@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projectile Motion Explorer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Barlow:wght@300;400;600;700;900&display=swap');
+
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2236;
+    --accent: #00e5ff;
+    --accent2: #ff6b35;
+    --accent3: #a8ff3e;
+    --text: #e8edf5;
+    --muted: #5a6a82;
+    --grid: rgba(0,229,255,0.06);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  header {
+    padding: 24px 32px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 3px 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  h1 {
+    font-size: clamp(24px, 4vw, 42px);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+  }
+
+  .main {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 20px;
+    padding: 20px 32px 32px;
+    height: calc(100vh - 100px);
+    min-height: 560px;
+  }
+
+  .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid rgba(0,229,255,0.1);
+    padding: 18px;
+  }
+
+  .panel-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(0,229,255,0.1);
+  }
+
+  .slider-group {
+    margin-bottom: 16px;
+  }
+
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+
+  .slider-label span:first-child {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.5px;
+  }
+
+  .slider-value {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .slider-unit {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-left: 2px;
+  }
+
+  input[type=range] {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    background: var(--surface2);
+    border-radius: 0;
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: 0;
+    cursor: pointer;
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  input[type=range]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: 0;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+  }
+
+  .btn-primary:hover {
+    background: #fff;
+    box-shadow: 0 0 20px var(--accent);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--accent2);
+    border: 1px solid var(--accent2);
+    margin-top: 6px;
+  }
+
+  .btn-secondary:hover {
+    background: var(--accent2);
+    color: var(--bg);
+  }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .metric {
+    background: var(--surface2);
+    padding: 10px 12px;
+    border-left: 2px solid var(--accent);
+  }
+
+  .metric-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 3px;
+  }
+
+  .metric-value {
+    font-family: 'Space Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent3);
+  }
+
+  .metric-unit {
+    font-size: 10px;
+    color: var(--muted);
+    margin-left: 2px;
+  }
+
+  .canvas-wrap {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid rgba(0,229,255,0.1);
+    overflow: hidden;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .equations {
+    margin-top: 8px;
+    background: var(--surface);
+    border: 1px solid rgba(0,229,255,0.1);
+    padding: 14px 18px;
+  }
+
+  .eq-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .eq {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  .eq strong {
+    color: var(--accent2);
+    font-size: 10px;
+    display: block;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+
+  .eq .val { color: var(--text); }
+
+  .canvas-overlay {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-align: right;
+    pointer-events: none;
+  }
+
+  .trail-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    cursor: pointer;
+  }
+
+  .toggle-box {
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .toggle-box.on { background: var(--accent); }
+
+  .toggle-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  @media (max-width: 700px) {
+    .main { grid-template-columns: 1fr; height: auto; }
+    .eq-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Projectile <span>Motion</span></h1>
+    <div class="subtitle">Interactive Biomechanics Explorer — Sport & Exercise Science</div>
+  </div>
+  <div class="badge">SES Tool</div>
+</header>
+
+<div class="main">
+  <div class="controls">
+    <div class="panel">
+      <div class="panel-title">Parameters</div>
+
+      <div class="slider-group">
+        <div class="slider-label">
+          <span>Launch Velocity</span>
+          <span><span class="slider-value" id="v0-val">15</span><span class="slider-unit">m/s</span></span>
+        </div>
+        <input type="range" id="v0" min="1" max="40" step="0.5" value="15">
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-label">
+          <span>Launch Angle</span>
+          <span><span class="slider-value" id="angle-val">45</span><span class="slider-unit">°</span></span>
+        </div>
+        <input type="range" id="angle" min="1" max="89" step="1" value="45">
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-label">
+          <span>Release Height</span>
+          <span><span class="slider-value" id="height-val">1.0</span><span class="slider-unit">m</span></span>
+        </div>
+        <input type="range" id="height" min="0" max="3" step="0.1" value="1.0">
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-label">
+          <span>Gravity</span>
+          <span><span class="slider-value" id="g-val">9.81</span><span class="slider-unit">m/s²</span></span>
+        </div>
+        <input type="range" id="grav" min="1" max="25" step="0.01" value="9.81">
+      </div>
+
+      <div class="trail-toggle" id="trail-toggle">
+        <div class="toggle-box on" id="trail-box"></div>
+        <span class="toggle-label">Show trajectory trail</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Outputs</div>
+      <div class="metrics-grid">
+        <div class="metric">
+          <div class="metric-label">Max Range</div>
+          <div class="metric-value" id="out-range">—<span class="metric-unit">m</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Max Height</div>
+          <div class="metric-value" id="out-height">—<span class="metric-unit">m</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Flight Time</div>
+          <div class="metric-value" id="out-time">—<span class="metric-unit">s</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Impact Speed</div>
+          <div class="metric-value" id="out-speed">—<span class="metric-unit">m/s</span></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="launch-btn">▶ LAUNCH</button>
+    <button class="btn btn-secondary" id="reset-btn">↺ RESET</button>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:8px;min-height:0;">
+    <div class="canvas-wrap" style="flex:1;">
+      <canvas id="canvas"></canvas>
+      <div class="canvas-overlay" id="canvas-info">Click LAUNCH to simulate</div>
+    </div>
+
+    <div class="equations">
+      <div class="panel-title" style="margin-bottom:12px;">Key Equations</div>
+      <div class="eq-grid">
+        <div class="eq">
+          <strong>Horizontal</strong>
+          x(t) = v₀·cos(θ)·t
+        </div>
+        <div class="eq">
+          <strong>Vertical</strong>
+          y(t) = h₀ + v₀·sin(θ)·t − ½gt²
+        </div>
+        <div class="eq">
+          <strong>Components</strong>
+          vₓ = <span class="val" id="eq-vx">—</span> m/s &nbsp; vᵧ = <span class="val" id="eq-vy">—</span> m/s
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  let animId = null;
+  let showTrail = true;
+  let computed = null;
+
+  const els = {
+    v0: document.getElementById('v0'),
+    angle: document.getElementById('angle'),
+    height: document.getElementById('height'),
+    grav: document.getElementById('grav'),
+    v0Val: document.getElementById('v0-val'),
+    angleVal: document.getElementById('angle-val'),
+    heightVal: document.getElementById('height-val'),
+    gVal: document.getElementById('g-val'),
+    outRange: document.getElementById('out-range'),
+    outHeight: document.getElementById('out-height'),
+    outTime: document.getElementById('out-time'),
+    outSpeed: document.getElementById('out-speed'),
+    eqVx: document.getElementById('eq-vx'),
+    eqVy: document.getElementById('eq-vy'),
+    info: document.getElementById('canvas-info'),
+    trailToggle: document.getElementById('trail-toggle'),
+    trailBox: document.getElementById('trail-box'),
+  };
+
+  function getParams() {
+    return {
+      v0: parseFloat(els.v0.value),
+      angle: parseFloat(els.angle.value),
+      h0: parseFloat(els.height.value),
+      g: parseFloat(els.grav.value),
+    };
+  }
+
+  function computeTrajectory(p) {
+    const rad = p.angle * Math.PI / 180;
+    const vx = p.v0 * Math.cos(rad);
+    const vy = p.v0 * Math.sin(rad);
+
+    // Time of flight: h0 + vy*t - 0.5*g*t^2 = 0
+    const a = -0.5 * p.g, b = vy, c = p.h0;
+    const disc = b * b - 4 * a * c;
+    const tFlight = (-b - Math.sqrt(disc)) / (2 * a);
+
+    const tPeak = vy / p.g;
+    const hMax = p.h0 + vy * tPeak - 0.5 * p.g * tPeak * tPeak;
+    const range = vx * tFlight;
+
+    const vxFinal = vx;
+    const vyFinal = vy - p.g * tFlight;
+    const speedFinal = Math.sqrt(vxFinal * vxFinal + vyFinal * vyFinal);
+
+    const points = [];
+    const steps = 300;
+    for (let i = 0; i <= steps; i++) {
+      const t = (i / steps) * tFlight;
+      points.push({ x: vx * t, y: p.h0 + vy * t - 0.5 * p.g * t * t, t });
+    }
+
+    return { tFlight, hMax, range, speedFinal, points, vx, vy };
+  }
+
+  function resize() {
+    canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+    canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    if (computed) drawStatic(computed);
+    else drawEmpty();
+  }
+
+  function toCanvas(x, y, range, hMax, h0, cw, ch) {
+    const pad = 48;
+    const scaleX = (cw - pad * 2) / (range * 1.08);
+    const maxY = Math.max(hMax * 1.15, h0 + 1);
+    const scaleY = (ch - pad * 2) / maxY;
+    const scale = Math.min(scaleX, scaleY);
+    return {
+      cx: pad + x * scale,
+      cy: ch - pad - y * scale,
+    };
+  }
+
+  function drawGrid(cw, ch) {
+    ctx.strokeStyle = 'rgba(0,229,255,0.05)';
+    ctx.lineWidth = 1;
+    const step = 60;
+    for (let x = 0; x < cw; x += step) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, ch); ctx.stroke();
+    }
+    for (let y = 0; y < ch; y += step) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cw, y); ctx.stroke();
+    }
+  }
+
+  function drawEmpty() {
+    const cw = canvas.offsetWidth, ch = canvas.offsetHeight;
+    ctx.clearRect(0, 0, cw, ch);
+    drawGrid(cw, ch);
+    // Ground
+    ctx.strokeStyle = 'rgba(0,229,255,0.2)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, ch - 48);
+    ctx.lineTo(cw, ch - 48);
+    ctx.stroke();
+  }
+
+  function drawStatic(data) {
+    const { points, range, hMax, h0 } = data;
+    const cw = canvas.offsetWidth, ch = canvas.offsetHeight;
+    ctx.clearRect(0, 0, cw, ch);
+    drawGrid(cw, ch);
+
+    // Ground
+    ctx.strokeStyle = 'rgba(0,229,255,0.2)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(0, ch - 48); ctx.lineTo(cw, ch - 48); ctx.stroke();
+
+    if (!showTrail) return;
+
+    // Trail gradient
+    const grad = ctx.createLinearGradient(0, 0, cw, 0);
+    grad.addColorStop(0, 'rgba(0,229,255,0.9)');
+    grad.addColorStop(0.5, 'rgba(168,255,62,0.7)');
+    grad.addColorStop(1, 'rgba(255,107,53,0.5)');
+
+    ctx.beginPath();
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = '#00e5ff';
+    ctx.shadowBlur = 8;
+
+    points.forEach((p, i) => {
+      const { cx, cy } = toCanvas(p.x, p.y, range, hMax, h0, cw, ch);
+      if (i === 0) ctx.moveTo(cx, cy); else ctx.lineTo(cx, cy);
+    });
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Peak marker
+    const peak = points.reduce((a, b) => b.y > a.y ? b : a);
+    const { cx: px, cy: py } = toCanvas(peak.x, peak.y, range, hMax, h0, cw, ch);
+    ctx.fillStyle = '#a8ff3e';
+    ctx.shadowColor = '#a8ff3e';
+    ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.font = '10px Space Mono, monospace';
+    ctx.fillStyle = '#a8ff3e';
+    ctx.fillText(`H = ${hMax.toFixed(1)}m`, px + 8, py - 6);
+
+    // Landing marker
+    const last = points[points.length - 1];
+    const { cx: lx, cy: ly } = toCanvas(last.x, last.y, range, hMax, h0, cw, ch);
+    ctx.fillStyle = '#ff6b35';
+    ctx.shadowColor = '#ff6b35';
+    ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(lx, ly, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#ff6b35';
+    ctx.fillText(`R = ${range.toFixed(1)}m`, lx - 60, ly - 10);
+
+    // Origin dot
+    const { cx: ox, cy: oy } = toCanvas(0, h0, range, hMax, h0, cw, ch);
+    ctx.fillStyle = '#00e5ff';
+    ctx.shadowColor = '#00e5ff';
+    ctx.shadowBlur = 12;
+    ctx.beginPath(); ctx.arc(ox, oy, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  function animate(data, startTime) {
+    const { points, range, hMax, h0, tFlight } = data;
+    const cw = canvas.offsetWidth, ch = canvas.offsetHeight;
+
+    function frame(ts) {
+      const elapsed = (ts - startTime) / 1000;
+      const progress = Math.min(elapsed / (tFlight * 0.6 + 0.5), 1);
+      const idx = Math.floor(progress * (points.length - 1));
+
+      ctx.clearRect(0, 0, cw, ch);
+      drawGrid(cw, ch);
+
+      // Ground
+      ctx.strokeStyle = 'rgba(0,229,255,0.2)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(0, ch - 48); ctx.lineTo(cw, ch - 48); ctx.stroke();
+
+      // Trail so far
+      if (showTrail && idx > 0) {
+        const grad = ctx.createLinearGradient(0, 0, cw, 0);
+        grad.addColorStop(0, 'rgba(0,229,255,0.9)');
+        grad.addColorStop(0.5, 'rgba(168,255,62,0.7)');
+        grad.addColorStop(1, 'rgba(255,107,53,0.5)');
+        ctx.beginPath();
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = '#00e5ff';
+        ctx.shadowBlur = 8;
+        for (let i = 0; i <= idx; i++) {
+          const { cx, cy } = toCanvas(points[i].x, points[i].y, range, hMax, h0, cw, ch);
+          if (i === 0) ctx.moveTo(cx, cy); else ctx.lineTo(cx, cy);
+        }
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+
+      // Ball
+      const cur = points[idx];
+      const { cx: bx, cy: by } = toCanvas(cur.x, cur.y, range, hMax, h0, cw, ch);
+      ctx.fillStyle = '#00e5ff';
+      ctx.shadowColor = '#00e5ff';
+      ctx.shadowBlur = 18;
+      ctx.beginPath(); ctx.arc(bx, by, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Live readout
+      els.info.textContent = `t = ${cur.t.toFixed(2)}s  |  x = ${cur.x.toFixed(1)}m  |  y = ${cur.y.toFixed(1)}m`;
+
+      if (progress < 1) {
+        animId = requestAnimationFrame(t => frame(t));
+      } else {
+        drawStatic(data);
+        els.info.textContent = `Range: ${range.toFixed(2)}m  |  Peak: ${hMax.toFixed(2)}m  |  Time: ${tFlight.toFixed(2)}s`;
+      }
+    }
+
+    animId = requestAnimationFrame(t => frame(t));
+  }
+
+  function updateSliders() {
+    const p = getParams();
+    els.v0Val.textContent = p.v0;
+    els.angleVal.textContent = p.angle;
+    els.heightVal.textContent = p.h0.toFixed(1);
+    els.gVal.textContent = p.g.toFixed(2);
+
+    const rad = p.angle * Math.PI / 180;
+    els.eqVx.textContent = (p.v0 * Math.cos(rad)).toFixed(2);
+    els.eqVy.textContent = (p.v0 * Math.sin(rad)).toFixed(2);
+  }
+
+  function launch() {
+    if (animId) cancelAnimationFrame(animId);
+    const p = getParams();
+    computed = computeTrajectory(p);
+
+    els.outRange.innerHTML = computed.range.toFixed(2) + '<span class="metric-unit">m</span>';
+    els.outHeight.innerHTML = computed.hMax.toFixed(2) + '<span class="metric-unit">m</span>';
+    els.outTime.innerHTML = computed.tFlight.toFixed(2) + '<span class="metric-unit">s</span>';
+    els.outSpeed.innerHTML = computed.speedFinal.toFixed(2) + '<span class="metric-unit">m/s</span>';
+
+    animate(computed, performance.now());
+  }
+
+  function reset() {
+    if (animId) cancelAnimationFrame(animId);
+    computed = null;
+    els.outRange.innerHTML = '—<span class="metric-unit">m</span>';
+    els.outHeight.innerHTML = '—<span class="metric-unit">m</span>';
+    els.outTime.innerHTML = '—<span class="metric-unit">s</span>';
+    els.outSpeed.innerHTML = '—<span class="metric-unit">m/s</span>';
+    els.info.textContent = 'Click LAUNCH to simulate';
+    drawEmpty();
+  }
+
+  // Events
+  document.getElementById('launch-btn').addEventListener('click', launch);
+  document.getElementById('reset-btn').addEventListener('click', reset);
+
+  [els.v0, els.angle, els.height, els.grav].forEach(el => {
+    el.addEventListener('input', () => { updateSliders(); if (computed) { computed = computeTrajectory(getParams()); drawStatic(computed); } });
+  });
+
+  els.trailToggle.addEventListener('click', () => {
+    showTrail = !showTrail;
+    els.trailBox.className = 'toggle-box' + (showTrail ? ' on' : '');
+    if (computed) drawStatic(computed);
+  });
+
+  window.addEventListener('resize', resize);
+
+  updateSliders();
+  resize();
+  drawEmpty();
+</script>
+</body>
+</html>
