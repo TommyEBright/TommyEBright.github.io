@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(anthropic-skills:docx)",
+      "Skill(anthropic-skills:docx:*)",
+      "Bash(grep -n \"oblaMethod\\\\|saveProfile\\\\|loadProfile\\\\|p\\\\.obla\\\\|\\\\$\\('oblaMethod'\\)\" \"/Users/lauragreene/Desktop/Matt Examples/blood-lactate-analysis.html\")",
+      "Bash(python3 -c ' *)"
+    ]
+  }
+}

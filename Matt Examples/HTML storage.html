@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTML Gallery</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0a1628;--navy-mid:#1a2f50;--navy-light:#2d4a7a;
+  --accent:#3b82f6;--accent-light:#60a5fa;
+  --white:#ffffff;--gray-50:#f8fafc;--gray-100:#f1f5f9;
+  --gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;
+  --gray-500:#64748b;--gray-700:#334155;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.12);
+  --shadow-md:0 4px 12px rgba(0,0,0,.15);
+  --shadow-lg:0 8px 24px rgba(0,0,0,.2);
+  --r:12px;--rs:6px;--tr:.2s ease;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--gray-50);color:var(--gray-700);min-height:100vh}
+
+/* ── HEADER ── */
+header{background:linear-gradient(135deg,var(--navy),var(--navy-mid));color:#fff;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-md)}
+.hd{max-width:1400px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:62px;gap:1rem}
+.logo{font-size:1.2rem;font-weight:700;letter-spacing:-.5px;display:flex;align-items:center;gap:.5rem;flex-shrink:0}
+.logo svg{opacity:.9}
+.hd-actions{display:flex;gap:.5rem;align-items:center;flex-shrink:0}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:.35rem;padding:.45rem .9rem;border-radius:var(--rs);font-size:.85rem;font-weight:500;cursor:pointer;border:none;transition:all var(--tr);white-space:nowrap;font-family:inherit}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-light);transform:translateY(-1px)}
+.btn-ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)}
+.btn-ghost:hover{background:rgba(255,255,255,.2)}
+.btn-outline{background:transparent;color:var(--gray-700);border:1px solid var(--gray-300)}
+.btn-outline:hover{background:var(--gray-100)}
+.btn-danger{background:transparent;color:#dc2626;border:1px solid #fca5a5;font-size:.8rem;padding:.35rem .7rem}
+.btn-danger:hover{background:#fee2e2}
+
+/* ── NAV TABS ── */
+nav{background:var(--navy-mid);border-bottom:1px solid rgba(255,255,255,.1)}
+.nav-inner{max-width:1400px;margin:0 auto;padding:0 1.5rem;display:flex}
+.tab-btn{padding:.7rem 1.2rem;color:rgba(255,255,255,.55);font-size:.85rem;font-weight:500;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all var(--tr);display:flex;align-items:center;gap:.35rem;font-family:inherit}
+.tab-btn:hover{color:rgba(255,255,255,.9)}
+.tab-btn.active{color:#fff;border-bottom-color:var(--accent)}
+
+/* ── LAYOUT ── */
+main{max-width:1400px;margin:0 auto;padding:1.75rem 1.5rem}
+.view{display:none}
+.view.active{display:block}
+
+/* ── GALLERY CONTROLS ── */
+.gallery-top{display:flex;gap:.75rem;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center}
+.search-wrap{position:relative;flex:1;min-width:200px}
+.search-wrap svg{position:absolute;left:.7rem;top:50%;transform:translateY(-50%);color:var(--gray-400);pointer-events:none}
+.search-input{width:100%;padding:.575rem 1rem .575rem 2.3rem;border:1px solid var(--gray-200);border-radius:var(--rs);font-size:.875rem;background:#fff;outline:none;transition:border-color var(--tr);font-family:inherit}
+.search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+
+/* ── FILTER BAR ── */
+.filter-bar{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin-bottom:1.25rem;min-height:28px}
+.filter-section-label{font-size:.7rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.06em;margin-right:.1rem;flex-shrink:0}
+.chip{padding:.3rem .65rem;border-radius:999px;font-size:.775rem;font-weight:500;cursor:pointer;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-700);transition:all var(--tr);white-space:nowrap;display:inline-flex;align-items:center;gap:.3rem}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip .chip-count{opacity:.7;font-size:.7rem}
+
+/* ── CARD GRID ── */
+.results-count{font-size:.8rem;color:var(--gray-400);margin-bottom:1rem}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:1.25rem}
+.card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow-sm);border:1px solid var(--gray-200);overflow:hidden;transition:all var(--tr);cursor:pointer;display:flex;flex-direction:column}
+.card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:var(--accent-light)}
+
+.card-thumb{height:148px;background:linear-gradient(135deg,#f1f5f9,#e2e8f0);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card-thumb-icon{color:var(--gray-300)}
+.card-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 55%,rgba(0,0,0,.06) 100%)}
+/* ── CARD TYPE STRIP (bottom overlay on thumbnail) ── */
+.card-type-strip{position:absolute;bottom:0;left:0;right:0;padding:.45rem .75rem;display:flex;align-items:center;gap:.4rem}
+.ctype-icon{font-size:.95rem;line-height:1;flex-shrink:0}
+.ctype-name{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.25)}
+.tb-game        {background:rgba(220,38,38,.88)}
+.tb-calculator  {background:rgba(5,150,105,.88)}
+.tb-dashboard   {background:rgba(37,99,235,.88)}
+.tb-lesson      {background:rgba(217,119,6,.88)}
+.tb-quiz        {background:rgba(124,58,237,.88)}
+.tb-data-tool   {background:rgba(2,132,199,.88)}
+.tb-other       {background:rgba(107,114,128,.88)}
+
+/* ── TYPE FILTER BUTTONS ── */
+.type-filter-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem;align-items:center}
+.type-btn{display:inline-flex;align-items:center;gap:.38rem;padding:.42rem .9rem;border-radius:999px;font-size:.82rem;font-weight:600;cursor:pointer;border:2px solid var(--gray-200);background:#fff;color:var(--gray-600,#475569);transition:all var(--tr);user-select:none;font-family:inherit}
+.type-btn:hover{transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+.type-btn-icon{font-size:.9rem;line-height:1}
+.type-btn-count{font-size:.68rem;font-weight:700;background:var(--gray-100);border-radius:999px;padding:.05rem .4rem;transition:all var(--tr)}
+.type-btn-tick{display:none;width:15px;height:15px;border-radius:50%;background:rgba(255,255,255,.28);align-items:center;justify-content:center;font-size:.6rem;font-weight:900;flex-shrink:0}
+/* active state */
+.type-btn.active{border-color:transparent;color:#fff}
+.type-btn.active .type-btn-tick{display:flex}
+.type-btn.active .type-btn-count{background:rgba(255,255,255,.22);color:#fff}
+/* per-type colours — inactive hover */
+.type-btn.tfb-game:hover        {border-color:#dc2626;color:#dc2626}
+.type-btn.tfb-calculator:hover  {border-color:#059669;color:#059669}
+.type-btn.tfb-dashboard:hover   {border-color:#2563eb;color:#2563eb}
+.type-btn.tfb-lesson:hover      {border-color:#d97706;color:#d97706}
+.type-btn.tfb-quiz:hover        {border-color:#7c3aed;color:#7c3aed}
+.type-btn.tfb-data-tool:hover   {border-color:#0284c7;color:#0284c7}
+.type-btn.tfb-other:hover       {border-color:#6b7280;color:#6b7280}
+/* per-type colours — active fill */
+.type-btn.active.tfb-game       {background:#dc2626}
+.type-btn.active.tfb-calculator {background:#059669}
+.type-btn.active.tfb-dashboard  {background:#2563eb}
+.type-btn.active.tfb-lesson     {background:#d97706}
+.type-btn.active.tfb-quiz       {background:#7c3aed}
+.type-btn.active.tfb-data-tool  {background:#0284c7}
+.type-btn.active.tfb-other      {background:#6b7280}
+
+.card-body{padding:.9rem 1.1rem 1rem;flex:1;display:flex;flex-direction:column;gap:.45rem}
+.card-title{font-size:.92rem;font-weight:700;color:var(--navy);line-height:1.3;word-break:break-word}
+.card-meta{display:flex;align-items:center;gap:.6rem;font-size:.72rem;color:var(--gray-400)}
+.card-summary{font-size:.78rem;color:var(--gray-500);line-height:1.5;flex:1;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card-tags{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.2rem}
+.tag{padding:.18rem .45rem;background:var(--gray-100);border-radius:999px;font-size:.68rem;font-weight:500;color:var(--gray-600,#475569);border:1px solid var(--gray-200);transition:all var(--tr);cursor:pointer}
+.tag:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ── EMPTY / LOADING STATES ── */
+.empty{text-align:center;padding:4rem 2rem;color:var(--gray-400);grid-column:1/-1}
+.empty-icon{font-size:2.75rem;margin-bottom:.75rem}
+.empty h3{font-size:1.05rem;color:var(--gray-500);margin-bottom:.4rem}
+.empty p{font-size:.85rem;max-width:280px;margin:0 auto}
+.loading-state{text-align:center;padding:4rem 2rem;color:var(--gray-400);grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:.75rem;font-size:.9rem}
+.spinner{display:inline-block;width:20px;height:20px;border:2.5px solid var(--gray-200);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── DASHBOARD ── */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem;margin-bottom:1.75rem}
+.stat-card{background:#fff;border-radius:var(--r);padding:1.1rem 1.4rem;box-shadow:var(--shadow-sm);border:1px solid var(--gray-200)}
+.stat-val{font-size:2rem;font-weight:800;color:var(--navy);line-height:1}
+.stat-lbl{font-size:.775rem;color:var(--gray-500);margin-top:.3rem;font-weight:500}
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem}
+.chart-card{background:#fff;border-radius:var(--r);padding:1.1rem 1.25rem;box-shadow:var(--shadow-sm);border:1px solid var(--gray-200)}
+.chart-title{font-size:.85rem;font-weight:700;color:var(--navy);margin-bottom:.9rem}
+.chart-wrap{position:relative;height:200px}
+.chart-wrap-sm{position:relative;height:160px}
+.up-table{width:100%;border-collapse:collapse;font-size:.84rem}
+.up-table th,.up-table td{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--gray-100)}
+.up-table th{font-size:.7rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.05em}
+.up-table tr:last-child td{border-bottom:none}
+
+/* ── UPLOAD ── */
+.upload-wrap{max-width:680px;margin:0 auto}
+.upload-card{background:#fff;border-radius:var(--r);padding:1.75rem 2rem;box-shadow:var(--shadow-sm);border:1px solid var(--gray-200);display:flex;flex-direction:column;gap:1.25rem}
+.upload-heading{font-size:1.2rem;font-weight:700;color:var(--navy);margin-bottom:.2rem}
+.upload-subheading{font-size:.85rem;color:var(--gray-500)}
+.field{display:flex;flex-direction:column;gap:.35rem}
+.field-label{font-size:.85rem;font-weight:600;color:var(--gray-700)}
+.field-input{padding:.575rem .8rem;border:1px solid var(--gray-200);border-radius:var(--rs);font-size:.875rem;outline:none;transition:border-color var(--tr);font-family:inherit}
+.field-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.drop-zone{border:2px dashed var(--gray-300);border-radius:var(--r);padding:2.5rem 2rem;text-align:center;cursor:pointer;transition:all var(--tr);background:var(--gray-50)}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--accent);background:rgba(59,130,246,.04)}
+.dz-icon{font-size:2.25rem;margin-bottom:.6rem}
+.dz-text{font-size:.9rem;color:var(--gray-500)}
+.dz-text strong{color:var(--accent)}
+.dz-sub{display:block;margin-top:.25rem;font-size:.75rem;color:var(--gray-400)}
+
+/* ── ANALYSIS PANEL ── */
+.analysis{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--r);padding:1.25rem 1.5rem;display:none;flex-direction:column;gap:.9rem}
+.analysis.show{display:flex}
+.analysis-heading{font-size:.85rem;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:.4rem}
+.analysis-note{font-size:.72rem;font-weight:400;color:var(--gray-400);margin-left:auto}
+.a-section{display:flex;flex-direction:column;gap:.3rem}
+.a-label{font-size:.7rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.06em}
+.a-hint{font-weight:400;color:var(--gray-300)}
+.type-sel{padding:.45rem .7rem;border:1px solid var(--gray-200);border-radius:var(--rs);font-size:.85rem;background:#fff;outline:none;font-family:inherit;width:auto}
+.type-sel:focus{border-color:var(--accent)}
+.summary-box{font-size:.85rem;color:var(--gray-700);line-height:1.55;padding:.55rem .8rem;background:#fff;border:1px solid var(--gray-200);border-radius:var(--rs)}
+.tags-editor{display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;background:#fff;border:1px solid var(--gray-200);border-radius:var(--rs);padding:.5rem .6rem;min-height:40px}
+.tag-pill{display:inline-flex;align-items:center;gap:.2rem;padding:.22rem .5rem .22rem .6rem;background:var(--navy-light);color:#fff;border-radius:999px;font-size:.75rem;font-weight:500}
+.tag-rm{cursor:pointer;opacity:.65;line-height:1;font-size:.85rem;padding:0 .05rem;transition:opacity var(--tr)}
+.tag-rm:hover{opacity:1}
+.tag-add{padding:.22rem .45rem;border:1.5px dashed var(--gray-300);border-radius:999px;font-size:.75rem;outline:none;background:transparent;width:90px;font-family:inherit;color:var(--gray-500)}
+.tag-add::placeholder{color:var(--gray-300)}
+.tag-add:focus{border-color:var(--accent)}
+.form-actions{display:flex;gap:.65rem;justify-content:flex-end}
+
+/* ── MODAL ── */
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:200;padding:1rem;backdrop-filter:blur(4px)}
+.backdrop.open{display:flex}
+.modal{background:#fff;border-radius:var(--r);width:100%;max-width:1020px;max-height:90vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);overflow:hidden;animation:fadeUp .2s ease}
+@keyframes fadeUp{from{transform:scale(.95) translateY(8px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.modal-hd{padding:.9rem 1.25rem;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between;background:var(--navy);color:#fff;flex-shrink:0}
+.modal-title{font-size:1rem;font-weight:600}
+.modal-sub{font-size:.72rem;opacity:.65;margin-top:.1rem}
+.modal-close{background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;line-height:1;padding:.2rem .4rem;border-radius:4px;opacity:.65;transition:opacity var(--tr)}
+.modal-close:hover{opacity:1}
+.modal-body{flex:1;overflow:hidden;min-height:320px;position:relative}
+.preview-frame{width:100%;height:100%;border:none;display:block;min-height:520px}
+.modal-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:.6rem;color:var(--gray-400);font-size:.9rem;background:#fff}
+.modal-ft{padding:.7rem 1.25rem;border-top:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;flex-wrap:wrap;gap:.5rem;transition:padding .15s}
+.modal-tags{display:flex;flex-wrap:wrap;gap:.3rem;flex:1}
+/* edit mode expands the footer into a mini-form */
+.modal-ft.edit-mode{flex-direction:column;align-items:stretch;gap:.6rem;padding:1rem 1.25rem}
+.modal-edit-row{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.modal-edit-lbl{font-size:.72rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.05em;width:38px;flex-shrink:0}
+.modal-edit-actions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:.1rem}
+.edit-type-sel{padding:.4rem .65rem;border:1px solid var(--gray-200);border-radius:var(--rs);font-size:.85rem;background:#fff;outline:none;font-family:inherit}
+.edit-type-sel:focus{border-color:var(--accent)}
+
+/* ── NOTIFICATION ── */
+.notif{position:fixed;bottom:1.25rem;right:1.25rem;background:var(--navy);color:#fff;padding:.8rem 1.1rem;border-radius:var(--rs);font-size:.85rem;box-shadow:var(--shadow-lg);transform:translateY(80px);opacity:0;transition:all .3s ease;z-index:300;max-width:300px}
+.notif.show{transform:translateY(0);opacity:1}
+.notif.err{background:#dc2626}
+.notif.ok{background:#059669}
+
+/* ── REALTIME INDICATOR ── */
+.rt-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#22c55e;margin-left:.4rem;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  main{padding:1rem}
+  .hd{padding:0 1rem}
+  .nav-inner{padding:0 1rem}
+  .charts-row{grid-template-columns:1fr}
+  .upload-card{padding:1.25rem}
+}
+@media(max-width:480px){
+  .card-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="hd">
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+      </svg>
+      HTML Gallery
+      <span class="rt-dot" id="rtDot" title="Live — updates in real time" style="display:none"></span>
+    </div>
+    <div class="hd-actions">
+      <button class="btn btn-ghost" onclick="exportData()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export
+      </button>
+      <label class="btn btn-ghost" style="cursor:pointer">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Import
+        <input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(event)">
+      </label>
+      <button class="btn btn-primary" onclick="switchTab('upload')">
+        + Upload
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <button class="tab-btn active" data-tab="gallery" onclick="switchTab('gallery')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Gallery
+    </button>
+    <button class="tab-btn" data-tab="dashboard" onclick="switchTab('dashboard')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Dashboard
+    </button>
+    <button class="tab-btn" data-tab="upload" onclick="switchTab('upload')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload
+    </button>
+  </div>
+</nav>
+
+<main>
+  <!-- GALLERY -->
+  <div class="view active" id="view-gallery">
+    <div class="gallery-top">
+      <div class="search-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search files, uploaders, tags…" oninput="filterGallery()">
+      </div>
+      <button class="btn btn-outline" id="clearBtn" style="display:none" onclick="clearFilters()">✕ Clear filters</button>
+    </div>
+    <div class="type-filter-row" id="typeFilterRow"></div>
+    <div class="filter-bar" id="filterBar"></div>
+    <div class="results-count" id="resultsCount"></div>
+    <div class="card-grid" id="cardGrid"></div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="view" id="view-dashboard">
+    <div class="stat-grid" id="statGrid"></div>
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Top Tags</div>
+        <div class="chart-wrap"><canvas id="tagsChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">By Type</div>
+        <div class="chart-wrap"><canvas id="typesChart"></canvas></div>
+      </div>
+    </div>
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Uploads Over Time</div>
+        <div class="chart-wrap-sm"><canvas id="timelineChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Most Active Uploaders</div>
+        <table class="up-table" id="upTable">
+          <thead><tr><th>Name</th><th>Uploads</th><th>Last Upload</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPLOAD -->
+  <div class="view" id="view-upload">
+    <div class="upload-wrap">
+      <div class="upload-card">
+        <div>
+          <div class="upload-heading">Upload HTML File</div>
+          <div class="upload-subheading">Share your HTML project with everyone. Tags, type and summary are detected automatically from the file content.</div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="uploaderName">Your Name</label>
+          <input type="text" id="uploaderName" class="field-input" placeholder="Enter your name" autocomplete="name">
+        </div>
+
+        <div class="field">
+          <label class="field-label">HTML File</label>
+          <div class="drop-zone" id="dropZone">
+            <div class="dz-icon">📁</div>
+            <div class="dz-text"><strong>Choose a file</strong> or drag it here<span class="dz-sub">.html files only · max 2 MB</span></div>
+            <input type="file" id="fileInput" accept=".html" style="display:none">
+          </div>
+        </div>
+
+        <!-- Analysis -->
+        <div class="analysis" id="analysisPanel">
+          <div class="analysis-heading">
+            ✦ Auto-detected Analysis
+            <span class="analysis-note">Review and edit before saving</span>
+          </div>
+          <div class="a-section">
+            <div class="a-label">Type</div>
+            <select class="type-sel" id="typeSelect">
+              <option>Game</option><option>Calculator</option><option>Dashboard</option>
+              <option>Lesson</option><option>Quiz</option><option>Data Tool</option><option>Other</option>
+            </select>
+          </div>
+          <div class="a-section">
+            <div class="a-label">Summary</div>
+            <div class="summary-box" id="summaryBox"></div>
+          </div>
+          <div class="a-section">
+            <div class="a-label">Tags <span class="a-hint">(click × to remove · press Enter to add)</span></div>
+            <div class="tags-editor" id="tagsEditor">
+              <input type="text" class="tag-add" id="tagAddInput" placeholder="+ add tag">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-outline" onclick="resetUpload()">Cancel</button>
+          <button class="btn btn-primary" id="confirmBtn" onclick="confirmUpload()" disabled>Save to Gallery</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL -->
+<div class="backdrop" id="backdrop" onclick="backdropClick(event)">
+  <div class="modal">
+    <div class="modal-hd">
+      <div>
+        <div class="modal-title" id="modalTitle"></div>
+        <div class="modal-sub" id="modalSub"></div>
+      </div>
+      <button class="modal-close" onclick="closePreview()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-loading" id="modalLoading">
+        <span class="spinner"></span> Loading preview…
+      </div>
+      <iframe class="preview-frame" id="previewFrame" sandbox="allow-scripts allow-same-origin" style="display:none"></iframe>
+    </div>
+    <div class="modal-ft" id="modalFt">
+      <!-- VIEW MODE -->
+      <div id="modalView" style="display:flex;align-items:center;justify-content:space-between;width:100%;flex-wrap:wrap;gap:.5rem">
+        <div class="modal-tags" id="modalTags"></div>
+        <div style="display:flex;gap:.5rem;flex-shrink:0">
+          <button class="btn btn-outline" onclick="startEdit()" style="font-size:.8rem;padding:.35rem .7rem">✏️ Edit</button>
+          <button class="btn btn-danger" onclick="deleteItem()">🗑 Delete</button>
+        </div>
+      </div>
+      <!-- EDIT MODE -->
+      <div id="modalEdit" style="display:none;flex-direction:column;gap:.6rem;width:100%">
+        <div class="modal-edit-row">
+          <span class="modal-edit-lbl">Type</span>
+          <select class="edit-type-sel" id="editTypeSelect">
+            <option>Game</option><option>Calculator</option><option>Dashboard</option>
+            <option>Lesson</option><option>Quiz</option><option>Data Tool</option><option>Other</option>
+          </select>
+        </div>
+        <div class="modal-edit-row">
+          <span class="modal-edit-lbl">Tags</span>
+          <div class="tags-editor" id="editTagsEditor" style="flex:1">
+            <input type="text" class="tag-add" id="editTagInput" placeholder="+ add tag">
+          </div>
+        </div>
+        <div class="modal-edit-actions">
+          <button class="btn btn-outline" onclick="cancelEdit()" style="font-size:.82rem">Cancel</button>
+          <button class="btn btn-primary" onclick="saveEdit()" style="font-size:.82rem">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION -->
+<div class="notif" id="notif"></div>
+
+<script>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  SUPABASE CONFIG
+//  Fill in your Project URL and anon key before deploying.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const SUPABASE_URL      = 'https://oaovnfzsycldusriakeq.supabase.co'
+const SUPABASE_ANON_KEY = 'sb_publishable_z65YB6ntnhblFMHHqFjTRw_5edCjeUt'
+
+const { createClient } = window.supabase
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+// Columns fetched for the gallery list — excludes html_content to keep payloads small.
+// html_content is fetched on-demand when a user opens a preview or triggers export.
+const META = 'id,name,uploader,date,tags,type,summary'
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  NLP — STOP WORDS (domain-neutral)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const STOPS = new Set([
+  'a','an','the','and','or','but','in','on','at','to','for','of','with','by',
+  'from','is','are','was','were','be','been','being','have','has','had','do',
+  'does','did','will','would','could','should','may','might','can','shall',
+  'this','that','these','those','it','its','i','we','you','they','he','she',
+  'me','him','her','us','them','my','your','his','our','their','its',
+  'if','then','else','when','where','how','what','which','who','than','as',
+  'not','no','nor','so','yet','all','any','some','such','more','most','other',
+  'into','through','during','before','after','above','below','up','down','out',
+  'off','over','under','again','here','there','once','while','about','against',
+  'between','own','same','too','very','just','also','only','even','still','back',
+  'well','way','new','old','first','last','long','good','big','small','high',
+  'low','right','left','get','go','one','two','three','true','false','null',
+  'undefined','var','let','const','function','return','class','import','export',
+  'from','default','async','await','delete','typeof','void','try','catch',
+  'finally','throw','extends','super','static','new',
+  'div','span','html','body','head','script','style','link','meta','form',
+  'input','button','select','option','table','tr','td','th','ul','li','ol',
+  'img','svg','path','rect','circle','nav','main','header','footer','section',
+  'article','aside','href','src','class','id','onclick','onchange',
+  'data','item','items','list','value','result','array','object','string',
+  'number','boolean','index','count','element','node','event','handler',
+  'method','prop','state','render','update','set','add','remove','create',
+  'find','filter','map','sort','push','pop','click','change','submit','load',
+  'error','success','message','none','auto','block','flex','grid','inline',
+  'px','em','rem','vh','vw','rgb','rgba','url','background','color','width',
+  'height','margin','padding','border','font','display','position','top',
+  'left','right','bottom','opacity','transform','transition','animation',
+]);
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  NLP — CORE ANALYSIS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function analyzeHTML(html) {
+  let doc;
+  try {
+    const parser = new DOMParser();
+    doc = parser.parseFromString(html, 'text/html');
+  } catch { doc = null; }
+
+  const sources = collectSources(html, doc);
+  const tags    = extractTags(sources);
+  const type    = detectType(html, doc);
+  const summary = buildSummary(doc, html);
+  return { tags, type, summary };
+}
+
+function collectSources(html, doc) {
+  const src = [];
+  const push = (text, w) => { if (text && text.trim()) src.push({ text: text.trim(), w }); };
+
+  if (doc) {
+    push(doc.querySelector('title')?.textContent, 6);
+    push(doc.querySelector('meta[name="description"]')?.getAttribute('content'), 4);
+    doc.querySelectorAll('h1,h2').forEach(h => push(h.textContent, 5));
+    doc.querySelectorAll('h3,h4').forEach(h => push(h.textContent, 3));
+    doc.querySelectorAll('h5,h6').forEach(h => push(h.textContent, 2));
+    doc.querySelectorAll('label,th,button,legend,caption,figcaption').forEach(el => push(el.textContent, 2.5));
+    doc.querySelectorAll('p,li').forEach(el => push(el.textContent, 1));
+    const clsId = [...doc.querySelectorAll('[class],[id]')].map(el =>
+      (el.className + ' ' + el.id).replace(/[-_]/g, ' ')
+    ).join(' ');
+    push(clsId, 0.4);
+  }
+
+  const scriptRe = /<script[^>]*>([\s\S]*?)<\/script>/gi;
+  let m;
+  while ((m = scriptRe.exec(html)) !== null) {
+    const code = m[1];
+    code.replace(/\/\/([^\n]*)/g, (_, c) => push(c, 2.5));
+    code.replace(/\/\*([\s\S]*?)\*\//g, (_, c) => push(c, 2.5));
+    code.replace(/"([^"\n]{4,80})"/g,  (_, s) => push(s, 2));
+    code.replace(/'([^'\n]{4,80})'/g,  (_, s) => push(s, 2));
+    code.replace(/`([^`]{4,120})`/g,   (_, s) => push(s, 1.5));
+    const ids = (code.match(/\b[a-zA-Z][a-zA-Z0-9]{3,}\b/g) || [])
+      .flatMap(splitCamel).join(' ');
+    push(ids, 0.5);
+  }
+
+  html.replace(/<!--([\s\S]*?)-->/g, (_, c) => push(c, 2));
+  return src;
+}
+
+function splitCamel(str) {
+  return str
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .toLowerCase().split(/\s+/).filter(w => w.length > 2);
+}
+
+function tokenize(text) {
+  return text.toLowerCase()
+    .replace(/[^\w\s'-]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !/^\d+$/.test(w));
+}
+
+function stem(w) {
+  w = w.toLowerCase();
+  const rules = [
+    [/ically$/, 'ic'], [/ations?$/, 'ate'], [/ments?$/, ''],
+    [/nesses$/, 'ness'], [/ness$/, ''], [/ings?$/, ''],
+    [/tions?$/, 't'], [/ical$/, 'ic'], [/ables?$/, 'able'],
+    [/ers?$/, ''], [/ies$/, 'y'], [/ed$/, ''],
+    [/es$/, ''], [/s$/, ''],
+  ];
+  for (const [re, rep] of rules) {
+    if (re.test(w) && w.replace(re, rep).length > 3) return w.replace(re, rep);
+  }
+  return w;
+}
+
+function extractTags(sources) {
+  const freq    = new Map();
+  const addTerm = (t, w) => freq.set(t, (freq.get(t) || 0) + w);
+
+  for (const { text, w } of sources) {
+    const tokens    = tokenize(text);
+    const meaningful = tokens.filter(t => !STOPS.has(t) && t.length > 2);
+    meaningful.forEach(t => addTerm(t, w));
+
+    if (w >= 1) {
+      for (let i = 0; i < tokens.length - 1; i++) {
+        const a = tokens[i], b = tokens[i + 1];
+        if (!STOPS.has(a) && !STOPS.has(b) && a.length > 2 && b.length > 2)
+          addTerm(a + ' ' + b, w * 1.6);
+      }
+    }
+    if (w >= 2) {
+      for (let i = 0; i < tokens.length - 2; i++) {
+        const a = tokens[i], b = tokens[i + 1], c = tokens[i + 2];
+        if (!STOPS.has(a) && !STOPS.has(c) && a.length > 2 && c.length > 2)
+          addTerm(a + ' ' + b + ' ' + c, w * 1.8);
+      }
+    }
+  }
+
+  const groups = new Map();
+  for (const [term, score] of freq) {
+    if (score < 1.5) continue;
+    const fp = term.split(' ').map(stem).join(' ');
+    const g  = groups.get(fp);
+    if (!g || score > g.score) groups.set(fp, { best: term, score });
+    else groups.get(fp).score += score * 0.3;
+  }
+
+  const sorted   = [...groups.values()].sort((a, b) => b.score - a.score);
+  const chosen   = [];
+  const usedWords = new Set();
+
+  for (const { best } of sorted) {
+    if (!best.includes(' ')) continue;
+    const clean = cleanTag(best);
+    if (!clean) continue;
+    const words = clean.split(' ');
+    if (words.some(w => usedWords.has(w))) continue;
+    chosen.push(clean);
+    words.forEach(w => usedWords.add(w));
+    if (chosen.length >= 6) break;
+  }
+  for (const { best } of sorted) {
+    if (best.includes(' ')) continue;
+    const clean = cleanTag(best);
+    if (!clean || clean.length < 3) continue;
+    if (usedWords.has(clean) || chosen.includes(clean)) continue;
+    chosen.push(clean);
+    usedWords.add(clean);
+    if (chosen.length >= 12) break;
+  }
+  return chosen.slice(0, 10);
+}
+
+function cleanTag(tag) {
+  return tag.replace(/[^a-z0-9\s'\-\.]/g, '').trim().replace(/\s+/g, ' ');
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  TYPE DETECTION
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function detectType(html, doc) {
+  const t = html.toLowerCase();
+  const s = { game: 0, quiz: 0, dashboard: 0, calculator: 0, dataTool: 0, lesson: 0 };
+
+  if (/\bscore\b|\bpoints?\b|\blives?\b|\bhealth\b|\bgame.?over\b|\blevel.?up\b/.test(t)) s.game += 3;
+  if (/requestanimationframe|sprite|enemy|spawn|collision|shoot|jump\(/.test(t)) s.game += 3;
+  if (doc?.querySelector('canvas') && /game|player|shoot|jump/.test(t)) s.game += 2;
+  if (/keydown|keyup|arrowleft|arrowright|arrowup|arrowdown/.test(t)) s.game += 1;
+
+  if (/\bquiz\b|\bquestion\b.*\banswer\b|\bcorrect\b|\bwrong\b|\bscore\b.*\bquiz\b/.test(t)) s.quiz += 3;
+  if (doc && doc.querySelectorAll('input[type="radio"],input[type="checkbox"]').length >= 3) s.quiz += 2;
+  if (/multiple.?choice|true.?or.?false|select.?the.?correct/.test(t)) s.quiz += 2;
+
+  if (/new chart\(|chart\.js|chartjs|d3\.|plotly|recharts|apexcharts/.test(t)) s.dashboard += 4;
+  if (doc && doc.querySelectorAll('[id*="chart"],[class*="chart"],[id*="graph"]').length) s.dashboard += 2;
+  if (/\bdashboard\b|\bmetrics?\b|\bkpi\b|\banalytics\b|\bstatistics\b/.test(t)) s.dashboard += 2;
+
+  const numInputs = doc ? doc.querySelectorAll('input[type="number"],input[type="text"]').length : 0;
+  if (numInputs >= 2) s.calculator += 1;
+  if (/math\.|parsefloat|parseint|tofixed|\.toFixed/.test(t)) s.calculator += 2;
+  if (/\bcalculate\b|\bformula\b|\bresult\b|\bcompute\b/.test(t)) s.calculator += 2;
+  if (/\bbmi\b|\bmortgage\b|\btax\b|\binterest\b|\bconvert\b|\bcurrency\b|\bunit\b/.test(t)) s.calculator += 2;
+
+  if (doc && doc.querySelectorAll('table').length) s.dataTool += 2;
+  if (/\bcsv\b|\bjson\b|\bparse\b.*\bdata\b|\bfilter\b.*\bdata\b|\bsort\b.*\bdata\b/.test(t)) s.dataTool += 2;
+  if (/\bspreadsheet\b|\bdataset\b|\bdatabase\b/.test(t)) s.dataTool += 2;
+
+  if (doc && doc.querySelectorAll('p').length > 6 && numInputs < 2 && s.quiz < 2) s.lesson += 1;
+  if (/\blesson\b|\btutorial\b|\blearn\b|\bexplain\b|\bconcept\b|\bdefinition\b|\bchapter\b/.test(t)) s.lesson += 2;
+  if (/step.?by.?step|how.?to|walkthrough|overview|introduction/.test(t)) s.lesson += 1;
+
+  const max = Math.max(...Object.values(s));
+  if (max < 1) return 'Other';
+  if (s.game      >= max && s.game      >= 2) return 'Game';
+  if (s.quiz      >= max && s.quiz      >= 2) return 'Quiz';
+  if (s.dashboard >= max && s.dashboard >= 2) return 'Dashboard';
+  if (s.dataTool  >= max && s.dataTool  >= 2) return 'Data Tool';
+  if (s.calculator >= max && s.calculator >= 1) return 'Calculator';
+  if (s.lesson    >= max) return 'Lesson';
+  return 'Other';
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  SUMMARY GENERATION
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function buildSummary(doc, html) {
+  if (!doc) return 'An interactive HTML file.';
+  const metaDesc = doc.querySelector('meta[name="description"]')?.getAttribute('content')?.trim();
+  if (metaDesc && metaDesc.length > 20) return metaDesc.slice(0, 200);
+  const h1   = doc.querySelector('h1')?.textContent?.trim();
+  const para = [...doc.querySelectorAll('p')].map(p => p.textContent.trim()).find(t => t.length > 40);
+  if (h1 && para) return `${h1}. ${para}`.slice(0, 200);
+  if (para) return para.slice(0, 200);
+  const title = doc.querySelector('title')?.textContent?.trim();
+  if (title && h1 && title !== h1) return `${title} — ${h1}`.slice(0, 200);
+  if (h1) return h1.slice(0, 200);
+  if (title) return `An interactive HTML file: ${title}`;
+  return 'An interactive HTML file.';
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  GALLERY STATE
+//  allItems holds metadata rows (no html_content).
+//  html_content is fetched on-demand via openPreview / exportData.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let allItems      = [];
+let activeFilters = new Set();
+
+async function loadAndRender() {
+  setLoadingGrid(true);
+  const { data, error } = await db
+    .from('uploads')
+    .select(META)
+    .order('date', { ascending: false });
+
+  setLoadingGrid(false);
+  if (error) {
+    notify('Could not load gallery: ' + error.message, 'err');
+    document.getElementById('cardGrid').innerHTML =
+      `<div class="empty"><div class="empty-icon">⚠️</div><h3>Connection error</h3><p>${esc(error.message)}</p></div>`;
+    return;
+  }
+  allItems = data || [];
+  renderFilters();
+  renderGallery();
+}
+
+function setLoadingGrid(on) {
+  if (on) {
+    document.getElementById('cardGrid').innerHTML =
+      '<div class="loading-state"><span class="spinner"></span> Loading gallery…</div>';
+    document.getElementById('resultsCount').textContent = '';
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  FILTERS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function renderFilters() {
+  renderTypeFilters();
+  renderTagFilters();
+}
+
+function renderTypeFilters() {
+  const row        = document.getElementById('typeFilterRow');
+  const typeCounts = new Map();
+  allItems.forEach(item => {
+    if (item.type) typeCounts.set(item.type, (typeCounts.get(item.type) || 0) + 1);
+  });
+
+  if (!typeCounts.size) { row.innerHTML = ''; return; }
+
+  // Preserve the canonical order from TYPE_META, then append any unknown types
+  const ordered = [...Object.keys(TYPE_META), ...[...typeCounts.keys()].filter(t => !TYPE_META[t])];
+  row.innerHTML = ordered
+    .filter(t => typeCounts.has(t))
+    .map(type => {
+      const n       = typeCounts.get(type);
+      const active  = activeFilters.has('type:' + type) ? 'active' : '';
+      const btnCls  = typeBtnClass(type);
+      const icon    = typeIcon(type);
+      return `<button class="type-btn ${btnCls} ${active}" onclick="toggleFilter('type:${esc(type)}')">
+        <span class="type-btn-icon">${icon}</span>
+        <span>${esc(type)}</span>
+        <span class="type-btn-count">${n}</span>
+        <span class="type-btn-tick">✓</span>
+      </button>`;
+    }).join('');
+}
+
+function renderTagFilters() {
+  const bar      = document.getElementById('filterBar');
+  const tagCounts = new Map();
+  allItems.forEach(item =>
+    (item.tags || []).forEach(t => tagCounts.set(t, (tagCounts.get(t) || 0) + 1))
+  );
+
+  if (!tagCounts.size) { bar.innerHTML = ''; return; }
+
+  bar.innerHTML = '<span class="filter-section-label">Tags</span>' +
+    [...tagCounts.entries()].sort((a,b)=>b[1]-a[1]).slice(0, 30).map(([tag, n]) => {
+      const a = activeFilters.has('tag:' + tag) ? 'active' : '';
+      return `<button class="chip ${a}" onclick="toggleFilter('tag:${esc(tag)}')">${esc(tag)}<span class="chip-count">${n}</span></button>`;
+    }).join('');
+}
+
+function toggleFilter(f) {
+  activeFilters.has(f) ? activeFilters.delete(f) : activeFilters.add(f);
+  renderFilters();
+  renderGallery();
+  syncClearBtn();
+}
+
+function clearFilters() {
+  activeFilters.clear();
+  document.getElementById('searchInput').value = '';
+  renderFilters();
+  renderGallery();
+  syncClearBtn();
+}
+
+function filterGallery() { renderGallery(); syncClearBtn(); }
+
+function syncClearBtn() {
+  const has = activeFilters.size || document.getElementById('searchInput').value.trim();
+  document.getElementById('clearBtn').style.display = has ? '' : 'none';
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  CARD GRID
+//  Data arrives from Supabase newest-first — no reversal needed.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function getFiltered() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  return allItems.filter(item => {
+    if (q) {
+      const hay = [item.name, item.uploader, ...(item.tags||[]), item.type, item.summary].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    for (const f of activeFilters) {
+      if (f.startsWith('type:') && item.type !== f.slice(5)) return false;
+      if (f.startsWith('tag:')  && !(item.tags||[]).includes(f.slice(4))) return false;
+    }
+    return true;
+  });
+}
+
+function renderGallery() {
+  const grid     = document.getElementById('cardGrid');
+  const filtered = getFiltered();
+  const total    = allItems.length;
+  const rc       = document.getElementById('resultsCount');
+
+  rc.textContent = total === 0 ? ''
+    : filtered.length === total
+      ? `${total} file${total !== 1 ? 's' : ''}`
+      : `${filtered.length} of ${total} files`;
+
+  if (filtered.length === 0) {
+    grid.innerHTML = total === 0
+      ? `<div class="empty"><div class="empty-icon">📂</div><h3>No files yet</h3><p>Upload your first HTML file to get started.</p></div>`
+      : `<div class="empty"><div class="empty-icon">🔍</div><h3>No matches</h3><p>Try adjusting your search or filters.</p></div>`;
+    return;
+  }
+  grid.innerHTML = filtered.map(cardHTML).join('');
+}
+
+const TYPE_META = {
+  Game:        { icon:'🎮', cls:'game'      },
+  Calculator:  { icon:'🧮', cls:'calculator' },
+  Dashboard:   { icon:'📊', cls:'dashboard'  },
+  Lesson:      { icon:'📚', cls:'lesson'     },
+  Quiz:        { icon:'🧠', cls:'quiz'       },
+  'Data Tool': { icon:'🗃️', cls:'data-tool'  },
+  Other:       { icon:'📄', cls:'other'      },
+};
+
+function typeClass(t)     { return 'tb-'  + (TYPE_META[t]?.cls || 'other'); }
+function typeBtnClass(t)  { return 'tfb-' + (TYPE_META[t]?.cls || 'other'); }
+function typeIcon(t)      { return TYPE_META[t]?.icon || '📄'; }
+
+function cardHTML(item) {
+  const tc   = typeClass(item.type);
+  const tags = (item.tags || []).map(t =>
+    `<span class="tag" onclick="event.stopPropagation();toggleFilter('tag:${esc(t)}')">${esc(t)}</span>`
+  ).join('');
+  const date = item.date ? fmt(item.date) : '';
+  return `
+<div class="card" onclick="openPreview('${item.id}')">
+  <div class="card-thumb">
+    <svg class="card-thumb-icon" width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+      <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+    </svg>
+    <div class="card-type-strip ${tc}">
+      <span class="ctype-icon">${typeIcon(item.type)}</span>
+      <span class="ctype-name">${esc(item.type||'Other')}</span>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="card-title">${esc(item.name)}</div>
+    <div class="card-meta">
+      <span>👤 ${esc(item.uploader||'Unknown')}</span>
+      <span>📅 ${date}</span>
+    </div>
+    <div class="card-summary">${esc(item.summary||'')}</div>
+    <div class="card-tags">${tags}</div>
+  </div>
+</div>`;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  PREVIEW MODAL
+//  Opens immediately with metadata; fetches html_content async.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let previewId = null;
+let blobURL   = null;
+
+async function openPreview(id) {
+  const meta = allItems.find(i => i.id === id);
+  if (!meta) return;
+  previewId = id;
+
+  document.getElementById('modalTitle').textContent = meta.name;
+  document.getElementById('modalSub').textContent =
+    `by ${meta.uploader || 'Unknown'} · ${meta.type || 'Other'} · ${fmt(meta.date)}`;
+  document.getElementById('modalTags').innerHTML =
+    (meta.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('');
+
+  // Show modal with loading indicator immediately
+  const frame    = document.getElementById('previewFrame');
+  const loadDiv  = document.getElementById('modalLoading');
+  frame.style.display  = 'none';
+  loadDiv.style.display = 'flex';
+  document.getElementById('backdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // Fetch the HTML content on-demand
+  const { data, error } = await db.from('uploads').select('html_content').eq('id', id).single();
+  if (error || !data) {
+    loadDiv.innerHTML = '⚠️ Could not load preview.';
+    notify('Could not load file preview.', 'err');
+    return;
+  }
+
+  if (blobURL) URL.revokeObjectURL(blobURL);
+  const blob = new Blob([data.html_content], { type: 'text/html' });
+  blobURL = URL.createObjectURL(blob);
+
+  loadDiv.style.display = 'none';
+  frame.style.display   = 'block';
+  frame.src = blobURL;
+}
+
+function closePreview() {
+  document.getElementById('backdrop').classList.remove('open');
+  document.body.style.overflow = '';
+  const frame = document.getElementById('previewFrame');
+  frame.style.display = 'none';
+  frame.src = '';
+  document.getElementById('modalLoading').style.display  = 'flex';
+  document.getElementById('modalLoading').innerHTML =
+    '<span class="spinner"></span> Loading preview…';
+  if (blobURL) { URL.revokeObjectURL(blobURL); blobURL = null; }
+  previewId = null;
+}
+
+function backdropClick(e) { if (e.target === document.getElementById('backdrop')) closePreview(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePreview(); });
+
+async function deleteItem() {
+  if (!previewId) return;
+  if (!confirm('Remove this file from the gallery?')) return;
+
+  const id = previewId;
+  const { error } = await db.from('uploads').delete().eq('id', id);
+  if (error) { notify('Delete failed: ' + error.message, 'err'); return; }
+
+  closePreview();
+  allItems = allItems.filter(i => i.id !== id);
+  renderFilters();
+  renderGallery();
+  notify('File removed from gallery.', 'ok');
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  EDIT TAGS / TYPE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let editTags = [];
+
+function startEdit() {
+  const item = allItems.find(i => i.id === previewId);
+  if (!item) return;
+
+  editTags = [...(item.tags || [])];
+  document.getElementById('editTypeSelect').value = item.type || 'Other';
+  rebuildEditTagEditor();
+
+  document.getElementById('modalView').style.display = 'none';
+  document.getElementById('modalEdit').style.display = 'flex';
+  document.getElementById('modalFt').classList.add('edit-mode');
+  document.getElementById('editTagInput').focus();
+}
+
+function cancelEdit() {
+  document.getElementById('modalEdit').style.display = 'none';
+  document.getElementById('modalView').style.display = 'flex';
+  document.getElementById('modalFt').classList.remove('edit-mode');
+}
+
+async function saveEdit() {
+  const type = document.getElementById('editTypeSelect').value;
+  const tags = [...editTags];
+
+  const { error } = await db.from('uploads').update({ type, tags }).eq('id', previewId);
+  if (error) { notify('Update failed: ' + error.message, 'err'); return; }
+
+  // Patch in-memory record
+  const item = allItems.find(i => i.id === previewId);
+  if (item) { item.type = type; item.tags = tags; }
+
+  // Refresh modal header sub-line and tags display
+  document.getElementById('modalSub').textContent =
+    `by ${item?.uploader || 'Unknown'} · ${type} · ${fmt(item?.date)}`;
+  document.getElementById('modalTags').innerHTML =
+    tags.map(t => `<span class="tag">${esc(t)}</span>`).join('');
+
+  cancelEdit();
+  renderFilters();
+  renderGallery();
+  notify('Changes saved.', 'ok');
+}
+
+function rebuildEditTagEditor() {
+  const editor = document.getElementById('editTagsEditor');
+  const input  = document.getElementById('editTagInput');
+  editor.querySelectorAll('.tag-pill').forEach(el => el.remove());
+  editTags.forEach((tag, i) => {
+    const pill = document.createElement('span');
+    pill.className = 'tag-pill';
+    pill.innerHTML = `${esc(tag)} <span class="tag-rm" onclick="removeEditTag(${i})">×</span>`;
+    editor.insertBefore(pill, input);
+  });
+}
+
+function removeEditTag(i) { editTags.splice(i, 1); rebuildEditTagEditor(); }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  UPLOAD
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let pendingTags = [];
+let pendingHTML = null;
+let pendingName = '';
+
+function initUpload() {
+  const dz = document.getElementById('dropZone');
+  const fi = document.getElementById('fileInput');
+
+  dz.addEventListener('click', () => fi.click());
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('drag');
+    const f = e.dataTransfer?.files?.[0];
+    if (f) readFile(f);
+  });
+  fi.addEventListener('change', e => { if (e.target.files?.[0]) readFile(e.target.files[0]); });
+
+  document.getElementById('tagAddInput').addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ',') return;
+    e.preventDefault();
+    const val = e.target.value.trim().toLowerCase().replace(/[^a-z0-9\s'\-\.]/g, '').trim();
+    if (val && !pendingTags.includes(val)) { pendingTags.push(val); rebuildTagEditor(); }
+    e.target.value = '';
+  });
+}
+
+function readFile(file) {
+  if (!file.name.toLowerCase().endsWith('.html')) { notify('Please upload a .html file.', 'err'); return; }
+  if (file.size > 2 * 1024 * 1024) { notify(`File too large (${(file.size/1048576).toFixed(1)} MB — max 2 MB).`, 'err'); return; }
+  const r = new FileReader();
+  r.onload = e => {
+    pendingHTML = e.target.result;
+    pendingName = file.name;
+    try {
+      const a = analyzeHTML(pendingHTML);
+      pendingTags = [...a.tags];
+      document.getElementById('typeSelect').value = a.type;
+      document.getElementById('summaryBox').textContent = a.summary;
+      rebuildTagEditor();
+      document.getElementById('analysisPanel').classList.add('show');
+      document.getElementById('confirmBtn').disabled = false;
+      const dz = document.getElementById('dropZone');
+      dz.innerHTML = `<div class="dz-icon">✅</div><div class="dz-text"><strong>${esc(file.name)}</strong><span class="dz-sub">Click to change file</span></div>`;
+      dz.onclick = () => document.getElementById('fileInput').click();
+    } catch (err) {
+      console.error(err);
+      notify('Could not analyse file — saved with no tags.', 'err');
+    }
+  };
+  r.readAsText(file);
+}
+
+function rebuildTagEditor() {
+  const editor   = document.getElementById('tagsEditor');
+  const addInput = document.getElementById('tagAddInput');
+  editor.querySelectorAll('.tag-pill').forEach(el => el.remove());
+  pendingTags.forEach((tag, i) => {
+    const pill = document.createElement('span');
+    pill.className = 'tag-pill';
+    pill.innerHTML = `${esc(tag)} <span class="tag-rm" onclick="removeTag(${i})">×</span>`;
+    editor.insertBefore(pill, addInput);
+  });
+}
+
+function removeTag(i) { pendingTags.splice(i, 1); rebuildTagEditor(); }
+
+async function confirmUpload() {
+  const uploader = document.getElementById('uploaderName').value.trim();
+  if (!uploader) { notify('Please enter your name.', 'err'); document.getElementById('uploaderName').focus(); return; }
+  if (!pendingHTML) { notify('Please select a file.', 'err'); return; }
+
+  const btn = document.getElementById('confirmBtn');
+  btn.disabled    = true;
+  btn.textContent = 'Saving…';
+
+  const { error } = await db.from('uploads').insert({
+    name:         pendingName,
+    uploader,
+    tags:         [...pendingTags],
+    type:         document.getElementById('typeSelect').value,
+    summary:      document.getElementById('summaryBox').textContent,
+    html_content: pendingHTML,
+  });
+
+  btn.disabled    = false;
+  btn.textContent = 'Save to Gallery';
+
+  if (error) { notify('Save failed: ' + error.message, 'err'); return; }
+
+  notify(`"${pendingName}" added to gallery!`, 'ok');
+  resetUpload();
+  switchTab('gallery');
+  // Reload to pick up the server-assigned UUID and timestamp
+  await loadAndRender();
+}
+
+function resetUpload() {
+  pendingHTML = null; pendingName = ''; pendingTags = [];
+  document.getElementById('analysisPanel').classList.remove('show');
+  document.getElementById('confirmBtn').disabled = true;
+  document.getElementById('fileInput').value     = '';
+
+  const dz = document.getElementById('dropZone');
+  dz.innerHTML = `
+    <div class="dz-icon">📁</div>
+    <div class="dz-text"><strong>Choose a file</strong> or drag it here<span class="dz-sub">.html files only · max 2 MB</span></div>
+    <input type="file" id="fileInput" accept=".html" style="display:none">`;
+  const fi = document.getElementById('fileInput');
+  dz.onclick = () => fi.click();
+  fi.addEventListener('change', e => { if (e.target.files?.[0]) readFile(e.target.files[0]); });
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  DASHBOARD — uses in-memory allItems (metadata only)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let chartInstances = {};
+
+function renderDashboard() {
+  const items     = allItems;
+  const uploaders = new Set(items.map(i => i.uploader));
+  const tags      = new Set(items.flatMap(i => i.tags || []));
+
+  document.getElementById('statGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-val">${items.length}</div><div class="stat-lbl">Total Uploads</div></div>
+    <div class="stat-card"><div class="stat-val">${uploaders.size}</div><div class="stat-lbl">Contributors</div></div>
+    <div class="stat-card"><div class="stat-val">${tags.size}</div><div class="stat-lbl">Unique Tags</div></div>
+    <div class="stat-card"><div class="stat-val">${items.filter(i=>i.type==='Game'||i.type==='Quiz').length}</div><div class="stat-lbl">Games &amp; Quizzes</div></div>`;
+
+  drawCharts(items);
+  drawUploadersTable(items);
+}
+
+function destroyChart(key) { if (chartInstances[key]) { chartInstances[key].destroy(); delete chartInstances[key]; } }
+
+function drawCharts(items) {
+  const tagMap = new Map();
+  items.forEach(it => (it.tags||[]).forEach(t => tagMap.set(t, (tagMap.get(t)||0)+1)));
+  const topTags = [...tagMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+  destroyChart('tags');
+  chartInstances.tags = new Chart(document.getElementById('tagsChart'), {
+    type: 'bar',
+    data: {
+      labels:   topTags.map(([t])=>t),
+      datasets: [{ data: topTags.map(([,n])=>n), backgroundColor:'rgba(59,130,246,.8)', borderRadius:4 }],
+    },
+    options: {
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ ticks:{font:{size:10}}, grid:{color:'rgba(0,0,0,.05)'} },
+        y:{ ticks:{font:{size:10}} },
+      },
+    },
+  });
+
+  const typeMap = new Map();
+  items.forEach(it => { const k=it.type||'Other'; typeMap.set(k,(typeMap.get(k)||0)+1); });
+  const TCOLORS = { Game:'#dc2626',Calculator:'#059669',Dashboard:'#2563eb',Lesson:'#d97706',Quiz:'#7c3aed','Data Tool':'#0284c7',Other:'#9ca3af' };
+
+  destroyChart('types');
+  chartInstances.types = new Chart(document.getElementById('typesChart'), {
+    type:'doughnut',
+    data:{
+      labels:   [...typeMap.keys()],
+      datasets: [{ data:[...typeMap.values()], backgroundColor:[...typeMap.keys()].map(k=>TCOLORS[k]||'#9ca3af'), borderWidth:2, borderColor:'#fff' }],
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'right', labels:{ font:{size:11}, boxWidth:12, padding:8 } } },
+    },
+  });
+
+  const monthMap = new Map();
+  items.forEach(it => {
+    const d   = new Date(it.date);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    monthMap.set(key, (monthMap.get(key)||0)+1);
+  });
+  const months = [...monthMap.entries()].sort(([a],[b])=>a.localeCompare(b));
+
+  destroyChart('timeline');
+  chartInstances.timeline = new Chart(document.getElementById('timelineChart'), {
+    type:'line',
+    data:{
+      labels:   months.map(([k])=>{ const [y,mo]=k.split('-'); return new Date(+y,+mo-1).toLocaleDateString('en',{month:'short',year:'2-digit'}); }),
+      datasets: [{ data:months.map(([,n])=>n), borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,.1)', fill:true, tension:.35, pointRadius:3 }],
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{ y:{ beginAtZero:true, ticks:{font:{size:10},stepSize:1} }, x:{ ticks:{font:{size:10}} } },
+    },
+  });
+}
+
+function drawUploadersTable(items) {
+  const map = new Map();
+  items.forEach(it => {
+    const u = it.uploader || 'Unknown';
+    const e = map.get(u) || { n:0, last:'' };
+    e.n++;
+    if (it.date > e.last) e.last = it.date;
+    map.set(u, e);
+  });
+  const tbody = document.querySelector('#upTable tbody');
+  tbody.innerHTML = [...map.entries()].sort((a,b)=>b[1].n-a[1].n).slice(0,10).map(([name,{n,last}])=>
+    `<tr><td>${esc(name)}</td><td>${n}</td><td>${fmt(last)}</td></tr>`
+  ).join('') || `<tr><td colspan="3" style="text-align:center;color:var(--gray-300)">No uploads yet</td></tr>`;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  TABS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function switchTab(tab) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + tab).classList.add('active');
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+  if (tab === 'dashboard') renderDashboard();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  EXPORT — fetches full rows (with html_content) from Supabase
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function exportData() {
+  notify('Fetching data for export…');
+  const { data, error } = await db
+    .from('uploads')
+    .select('*')
+    .order('date', { ascending: true });
+
+  if (error) { notify('Export failed: ' + error.message, 'err'); return; }
+  if (!data || !data.length) { notify('Nothing to export yet.', 'err'); return; }
+
+  const blob = new Blob(
+    [JSON.stringify({ version:3, exported:new Date().toISOString(), items:data }, null, 2)],
+    { type:'application/json' }
+  );
+  const a = Object.assign(document.createElement('a'), {
+    href:     URL.createObjectURL(blob),
+    download: `html-gallery-${today()}.json`,
+  });
+  a.click();
+  URL.revokeObjectURL(a.href);
+  notify(`Exported ${data.length} file${data.length!==1?'s':''}.`, 'ok');
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  IMPORT — upserts into Supabase
+//  Handles both new (uuid id, html_content) and legacy
+//  (non-uuid id, content) backup formats.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function importData(e) {
+  const file = e.target.files?.[0]; if (!file) return;
+  const r    = new FileReader();
+  r.onload   = async ev => {
+    try {
+      const parsed   = JSON.parse(ev.target.result);
+      const incoming = Array.isArray(parsed) ? parsed : (parsed.items || []);
+      if (!incoming.length) { notify('No items found in backup.', 'err'); return; }
+
+      // Normalise rows: map legacy 'content' field → 'html_content'
+      const withUUID    = [];
+      const withoutUUID = [];
+
+      for (const row of incoming) {
+        const { id, date, content, html_content, ...rest } = row;
+        const normalised = {
+          ...rest,
+          html_content: html_content || content || '',
+          ...(date ? { date } : {}),
+        };
+        if (id && UUID_RE.test(id)) {
+          withUUID.push({ id, ...normalised });
+        } else {
+          withoutUUID.push(normalised);
+        }
+      }
+
+      notify(`Importing ${incoming.length} file${incoming.length!==1?'s':''}…`);
+
+      const ops = [];
+      if (withUUID.length)
+        ops.push(db.from('uploads').upsert(withUUID, { onConflict:'id', ignoreDuplicates:true }).select(META));
+      if (withoutUUID.length)
+        ops.push(db.from('uploads').insert(withoutUUID).select(META));
+
+      const results = await Promise.all(ops);
+      const errors  = results.filter(r => r.error);
+      if (errors.length) { notify('Import error: ' + errors[0].error.message, 'err'); return; }
+
+      const inserted = results.flatMap(r => r.data || []);
+      await loadAndRender();
+      notify(`Imported ${inserted.length} file${inserted.length!==1?'s':''}.`, 'ok');
+    } catch (err) {
+      notify('Could not parse backup file.', 'err');
+      console.error(err);
+    }
+  };
+  r.readAsText(file);
+  e.target.value = '';
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  REAL-TIME SUBSCRIPTION
+//  Keeps every open browser tab in sync without a page refresh.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function startRealtime() {
+  db.channel('uploads-live')
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'uploads' },
+      payload => {
+        // Skip if this row already landed via our own loadAndRender() after save
+        if (allItems.find(i => i.id === payload.new.id)) return;
+        // Strip html_content — we don't cache it in allItems
+        const { html_content: _hc, ...meta } = payload.new;
+        allItems.unshift(meta);
+        renderFilters();
+        renderGallery();
+        notify(`New upload: "${meta.name}" by ${meta.uploader}`);
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: 'DELETE', schema: 'public', table: 'uploads' },
+      payload => {
+        allItems = allItems.filter(i => i.id !== payload.old.id);
+        renderFilters();
+        renderGallery();
+      }
+    )
+    .subscribe(status => {
+      // Show the live dot once subscribed
+      if (status === 'SUBSCRIBED')
+        document.getElementById('rtDot').style.display = 'inline-block';
+    });
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  UTILITIES
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmt(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+function today() { return new Date().toISOString().slice(0,10); }
+
+let _notifTimer;
+function notify(msg, type='') {
+  const el     = document.getElementById('notif');
+  el.textContent = msg;
+  el.className   = 'notif show' + (type ? ' '+type : '');
+  clearTimeout(_notifTimer);
+  _notifTimer = setTimeout(() => el.classList.remove('show'), 3600);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  INIT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+document.addEventListener('DOMContentLoaded', () => {
+  loadAndRender();
+  initUpload();
+  startRealtime();
+
+  // Enter / comma adds a tag in the edit modal
+  document.getElementById('editTagInput').addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ',') return;
+    e.preventDefault();
+    const val = e.target.value.trim().toLowerCase().replace(/[^a-z0-9\s'\-\.]/g, '').trim();
+    if (val && !editTags.includes(val)) { editTags.push(val); rebuildEditTagEditor(); }
+    e.target.value = '';
+  });
+
+  // localStorage is fine for this UI-only preference (not shared data)
+  const savedName = localStorage.getItem('gallery_uploader');
+  if (savedName) document.getElementById('uploaderName').value = savedName;
+  document.getElementById('uploaderName').addEventListener('blur', e => {
+    localStorage.setItem('gallery_uploader', e.target.value);
+  });
+});
+</script>
+</body>
+</html>

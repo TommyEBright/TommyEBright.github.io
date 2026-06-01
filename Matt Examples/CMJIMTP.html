@@ -1,0 +1,3123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Force-Time Explorer — Sport &amp; Exercise Science</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --indigo:        #1F1A4A;
+    --indigo-soft:   #4a4570;
+    --magenta:       #E6007E;
+    --magenta-deep:  #b80064;
+    --magenta-tint:  rgba(230,0,126,0.10);
+    --lime:          #B6D43A;
+    --lime-deep:     #93ad2c;
+    --purple:        #6C2D8E;
+    --purple-deep:   #54226e;
+    --bg:            #f4f4f8;
+    --card:          #ffffff;
+    --rule:          #d6d6e0;
+    --rule-soft:     #e6e6ee;
+    --error:         #c63838;
+    --shadow:        0 2px 0 rgba(31,26,74,0.04), 0 14px 28px -18px rgba(31,26,74,0.25);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--indigo);
+    font-family: 'Atkinson Hyperlegible', 'Lexend', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 28px 24px 60px; }
+
+  header.mast {
+    background: linear-gradient(135deg, rgba(31,26,74,0.95), rgba(31,26,74,0.85));
+    color: #fff;
+    border-radius: 8px;
+    border-bottom: 8px solid var(--magenta);
+    padding: 32px 28px;
+    margin-bottom: 22px;
+    text-align: center;
+  }
+  .mast .eyebrow {
+    font-family: 'Lexend', sans-serif;
+    font-weight: 500;
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--lime);
+    margin-bottom: 6px;
+  }
+  .mast h1 {
+    font-family: 'Lexend', sans-serif;
+    font-weight: 700;
+    font-size: clamp(28px, 4.4vw, 42px);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin: 0;
+    color: #fff;
+  }
+  .mast .sub {
+    margin: 10px auto 0;
+    color: var(--lime);
+    font-weight: 700;
+    max-width: 720px;
+    font-size: 16px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .tab {
+    background: var(--card);
+    border: 2px solid var(--indigo);
+    padding: 12px 22px;
+    font-family: 'Lexend', sans-serif;
+    font-weight: 600;
+    font-size: 14.5px;
+    cursor: pointer;
+    color: var(--indigo);
+    border-radius: 999px;
+    transition: all 0.15s;
+  }
+  .tab .n {
+    display: inline-block;
+    background: var(--indigo);
+    color: var(--lime);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    margin-right: 8px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+  .tab:hover { background: var(--indigo); color: var(--lime); }
+  .tab:hover .n { background: var(--magenta); color: #fff; }
+  .tab.active {
+    background: var(--magenta);
+    border-color: var(--magenta-deep);
+    color: #fff;
+  }
+  .tab.active .n { background: var(--indigo); color: #fff; }
+
+  .panel {
+    background: var(--card);
+    border: 2px solid var(--indigo);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 26px;
+    margin-top: 16px;
+  }
+
+  .stage {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+  }
+  @media (max-width: 920px) { .stage { grid-template-columns: 1fr; } }
+
+  .plot-card { position: relative; }
+  .plot-frame {
+    background: #fff;
+    border: 2px solid var(--indigo);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+  }
+  .plot-frame .corner {
+    position: absolute;
+    top: 0; right: 0;
+    background: var(--indigo);
+    color: #fff;
+    padding: 5px 12px;
+    font-family: 'Lexend', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border-bottom-left-radius: 8px;
+    z-index: 2;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    cursor: crosshair;
+    touch-action: none;
+  }
+  .plot-axes-note {
+    display: flex; justify-content: space-between;
+    margin-top: 10px;
+    font-family: 'Lexend', sans-serif;
+    font-size: 12px;
+    color: var(--indigo-soft);
+  }
+
+  .side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .card {
+    background: var(--card);
+    border: 2px solid var(--indigo);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .card.accent-magenta { border-top: 6px solid var(--magenta); }
+  .card.accent-lime    { border-top: 6px solid var(--lime); }
+  .card.accent-purple  { border-top: 6px solid var(--purple); }
+
+  .card h3 {
+    font-family: 'Lexend', sans-serif;
+    font-weight: 700;
+    font-size: 19px;
+    margin: 0 0 4px;
+    color: var(--indigo);
+    letter-spacing: -0.01em;
+  }
+  .card .sublabel {
+    font-family: 'Lexend', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--indigo-soft);
+    margin-bottom: 10px;
+  }
+  .card p {
+    margin: 0;
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--indigo);
+  }
+
+  .badge-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px;
+    background: var(--magenta); color: #fff;
+    font-family: 'Lexend', sans-serif; font-weight: 700; font-size: 16px;
+    border: 2px solid var(--magenta-deep);
+    border-radius: 8px; flex-shrink: 0;
+  }
+  .badge-row .phase-name {
+    font-family: 'Lexend', sans-serif;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--indigo-soft);
+  }
+
+  .readout { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .chip {
+    border: 1.5px solid var(--rule); background: var(--bg);
+    padding: 10px 12px; border-radius: 6px;
+  }
+  .chip .lbl {
+    font-family: 'Lexend', sans-serif;
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--indigo-soft); margin-bottom: 3px;
+  }
+  .chip .val {
+    font-family: 'Lexend', sans-serif; font-weight: 700; font-size: 22px;
+    color: var(--indigo); line-height: 1;
+  }
+  .chip .unit {
+    font-family: 'Lexend', sans-serif; font-size: 11px; font-weight: 500;
+    color: var(--indigo-soft); margin-left: 3px;
+  }
+
+  .walk-nav { display: flex; gap: 8px; justify-content: space-between; align-items: center; }
+  .walk-nav button {
+    flex: 1; padding: 11px;
+    font-family: 'Lexend', sans-serif;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    background: var(--card); border: 2px solid var(--indigo);
+    color: var(--indigo); border-radius: 6px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .walk-nav button:hover:not(:disabled) { background: var(--indigo); color: var(--lime); }
+  .walk-nav button:disabled { opacity: 0.35; cursor: not-allowed; }
+  .walk-nav .step-of {
+    font-family: 'Lexend', sans-serif; font-size: 13px; font-weight: 600;
+    color: var(--indigo); padding: 0 12px; text-align: center;
+  }
+
+  .landmark-pills { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+  .pill {
+    width: 34px; height: 34px;
+    border: 2px solid var(--indigo); background: var(--card); color: var(--indigo);
+    font-family: 'Lexend', sans-serif; font-weight: 700; font-size: 14px;
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 8px; transition: all 0.15s;
+  }
+  .pill:hover { background: var(--indigo); color: var(--lime); }
+  .pill.active { background: var(--magenta); color: #fff; border-color: var(--magenta-deep); }
+
+  .slider-block { margin-bottom: 16px; }
+  .slider-block label {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: 'Lexend', sans-serif;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--indigo-soft); margin-bottom: 6px;
+  }
+  .slider-block label .v {
+    font-family: 'Lexend', sans-serif; font-size: 14px;
+    color: var(--indigo); letter-spacing: 0; text-transform: none; font-weight: 700;
+  }
+  .slider-block input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none; appearance: none;
+    height: 3px; background: var(--indigo); outline: none; border-radius: 999px;
+  }
+  .slider-block input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px;
+    background: var(--magenta); border: 2px solid var(--magenta-deep);
+    border-radius: 50%; cursor: pointer;
+  }
+  .slider-block input[type="range"]::-moz-range-thumb {
+    width: 18px; height: 18px;
+    background: var(--magenta); border: 2px solid var(--magenta-deep);
+    border-radius: 50%; cursor: pointer;
+  }
+  .reset-btn {
+    width: 100%; margin-top: 6px;
+    background: var(--card); border: 2px dashed var(--indigo); color: var(--indigo);
+    padding: 10px;
+    font-family: 'Lexend', sans-serif;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    border-radius: 6px; cursor: pointer; transition: all 0.15s;
+  }
+  .reset-btn:hover { background: var(--indigo); color: var(--lime); border-style: solid; }
+
+  .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .phase-legend {
+    display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px;
+    font-family: 'Lexend', sans-serif; font-size: 12px; font-weight: 500;
+  }
+  .phase-legend span { display: inline-flex; align-items: center; gap: 6px; color: var(--indigo-soft); }
+  .phase-legend .sw {
+    width: 16px; height: 16px;
+    background: var(--magenta-tint); border: 1.5px solid var(--magenta); border-radius: 3px;
+  }
+
+  /* Upload tab specific */
+  h2.section {
+    font-family: 'Lexend', sans-serif; font-weight: 700; font-size: 22px;
+    margin: 0 0 6px; color: var(--indigo);
+    border-bottom: 3px solid var(--lime); padding-bottom: 8px;
+  }
+  .section-intro { margin: 0 0 22px; font-size: 15px; color: var(--indigo-soft); }
+
+  .btn {
+    font-family: 'Lexend', sans-serif; font-size: 13px; font-weight: 600;
+    padding: 10px 16px; border-radius: 6px;
+    border: 2px solid var(--indigo); cursor: pointer;
+    background: var(--card); color: var(--indigo);
+    text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+    transition: all 0.15s;
+  }
+  .btn:hover { background: var(--indigo); color: var(--lime); }
+  .btn-primary {
+    background: var(--magenta); color: #fff; border-color: var(--magenta-deep);
+  }
+  .btn-primary:hover { background: var(--magenta-deep); color: #fff; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+  .upload-zone {
+    background: var(--bg);
+    border: 2px dashed var(--indigo);
+    border-radius: 8px;
+    padding: 22px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .upload-zone:hover, .upload-zone.dragover {
+    background: var(--magenta-tint);
+    border-color: var(--magenta);
+  }
+  .upload-zone input[type="file"] { display: none; }
+  .upload-zone .file-name {
+    font-family: 'Lexend', sans-serif;
+    font-weight: 700;
+    color: var(--magenta-deep);
+    word-break: break-all;
+  }
+  .upload-zone .small { font-size: 12px; color: var(--indigo-soft); }
+
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label {
+    font-family: 'Lexend', sans-serif;
+    font-weight: 600; font-size: 11px;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--indigo-soft);
+  }
+  .field label .opt { color: var(--lime-deep); font-weight: 500; margin-left: 4px; }
+  .field input, .field select {
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-size: 14px;
+    padding: 9px 11px;
+    border: 1.5px solid var(--rule);
+    border-radius: 6px;
+    background: var(--card);
+    color: var(--indigo);
+    outline: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--magenta); }
+
+  fieldset {
+    border: 2px solid var(--rule);
+    border-radius: 8px;
+    padding: 18px;
+    margin: 0 0 18px;
+  }
+  fieldset legend {
+    font-family: 'Lexend', sans-serif;
+    font-weight: 700; font-size: 13px; color: var(--indigo);
+    padding: 0 8px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  fieldset.accent-magenta { border-color: var(--magenta); }
+  fieldset.accent-lime    { border-color: var(--lime-deep); }
+  fieldset.accent-purple  { border-color: var(--purple); }
+
+  .alert {
+    background: #fdf0f0;
+    border: 2px solid var(--error);
+    color: var(--error);
+    padding: 12px 14px;
+    border-radius: 6px;
+    margin: 12px 0;
+    font-size: 14px;
+  }
+  .info {
+    background: #f0f4fd;
+    border: 2px solid var(--indigo);
+    color: var(--indigo);
+    padding: 12px 14px;
+    border-radius: 6px;
+    margin: 12px 0;
+    font-size: 14px;
+  }
+  .hidden { display: none !important; }
+
+  /* Results table */
+  table.results {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin-bottom: 18px;
+  }
+  table.results thead {
+    background: var(--indigo);
+    color: #fff;
+  }
+  table.results th {
+    padding: 10px;
+    text-align: left;
+    font-family: 'Lexend', sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  table.results th:first-child { border-top-left-radius: 6px; }
+  table.results th:last-child { border-top-right-radius: 6px; text-align: right; }
+  table.results td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  table.results td:last-child {
+    text-align: right;
+    font-family: 'Lexend', sans-serif;
+    font-weight: 700;
+    color: var(--indigo);
+    font-variant-numeric: tabular-nums;
+  }
+  table.results tr.group-header td {
+    background: var(--bg);
+    font-family: 'Lexend', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--indigo);
+    letter-spacing: 0.04em;
+    border-top: 2px solid var(--indigo);
+    padding: 10px;
+  }
+  table.results tr:hover td { background: rgba(230, 0, 126, 0.03); }
+  table.results tr.group-header:hover td { background: var(--bg); }
+  table.results .var-name { color: var(--indigo); }
+  table.results .var-meta {
+    display: block;
+    font-size: 11px;
+    color: var(--indigo-soft);
+    font-style: italic;
+    margin-top: 2px;
+  }
+
+  /* Reference accordion */
+  details.ref-row {
+    background: var(--card);
+    border: 1.5px solid var(--rule);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin: 6px 0;
+  }
+  details.ref-row summary {
+    cursor: pointer;
+    font-family: 'Lexend', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--indigo);
+  }
+  details.ref-row[open] {
+    border-color: var(--magenta);
+    background: #fff;
+  }
+  details.ref-row > div {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--rule);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  details.ref-row code {
+    background: var(--bg);
+    padding: 1px 6px;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    font-size: 13px;
+    font-family: ui-monospace, Menlo, monospace;
+  }
+  .ref-group {
+    margin-bottom: 24px;
+  }
+  .ref-group h3 {
+    font-family: 'Lexend', sans-serif;
+    color: var(--magenta-deep);
+    font-size: 17px;
+    margin: 0 0 6px;
+    border-bottom: 2px solid var(--lime);
+    padding-bottom: 4px;
+  }
+  .ref-group .group-intro {
+    color: var(--indigo-soft);
+    font-size: 13.5px;
+    margin: 0 0 12px;
+  }
+
+  footer {
+    margin-top: 40px;
+    padding: 20px;
+    background: var(--indigo);
+    color: #fff;
+    border-radius: 6px;
+    border-bottom: 8px solid var(--magenta);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-family: 'Lexend', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  footer .marque { font-weight: 700; color: var(--lime); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="mast">
+    <div class="eyebrow">Sport &amp; Exercise Science · Teaching Tool</div>
+    <h1>Force-Time Explorer</h1>
+    <p class="sub">Understand and analyse countermovement jump and isometric mid-thigh pull force-time curves</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="explore"><span class="n">01</span>Explore</button>
+    <button class="tab" data-tab="upload"><span class="n">04</span>CMJ Upload</button>
+    <button class="tab" data-tab="imtp"><span class="n">05</span>IMTP Upload</button>
+  </div>
+
+  <div class="panel">
+
+    <!-- TAB 1: EXPLORE -->
+    <div class="tab-content active" id="tab-explore">
+      <div class="stage">
+        <div class="plot-card">
+          <div class="plot-frame">
+            <div class="corner" id="ex-corner">Plot 01 · CMJ — Hover to explore</div>
+            <canvas id="canvas-explore" width="1600" height="900"></canvas>
+          </div>
+          <div class="phase-legend" id="ex-legend">
+            <span><span class="sw"></span>Eccentric (unloading + braking)</span>
+            <span><span class="sw"></span>Concentric (propulsion)</span>
+            <span><span class="sw"></span>Flight</span>
+            <span><span class="sw"></span>Landing</span>
+          </div>
+          <div class="plot-axes-note">
+            <span>← time (s)</span>
+            <span>vertical ground reaction force (N) ↑</span>
+          </div>
+        </div>
+        <div class="side">
+          <div class="card accent-purple">
+            <div class="sublabel">Test type</div>
+            <select id="ex-mode" style="width:100%; padding:10px 11px; border:1.5px solid var(--rule); border-radius:6px; font-family:'Atkinson Hyperlegible',sans-serif; font-size:14px; color:var(--indigo); background:var(--card); margin-top:4px;">
+              <option value="cmj" selected>Countermovement Jump (CMJ)</option>
+              <option value="imtp">Isometric Mid-Thigh Pull (IMTP)</option>
+            </select>
+            <p style="margin:10px 0 0; font-size:13px; color:var(--indigo-soft);" id="ex-mode-desc">
+              A dynamic test of lower-body explosive strength. The athlete drops down then jumps as high as possible.
+            </p>
+          </div>
+          <div class="card accent-magenta">
+            <div class="badge-row">
+              <div class="badge" id="ex-badge">·</div>
+              <div><div class="phase-name" id="ex-phase">Move the cursor</div></div>
+            </div>
+            <h3 id="ex-name">CMJ force-time trace</h3>
+            <div class="sublabel" id="ex-sub">5 landmarks · 4 phases</div>
+            <p id="ex-desc">Hover anywhere on the trace to identify the phase you're in. Click any of the pills below to jump to a landmark and read its definition.</p>
+          </div>
+          <div class="card accent-lime">
+            <div class="sublabel">Live readout</div>
+            <div class="readout">
+              <div class="chip"><div class="lbl">Time</div><div class="val"><span id="ex-t">—</span><span class="unit">s</span></div></div>
+              <div class="chip"><div class="lbl">Force</div><div class="val"><span id="ex-f">—</span><span class="unit">N</span></div></div>
+              <div class="chip"><div class="lbl">% body wt</div><div class="val"><span id="ex-bw">—</span><span class="unit">%</span></div></div>
+              <div class="chip"><div class="lbl">Phase</div><div class="val" style="font-size:14px" id="ex-ph">—</div></div>
+            </div>
+            <div class="landmark-pills" id="ex-pills"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: UPLOAD & ANALYSE -->
+    <div class="tab-content" id="tab-upload">
+      <h2 class="section">Upload &amp; analyse your CMJ trial</h2>
+      <p class="section-intro">Drop a force-plate CSV (sampled at 1000 Hz; vertical GRF in Newtons) and the app will detect phases, compute the full set of force, velocity, displacement, power and RFD variables, and plot the trace with landmarks. The first ~1 s of the file is used as quiet standing to compute body weight.</p>
+
+      <div class="stage" style="grid-template-columns: 340px 1fr;">
+        <div>
+          <fieldset class="accent-magenta">
+            <legend>Trial setup</legend>
+
+            <div class="field" style="margin-bottom: 14px;">
+              <label for="up-rate">Sampling rate</label>
+              <select id="up-rate">
+                <option value="1000" selected>1000 Hz (default)</option>
+                <option value="500">500 Hz</option>
+                <option value="2000">2000 Hz</option>
+                <option value="custom">Custom…</option>
+              </select>
+            </div>
+            <div class="field hidden" id="up-rate-custom-wrap" style="margin-bottom: 14px;">
+              <label for="up-rate-custom">Custom rate (Hz)</label>
+              <input type="number" id="up-rate-custom" min="50" step="50" value="1000">
+            </div>
+
+            <div class="field" style="margin-bottom: 14px;">
+              <label>Quiet-standing window <span class="opt">first N seconds for BW</span></label>
+              <input type="number" id="up-bw-window" min="0.5" max="3" step="0.1" value="1.0">
+            </div>
+
+            <label style="font-family: 'Lexend', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--indigo-soft); display: block; margin-bottom: 5px;">CSV file *</label>
+            <div class="upload-zone" id="up-upload-zone">
+              <input type="file" id="up-csv-file" accept=".csv,.txt,.tsv">
+              <p><strong>Click or drop a CSV here</strong></p>
+              <p class="small">Single column of force (N), or time + force columns. Header row optional.</p>
+              <p id="up-file-display" class="file-name hidden"></p>
+            </div>
+            <div id="up-error" class="alert hidden"></div>
+
+            <div style="display: flex; gap: 8px; margin-top: 14px;">
+              <button class="btn btn-primary" id="up-analyse" style="flex:1">Analyse trial</button>
+              <button class="btn" id="up-load-demo">Demo</button>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Detection notes</legend>
+            <p style="margin:0;font-size:13px;color:var(--indigo-soft);">
+              Onset of movement: force leaves a window of <strong>BW ± 5 × SD(BW)</strong>, then the algorithm steps back 30 samples to capture true onset. Take-off and touchdown use a noise-derived threshold (5 × SD of the flight-phase tail). Frame numbers and times are reported in the methods row of the output.
+            </p>
+          </fieldset>
+        </div>
+
+        <div id="up-results-pane" class="hidden">
+          <h2 class="section" style="margin-top:0;">Results</h2>
+          <p class="section-intro" id="up-meta">—</p>
+
+          <div class="plot-frame" style="margin-bottom: 18px;">
+            <div class="corner">Force-time with landmarks</div>
+            <canvas id="up-chart" width="1600" height="700"></canvas>
+          </div>
+
+          <div class="metric-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 18px;">
+            <div class="chip"><div class="lbl">Body weight</div><div class="val"><span id="up-bw">—</span> <span class="unit">N</span></div></div>
+            <div class="chip"><div class="lbl">Body mass</div><div class="val"><span id="up-mass">—</span> <span class="unit">kg</span></div></div>
+            <div class="chip"><div class="lbl">Jump ht (FT)</div><div class="val"><span id="up-jhft">—</span> <span class="unit">cm</span></div></div>
+            <div class="chip"><div class="lbl">Jump ht (TOV)</div><div class="val"><span id="up-jhtov">—</span> <span class="unit">cm</span></div></div>
+            <div class="chip"><div class="lbl">Peak power</div><div class="val"><span id="up-pp">—</span> <span class="unit">W</span></div></div>
+            <div class="chip"><div class="lbl">RSI-mod</div><div class="val"><span id="up-rsi">—</span></div></div>
+          </div>
+
+          <table class="results" id="up-table"></table>
+
+          <button class="btn" id="up-download">Download variables (.csv)</button>
+          <button class="btn" id="up-download-ts" style="margin-top:8px;">Download time-series (.csv)</button>
+        </div>
+      </div>
+
+      <!-- Reference section below upload results -->
+      <div style="margin-top: 40px;">
+        <h2 class="section">Phases &amp; variables — reference</h2>
+        <p class="section-intro">A glossary of every phase and variable above, with the formula or detection rule used. Click any item to expand.</p>
+        <div id="reference-content"></div>
+      </div>
+    </div>
+
+    <!-- TAB 3: IMTP UPLOAD -->
+    <div class="tab-content" id="tab-imtp">
+      <h2 class="section">Upload &amp; analyse an IMTP trial</h2>
+      <p class="section-intro">Drop a force-plate CSV from an isometric mid-thigh pull (sampled at 1000 Hz; vertical GRF in Newtons). The first ~1 s of the file is treated as quiet standing on the plate to compute system weight. The app reports peak force, time-windowed RFD, force at fixed time intervals, and net impulse.</p>
+
+      <div class="stage" style="grid-template-columns: 340px 1fr;">
+        <div>
+          <fieldset class="accent-magenta">
+            <legend>Trial setup</legend>
+
+            <div class="field" style="margin-bottom: 14px;">
+              <label for="im-rate">Sampling rate</label>
+              <select id="im-rate">
+                <option value="1000" selected>1000 Hz (default)</option>
+                <option value="500">500 Hz</option>
+                <option value="2000">2000 Hz</option>
+                <option value="custom">Custom…</option>
+              </select>
+            </div>
+            <div class="field hidden" id="im-rate-custom-wrap" style="margin-bottom: 14px;">
+              <label for="im-rate-custom">Custom rate (Hz)</label>
+              <input type="number" id="im-rate-custom" min="50" step="50" value="1000">
+            </div>
+
+            <div class="field" style="margin-bottom: 14px;">
+              <label>Quiet-standing window <span class="opt">first N seconds for system weight</span></label>
+              <input type="number" id="im-bw-window" min="0.5" max="3" step="0.1" value="1.0">
+            </div>
+
+            <label style="font-family: 'Lexend', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--indigo-soft); display: block; margin-bottom: 5px;">CSV file *</label>
+            <div class="upload-zone" id="im-upload-zone">
+              <input type="file" id="im-csv-file" accept=".csv,.txt,.tsv">
+              <p><strong>Click or drop a CSV here</strong></p>
+              <p class="small">Single column of force (N), or time + force columns. Header row optional.</p>
+              <p id="im-file-display" class="file-name hidden"></p>
+            </div>
+            <div id="im-error" class="alert hidden"></div>
+
+            <div style="display: flex; gap: 8px; margin-top: 14px;">
+              <button class="btn btn-primary" id="im-analyse" style="flex:1">Analyse trial</button>
+              <button class="btn" id="im-load-demo">Demo</button>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Detection notes</legend>
+            <p style="margin:0;font-size:13px;color:var(--indigo-soft);">
+              The athlete stands on the plate gripping the bar — that's the <strong>system weight</strong> (body + bar). Pull onset is detected as the first sample where force exceeds <strong>system weight + 5 × SD</strong>. Time windows for RFD (50, 100, 150, 200, 250 ms) are measured from onset.
+            </p>
+          </fieldset>
+        </div>
+
+        <div id="im-results-pane" class="hidden">
+          <h2 class="section" style="margin-top:0;">Results</h2>
+          <p class="section-intro" id="im-meta">—</p>
+
+          <div class="plot-frame" style="margin-bottom: 18px;">
+            <div class="corner">Force-time with landmarks</div>
+            <canvas id="im-chart" width="1600" height="700"></canvas>
+          </div>
+
+          <div class="metric-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 18px;">
+            <div class="chip"><div class="lbl">System weight</div><div class="val"><span id="im-sw">—</span> <span class="unit">N</span></div></div>
+            <div class="chip"><div class="lbl">Peak force</div><div class="val"><span id="im-pf">—</span> <span class="unit">N</span></div></div>
+            <div class="chip"><div class="lbl">Peak force (rel)</div><div class="val"><span id="im-pfrel">—</span> <span class="unit">× BW</span></div></div>
+            <div class="chip"><div class="lbl">Net peak force</div><div class="val"><span id="im-pfnet">—</span> <span class="unit">N</span></div></div>
+            <div class="chip"><div class="lbl">Time to peak</div><div class="val"><span id="im-ttp">—</span> <span class="unit">s</span></div></div>
+            <div class="chip"><div class="lbl">RFD 0-200ms</div><div class="val"><span id="im-rfd200">—</span> <span class="unit">N/s</span></div></div>
+          </div>
+
+          <table class="results" id="im-table"></table>
+
+          <button class="btn" id="im-download">Download variables (.csv)</button>
+          <button class="btn" id="im-download-ts" style="margin-top:8px;">Download time-series (.csv)</button>
+        </div>
+      </div>
+
+      <!-- IMTP Reference -->
+      <div style="margin-top: 40px;">
+        <h2 class="section">IMTP — variables &amp; methods reference</h2>
+        <p class="section-intro">A glossary of every variable above, with the formula or detection rule used. Click any item to expand.</p>
+        <div id="imtp-reference-content"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <span>Pure HTML · single file · no build step</span>
+    <span class="marque">Force-Time Explorer</span>
+    <span>Plymouth Marjon · Sport &amp; Exercise Science</span>
+  </footer>
+
+</div>
+
+<script>
+/* ===== Plot palette ===== */
+var COLOR = {
+  paper:'#ffffff', bg:'#f4f4f8',
+  ink:'#1F1A4A', inkSoft:'#4a4570',
+  grid:'#e6e6ee',
+  bandFill:'rgba(230,0,126,0.08)',
+  bandEdge:'rgba(230,0,126,0.18)',
+  bw:'#93ad2c', bwLabel:'#6b7f1f',
+  trace:'#1F1A4A',
+  landmark:'#1F1A4A', landmarkActive:'#E6007E', landmarkActiveDeep:'#b80064',
+  cursor:'#6C2D8E', cursorDeep:'#54226e',
+  phaseLabel:'#b80064', tick:'#4a4570',
+  // Phase-specific colors for 7-phase CMJ structure
+  phaseColors: {
+    'Weighing': {fill:'rgba(156,163,175,0.15)', edge:'rgba(156,163,175,0.35)', label:'#6b7280'},      // Gray
+    'Unweighting': {fill:'rgba(230,0,126,0.15)', edge:'rgba(230,0,126,0.35)', label:'#b80064'},       // Magenta
+    'Braking': {fill:'rgba(244,63,94,0.15)', edge:'rgba(244,63,94,0.35)', label:'#dc2626'},           // Red
+    'Propulsion': {fill:'rgba(34,197,94,0.15)', edge:'rgba(34,197,94,0.35)', label:'#15803d'},        // Green
+    'Flight': {fill:'rgba(59,130,246,0.15)', edge:'rgba(59,130,246,0.35)', label:'#1e40af'},          // Blue
+    'Landing': {fill:'rgba(249,115,22,0.15)', edge:'rgba(249,115,22,0.35)', label:'#c2410c'},         // Orange
+    'Landing Weighing': {fill:'rgba(156,163,175,0.15)', edge:'rgba(156,163,175,0.35)', label:'#6b7280'}  // Gray
+  }
+};
+
+/* =========================================================
+   SYNTHETIC TRACE (for Explore / Walkthrough / Sandbox)
+   ========================================================= */
+function buildSynthTrace(p) {
+  // Real CMJ data from force plate (500 Hz, downsampled from 1000 Hz)
+  // Athlete: ~99.6 kg, BW ~977 N
+  var forceData = [981,981,982,982,982,984,984,985,986,985,985,984,986,987,988,989,989,991,991,991,990,990,990,991,990,991,992,992,991,989,987,985,982,982,982,982,982,982,982,980,980,979,979,977,976,975,975,975,974,973,973,973,974,974,974,975,976,976,977,976,974,974,973,973,973,973,973,973,975,976,976,975,974,974,974,974,973,972,973,974,976,976,976,976,976,976,975,976,976,976,976,974,974,975,975,975,975,974,973,972,973,973,973,974,974,975,976,979,979,979,980,978,977,978,977,977,978,977,976,977,977,977,976,976,975,974,973,971,971,971,970,969,970,971,973,973,973,972,972,972,972,971,971,971,971,971,973,976,976,977,977,976,974,973,972,973,974,976,977,979,978,978,976,976,974,973,972,972,972,973,974,975,975,975,974,973,973,972,974,975,976,976,975,975,975,976,976,978,978,979,979,979,980,979,978,977,976,976,977,980,981,982,983,983,983,981,978,978,975,975,977,978,980,981,981,981,979,978,978,974,974,973,974,976,977,979,977,977,974,973,972,972,973,974,973,973,974,972,973,974,973,974,974,974,976,977,977,977,976,975,973,975,975,975,975,975,975,974,973,972,973,973,973,973,974,973,975,975,975,976,975,976,975,975,974,972,972,973,977,980,981,983,982,983,983,983,981,980,979,979,978,976,974,973,974,973,974,972,972,972,972,973,973,973,973,975,975,974,973,972,971,971,972,972,972,973,973,975,976,977,976,976,973,972,974,974,976,977,977,977,976,976,976,977,978,978,978,979,980,978,978,979,979,979,979,978,977,976,977,979,978,979,980,981,981,982,982,981,982,981,981,982,983,982,981,980,979,978,977,979,979,980,981,981,981,979,980,978,978,978,977,975,973,973,973,975,974,975,976,975,976,976,974,974,971,972,973,975,975,976,978,978,977,974,972,969,969,970,972,974,976,976,978,978,978,976,974,972,971,972,972,974,975,976,978,978,978,977,977,976,975,975,974,973,974,974,974,974,974,973,972,971,971,972,973,974,975,976,977,977,978,978,980,980,980,981,981,981,980,979,979,978,978,979,979,978,978,978,977,975,975,974,976,977,978,977,977,974,974,974,973,973,972,972,973,973,974,977,978,978,976,974,974,974,975,975,975,976,977,978,978,979,980,978,976,977,977,979,979,980,979,980,979,977,976,976,975,976,979,978,981,981,980,980,979,978,980,978,978,976,974,973,974,975,976,977,979,979,978,977,977,978,978,978,978,979,979,978,979,978,978,978,976,976,976,975,976,976,978,979,980,981,981,981,980,981,981,979,977,976,976,976,976,976,977,977,976,976,975,974,975,975,976,974,973,973,973,975,976,975,973,971,972,971,972,971,971,973,974,976,978,979,979,979,977,976,976,978,978,977,978,976,976,976,975,976,978,979,979,979,977,978,978,978,978,978,978,979,980,980,979,976,976,977,977,978,977,977,977,975,973,972,972,975,977,980,980,981,980,980,979,977,976,977,978,977,978,979,978,978,979,981,983,984,984,984,984,981,981,977,977,977,978,977,979,980,979,978,979,980,979,979,978,977,975,975,975,976,977,977,975,974,972,973,973,974,973,975,975,974,974,973,973,974,975,976,978,979,979,980,980,980,981,982,984,987,989,992,994,995,998,1001,1006,1009,1013,1014,1016,1019,1024,1027,1029,1032,1033,1035,1037,1039,1040,1044,1044,1044,1043,1041,1041,1040,1036,1033,1026,1021,1016,1009,1005,1000,993,985,977,968,958,948,937,926,912,901,889,877,865,855,843,830,815,801,788,774,759,744,730,717,707,696,686,674,664,653,642,630,617,607,596,584,572,560,547,534,524,513,502,489,477,463,450,435,421,407,394,379,368,355,343,330,316,301,285,270,256,243,230,219,206,195,185,177,168,161,155,149,144,140,135,129,124,118,113,108,104,100,95,90,87,82,79,78,74,72,69,67,65,64,62,61,60,61,61,61,62,64,64,64,64,66,69,71,75,78,81,84,88,95,103,109,120,129,140,153,169,186,205,227,250,274,300,328,362,399,444,493,547,607,670,738,810,884,957,1025,1089,1147,1199,1246,1291,1332,1373,1411,1451,1491,1529,1568,1606,1641,1675,1708,1740,1774,1808,1842,1879,1916,1955,1993,2033,2073,2113,2155,2197,2239,2281,2321,2362,2400,2435,2467,2496,2523,2546,2565,2580,2592,2597,2601,2603,2601,2602,2604,2607,2613,2618,2625,2631,2639,2649,2659,2669,2676,2682,2687,2690,2694,2694,2695,2695,2696,2694,2691,2687,2679,2670,2662,2652,2642,2633,2623,2615,2608,2597,2589,2581,2573,2563,2552,2538,2528,2519,2512,2506,2500,2494,2489,2485,2480,2478,2475,2473,2471,2470,2467,2464,2463,2464,2464,2467,2471,2476,2481,2483,2488,2493,2497,2501,2504,2507,2509,2512,2516,2519,2523,2528,2532,2536,2540,2545,2550,2554,2559,2562,2566,2571,2575,2578,2578,2578,2579,2579,2578,2578,2578,2579,2576,2573,2571,2564,2560,2554,2548,2539,2530,2518,2505,2491,2472,2452,2433,2410,2387,2362,2334,2305,2270,2232,2190,2143,2092,2033,1970,1901,1828,1750,1669,1580,1484,1377,1261,1134,997,855,704,551,402,264,144,46,-28,-82,-111,-116,-107,-85,-56,-31,-13,-3,3,13,28,42,56,61,59,50,35,21,12,11,8,1,0,-13,-18,-19,-18,-26,-12,-13,-14,-13,-10,0,0,1,9,16,23,28,29,26,20,14,9,2,0,0,0,-11,-24,-26,-24,-12,0,4,9,17,21,22,21,19,16,11,7,5,3,1,1,0,0,0,0,0,0,1,4,9,11,11,9,6,5,5,7,7,9,7,3,1,0,0,0,0,0,0,0,0,2,3,3,3,4,5,6,5,5,4,4,4,4,2,1,0,0,0,0,0,0,0,0,0,0,2,3,4,5,4,3,3,4,4,3,2,0,0,1,1,2,2,3,3,3,2,3,3,3,5,5,6,6,5,4,4,3,3,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,2,2,2,3,1,1,1,2,2,1,0,1,1,1,1,1,1,1,0,0,1,1,3,3,3,3,2,2,2,2,2,2,2,2,2,3,4,3,3,2,1,1,2,4,2,0,1,1,1,2,2,1,0,2,1,1,2,2,3,3,3,3,3,4,3,2,2,2,2,2,2,2,2,1,1,0,0,0,0,0,1,2,2,3,2,1,0,0,1,1,1,2,1,2,1,2,1,0,1,1,2,3,3,3,2,2,1,1,2,2,3,3,5,5,5,4,4,2,2,1,3,3,2,1,1,1,1,1,2,2,1,2,4,4,5,3,1,0,0,0,3,19,70,174,362,674,1109,1580,1983,2232,2268,2092,1806,1529,1324,1230,1285,1486,1778,2116,2469,2835,3224,3676,4226,4836,5393,5769,5896,5781,5497,5135,4774,4466,4226,4040,3889,3745,3557,3303,3011,2722,2466,2254,2081,1942,1836,1759,1719,1714,1740,1786,1841,1898,1951,1996,2033,2067,2100,2139,2181,2224,2263,2297,2324,2344,2355,2354,2344,2323,2289,2246,2200,2152,2107,2065,2027,1990,1957,1927,1901,1882,1869,1858,1848,1836,1824,1812,1801,1793,1785,1776,1768,1757,1745,1731,1716,1699,1682,1668,1654,1641,1624,1608,1592,1575,1560,1547,1538,1529,1524,1520,1518,1517,1515,1515,1517,1519,1521,1524,1525,1524,1519,1515,1508,1499,1490,1483,1473,1462,1450,1437,1424,1413,1400,1387,1373,1358,1340,1324,1307,1295,1282,1269,1257,1245,1232,1221,1210,1198,1186,1176,1166,1156,1148,1143,1138,1134,1132,1130,1128,1126,1122,1119,1116,1112,1108,1103,1102,1098,1099,1099,1098,1097,1095,1093,1091,1089,1087,1085,1080,1079,1076,1076,1074,1073,1072,1072,1070,1069,1065,1063,1060,1058,1055,1052,1049,1048,1047,1045,1043,1041,1038,1033,1030,1028,1026,1024,1022,1019,1017,1013,1008,1004,1000,998,996,997,997,995,994,992,989,987,984,981,978,975,972,969,967,964,963,963,962,962,963,962,962,961,960,959,960,959,961,962,961,960,960,959,960,960,962,964,964,965,964,965,963,962,961,960,959,958,959,959,958,958,957,956,954,953,952,952,951,950,950,949,951,951,950,949,946,943,941,940,940,939,938,938,937,936,938,939,939,940,940,940,940,939,939,940,940,939,940,938,938,935,932,930,929,928,928,927,927,927,929,929,928,927,926,924,923,921,919,918,917,916,915,914,914,914,915,916,914,913,911,908,907,906,906,908,907,905,905,905,904,905,907,905,906,906,909,911,914,914,913,913,913,914,916,916,917,915,913,910,907,907,907,908,911,910,911,911,909,910,911,912,912,913,912,915,914,913,913,913,913,914,916,915,916,919,921,921,922,922,923,924,927,928,930,932,933,934,934,933,933,931,930,929,929,928,929,929,930,930,930,929,929,928,929,929,931,932,933,931,931,930,929,929,930,931,936,936,938,937,939,939,939,940,941,940,940,940,939,942,942,943,945,947,948,951,950,952,952,953,953,954,954,953,952,952,953,954,955,955,956,959,959,961,963,965,966,968,970,972,972,972,970,971,971,971,974,975,975,975,976,974,973,975,974,975,976,977,977,981,980,979,980,979,978,979,980,981,983,983,984,985,987,987,988,990,989,989,986,985,985,985,984,984,984,985,986,986,987,987,989,989,991,992,991,990,990,988,986,984,984,983,984,984,984,983,982,982,981,979,979,979,981,981,983,982,980,978,977,977,978,979,980,981,981,981,982,980,981,982,983,982,982,982,984,985,986,986,987,987,986,986,986,986,985,985,984,984,983,983,981,982,982,981,982,983,983,984,981,982,982,982,982,982,983,981,981,979,978,977,977,977,976,977,978,978,978,978,978,976,976,974,973,972,973,974,973,975,974,974,974,976,976,977,978,978,977,976,974,972,972,973,973,971,971,969,968,968,967,967,967,969,970,971,971,969,968,967,967,968,969,968,969,970,971,973,973,974,972,970,970,969,968,967,966,965,964,965,965,965,965,965,964,964,963,962,963,964,965,964,964,964,966,966,965,966,968,968,970,969,969,968,969,969,969,969,970,970,971,972,972,974,975,975,976,978,976,976,975,975,973,972,973,974,974,974,974,974,973,975,975,975,975,975,975,975,973,971,971,972,974,974,975,975,975,975,974,974,975,974,974,973,973,973,975,975,976,976];
+  var velData = [0.000,0.000,0.000,0.000,0.000,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.002,0.002,0.002,0.002,0.003,0.003,0.003,0.003,0.004,0.004,0.004,0.004,0.005,0.005,0.005,0.006,0.006,0.006,0.006,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.006,0.006,0.006,0.006,0.006,0.006,0.006,0.006,0.006,0.006,0.006,0.006,0.006,0.006,0.006,0.005,0.005,0.005,0.005,0.005,0.005,0.005,0.005,0.005,0.005,0.005,0.005,0.005,0.005,0.005,0.005,0.005,0.005,0.005,0.005,0.005,0.005,0.005,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.003,0.003,0.003,0.003,0.003,0.003,0.003,0.003,0.003,0.003,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.002,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.001,0.001,0.001,0.001,0.000,0.000,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.002,0.002,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,-0.000,-0.000,-0.000,-0.000,-0.000,-0.000,-0.000,-0.000,-0.000,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.002,-0.002,-0.002,-0.002,-0.002,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.005,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.003,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.004,-0.003,-0.003,-0.003,-0.003,-0.002,-0.002,-0.001,-0.001,-0.000,0.001,0.001,0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0.010,0.012,0.013,0.014,0.016,0.017,0.018,0.020,0.021,0.022,0.023,0.025,0.026,0.026,0.027,0.028,0.029,0.029,0.029,0.030,0.030,0.029,0.029,0.029,0.028,0.027,0.026,0.024,0.023,0.021,0.018,0.016,0.013,0.010,0.007,0.004,0.000,-0.004,-0.008,-0.013,-0.018,-0.023,-0.028,-0.034,-0.040,-0.046,-0.052,-0.058,-0.065,-0.072,-0.079,-0.086,-0.094,-0.102,-0.110,-0.118,-0.127,-0.136,-0.145,-0.154,-0.163,-0.173,-0.183,-0.193,-0.204,-0.215,-0.226,-0.237,-0.249,-0.261,-0.273,-0.285,-0.298,-0.311,-0.324,-0.338,-0.351,-0.366,-0.380,-0.395,-0.410,-0.425,-0.440,-0.456,-0.472,-0.488,-0.504,-0.520,-0.537,-0.553,-0.570,-0.587,-0.604,-0.621,-0.638,-0.655,-0.672,-0.690,-0.707,-0.725,-0.743,-0.760,-0.778,-0.796,-0.814,-0.832,-0.850,-0.868,-0.887,-0.905,-0.923,-0.942,-0.960,-0.978,-0.997,-1.015,-1.034,-1.052,-1.070,-1.089,-1.107,-1.125,-1.144,-1.162,-1.180,-1.198,-1.217,-1.235,-1.253,-1.271,-1.288,-1.306,-1.324,-1.341,-1.358,-1.376,-1.392,-1.409,-1.425,-1.441,-1.457,-1.472,-1.487,-1.501,-1.515,-1.528,-1.540,-1.552,-1.563,-1.573,-1.582,-1.590,-1.596,-1.601,-1.605,-1.607,-1.608,-1.608,-1.606,-1.602,-1.598,-1.593,-1.587,-1.580,-1.572,-1.564,-1.554,-1.544,-1.533,-1.522,-1.509,-1.496,-1.482,-1.468,-1.453,-1.437,-1.420,-1.403,-1.385,-1.367,-1.347,-1.327,-1.306,-1.284,-1.261,-1.238,-1.214,-1.189,-1.163,-1.136,-1.108,-1.080,-1.051,-1.021,-0.991,-0.960,-0.928,-0.896,-0.864,-0.832,-0.799,-0.767,-0.734,-0.702,-0.669,-0.636,-0.604,-0.571,-0.538,-0.505,-0.472,-0.438,-0.405,-0.371,-0.337,-0.303,-0.269,-0.234,-0.200,-0.166,-0.131,-0.097,-0.062,-0.028,0.007,0.041,0.076,0.110,0.144,0.178,0.212,0.245,0.278,0.311,0.344,0.377,0.410,0.442,0.474,0.507,0.538,0.570,0.602,0.633,0.664,0.695,0.725,0.756,0.786,0.817,0.847,0.877,0.907,0.938,0.968,0.998,1.028,1.058,1.087,1.117,1.147,1.177,1.207,1.237,1.267,1.297,1.327,1.358,1.388,1.419,1.449,1.480,1.511,1.541,1.572,1.603,1.634,1.665,1.696,1.727,1.759,1.790,1.821,1.853,1.885,1.916,1.948,1.980,2.012,2.044,2.076,2.109,2.141,2.173,2.205,2.237,2.269,2.301,2.334,2.366,2.398,2.430,2.462,2.494,2.525,2.557,2.588,2.620,2.651,2.681,2.712,2.742,2.772,2.801,2.830,2.858,2.886,2.914,2.940,2.967,2.992,3.017,3.040,3.063,3.084,3.105,3.124,3.141,3.157,3.171,3.184,3.195,3.203,3.209,3.213,3.214,3.213,3.208,3.200,3.189,3.176,3.159,3.141,3.121,3.100,3.079,3.057,3.035,3.013,2.992,2.972,2.952,2.933,2.913,2.894,2.874,2.855,2.837,2.819,2.800,2.782,2.763,2.744,2.724,2.705,2.685,2.666,2.646,2.626,2.606,2.586,2.566,2.546,2.526,2.507,2.487,2.467,2.447,2.427,2.408,2.388,2.369,2.349,2.330,2.311,2.292,2.273,2.254,2.234,2.215,2.195,2.176,2.156,2.137,2.117,2.097,2.077,2.056,2.037,2.017,1.997,1.978,1.959,1.939,1.920,1.901,1.882,1.862,1.843,1.824,1.804,1.785,1.765,1.745,1.726,1.706,1.686,1.667,1.647,1.628,1.608,1.588,1.569,1.550,1.530,1.511,1.491,1.472,1.452,1.433,1.413,1.394,1.374,1.355,1.335,1.316,1.296,1.276,1.257,1.237,1.218,1.198,1.178,1.159,1.139,1.120,1.100,1.080,1.061,1.041,1.022,1.002,0.983,0.963,0.944,0.924,0.905,0.885,0.865,0.846,0.826,0.807,0.787,0.767,0.748,0.728,0.709,0.689,0.669,0.650,0.630,0.611,0.591,0.572,0.552,0.532,0.513,0.493,0.474,0.454,0.435,0.415,0.395,0.376,0.356,0.337,0.317,0.298,0.278,0.258,0.239,0.219,0.200,0.180,0.161,0.141,0.122,0.102,0.083,0.063,0.043,0.024,0.004,-0.015,-0.035,-0.055,-0.074,-0.094,-0.113,-0.133,-0.153,-0.172,-0.192,-0.212,-0.231,-0.251,-0.270,-0.290,-0.310,-0.329,-0.349,-0.368,-0.388,-0.408,-0.427,-0.447,-0.466,-0.486,-0.506,-0.525,-0.545,-0.564,-0.584,-0.603,-0.623,-0.643,-0.662,-0.682,-0.701,-0.721,-0.741,-0.760,-0.780,-0.800,-0.819,-0.839,-0.858,-0.878,-0.897,-0.917,-0.937,-0.956,-0.976,-0.995,-1.015,-1.034,-1.054,-1.074,-1.093,-1.113,-1.132,-1.152,-1.171,-1.191,-1.211,-1.230,-1.250,-1.269,-1.289,-1.308,-1.328,-1.348,-1.367,-1.387,-1.406,-1.426,-1.446,-1.465,-1.485,-1.504,-1.524,-1.544,-1.563,-1.583,-1.602,-1.622,-1.641,-1.661,-1.680,-1.700,-1.720,-1.739,-1.759,-1.778,-1.798,-1.818,-1.837,-1.857,-1.876,-1.896,-1.916,-1.935,-1.955,-1.974,-1.994,-2.014,-2.033,-2.053,-2.072,-2.092,-2.112,-2.131,-2.151,-2.170,-2.190,-2.210,-2.229,-2.249,-2.268,-2.288,-2.308,-2.327,-2.347,-2.366,-2.386,-2.405,-2.425,-2.445,-2.464,-2.484,-2.503,-2.523,-2.542,-2.562,-2.582,-2.601,-2.621,-2.640,-2.660,-2.679,-2.699,-2.718,-2.738,-2.758,-2.777,-2.797,-2.816,-2.836,-2.856,-2.875,-2.895,-2.914,-2.934,-2.953,-2.973,-2.993,-3.012,-3.032,-3.051,-3.071,-3.090,-3.110,-3.130,-3.149,-3.168,-3.184,-3.198,-3.206,-3.205,-3.195,-3.177,-3.153,-3.127,-3.103,-3.085,-3.073,-3.065,-3.060,-3.054,-3.045,-3.030,-3.009,-2.981,-2.945,-2.902,-2.851,-2.788,-2.714,-2.628,-2.533,-2.435,-2.337,-2.245,-2.160,-2.082,-2.010,-1.944,-1.881,-1.822,-1.766,-1.713,-1.665,-1.622,-1.586,-1.555,-1.528,-1.505,-1.485,-1.467,-1.451,-1.436,-1.422,-1.406,-1.390,-1.373,-1.355,-1.336,-1.315,-1.294,-1.273,-1.250,-1.227,-1.203,-1.178,-1.153,-1.126,-1.099,-1.072,-1.044,-1.017,-0.989,-0.962,-0.936,-0.910,-0.885,-0.861,-0.838,-0.816,-0.795,-0.774,-0.755,-0.735,-0.717,-0.698,-0.680,-0.663,-0.645,-0.628,-0.611,-0.594,-0.577,-0.561,-0.545,-0.529,-0.513,-0.497,-0.481,-0.466,-0.451,-0.437,-0.422,-0.408,-0.395,-0.381,-0.368,-0.356,-0.343,-0.331,-0.319,-0.308,-0.296,-0.285,-0.274,-0.263,-0.253,-0.242,-0.231,-0.220,-0.209,-0.198,-0.187,-0.176,-0.165,-0.154,-0.144,-0.133,-0.122,-0.112,-0.101,-0.091,-0.081,-0.071,-0.062,-0.052,-0.043,-0.034,-0.026,-0.018,-0.010,-0.002,0.006,0.013,0.019,0.026,0.032,0.038,0.044,0.049,0.054,0.059,0.064,0.068,0.073,0.077,0.081,0.084,0.088,0.091,0.094,0.097,0.101,0.104,0.107,0.110,0.113,0.115,0.118,0.121,0.124,0.126,0.129,0.131,0.134,0.136,0.138,0.141,0.143,0.146,0.148,0.150,0.152,0.155,0.157,0.159,0.161,0.163,0.165,0.167,0.169,0.170,0.172,0.174,0.176,0.178,0.179,0.181,0.183,0.184,0.186,0.187,0.188,0.190,0.191,0.192,0.194,0.195,0.196,0.197,0.198,0.199,0.200,0.201,0.201,0.202,0.203,0.203,0.204,0.204,0.205,0.205,0.206,0.206,0.206,0.207,0.207,0.207,0.207,0.207,0.207,0.207,0.207,0.207,0.207,0.207,0.206,0.206,0.206,0.205,0.205,0.205,0.205,0.204,0.204,0.204,0.203,0.203,0.203,0.202,0.202,0.202,0.201,0.201,0.201,0.200,0.200,0.200,0.199,0.199,0.199,0.199,0.198,0.198,0.198,0.197,0.197,0.197,0.196,0.196,0.196,0.195,0.195,0.194,0.194,0.194,0.193,0.193,0.192,0.192,0.191,0.190,0.190,0.189,0.189,0.188,0.188,0.187,0.186,0.186,0.185,0.184,0.183,0.183,0.182,0.181,0.180,0.179,0.179,0.178,0.177,0.176,0.176,0.175,0.174,0.173,0.173,0.172,0.171,0.170,0.170,0.169,0.168,0.167,0.166,0.165,0.164,0.163,0.162,0.161,0.160,0.159,0.158,0.157,0.156,0.155,0.154,0.153,0.152,0.151,0.149,0.148,0.147,0.146,0.144,0.143,0.142,0.141,0.139,0.138,0.137,0.135,0.134,0.133,0.131,0.130,0.128,0.127,0.125,0.124,0.123,0.121,0.120,0.118,0.117,0.115,0.114,0.113,0.111,0.110,0.109,0.108,0.106,0.105,0.104,0.103,0.101,0.100,0.099,0.097,0.096,0.095,0.093,0.092,0.091,0.089,0.088,0.086,0.085,0.084,0.082,0.081,0.080,0.079,0.077,0.076,0.075,0.073,0.072,0.071,0.070,0.068,0.067,0.066,0.065,0.063,0.062,0.061,0.060,0.059,0.058,0.057,0.056,0.055,0.054,0.053,0.052,0.051,0.050,0.049,0.049,0.048,0.047,0.046,0.045,0.044,0.043,0.042,0.041,0.040,0.039,0.038,0.037,0.036,0.035,0.034,0.033,0.032,0.032,0.031,0.030,0.029,0.028,0.027,0.026,0.025,0.024,0.023,0.022,0.022,0.021,0.020,0.019,0.019,0.018,0.017,0.016,0.016,0.015,0.014,0.014,0.013,0.012,0.012,0.011,0.010,0.010,0.009,0.009,0.008,0.008,0.007,0.007,0.007,0.006,0.006,0.005,0.005,0.004,0.004,0.003,0.003,0.003,0.002,0.002,0.002,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,-0.000,-0.000,-0.000,-0.000,-0.000,-0.000,-0.000,-0.000,-0.000,-0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.001,0.001,0.001,0.001,0.001,0.001,0.002,0.002,0.002,0.002,0.003,0.003,0.003,0.003,0.003,0.003,0.003,0.004,0.004,0.004,0.004,0.004,0.005,0.005,0.005,0.006,0.006,0.006,0.006,0.006,0.007,0.007,0.007,0.007,0.007,0.007,0.007,0.008,0.008,0.008,0.008,0.008,0.008,0.008,0.008,0.008,0.008,0.008,0.008,0.008,0.008,0.008,0.008,0.008,0.009,0.009,0.009,0.009,0.009,0.009,0.009,0.009,0.009,0.009,0.009,0.010,0.010,0.010,0.010,0.010,0.010,0.011,0.011,0.011,0.011,0.011,0.012,0.012,0.012,0.012,0.012,0.012,0.012,0.012,0.012,0.013,0.013,0.013,0.013,0.013,0.013,0.013,0.013,0.013,0.014,0.014,0.014,0.014,0.014,0.014,0.014,0.014,0.014,0.014,0.014,0.014,0.014,0.014,0.014,0.014,0.014,0.014,0.014,0.014,0.014,0.014,0.014,0.014,0.013,0.013,0.013,0.013,0.013,0.013,0.013,0.013,0.013,0.013,0.013,0.013,0.013,0.013,0.013,0.013,0.013,0.013,0.012,0.012,0.012,0.012,0.012,0.012,0.011,0.011,0.011,0.011,0.011,0.011,0.010,0.010,0.010,0.010,0.010,0.010,0.009,0.009,0.009,0.009,0.009,0.009,0.009,0.009,0.009,0.008,0.008,0.008,0.008,0.008,0.007,0.007,0.007,0.007,0.006,0.006,0.006,0.005,0.005,0.005,0.005,0.004,0.004,0.004,0.004,0.003,0.003,0.003,0.003,0.003,0.002,0.002,0.002,0.002,0.002,0.002,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,-0.000,-0.000,-0.000,-0.000,-0.000,-0.000,-0.000,-0.000,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.001,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002,-0.002];
+  var dt = 0.002;
+  var N = forceData.length;
+  var t = new Float32Array(N);
+  var f = new Float32Array(N);
+  var v = new Float32Array(N);
+  for (var i = 0; i < N; i++) {
+    t[i] = i * dt;
+    f[i] = forceData[i];
+    v[i] = velData[i];
+  }
+
+  // Compute BW from first ~1 second (quiet standing)
+  var quietSum = 0, quietCount = 0;
+  for (var i = 0; i < N && t[i] < 1.0; i++) {
+    quietSum += f[i];
+    quietCount++;
+  }
+  var BW = quietSum / quietCount;
+  var bm = BW / 9.81;
+
+  // Compute SD of quiet standing for threshold
+  var sdSum = 0;
+  for (var i = 0; i < quietCount; i++) sdSum += (f[i] - BW) * (f[i] - BW);
+  var sd = Math.sqrt(sdSum / quietCount);
+  var onsetThreshold = BW - 5 * sd;
+
+  // ===== Phase detection =====
+
+  // Phase 1: Weighing - from start until movement onset (force drops below BW - 5*SD)
+  var iWeightingEnd = 0;
+  for (var k = 0; k < N; k++) {
+    if (t[k] > 1.0 && f[k] < onsetThreshold) {
+      iWeightingEnd = k;
+      break;
+    }
+  }
+
+  // Phase 2: Unweighting - from movement onset to first instant force returns to BW
+  var iUnweightingStart = iWeightingEnd;
+  var iUnweightingEnd = iUnweightingStart;
+  for (var k = iUnweightingStart + 5; k < N; k++) {
+    if (f[k] >= BW) {
+      iUnweightingEnd = k;
+      break;
+    }
+  }
+
+  // Phase 3: Braking - from end of unweighting until velocity = 0
+  var iBrakingStart = iUnweightingEnd;
+  var iBrakingEnd = iBrakingStart;
+  for (var k = iBrakingStart + 1; k < N; k++) {
+    if (v[k] >= 0) {
+      iBrakingEnd = k;
+      break;
+    }
+  }
+
+  // Phase 4: Propulsion - from velocity = 0 to take-off (force < 20 N for the first time)
+  var iPropulsionStart = iBrakingEnd;
+  var iPropulsionEnd = iPropulsionStart;
+  var forceThreshold = 20;
+  for (var k = iPropulsionStart + 1; k < N; k++) {
+    if (f[k] < forceThreshold) {
+      iPropulsionEnd = k;
+      break;
+    }
+  }
+
+  // Phase 5: Flight - from take-off to touchdown
+  // Touchdown: first sustained force > 20 N after take-off
+  // Need to skip the noisy oscillation around 0 right after take-off
+  var iFlightStart = iPropulsionEnd;
+  var iFlightEnd = iFlightStart;
+  // Look for force > 20N that is sustained (next 10 samples also above some threshold)
+  for (var k = iFlightStart + 20; k < N; k++) {
+    if (f[k] > forceThreshold) {
+      // Verify sustained: check next few samples
+      var sustained = true;
+      for (var j = 1; j <= 5 && k+j < N; j++) {
+        if (f[k+j] < forceThreshold) {
+          // Could be noise, but if it bounces back high, it's real touchdown
+          if (f[k+j+1] && f[k+j+1] > 100) continue;
+          sustained = false;
+          break;
+        }
+      }
+      if (sustained || f[k] > 100) {
+        iFlightEnd = k;
+        break;
+      }
+    }
+  }
+
+  // Phase 6: Landing - from touchdown to SECOND velocity = 0 after touchdown
+  // (First v=0 is at lowest landing position; second is when stood upright)
+  var iLandingStart = iFlightEnd;
+  var iLandingEnd = iLandingStart;
+  var zeroCrossingsAfterLanding = 0;
+  var prevV = v[iLandingStart];
+  for (var k = iLandingStart + 1; k < N; k++) {
+    // Detect velocity zero-crossings (sign change)
+    if ((prevV < 0 && v[k] >= 0) || (prevV > 0 && v[k] <= 0)) {
+      zeroCrossingsAfterLanding++;
+      if (zeroCrossingsAfterLanding === 2) {
+        iLandingEnd = k;
+        break;
+      }
+    }
+    prevV = v[k];
+  }
+  // Fallback: if no second zero-crossing, use end of trace
+  if (iLandingEnd === iLandingStart) iLandingEnd = N - 1;
+
+  // Phase 7: Landing Weighing - from end of landing to end of trial
+  var iLandingWeighingStart = iLandingEnd;
+  var iLandingWeighingEnd = N - 1;
+
+  return {
+    t: t, f: f, v: v, dt: dt, N: N, BW: BW, bm: bm,
+    landmarks: [
+      {idx: iWeightingEnd, t: t[iWeightingEnd], f: f[iWeightingEnd]},
+      {idx: iUnweightingEnd, t: t[iUnweightingEnd], f: f[iUnweightingEnd]},
+      {idx: iBrakingEnd, t: t[iBrakingEnd], f: f[iBrakingEnd]},
+      {idx: iPropulsionEnd, t: t[iPropulsionEnd], f: f[iPropulsionEnd]},
+      {idx: iLandingEnd, t: t[iLandingEnd], f: f[iLandingEnd]}
+    ],
+    phaseTimes: {
+      weighingStart: t[0],
+      weighingEnd: t[iWeightingEnd],
+      unweightingStart: t[iWeightingEnd],
+      unweightingEnd: t[iUnweightingEnd],
+      brakingStart: t[iUnweightingEnd],
+      brakingEnd: t[iBrakingEnd],
+      propulsionStart: t[iBrakingEnd],
+      propulsionEnd: t[iPropulsionEnd],
+      flightStart: t[iPropulsionEnd],
+      flightEnd: t[iFlightEnd],
+      landingStart: t[iFlightEnd],
+      landingEnd: t[iLandingEnd],
+      landingWeighingStart: t[iLandingWeighingStart],
+      landingWeighingEnd: t[iLandingWeighingEnd],
+      end: t[iLandingWeighingEnd]
+    }
+  };
+}
+
+var LANDMARKS = [
+  {n:1, name:'Movement Onset', phase:'Weighing → Unweighting',
+   desc:'The instant the athlete begins to descend. Force first drops below the quiet standing band (BW − 5×SD). This marks the end of weighing and start of unweighting.'},
+  {n:2, name:'Force = BW', phase:'Unweighting → Braking',
+   desc:'The first instant force returns to body weight after the unweighting dip. This marks the end of unweighting and the start of braking — the athlete is now decelerating their downward motion.'},
+  {n:3, name:'Velocity = 0', phase:'Braking → Propulsion',
+   desc:'The instant when vertical velocity reaches zero — the deepest point of the countermovement. Braking ends here; propulsion begins as the athlete now accelerates upward.'},
+  {n:4, name:'Take-off', phase:'Propulsion → Flight',
+   desc:'The first instant force drops below 20 N. The athlete has left the plate; vertical velocity is at its take-off maximum. Flight phase begins.'},
+  {n:5, name:'Landing End', phase:'Landing → Landing Weighing',
+   desc:'The second time velocity returns to zero after touchdown — when the athlete has stabilised upright. The first zero crossing (at the lowest point of landing) is ignored; this one marks the end of the landing phase.'}
+];
+
+var PHASE_BANDS = [
+  {name:'Weighing', startKey:'weighingStart', endKey:'weighingEnd'},
+  {name:'Unweighting', startKey:'unweightingStart', endKey:'unweightingEnd'},
+  {name:'Braking', startKey:'brakingStart', endKey:'brakingEnd'},
+  {name:'Propulsion', startKey:'propulsionStart', endKey:'propulsionEnd'},
+  {name:'Flight', startKey:'flightStart', endKey:'flightEnd'},
+  {name:'Landing', startKey:'landingStart', endKey:'landingEnd'},
+  {name:'Landing Weighing', startKey:'landingWeighingStart', endKey:'landingWeighingEnd'}
+];
+
+/* ===== IMTP LANDMARKS, PHASES, SYNTH TRACE ===== */
+
+var IMTP_LANDMARKS = [
+  {n:1, name:'Quiet Standing', phase:'System Weight',
+   desc:'The athlete stands on the plate gripping the bar. Force equals system weight (body weight + barbell). The first ~1 s of the file is averaged here to compute system weight and the SD used for onset detection.'},
+  {n:2, name:'Pull Onset', phase:'Start of Force Development',
+   desc:'The athlete starts pulling against the bar. Onset is the first sample where force exceeds system weight + 5×SD. Standard convention is to step back 30 ms to capture the true start.'},
+  {n:3, name:'Force at 100 ms', phase:'Early Force Development',
+   desc:'The force value 100 ms after pull onset. Early-phase force production is a strong predictor of dynamic performance (e.g. sprint acceleration) because most athletic actions allow less than 250 ms of ground contact.'},
+  {n:4, name:'Force at 200 ms', phase:'Mid-phase Force Development',
+   desc:'The force value 200 ms after pull onset. Closer to peak in well-trained athletes. The slope of force-time from onset to here is RFD over 0–200 ms.'},
+  {n:5, name:'Peak Force', phase:'Maximum Strength',
+   desc:'The highest force value during the trial. Represents maximum isometric strength capacity. Often reported as absolute (N) and relative to body weight (× BW).'}
+];
+
+var IMTP_PHASE_BANDS = [
+  {name:'Quiet standing', startKey:'quietStart', endKey:'onset'},
+  {name:'Pull (force development)', startKey:'onset', endKey:'peak'},
+  {name:'Plateau', startKey:'peak', endKey:'release'},
+  {name:'Release', startKey:'release', endKey:'end'}
+];
+
+function buildIMTPSynth(p) {
+  p = p || {};
+  var sw = p.systemWeight != null ? p.systemWeight : 1045;
+  var peak = p.peak != null ? p.peak : 2700;
+  var quietT = 1.2;          // quiet standing duration
+  var preTension = 0.15;     // brief pre-pull build
+  var rampT = 0.20;          // rapid pull
+  var plateauT = 2.2;        // sustained near peak
+  var releaseT = 0.30;       // release
+  var postT = 0.50;          // post quiet
+  var T = quietT + preTension + rampT + plateauT + releaseT + postT;
+  var dt = 0.002, N = Math.round(T/dt);
+  var t = new Float32Array(N), f = new Float32Array(N);
+
+  var tQuietEnd = quietT;
+  var tOnset    = tQuietEnd + preTension;
+  var tPeak     = tOnset + rampT;
+  var tPlateauEnd = tPeak + plateauT;
+  var tReleaseEnd = tPlateauEnd + releaseT;
+  var tEnd      = tReleaseEnd + postT;
+
+  function smoothStep(u) { return 0.5 * (1 - Math.cos(Math.PI * u)); }
+
+  for (var i = 0; i < N; i++) {
+    var x = i*dt; t[i] = x; var force;
+    if (x < tQuietEnd) {
+      force = sw + (Math.random()-0.5)*5;
+    } else if (x < tOnset) {
+      // pre-tension: subtle build from sw to sw+50 N
+      var u = (x - tQuietEnd) / preTension;
+      force = sw + 50 * smoothStep(u);
+    } else if (x < tPeak) {
+      // sigmoid ramp from sw+50 to peak
+      var u2 = (x - tOnset) / (tPeak - tOnset);
+      // S-curve for realistic RFD profile
+      var s = 1 / (1 + Math.exp(-12*(u2 - 0.45)));
+      var s0 = 1 / (1 + Math.exp(-12*(0 - 0.45)));
+      var s1 = 1 / (1 + Math.exp(-12*(1 - 0.45)));
+      var sNorm = (s - s0) / (s1 - s0);
+      force = (sw + 50) + (peak - sw - 50) * sNorm;
+    } else if (x < tPlateauEnd) {
+      // plateau with small oscillations
+      var u3 = (x - tPeak) / (tPlateauEnd - tPeak);
+      force = peak - 30 * Math.sin(u3 * Math.PI * 3) - 15 * (u3*u3);
+    } else if (x < tReleaseEnd) {
+      // release back to roughly post-quiet level (= sw - bar weight if they drop bar)
+      var u4 = (x - tPlateauEnd) / (tReleaseEnd - tPlateauEnd);
+      var postSw = sw - 95; // bar slack
+      force = peak * (1 - smoothStep(u4)) + postSw * smoothStep(u4);
+    } else {
+      // post-release quiet: athlete may release bar
+      force = (sw - 95) + (Math.random()-0.5)*4;
+    }
+    f[i] = force;
+  }
+
+  // Find landmarks
+  function idxOf(tt){ return Math.max(0, Math.min(N-1, Math.round(tt/dt))); }
+  var i1 = idxOf(0.4);              // quiet standing midpoint
+  var i2 = idxOf(tOnset);           // pull onset
+  var i3 = idxOf(tOnset + 0.100);   // force at 100 ms
+  var i4 = idxOf(tOnset + 0.200);   // force at 200 ms
+  // peak: scan plateau for max
+  var i5 = idxOf(tPeak);
+  for (var k = idxOf(tPeak); k < idxOf(tPlateauEnd); k++) if (f[k] > f[i5]) i5 = k;
+
+  return {
+    t:t, f:f, dt:dt, N:N, BW:sw, bm:sw/9.81,
+    isImtp: true,
+    landmarks: [
+      {idx:i1, t:t[i1], f:f[i1]},
+      {idx:i2, t:t[i2], f:f[i2]},
+      {idx:i3, t:t[i3], f:f[i3]},
+      {idx:i4, t:t[i4], f:f[i4]},
+      {idx:i5, t:t[i5], f:f[i5]}
+    ],
+    phaseTimes: {
+      quietStart: 0,
+      onset: tOnset,
+      peak: t[i5],
+      release: tPlateauEnd,
+      end: tEnd
+    }
+  };
+}
+
+function phaseAt(time, trace) {
+  var p = trace.phaseTimes;
+  if (trace.isImtp) {
+    if (time < p.onset) return 'Quiet standing';
+    if (time < p.peak) return 'Pull (force development)';
+    if (time < p.release) return 'Plateau';
+    if (time < p.end) return 'Release';
+    return 'Post-release';
+  }
+  // CMJ phases - 7 phases
+  if (time < p.weighingEnd) return 'Weighing';
+  if (time < p.unweightingEnd) return 'Unweighting';
+  if (time < p.brakingEnd) return 'Braking';
+  if (time < p.propulsionEnd) return 'Propulsion';
+  if (time < p.flightEnd) return 'Flight';
+  if (time < p.landingEnd) return 'Landing';
+  if (time < p.landingWeighingEnd) return 'Landing Weighing';
+  return 'End';
+}
+function niceStep(range) {
+  var pow = Math.pow(10, Math.floor(Math.log10(range))), n = range/pow, step;
+  if (n < 1.5) step = 1; else if (n < 3) step = 2; else if (n < 7) step = 5; else step = 10;
+  return step*pow;
+}
+
+/* =========================================================
+   DRAW THE SYNTH/EXPLORE TRACE
+   ========================================================= */
+function drawTrace(canvas, trace, opts) {
+  opts = opts || {};
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = COLOR.paper; ctx.fillRect(0,0,W,H);
+  var m = {l:80, r:40, t:50, b:60}, plotW = W-m.l-m.r, plotH = H-m.t-m.b;
+  var fMax = 0;
+  for (var i=0; i<trace.N; i++) if (trace.f[i]>fMax) fMax = trace.f[i];
+  fMax *= 1.06;
+  var fMin = 0;
+  if (trace.isImtp) {
+    // IMTP force stays well above zero; start y-axis at ~ 70% of system weight for better detail
+    var fMinScan = trace.f[0];
+    for (var im=0; im<trace.N; im++) if (trace.f[im] < fMinScan) fMinScan = trace.f[im];
+    fMin = Math.max(0, fMinScan - 200);
+  }
+  var tMax = trace.t[trace.N-1];
+  function xToPx(x){ return m.l + (x/tMax)*plotW; }
+  function yToPx(y){ return m.t + ((fMax-y)/(fMax-fMin))*plotH; }
+
+  var phaseBands = trace.isImtp ? IMTP_PHASE_BANDS : PHASE_BANDS;
+  for (var b=0; b<phaseBands.length; b++) {
+    var band = phaseBands[b];
+    var x0 = xToPx(trace.phaseTimes[band.startKey]);
+    var x1 = xToPx(trace.phaseTimes[band.endKey]);
+    
+    // For IMTP: white background, colored lines only
+    if (trace.isImtp) {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x0, m.t, x1-x0, plotH);
+      // Still draw colored vertical lines
+      var imtpLineColors = {
+        'Quiet standing': '#9ca3af',
+        'Pull (force development)': '#059669',
+        'Plateau': '#059669',
+        'Release': '#d97706'
+      };
+      ctx.strokeStyle = imtpLineColors[band.name] || '#6b7280';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x0, m.t); ctx.lineTo(x0, m.t+plotH);
+      ctx.moveTo(x1, m.t); ctx.lineTo(x1, m.t+plotH);
+      ctx.stroke();
+    } else {
+      // For CMJ: colored backgrounds with vertical lines
+      var phaseColor = COLOR.phaseColors[band.name];
+      if (phaseColor) {
+        ctx.fillStyle = phaseColor.fill;
+        ctx.fillRect(x0, m.t, x1-x0, plotH);
+        ctx.strokeStyle = phaseColor.edge; ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(x0, m.t); ctx.lineTo(x0, m.t+plotH);
+        ctx.moveTo(x1, m.t); ctx.lineTo(x1, m.t+plotH);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = COLOR.bandFill;
+        ctx.fillRect(x0, m.t, x1-x0, plotH);
+        ctx.strokeStyle = COLOR.bandEdge; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x0, m.t); ctx.lineTo(x0, m.t+plotH);
+        ctx.moveTo(x1, m.t); ctx.lineTo(x1, m.t+plotH);
+        ctx.stroke();
+      }
+    }
+  }
+
+  ctx.strokeStyle = COLOR.grid; ctx.lineWidth = 1; ctx.beginPath();
+  var yStep = niceStep((fMax-fMin)/6);
+  for (var y=Math.ceil(fMin/yStep)*yStep; y<=fMax; y+=yStep) { var py=yToPx(y); ctx.moveTo(m.l, py); ctx.lineTo(m.l+plotW, py); }
+  var xStep = niceStep(tMax/8);
+  for (var x=0; x<=tMax; x+=xStep) { var px=xToPx(x); ctx.moveTo(px, m.t); ctx.lineTo(px, m.t+plotH); }
+  ctx.stroke();
+
+  ctx.strokeStyle = COLOR.bw; ctx.lineWidth = 1.4; ctx.setLineDash([5,5]);
+  ctx.beginPath(); ctx.moveTo(m.l, yToPx(trace.BW)); ctx.lineTo(m.l+plotW, yToPx(trace.BW));
+  ctx.stroke(); ctx.setLineDash([]);
+  ctx.font = '600 13px "Lexend", sans-serif'; ctx.fillStyle = COLOR.bwLabel;
+  ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+  ctx.fillText(trace.isImtp ? 'system weight' : 'body weight', m.l+6, yToPx(trace.BW)-4);
+
+  ctx.font = '600 14px "Lexend", sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (var b2=0; b2<phaseBands.length; b2++) {
+    var bd2 = phaseBands[b2];
+    var x0b = xToPx(trace.phaseTimes[bd2.startKey]);
+    var x1b = xToPx(trace.phaseTimes[bd2.endKey]);
+    if (x1b - x0b > 60) {
+      // Use phase-specific color for labels
+      var phaseColor = COLOR.phaseColors[bd2.name];
+      if (phaseColor && phaseColor.label) {
+        ctx.fillStyle = phaseColor.label;
+      } else {
+        ctx.fillStyle = COLOR.phaseLabel;
+      }
+      ctx.fillText(bd2.name, (x0b+x1b)/2, m.t+8);
+    }
+  }
+
+  ctx.strokeStyle = COLOR.ink; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(m.l, m.t); ctx.lineTo(m.l, m.t+plotH); ctx.lineTo(m.l+plotW, m.t+plotH);
+  ctx.stroke();
+
+  ctx.fillStyle = COLOR.tick;
+  ctx.font = '500 13px "Lexend", sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (var xt=0; xt<=tMax+1e-9; xt+=xStep) {
+    var pxt = xToPx(xt);
+    ctx.fillRect(pxt-0.5, m.t+plotH, 1, 6);
+    ctx.fillText(xt.toFixed(1), pxt, m.t+plotH+10);
+  }
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (var yt=Math.ceil(fMin/yStep)*yStep; yt<=fMax+1e-9; yt+=yStep) {
+    var pyt = yToPx(yt);
+    ctx.fillRect(m.l-6, pyt-0.5, 6, 1);
+    ctx.fillText(Math.round(yt).toString(), m.l-12, pyt);
+  }
+  ctx.fillStyle = COLOR.ink;
+  ctx.font = '600 14px "Lexend", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('time  (s)', m.l+plotW/2, m.t+plotH+40);
+  ctx.save();
+  ctx.translate(22, m.t+plotH/2); ctx.rotate(-Math.PI/2);
+  ctx.textAlign = 'center';
+  ctx.fillText('vertical ground reaction force  (N)', 0, 0);
+  ctx.restore();
+
+  ctx.strokeStyle = COLOR.trace; ctx.lineWidth = 2.6;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.beginPath();
+  for (var ti=0; ti<trace.N; ti++) {
+    var pxc = xToPx(trace.t[ti]), pyc = yToPx(trace.f[ti]);
+    if (ti === 0) ctx.moveTo(pxc, pyc); else ctx.lineTo(pxc, pyc);
+  }
+  ctx.stroke();
+
+  if (opts.showLandmarks !== false) {
+    for (var k=0; k<trace.landmarks.length; k++) {
+      var lm = trace.landmarks[k];
+      var pxL = xToPx(lm.t), pyL = yToPx(lm.f);
+      var active = opts.activeLandmark === k;
+      ctx.fillStyle = active ? COLOR.landmarkActive : COLOR.landmark;
+      ctx.beginPath(); ctx.arc(pxL, pyL, active?9:5.5, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = COLOR.paper; ctx.lineWidth = 2.5; ctx.stroke();
+      var badgeSize = 28, bx = pxL-badgeSize/2, by = pyL-42, r = 6;
+      ctx.fillStyle = active ? COLOR.landmarkActive : COLOR.landmark;
+      ctx.beginPath();
+      ctx.moveTo(bx+r, by);
+      ctx.lineTo(bx+badgeSize-r, by); ctx.quadraticCurveTo(bx+badgeSize, by, bx+badgeSize, by+r);
+      ctx.lineTo(bx+badgeSize, by+badgeSize-r); ctx.quadraticCurveTo(bx+badgeSize, by+badgeSize, bx+badgeSize-r, by+badgeSize);
+      ctx.lineTo(bx+r, by+badgeSize); ctx.quadraticCurveTo(bx, by+badgeSize, bx, by+badgeSize-r);
+      ctx.lineTo(bx, by+r); ctx.quadraticCurveTo(bx, by, bx+r, by); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = active ? COLOR.landmarkActiveDeep : COLOR.ink; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.font = '700 14px "Lexend", sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText((k+1).toString(), bx+badgeSize/2, by+badgeSize/2+1);
+      ctx.strokeStyle = active ? COLOR.landmarkActive : COLOR.landmark; ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(pxL, by+badgeSize); ctx.lineTo(pxL, pyL-(active?9:5.5)); ctx.stroke();
+    }
+  }
+  if (opts.cursorIdx !== undefined && opts.cursorIdx !== null) {
+    var iC = Math.max(0, Math.min(trace.N-1, opts.cursorIdx));
+    var pxC = xToPx(trace.t[iC]), pyC = yToPx(trace.f[iC]);
+    ctx.strokeStyle = 'rgba(108,45,142,0.45)'; ctx.lineWidth = 1; ctx.setLineDash([3,4]);
+    ctx.beginPath();
+    ctx.moveTo(pxC, m.t); ctx.lineTo(pxC, m.t+plotH);
+    ctx.moveTo(m.l, pyC); ctx.lineTo(m.l+plotW, pyC);
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = COLOR.cursor; ctx.strokeStyle = COLOR.cursorDeep; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(pxC, pyC, 8, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  }
+  canvas._inverseX = function(px){ return ((px-m.l)/plotW)*tMax; };
+  canvas._bounds = {m:m, plotW:plotW, plotH:plotH};
+}
+
+/* =========================================================
+   TAB SWITCHING
+   ========================================================= */
+var tabs = document.querySelectorAll('.tab');
+var contents = document.querySelectorAll('.tab-content');
+tabs.forEach(function(t){
+  t.addEventListener('click', function(){
+    tabs.forEach(function(x){ x.classList.remove('active'); });
+    contents.forEach(function(x){ x.classList.remove('active'); });
+    t.classList.add('active');
+    document.getElementById('tab-' + t.dataset.tab).classList.add('active');
+    if (t.dataset.tab === 'explore') renderExplore();
+    if (t.dataset.tab === 'upload') renderUpload();
+  });
+});
+
+/* =========================================================
+   TAB 1: EXPLORE (CMJ or IMTP)
+   ========================================================= */
+var traceCMJ = buildSynthTrace();
+var traceIMTP = buildIMTPSynth();
+var exCanvas = document.getElementById('canvas-explore');
+var exState = {mode:'cmj', cursorIdx:null, activeLandmark:null};
+
+function getExTrace() { return exState.mode === 'imtp' ? traceIMTP : traceCMJ; }
+function getExLandmarks() { return exState.mode === 'imtp' ? IMTP_LANDMARKS : LANDMARKS; }
+
+function renderExplore(){
+  var trace = getExTrace();
+  var lms = getExLandmarks();
+  drawTrace(exCanvas, trace, {cursorIdx:exState.cursorIdx, activeLandmark:exState.activeLandmark});
+  var pillsEl = document.getElementById('ex-pills');
+  // Rebuild pills when mode changes
+  if (pillsEl.dataset.mode !== exState.mode) {
+    pillsEl.innerHTML = '';
+    lms.forEach(function(lm, idx){
+      var b = document.createElement('button');
+      b.className = 'pill'; b.textContent = lm.n;
+      b.addEventListener('click', function(){
+        exState.activeLandmark = idx;
+        exState.cursorIdx = getExTrace().landmarks[idx].idx;
+        updateExploreReadout(); renderExplore();
+      });
+      pillsEl.appendChild(b);
+    });
+    pillsEl.dataset.mode = exState.mode;
+  }
+  pillsEl.querySelectorAll('.pill').forEach(function(b, i){ b.classList.toggle('active', i===exState.activeLandmark); });
+
+  // Update corner label and legend
+  document.getElementById('ex-corner').textContent = 'Plot 01 · ' +
+    (exState.mode === 'imtp' ? 'IMTP — Hover to explore' : 'CMJ — Hover to explore');
+  var legend = document.getElementById('ex-legend');
+  if (exState.mode === 'imtp') {
+    legend.innerHTML =
+      '<span><span class="sw" style="background:#e5e7eb; border-color:#9ca3af;"></span>Quiet standing</span>' +
+      '<span><span class="sw" style="background:#d1fae5; border-color:#10b981;"></span>Pull (force development)</span>' +
+      '<span><span class="sw" style="background:#d1fae5; border-color:#10b981;"></span>Plateau</span>' +
+      '<span><span class="sw" style="background:#fed7aa; border-color:#f97316;"></span>Release</span>';
+  } else {
+    legend.innerHTML =
+      '<span><span class="sw" style="background:#e5e7eb; border-color:#9ca3af;"></span>Weighing</span>' +
+      '<span><span class="sw" style="background:#fce7f3; border-color:#be123c;"></span>Unweighting</span>' +
+      '<span><span class="sw" style="background:#fee2e2; border-color:#dc2626;"></span>Braking</span>' +
+      '<span><span class="sw" style="background:#dcfce7; border-color:#22c55e;"></span>Propulsion</span>' +
+      '<span><span class="sw" style="background:#dbeafe; border-color:#3b82f6;"></span>Flight</span>' +
+      '<span><span class="sw" style="background:#fed7aa; border-color:#f97316;"></span>Landing</span>' +
+      '<span><span class="sw" style="background:#e5e7eb; border-color:#9ca3af;"></span>Landing Weighing</span>';
+  }
+}
+
+function updateExploreReadout(){
+  var trace = getExTrace();
+  var lms = getExLandmarks();
+  var defaultTitle = exState.mode === 'imtp' ? 'IMTP force-time trace' : 'CMJ force-time trace';
+  var defaultSub = '5 landmarks · ' + (exState.mode === 'imtp' ? '4 phases' : '7 phases');
+  var defaultDesc = "Hover anywhere on the trace to identify the phase you're in. Click any of the pills below to jump to a landmark and read its definition.";
+
+  var i = exState.cursorIdx;
+  if (i === null) {
+    document.getElementById('ex-t').textContent = '—';
+    document.getElementById('ex-f').textContent = '—';
+    document.getElementById('ex-bw').textContent = '—';
+    document.getElementById('ex-ph').textContent = '—';
+    document.getElementById('ex-badge').textContent = '·';
+    document.getElementById('ex-phase').textContent = 'Move the cursor';
+    document.getElementById('ex-name').textContent = defaultTitle;
+    document.getElementById('ex-sub').textContent = defaultSub;
+    document.getElementById('ex-desc').textContent = defaultDesc;
+    return;
+  }
+  var t = trace.t[i], f = trace.f[i];
+  document.getElementById('ex-t').textContent = t.toFixed(2);
+  document.getElementById('ex-f').textContent = Math.round(f);
+  document.getElementById('ex-bw').textContent = Math.round((f/trace.BW)*100);
+  var ph = phaseAt(t, trace);
+  document.getElementById('ex-ph').textContent = ph;
+  if (exState.activeLandmark !== null) {
+    var lm = lms[exState.activeLandmark];
+    document.getElementById('ex-badge').textContent = lm.n;
+    document.getElementById('ex-phase').textContent = lm.phase.toUpperCase();
+    document.getElementById('ex-name').textContent = lm.name;
+    document.getElementById('ex-sub').textContent = 'Landmark ' + lm.n + ' of 5';
+    document.getElementById('ex-desc').textContent = lm.desc;
+  } else {
+    document.getElementById('ex-badge').textContent = '·';
+    document.getElementById('ex-phase').textContent = ph.toUpperCase();
+    document.getElementById('ex-name').textContent = 'Currently in: ' + ph;
+    document.getElementById('ex-sub').textContent = 'Hovering over the trace';
+    document.getElementById('ex-desc').textContent = 'Hover near one of the numbered badges, or click a pill below, to load that landmark\'s definition.';
+  }
+}
+
+exCanvas.addEventListener('mousemove', function(e){
+  var trace = getExTrace();
+  var rect = exCanvas.getBoundingClientRect();
+  var cx = (e.clientX-rect.left)*(exCanvas.width/rect.width);
+  var cy = (e.clientY-rect.top)*(exCanvas.height/rect.height);
+  var bnd = exCanvas._bounds;
+  if (cx < bnd.m.l || cx > bnd.m.l+bnd.plotW || cy < bnd.m.t || cy > bnd.m.t+bnd.plotH) return;
+  var idx = Math.round(exCanvas._inverseX(cx)/trace.dt);
+  exState.cursorIdx = idx; exState.activeLandmark = null;
+  for (var k=0; k<trace.landmarks.length; k++) {
+    if (Math.abs(trace.landmarks[k].idx-idx)*trace.dt < 0.04) { exState.activeLandmark = k; break; }
+  }
+  updateExploreReadout(); renderExplore();
+});
+exCanvas.addEventListener('mouseleave', function(){
+  exState.cursorIdx = null; exState.activeLandmark = null;
+  updateExploreReadout(); renderExplore();
+});
+
+document.getElementById('ex-mode').addEventListener('change', function(e){
+  exState.mode = e.target.value;
+  exState.cursorIdx = null;
+  exState.activeLandmark = null;
+  document.getElementById('ex-mode-desc').textContent = exState.mode === 'imtp'
+    ? 'A static test of maximal isometric strength. The athlete pulls vertically against a fixed bar with their hips and knees in a mid-thigh-pull position, ramping force to maximum over ~3-5 s.'
+    : 'A dynamic test of lower-body explosive strength. The athlete drops down then jumps as high as possible.';
+  updateExploreReadout();
+  renderExplore();
+});
+
+/* TAB 2: WALKTHROUGH (CMJ only) */
+var wkCanvas = document.getElementById('canvas-walk');
+var wkState = {step:0};
+
+/* =========================================================
+   TAB 2: UPLOAD & ANALYSE
+   The core CMJ analysis pipeline. Takes a raw force-time
+   array sampled at `rate` Hz and returns the full variable set.
+   ========================================================= */
+
+function parseCsv(text) {
+  text = text.replace(/^\uFEFF/, '');
+  var firstLine = text.split(/\r?\n/, 1)[0];
+  var delim = ',';
+  if (firstLine.indexOf('\t') !== -1 && firstLine.split('\t').length > firstLine.split(',').length) delim = '\t';
+  else if (firstLine.indexOf(';') !== -1 && firstLine.split(';').length > firstLine.split(',').length) delim = ';';
+  var lines = text.split(/\r?\n/).filter(function(l){ return l.trim().length > 0; });
+  if (lines.length === 0) throw new Error('File is empty.');
+  var firstParts = lines[0].split(delim);
+  var headerLooksLikeText = firstParts.some(function(p){ return p.trim() !== '' && isNaN(Number(p.trim())); });
+  var startRow = headerLooksLikeText ? 1 : 0;
+  var forceCol = -1, timeCol = -1;
+  if (headerLooksLikeText) {
+    var names = firstParts.map(function(p){ return p.trim().toLowerCase(); });
+    var forceCands = ['fz','force','force (n)','vertical force','vgrf','grf','fz (n)','total force','sum force'];
+    var timeCands  = ['time','time (s)','t','time(s)','seconds'];
+    for (var i=0; i<names.length; i++) {
+      if (forceCol === -1 && forceCands.indexOf(names[i]) !== -1) forceCol = i;
+      if (timeCol === -1 && timeCands.indexOf(names[i]) !== -1) timeCol = i;
+    }
+    if (forceCol === -1) {
+      if (lines.length < 2) throw new Error('Header found but no data rows.');
+      var row2 = lines[1].split(delim);
+      for (var j=row2.length-1; j>=0; j--) {
+        var nn = Number(row2[j].trim());
+        if (!isNaN(nn) && nn > 100 && nn < 10000) { forceCol = j; break; }
+      }
+      if (forceCol === -1) throw new Error('Could not find a force column. Try renaming it to "Fz" or "Force".');
+    }
+  } else {
+    if (firstParts.length === 1) forceCol = 0;
+    else {
+      for (var k=firstParts.length-1; k>=0; k--) {
+        var v = Number(firstParts[k].trim());
+        if (!isNaN(v) && v > 100 && v < 10000) { forceCol = k; break; }
+      }
+      if (forceCol === -1) throw new Error('No values look like force (100–10000 N).');
+    }
+  }
+  var force = [];
+  for (var r = startRow; r < lines.length; r++) {
+    var parts = lines[r].split(delim);
+    if (forceCol >= parts.length) continue;
+    var fv = Number(parts[forceCol].trim());
+    if (isFinite(fv)) force.push(fv);
+  }
+  if (force.length < 100) throw new Error('Need at least 100 samples to analyse.');
+  return {force:force, hadTime: timeCol !== -1, hadHeader: headerLooksLikeText, forceCol:forceCol};
+}
+
+/* The big one: CMJ analysis */
+function analyseCMJ(force, rate, bwWindowSec) {
+  var dt = 1/rate;
+  var N = force.length;
+  var t = new Float64Array(N);
+  for (var i=0; i<N; i++) t[i] = i*dt;
+
+  // ---- Body weight from quiet standing window (first `bwWindowSec` seconds)
+  var bwN = Math.min(N, Math.round(bwWindowSec*rate));
+  if (bwN < 50) throw new Error('Quiet-standing window too short — need at least 50 samples.');
+  var sum=0, sumSq=0;
+  for (var k=0; k<bwN; k++) { sum += force[k]; sumSq += force[k]*force[k]; }
+  var BW = sum/bwN;
+  var variance = (sumSq/bwN) - BW*BW;
+  if (variance < 0) variance = 0;
+  var SD = Math.sqrt(variance);
+  var thr5SD = 5*SD;
+  var upperT = BW + thr5SD, lowerT = BW - thr5SD;
+  var g = 9.812;
+  var mass = BW/g;
+
+  // ---- Onset of movement: first sample outside [lower, upper], step back 30 frames
+  var firstOutside = -1;
+  for (var s = bwN; s < N; s++) {
+    if (force[s] > upperT || force[s] < lowerT) { firstOutside = s; break; }
+  }
+  if (firstOutside < 0) throw new Error('Could not detect movement onset — quiet phase looks like the whole trial.');
+  var idxOnset = Math.max(0, firstOutside - 30);
+
+  // ---- Build acceleration, velocity, displacement, power from onset
+  // a = (F - BW) / mass; v_i = v_{i-1} + a_i * dt; d_i = d_{i-1} + v_i * dt
+  // Velocity starts at 0 at onset (assumes quiet standing)
+  var accel = new Float64Array(N);
+  var vel = new Float64Array(N);
+  var disp = new Float64Array(N);
+  var power = new Float64Array(N);
+  for (var i2=0; i2<N; i2++) {
+    accel[i2] = (force[i2] - BW)/mass;
+    if (i2 < idxOnset) { vel[i2] = 0; disp[i2] = 0; power[i2] = force[i2]*0; continue; }
+    if (i2 === idxOnset) { vel[i2] = 0; disp[i2] = 0; power[i2] = 0; continue; }
+    vel[i2] = vel[i2-1] + accel[i2]*dt;
+    disp[i2] = disp[i2-1] + vel[i2]*dt;
+    power[i2] = force[i2]*vel[i2];
+  }
+
+  // ---- Onset of braking: minimum velocity from onset to ... (use min vel before TO)
+  //  Equivalent to spreadsheet's "Frame of Onset of Braking" = min Fz between onset and start-of-propulsion frame.
+  //  We'll find it after locating start of propulsion (peak velocity is end of propulsion in unweighting context;
+  //  more robust: first run pass to find takeoff, then refine).
+
+  // ---- Find takeoff: first frame where force drops below a noise threshold derived from flight phase
+  //  Step 1: provisional search — first place where force < 30 N for 5 consecutive samples (a generous low-threshold)
+  var prov_iTO = -1;
+  var lowRun = 0;
+  for (var z = idxOnset+1; z < N; z++) {
+    if (force[z] < 30) { lowRun++; if (lowRun >= 5) { prov_iTO = z - 4; break; } }
+    else lowRun = 0;
+  }
+  if (prov_iTO < 0) throw new Error('No flight phase detected (force never drops near zero). Check that data ends after takeoff.');
+
+  // Step 2: compute SD of force across a window inside the flight (after prov_iTO, +50 ms in)
+  var flightStart = prov_iTO + Math.round(0.05*rate);
+  var flightEnd = Math.min(N-1, flightStart + Math.round(0.2*rate));
+  var fsum=0, fsumSq=0, fc=0;
+  for (var z2 = flightStart; z2 <= flightEnd; z2++) { fsum += force[z2]; fsumSq += force[z2]*force[z2]; fc++; }
+  if (fc < 10) { // fallback
+    fsum = 0; fsumSq = 0; fc = 0;
+    for (var z3 = prov_iTO; z3 < Math.min(prov_iTO+10, N); z3++) { fsum += force[z3]; fsumSq += force[z3]*force[z3]; fc++; }
+  }
+  var meanF = fsum/fc, varF = Math.max(0, (fsumSq/fc) - meanF*meanF);
+  var sdF = Math.sqrt(varF);
+  var toTouchThr = 5*sdF;
+  if (toTouchThr < 10) toTouchThr = 10;
+
+  // refine takeoff: walk back from prov_iTO while force > toTouchThr
+  var idxTO = prov_iTO;
+  for (var z4 = prov_iTO; z4 > idxOnset; z4--) {
+    if (force[z4] > toTouchThr) { idxTO = z4 + 1; break; }
+  }
+
+  // ---- Find touchdown: first frame after takeoff where force rises above toTouchThr
+  var idxTD = -1;
+  for (var z5 = idxTO + Math.round(0.05*rate); z5 < N; z5++) {
+    if (force[z5] > toTouchThr) { idxTD = z5; break; }
+  }
+  if (idxTD < 0) idxTD = N-1; // no landing captured
+
+  // ---- MODERN VELOCITY-BASED PHASE DEFINITIONS ----
+  // By impulse-momentum, for a CMJ that starts from rest, the impulse during
+  // unweighting (when F < BW, body accelerates downward) must equal the
+  // braking impulse (when F > BW, body decelerates its downward motion) for
+  // velocity to return to zero at the bottom of the countermovement.
+  //
+  // The clean phase boundaries that make this balance hold by definition are:
+  //   Unweighting:  onset → idxVelMin   (peak negative velocity)
+  //   Braking:      idxVelMin → idxConcStart  (v returns to 0 = bottom of CM)
+  //   Propulsion:   idxConcStart → idxTO
+  //
+  // Find peak propulsion velocity first (max upward vel before take-off):
+  var idxPeakPropVel = idxOnset;
+  for (var z6 = idxOnset; z6 < idxTO; z6++) {
+    if (vel[z6] > vel[idxPeakPropVel]) idxPeakPropVel = z6;
+  }
+  // Peak (most negative) velocity = end of unweighting / start of braking:
+  var idxVelMin = idxOnset;
+  for (var z6b = idxOnset; z6b < idxPeakPropVel; z6b++) {
+    if (vel[z6b] < vel[idxVelMin]) idxVelMin = z6b;
+  }
+  // Bottom of countermovement = where velocity returns to zero after vel min.
+  // We find the displacement minimum constrained to lie between idxVelMin and
+  // idxPeakPropVel — this is by definition where vel passes through zero.
+  var idxDispMin = idxVelMin;
+  for (var z7 = idxVelMin; z7 < idxPeakPropVel; z7++) {
+    if (disp[z7] < disp[idxDispMin]) idxDispMin = z7;
+  }
+  // Phase boundaries used for impulse-balance calculations:
+  var idxUnweightStart = idxOnset;
+  var idxUnweightEnd   = idxVelMin;
+  var idxBrakingStart  = idxVelMin;
+  var idxBrakingEnd    = idxDispMin;
+  var idxConcStart     = idxDispMin;
+
+  // ---- Legacy/descriptive landmarks the spreadsheet also reports ----
+  // Spreadsheet "Minimum Fz" — deepest unloading point in force (NOT same as velocity min).
+  // This is reported but does NOT define the phase boundary.
+  var idxMinForce = idxOnset;
+  for (var z8 = idxOnset; z8 < idxDispMin; z8++) {
+    if (force[z8] < force[idxMinForce]) idxMinForce = z8;
+  }
+  // Spreadsheet "End of Braking (force crosses BW going up)" — the moment net force
+  // first becomes positive again. Useful descriptive landmark, but reaching this
+  // point doesn't mean braking is over (velocity is still negative until idxDispMin).
+  var idxNetForceZero = idxDispMin;
+  for (var z9 = idxMinForce; z9 < idxDispMin; z9++) {
+    if (force[z9] >= BW) { idxNetForceZero = z9; break; }
+  }
+
+  // ---- Peak Fz values, mean Fz per phase
+  function maxIn(arr, a, b){ a=Math.max(0,a); b=Math.min(arr.length-1,b); var m=arr[a],idx=a; for (var i=a;i<=b;i++) if (arr[i]>m){m=arr[i];idx=i;} return {val:m,idx:idx}; }
+  function minIn(arr, a, b){ a=Math.max(0,a); b=Math.min(arr.length-1,b); var m=arr[a],idx=a; for (var i=a;i<=b;i++) if (arr[i]<m){m=arr[i];idx=i;} return {val:m,idx:idx}; }
+  function meanIn(arr, a, b){ a=Math.max(0,a); b=Math.min(arr.length-1,b); var s=0,c=0; for (var i=a;i<=b;i++){ s+=arr[i]; c++; } return c>0 ? s/c : 0; }
+  function sumIn(arr, a, b, scale){ a=Math.max(0,a); b=Math.min(arr.length-1,b); var s=0; for (var i=a;i<=b;i++) s+=arr[i]; return s*(scale||1); }
+
+  // Force landmarks (using the new phase boundaries)
+  // Note: "Minimum Fz" is the deepest unloading point in FORCE — it is
+  // a descriptive landmark, NOT a phase boundary.
+  var minFz = {val: force[idxMinForce], idx: idxMinForce};
+  // Braking peak Fz: max force during braking phase (idxVelMin → idxDispMin).
+  var brakingPeakFz = maxIn(force, idxBrakingStart, idxBrakingEnd);
+  // Propulsion peak Fz: max force during propulsion phase (idxConcStart → idxTO).
+  var propPeakFz = maxIn(force, idxConcStart, idxTO);
+  // Mean Fz during each phase.
+  var meanUnweightFz = meanIn(force, idxUnweightStart, idxUnweightEnd);
+  var meanBrakingFz = meanIn(force, idxBrakingStart, idxBrakingEnd);
+  var meanPropFz = meanIn(force, idxConcStart, idxTO);
+  var landingPeakFz = maxIn(force, idxTD, N-1);
+
+  // Landing tail: from touchdown, find where force settles back to BW±5SD for stabilisation
+  var idxStable = N-1;
+  for (var st = idxTD + Math.round(0.2*rate); st < N - Math.round(0.1*rate); st++) {
+    var stable = true;
+    for (var sw = st; sw < st + Math.round(0.1*rate); sw++) {
+      if (force[sw] < lowerT || force[sw] > upperT) { stable = false; break; }
+    }
+    if (stable) { idxStable = st; break; }
+  }
+  var meanLandingFz = meanIn(force, idxTD, Math.min(idxStable, N-1));
+
+  // Velocity landmarks
+  var velOnset = vel[idxOnset];
+  // Peak braking velocity = velocity minimum (which is by definition idxVelMin in the new scheme).
+  var peakBrakingVel = {val: vel[idxVelMin], idx: idxVelMin};
+  var peakPropVel = maxIn(vel, idxConcStart, idxTO);
+  var meanUnweightVel = meanIn(vel, idxUnweightStart, idxUnweightEnd);
+  var meanBrakingVel = meanIn(vel, idxBrakingStart, idxBrakingEnd);
+  var meanPropVel = meanIn(vel, idxConcStart, idxTO);
+  var velTO = vel[idxTO];
+  var velTD = vel[idxTD];
+  var peakLandingVel = minIn(vel, idxTD, N-1);
+
+  // Power
+  var peakBrakingPower = minIn(power, idxBrakingStart, idxBrakingEnd);
+  var peakPropPower = maxIn(power, idxConcStart, idxTO);
+  var meanBrakingPower = meanIn(power, idxBrakingStart, idxBrakingEnd);
+  var meanPropPower = meanIn(power, idxConcStart, idxTO);
+
+  // Force/velocity at peak power & at peak velocity
+  var forceAtPeakPower = force[peakPropPower.idx];
+  var velAtPeakPower = vel[peakPropPower.idx];
+  var forceAtPeakVel = force[peakPropVel.idx];
+
+  // Jump heights
+  var flightTime = (idxTD - idxTO) * dt;
+  var jhFT = (flightTime*flightTime * g) / 8;
+  var jhTOV = (velTO*velTO) / (2*g);
+  var maxDispFlight = -Infinity;
+  for (var fl = idxTO; fl <= idxTD; fl++) if (disp[fl] > maxDispFlight) maxDispFlight = disp[fl];
+  var dispAtTO = disp[idxTO];
+  var jhDisp = maxDispFlight - dispAtTO;
+
+  // RSImod variants
+  var totalTimeToTO = (idxTO - idxOnset) * dt;
+  var totalTimeFromBraking = (idxTO - idxBrakingStart) * dt;
+  var rsiFT_total = jhFT / totalTimeToTO;
+  var rsiFT_braking = jhFT / totalTimeFromBraking;
+  var rsiTOV_total = jhTOV / totalTimeToTO;
+  var rsiTOV_braking = jhTOV / totalTimeFromBraking;
+
+  // Phase times (using velocity-based boundaries)
+  var unweightingTime = (idxUnweightEnd - idxUnweightStart) * dt;
+  var brakingTime = (idxBrakingEnd - idxBrakingStart) * dt;
+  var propulsionTime = (idxTO - idxConcStart) * dt;
+  // Amortisation is no longer a separate phase under the velocity-based scheme
+  // (braking flows directly into propulsion at v=0). For backward compatibility
+  // we report the legacy "amortisation" as the gap between force-zero crossing
+  // and velocity-zero crossing.
+  var amortisationTime = Math.max(0, (idxDispMin - idxNetForceZero) * dt);
+
+  // Displacement variables
+  var dispAtBrakingStart = disp[idxBrakingStart];
+  var brakingDisplacement = disp[idxBrakingEnd] - dispAtBrakingStart;
+  var depthCM = disp[idxDispMin];  // most negative displacement (deepest point)
+  var dispAtTouchdown = disp[idxTD];
+  var dispAtPropulsion = disp[idxConcStart];
+  var propulsionDisp = dispAtTO - dispAtPropulsion;
+  var minDispPostLand = Infinity;
+  for (var pl = idxTD; pl < N; pl++) if (disp[pl] < minDispPostLand) minDispPostLand = disp[pl];
+
+  // Stiffness: (peak braking Fz - force at start of braking) / |braking displacement|
+  var fAtBrakingStart = force[idxBrakingStart];
+  var stiffnessAbs = ((brakingPeakFz.val - fAtBrakingStart) / 1000) / Math.abs(brakingDisplacement);
+  var stiffnessRel = ((brakingPeakFz.val - fAtBrakingStart) / Math.abs(brakingDisplacement)) / mass;
+
+  // Impulse — trapezoidal integration of net force (F - BW) over time.
+  // With velocity-based boundaries, unweightingImpulse + brakingImpulse = 0 by
+  // impulse-momentum theorem (velocity returns to zero at idxDispMin).
+  function impulseTrapezoid(a, b) {
+    a = Math.max(1, a); b = Math.min(force.length-1, b);
+    var s = 0;
+    for (var i = a; i <= b; i++) {
+      s += (((force[i-1] - BW) + (force[i] - BW))/2) * dt;
+    }
+    return s;
+  }
+  var unweightingImpulse = impulseTrapezoid(idxUnweightStart, idxUnweightEnd);
+  var brakingImpulse = impulseTrapezoid(idxBrakingStart, idxBrakingEnd);
+  var propImpulse = impulseTrapezoid(idxConcStart, idxTO);
+  // Net eccentric impulse — sum of unweighting + braking (should be ~0 for a
+  // well-detected trial; deviation indicates noise or detection drift).
+  var netEccImpulse = unweightingImpulse + brakingImpulse;
+  var landingImpulse = impulseTrapezoid(idxTD, Math.min(idxStable, N-1));
+
+  // RFD per sample = (F_i - F_{i-1}) / dt
+  var rfd = new Float64Array(N);
+  for (var i3=1; i3<N; i3++) rfd[i3] = (force[i3] - force[i3-1])/dt;
+  var meanBrakingRFD = meanIn(rfd, idxBrakingStart, idxBrakingEnd);
+  var meanPropRFD = meanIn(rfd, idxConcStart, idxTO);
+  var peakBrakingRFD = maxIn(rfd, idxBrakingStart, idxBrakingEnd);
+  var peakPropRFD = maxIn(rfd, idxConcStart, idxTO);
+
+  // Work (J): trapezoidal of (F - BW) over displacement
+  function workTrapezoid(a, b) {
+    a = Math.max(1, a); b = Math.min(force.length-1, b);
+    var s = 0;
+    for (var i = a; i <= b; i++) {
+      s += ((force[i-1] - BW) + (force[i] - BW))/2 * (disp[i] - disp[i-1]);
+    }
+    return s;
+  }
+  var brakingWork = workTrapezoid(idxBrakingStart, idxBrakingEnd);
+  var propWork = workTrapezoid(idxConcStart, idxTO);
+
+  // F-v curve area
+  function fvArea(a, b) {
+    var s = 0;
+    for (var i = a+1; i <= b; i++) {
+      s += (force[i-1] + force[i])/2 * (vel[i] - vel[i-1]);
+    }
+    return s;
+  }
+  var areaUnweightBraking = fvArea(idxOnset, idxBrakingEnd);
+  var areaPropulsion = fvArea(idxConcStart, idxTO);
+
+  // Temporal landmarks (times from onset of movement)
+  var tOnset = t[idxOnset];
+  function timeFrom(i) { return (t[i] - tOnset); }
+  function timeFromTD(i) { return (t[i] - t[idxTD]); }
+
+  return {
+    // raw
+    force:force, t:t, vel:vel, disp:disp, power:power, rfd:rfd, dt:dt, N:N,
+    // setup
+    BW:BW, mass:mass, SD:SD, upperT:upperT, lowerT:lowerT, toTouchThr:toTouchThr,
+    // landmark indices
+    idxOnset:idxOnset,
+    idxUnweightStart:idxUnweightStart, idxUnweightEnd:idxUnweightEnd,
+    idxBrakingStart:idxBrakingStart, idxBrakingEnd:idxBrakingEnd,
+    idxConcStart:idxConcStart,
+    idxDispMin:idxDispMin, idxVelMin:idxVelMin,
+    idxMinForce:idxMinForce, idxNetForceZero:idxNetForceZero,
+    idxTO:idxTO, idxTD:idxTD, idxStable:idxStable,
+    // FORCE
+    onsetFz: force[idxOnset],
+    minFz: minFz.val, t_minFz: timeFrom(minFz.idx),
+    brakingPeakFz: brakingPeakFz.val, t_brakingPeakFz: timeFrom(brakingPeakFz.idx),
+    propPeakFz: propPeakFz.val, t_propPeakFz: timeFrom(propPeakFz.idx),
+    meanUnweightFz: meanUnweightFz,
+    meanBrakingFz: meanBrakingFz,
+    meanPropFz: meanPropFz,
+    meanLandingFz: meanLandingFz,
+    landingPeakFz: landingPeakFz.val, t_landingPeakFz: timeFromTD(landingPeakFz.idx),
+    forceAtPeakPower: forceAtPeakPower,
+    forceAtPeakVel: forceAtPeakVel,
+    // VELOCITY
+    velOnset: velOnset,
+    peakBrakingVel: peakBrakingVel.val, t_peakBrakingVel: timeFrom(peakBrakingVel.idx),
+    peakPropVel: peakPropVel.val, t_peakPropVel: timeFrom(peakPropVel.idx),
+    meanUnweightVel: meanUnweightVel,
+    meanBrakingVel: meanBrakingVel, meanPropVel: meanPropVel,
+    velTO: velTO, velAtPeakPower: velAtPeakPower,
+    velTD: velTD, peakLandingVel: peakLandingVel.val,
+    // JUMP HEIGHT
+    jhFT: jhFT, jhTOV: jhTOV, jhDisp: jhDisp,
+    flightTime: flightTime,
+    // RSI
+    rsiFT_total: rsiFT_total, rsiFT_braking: rsiFT_braking,
+    rsiTOV_total: rsiTOV_total, rsiTOV_braking: rsiTOV_braking,
+    // PHASE TIMES
+    unweightingTime: unweightingTime,
+    brakingTime: brakingTime,
+    amortisationTime: amortisationTime,
+    propulsionTime: propulsionTime,
+    totalTimeToTO: totalTimeToTO,
+    // DISPLACEMENT
+    dispAtBrakingStart: dispAtBrakingStart,
+    brakingDisplacement: brakingDisplacement,
+    depthCM: depthCM, t_depthCM: timeFrom(idxDispMin),
+    dispAtTO: dispAtTO,
+    dispAtTouchdown: dispAtTouchdown,
+    propulsionDisp: propulsionDisp,
+    minDispPostLand: minDispPostLand,
+    // POWER & WORK
+    peakBrakingPower: peakBrakingPower.val, t_peakBrakingPower: timeFrom(peakBrakingPower.idx),
+    peakPropPower: peakPropPower.val, t_peakPropPower: timeFrom(peakPropPower.idx),
+    meanBrakingPower: meanBrakingPower, meanPropPower: meanPropPower,
+    areaUnweightBraking: areaUnweightBraking, areaPropulsion: areaPropulsion,
+    brakingWork: brakingWork, propWork: propWork,
+    // STIFFNESS
+    stiffnessAbs: stiffnessAbs, stiffnessRel: stiffnessRel,
+    // IMPULSE & RFD
+    unweightingImpulse: unweightingImpulse,
+    brakingImpulse: brakingImpulse,
+    netEccImpulse: netEccImpulse,
+    propImpulse: propImpulse,
+    landingImpulse: landingImpulse,
+    meanBrakingRFD: meanBrakingRFD,
+    meanPropRFD: meanPropRFD,
+    peakBrakingRFD: peakBrakingRFD.val,
+    peakPropRFD: peakPropRFD.val
+  };
+}
+
+/* Draw the uploaded-trial trace with landmarks */
+function drawUploadChart(canvas, A) {
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = COLOR.paper; ctx.fillRect(0,0,W,H);
+  var m = {l:80, r:40, t:40, b:60}, plotW = W-m.l-m.r, plotH = H-m.t-m.b;
+  var N = A.N, force = A.force;
+  // x range: from onset-200ms to touchdown+300ms (or end)
+  var startSamp = Math.max(0, A.idxOnset - Math.round(0.2/A.dt));
+  var endSamp = Math.min(N-1, (A.idxTD>0 ? A.idxTD : N-1) + Math.round(0.3/A.dt));
+  var t0 = A.t[startSamp], t1 = A.t[endSamp];
+  var fMax = 0, fMin = Infinity;
+  for (var i=startSamp; i<=endSamp; i++) { if (force[i]>fMax) fMax=force[i]; if (force[i]<fMin) fMin=force[i]; }
+  fMax *= 1.05;
+  fMin = Math.min(fMin, 0); // include zero
+  function xToPx(x){ return m.l + ((x-t0)/(t1-t0))*plotW; }
+  function yToPx(y){ return m.t + ((fMax-y)/(fMax-fMin))*plotH; }
+
+  // phase bands
+  function band(a, b, fill) {
+    var x0 = xToPx(A.t[a]), x1 = xToPx(A.t[b]);
+    ctx.fillStyle = fill; ctx.fillRect(x0, m.t, x1-x0, plotH);
+  }
+  band(A.idxUnweightStart, A.idxUnweightEnd, 'rgba(108,45,142,0.07)');  // unweighting (onset → vel min)
+  band(A.idxBrakingStart, A.idxBrakingEnd, 'rgba(230,0,126,0.10)');     // braking (vel min → bottom of CM)
+  band(A.idxConcStart, A.idxTO, 'rgba(147,173,44,0.10)');               // propulsion (bottom CM → take-off)
+  band(A.idxTO, A.idxTD, 'rgba(31,26,74,0.03)');                        // flight
+  if (A.idxTD < N-1) band(A.idxTD, Math.min(A.idxStable, N-1), 'rgba(224,138,0,0.10)'); // landing
+
+  // grid
+  ctx.strokeStyle = COLOR.grid; ctx.lineWidth = 1; ctx.beginPath();
+  var yStep = niceStep((fMax-fMin)/6);
+  for (var y=Math.ceil(fMin/yStep)*yStep; y<=fMax; y+=yStep) {
+    var py=yToPx(y); ctx.moveTo(m.l, py); ctx.lineTo(m.l+plotW, py);
+  }
+  var xStep = niceStep((t1-t0)/8);
+  for (var x=Math.ceil(t0/xStep)*xStep; x<=t1; x+=xStep) {
+    var px=xToPx(x); ctx.moveTo(px, m.t); ctx.lineTo(px, m.t+plotH);
+  }
+  ctx.stroke();
+
+  // BW line
+  ctx.strokeStyle = COLOR.bw; ctx.lineWidth = 1.4; ctx.setLineDash([5,5]);
+  ctx.beginPath(); ctx.moveTo(m.l, yToPx(A.BW)); ctx.lineTo(m.l+plotW, yToPx(A.BW));
+  ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = COLOR.bwLabel;
+  ctx.font = '600 12px "Lexend", sans-serif';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+  ctx.fillText('BW = ' + Math.round(A.BW) + ' N', m.l+6, yToPx(A.BW)-4);
+
+  // axes
+  ctx.strokeStyle = COLOR.ink; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(m.l, m.t); ctx.lineTo(m.l, m.t+plotH); ctx.lineTo(m.l+plotW, m.t+plotH);
+  ctx.stroke();
+
+  // tick labels
+  ctx.fillStyle = COLOR.tick; ctx.font = '500 12px "Lexend", sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (var xt=Math.ceil(t0/xStep)*xStep; xt<=t1+1e-9; xt+=xStep) {
+    var pxt=xToPx(xt);
+    ctx.fillRect(pxt-0.5, m.t+plotH, 1, 5);
+    ctx.fillText(xt.toFixed(2), pxt, m.t+plotH+8);
+  }
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (var yt=Math.ceil(fMin/yStep)*yStep; yt<=fMax+1e-9; yt+=yStep) {
+    var pyt=yToPx(yt);
+    ctx.fillRect(m.l-5, pyt-0.5, 5, 1);
+    ctx.fillText(Math.round(yt).toString(), m.l-8, pyt);
+  }
+  ctx.fillStyle = COLOR.ink;
+  ctx.font = '600 13px "Lexend", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('time (s)', m.l+plotW/2, m.t+plotH+34);
+  ctx.save();
+  ctx.translate(20, m.t+plotH/2); ctx.rotate(-Math.PI/2);
+  ctx.textAlign = 'center';
+  ctx.fillText('Fz (N)', 0, 0);
+  ctx.restore();
+
+  // the trace — downsample to ~one point per pixel
+  var samplesInView = endSamp - startSamp + 1;
+  var stride = Math.max(1, Math.floor(samplesInView / plotW));
+  ctx.strokeStyle = COLOR.trace; ctx.lineWidth = 1.6;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (var s=startSamp; s<=endSamp; s+=stride) {
+    var pxs = xToPx(A.t[s]), pys = yToPx(force[s]);
+    if (s === startSamp) ctx.moveTo(pxs, pys); else ctx.lineTo(pxs, pys);
+  }
+  ctx.stroke();
+
+  // landmarks (numbered)
+  var marks = [
+    {idx:A.idxOnset, label:'1', desc:'Onset'},
+    {idx:A.idxMinForce, label:'2', desc:'Min Fz'},
+    {idx:A.idxVelMin, label:'3', desc:'Peak braking v'},
+    {idx:A.idxDispMin, label:'4', desc:'Bottom CM'},
+    {idx:A.idxTO, label:'5', desc:'Take-off'},
+    {idx:A.idxTD, label:'6', desc:'Touchdown'}
+  ];
+  for (var mi=0; mi<marks.length; mi++) {
+    var mk = marks[mi];
+    if (mk.idx < startSamp || mk.idx > endSamp) continue;
+    var pxL = xToPx(A.t[mk.idx]), pyL = yToPx(force[mk.idx]);
+    ctx.fillStyle = '#E6007E';
+    ctx.beginPath(); ctx.arc(pxL, pyL, 5, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+    var bs = 22, bx = pxL-bs/2, by = Math.max(m.t+2, pyL-32);
+    ctx.fillStyle = '#1F1A4A';
+    ctx.beginPath();
+    var rr = 4;
+    ctx.moveTo(bx+rr, by); ctx.lineTo(bx+bs-rr, by);
+    ctx.quadraticCurveTo(bx+bs, by, bx+bs, by+rr); ctx.lineTo(bx+bs, by+bs-rr);
+    ctx.quadraticCurveTo(bx+bs, by+bs, bx+bs-rr, by+bs); ctx.lineTo(bx+rr, by+bs);
+    ctx.quadraticCurveTo(bx, by+bs, bx, by+bs-rr); ctx.lineTo(bx, by+rr);
+    ctx.quadraticCurveTo(bx, by, bx+rr, by); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '700 12px "Lexend", sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(mk.label, bx+bs/2, by+bs/2+1);
+    ctx.strokeStyle = '#1F1A4A'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pxL, by+bs); ctx.lineTo(pxL, pyL-5); ctx.stroke();
+  }
+
+  // Phase labels at top
+  ctx.fillStyle = COLOR.phaseLabel;
+  ctx.font = '600 11px "Lexend", sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  function phaseLabel(a, b, txt) {
+    var x0=xToPx(A.t[a]), x1=xToPx(A.t[b]);
+    if (x1-x0 > 50 && x0 < m.l+plotW && x1 > m.l) {
+      ctx.fillText(txt, Math.max(m.l, Math.min(m.l+plotW, (x0+x1)/2)), m.t+4);
+    }
+  }
+  phaseLabel(A.idxUnweightStart, A.idxUnweightEnd, 'Unweighting');
+  phaseLabel(A.idxBrakingStart, A.idxBrakingEnd, 'Braking');
+  phaseLabel(A.idxConcStart, A.idxTO, 'Propulsion');
+  phaseLabel(A.idxTO, A.idxTD, 'Flight');
+  if (A.idxTD < N-1) phaseLabel(A.idxTD, Math.min(A.idxStable, N-1), 'Landing');
+}
+
+/* ===== Upload UI wiring ===== */
+var uploadState = {csv:null, fileName:''};
+
+document.getElementById('up-rate').addEventListener('change', function(e){
+  document.getElementById('up-rate-custom-wrap').classList.toggle('hidden', e.target.value !== 'custom');
+});
+function getUploadRate() {
+  var v = document.getElementById('up-rate').value;
+  if (v === 'custom') return Number(document.getElementById('up-rate-custom').value) || 1000;
+  return Number(v);
+}
+
+var upZone = document.getElementById('up-upload-zone');
+var upInput = document.getElementById('up-csv-file');
+upZone.addEventListener('click', function(){ upInput.click(); });
+upZone.addEventListener('dragover', function(e){ e.preventDefault(); upZone.classList.add('dragover'); });
+upZone.addEventListener('dragleave', function(){ upZone.classList.remove('dragover'); });
+upZone.addEventListener('drop', function(e){
+  e.preventDefault(); upZone.classList.remove('dragover');
+  var f = e.dataTransfer.files[0]; if (f) loadUploadFile(f);
+});
+upInput.addEventListener('change', function(e){
+  var f = e.target.files[0]; if (f) loadUploadFile(f);
+});
+
+function showUpError(msg) {
+  var el = document.getElementById('up-error');
+  el.textContent = msg; el.classList.remove('hidden');
+}
+function clearUpError() { document.getElementById('up-error').classList.add('hidden'); }
+
+function loadUploadFile(file) {
+  clearUpError();
+  uploadState.fileName = file.name;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var parsed = parseCsv(ev.target.result);
+      uploadState.csv = parsed;
+      document.getElementById('up-file-display').textContent =
+        file.name + ' — ' + parsed.force.length + ' samples loaded';
+      document.getElementById('up-file-display').classList.remove('hidden');
+    } catch (err) {
+      uploadState.csv = null;
+      document.getElementById('up-file-display').classList.add('hidden');
+      showUpError('Could not parse: ' + err.message);
+    }
+  };
+  reader.onerror = function(){ showUpError('File read failed.'); };
+  reader.readAsText(file);
+}
+
+/* Demo: use the exact same real force-plate data as the Explore tab (500 Hz). */
+document.getElementById('up-load-demo').addEventListener('click', function(){
+  var force = Array.from(traceCMJ.f);
+  var N = force.length;
+  uploadState.csv = {force: force, hadTime: false, hadHeader: false, forceCol: 0};
+  uploadState.fileName = 'demo_cmj_500hz.csv (real force-plate data)';
+  document.getElementById('up-file-display').textContent = uploadState.fileName + ' — ' + N + ' samples loaded';
+  document.getElementById('up-file-display').classList.remove('hidden');
+  document.getElementById('up-rate').value = '500';
+  clearUpError();
+});
+
+document.getElementById('up-analyse').addEventListener('click', function(){
+  clearUpError();
+  if (!uploadState.csv) { showUpError('Upload a CSV (or click Demo) first.'); return; }
+  var rate = getUploadRate();
+  if (!rate || rate <= 0) { showUpError('Invalid sampling rate.'); return; }
+  var bwWin = Number(document.getElementById('up-bw-window').value) || 1.0;
+  try {
+    var A = analyseCMJ(uploadState.csv.force, rate, bwWin);
+    renderUploadResults(A, rate);
+  } catch (err) {
+    showUpError('Analysis failed: ' + err.message);
+  }
+});
+
+function fmt(v, dp) {
+  if (v == null || !isFinite(v)) return '—';
+  if (dp == null) dp = 2;
+  return Number(v).toFixed(dp);
+}
+
+function renderUploadResults(A, rate) {
+  document.getElementById('up-results-pane').classList.remove('hidden');
+  document.getElementById('up-meta').textContent =
+    uploadState.fileName + ' · ' + rate + ' Hz · ' + A.N + ' samples · BW window ' +
+    (document.getElementById('up-bw-window').value) + ' s';
+  // headline chips
+  document.getElementById('up-bw').textContent = Math.round(A.BW);
+  document.getElementById('up-mass').textContent = A.mass.toFixed(1);
+  document.getElementById('up-jhft').textContent = (A.jhFT*100).toFixed(1);
+  document.getElementById('up-jhtov').textContent = (A.jhTOV*100).toFixed(1);
+  document.getElementById('up-pp').textContent = Math.round(A.peakPropPower);
+  document.getElementById('up-rsi').textContent = A.rsiFT_total.toFixed(2);
+
+  // chart
+  drawUploadChart(document.getElementById('up-chart'), A);
+
+  // build table
+  var rows = [
+    {group:'Force Analysis'},
+    {name:'Onset of movement Fz', val:A.onsetFz, unit:'N', dp:1},
+    {name:'Minimum Fz', val:A.minFz, unit:'N', dp:1, time:A.t_minFz},
+    {name:'Braking peak Fz', val:A.brakingPeakFz, unit:'N', dp:1, time:A.t_brakingPeakFz},
+    {name:'Propulsion peak Fz', val:A.propPeakFz, unit:'N', dp:1, time:A.t_propPeakFz},
+    {name:'Mean braking Fz', val:A.meanBrakingFz, unit:'N', dp:1},
+    {name:'Mean propulsion Fz', val:A.meanPropFz, unit:'N', dp:1},
+    {name:'Mean landing Fz', val:A.meanLandingFz, unit:'N', dp:1},
+    {name:'Peak landing Fz', val:A.landingPeakFz, unit:'N', dp:1, time:A.t_landingPeakFz, timeFromTD:true},
+    {name:'Force at peak power', val:A.forceAtPeakPower, unit:'N', dp:1},
+    {name:'Force at peak velocity', val:A.forceAtPeakVel, unit:'N', dp:1},
+
+    {group:'Velocity Analysis'},
+    {name:'Vertical velocity at onset', val:A.velOnset, unit:'m·s⁻¹', dp:3},
+    {name:'Peak braking velocity', val:A.peakBrakingVel, unit:'m·s⁻¹', dp:3, time:A.t_peakBrakingVel},
+    {name:'Peak propulsion velocity', val:A.peakPropVel, unit:'m·s⁻¹', dp:3, time:A.t_peakPropVel},
+    {name:'Mean braking velocity', val:A.meanBrakingVel, unit:'m·s⁻¹', dp:3},
+    {name:'Mean propulsion velocity', val:A.meanPropVel, unit:'m·s⁻¹', dp:3},
+    {name:'Vertical velocity at take-off', val:A.velTO, unit:'m·s⁻¹', dp:3},
+    {name:'Velocity at peak power', val:A.velAtPeakPower, unit:'m·s⁻¹', dp:3},
+    {name:'Velocity at landing', val:A.velTD, unit:'m·s⁻¹', dp:3},
+    {name:'Peak landing velocity', val:A.peakLandingVel, unit:'m·s⁻¹', dp:3},
+
+    {group:'Jump Height Analysis'},
+    {name:'Jump height (flight time)', val:A.jhFT*100, unit:'cm', dp:1},
+    {name:'Jump height (TOV)', val:A.jhTOV*100, unit:'cm', dp:1},
+    {name:'Jump height (CM displacement)', val:A.jhDisp*100, unit:'cm', dp:1},
+
+    {group:'Reactive Strength Analysis'},
+    {name:'RSI-mod  (jhFT / total movement time)', val:A.rsiFT_total, dp:3},
+    {name:'RSI-mod  (jhFT / time from braking)', val:A.rsiFT_braking, dp:3},
+    {name:'RSI-mod  (jhTOV / total movement time)', val:A.rsiTOV_total, dp:3},
+    {name:'RSI-mod  (jhTOV / time from braking)', val:A.rsiTOV_braking, dp:3},
+
+    {group:'Phase Time Analysis'},
+    {name:'Unweighting phase time', val:A.unweightingTime, unit:'s', dp:3},
+    {name:'Braking phase time', val:A.brakingTime, unit:'s', dp:3},
+    {name:'Amortisation phase time', val:A.amortisationTime, unit:'s', dp:3},
+    {name:'Propulsion phase time', val:A.propulsionTime, unit:'s', dp:3},
+    {name:'Total time to take-off', val:A.totalTimeToTO, unit:'s', dp:3},
+    {name:'Flight time', val:A.flightTime, unit:'s', dp:3},
+
+    {group:'Displacement Analysis'},
+    {name:'Displacement at start of braking', val:A.dispAtBrakingStart, unit:'m', dp:4},
+    {name:'Displacement during braking', val:A.brakingDisplacement, unit:'m', dp:4},
+    {name:'Depth of countermovement', val:A.depthCM, unit:'m', dp:4, time:A.t_depthCM},
+    {name:'Displacement at take-off', val:A.dispAtTO, unit:'m', dp:4},
+    {name:'Propulsion displacement', val:A.propulsionDisp, unit:'m', dp:4},
+    {name:'Displacement at touchdown', val:A.dispAtTouchdown, unit:'m', dp:4},
+    {name:'Peak negative displacement post-landing', val:A.minDispPostLand, unit:'m', dp:4},
+
+    {group:'Power & Work Analysis'},
+    {name:'Peak braking power', val:A.peakBrakingPower, unit:'W', dp:0, time:A.t_peakBrakingPower},
+    {name:'Peak propulsion power', val:A.peakPropPower, unit:'W', dp:0, time:A.t_peakPropPower},
+    {name:'Mean braking power', val:A.meanBrakingPower, unit:'W', dp:0},
+    {name:'Mean propulsion power', val:A.meanPropPower, unit:'W', dp:0},
+    {name:'Area under unweighting-braking F-v curve', val:A.areaUnweightBraking, unit:'W', dp:1},
+    {name:'Area under propulsion F-v curve', val:A.areaPropulsion, unit:'W', dp:1},
+    {name:'Braking work', val:A.brakingWork, unit:'J', dp:2},
+    {name:'Propulsion work', val:A.propWork, unit:'J', dp:2},
+
+    {group:'Stiffness Analysis'},
+    {name:'Vertical leg stiffness', val:A.stiffnessAbs, unit:'kN·m⁻¹', dp:2},
+    {name:'Relative vertical leg stiffness', val:A.stiffnessRel, unit:'N·kg⁻¹·m⁻¹', dp:1},
+
+    {group:'Impulse & RFD'},
+    {name:'Unweighting impulse', val:A.unweightingImpulse, unit:'N·s', dp:2},
+    {name:'Braking impulse', val:A.brakingImpulse, unit:'N·s', dp:2},
+    {name:'Net eccentric impulse  (should be ≈ 0)', val:A.netEccImpulse, unit:'N·s', dp:2},
+    {name:'Propulsion impulse', val:A.propImpulse, unit:'N·s', dp:2},
+    {name:'Landing impulse', val:A.landingImpulse, unit:'N·s', dp:2},
+    {name:'Mean braking RFD', val:A.meanBrakingRFD, unit:'N·s⁻¹', dp:0},
+    {name:'Mean propulsion RFD', val:A.meanPropRFD, unit:'N·s⁻¹', dp:0},
+    {name:'Peak braking RFD', val:A.peakBrakingRFD, unit:'N·s⁻¹', dp:0},
+    {name:'Peak propulsion RFD', val:A.peakPropRFD, unit:'N·s⁻¹', dp:0},
+
+    {group:'Methods'},
+    {name:'Body weight', val:A.BW, unit:'N', dp:1},
+    {name:'5 × SD threshold', val:5*A.SD, unit:'N', dp:2},
+    {name:'Take-off / touchdown threshold', val:A.toTouchThr, unit:'N', dp:2}
+  ];
+
+  var html = '<thead><tr><th>Variable</th><th>Value</th></tr></thead><tbody>';
+  rows.forEach(function(r) {
+    if (r.group) {
+      html += '<tr class="group-header"><td colspan="2">' + r.group + '</td></tr>';
+    } else {
+      var v = fmt(r.val, r.dp != null ? r.dp : 2);
+      var u = r.unit ? ' <span style="color:var(--indigo-soft);font-weight:500;font-size:11px;">' + r.unit + '</span>' : '';
+      var meta = '';
+      if (r.time != null && isFinite(r.time)) {
+        meta = '<span class="var-meta">' + (r.timeFromTD ? 'time from touchdown: ' : 'time from onset: ') + r.time.toFixed(3) + ' s</span>';
+      }
+      html += '<tr><td><span class="var-name">' + r.name + '</span>' + meta + '</td><td>' + v + u + '</td></tr>';
+    }
+  });
+  html += '</tbody>';
+  document.getElementById('up-table').innerHTML = html;
+
+  // store for download
+  uploadState.lastResult = {analysis:A, rate:rate, rows:rows};
+}
+
+// CSV utility: escape a value for safe CSV output
+function csvEscape(v) {
+  if (v == null || (typeof v === 'number' && !isFinite(v))) return '';
+  var s = String(v);
+  // Quote if contains comma, quote, or newline
+  if (s.indexOf(',') !== -1 || s.indexOf('"') !== -1 || s.indexOf('\n') !== -1) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
+function downloadCSV(content, filename) {
+  var blob = new Blob([content], {type:'text/csv;charset=utf-8;'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// CMJ — Download summary CSV (variables, grouped by category)
+document.getElementById('up-download').addEventListener('click', function() {
+  if (!uploadState.lastResult) return;
+  var A = uploadState.lastResult.analysis;
+  var rate = uploadState.lastResult.rate;
+  var rows = uploadState.lastResult.rows;
+
+  var lines = [];
+  lines.push('CMJ Force-Time Analysis');
+  lines.push('File,' + csvEscape(uploadState.fileName));
+  lines.push('Computed at,' + csvEscape(new Date().toISOString()));
+  lines.push('Sampling rate (Hz),' + rate);
+  lines.push('Body weight (N),' + (A.BW != null ? A.BW.toFixed(2) : ''));
+  lines.push('Body mass (kg),' + (A.mass != null ? A.mass.toFixed(2) : ''));
+  lines.push('Samples (N),' + A.N);
+  lines.push('');
+  lines.push('Group,Variable,Value,Unit,Time (s)');
+
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    if (r.group) {
+      lines.push(csvEscape(r.group) + ',,,,');
+      var currentGroup = r.group;
+      continue;
+    }
+    var val = '';
+    if (r.val != null && isFinite(r.val)) {
+      val = r.dp != null ? r.val.toFixed(r.dp) : r.val.toFixed(3);
+    }
+    var unit = r.unit || '';
+    var timeVal = '';
+    if (r.time != null && isFinite(r.time)) timeVal = r.time.toFixed(3);
+    lines.push(
+      ',' +
+      csvEscape(r.name) + ',' +
+      csvEscape(val) + ',' +
+      csvEscape(unit) + ',' +
+      csvEscape(timeVal)
+    );
+  }
+
+  downloadCSV(lines.join('\n'), 'cmj_variables_' + (new Date().toISOString().slice(0,10)) + '.csv');
+});
+
+// CMJ — Download time-series CSV (raw arrays + phase column)
+document.getElementById('up-download-ts').addEventListener('click', function() {
+  if (!uploadState.lastResult) return;
+  var A = uploadState.lastResult.analysis;
+
+  // Build phase lookup based on landmark indices
+  function phaseAtIdx(i) {
+    if (i < A.idxOnset) return 'Weighing';
+    if (i < A.idxUnweightEnd) return 'Unweighting';
+    if (i < A.idxBrakingEnd) return 'Braking';
+    if (i < A.idxTO) return 'Propulsion';
+    if (i < A.idxTD) return 'Flight';
+    if (i < A.idxStable) return 'Landing';
+    return 'Landing Weighing';
+  }
+
+  var lines = [];
+  lines.push('# CMJ time-series export');
+  lines.push('# File: ' + uploadState.fileName);
+  lines.push('# Sampling rate (Hz): ' + uploadState.lastResult.rate);
+  lines.push('# Body weight (N): ' + (A.BW != null ? A.BW.toFixed(2) : ''));
+  lines.push('# Body mass (kg): ' + (A.mass != null ? A.mass.toFixed(2) : ''));
+  lines.push('time_s,force_N,velocity_ms,displacement_m,power_W,phase');
+
+  for (var i = 0; i < A.N; i++) {
+    lines.push(
+      A.t[i].toFixed(4) + ',' +
+      A.force[i].toFixed(2) + ',' +
+      (A.vel ? A.vel[i].toFixed(4) : '') + ',' +
+      (A.disp ? A.disp[i].toFixed(5) : '') + ',' +
+      (A.power ? A.power[i].toFixed(2) : '') + ',' +
+      phaseAtIdx(i)
+    );
+  }
+
+  downloadCSV(lines.join('\n'), 'cmj_timeseries_' + (new Date().toISOString().slice(0,10)) + '.csv');
+});
+
+/* =========================================================
+   IMTP ANALYSIS PIPELINE
+   =========================================================
+   Computes the standard set of IMTP performance variables from a
+   1000 Hz vertical GRF trial. Detection method mirrors the IMTP
+   spreadsheet: system weight from the first N seconds of quiet
+   standing on the plate (athlete gripping the bar), pull onset
+   when force exceeds SW + 5×SD, time-windowed RFD and impulse
+   from onset to fixed time intervals (50, 100, 150, 200, 250 ms),
+   peak force across the trial. */
+function analyseIMTP(force, rate, swWindowSec) {
+  var dt = 1/rate;
+  var N = force.length;
+  var t = new Float64Array(N);
+  for (var i=0; i<N; i++) t[i] = i*dt;
+
+  // System weight from quiet standing window
+  var swN = Math.min(N, Math.round(swWindowSec*rate));
+  if (swN < 50) throw new Error('Quiet-standing window too short — need at least 50 samples.');
+  var sum = 0, sumSq = 0;
+  for (var k=0; k<swN; k++) { sum += force[k]; sumSq += force[k]*force[k]; }
+  var SW = sum/swN;
+  var variance = (sumSq/swN) - SW*SW;
+  if (variance < 0) variance = 0;
+  var SD = Math.sqrt(variance);
+  var startThreshold = SW + 5*SD;
+  var bodyMassEstimate = SW / 9.812;
+
+  // Pull onset: first sample exceeding SW + 5×SD; step back 30 ms to capture true onset
+  var firstAbove = -1;
+  for (var s = swN; s < N; s++) {
+    if (force[s] > startThreshold) { firstAbove = s; break; }
+  }
+  if (firstAbove < 0) throw new Error('No pull detected — force never exceeded system weight + 5×SD.');
+  var idxOnset = Math.max(0, firstAbove - Math.round(0.030*rate));
+
+  // Peak force across whole trial
+  var peakF = force[0], idxPeak = 0;
+  for (var p = 0; p < N; p++) {
+    if (force[p] > peakF) { peakF = force[p]; idxPeak = p; }
+  }
+  var timeToPeak = (idxPeak - idxOnset) * dt;
+
+  // Force at fixed time intervals from onset (interpolated)
+  function forceAt(tFromOnset) {
+    var sampleOffset = tFromOnset * rate;
+    var i0 = idxOnset + Math.floor(sampleOffset);
+    var frac = sampleOffset - Math.floor(sampleOffset);
+    if (i0 < 0 || i0 >= N-1) return NaN;
+    return force[i0]*(1-frac) + force[i0+1]*frac;
+  }
+  var fAtOnset = force[idxOnset];
+  var f50  = forceAt(0.050);
+  var f100 = forceAt(0.100);
+  var f150 = forceAt(0.150);
+  var f200 = forceAt(0.200);
+  var f250 = forceAt(0.250);
+
+  // Net force at fixed time intervals (subtract SW)
+  var netF50 = f50 - SW, netF100 = f100 - SW, netF150 = f150 - SW;
+  var netF200 = f200 - SW, netF250 = f250 - SW;
+
+  // Time-windowed RFD = ΔF / Δt (slope from onset to time t)
+  function rfdWindow(tFromOnset, fAtTime) {
+    if (!isFinite(fAtTime)) return NaN;
+    return (fAtTime - fAtOnset) / tFromOnset;
+  }
+  var rfd50  = rfdWindow(0.050, f50);
+  var rfd100 = rfdWindow(0.100, f100);
+  var rfd150 = rfdWindow(0.150, f150);
+  var rfd200 = rfdWindow(0.200, f200);
+  var rfd250 = rfdWindow(0.250, f250);
+
+  // Peak instantaneous RFD (over a 20 ms moving window for noise robustness)
+  var rfdWin = Math.round(0.020*rate);
+  var peakInstRFD = -Infinity, idxPeakRFD = idxOnset;
+  for (var r = idxOnset; r < Math.min(idxPeak, N-rfdWin); r++) {
+    var slope = (force[r+rfdWin] - force[r]) / (rfdWin*dt);
+    if (slope > peakInstRFD) { peakInstRFD = slope; idxPeakRFD = r; }
+  }
+
+  // Net impulse over time windows: ∫(F - SW)dt from onset
+  function impulseWindow(tFromOnset) {
+    var endSample = idxOnset + Math.round(tFromOnset*rate);
+    if (endSample >= N) return NaN;
+    var s = 0;
+    for (var i = idxOnset+1; i <= endSample; i++) {
+      s += (((force[i-1] - SW) + (force[i] - SW))/2) * dt;
+    }
+    return s;
+  }
+  var imp50  = impulseWindow(0.050);
+  var imp100 = impulseWindow(0.100);
+  var imp150 = impulseWindow(0.150);
+  var imp200 = impulseWindow(0.200);
+  var imp250 = impulseWindow(0.250);
+
+  // Net impulse over user-defined phase: onset → peak force
+  var totalImpulseToPeak = 0;
+  for (var im = idxOnset+1; im <= idxPeak; im++) {
+    totalImpulseToPeak += (((force[im-1] - SW) + (force[im] - SW))/2) * dt;
+  }
+
+  // Mean force during the pull (onset → peak)
+  var meanPullF = 0, cPull = 0;
+  for (var mp = idxOnset; mp <= idxPeak; mp++) { meanPullF += force[mp]; cPull++; }
+  meanPullF = cPull > 0 ? meanPullF/cPull : 0;
+
+  // Relative variables
+  var peakFRel = peakF / SW;            // × system weight
+  var peakFNet = peakF - SW;             // net peak force in N
+  var peakFperKg = peakF / bodyMassEstimate;  // N·kg⁻¹
+
+  return {
+    force:force, t:t, dt:dt, N:N,
+    // setup
+    SW:SW, SD:SD, startThreshold:startThreshold,
+    bodyMassEstimate:bodyMassEstimate, swWindowSec:swWindowSec,
+    // landmarks
+    idxOnset:idxOnset, idxPeak:idxPeak, idxPeakRFD:idxPeakRFD,
+    tOnset: idxOnset*dt, tPeak: idxPeak*dt,
+    // peak force
+    peakF:peakF, peakFNet:peakFNet, peakFRel:peakFRel, peakFperKg:peakFperKg,
+    timeToPeak:timeToPeak, meanPullF:meanPullF,
+    // forces at intervals
+    fAtOnset:fAtOnset, f50:f50, f100:f100, f150:f150, f200:f200, f250:f250,
+    netF50:netF50, netF100:netF100, netF150:netF150, netF200:netF200, netF250:netF250,
+    // RFD
+    rfd50:rfd50, rfd100:rfd100, rfd150:rfd150, rfd200:rfd200, rfd250:rfd250,
+    peakInstRFD:peakInstRFD,
+    // impulse
+    imp50:imp50, imp100:imp100, imp150:imp150, imp200:imp200, imp250:imp250,
+    totalImpulseToPeak:totalImpulseToPeak
+  };
+}
+
+/* Draw the IMTP trace with landmarks */
+function drawIMTPChart(canvas, A) {
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = COLOR.paper; ctx.fillRect(0,0,W,H);
+  var m = {l:80, r:40, t:40, b:60}, plotW = W-m.l-m.r, plotH = H-m.t-m.b;
+  var N = A.N, force = A.force;
+
+  // x range: from 200 ms before onset to 500 ms after peak (or end)
+  var startSamp = Math.max(0, A.idxOnset - Math.round(0.5/A.dt));
+  var endSamp = Math.min(N-1, A.idxPeak + Math.round(0.8/A.dt));
+  var t0 = A.t[startSamp], t1 = A.t[endSamp];
+  var fMaxScan = 0, fMinScan = Infinity;
+  for (var i=startSamp; i<=endSamp; i++) {
+    if (force[i]>fMaxScan) fMaxScan=force[i];
+    if (force[i]<fMinScan) fMinScan=force[i];
+  }
+  var fMax = fMaxScan * 1.05;
+  var fMin = Math.max(0, fMinScan - 200);
+  function xToPx(x){ return m.l + ((x-t0)/(t1-t0))*plotW; }
+  function yToPx(y){ return m.t + ((fMax-y)/(fMax-fMin))*plotH; }
+
+  // Phase bands
+  function band(a, b, fill) {
+    var x0 = xToPx(A.t[a]), x1 = xToPx(A.t[b]);
+    ctx.fillStyle = fill; ctx.fillRect(x0, m.t, x1-x0, plotH);
+  }
+  band(startSamp, A.idxOnset, 'rgba(108,45,142,0.07)');     // quiet
+  band(A.idxOnset, A.idxPeak, 'rgba(230,0,126,0.10)');      // pull / force development
+  if (endSamp > A.idxPeak) band(A.idxPeak, endSamp, 'rgba(147,173,44,0.10)'); // post-peak plateau
+
+  // Grid
+  ctx.strokeStyle = COLOR.grid; ctx.lineWidth = 1; ctx.beginPath();
+  var yStep = niceStep((fMax-fMin)/6);
+  for (var y=Math.ceil(fMin/yStep)*yStep; y<=fMax; y+=yStep) {
+    var py=yToPx(y); ctx.moveTo(m.l, py); ctx.lineTo(m.l+plotW, py);
+  }
+  var xStep = niceStep((t1-t0)/8);
+  for (var x=Math.ceil(t0/xStep)*xStep; x<=t1; x+=xStep) {
+    var px=xToPx(x); ctx.moveTo(px, m.t); ctx.lineTo(px, m.t+plotH);
+  }
+  ctx.stroke();
+
+  // SW line
+  ctx.strokeStyle = COLOR.bw; ctx.lineWidth = 1.4; ctx.setLineDash([5,5]);
+  ctx.beginPath(); ctx.moveTo(m.l, yToPx(A.SW)); ctx.lineTo(m.l+plotW, yToPx(A.SW));
+  ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = COLOR.bwLabel;
+  ctx.font = '600 12px "Lexend", sans-serif';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+  ctx.fillText('SW = ' + Math.round(A.SW) + ' N', m.l+6, yToPx(A.SW)-4);
+
+  // Start threshold line
+  ctx.strokeStyle = '#54226e'; ctx.lineWidth = 1; ctx.setLineDash([2,4]);
+  ctx.beginPath(); ctx.moveTo(m.l, yToPx(A.startThreshold)); ctx.lineTo(m.l+plotW, yToPx(A.startThreshold));
+  ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = '#54226e';
+  ctx.font = '500 11px "Lexend", sans-serif';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+  ctx.fillText('SW + 5×SD threshold', m.l+6, yToPx(A.startThreshold)-3);
+
+  // Axes
+  ctx.strokeStyle = COLOR.ink; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(m.l, m.t); ctx.lineTo(m.l, m.t+plotH); ctx.lineTo(m.l+plotW, m.t+plotH);
+  ctx.stroke();
+
+  // Tick labels
+  ctx.fillStyle = COLOR.tick; ctx.font = '500 12px "Lexend", sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (var xt=Math.ceil(t0/xStep)*xStep; xt<=t1+1e-9; xt+=xStep) {
+    var pxt=xToPx(xt);
+    ctx.fillRect(pxt-0.5, m.t+plotH, 1, 5);
+    ctx.fillText(xt.toFixed(2), pxt, m.t+plotH+8);
+  }
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (var yt=Math.ceil(fMin/yStep)*yStep; yt<=fMax+1e-9; yt+=yStep) {
+    var pyt=yToPx(yt);
+    ctx.fillRect(m.l-5, pyt-0.5, 5, 1);
+    ctx.fillText(Math.round(yt).toString(), m.l-8, pyt);
+  }
+  ctx.fillStyle = COLOR.ink;
+  ctx.font = '600 13px "Lexend", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('time (s)', m.l+plotW/2, m.t+plotH+34);
+  ctx.save();
+  ctx.translate(20, m.t+plotH/2); ctx.rotate(-Math.PI/2);
+  ctx.textAlign = 'center';
+  ctx.fillText('Fz (N)', 0, 0);
+  ctx.restore();
+
+  // Force trace (downsample to ~1 point per pixel)
+  var samplesInView = endSamp - startSamp + 1;
+  var stride = Math.max(1, Math.floor(samplesInView / plotW));
+  ctx.strokeStyle = COLOR.trace; ctx.lineWidth = 1.6;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (var s=startSamp; s<=endSamp; s+=stride) {
+    var pxs = xToPx(A.t[s]), pys = yToPx(force[s]);
+    if (s === startSamp) ctx.moveTo(pxs, pys); else ctx.lineTo(pxs, pys);
+  }
+  ctx.stroke();
+
+  // Time-interval markers (vertical lines at 50, 100, 150, 200, 250 ms after onset)
+  var intervals = [{t:0.050, lbl:'50'}, {t:0.100, lbl:'100'}, {t:0.150, lbl:'150'},
+                   {t:0.200, lbl:'200'}, {t:0.250, lbl:'250'}];
+  ctx.strokeStyle = 'rgba(31,26,74,0.25)'; ctx.lineWidth = 1; ctx.setLineDash([2,3]);
+  ctx.fillStyle = COLOR.inkSoft;
+  ctx.font = '500 10px "Lexend", sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (var iv=0; iv<intervals.length; iv++) {
+    var iSample = A.idxOnset + Math.round(intervals[iv].t * A.N / (A.t[A.N-1] || 1));
+    var tMark = A.tOnset + intervals[iv].t;
+    if (tMark < t0 || tMark > t1) continue;
+    var pxv = xToPx(tMark);
+    ctx.beginPath(); ctx.moveTo(pxv, m.t); ctx.lineTo(pxv, m.t+plotH); ctx.stroke();
+    ctx.fillText(intervals[iv].lbl + ' ms', pxv, m.t+plotH+22);
+  }
+  ctx.setLineDash([]);
+
+  // Numbered landmarks
+  var marks = [
+    {idx:A.idxOnset, label:'1', desc:'Pull onset'},
+    {idx:A.idxOnset + Math.round(0.100*A.N/(A.t[A.N-1]||1)), label:'2', desc:'F at 100 ms'},
+    {idx:A.idxOnset + Math.round(0.200*A.N/(A.t[A.N-1]||1)), label:'3', desc:'F at 200 ms'},
+    {idx:A.idxPeak, label:'4', desc:'Peak force'},
+    {idx:A.idxPeakRFD, label:'5', desc:'Peak RFD'}
+  ];
+  for (var mi=0; mi<marks.length; mi++) {
+    var mk = marks[mi];
+    if (mk.idx < startSamp || mk.idx > endSamp) continue;
+    var pxL = xToPx(A.t[mk.idx]), pyL = yToPx(force[mk.idx]);
+    ctx.fillStyle = '#E6007E';
+    ctx.beginPath(); ctx.arc(pxL, pyL, 5, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+    var bs = 22, bx = pxL-bs/2, by = Math.max(m.t+2, pyL-32);
+    ctx.fillStyle = '#1F1A4A';
+    ctx.beginPath();
+    var rr = 4;
+    ctx.moveTo(bx+rr, by); ctx.lineTo(bx+bs-rr, by);
+    ctx.quadraticCurveTo(bx+bs, by, bx+bs, by+rr); ctx.lineTo(bx+bs, by+bs-rr);
+    ctx.quadraticCurveTo(bx+bs, by+bs, bx+bs-rr, by+bs); ctx.lineTo(bx+rr, by+bs);
+    ctx.quadraticCurveTo(bx, by+bs, bx, by+bs-rr); ctx.lineTo(bx, by+rr);
+    ctx.quadraticCurveTo(bx, by, bx+rr, by); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '700 12px "Lexend", sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(mk.label, bx+bs/2, by+bs/2+1);
+    ctx.strokeStyle = '#1F1A4A'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pxL, by+bs); ctx.lineTo(pxL, pyL-5); ctx.stroke();
+  }
+
+  // Phase labels at top
+  ctx.fillStyle = COLOR.phaseLabel;
+  ctx.font = '600 11px "Lexend", sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  function phaseLabel(a, b, txt) {
+    var x0=xToPx(A.t[a]), x1=xToPx(A.t[b]);
+    if (x1-x0 > 50 && x0 < m.l+plotW && x1 > m.l) {
+      ctx.fillText(txt, Math.max(m.l, Math.min(m.l+plotW, (x0+x1)/2)), m.t+4);
+    }
+  }
+  phaseLabel(startSamp, A.idxOnset, 'Quiet standing');
+  phaseLabel(A.idxOnset, A.idxPeak, 'Pull (force development)');
+  if (endSamp > A.idxPeak) phaseLabel(A.idxPeak, endSamp, 'Post-peak');
+}
+
+/* ===== IMTP Upload UI wiring ===== */
+var imtpState = {csv:null, fileName:'', lastResult:null};
+
+document.getElementById('im-rate').addEventListener('change', function(e){
+  document.getElementById('im-rate-custom-wrap').classList.toggle('hidden', e.target.value !== 'custom');
+});
+function getIMTPRate() {
+  var v = document.getElementById('im-rate').value;
+  if (v === 'custom') return Number(document.getElementById('im-rate-custom').value) || 1000;
+  return Number(v);
+}
+
+var imZone = document.getElementById('im-upload-zone');
+var imInput = document.getElementById('im-csv-file');
+imZone.addEventListener('click', function(){ imInput.click(); });
+imZone.addEventListener('dragover', function(e){ e.preventDefault(); imZone.classList.add('dragover'); });
+imZone.addEventListener('dragleave', function(){ imZone.classList.remove('dragover'); });
+imZone.addEventListener('drop', function(e){
+  e.preventDefault(); imZone.classList.remove('dragover');
+  var f = e.dataTransfer.files[0]; if (f) loadIMTPFile(f);
+});
+imInput.addEventListener('change', function(e){
+  var f = e.target.files[0]; if (f) loadIMTPFile(f);
+});
+
+function showIMTPError(msg) {
+  var el = document.getElementById('im-error');
+  el.textContent = msg; el.classList.remove('hidden');
+}
+function clearIMTPError() { document.getElementById('im-error').classList.add('hidden'); }
+
+function loadIMTPFile(file) {
+  clearIMTPError();
+  imtpState.fileName = file.name;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var parsed = parseCsv(ev.target.result);
+      imtpState.csv = parsed;
+      document.getElementById('im-file-display').textContent =
+        file.name + ' — ' + parsed.force.length + ' samples loaded';
+      document.getElementById('im-file-display').classList.remove('hidden');
+    } catch (err) {
+      imtpState.csv = null;
+      document.getElementById('im-file-display').classList.add('hidden');
+      showIMTPError('Could not parse: ' + err.message);
+    }
+  };
+  reader.onerror = function(){ showIMTPError('File read failed.'); };
+  reader.readAsText(file);
+}
+
+/* Demo: build a synthetic 1000 Hz IMTP trial.
+   System weight ~1045 N, peak ~2700 N. Matches the user's spreadsheet. */
+document.getElementById('im-load-demo').addEventListener('click', function(){
+  var rate = 1000, dt = 1/rate;
+  var SW = 1045, peak = 2700;
+  var tQuiet = 1.2, tPreTension = 0.15, tRamp = 0.20, tPlateau = 2.2, tRelease = 0.30, tPost = 0.50;
+  var T = tQuiet + tPreTension + tRamp + tPlateau + tRelease + tPost;
+  var N = Math.round(T * rate);
+  var force = new Array(N);
+
+  var tOnset = tQuiet + tPreTension;
+  var tPeak  = tOnset + tRamp;
+  var tPlateauEnd = tPeak + tPlateau;
+  var tReleaseEnd = tPlateauEnd + tRelease;
+
+  function smoothStep(u) { return 0.5 * (1 - Math.cos(Math.PI * u)); }
+
+  for (var i = 0; i < N; i++) {
+    var t = i * dt;
+    if (t < tQuiet) {
+      force[i] = SW + (Math.random()-0.5)*5;
+    } else if (t < tOnset) {
+      var u = (t - tQuiet) / tPreTension;
+      force[i] = SW + 50 * smoothStep(u);
+    } else if (t < tPeak) {
+      var u2 = (t - tOnset) / (tPeak - tOnset);
+      var s = 1 / (1 + Math.exp(-12*(u2 - 0.45)));
+      var s0 = 1 / (1 + Math.exp(-12*(0 - 0.45)));
+      var s1 = 1 / (1 + Math.exp(-12*(1 - 0.45)));
+      var sNorm = (s - s0) / (s1 - s0);
+      force[i] = (SW + 50) + (peak - SW - 50) * sNorm + (Math.random()-0.5)*8;
+    } else if (t < tPlateauEnd) {
+      var u3 = (t - tPeak) / (tPlateauEnd - tPeak);
+      force[i] = peak - 30 * Math.sin(u3 * Math.PI * 3) - 15 * (u3*u3) + (Math.random()-0.5)*10;
+    } else if (t < tReleaseEnd) {
+      var u4 = (t - tPlateauEnd) / tRelease;
+      var postSw = SW - 95;
+      force[i] = peak * (1 - smoothStep(u4)) + postSw * smoothStep(u4) + (Math.random()-0.5)*5;
+    } else {
+      force[i] = (SW - 95) + (Math.random()-0.5)*4;
+    }
+  }
+
+  imtpState.csv = {force:force, hadTime:false, hadHeader:false, forceCol:0};
+  imtpState.fileName = 'demo_imtp_1000hz.csv (synthetic)';
+  document.getElementById('im-file-display').textContent = imtpState.fileName + ' — ' + N + ' samples loaded';
+  document.getElementById('im-file-display').classList.remove('hidden');
+  document.getElementById('im-rate').value = '1000';
+  clearIMTPError();
+});
+
+document.getElementById('im-analyse').addEventListener('click', function(){
+  clearIMTPError();
+  if (!imtpState.csv) { showIMTPError('Upload a CSV (or click Demo) first.'); return; }
+  var rate = getIMTPRate();
+  if (!rate || rate <= 0) { showIMTPError('Invalid sampling rate.'); return; }
+  var swWin = Number(document.getElementById('im-bw-window').value) || 1.0;
+  try {
+    var A = analyseIMTP(imtpState.csv.force, rate, swWin);
+    renderIMTPResults(A, rate);
+  } catch (err) {
+    showIMTPError('Analysis failed: ' + err.message);
+  }
+});
+
+function renderIMTPResults(A, rate) {
+  document.getElementById('im-results-pane').classList.remove('hidden');
+  document.getElementById('im-meta').textContent =
+    imtpState.fileName + ' · ' + rate + ' Hz · ' + A.N + ' samples · SW window ' +
+    (document.getElementById('im-bw-window').value) + ' s';
+  // Headline chips
+  document.getElementById('im-sw').textContent = Math.round(A.SW);
+  document.getElementById('im-pf').textContent = Math.round(A.peakF);
+  document.getElementById('im-pfrel').textContent = A.peakFRel.toFixed(2);
+  document.getElementById('im-pfnet').textContent = Math.round(A.peakFNet);
+  document.getElementById('im-ttp').textContent = A.timeToPeak.toFixed(3);
+  document.getElementById('im-rfd200').textContent = isFinite(A.rfd200) ? Math.round(A.rfd200) : '—';
+
+  drawIMTPChart(document.getElementById('im-chart'), A);
+
+  var rows = [
+    {group:'Peak Force'},
+    {name:'Peak force (absolute)', val:A.peakF, unit:'N', dp:1},
+    {name:'Net peak force (Peak − SW)', val:A.peakFNet, unit:'N', dp:1},
+    {name:'Peak force relative to body weight', val:A.peakFRel, unit:'× BW', dp:2},
+    {name:'Peak force per kg', val:A.peakFperKg, unit:'N·kg⁻¹', dp:2},
+    {name:'Time to peak (from onset)', val:A.timeToPeak, unit:'s', dp:3},
+    {name:'Mean force during pull (onset → peak)', val:A.meanPullF, unit:'N', dp:1},
+
+    {group:'Force at fixed time intervals (from onset)'},
+    {name:'Force at 50 ms',  val:A.f50,  unit:'N', dp:1},
+    {name:'Force at 100 ms', val:A.f100, unit:'N', dp:1},
+    {name:'Force at 150 ms', val:A.f150, unit:'N', dp:1},
+    {name:'Force at 200 ms', val:A.f200, unit:'N', dp:1},
+    {name:'Force at 250 ms', val:A.f250, unit:'N', dp:1},
+
+    {group:'Net force at fixed time intervals'},
+    {name:'Net F at 50 ms  (F − SW)',  val:A.netF50,  unit:'N', dp:1},
+    {name:'Net F at 100 ms', val:A.netF100, unit:'N', dp:1},
+    {name:'Net F at 150 ms', val:A.netF150, unit:'N', dp:1},
+    {name:'Net F at 200 ms', val:A.netF200, unit:'N', dp:1},
+    {name:'Net F at 250 ms', val:A.netF250, unit:'N', dp:1},
+
+    {group:'Rate of Force Development (RFD)'},
+    {name:'RFD 0–50 ms',  val:A.rfd50,  unit:'N·s⁻¹', dp:0},
+    {name:'RFD 0–100 ms', val:A.rfd100, unit:'N·s⁻¹', dp:0},
+    {name:'RFD 0–150 ms', val:A.rfd150, unit:'N·s⁻¹', dp:0},
+    {name:'RFD 0–200 ms', val:A.rfd200, unit:'N·s⁻¹', dp:0},
+    {name:'RFD 0–250 ms', val:A.rfd250, unit:'N·s⁻¹', dp:0},
+    {name:'Peak instantaneous RFD (20 ms window)', val:A.peakInstRFD, unit:'N·s⁻¹', dp:0},
+
+    {group:'Net Impulse (from onset)'},
+    {name:'Impulse 0–50 ms',  val:A.imp50,  unit:'N·s', dp:3},
+    {name:'Impulse 0–100 ms', val:A.imp100, unit:'N·s', dp:3},
+    {name:'Impulse 0–150 ms', val:A.imp150, unit:'N·s', dp:3},
+    {name:'Impulse 0–200 ms', val:A.imp200, unit:'N·s', dp:3},
+    {name:'Impulse 0–250 ms', val:A.imp250, unit:'N·s', dp:3},
+    {name:'Total net impulse (onset → peak)', val:A.totalImpulseToPeak, unit:'N·s', dp:2},
+
+    {group:'Methods'},
+    {name:'System weight (mean of quiet window)', val:A.SW, unit:'N', dp:1},
+    {name:'System weight SD', val:A.SD, unit:'N', dp:2},
+    {name:'Start threshold (SW + 5 × SD)', val:A.startThreshold, unit:'N', dp:1},
+    {name:'Body mass (estimated from SW)', val:A.bodyMassEstimate, unit:'kg', dp:2}
+  ];
+
+  var html = '<thead><tr><th>Variable</th><th>Value</th></tr></thead><tbody>';
+  rows.forEach(function(r) {
+    if (r.group) {
+      html += '<tr class="group-header"><td colspan="2">' + r.group + '</td></tr>';
+    } else {
+      var v = fmt(r.val, r.dp != null ? r.dp : 2);
+      var u = r.unit ? ' <span style="color:var(--indigo-soft);font-weight:500;font-size:11px;">' + r.unit + '</span>' : '';
+      html += '<tr><td><span class="var-name">' + r.name + '</span></td><td>' + v + u + '</td></tr>';
+    }
+  });
+  html += '</tbody>';
+  document.getElementById('im-table').innerHTML = html;
+  imtpState.lastResult = {analysis:A, rate:rate, rows:rows};
+}
+
+// IMTP — Download summary CSV
+document.getElementById('im-download').addEventListener('click', function() {
+  if (!imtpState.lastResult) return;
+  var A = imtpState.lastResult.analysis;
+  var rate = imtpState.lastResult.rate;
+  var rows = imtpState.lastResult.rows;
+
+  var lines = [];
+  lines.push('IMTP Analysis');
+  lines.push('File,' + csvEscape(imtpState.fileName));
+  lines.push('Computed at,' + csvEscape(new Date().toISOString()));
+  lines.push('Sampling rate (Hz),' + rate);
+  lines.push('System weight (N),' + (A.SW != null ? A.SW.toFixed(2) : ''));
+  lines.push('Body mass estimate (kg),' + (A.bodyMassEstimate != null ? A.bodyMassEstimate.toFixed(2) : ''));
+  lines.push('Quiet standing window (s),' + (A.swWindowSec != null ? A.swWindowSec : ''));
+  lines.push('Samples (N),' + A.N);
+  lines.push('Onset time (s),' + (A.tOnset != null ? A.tOnset.toFixed(3) : ''));
+  lines.push('Peak time (s),' + (A.tPeak != null ? A.tPeak.toFixed(3) : ''));
+  lines.push('');
+  lines.push('Group,Variable,Value,Unit');
+
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    if (r.group) {
+      lines.push(csvEscape(r.group) + ',,,');
+      continue;
+    }
+    var val = '';
+    if (r.val != null && isFinite(r.val)) {
+      val = r.dp != null ? r.val.toFixed(r.dp) : r.val.toFixed(3);
+    }
+    lines.push(
+      ',' +
+      csvEscape(r.name) + ',' +
+      csvEscape(val) + ',' +
+      csvEscape(r.unit || '')
+    );
+  }
+
+  downloadCSV(lines.join('\n'), 'imtp_variables_' + (new Date().toISOString().slice(0,10)) + '.csv');
+});
+
+// IMTP — Download time-series CSV
+document.getElementById('im-download-ts').addEventListener('click', function() {
+  if (!imtpState.lastResult) return;
+  var A = imtpState.lastResult.analysis;
+
+  function phaseAtIdx(i) {
+    if (i < A.idxOnset) return 'Quiet standing';
+    if (i < A.idxPeak) return 'Pull';
+    return 'Post-peak';
+  }
+
+  var lines = [];
+  lines.push('# IMTP time-series export');
+  lines.push('# File: ' + imtpState.fileName);
+  lines.push('# Sampling rate (Hz): ' + imtpState.lastResult.rate);
+  lines.push('# System weight (N): ' + (A.SW != null ? A.SW.toFixed(2) : ''));
+  lines.push('# Body mass estimate (kg): ' + (A.bodyMassEstimate != null ? A.bodyMassEstimate.toFixed(2) : ''));
+  lines.push('time_s,force_N,net_force_N,phase');
+
+  for (var i = 0; i < A.N; i++) {
+    lines.push(
+      A.t[i].toFixed(4) + ',' +
+      A.force[i].toFixed(2) + ',' +
+      (A.force[i] - A.SW).toFixed(2) + ',' +
+      phaseAtIdx(i)
+    );
+  }
+
+  downloadCSV(lines.join('\n'), 'imtp_timeseries_' + (new Date().toISOString().slice(0,10)) + '.csv');
+});
+
+/* IMTP Reference glossary */
+var IMTP_REFERENCE = [
+  {
+    group: 'Detection method',
+    intro: 'How the algorithm finds pull onset and peak force.',
+    items: [
+      {name:'System weight (SW)', text:'Mean vertical GRF over the first <code>N</code> seconds of the file (default 1.0 s). Includes the athlete\'s body weight plus the barbell weight, as both are supported on the plate during quiet standing.'},
+      {name:'5 × SD threshold', text:'Five times the standard deviation of force during the quiet-standing window. Pull onset is detected as the first sample where force exceeds <code>SW + 5×SD</code>, then the algorithm steps back 30 ms to capture true onset.'},
+      {name:'Peak force', text:'Maximum vertical GRF value across the whole trial.'},
+      {name:'Time windows', text:'Force, net force, RFD, and impulse are evaluated at fixed time intervals (50, 100, 150, 200, 250 ms) measured from pull onset.'}
+    ]
+  },
+  {
+    group: 'Phases',
+    intro: 'An IMTP has a simpler phase structure than a CMJ.',
+    items: [
+      {name:'1 · Quiet standing', text:'The athlete stands on the plate gripping the bar. Force equals system weight. Used to compute SW and the 5×SD threshold.'},
+      {name:'2 · Pre-tension', text:'Some athletes apply a small amount of tension before the maximal pull. Onset detection picks up the start of the maximal pull, not the pre-tension.'},
+      {name:'3 · Pull (force development)', text:'The athlete pulls maximally against the immovable bar. Force rises rapidly toward peak. This is the main phase of interest for performance analysis.'},
+      {name:'4 · Plateau', text:'Force is sustained at or near peak. Typical IMTP protocols ask for 3–5 s of sustained maximal effort.'},
+      {name:'5 · Release', text:'The athlete relaxes; force returns toward system weight (or to body weight if they release the bar).'}
+    ]
+  },
+  {
+    group: 'Peak force variables',
+    intro: 'The headline measures of maximum isometric strength.',
+    items: [
+      {name:'Peak force (absolute)', text:'The single highest force value during the trial, in Newtons. Standard expression of maximum strength.'},
+      {name:'Net peak force', text:'Peak force minus system weight. Removes the "free" component of force that\'s just supporting body and bar mass; gives only the muscular contribution.'},
+      {name:'Peak force × BW', text:'Peak force divided by system weight. Useful for comparing across athletes of different sizes. Values above 4× BW are considered very strong.'},
+      {name:'Peak force per kg', text:'Peak force divided by body mass (estimated from SW). Direct comparison to body weight isn\'t the same as N·kg⁻¹, which gives strength per unit mass.'},
+      {name:'Time to peak', text:'Time from pull onset to peak force. Tells you how long it takes to reach maximum. Slower (longer) times can indicate a more "ramped" effort vs. an explosive one.'}
+    ]
+  },
+  {
+    group: 'Force at fixed time intervals',
+    intro: 'The force value at 50, 100, 150, 200, 250 ms after onset. Early-phase force production is more relevant to dynamic performance than peak force alone, because most athletic actions allow less than 250 ms of ground contact.',
+    items: [
+      {name:'Force at 50 ms', text:'Very early-phase force. Heavily influenced by tendon stiffness and neural drive at pull initiation.'},
+      {name:'Force at 100 ms', text:'Early-phase force. Often correlates with sprint acceleration performance.'},
+      {name:'Force at 150 ms', text:'Mid-early phase. Within the time window of most sprint ground contacts.'},
+      {name:'Force at 200 ms', text:'Mid-phase force. Closer to peak in well-trained athletes.'},
+      {name:'Force at 250 ms', text:'Late mid-phase. Approaches peak in most well-trained athletes.'}
+    ]
+  },
+  {
+    group: 'Rate of Force Development (RFD)',
+    intro: 'RFD over a time window = ΔF / Δt, measured from pull onset to the time point. Reported in N·s⁻¹.',
+    items: [
+      {name:'RFD 0–50 ms', text:'<code>(F<sub>50</sub> − F<sub>onset</sub>) / 0.050</code>. Initial slope of the force-time curve; reflects early neural drive.'},
+      {name:'RFD 0–100 ms', text:'<code>(F<sub>100</sub> − F<sub>onset</sub>) / 0.100</code>. The "explosive strength" index typically cited in the literature.'},
+      {name:'RFD 0–150 ms', text:'<code>(F<sub>150</sub> − F<sub>onset</sub>) / 0.150</code>.'},
+      {name:'RFD 0–200 ms', text:'<code>(F<sub>200</sub> − F<sub>onset</sub>) / 0.200</code>.'},
+      {name:'RFD 0–250 ms', text:'<code>(F<sub>250</sub> − F<sub>onset</sub>) / 0.250</code>. By this time most athletes are approaching peak, so RFD over this window starts to flatten.'},
+      {name:'Peak instantaneous RFD', text:'The maximum slope of the force-time curve, measured over a 20 ms moving window for noise robustness. Captures the fastest moment of force change anywhere in the pull.'}
+    ]
+  },
+  {
+    group: 'Net Impulse',
+    intro: 'Impulse is the time-integral of net force <code>(F − SW)dt</code> from pull onset. Reported in N·s.',
+    items: [
+      {name:'Impulse 0–50 ms', text:'Net impulse generated in the first 50 ms after onset.'},
+      {name:'Impulse 0–100 ms', text:'Net impulse generated in the first 100 ms after onset.'},
+      {name:'Impulse 0–150 ms', text:'Net impulse generated in the first 150 ms after onset.'},
+      {name:'Impulse 0–200 ms', text:'Net impulse generated in the first 200 ms after onset.'},
+      {name:'Impulse 0–250 ms', text:'Net impulse generated in the first 250 ms after onset.'},
+      {name:'Total net impulse (onset → peak)', text:'Total area under the net force-time curve from onset to peak force. Represents the total impulsive contribution of the pull phase.'}
+    ]
+  }
+];
+
+function renderIMTPReference() {
+  var c = document.getElementById('imtp-reference-content');
+  c.innerHTML = IMTP_REFERENCE.map(function(g) {
+    var items = g.items.map(function(it) {
+      return '<details class="ref-row"><summary>' + it.name + '</summary><div>' + it.text + '</div></details>';
+    }).join('');
+    return '<div class="ref-group"><h3>' + g.group + '</h3>' +
+           '<p class="group-intro">' + g.intro + '</p>' +
+           items + '</div>';
+  }).join('');
+}
+
+/* =========================================================
+   REFERENCE / GLOSSARY (CMJ)
+   ========================================================= */
+var REFERENCE = [
+  {
+    group: 'Detection method',
+    intro: 'How the algorithm finds each phase of the jump from the raw force-time signal.',
+    items: [
+      {name:'Body weight (BW)', text:'Mean vertical GRF over the first <code>N</code> seconds of the file (default 1.0 s). Used as the reference for net force throughout the analysis.'},
+      {name:'5 × SD threshold', text:'Five times the standard deviation of force during the quiet-standing window. Used as the noise band around BW. Onset of movement is the first sample outside <code>BW ± 5×SD</code>, then the algorithm steps back 30 frames to capture true onset.'},
+      {name:'Take-off / touchdown threshold', text:'Five times the SD of force during the flight phase (≈50 ms after the force collapses near zero). Used to define take-off (force first drops below this threshold) and touchdown (force first rises above it after take-off).'},
+      {name:'Velocity & displacement', text:'Computed by forward integration of acceleration <code>a = (F − BW) / m</code>. Velocity at onset is assumed to be zero (athlete starts in quiet stance). Displacement is the integral of velocity. Power is <code>F × v</code> at each sample.'}
+    ]
+  },
+  {
+    group: 'Phases',
+    intro: 'A countermovement jump splits cleanly into six successive phases.',
+    items: [
+      {name:'1 · Weighing', text:'From the beginning of recording until movement onset. Athlete stands still on the force plate; force is approximately equal to body weight. Used to compute body weight and establish the quiet standing baseline.'},
+      {name:'2 · Unweighting', text:'From movement onset until minimum force. Athlete begins descending; force drops below body weight as the centre of mass accelerates downward. Ends at the deepest unloading point.'},
+      {name:'3 · Braking', text:'From minimum force until vertical velocity reaches zero (bottom of the countermovement). Force rises above body weight to decelerate the downward motion. The lower body absorbs the downward momentum.'},
+      {name:'4 · Propulsion', text:'From velocity = 0 until take-off. Athlete pushes upward against the ground; force continues to rise, accelerating the centre of mass upward. Peak takeoff force typically occurs here.'},
+      {name:'5 · Flight', text:'From take-off until landing. Athlete is airborne; ground reaction force is zero (or near the noise threshold). Duration determines flight time; used to estimate jump height.'},
+      {name:'6 · Landing', text:'From landing until force stabilises back to quiet standing. Athlete recontacts the ground and absorbs landing forces. Includes peak landing force and damped oscillation back to resting state.'}
+    ]
+  },
+  {
+    group: 'Force variables',
+    intro: 'Magnitudes of Fz at characteristic moments and means within each phase.',
+    items: [
+      {name:'Onset of movement Fz', text:'Force at the first frame of movement (close to BW by definition).'},
+      {name:'Minimum Fz', text:'The lowest force during the unweighting phase — the deepest point of unloading. <code>min(F)</code> between onset and start of braking.'},
+      {name:'Braking peak Fz', text:'Maximum Fz during the braking phase.'},
+      {name:'Propulsion peak Fz', text:'Maximum Fz during the propulsion phase — typically the largest force value of the whole trial.'},
+      {name:'Mean braking / propulsion / landing Fz', text:'Arithmetic mean of force across each phase.'},
+      {name:'Peak landing Fz', text:'Maximum Fz after touchdown — the impact peak.'},
+      {name:'Force at peak power & at peak velocity', text:'The Fz value at the same instant that peak propulsion power and peak propulsion velocity occur.'}
+    ]
+  },
+  {
+    group: 'Velocity variables',
+    intro: 'Centre-of-mass velocity is obtained by integrating acceleration. Up is positive.',
+    items: [
+      {name:'Vertical velocity at onset', text:'Assumed zero (athlete in quiet stance).'},
+      {name:'Peak braking velocity', text:'The most negative (downward) velocity reached during braking — bottom of the velocity-time curve.'},
+      {name:'Peak propulsion velocity', text:'The highest upward velocity, occurring just before take-off in most athletes.'},
+      {name:'Velocity at take-off (TOV)', text:'Vertical velocity in the instant force drops below the take-off threshold. The cleaner estimator for jump height (<code>h = v²/2g</code>).'},
+      {name:'Velocity at landing', text:'Vertical velocity at touchdown — equal in magnitude to TOV in vacuum, slightly less in practice.'},
+      {name:'Peak landing velocity', text:'Most negative velocity reached during the landing phase.'}
+    ]
+  },
+  {
+    group: 'Jump height',
+    intro: 'Three estimators are reported. They agree closely on a clean trial; large divergence flags either landmark detection problems or postural changes.',
+    items: [
+      {name:'Jump height (flight time)', text:'<code>h = g · t<sub>flight</sub>² / 8</code>. Pure ballistic estimator; assumes take-off and landing posture are the same.'},
+      {name:'Jump height (TOV)', text:'<code>h = v<sub>TO</sub>² / 2g</code>. Uses the velocity at take-off from the integrated force signal.'},
+      {name:'Jump height (CM displacement)', text:'Maximum displacement during flight minus displacement at take-off. Direct measurement, but accumulates any integration drift in velocity/displacement.'}
+    ]
+  },
+  {
+    group: 'Reactive strength (RSI-mod)',
+    intro: 'Four variants depending on the jump-height estimator and the start of the contraction window.',
+    items: [
+      {name:'RSI-mod (jhFT / total movement time)', text:'Flight-time jump height divided by time from onset of movement to take-off.'},
+      {name:'RSI-mod (jhFT / time from braking)', text:'Same numerator; denominator runs from the start of braking instead of onset. Useful when you want to ignore the unweighting drift.'},
+      {name:'RSI-mod (jhTOV / total movement time)', text:'TOV-derived jump height with the same denominator as above. Generally the cleanest RSI-mod variant.'},
+      {name:'RSI-mod (jhTOV / time from braking)', text:'TOV jump height divided by time from braking start to take-off.'}
+    ]
+  },
+  {
+    group: 'Phase times',
+    intro: 'Duration of each phase in seconds. Useful for asymmetry between athletes and for tracking fatigue (eccentric phase often lengthens with fatigue).',
+    items: [
+      {name:'Unweighting / braking / amortisation / propulsion time', text:'Each is the time between the relevant landmark frames.'},
+      {name:'Total time to take-off', text:'Time from onset of movement to take-off. The denominator for the standard RSI-mod.'},
+      {name:'Flight time', text:'Take-off to touchdown.'}
+    ]
+  },
+  {
+    group: 'Displacement',
+    intro: 'Vertical displacement of the centre of mass relative to the standing position.',
+    items: [
+      {name:'Displacement at start of braking', text:'How far the centre of mass has dropped by the time braking begins.'},
+      {name:'Displacement during braking', text:'Further drop during the braking phase only.'},
+      {name:'Depth of countermovement', text:'The deepest point reached — most negative displacement value during the descent.'},
+      {name:'Displacement at take-off', text:'CM position at take-off (typically slightly above the standing position because the athlete is extended).'},
+      {name:'Propulsion displacement', text:'Net upward movement during the propulsion phase.'},
+      {name:'Displacement at touchdown', text:'CM position at the moment of landing.'},
+      {name:'Peak negative displacement post-landing', text:'Deepest point reached during the landing absorption.'}
+    ]
+  },
+  {
+    group: 'Power & work',
+    intro: 'Power is <code>F × v</code>. Work is the integral of force over displacement.',
+    items: [
+      {name:'Peak braking / propulsion power', text:'Largest power value (most negative for braking, most positive for propulsion) within each phase.'},
+      {name:'Mean braking / propulsion power', text:'Arithmetic mean of power across each phase.'},
+      {name:'Area under F-v curve (unweighting-braking / propulsion)', text:'Integral of force with respect to velocity. Approximates net mechanical work done across the relevant phase.'},
+      {name:'Braking & propulsion work', text:'Integral of net force <code>(F − BW)</code> over CM displacement during each phase.'}
+    ]
+  },
+  {
+    group: 'Stiffness',
+    intro: 'A summary of how rapidly the athlete generated force per unit of CM descent during braking.',
+    items: [
+      {name:'Vertical leg stiffness', text:'<code>(F<sub>brakingPeak</sub> − F<sub>brakingStart</sub>) / |braking displacement|</code>, scaled to kN·m⁻¹.'},
+      {name:'Relative vertical leg stiffness', text:'Same as above, additionally divided by body mass — N·kg⁻¹·m⁻¹.'}
+    ]
+  },
+  {
+    group: 'Impulse & RFD',
+    intro: 'Impulse is the time-integral of net force; RFD is its derivative. Reported per phase.',
+    items: [
+      {name:'Unweighting / braking / propulsion impulse', text:'Trapezoidal integral of net force <code>(F − BW)</code> over the relevant phase. Negative for unweighting (force below BW), positive for propulsion.'},
+      {name:'Propulsion (deceleration) impulse', text:'Variant where the propulsion phase starts at the peak negative velocity (i.e. when the athlete starts decelerating their descent) rather than at the bottom of the countermovement.'},
+      {name:'Landing impulse', text:'Net force integral from touchdown to stabilisation.'},
+      {name:'Mean RFD (braking / propulsion)', text:'Average value of <code>dF/dt</code> across the phase.'},
+      {name:'Peak RFD (braking / propulsion)', text:'Largest single value of <code>dF/dt</code> across the phase.'}
+    ]
+  }
+];
+
+function renderReference() {
+  var c = document.getElementById('reference-content');
+  c.innerHTML = REFERENCE.map(function(g) {
+    var items = g.items.map(function(it) {
+      return '<details class="ref-row"><summary>' + it.name + '</summary><div>' + it.text + '</div></details>';
+    }).join('');
+    return '<div class="ref-group"><h3>' + g.group + '</h3>' +
+           '<p class="group-intro">' + g.intro + '</p>' +
+           items + '</div>';
+  }).join('');
+}
+
+/* ===== BOOT ===== */
+renderExplore();
+renderReference();
+renderIMTPReference();
+window.addEventListener('resize', function(){ renderExplore(); });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<title>Outbreak Lab: A Statistical Escape</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Courier New', monospace;
+    background: #0a0a0a;
+    color: #c8e6c9;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image: 
+        radial-gradient(circle at 20% 30%, rgba(76, 175, 80, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(244, 67, 54, 0.08) 0%, transparent 50%);
+}
+
+/* Scanline effect */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.15),
+        rgba(0,0,0,0.15) 1px,
+        transparent 1px,
+        transparent 3px
+    );
+    pointer-events: none;
+    z-index: 100;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+}
+
+/* ====== TITLE SCREEN ====== */
+.title-screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.title-screen h1 {
+    font-size: 4em;
+    color: #4caf50;
+    text-shadow: 0 0 20px #4caf50, 0 0 40px #4caf50;
+    margin-bottom: 10px;
+    letter-spacing: 4px;
+    animation: flicker 3s infinite;
+}
+
+.title-screen .subtitle {
+    color: #f44336;
+    font-size: 1.3em;
+    margin-bottom: 40px;
+    letter-spacing: 8px;
+    text-shadow: 0 0 10px #f44336;
+}
+
+.story-text {
+    max-width: 700px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #4caf50;
+    padding: 30px;
+    margin-bottom: 30px;
+    text-align: left;
+    line-height: 1.8;
+    font-size: 1.05em;
+    box-shadow: 0 0 30px rgba(76, 175, 80, 0.3);
+}
+
+.story-text p {
+    margin-bottom: 15px;
+}
+
+.story-text .alert {
+    color: #f44336;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.story-text .typing {
+    border-right: 2px solid #4caf50;
+    animation: blink 1s infinite;
+}
+
+.big-btn {
+    background: linear-gradient(135deg, #4caf50, #2e7d32);
+    border: 2px solid #4caf50;
+    color: #fff;
+    padding: 18px 50px;
+    font-size: 1.3em;
+    font-family: inherit;
+    font-weight: bold;
+    cursor: pointer;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    transition: all 0.3s;
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
+}
+
+.big-btn:hover {
+    background: linear-gradient(135deg, #66bb6a, #388e3c);
+    box-shadow: 0 0 40px rgba(76, 175, 80, 0.8);
+    transform: scale(1.05);
+}
+
+/* ====== GAME SCREEN ====== */
+.game-screen {
+    display: none;
+}
+
+.game-screen.active {
+    display: block;
+}
+
+/* HUD at top */
+.hud {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    gap: 15px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #4caf50;
+    padding: 15px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.hud-section {
+    text-align: center;
+}
+
+.hud-label {
+    font-size: 0.75em;
+    color: #81c784;
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+}
+
+.hud-value {
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #4caf50;
+}
+
+.health-bar-wrapper {
+    background: #1a0a0a;
+    border: 1px solid #f44336;
+    height: 25px;
+    position: relative;
+    overflow: hidden;
+}
+
+.health-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f44336, #ff5722);
+    transition: width 0.4s;
+    box-shadow: 0 0 15px #f44336;
+}
+
+.health-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 1px 1px 2px #000;
+    font-size: 0.9em;
+    letter-spacing: 1px;
+}
+
+.timer-display {
+    color: #ffc107;
+    font-size: 1.4em;
+    font-weight: bold;
+}
+
+.timer-display.danger {
+    color: #f44336;
+    animation: pulse 0.6s infinite;
+}
+
+/* Inventory bar */
+.inventory-bar {
+    display: flex;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #4caf50;
+    padding: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.inventory-label {
+    color: #81c784;
+    font-size: 0.8em;
+    letter-spacing: 2px;
+    margin-right: 10px;
+}
+
+.power-up {
+    background: rgba(76, 175, 80, 0.15);
+    border: 1px solid #4caf50;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9em;
+    position: relative;
+}
+
+.power-up:hover:not(.disabled) {
+    background: rgba(76, 175, 80, 0.4);
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.6);
+}
+
+.power-up.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.power-up .count {
+    background: #f44336;
+    color: #fff;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7em;
+    margin-left: 5px;
+    font-weight: bold;
+}
+
+/* Boss container */
+.boss-arena {
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #f44336;
+    padding: 25px;
+    margin-bottom: 20px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(244, 67, 54, 0.3);
+}
+
+.boss-name {
+    color: #f44336;
+    font-size: 1.8em;
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px #f44336;
+}
+
+.boss-subtitle {
+    color: #81c784;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+    font-style: italic;
+}
+
+.boss-sprite {
+    font-size: 6em;
+    margin: 15px 0;
+    display: inline-block;
+    transition: all 0.3s;
+}
+
+.boss-sprite.hit {
+    animation: bossHit 0.5s;
+}
+
+.boss-sprite.defeated {
+    animation: bossDie 1.5s forwards;
+}
+
+.boss-hp-wrapper {
+    background: #1a0a0a;
+    border: 2px solid #f44336;
+    height: 30px;
+    position: relative;
+    overflow: hidden;
+    margin-top: 15px;
+}
+
+.boss-hp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4caf50 0%, #ffc107 50%, #f44336 100%);
+    transition: width 0.6s;
+}
+
+.boss-hp-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 1px 1px 2px #000;
+    letter-spacing: 2px;
+}
+
+/* Puzzle box */
+.puzzle-box {
+    background: rgba(0, 0, 0, 0.85);
+    border: 2px solid #4caf50;
+    padding: 30px;
+    margin-bottom: 20px;
+    position: relative;
+    box-shadow: 0 0 30px rgba(76, 175, 80, 0.2);
+}
+
+.puzzle-stage-label {
+    display: inline-block;
+    background: #4caf50;
+    color: #000;
+    padding: 4px 12px;
+    font-size: 0.8em;
+    letter-spacing: 2px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.puzzle-narrative {
+    color: #81c784;
+    font-style: italic;
+    margin-bottom: 15px;
+    border-left: 3px solid #4caf50;
+    padding-left: 15px;
+    font-size: 0.95em;
+}
+
+.puzzle-question {
+    font-size: 1.2em;
+    color: #fff;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.choices {
+    display: grid;
+    gap: 10px;
+}
+
+.choice {
+    background: rgba(76, 175, 80, 0.1);
+    border: 2px solid #4caf50;
+    color: #c8e6c9;
+    padding: 15px 20px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1em;
+    text-align: left;
+    transition: all 0.2s;
+}
+
+.choice:hover:not(:disabled) {
+    background: rgba(76, 175, 80, 0.3);
+    transform: translateX(8px);
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+}
+
+.choice:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.choice.correct {
+    background: #4caf50;
+    color: #000;
+    border-color: #4caf50;
+    box-shadow: 0 0 25px #4caf50;
+    animation: correctPulse 0.5s;
+}
+
+.choice.wrong {
+    background: #f44336;
+    color: #fff;
+    border-color: #f44336;
+    animation: shake 0.4s;
+}
+
+.choice.eliminated {
+    text-decoration: line-through;
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+/* Feedback */
+.feedback {
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 2px solid;
+    font-weight: bold;
+}
+
+.feedback.success {
+    border-color: #4caf50;
+    background: rgba(76, 175, 80, 0.2);
+    color: #4caf50;
+}
+
+.feedback.danger {
+    border-color: #f44336;
+    background: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+}
+
+.feedback.info {
+    border-color: #ffc107;
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+.hidden { display: none !important; }
+
+/* Damage popup */
+.damage-popup {
+    position: absolute;
+    color: #ffc107;
+    font-size: 2.5em;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px #000;
+    pointer-events: none;
+    animation: damageRise 1.2s forwards;
+    z-index: 10;
+}
+
+/* End screen */
+.end-screen {
+    text-align: center;
+    background: rgba(0, 0, 0, 0.9);
+    border: 3px solid #4caf50;
+    padding: 50px 30px;
+    box-shadow: 0 0 50px #4caf50;
+}
+
+.end-screen.failure {
+    border-color: #f44336;
+    box-shadow: 0 0 50px #f44336;
+}
+
+.end-screen h2 {
+    font-size: 3em;
+    margin-bottom: 20px;
+    letter-spacing: 4px;
+    color: #4caf50;
+    text-shadow: 0 0 20px #4caf50;
+}
+
+.end-screen.failure h2 {
+    color: #f44336;
+    text-shadow: 0 0 20px #f44336;
+}
+
+.end-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+    margin: 30px 0;
+}
+
+.end-stat {
+    border: 1px solid #4caf50;
+    padding: 15px;
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.end-stat-label {
+    color: #81c784;
+    font-size: 0.8em;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.end-stat-value {
+    color: #4caf50;
+    font-size: 1.8em;
+    font-weight: bold;
+}
+
+/* Animations */
+@keyframes flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+    52% { opacity: 1; }
+    54% { opacity: 0.85; }
+    56% { opacity: 1; }
+}
+
+@keyframes blink {
+    0%, 50% { border-color: #4caf50; }
+    51%, 100% { border-color: transparent; }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+}
+
+@keyframes correctPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes bossHit {
+    0%, 100% { transform: scale(1) rotate(0); }
+    25% { transform: scale(1.1) rotate(-5deg); filter: brightness(2); }
+    75% { transform: scale(0.95) rotate(5deg); }
+}
+
+@keyframes bossDie {
+    0% { transform: scale(1) rotate(0); opacity: 1; }
+    50% { transform: scale(1.3) rotate(180deg); opacity: 0.7; filter: brightness(3); }
+    100% { transform: scale(0) rotate(720deg); opacity: 0; }
+}
+
+@keyframes damageRise {
+    0% { transform: translate(-50%, 0); opacity: 1; }
+    100% { transform: translate(-50%, -120px); opacity: 0; }
+}
+
+@media (max-width: 700px) {
+    .title-screen h1 { font-size: 2.5em; letter-spacing: 2px; }
+    .hud { grid-template-columns: 1fr; }
+    .puzzle-box { padding: 20px; }
+    .boss-sprite { font-size: 4em; }
+    .end-screen h2 { font-size: 2em; }
+}
+</style>
+</head>
+<body>
+
+<div class='container'>
+
+<!-- ============ TITLE / STORY SCREEN ============ -->
+<div id='titleScreen' class='title-screen'>
+    <h1>OUTBREAK LAB</h1>
+    <div class='subtitle'>// A STATISTICAL ESCAPE //</div>
+    
+    <div class='story-text'>
+        <p><span class='alert'>⚠ INCOMING TRANSMISSION ⚠</span></p>
+        <p>Dr. Hayes — this is Director Chen. The lab containment has failed. A statistical analysis error in our vaccine trial caused us to release a strain that <strong>wasn't actually ready</strong>.</p>
+        <p>The infected are spreading. We need the <strong>real data</strong> — the data that was buried under flawed reasoning. Five sealed terminals stand between you and the exit.</p>
+        <p>Each terminal is guarded by <span class='alert'>"The Misconception"</span> — a corrupted AI built on every statistical fallacy we've ever made. <strong>Defeat it. Recover the truth. Escape.</strong></p>
+        <p style='color: #f44336; text-align: center; margin-top: 25px;'>⏱ TIME REMAINING: 10 MINUTES UNTIL FULL CONTAINMENT BREACH</p>
+    </div>
+    
+    <button class='big-btn' onclick='startGame()'>► BEGIN MISSION</button>
+</div>
+
+<!-- ============ MAIN GAME SCREEN ============ -->
+<div id='gameScreen' class='game-screen'>
+    
+    <!-- HUD -->
+    <div class='hud'>
+        <div class='hud-section'>
+            <div class='hud-label'>⚕ INTEGRITY</div>
+            <div class='health-bar-wrapper'>
+                <div class='health-bar-fill' id='healthBar' style='width: 100%;'></div>
+                <div class='health-text' id='healthText'>100 / 100</div>
+            </div>
+        </div>
+        <div class='hud-section'>
+            <div class='hud-label'>⚠ THREAT LEVEL</div>
+            <div class='hud-value' id='stageDisplay'>STAGE 1 / 5</div>
+        </div>
+        <div class='hud-section'>
+            <div class='hud-label'>⏱ TIME</div>
+            <div class='timer-display' id='timer'>10:00</div>
+        </div>
+    </div>
+    
+    <!-- Power-ups inventory -->
+    <div class='inventory-bar'>
+        <span class='inventory-label'>INVENTORY:</span>
+        <div class='power-up' id='pu-fiftyfifty' onclick='useFiftyFifty()'>
+            🎯 50/50<span class='count' id='count-fiftyfifty'>2</span>
+        </div>
+        <div class='power-up' id='pu-shield' onclick='useShield()'>
+            🛡️ Shield<span class='count' id='count-shield'>1</span>
+        </div>
+        <div class='power-up' id='pu-hint' onclick='useHint()'>
+            💡 Hint<span class='count' id='count-hint'>3</span>
+        </div>
+        <div class='power-up' id='pu-doubledmg' onclick='useDoubleDmg()'>
+            ⚡ 2x DMG<span class='count' id='count-doubledmg'>1</span>
+        </div>
+    </div>
+    
+    <!-- Boss arena -->
+    <div class='boss-arena' id='bossArena'>
+        <div class='boss-name' id='bossName'>THE MISCONCEPTION</div>
+        <div class='boss-subtitle' id='bossSubtitle'>Form 1: The P-Value Phantom</div>
+        <div class='boss-sprite' id='bossSprite'>🧟</div>
+        <div class='boss-hp-wrapper'>
+            <div class='boss-hp-fill' id='bossHpBar' style='width: 100%;'></div>
+            <div class='boss-hp-text' id='bossHpText'>100 / 100</div>
+        </div>
+    </div>
+    
+    <!-- Puzzle -->
+    <div class='puzzle-box' id='puzzleBox'></div>
+    
+    <!-- Feedback -->
+    <div id='feedback' class='feedback hidden'></div>
+    
+</div>
+
+<!-- ============ END SCREEN ============ -->
+<div id='endScreen' class='game-screen'></div>
+
+</div>
+
+<script>
+// ============ GAME STATE ============
+const state = {
+    health: 100,
+    maxHealth: 100,
+    timeRemaining: 600, // 10 minutes in seconds
+    timerInterval: null,
+    
+    currentStage: 0,
+    currentQuestionInStage: 0,
+    questionsAnswered: 0,
+    correctAnswers: 0,
+    wrongAnswers: 0,
+    
+    // Power-ups
+    powerUps: {
+        fiftyfifty: 2,
+        shield: 1,
+        hint: 3,
+        doubledmg: 1
+    },
+    shieldActive: false,
+    doubleDmgActive: false,
+    
+    // Boss state
+    bossMaxHp: 100,
+    bossCurrentHp: 100,
+    
+    gameOver: false,
+    victory: false
+};
+
+// ============ BOSS DEFINITIONS ============
+const bosses = [
+    {
+        name: 'THE P-VALUE PHANTOM',
+        subtitle: 'Form 1: Whispers of Significance',
+        sprite: '👁️',
+        narrative: 'A spectral figure flickers in the data logs. It speaks in misinterpreted probabilities...'
+    },
+    {
+        name: 'THE ERROR REVENANT',
+        subtitle: 'Form 2: Type I and Type II Wraith',
+        sprite: '💀',
+        narrative: 'A wraith made of false positives and false negatives blocks your path.'
+    },
+    {
+        name: 'THE EFFECT SIZE GOLEM',
+        subtitle: 'Form 3: Magnitude of Madness',
+        sprite: '🗿',
+        narrative: 'A massive figure built of misunderstood magnitudes. Statistical, but not practical.'
+    },
+    {
+        name: 'THE INTERVAL HYDRA',
+        subtitle: 'Form 4: 95% Confident, 100% Wrong',
+        sprite: '🐍',
+        narrative: 'Multi-headed, each head speaking a different wrong interpretation of confidence.'
+    },
+    {
+        name: 'THE OVERLORD OF OVERFIT',
+        subtitle: 'Final Form: Master of Misconceptions',
+        sprite: '👹',
+        narrative: 'The corrupted AI revealed. Every statistical error, fused into one final enemy.'
+    }
+];
+
+// ============ QUESTION BANK (3 per boss) ============
+const questions = [
+    // BOSS 1: P-Value Phantom
+    [
+        {
+            q: 'A p-value of 0.03 means:',
+            choices: [
+                { text: 'There\'s a 3% chance the null hypothesis is true', correct: false },
+                { text: 'If the null is true, there\'s a 3% chance of getting data this extreme or more', correct: true },
+                { text: 'The result has 97% practical importance', correct: false },
+                { text: 'The alternative hypothesis is 97% likely', correct: false }
+            ],
+            hint: 'P-value = P(data | H0 is true), not P(H0 | data).'
+        },
+        {
+            q: 'You run 20 independent tests at α = 0.05. How many "significant" results would you EXPECT by chance alone if all nulls are true?',
+            choices: [
+                { text: '0 — significance means real effect', correct: false },
+                { text: 'About 1', correct: true },
+                { text: 'About 5', correct: false },
+                { text: 'About 10', correct: false }
+            ],
+            hint: '20 × 0.05 = ?'
+        },
+        {
+            q: 'A study reports p = 0.049 with n = 12. Another reports p = 0.051 with n = 5000. Which is the bigger concern?',
+            choices: [
+                { text: 'The first — barely significant', correct: false },
+                { text: 'The second — barely non-significant', correct: false },
+                { text: 'Neither tells you about effect size or practical importance', correct: true },
+                { text: 'Both are equally meaningful', correct: false }
+            ],
+            hint: 'P-values alone don\'t convey magnitude or relevance.'
+        }
+    ],
+    // BOSS 2: Error Revenant
+    [
+        {
+            q: 'Concluding a drug works when it actually does NOT is which type of error?',
+            choices: [
+                { text: 'Type I (False Positive)', correct: true },
+                { text: 'Type II (False Negative)', correct: false },
+                { text: 'Type III', correct: false },
+                { text: 'Sampling error', correct: false }
+            ],
+            hint: 'Rejecting a true null = Type I.'
+        },
+        {
+            q: 'Statistical power (1 − β) is the probability of:',
+            choices: [
+                { text: 'The null hypothesis being false', correct: false },
+                { text: 'Detecting a true effect when it exists', correct: true },
+                { text: 'Getting a p-value below 0.05', correct: false },
+                { text: 'Making a Type I error', correct: false }
+            ],
+            hint: 'Power = avoiding Type II errors.'
+        },
+        {
+            q: 'You have low power and find p > 0.05. The BEST conclusion is:',
+            choices: [
+                { text: 'The null hypothesis is true', correct: false },
+                { text: 'There is no effect', correct: false },
+                { text: 'Absence of evidence is not evidence of absence', correct: true },
+                { text: 'The treatment definitely doesn\'t work', correct: false }
+            ],
+            hint: 'Low power means you might miss real effects.'
+        }
+    ],
+    // BOSS 3: Effect Size Golem
+    [
+        {
+            q: 'Two groups: Mean A = 100, Mean B = 102, pooled SD = 20, n = 10000 per group. The p-value is < 0.001. What\'s the practical takeaway?',
+            choices: [
+                { text: 'Massive effect — highly significant', correct: false },
+                { text: 'Tiny effect (d = 0.1) — significant only because of huge sample', correct: true },
+                { text: 'Group B is twice as good as Group A', correct: false },
+                { text: 'The result is meaningless', correct: false }
+            ],
+            hint: 'Cohen\'s d = (M1 − M2) / SD. Big n inflates significance.'
+        },
+        {
+            q: 'Cohen\'s d = 0.8 is typically interpreted as:',
+            choices: [
+                { text: 'Small effect', correct: false },
+                { text: 'Medium effect', correct: false },
+                { text: 'Large effect', correct: true },
+                { text: 'No effect', correct: false }
+            ],
+            hint: 'Cohen\'s rules of thumb: 0.2 small, 0.5 medium, 0.8 large.'
+        },
+        {
+            q: 'Why report effect sizes alongside p-values?',
+            choices: [
+                { text: 'It\'s required by all journals', correct: false },
+                { text: 'Effect size conveys magnitude; p-value only conveys evidence against null', correct: true },
+                { text: 'It increases statistical significance', correct: false },
+                { text: 'It replaces the need for hypothesis testing', correct: false }
+            ],
+            hint: 'Significance ≠ importance.'
+        }
+    ],
+    // BOSS 4: Interval Hydra
+    [
+        {
+            q: 'A 95% CI for a mean is [3.2, 7.8]. Which statement is CORRECT?',
+            choices: [
+                { text: 'There\'s a 95% chance the true mean is between 3.2 and 7.8', correct: false },
+                { text: '95% of the data falls between 3.2 and 7.8', correct: false },
+                { text: 'If we repeated sampling many times, 95% of such intervals would contain the true mean', correct: true },
+                { text: 'The true mean is definitely between 3.2 and 7.8', correct: false }
+            ],
+            hint: 'CIs describe long-run procedure behavior, not single-interval probability.'
+        },
+        {
+            q: 'A wider confidence interval typically indicates:',
+            choices: [
+                { text: 'Higher precision', correct: false },
+                { text: 'More certainty about the estimate', correct: false },
+                { text: 'Greater uncertainty / smaller sample / more variability', correct: true },
+                { text: 'A larger effect size', correct: false }
+            ],
+            hint: 'Width ∝ uncertainty.'
+        },
+        {
+            q: 'A 99% CI compared to a 95% CI for the same data will be:',
+            choices: [
+                { text: 'Narrower', correct: false },
+                { text: 'Wider', correct: true },
+                { text: 'Identical', correct: false },
+                { text: 'Shifted, but same width', correct: false }
+            ],
+            hint: 'Higher confidence → more coverage → wider interval.'
+        }
+    ],
+    // FINAL BOSS: Overlord of Overfit
+    [
+        {
+            q: 'A model fits training data with R² = 0.99 but predicts new data with R² = 0.20. This is:',
+            choices: [
+                { text: 'A great model — high R²', correct: false },
+                { text: 'Overfitting — the model memorized noise', correct: true },
+                { text: 'Underfitting', correct: false },
+                { text: 'Sampling error', correct: false }
+            ],
+            hint: 'Train ≫ test performance = classic overfit.'
+        },
+        {
+            q: 'You collect data, test 50 hypotheses, find 3 with p < 0.05, then publish ONLY those 3. The main problem is:',
+            choices: [
+                { text: 'Sample size is too small', correct: false },
+                { text: 'Multiple comparisons + publication bias inflate false-positive rate', correct: true },
+                { text: 'The p-values are calculated wrong', correct: false },
+                { text: 'There\'s no problem if p < 0.05', correct: false }
+            ],
+            hint: 'P-hacking and the garden of forking paths.'
+        },
+        {
+            q: 'A correlation of r = 0.85 between ice cream sales and drowning deaths means:',
+            choices: [
+                { text: 'Ice cream causes drownings', correct: false },
+                { text: 'Drownings cause ice cream sales', correct: false },
+                { text: 'A confounding variable (e.g., summer / heat) likely drives both', correct: true },
+                { text: 'The data is wrong', correct: false }
+            ],
+            hint: 'Correlation ≠ causation. Look for confounders.'
+        }
+    ]
+];
+
+// ============ GAME FLOW ============
+function startGame() {
+    document.getElementById('titleScreen').style.display = 'none';
+    document.getElementById('gameScreen').classList.add('active');
+    startTimer();
+    loadBoss(0);
+}
+
+function startTimer() {
+    state.timerInterval = setInterval(() => {
+        state.timeRemaining--;
+        updateTimerDisplay();
+        if (state.timeRemaining <= 0) {
+            endGame(false, 'Time ran out. Containment breached.');
+        }
+    }, 1000);
+}
+
+function updateTimerDisplay() {
+    const mins = Math.floor(state.timeRemaining / 60);
+    const secs = state.timeRemaining % 60;
+    const display = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    const timerEl = document.getElementById('timer');
+    timerEl.textContent = display;
+    if (state.timeRemaining < 60) timerEl.classList.add('danger');
+}
+
+function loadBoss(stageIndex) {
+    const boss = bosses[stageIndex];
+    state.currentStage = stageIndex;
+    state.currentQuestionInStage = 0;
+    state.bossMaxHp = 100;
+    state.bossCurrentHp = 100;
+    
+    document.getElementById('bossName').textContent = boss.name;
+    document.getElementById('bossSubtitle').textContent = boss.subtitle;
+    const sprite = document.getElementById('bossSprite');
+    sprite.textContent = boss.sprite;
+    sprite.className = 'boss-sprite';
+    document.getElementById('stageDisplay').textContent = `STAGE ${stageIndex + 1} / ${bosses.length}`;
+    updateBossHp();
+    
+    // Show boss narrative briefly, then load question
+    showFeedback('info', `📡 ${boss.narrative}`);
+    setTimeout(() => {
+        hideFeedback();
+        loadQuestion();
+    }, 2500);
+}
+
+function loadQuestion() {
+    if (state.gameOver) return;
+    
+    const stageQuestions = questions[state.currentStage];
+    const q = stageQuestions[state.currentQuestionInStage];
+    
+    const box = document.getElementById('puzzleBox');
+    
+    let choicesHtml = '';
+    q.choices.forEach((c, i) => {
+        choicesHtml += `<button class='choice' data-idx='${i}' onclick='answerQuestion(${i})'>${c.text}</button>`;
+    });
+    
+    box.innerHTML = `
+        <div class='puzzle-stage-label'>ATTACK ${state.currentQuestionInStage + 1} / 3</div>
+        <div class='puzzle-narrative'>The boss radiates statistical corruption. Choose your weapon — the correct answer.</div>
+        <div class='puzzle-question'>${q.q}</div>
+        <div class='choices'>${choicesHtml}</div>
+    `;
+}
+
+function answerQuestion(choiceIdx) {
+    const q = questions[state.currentStage][state.currentQuestionInStage];
+    const choices = document.querySelectorAll('.choice');
+    choices.forEach(c => c.disabled = true);
+    
+    state.questionsAnswered++;
+    
+    if (q.choices[choiceIdx].correct) {
+        // Correct — damage boss
+        state.correctAnswers++;
+        choices[choiceIdx].classList.add('correct');
+        
+        let damage = 35;
+        if (state.doubleDmgActive) {
+            damage = 70;
+            state.doubleDmgActive = false;
+        }
+        
+        dealDamage(damage);
+        showFeedback('success', `✓ Direct hit! −${damage} HP to ${bosses[state.currentStage].name}`);
+        
+        setTimeout(() => {
+            if (state.bossCurrentHp <= 0) {
+                defeatBoss();
+            } else {
+                state.currentQuestionInStage++;
+                if (state.currentQuestionInStage >= 3) {
+                    // Shouldn't normally happen — boss should die in 3 hits — but safety net
+                    defeatBoss();
+                } else {
+                    hideFeedback();
+                    loadQuestion();
+                }
+            }
+        }, 1500);
+        
+    } else {
+        // Wrong — take damage
+        state.wrongAnswers++;
+        choices[choiceIdx].classList.add('wrong');
+        // Reveal correct
+        q.choices.forEach((c, i) => {
+            if (c.correct) choices[i].classList.add('correct');
+        });
+        
+        let damageToPlayer = 20;
+        if (state.shieldActive) {
+            damageToPlayer = 0;
+            state.shieldActive = false;
+            showFeedback('info', `🛡️ Shield absorbed the damage!`);
+        } else {
+            takeDamage(damageToPlayer);
+            showFeedback('danger', `✗ Wrong! The Misconception strikes back — you lose ${damageToPlayer} HP.`);
+        }
+        
+        setTimeout(() => {
+            if (state.health <= 0) {
+                endGame(false, 'Your integrity reached zero. The lab is lost.');
+                return;
+            }
+            // Move on after wrong answer too
+            state.currentQuestionInStage++;
+            if (state.currentQuestionInStage >= 3) {
+                // Failed to defeat boss in 3 attempts — but let them continue if boss still alive
+                if (state.bossCurrentHp > 0) {
+                    // Reset question pool for this boss
+                    state.currentQuestionInStage = 0;
+                    showFeedback('danger', `⚠ The boss still stands! Try the questions again.`);
+                    setTimeout(() => { hideFeedback(); loadQuestion(); }, 2000);
+                } else {
+                    defeatBoss();
+                }
+            } else {
+                hideFeedback();
+                loadQuestion();
+            }
+        }, 2000);
+    }
+}
+
+function dealDamage(amount) {
+    state.bossCurrentHp = Math.max(0, state.bossCurrentHp - amount);
+    updateBossHp();
+    
+    const sprite = document.getElementById('bossSprite');
+    sprite.classList.add('hit');
+    setTimeout(() => sprite.classList.remove('hit'), 500);
+    
+    // Floating damage popup
+    const arena = document.getElementById('bossArena');
+    const popup = document.createElement('div');
+    popup.className = 'damage-popup';
+    popup.textContent = `−${amount}`;
+    popup.style.left = '50%';
+    popup.style.top = '50%';
+    arena.appendChild(popup);
+    setTimeout(() => popup.remove(), 1200);
+}
+
+function takeDamage(amount) {
+    state.health = Math.max(0, state.health - amount);
+    updateHealth();
+}
+
+function updateBossHp() {
+    const pct = (state.bossCurrentHp / state.bossMaxHp) * 100;
+    document.getElementById('bossHpBar').style.width = pct + '%';
+    document.getElementById('bossHpText').textContent = `${state.bossCurrentHp} / ${state.bossMaxHp}`;
+}
+
+function updateHealth() {
+    const pct = (state.health / state.maxHealth) * 100;
+    document.getElementById('healthBar').style.width = pct + '%';
+    document.getElementById('healthText').textContent = `${state.health} / ${state.maxHealth}`;
+}
+
+function defeatBoss() {
+    const sprite = document.getElementById('bossSprite');
+    sprite.classList.add('defeated');
+    showFeedback('success', `💥 ${bosses[state.currentStage].name} DEFEATED! Terminal unlocked.`);
+    
+    // Reward: small heal + maybe a power-up
+    state.health = Math.min(state.maxHealth, state.health + 15);
+    updateHealth();
+    
+    if (state.currentStage % 2 === 1) {
+        // Every other boss, grant a power-up
+        state.powerUps.hint++;
+        updatePowerUps();
+    }
+    
+    setTimeout(() => {
+        hideFeedback();
+        if (state.currentStage + 1 >= bosses.length) {
+            endGame(true, 'You recovered the real data and escaped the lab!');
+        } else {
+            loadBoss(state.currentStage + 1);
+        }
+    }, 2500);
+}
+
+function endGame(victory, message) {
+    state.gameOver = true;
+    state.victory = victory;
+    clearInterval(state.timerInterval);
+    
+    document.getElementById('gameScreen').classList.remove('active');
+    const endScreen = document.getElementById('endScreen');
+    endScreen.classList.add('active');
+    
+    const accuracy = state.questionsAnswered > 0
+        ? Math.round((state.correctAnswers / state.questionsAnswered) * 100)
+        : 0;
+    
+    const mins = Math.floor((600 - state.timeRemaining) / 60);
+    const secs = (600 - state.timeRemaining) % 60;
+    const timeUsed = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    
+    const bossesDefeated = state.currentStage + (state.bossCurrentHp <= 0 ? 1 : 0);
+    
+    let rank = '';
+    if (victory) {
+        if (accuracy >= 90 && state.timeRemaining > 300) rank = 'S — LEGENDARY ESCAPE';
+        else if (accuracy >= 80) rank = 'A — EXCELLENT ESCAPE';
+        else if (accuracy >= 60) rank = 'B — SOLID ESCAPE';
+        else rank = 'C — NARROW ESCAPE';
+    } else {
+        rank = 'CONTAINMENT FAILED';
+    }
+    
+    endScreen.innerHTML = `
+        <div class='end-screen ${victory ? '' : 'failure'}'>
+            <h2>${victory ? '★ MISSION COMPLETE ★' : '☠ MISSION FAILED ☠'}</h2>
+            <p style='font-size: 1.2em; margin-bottom: 10px; color: ${victory ? '#4caf50' : '#f44336'};'><strong>${rank}</strong></p>
+            <p style='font-size: 1.1em; margin-bottom: 20px; color: #c8e6c9;'>${message}</p>
+            
+            <div class='end-stats'>
+                <div class='end-stat'>
+                    <div class='end-stat-label'>BOSSES DEFEATED</div>
+                    <div class='end-stat-value'>${bossesDefeated} / ${bosses.length}</div>
+                </div>
+                <div class='end-stat'>
+                    <div class='end-stat-label'>ACCURACY</div>
+                    <div class='end-stat-value'>${accuracy}%</div>
+                </div>
+                <div class='end-stat'>
+                    <div class='end-stat-label'>HP REMAINING</div>
+                    <div class='end-stat-value'>${state.health}</div>
+                </div>
+                <div class='end-stat'>
+                    <div class='end-stat-label'>TIME USED</div>
+                    <div class='end-stat-value'>${timeUsed}</div>
+                </div>
+                <div class='end-stat'>
+                    <div class='end-stat-label'>CORRECT</div>
+                    <div class='end-stat-value'>${state.correctAnswers}</div>
+                </div>
+                <div class='end-stat'>
+                    <div class='end-stat-label'>WRONG</div>
+                    <div class='end-stat-value'>${state.wrongAnswers}</div>
+                </div>
+            </div>
+            
+            <button class='big-btn' onclick='location.reload()'>► RETRY MISSION</button>
+        </div>
+    `;
+}
+
+// ============ POWER-UPS ============
+function updatePowerUps() {
+    document.getElementById('count-fiftyfifty').textContent = state.powerUps.fiftyfifty;
+    document.getElementById('count-shield').textContent = state.powerUps.shield;
+    document.getElementById('count-hint').textContent = state.powerUps.hint;
+    document.getElementById('count-doubledmg').textContent = state.powerUps.doubledmg;
+    
+    document.getElementById('pu-fiftyfifty').classList.toggle('disabled', state.powerUps.fiftyfifty <= 0);
+    document.getElementById('pu-shield').classList.toggle('disabled', state.powerUps.shield <= 0 || state.shieldActive);
+    document.getElementById('pu-hint').classList.toggle('disabled', state.powerUps.hint <= 0);
+    document.getElementById('pu-doubledmg').classList.toggle('disabled', state.powerUps.doubledmg <= 0 || state.doubleDmgActive);
+}
+
+function useFiftyFifty() {
+    if (state.powerUps.fiftyfifty <= 0) return;
+    const q = questions[state.currentStage][state.currentQuestionInStage];
+    const wrongChoices = [];
+    q.choices.forEach((c, i) => { if (!c.correct) wrongChoices.push(i); });
+    // Eliminate 2 wrong choices
+    const toEliminate = wrongChoices.sort(() => Math.random() - 0.5).slice(0, 2);
+    document.querySelectorAll('.choice').forEach((el, i) => {
+        if (toEliminate.includes(i)) el.classList.add('eliminated');
+    });
+    state.powerUps.fiftyfifty--;
+    updatePowerUps();
+    showFeedback('info', '🎯 50/50 activated — two wrong choices eliminated.');
+    setTimeout(hideFeedback, 1500);
+}
+
+function useShield() {
+    if (state.powerUps.shield <= 0 || state.shieldActive) return;
+    state.shieldActive = true;
+    state.powerUps.shield--;
+    updatePowerUps();
+    showFeedback('info', '🛡️ Shield activated — next wrong answer absorbed.');
+    setTimeout(hideFeedback, 1500);
+}
+
+function useHint() {
+    if (state.powerUps.hint <= 0) return;
+    const q = questions[state.currentStage][state.currentQuestionInStage];
+    state.powerUps.hint--;
+    updatePowerUps();
+    showFeedback('info', `💡 Hint: ${q.hint}`);
+}
+
+function useDoubleDmg() {
+    if (state.powerUps.doubledmg <= 0 || state.doubleDmgActive) return;
+    state.doubleDmgActive = true;
+    state.powerUps.doubledmg--;
+    updatePowerUps();
+    showFeedback('info', '⚡ Double damage primed — your next correct answer deals 70 HP.');
+    setTimeout(hideFeedback, 1500);
+}
+
+// ============ FEEDBACK ============
+function showFeedback(type, message) {
+    const fb = document.getElementById('feedback');
+    fb.className = 'feedback ' + type;
+    fb.textContent = message;
+}
+
+function hideFeedback() {
+    document.getElementById('feedback').classList.add('hidden');
+    document.getElementById('feedback').textContent = '';
+}
+
+// Init power-ups display
+updatePowerUps();
+</script>
+
+</body>
+</html>

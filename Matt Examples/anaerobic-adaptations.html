@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adaptations to Anaerobic Training | SESD53</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0d2136;
+    --teal: #00b4a0;
+    --teal-dark: #008c7c;
+    --teal-light: #e0f7f5;
+    --orange: #f06c2a;
+    --orange-light: #fff3ec;
+    --purple: #7c3aed;
+    --purple-light: #f3eeff;
+    --blue: #1d6fb5;
+    --blue-light: #e8f2fc;
+    --green: #16a34a;
+    --green-light: #edfbf2;
+    --white: #ffffff;
+    --off-white: #f4f8f9;
+    --border: #d6e8ea;
+    --text: #1a2e3b;
+    --muted: #5a7080;
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.14);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--off-white);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: var(--navy);
+    position: relative;
+    overflow: hidden;
+    padding: 64px 24px 56px;
+    text-align: center;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 80% at 80% 40%, rgba(0,180,160,0.18) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 60% at 20% 70%, rgba(240,108,42,0.12) 0%, transparent 60%);
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(0,180,160,0.2);
+    border: 1px solid rgba(0,180,160,0.45);
+    color: var(--teal);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 5px 16px;
+    border-radius: 2px;
+    margin-bottom: 18px;
+  }
+  .hero h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    color: var(--white);
+    line-height: 1.05;
+    position: relative;
+    letter-spacing: -0.01em;
+  }
+  .hero h1 span { color: var(--teal); }
+  .hero-sub {
+    color: rgba(255,255,255,0.65);
+    font-size: 1rem;
+    font-weight: 300;
+    max-width: 560px;
+    margin: 16px auto 32px;
+    position: relative;
+  }
+  .hero-nav {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    position: relative;
+  }
+  .hero-nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 22px;
+    border-radius: 3px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: var(--teal);
+    color: var(--navy);
+  }
+  .btn-primary:hover { background: var(--teal-dark); }
+  .btn-ghost {
+    background: transparent;
+    color: rgba(255,255,255,0.85);
+    border: 1.5px solid rgba(255,255,255,0.3);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.6); }
+
+  /* ── STAT STRIP ── */
+  .stat-strip {
+    background: var(--teal);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    text-align: center;
+  }
+  .stat-item {
+    padding: 20px 16px;
+    border-right: 1px solid rgba(255,255,255,0.2);
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 1.9rem;
+    color: var(--navy);
+    display: block;
+  }
+  .stat-label {
+    font-size: 0.78rem;
+    color: rgba(13,33,54,0.75);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .page-wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 48px 20px 64px;
+  }
+
+  /* ── SECTION CARDS ── */
+  .section-card {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    margin-bottom: 28px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+    gap: 12px;
+  }
+  .section-header:hover { filter: brightness(0.95); }
+
+  .section-header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .section-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 1.18rem;
+    color: var(--white);
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+  }
+  .section-subtitle {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.7);
+    font-weight: 400;
+    display: block;
+    margin-top: 2px;
+  }
+  .chevron {
+    color: rgba(255,255,255,0.8);
+    font-size: 1.1rem;
+    transition: transform 0.25s;
+    flex-shrink: 0;
+  }
+  .section-card.open .chevron { transform: rotate(180deg); }
+
+  .section-body {
+    display: none;
+    padding: 28px 24px;
+    border-top: 1px solid var(--border);
+    animation: fadeIn 0.2s ease;
+  }
+  .section-card.open .section-body { display: block; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+  /* ── COLOUR THEMES PER SECTION ── */
+  .theme-teal .section-header { background: linear-gradient(135deg, #007a6e 0%, #00b4a0 100%); }
+  .theme-teal .section-icon { background: rgba(255,255,255,0.15); }
+  .theme-orange .section-header { background: linear-gradient(135deg, #c4521a 0%, #f06c2a 100%); }
+  .theme-orange .section-icon { background: rgba(255,255,255,0.15); }
+  .theme-purple .section-header { background: linear-gradient(135deg, #5b20c4 0%, #7c3aed 100%); }
+  .theme-purple .section-icon { background: rgba(255,255,255,0.15); }
+  .theme-blue .section-header { background: linear-gradient(135deg, #145490 0%, #1d6fb5 100%); }
+  .theme-blue .section-icon { background: rgba(255,255,255,0.15); }
+  .theme-navy .section-header { background: linear-gradient(135deg, #0a1826 0%, #0d2136 100%); }
+  .theme-navy .section-icon { background: rgba(255,255,255,0.15); }
+  .theme-green .section-header { background: linear-gradient(135deg, #0d7a38 0%, #16a34a 100%); }
+  .theme-green .section-icon { background: rgba(255,255,255,0.15); }
+  .theme-amber .section-header { background: linear-gradient(135deg, #b45309 0%, #d97706 100%); }
+  .theme-amber .section-icon { background: rgba(255,255,255,0.15); }
+
+  /* ── INNER CONTENT STYLES ── */
+  h3 { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1.15rem; color: var(--navy); margin-bottom: 8px; }
+  h4 { font-weight: 600; font-size: 0.95rem; color: var(--navy); margin-bottom: 6px; }
+  p { margin-bottom: 10px; }
+  ul, ol { padding-left: 20px; }
+  li { margin-bottom: 4px; }
+
+  .info-box {
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    border-left: 4px solid transparent;
+  }
+  .info-box.teal { background: var(--teal-light); border-color: var(--teal); }
+  .info-box.orange { background: var(--orange-light); border-color: var(--orange); }
+  .info-box.blue { background: var(--blue-light); border-color: var(--blue); }
+  .info-box.purple { background: var(--purple-light); border-color: var(--purple); }
+  .info-box.green { background: var(--green-light); border-color: var(--green); }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .mini-card {
+    background: var(--off-white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+  }
+  .mini-card h4 { color: var(--teal-dark); }
+  .mini-card.orange h4 { color: var(--orange); }
+  .mini-card.purple h4 { color: var(--purple); }
+
+  .tag {
+    display: inline-block;
+    background: var(--navy);
+    color: var(--white);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 10px;
+    border-radius: 2px;
+    margin-bottom: 8px;
+  }
+  .tag.teal { background: var(--teal); color: var(--navy); }
+  .tag.orange { background: var(--orange); }
+  .tag.purple { background: var(--purple); }
+
+  em.note {
+    display: block;
+    background: var(--navy);
+    color: var(--teal);
+    font-style: normal;
+    font-weight: 600;
+    font-size: 0.88rem;
+    padding: 10px 16px;
+    border-radius: 4px;
+    margin-top: 10px;
+  }
+
+  /* ── TABLE ── */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  .data-table th {
+    background: var(--navy);
+    color: var(--white);
+    padding: 12px 16px;
+    text-align: left;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.04em;
+  }
+  .data-table th:first-child { border-radius: 6px 0 0 0; }
+  .data-table th:last-child { border-radius: 0 6px 0 0; }
+  .data-table td { padding: 11px 16px; border-bottom: 1px solid var(--border); }
+  .data-table tr:nth-child(even) td { background: var(--off-white); }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table .pill {
+    display: inline-block;
+    background: var(--teal-light);
+    color: var(--teal-dark);
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  /* ── LECTURE VIDEO ── */
+  .video-wrap {
+    position: relative; width: 100%; padding-top: 56.25%;
+    border-radius: 8px; overflow: hidden; box-shadow: var(--shadow-lg);
+  }
+  .video-wrap iframe {
+    position: absolute; inset: 0; width: 100%; height: 100%; border: none;
+  }
+
+  /* ── PERFORMANCE CARDS ── */
+  .perf-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .perf-card {
+    border-radius: 8px;
+    padding: 22px 18px;
+    text-align: center;
+    border: 2px solid var(--border);
+  }
+  .perf-card .sport-icon { font-size: 2rem; margin-bottom: 8px; display: block; }
+  .perf-card h4 { font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; }
+  .perf-card p { font-size: 0.88rem; color: var(--muted); margin: 0; }
+
+  /* ── CALLOUT ── */
+  .big-callout {
+    background: var(--navy);
+    border-radius: 8px;
+    padding: 28px 32px;
+    text-align: center;
+    margin-top: 20px;
+  }
+  .big-callout p { color: rgba(255,255,255,0.9); font-size: 1.1rem; font-weight: 300; margin: 0 0 16px; line-height: 1.6; }
+  .big-callout p strong { color: var(--teal); font-weight: 700; }
+  .pill-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .key-pill {
+    background: rgba(0,180,160,0.15);
+    border: 1px solid rgba(0,180,160,0.35);
+    color: var(--teal);
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 20px;
+  }
+
+  /* ── LEARNING CHECK ── */
+  .lc-list { list-style: none; padding: 0; }
+  .lc-item {
+    display: flex;
+    gap: 14px;
+    padding: 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    margin-bottom: 10px;
+    background: var(--off-white);
+    align-items: flex-start;
+  }
+  .lc-num {
+    background: var(--teal);
+    color: var(--navy);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 1rem;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .lc-text { font-size: 0.95rem; line-height: 1.6; }
+  .tip-box {
+    background: var(--orange-light);
+    border-left: 4px solid var(--orange);
+    border-radius: 4px;
+    padding: 14px 18px;
+    margin-top: 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  /* ── REFERENCES ── */
+  .ref-list { list-style: none; padding: 0; counter-reset: ref; }
+  .ref-list li {
+    counter-increment: ref;
+    display: flex;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+  .ref-list li:last-child { border-bottom: none; }
+  .ref-list li::before {
+    content: counter(ref);
+    background: var(--navy);
+    color: var(--white);
+    font-weight: 700;
+    font-size: 0.8rem;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--navy);
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    padding: 32px 20px;
+    font-size: 0.85rem;
+    line-height: 2;
+  }
+  footer a { color: var(--teal); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  footer strong { color: rgba(255,255,255,0.8); }
+
+  /* ── BACK TO TOP ── */
+  .back-top {
+    text-align: center;
+    margin: 40px 0 20px;
+  }
+  .back-top a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--navy);
+    color: var(--white);
+    padding: 10px 22px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+  }
+  .back-top a:hover { background: var(--teal-dark); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .stat-strip { grid-template-columns: repeat(3,1fr); }
+    .stat-num { font-size: 1.4rem; }
+    .card-grid { grid-template-columns: 1fr; }
+    .perf-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body id="top">
+
+<!-- ═══ HERO ═══ -->
+<header class="hero">
+  <div class="hero-badge">Level 5 · Exercise Physiology · SESD53</div>
+  <h1>Adaptations to<br><span>Anaerobic Training</span></h1>
+  <p class="hero-sub">From neural drive to structural change — producing force quickly, efficiently, and repeatedly</p>
+  <nav class="hero-nav">
+    <a href="https://marjon.instructure.com/courses/5859/pages/home-page" class="btn-primary">🏠 Module Homepage</a>
+    <a href="#" class="btn-ghost">📘 Module Overview</a>
+  </nav>
+</header>
+
+<!-- ═══ STAT STRIP ═══ -->
+<div class="stat-strip">
+  <div class="stat-item">
+    <span class="stat-num">&gt;85%</span>
+    <span class="stat-label">VO₂max intensity</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num">0–2 min</span>
+    <span class="stat-label">Duration range</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num">2 systems</span>
+    <span class="stat-label">ATP-PCr + Glycolytic</span>
+  </div>
+</div>
+
+<!-- ═══ PAGE CONTENT ═══ -->
+<main class="page-wrap">
+
+  <!-- VIDEO SECTION -->
+  <div class="section-label">Lecture Slides</div>
+  <div class="section-card theme-navy open" style="margin-bottom:28px;">
+    <div class="section-header" onclick="toggle(this.parentElement)">
+      <div class="section-header-left">
+        <div class="section-icon">📽️</div>
+        <div>
+          <div class="section-title">Lecture Slides: Anaerobic Adaptations</div>
+          <span class="section-subtitle">ATP-PCr, Glycolytic, Neural &amp; Structural</span>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="video-wrap">
+        <iframe src="https://docs.google.com/presentation/d/e/2PACX-1vRXtAx2buS2e-EtQDiZOo13rXcyRLY-onUTmVXiwPVTxtnswlNr58Jnc2TIn3rHjKXEmRcg9G3omkaI/embed?start=false&loop=false&delayms=60000" loading="lazy" allowfullscreen></iframe>
+      </div>
+      <p style="margin-top:14px;font-size:0.88rem;color:var(--muted);">🔗 Metabolic, neuromuscular, and structural changes for high-power performance.</p>
+    </div>
+  </div>
+
+  <div class="section-label">Core Content</div>
+
+  <!-- 1. ENERGY SYSTEMS -->
+  <div class="section-card theme-teal open">
+    <div class="section-header" onclick="toggle(this.parentElement)">
+      <div class="section-header-left">
+        <div class="section-icon">⚡</div>
+        <div>
+          <div class="section-title">1. Core Concept &amp; Energy Systems Overview</div>
+          <span class="section-subtitle">What are anaerobic adaptations?</span>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="info-box teal" style="margin-bottom:20px;">
+        <h3>What are anaerobic adaptations?</h3>
+        <p>Physiological and neuromuscular changes that improve the ability to produce high power rapidly <strong>without oxygen</strong> — at intensities above 85% VO₂max, lasting 0–2 minutes.</p>
+      </div>
+
+      <h4 style="margin-bottom:12px;">🔋 Energy Systems — they overlap, not separate</h4>
+      <div class="card-grid">
+        <div class="mini-card">
+          <span class="tag teal">0–10 sec</span>
+          <h4>ATP-PCr System</h4>
+          <p style="font-size:0.9rem;color:var(--muted);">Explosive energy — phosphocreatine rapidly resynthesises ATP. No oxygen needed.</p>
+        </div>
+        <div class="mini-card">
+          <span class="tag orange">10 sec – 2 min</span>
+          <h4>Glycolytic System</h4>
+          <p style="font-size:0.9rem;color:var(--muted);">Rapid ATP from glycogen breakdown. Accumulates H⁺ → fatigue.</p>
+        </div>
+        <div class="mini-card">
+          <span class="tag">2+ min</span>
+          <h4>Oxidative System</h4>
+          <p style="font-size:0.9rem;color:var(--muted);">Recovery &amp; sustained support. Clears lactate, restores PCr.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. METABOLIC -->
+  <div class="section-card theme-blue">
+    <div class="section-header" onclick="toggle(this.parentElement)">
+      <div class="section-header-left">
+        <div class="section-icon">🔬</div>
+        <div>
+          <div class="section-title">2. Metabolic Adaptations</div>
+          <span class="section-subtitle">Energy supply improvements</span>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <p style="margin-bottom:16px;"><strong>What improves with anaerobic training:</strong></p>
+      <div class="card-grid">
+        <div class="mini-card">
+          <h4>↑ PCr Stores</h4>
+          <p style="font-size:0.9rem;color:var(--muted);">Greater phosphocreatine availability for rapid ATP resynthesis.</p>
+        </div>
+        <div class="mini-card">
+          <h4>↑ Glycolytic Enzymes</h4>
+          <p style="font-size:0.9rem;color:var(--muted);">PFK, LDH activity increases → faster ATP from glycogen.</p>
+        </div>
+        <div class="mini-card">
+          <h4>↑ Buffering Capacity</h4>
+          <p style="font-size:0.9rem;color:var(--muted);">Better H⁺ tolerance → delayed fatigue during high-intensity work.</p>
+        </div>
+      </div>
+      <div class="info-box blue" style="margin-top:4px;">
+        <strong>Outcome:</strong> Faster energy production + delayed fatigue onset
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. NEUROMUSCULAR -->
+  <div class="section-card theme-orange">
+    <div class="section-header" onclick="toggle(this.parentElement)">
+      <div class="section-header-left">
+        <div class="section-icon">💪</div>
+        <div>
+          <div class="section-title">3. Neuromuscular Adaptations</div>
+          <span class="section-subtitle">Force production &amp; neural drive</span>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+
+      <div class="info-box blue" style="margin-bottom:16px;">
+        <span class="tag" style="background:var(--blue);">Neural Drive</span>
+        <h4 style="margin-top:8px;">🧠 Motor Unit Recruitment &amp; EMG</h4>
+        <ul style="margin-top:8px;font-size:0.93rem;">
+          <li>↑ Motor unit recruitment (especially Type II fibres)</li>
+          <li>↑ Firing frequency (rate coding)</li>
+          <li>↑ EMG amplitude → greater activation</li>
+        </ul>
+        <em class="note">👉 Early strength gains are neural — not hypertrophy</em>
+      </div>
+
+      <div class="info-box orange">
+        <span class="tag orange">SSC</span>
+        <h4 style="margin-top:8px;">🔁 Stretch–Shortening Cycle</h4>
+        <p style="margin-top:6px;font-size:0.93rem;"><strong>Phases:</strong> Eccentric (stretch) → Amortisation (transition) → Concentric (shortening)</p>
+        <p style="font-size:0.93rem;"><strong>Adaptations:</strong> ↓ Amortisation time, ↑ Elastic energy reuse, ↑ Rate of force development (RFD)</p>
+      </div>
+
+      <div class="info-box teal" style="margin-top:16px;">
+        <span class="tag teal">Reflex</span>
+        <h4 style="margin-top:8px;">⚡ Myotatic (Stretch) Reflex</h4>
+        <p style="margin-top:6px;font-size:0.93rem;">Muscle spindles detect rapid stretch → reflex increases activation. Training effect: ↑ Reflex sensitivity, faster contraction.</p>
+        <em class="note">👉 Critical for sprinting, jumping, change of direction</em>
+      </div>
+
+      <div class="card-grid" style="margin-top:16px;">
+        <div class="mini-card orange">
+          <h4>🏃 Plyometric Training</h4>
+          <p style="font-size:0.9rem;color:var(--muted);">Develops SSC efficiency + reflex contribution + neural coordination → ↑ Reactive strength, ↑ RFD, ↑ movement efficiency</p>
+        </div>
+        <div class="mini-card">
+          <h4>🧠 Coordination &amp; Efficiency</h4>
+          <p style="font-size:0.9rem;color:var(--muted);">↓ Antagonist co-activation, ↑ Intermuscular coordination → "Better movement = more effective force"</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. STRUCTURAL -->
+  <div class="section-card theme-purple">
+    <div class="section-header" onclick="toggle(this.parentElement)">
+      <div class="section-header-left">
+        <div class="section-icon">🧬</div>
+        <div>
+          <div class="section-title">4. Muscle &amp; Structural Adaptations</div>
+          <span class="section-subtitle">Fibre type &amp; architecture changes</span>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="card-grid">
+        <div class="mini-card purple">
+          <h4>💥 Fibre Type Adaptations</h4>
+          <ul style="font-size:0.9rem;color:var(--muted);margin-top:8px;">
+            <li>↑ Type II fibre hypertrophy</li>
+            <li>Type IIx → IIa shift (more fatigue resistant)</li>
+            <li>Greater glycolytic capacity per fibre</li>
+          </ul>
+        </div>
+        <div class="mini-card purple">
+          <h4>📐 Muscle Architecture</h4>
+          <ul style="font-size:0.9rem;color:var(--muted);margin-top:8px;">
+            <li>↑ Pennation angle → more fibres packed → ↑ force</li>
+            <li>↑ Fascicle length → more sarcomeres in series → ↑ velocity</li>
+            <li>↑ Tendon stiffness → faster force transmission + elastic recoil</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. INTEGRATION TABLE -->
+  <div class="section-card theme-teal">
+    <div class="section-header" onclick="toggle(this.parentElement)">
+      <div class="section-header-left">
+        <div class="section-icon">🔁</div>
+        <div>
+          <div class="section-title">5. Integrating Neuromuscular + Metabolic Adaptations</div>
+          <span class="section-subtitle">How the systems work together</span>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border);">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>System</th>
+              <th>Key Adaptation</th>
+              <th>Performance Effect</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Metabolic</strong></td>
+              <td>↑ ATP production rate</td>
+              <td><span class="pill">Sustained power output</span></td>
+            </tr>
+            <tr>
+              <td><strong>Neural</strong></td>
+              <td>↑ Motor unit activation</td>
+              <td><span class="pill">Greater peak force</span></td>
+            </tr>
+            <tr>
+              <td><strong>SSC</strong></td>
+              <td>↑ Elastic energy reuse</td>
+              <td><span class="pill">Efficiency + speed</span></td>
+            </tr>
+            <tr>
+              <td><strong>Reflex</strong></td>
+              <td>↑ Stretch reflex sensitivity</td>
+              <td><span class="pill">Explosiveness</span></td>
+            </tr>
+            <tr>
+              <td><strong>Architecture</strong></td>
+              <td>↑ Force &amp; velocity capacity</td>
+              <td><span class="pill">Sprint &amp; jump ability</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. ASR -->
+  <div class="section-card theme-amber">
+    <div class="section-header" onclick="toggle(this.parentElement)">
+      <div class="section-header-left">
+        <div class="section-icon">🏃</div>
+        <div>
+          <div class="section-title">6. Anaerobic Speed Reserve (ASR) &amp; Individual Differences</div>
+          <span class="section-subtitle">Modern concept in high-intensity training</span>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="card-grid">
+        <div class="mini-card" style="border-left:4px solid var(--orange);">
+          <h4>What is ASR?</h4>
+          <p style="font-size:0.9rem;margin-top:6px;"><strong>ASR = Max Sprint Speed − Max Aerobic Speed</strong></p>
+          <p style="font-size:0.9rem;color:var(--muted);">Determines tolerance to high-intensity work. Better predictor than %VO₂max alone. Performance above MAS depends on % of ASR used.</p>
+        </div>
+        <div class="mini-card" style="border-left:4px solid var(--blue);">
+          <h4>Individual Differences</h4>
+          <p style="font-size:0.9rem;color:var(--muted);">Athletes respond differently due to fibre type, neuromuscular profile, and ASR. ASR-based training reduces variability in fatigue and lactate response.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. FINAL SUMMARY -->
+  <div class="section-card theme-green">
+    <div class="section-header" onclick="toggle(this.parentElement)">
+      <div class="section-header-left">
+        <div class="section-icon">✅</div>
+        <div>
+          <div class="section-title">7. Final Summary — Link to Performance</div>
+          <span class="section-subtitle">Bringing it all together</span>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="perf-grid" style="margin-bottom:20px;">
+        <div class="perf-card">
+          <span class="sport-icon">🏃</span>
+          <h4>Sprinting</h4>
+          <p>SSC + fascicle length → speed<br>Neural drive → acceleration</p>
+        </div>
+        <div class="perf-card">
+          <span class="sport-icon">🏀</span>
+          <h4>Jumping</h4>
+          <p>Elastic energy + coordination → height &amp; power</p>
+        </div>
+        <div class="perf-card">
+          <span class="sport-icon">⚽</span>
+          <h4>Team Sports</h4>
+          <p>Repeated SSC + buffering → repeated sprint ability</p>
+        </div>
+      </div>
+      <div class="big-callout">
+        <p>Anaerobic adaptations are not just about energy — they are about <strong>producing force quickly, efficiently, and repeatedly</strong></p>
+        <div class="pill-row">
+          <span class="key-pill">🔥 Faster ATP production</span>
+          <span class="key-pill">💪 Greater force output</span>
+          <span class="key-pill">⚡ Faster contractions (SSC + reflex)</span>
+          <span class="key-pill">🧬 Structural changes for power</span>
+          <span class="key-pill">🧠 Neural system drives performance</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEARNING CHECK -->
+  <div class="section-label" style="margin-top:40px;">Self-Assessment</div>
+  <div class="section-card theme-navy open">
+    <div class="section-header" onclick="toggle(this.parentElement)">
+      <div class="section-header-left">
+        <div class="section-icon">🧠</div>
+        <div>
+          <div class="section-title">Learning Check: Anaerobic Adaptations</div>
+          <span class="section-subtitle">5 questions to test your understanding</span>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <ul class="lc-list">
+        <li class="lc-item"><span class="lc-num">1</span><span class="lc-text">What are the three phases of the stretch-shortening cycle, and which phase shows the greatest adaptation with plyometric training?</span></li>
+        <li class="lc-item"><span class="lc-num">2</span><span class="lc-text">Explain how neural drive contributes to early strength gains before hypertrophy occurs.</span></li>
+        <li class="lc-item"><span class="lc-num">3</span><span class="lc-text">Describe two structural changes in muscle architecture that improve power output.</span></li>
+        <li class="lc-item"><span class="lc-num">4</span><span class="lc-text">What is Anaerobic Speed Reserve (ASR) and why is it a better predictor than %VO₂max for high-intensity performance?</span></li>
+        <li class="lc-item"><span class="lc-num">5</span><span class="lc-text">Compare the metabolic adaptations (PCr, enzymes, buffering) that occur with repeated sprint training.</span></li>
+      </ul>
+      <div class="tip-box">💡 <strong>Tip:</strong> Link each adaptation back to a real sport — sprinting, jumping, or team-sport repeated efforts.</div>
+    </div>
+  </div>
+
+  <!-- REFERENCES -->
+  <div class="section-label" style="margin-top:40px;">Academic References</div>
+  <div class="section-card theme-navy">
+    <div class="section-header" onclick="toggle(this.parentElement)">
+      <div class="section-header-left">
+        <div class="section-icon">📘</div>
+        <div>
+          <div class="section-title">Key References</div>
+          <span class="section-subtitle">Anaerobic adaptations literature</span>
+        </div>
+      </div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+      <ol class="ref-list">
+        <li>Bompa, T.O. &amp; Buzzichelli, C. (2019). <em>Periodization: Theory and Methodology of Training.</em> Human Kinetics.</li>
+        <li>Haff, G.G. &amp; Triplett, N.T. (2016). <em>Essentials of Strength Training and Conditioning.</em> 4th ed. NSCA.</li>
+        <li>Ross, A. et al. (2023). Neural adaptations to sprint interval training. <em>Journal of Applied Physiology.</em></li>
+        <li>Egan, B. &amp; Zierath, J.R. (2022). Exercise metabolism and molecular regulation. <em>Nature Reviews Endocrinology.</em></li>
+        <li>Markovic, G. &amp; Mikulic, P. (2024). Stretch-shortening cycle and athletic performance. <em>Sports Medicine.</em></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="back-top"><a href="#top">⬆ Back to Top</a></div>
+
+</main>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <p><strong>SESD53: Sport and Exercise Physiology</strong> | Plymouth Marjon University</p>
+  <p>
+    <a href="#">Module Homepage</a> ·
+    <a href="#">Module Overview</a> ·
+    <a href="#">Assessment</a> ·
+    <a href="#">Reading List</a>
+  </p>
+  <p style="margin-top:8px;">⚡ Anaerobic training improves force production speed — faster ATP, faster contraction, stronger structure.</p>
+</footer>
+
+<script>
+  function toggle(card) {
+    card.classList.toggle('open');
+  }
+  // Open first few sections by default (already done via class)
+</script>
+</body>
+</html>
