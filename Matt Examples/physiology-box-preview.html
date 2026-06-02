@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physiology Box — Background Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #0a0f1e;
+    --muted: #7a86a0;
+    --accent3: #2a8c4a;
+    --serif: 'DM Serif Display', Georgia, serif;
+    --sans: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#f0f2f5; font-family:var(--sans); padding:40px 24px; }
+  h1 { font-family:var(--mono); font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#666; margin-bottom:32px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(380px,1fr)); gap:24px; }
+  .option-label {
+    font-family:var(--mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase;
+    color:#666; margin-bottom:8px;
+  }
+
+  /* ── SHARED BOX STYLES (matches teaching.html physiology card) ── */
+  .box {
+    background:#0a0f1e;
+    padding:40px;
+    border:1px solid rgba(42,140,74,0.3);
+    position:relative;
+    overflow:hidden;
+    min-height:300px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+  }
+  .box-content { position:relative; z-index:2; }
+  .box-tag {
+    font-family:var(--mono); font-size:10px; letter-spacing:2px; text-transform:uppercase;
+    color:#6bcf8f; margin-bottom:16px;
+  }
+  .box-title {
+    font-family:var(--serif); font-size:28px; color:#fff; margin-bottom:12px; line-height:1.2;
+  }
+  .box-body {
+    font-size:14px; color:rgba(255,255,255,0.55); font-weight:300; line-height:1.7; margin-bottom:24px;
+  }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:28px; }
+  .chip {
+    font-family:var(--mono); font-size:10px; padding:3px 8px;
+    border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.4);
+  }
+  .btn {
+    display:inline-block; background:#2a8c4a; color:#fff; padding:10px 22px;
+    font-family:var(--sans); font-size:13px; font-weight:500; text-decoration:none; border:none; cursor:pointer;
+  }
+
+  /* ── OPTION A: Heart outline + ECG line ── */
+  .bg-a {
+    position:absolute; inset:0; z-index:1;
+    display:flex; align-items:center; justify-content:flex-end;
+    padding-right:20px; opacity:0.07;
+  }
+  .bg-a svg { width:280px; height:280px; }
+
+  /* ── OPTION B: ECG trace only, full width ── */
+  .bg-b {
+    position:absolute; bottom:0; left:0; right:0; z-index:1;
+    opacity:0.08;
+  }
+  .bg-b svg { width:100%; height:120px; }
+
+  /* ── OPTION C: Heart + ECG trace combined, large centred ── */
+  .bg-c {
+    position:absolute; inset:0; z-index:1;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0.06;
+  }
+  .bg-c svg { width:320px; height:260px; }
+
+  /* ── OPTION D: Subtle radial gradient + ECG ── */
+  .bg-d-gradient {
+    position:absolute; inset:0; z-index:1;
+    background: radial-gradient(ellipse 60% 80% at 85% 50%, rgba(42,140,74,0.15), transparent);
+  }
+  .bg-d-ecg {
+    position:absolute; bottom:16px; left:0; right:0; z-index:1; opacity:0.12;
+  }
+  .bg-d-ecg svg { width:100%; height:80px; }
+</style>
+</head>
+<body>
+
+<h1>Physiology box background — options</h1>
+
+<div class="grid">
+
+  <!-- OPTION A: Heart outline right-aligned -->
+  <div>
+    <div class="option-label">A — Heart outline, right-aligned</div>
+    <div class="box">
+      <div class="bg-a">
+        <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Heart outline -->
+          <path d="M100 170 C60 140, 20 110, 20 70 C20 40, 45 20, 70 20 C82 20, 92 26, 100 36 C108 26, 118 20, 130 20 C155 20, 180 40, 180 70 C180 110, 140 140, 100 170Z"
+                stroke="#2a8c4a" stroke-width="4" fill="none"/>
+          <!-- ECG trace over heart -->
+          <polyline points="10,100 30,100 38,60 46,140 54,100 70,100 78,50 86,150 94,100 190,100"
+                    stroke="#6bcf8f" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="box-content">
+        <div class="box-tag">Physiology</div>
+        <div class="box-title">Adaptation, response,<br>and function.</div>
+        <div class="box-body">Exercise physiology resources spanning cardiovascular and respiratory responses, energy systems, and training adaptation.</div>
+        <div class="chips">
+          <span class="chip">Energy Systems</span>
+          <span class="chip">VO2 Max</span>
+          <span class="chip">Cardiovascular</span>
+          <span class="chip">Training Adaptation</span>
+        </div>
+        <a href="#" class="btn">Physiology Resources</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPTION B: ECG trace running along the bottom -->
+  <div>
+    <div class="option-label">B — ECG trace along the bottom</div>
+    <div class="box">
+      <div class="bg-b">
+        <svg viewBox="0 0 800 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <polyline
+            points="0,60 60,60 80,60 90,10 100,110 110,60 130,60 145,40 160,80 175,60 200,60
+                    260,60 280,60 290,10 300,110 310,60 330,60 345,40 360,80 375,60 400,60
+                    460,60 480,60 490,10 500,110 510,60 530,60 545,40 560,80 575,60 600,60
+                    660,60 680,60 690,10 700,110 710,60 730,60 745,40 760,80 775,60 800,60"
+            stroke="#6bcf8f" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="box-content">
+        <div class="box-tag">Physiology</div>
+        <div class="box-title">Adaptation, response,<br>and function.</div>
+        <div class="box-body">Exercise physiology resources spanning cardiovascular and respiratory responses, energy systems, and training adaptation.</div>
+        <div class="chips">
+          <span class="chip">Energy Systems</span>
+          <span class="chip">VO2 Max</span>
+          <span class="chip">Cardiovascular</span>
+          <span class="chip">Training Adaptation</span>
+        </div>
+        <a href="#" class="btn">Physiology Resources</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPTION C: Large heart + ECG, centred watermark style -->
+  <div>
+    <div class="option-label">C — Large heart + ECG, centred watermark</div>
+    <div class="box">
+      <div class="bg-c">
+        <svg viewBox="0 0 320 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Big heart -->
+          <path d="M160 230 C100 190, 30 150, 30 90 C30 50, 62 24, 96 24 C114 24, 130 33, 160 52 C190 33, 206 24, 224 24 C258 24, 290 50, 290 90 C290 150, 220 190, 160 230Z"
+                stroke="#2a8c4a" stroke-width="6" fill="rgba(42,140,74,0.15)"/>
+          <!-- ECG across heart -->
+          <polyline points="0,130 40,130 55,130 65,60 75,200 85,130 110,130 122,100 134,160 146,130 320,130"
+                    stroke="#6bcf8f" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="box-content">
+        <div class="box-tag">Physiology</div>
+        <div class="box-title">Adaptation, response,<br>and function.</div>
+        <div class="box-body">Exercise physiology resources spanning cardiovascular and respiratory responses, energy systems, and training adaptation.</div>
+        <div class="chips">
+          <span class="chip">Energy Systems</span>
+          <span class="chip">VO2 Max</span>
+          <span class="chip">Cardiovascular</span>
+          <span class="chip">Training Adaptation</span>
+        </div>
+        <a href="#" class="btn">Physiology Resources</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPTION D: Green radial glow + faint ECG trace -->
+  <div>
+    <div class="option-label">D — Green radial glow + faint ECG</div>
+    <div class="box">
+      <div class="bg-d-gradient"></div>
+      <div class="bg-d-ecg">
+        <svg viewBox="0 0 800 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <polyline
+            points="0,40 60,40 80,40 90,5 100,75 110,40 130,40 145,25 160,55 175,40 200,40
+                    260,40 280,40 290,5 300,75 310,40 330,40 345,25 360,55 375,40 400,40
+                    460,40 480,40 490,5 500,75 510,40 530,40 545,25 560,55 575,40 600,40
+                    660,40 680,40 690,5 700,75 710,40 730,40 745,25 760,55 775,40 800,40"
+            stroke="#6bcf8f" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="box-content">
+        <div class="box-tag">Physiology</div>
+        <div class="box-title">Adaptation, response,<br>and function.</div>
+        <div class="box-body">Exercise physiology resources spanning cardiovascular and respiratory responses, energy systems, and training adaptation.</div>
+        <div class="chips">
+          <span class="chip">Energy Systems</span>
+          <span class="chip">VO2 Max</span>
+          <span class="chip">Cardiovascular</span>
+          <span class="chip">Training Adaptation</span>
+        </div>
+        <a href="#" class="btn">Physiology Resources</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
