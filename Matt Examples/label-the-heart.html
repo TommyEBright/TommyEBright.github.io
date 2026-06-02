@@ -384,7 +384,7 @@
     <!-- Score bar -->
     <div class="scorebar">
       <div class="stat">
-        <span class="num" id="placedCount">0/9</span>
+        <span class="num" id="placedCount">0/12</span>
         <span class="lbl">Placed</span>
       </div>
       <div class="stat">
@@ -413,15 +413,21 @@
       <div class="figure" id="figure">
         <img src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Diagram_of_the_human_heart_%28no_labels%29.svg"
              alt="Cross-section diagram of the human heart, unlabelled">
+        <!-- Vessels -->
         <span class="region" data-region="vena-cava"        style="left:30%; top:21%; width:13%; height:16%"></span>
         <span class="region" data-region="aorta"            style="left:52%; top:13%; width:13%; height:15%"></span>
         <span class="region" data-region="pulmonary-artery" style="left:67%; top:24%; width:15%; height:14%"></span>
         <span class="region" data-region="pulmonary-vein"   style="left:74%; top:41%; width:13%; height:12%"></span>
+        <!-- Chambers -->
         <span class="region" data-region="right-atrium"     style="left:33%; top:46%; width:17%; height:16%"></span>
         <span class="region" data-region="left-atrium"      style="left:65%; top:46%; width:16%; height:15%"></span>
-        <span class="region" data-region="semilunar-valve"  style="left:50%; top:55%; width:12%; height:9%"></span>
         <span class="region" data-region="right-ventricle"  style="left:38%; top:73%; width:20%; height:22%"></span>
         <span class="region" data-region="left-ventricle"   style="left:62%; top:74%; width:18%; height:24%"></span>
+        <!-- Valves -->
+        <span class="region" data-region="tricuspid-valve"  style="left:38%; top:60%; width:10%; height:8%"></span>
+        <span class="region" data-region="pulmonary-valve"  style="left:46%; top:54%; width:9%;  height:7%"></span>
+        <span class="region" data-region="mitral-valve"     style="left:60%; top:60%; width:10%; height:8%"></span>
+        <span class="region" data-region="aortic-valve"     style="left:54%; top:54%; width:9%;  height:7%"></span>
       </div>
 
       <div class="dropcol" id="colRight"></div>
@@ -490,15 +496,21 @@
 
 <script>
   const PARTS = [
-    { id:'vena-cava',         name:'Vena Cava',         desc:'Carries deoxygenated blood from the body back to the heart', col:'left' },
-    { id:'semilunar-valve',   name:'Semilunar Valve',   desc:'Prevents backflow of blood out of the ventricles', col:'left' },
-    { id:'aorta',             name:'Aorta',             desc:'The main artery carrying oxygenated blood to the whole body', col:'left' },
-    { id:'pulmonary-vein',    name:'Pulmonary Vein',    desc:'Carries oxygenated blood from the lungs to the left atrium', col:'left' },
-    { id:'right-atrium',      name:'Right Atrium',      desc:'Receives deoxygenated blood from the body via the vena cava', col:'left' },
-    { id:'right-ventricle',   name:'Right Ventricle',   desc:'Pumps deoxygenated blood to the lungs via the pulmonary artery', col:'left' },
-    { id:'pulmonary-artery',  name:'Pulmonary Artery',  desc:'Carries deoxygenated blood from the right ventricle to the lungs', col:'right' },
-    { id:'left-atrium',       name:'Left Atrium',       desc:'Receives oxygenated blood from the lungs via the pulmonary veins', col:'right' },
-    { id:'left-ventricle',    name:'Left Ventricle',    desc:'Pumps oxygenated blood to the body via the aorta — the most muscular chamber', col:'right' },
+    // Chambers
+    { id:'right-atrium',      name:'Right Atrium',      desc:'Upper right chamber. Receives deoxygenated blood returning from the body via the superior and inferior vena cava. Thin-walled and low-pressure — it simply collects blood before passing it to the right ventricle.', col:'left' },
+    { id:'right-ventricle',   name:'Right Ventricle',   desc:'Lower right chamber. Pumps deoxygenated blood to the lungs via the pulmonary artery. Has thinner walls than the left ventricle because pulmonary circulation requires less pressure.', col:'left' },
+    { id:'left-atrium',       name:'Left Atrium',       desc:'Upper left chamber. Receives freshly oxygenated blood from the lungs via the pulmonary veins. Like the right atrium, it is thin-walled and acts as a collecting chamber.', col:'left' },
+    { id:'left-ventricle',    name:'Left Ventricle',    desc:'Lower left chamber and the most muscular part of the heart. Pumps oxygenated blood to the entire body via the aorta. Its walls are roughly three times thicker than the right ventricle to generate the higher pressures needed for systemic circulation (~120 mmHg).', col:'left' },
+    // Valves
+    { id:'tricuspid-valve',   name:'Tricuspid Valve',   desc:'Atrioventricular valve between the right atrium and right ventricle. Has three leaflets (cusps). Opens to allow blood into the right ventricle during filling (diastole); closes during contraction (systole) to prevent backflow. Its closure contributes to the first heart sound (S1).', col:'left' },
+    { id:'pulmonary-valve',   name:'Pulmonary Valve',   desc:'Semilunar valve at the exit of the right ventricle. Opens to let blood into the pulmonary artery when the right ventricle contracts; snaps shut to prevent backflow during relaxation. Contributes to the second heart sound (S2).', col:'right' },
+    { id:'mitral-valve',      name:'Mitral Valve',      desc:'Atrioventricular valve between the left atrium and left ventricle. Also called the bicuspid valve (two leaflets). Opens during filling to allow oxygenated blood into the left ventricle; closes forcefully during systole — its closure is the main component of the first heart sound (S1).', col:'right' },
+    { id:'aortic-valve',      name:'Aortic Valve',      desc:'Semilunar valve at the exit of the left ventricle. Opens under high pressure when the left ventricle contracts, allowing oxygenated blood into the aorta. Closes to prevent backflow during ventricular relaxation. Contributes to the second heart sound (S2).', col:'right' },
+    // Vessels
+    { id:'vena-cava',         name:'Vena Cava',         desc:'Two large veins (superior and inferior) that return deoxygenated blood from the body to the right atrium. The superior vena cava drains the head and upper limbs; the inferior vena cava drains the abdomen and lower limbs. The largest veins in the body.', col:'right' },
+    { id:'pulmonary-artery',  name:'Pulmonary Artery',  desc:'Carries deoxygenated blood from the right ventricle to the lungs for gas exchange. The only artery in the body that carries deoxygenated blood. Splits into left and right branches to supply each lung.', col:'right' },
+    { id:'pulmonary-vein',    name:'Pulmonary Vein',    desc:'Carries oxygenated blood from the lungs back to the left atrium. The only veins in the body that carry oxygenated blood. There are four pulmonary veins — two from each lung.', col:'left' },
+    { id:'aorta',             name:'Aorta',             desc:'The largest artery in the body. Carries oxygenated blood from the left ventricle to the systemic circulation. Typical systolic pressure ~120 mmHg at rest, rising to ~200 mmHg during intense exercise. Branches into all major arteries supplying the body.', col:'right' },
   ];
 
   const bank      = document.getElementById('bank');
