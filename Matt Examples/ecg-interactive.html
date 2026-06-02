@@ -293,6 +293,45 @@ input[type=range].sim-range {
   .sim-wrap { grid-template-columns:1fr; }
   .tab-bar { padding:0 16px; }
 }
+
+/* ── WAVEFORM EXPLORER ────────────────────── */
+.wave-explorer-wrap { max-width:900px; margin:0 auto; padding:40px; }
+.wave-ecg-box {
+  background:rgba(0,0,0,.3); border:1px solid rgba(42,140,74,.15);
+  padding:24px 24px 16px; margin-bottom:24px; position:relative;
+}
+.wave-btn-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:8px; margin-bottom:16px;
+}
+.wave-btn2 {
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09);
+  color:rgba(255,255,255,.55); cursor:pointer; font-family:var(--mono);
+  font-size:10px; letter-spacing:1px; padding:10px 12px;
+  text-transform:uppercase; transition:all .15s; text-align:left;
+}
+.wave-btn2:hover { border-color:rgba(42,140,74,.5); color:#fff; }
+.wave-btn2.active { background:rgba(42,140,74,.15); border-color:#2a8c4a; color:#6bcf8f; }
+.wave-btn2-name { font-size:11px; margin-bottom:3px; }
+.wave-btn2-val { font-size:10px; color:rgba(255,255,255,.3); font-weight:300; }
+.wave-detail-box {
+  background:rgba(42,140,74,.06); border:1px solid rgba(42,140,74,.2);
+  padding:20px 24px; display:none; margin-bottom:24px;
+}
+.wave-detail-box.show { display:block; }
+.wave-detail-title2 { font-family:var(--serif); font-size:22px; color:#fff; margin-bottom:4px; }
+.wave-detail-val2 { font-family:var(--mono); font-size:11px; color:#6bcf8f; letter-spacing:1px; margin-bottom:12px; }
+.wave-detail-text2 { font-size:13px; color:rgba(255,255,255,.65); font-weight:300; line-height:1.7; }
+.values-tbl { width:100%; border-collapse:collapse; font-size:13px; margin-top:24px; }
+.values-tbl th {
+  font-family:var(--mono); font-size:9px; letter-spacing:1px; text-transform:uppercase;
+  color:rgba(255,255,255,.35); padding:10px 14px;
+  border:1px solid rgba(255,255,255,.07); background:rgba(255,255,255,.03);
+  text-align:left; font-weight:500;
+}
+.values-tbl td { padding:11px 14px; border:1px solid rgba(255,255,255,.06); color:rgba(255,255,255,.6); font-weight:300; }
+.values-tbl td:first-child { color:#6bcf8f; font-family:var(--mono); font-size:12px; font-weight:500; }
+.values-tbl tr:nth-child(even) td { background:rgba(255,255,255,.02); }
 </style>
 </head>
 <body class="ecg-page">
@@ -328,11 +367,12 @@ input[type=range].sim-range {
 <!-- TAB BAR -->
 <div class="tab-bar">
   <button class="active" onclick="switchTab(0)">① Synchronized View</button>
-  <button onclick="switchTab(1)">② ECG Simulator</button>
-  <button onclick="switchTab(2)">③ Label Practice</button>
-  <button onclick="switchTab(3)">④ Conduction Order</button>
-  <button onclick="switchTab(4)">⑤ Quiz</button>
-  <button onclick="switchTab(5)">⑥ Rhythm Library</button>
+  <button onclick="switchTab(6)">② Waveform Explorer</button>
+  <button onclick="switchTab(1)">③ ECG Simulator</button>
+  <button onclick="switchTab(2)">④ Label Practice</button>
+  <button onclick="switchTab(3)">⑤ Conduction Order</button>
+  <button onclick="switchTab(4)">⑥ Quiz</button>
+  <button onclick="switchTab(5)">⑦ Rhythm Library</button>
 </div>
 
 <!-- ═══════════ TAB 0: SYNCHRONIZED VIEW ═══════════ -->
@@ -443,7 +483,10 @@ input[type=range].sim-range {
       <button class="ctrl-btn active" id="playPauseBtn" onclick="togglePlay()">⏸ Pause</button>
       <button class="ctrl-btn" onclick="resetECG()">↺ Reset</button>
       <input type="range" id="scrubSlider" min="0" max="1000" value="0" oninput="scrubTo(this.value)">
-      <span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3);letter-spacing:1px;" id="hrDisplay">75 BPM</span>
+      <span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3);letter-spacing:1px;">SPEED</span>
+      <button class="ctrl-btn active" id="speedSlow"  onclick="setSpeed(4000,this)">Slow</button>
+      <button class="ctrl-btn"        id="speedMed"   onclick="setSpeed(2000,this)">Med</button>
+      <button class="ctrl-btn"        id="speedFast"  onclick="setSpeed(800,this)">Fast</button>
     </div>
   </div>
 
@@ -605,6 +648,93 @@ input[type=range].sim-range {
 </div>
 </div>
 
+<!-- ═══════════ TAB 6: WAVEFORM EXPLORER ═══════════ -->
+<div class="tab-panel" id="tab-6">
+<div class="section-header">
+  <h2>Waveform Explorer</h2>
+  <p>Click any region on the ECG trace or use the buttons below to explore each component — what it means electrically, mechanically, and clinically.</p>
+</div>
+<div class="wave-explorer-wrap">
+
+  <!-- Static SVG ECG with clickable regions -->
+  <div class="wave-ecg-box">
+    <svg id="waveSVG" viewBox="0 0 760 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;cursor:pointer;">
+      <defs>
+        <pattern id="wSmGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(42,140,74,0.07)" stroke-width="0.5"/>
+        </pattern>
+        <pattern id="wLgGrid" width="100" height="100" patternUnits="userSpaceOnUse">
+          <rect width="100" height="100" fill="url(#wSmGrid)"/>
+          <path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(42,140,74,0.14)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="760" height="200" fill="url(#wLgGrid)"/>
+      <line x1="0" y1="100" x2="760" y2="100" stroke="rgba(42,140,74,0.2)" stroke-width="1"/>
+
+      <!-- TWO PQRST COMPLEXES -->
+      <path d="M 0,100 L 30,100 C 45,100 50,75 60,70 C 70,65 75,100 85,100 L 105,100 L 115,106 L 125,18 L 138,130 L 148,100 L 175,100 C 185,100 195,82 210,78 C 225,74 235,100 248,100 L 280,100 L 290,100 C 305,100 310,75 320,70 C 330,65 335,100 345,100 L 365,100 L 375,106 L 385,18 L 398,130 L 408,100 L 435,100 C 445,100 455,82 470,78 C 485,74 495,100 508,100 L 760,100"
+            stroke="#6bcf8f" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- CLICKABLE HIGHLIGHT RECTS -->
+      <rect id="whl-p"   x="30"  y="55" width="60"  height="55" fill="rgba(107,207,143,0)" style="cursor:pointer;" onclick="selectWave2('p')"   onmouseover="hv2('p',1)"  onmouseout="hv2('p',0)"/>
+      <rect id="whl-pr"  x="30"  y="68" width="85"  height="42" fill="rgba(107,207,143,0)" style="cursor:pointer;" onclick="selectWave2('pr')"  onmouseover="hv2('pr',1)" onmouseout="hv2('pr',0)"/>
+      <rect id="whl-qrs" x="110" y="10" width="43"  height="130" fill="rgba(107,207,143,0)" style="cursor:pointer;" onclick="selectWave2('qrs')" onmouseover="hv2('qrs',1)" onmouseout="hv2('qrs',0)"/>
+      <rect id="whl-st"  x="148" y="72" width="32"  height="40" fill="rgba(107,207,143,0)" style="cursor:pointer;" onclick="selectWave2('st')"  onmouseover="hv2('st',1)"  onmouseout="hv2('st',0)"/>
+      <rect id="whl-t"   x="175" y="62" width="80"  height="52" fill="rgba(107,207,143,0)" style="cursor:pointer;" onclick="selectWave2('t')"   onmouseover="hv2('t',1)"   onmouseout="hv2('t',0)"/>
+
+      <!-- LABELS -->
+      <line x1="62"  y1="58" x2="62"  y2="30" stroke="#6bcf8f" stroke-width="1" stroke-dasharray="3,2"/>
+      <text x="62"  y="26" font-family="DM Mono,monospace" font-size="12" fill="#6bcf8f" text-anchor="middle" font-weight="500">P</text>
+      <line x1="128" y1="18" x2="128" y2="6"  stroke="#6bcf8f" stroke-width="1" stroke-dasharray="3,2"/>
+      <text x="128" y="14" font-family="DM Mono,monospace" font-size="12" fill="#6bcf8f" text-anchor="middle" font-weight="500">QRS</text>
+      <line x1="213" y1="70" x2="213" y2="44" stroke="#6bcf8f" stroke-width="1" stroke-dasharray="3,2"/>
+      <text x="213" y="40" font-family="DM Mono,monospace" font-size="12" fill="#6bcf8f" text-anchor="middle" font-weight="500">T</text>
+      <!-- PR interval bracket -->
+      <line x1="32" y1="152" x2="148" y2="152" stroke="rgba(107,207,143,0.4)" stroke-width="1"/>
+      <line x1="32"  y1="147" x2="32"  y2="157" stroke="rgba(107,207,143,0.4)" stroke-width="1"/>
+      <line x1="148" y1="147" x2="148" y2="157" stroke="rgba(107,207,143,0.4)" stroke-width="1"/>
+      <text x="90" y="168" font-family="DM Mono,monospace" font-size="9" fill="rgba(107,207,143,0.5)" text-anchor="middle">PR interval</text>
+      <!-- QT interval bracket -->
+      <line x1="115" y1="176" x2="252" y2="176" stroke="rgba(107,207,143,0.4)" stroke-width="1"/>
+      <line x1="115" y1="171" x2="115" y2="181" stroke="rgba(107,207,143,0.4)" stroke-width="1"/>
+      <line x1="252" y1="171" x2="252" y2="181" stroke="rgba(107,207,143,0.4)" stroke-width="1"/>
+      <text x="184" y="193" font-family="DM Mono,monospace" font-size="9" fill="rgba(107,207,143,0.5)" text-anchor="middle">QT interval</text>
+      <!-- RR bracket -->
+      <line x1="125" y1="18" x2="385" y2="18" stroke="rgba(107,207,143,0.25)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="255" y="13" font-family="DM Mono,monospace" font-size="9" fill="rgba(107,207,143,0.35)" text-anchor="middle">R–R interval = 1 cardiac cycle</text>
+    </svg>
+  </div>
+
+  <!-- Wave buttons -->
+  <div class="wave-btn-grid" id="waveBtnGrid"></div>
+
+  <!-- Detail panel -->
+  <div class="wave-detail-box" id="waveDetailBox">
+    <div class="wave-detail-title2" id="wdt2"></div>
+    <div class="wave-detail-val2"   id="wdv2"></div>
+    <div class="wave-detail-text2"  id="wdtxt2"></div>
+  </div>
+
+  <!-- Normal values table -->
+  <div style="margin-top:12px;">
+    <div class="section-label" style="color:#6bcf8f; padding:0; margin-bottom:12px;">Normal Values at Rest</div>
+    <table class="values-tbl">
+      <thead><tr><th>Measurement</th><th>Normal Range</th><th>Represents</th><th>Clinical Significance</th></tr></thead>
+      <tbody>
+        <tr><td>Heart rate</td><td>60–100 bpm</td><td>Beats per minute at rest</td><td>&lt;60 = bradycardia · &gt;100 = tachycardia</td></tr>
+        <tr><td>PR interval</td><td>120–200 ms</td><td>Atrial depolarisation + AV node delay</td><td>&gt;200ms = first-degree heart block</td></tr>
+        <tr><td>QRS duration</td><td>&lt;120 ms</td><td>Ventricular depolarisation</td><td>&gt;120ms = bundle branch block</td></tr>
+        <tr><td>QT interval</td><td>350–450 ms</td><td>Ventricular depolarisation + repolarisation</td><td>Prolonged QT = arrhythmia risk (correct for HR: QTc)</td></tr>
+        <tr><td>P wave</td><td>&lt;120 ms · &lt;0.25 mV</td><td>Atrial depolarisation</td><td>Absent P wave = AF or junctional rhythm</td></tr>
+        <tr><td>R–R interval</td><td>600–1000 ms</td><td>Time between successive beats</td><td>Basis for HRV (heart rate variability) analysis</td></tr>
+        <tr><td>ST segment</td><td>Isoelectric (on baseline)</td><td>Ventricular contraction plateau</td><td>Elevation = STEMI · Depression = ischaemia</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+</div><!-- /tab-6 -->
+
 <!-- FOOTER -->
 <footer>
   <div class="footer-top">
@@ -635,6 +765,7 @@ function switchTab(i) {
   document.querySelectorAll('.tab-panel').forEach((p,j) => p.classList.toggle('active', j===i));
   document.querySelectorAll('.tab-bar button').forEach((b,j) => b.classList.toggle('active', j===i));
   if (i===1) { setTimeout(drawSimCanvas,50); }
+  if (i===6) { setTimeout(initWaveExplorer,50); }
   if (i===2) { setTimeout(initLabels,50); }
   if (i===3) { initOrder(); }
   if (i===4) { initQuiz(); }
@@ -751,7 +882,7 @@ let animPlaying = true;
 let animT = 0; // 0–1 within one cycle
 let animRaf = null;
 let lastTimestamp = null;
-const CYCLE_MS = 800; // 75 bpm default
+let CYCLE_MS = 4000; // default: slow/educational pace
 let selectedPhaseKey = null;
 
 const canvas = document.getElementById('ecgCanvas');
@@ -1544,6 +1675,81 @@ function renderRhythmInfo(id) {
       <div class="rhythm-info-label">${row.label}</div>
       <div class="rhythm-info-val">${row.val}</div>
     </div>`).join('');
+}
+
+
+/* ── WAVEFORM EXPLORER (Tab 6) ──────────────────────────────
+   Rich descriptions merged from ecg-learning.html
+═══════════════════════════════════════════════════════════ */
+const WAVES2 = {
+  p: {
+    name:'P Wave',
+    val:'Duration: 80–100 ms · Amplitude: <0.25 mV',
+    text:'Represents atrial depolarisation — the electrical activation of both atria. Produced by the impulse spreading from the SA node across the right atrium first, then the left. The left and right atria contract during and just after the P wave, pushing blood through the AV valves into the ventricles. A broad or bifid P wave may indicate left atrial enlargement.'
+  },
+  pr: {
+    name:'PR Interval',
+    val:'Normal: 120–200 ms (3–5 small squares at standard speed)',
+    text:'Measured from the start of the P wave to the start of the QRS complex. Includes atrial depolarisation and the AV node delay. The AV node deliberately slows conduction to allow the atria to finish contracting and the ventricles to fill before ventricular systole begins. A prolonged PR (>200ms) = first-degree heart block. A short PR (<120ms) may indicate a pre-excitation syndrome (e.g. Wolff–Parkinson–White).'
+  },
+  qrs: {
+    name:'QRS Complex',
+    val:'Duration: <120 ms · R wave amplitude: 5–25 mm',
+    text:'Represents ventricular depolarisation — both ventricles depolarise and contract together. The Q wave reflects small septal depolarisation; the R wave is the dominant upward deflection as the main ventricular mass depolarises; the S wave reflects basal ventricular depolarisation. The QRS is tall because the ventricular muscle mass is much greater than the atria. A wide QRS (>120ms) indicates a bundle branch block — one ventricle is activated late via a slower, abnormal pathway.'
+  },
+  st: {
+    name:'ST Segment',
+    val:'Normally isoelectric — flat on the baseline',
+    text:'The period between ventricular depolarisation (QRS end) and repolarisation (T wave onset). During this period the ventricles are in the plateau phase of the action potential — all cells are depolarised, so no net current flows and the ECG is flat. ST elevation (>1mm) indicates acute myocardial injury and is the hallmark of a STEMI. ST depression indicates subendocardial ischaemia or digoxin effect. This segment is critical to interpret during exercise stress testing.'
+  },
+  t: {
+    name:'T Wave',
+    val:'Duration: ~160 ms · Amplitude: <5 mm limb leads, <10 mm precordial',
+    text:'Represents ventricular repolarisation — the ventricles recovering their resting membrane potential before the next beat. Normally upright in leads I, II, V3–V6 and inverted in aVR. Inverted T waves may indicate ischaemia, ventricular hypertrophy, bundle branch block, or pulmonary embolism. The QT interval (start of QRS to end of T wave) reflects total ventricular electrical activity and must be corrected for heart rate (QTc). A prolonged QTc increases risk of ventricular arrhythmia.'
+  }
+};
+
+let activeWave2 = null;
+
+function initWaveExplorer() {
+  const grid = document.getElementById('waveBtnGrid');
+  if (grid.children.length > 0) return; // already built
+  Object.entries(WAVES2).forEach(([key, w]) => {
+    const btn = document.createElement('button');
+    btn.className = 'wave-btn2';
+    btn.id = 'wb2-' + key;
+    btn.onclick = () => selectWave2(key);
+    btn.innerHTML = '<div class="wave-btn2-name">' + w.name + '</div><div class="wave-btn2-val">' + w.val.split('·')[0].trim() + '</div>';
+    grid.appendChild(btn);
+  });
+}
+
+function hv2(key, on) {
+  const el = document.getElementById('whl-' + key);
+  if (el && key !== activeWave2) el.setAttribute('fill', on ? 'rgba(107,207,143,0.1)' : 'rgba(107,207,143,0)');
+}
+
+function selectWave2(key) {
+  // Clear previous highlights
+  ['p','pr','qrs','st','t'].forEach(k => {
+    const el = document.getElementById('whl-' + k);
+    if (el) el.setAttribute('fill', k === key ? 'rgba(107,207,143,0.18)' : 'rgba(107,207,143,0)');
+    const btn = document.getElementById('wb2-' + k);
+    if (btn) btn.classList.toggle('active', k === key);
+  });
+  activeWave2 = key;
+  const w = WAVES2[key];
+  document.getElementById('wdt2').textContent   = w.name;
+  document.getElementById('wdv2').textContent   = w.val;
+  document.getElementById('wdtxt2').textContent = w.text;
+  document.getElementById('waveDetailBox').classList.add('show');
+}
+
+function setSpeed(ms, btn) {
+  CYCLE_MS = ms;
+  lastTimestamp = null;
+  document.querySelectorAll('#speedSlow,#speedMed,#speedFast').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
 }
 
 // ── INIT ──────────────────────────────────────────────────────
