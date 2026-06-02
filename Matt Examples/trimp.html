@@ -3,34 +3,34 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TRIMP Calculator — Sport &amp; Exercise Science</title>
+<title>Training Load Calculator — Dr. Tommy Bright</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --indigo:       #1F1A4A;
-    --indigo-soft:  #4a4570;
-    --magenta:      #E6007E;
-    --magenta-deep: #b80064;
-    --magenta-tint: rgba(230,0,126,0.10);
-    --lime:         #B6D43A;
-    --lime-deep:    #93ad2c;
-    --purple:       #6C2D8E;
-    --purple-deep:  #54226e;
-    --bg:           #f4f4f8;
+    --indigo:       #0a0f1e;
+    --indigo-soft:  #1a2a4a;
+    --magenta:      #2a8c4a;
+    --magenta-deep: #1a5a2d;
+    --magenta-tint: rgba(42,140,74,0.10);
+    --lime:         #6bcf8f;
+    --lime-deep:    #2a8c4a;
+    --purple:       #1a5fd4;
+    --purple-deep:  #0a3d8f;
+    --bg:           #f4f7fb;
     --card:         #ffffff;
-    --rule:         #d6d6e0;
-    --rule-soft:    #e6e6ee;
+    --rule:         #d0daea;
+    --rule-soft:    #e8eef6;
     --error:        #c63838;
-    --shadow:       0 2px 0 rgba(31,26,74,0.04), 0 14px 28px -18px rgba(31,26,74,0.25);
+    --shadow:       0 2px 0 rgba(10,15,30,0.04), 0 14px 28px -18px rgba(10,15,30,0.25);
   }
   * { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0;
     background: var(--bg);
     color: var(--indigo);
-    font-family: 'Atkinson Hyperlegible', 'Lexend', system-ui, sans-serif;
+    font-family: 'DM Sans', 'DM Sans', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     line-height: 1.55;
   }
@@ -38,7 +38,7 @@
   .wrap { max-width: 1280px; margin: 0 auto; padding: 28px 24px 60px; }
 
   header.mast {
-    background: linear-gradient(135deg, rgba(31,26,74,0.95), rgba(31,26,74,0.85));
+    background: linear-gradient(135deg, rgba(10,15,30,0.95), rgba(10,15,30,0.85));
     color: #fff;
     border-radius: 8px;
     border-bottom: 8px solid var(--magenta);
@@ -47,7 +47,7 @@
     text-align: center;
   }
   .mast .eyebrow {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 500;
     font-size: 12px;
     letter-spacing: 0.22em;
@@ -56,7 +56,7 @@
     margin-bottom: 6px;
   }
   .mast h1 {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 700;
     font-size: clamp(28px, 4.4vw, 42px);
     line-height: 1.1;
@@ -83,7 +83,7 @@
     background: var(--card);
     border: 2px solid var(--indigo);
     padding: 12px 22px;
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 600;
     font-size: 14.5px;
     cursor: pointer;
@@ -124,7 +124,7 @@
   .tab-content.active { display: block; }
 
   h2.section {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 700;
     font-size: 22px;
     margin: 0 0 6px;
@@ -145,7 +145,7 @@
   }
 
   .btn {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 13px;
     font-weight: 600;
     padding: 10px 16px;
@@ -188,7 +188,7 @@
     color: var(--indigo-soft);
   }
   .empty h3 {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     margin: 0 0 8px;
     color: var(--indigo);
   }
@@ -205,7 +205,7 @@
   table.roster th {
     padding: 12px 10px;
     text-align: left;
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 600;
     font-size: 12px;
     letter-spacing: 0.08em;
@@ -218,7 +218,7 @@
     border-bottom: 1px solid var(--rule-soft);
     vertical-align: middle;
   }
-  table.roster tbody tr:hover { background: rgba(230,0,126,0.04); }
+  table.roster tbody tr:hover { background: rgba(42,140,74,0.04); }
   table.roster .name {
     font-weight: 700;
     color: var(--indigo);
@@ -235,7 +235,7 @@
   }
   .field { display: flex; flex-direction: column; gap: 4px; }
   .field label {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 600;
     font-size: 11px;
     letter-spacing: 0.12em;
@@ -248,7 +248,7 @@
     margin-left: 4px;
   }
   .field input, .field textarea, .field select {
-    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 14px;
     padding: 9px 11px;
     border: 1.5px solid var(--rule);
@@ -275,7 +275,7 @@
     margin: 0 0 18px;
   }
   fieldset legend {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 700;
     font-size: 13px;
     color: var(--indigo);
@@ -322,7 +322,7 @@
   }
   .upload-zone input[type="file"] { display: none; }
   .upload-zone .file-name {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 700;
     color: var(--magenta-deep);
     word-break: break-all;
@@ -344,7 +344,7 @@
   .metric.lime { border-top-color: var(--lime); }
   .metric.purple { border-top-color: var(--purple); }
   .metric .lbl {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.18em;
@@ -353,7 +353,7 @@
     margin-bottom: 4px;
   }
   .metric .val {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 700;
     font-size: 26px;
     color: var(--indigo);
@@ -369,7 +369,7 @@
     margin-top: 4px;
     font-size: 11px;
     color: var(--indigo-soft);
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
   }
 
   .zones-row {
@@ -388,7 +388,7 @@
     padding: 16px;
   }
   .zones-card h4 {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     margin: 0 0 12px;
     color: var(--indigo);
     font-size: 15px;
@@ -399,7 +399,7 @@
   .zone-bar .head {
     display: flex; justify-content: space-between;
     font-size: 12px;
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     color: var(--indigo);
     margin-bottom: 3px;
   }
@@ -414,7 +414,7 @@
     background: var(--magenta);
     border-radius: 99px;
   }
-  .zone-bar.z1 .fill { background: #6C2D8E; }
+  .zone-bar.z1 .fill { background: #1a5fd4; }
   .zone-bar.z2 .fill { background: #3a4c8a; }
   .zone-bar.z3 .fill { background: var(--lime-deep); }
   .zone-bar.z4 .fill { background: #e08a00; }
@@ -461,7 +461,7 @@
   }
   details summary {
     cursor: pointer;
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 600;
     color: var(--indigo);
     font-size: 14px;
@@ -487,7 +487,7 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 12px;
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 13px;
     font-weight: 500;
   }
@@ -497,11 +497,29 @@
 <body>
 <div class="wrap">
 
-  <header class="mast">
-    <div class="eyebrow">Sport &amp; Exercise Science · Teaching Tool</div>
-    <h1>TRIMP Calculator</h1>
-    <p class="sub">Player profiles persist on this device · upload session data to compute all five TRIMPs</p>
-  </header>
+  <!-- SITE NAV -->
+  <nav style="position:sticky;top:0;z-index:200;background:#0a0f1e;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:56px;border-bottom:2px solid #1a5fd4;margin:0 -40px 0 -40px;width:calc(100% + 80px);">
+    <a href="../index.html" style="font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:#fff;text-decoration:none;">Dr. Tommy Bright</a>
+    <ul style="display:flex;gap:32px;list-style:none;">
+      <li><a href="../index.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;">Home</a></li>
+      <li><a href="../teaching.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:#fff;text-decoration:none;border-bottom:2px solid #1a5fd4;padding-bottom:2px;">Teaching &amp; Learning</a></li>
+      <li><a href="../project.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;">Projects</a></li>
+      <li><a href="../research.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;">Research</a></li>
+    </ul>
+    <div style="display:flex;gap:14px;">
+      <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:3px 9px;">LinkedIn</a>
+      <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:3px 9px;">ResearchGate</a>
+    </div>
+  </nav>
+
+  <!-- SITE HERO -->
+  <div style="background:#0a0f1e;padding:64px 40px 56px;margin:0 -40px 40px -40px;border-bottom:1px solid rgba(255,255,255,0.06);">
+    <div style="max-width:860px;margin:0 auto;">
+      <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#2a8c4a;margin-bottom:20px;">Physiology · Level 5 · 6 · 7</div>
+      <h1 style="font-family:'DM Serif Display',Georgia,serif;font-size:clamp(32px,5vw,52px);color:#fff;line-height:1.1;letter-spacing:-0.5px;margin-bottom:16px;">Training Load Calculator<br><em style="font-style:italic;color:#6b9fe4;">TRIMP &amp; beyond.</em></h1>
+      <p style="font-size:15px;color:rgba(255,255,255,0.6);max-width:560px;line-height:1.7;font-weight:300;">Player profiles · five TRIMP methods · session upload. Runs entirely in your browser.</p>
+    </div>
+  </div>
 
   <div class="tabs">
     <button class="tab active" data-tab="roster"><span class="n">01</span>Roster</button>
@@ -656,7 +674,7 @@
                 <input type="number" id="sn-rpe" min="0" max="10" step="0.5" placeholder="e.g. 7">
               </div>
 
-              <label style="font-family: 'Lexend', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--indigo-soft); display: block; margin-bottom: 5px;">HR data (CSV) *</label>
+              <label style="font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--indigo-soft); display: block; margin-bottom: 5px;">HR data (CSV) *</label>
               <div class="upload-zone" id="upload-zone">
                 <input type="file" id="csv-file" accept=".csv,.txt,.tsv">
                 <p><strong>Click or drop a CSV here</strong></p>
@@ -793,7 +811,7 @@
 
         <div id="batch-queue-wrap" class="hidden" style="margin-top:14px; overflow-x:auto;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
-            <span id="batch-status-summary" style="font-family:'Lexend',sans-serif; font-weight:600; font-size:14px; color:var(--indigo-soft);"></span>
+            <span id="batch-status-summary" style="font-family:'DM Sans',sans-serif; font-weight:600; font-size:14px; color:var(--indigo-soft);"></span>
             <div style="display:flex; gap:8px;">
               <button class="btn btn-primary" id="btn-batch-compute">▶ Compute all</button>
               <button class="btn" id="btn-batch-csv" disabled>Download results (.csv)</button>
@@ -856,10 +874,21 @@
 
   </div>
 
-  <footer>
-    <span>Pure HTML · single file · works offline</span>
-    <span class="marque">TRIMP Calculator</span>
-    <span>Roster lives in your browser</span>
+  <footer style="background:#0a0f1e;color:rgba(255,255,255,0.4);padding:40px;border-top:2px solid #1a5fd4;margin:40px -40px -40px -40px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:24px;margin-bottom:32px;">
+      <div style="font-size:15px;font-weight:600;color:rgba(255,255,255,0.8);font-family:'DM Sans',sans-serif;">Dr. Tommy Bright</div>
+      <ul style="display:flex;gap:24px;list-style:none;">
+        <li><a href="../index.html" style="font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;font-family:'DM Sans',sans-serif;">Home</a></li>
+        <li><a href="../teaching.html" style="font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;font-family:'DM Sans',sans-serif;">Teaching &amp; Learning</a></li>
+        <li><a href="../project.html" style="font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;font-family:'DM Sans',sans-serif;">Projects</a></li>
+        <li><a href="../research.html" style="font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;font-family:'DM Sans',sans-serif;">Research</a></li>
+      </ul>
+      <div style="display:flex;gap:12px;">
+        <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:5px 12px;">LinkedIn</a>
+        <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:5px 12px;">ResearchGate</a>
+      </div>
+    </div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.08);">Plymouth Marjon University · Cardiff Metropolitan University · Tournament Golf College</div>
   </footer>
 
 </div>
@@ -1537,7 +1566,7 @@ function drawHrChart(hr, dt, player, result) {
   function yToPx(y) { return m.t + ((yMax - y) / (yMax - yMin)) * plotH; }
 
   // Zone bands (Edwards)
-  var ezColors = ['rgba(108,45,142,0.07)', 'rgba(58,76,138,0.07)', 'rgba(147,173,44,0.10)', 'rgba(224,138,0,0.10)', 'rgba(230,0,126,0.12)'];
+  var ezColors = ['rgba(108,45,142,0.07)', 'rgba(58,76,138,0.07)', 'rgba(147,173,44,0.10)', 'rgba(224,138,0,0.10)', 'rgba(42,140,74,0.12)'];
   for (var i = 0; i < 5; i++) {
     var lo = (i === 0 ? 0.5 : [0.5,0.6,0.7,0.8,0.9][i]) * player.hrMax;
     var hi = (i === 4 ? yMax : [0.6,0.7,0.8,0.9][i] * player.hrMax);
@@ -1560,26 +1589,26 @@ function drawHrChart(hr, dt, player, result) {
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = color;
-    ctx.font = '600 11px "Lexend", sans-serif';
+    ctx.font = '600 11px "DM Sans", sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'bottom';
     ctx.fillText(label, m.l + plotW - 4, py - 2);
   }
-  refLine(player.hrMax, '#b80064', 'HRmax (' + player.hrMax + ')');
-  refLine(player.hrObla, '#54226e', 'HR OBLA (' + player.hrObla + ')');
-  refLine(player.hrLT, '#93ad2c', 'HR LT (' + player.hrLT + ')');
-  refLine(player.hrRest, '#4a4570', 'HRrest (' + player.hrRest + ')');
+  refLine(player.hrMax, '#1a5a2d', 'HRmax (' + player.hrMax + ')');
+  refLine(player.hrObla, '#0a3d8f', 'HR OBLA (' + player.hrObla + ')');
+  refLine(player.hrLT, '#2a8c4a', 'HR LT (' + player.hrLT + ')');
+  refLine(player.hrRest, '#1a2a4a', 'HRrest (' + player.hrRest + ')');
 
   // Axes
-  ctx.strokeStyle = '#1F1A4A';
+  ctx.strokeStyle = '#0a0f1e';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(m.l, m.t); ctx.lineTo(m.l, m.t + plotH); ctx.lineTo(m.l + plotW, m.t + plotH);
   ctx.stroke();
 
   // Y ticks
-  ctx.fillStyle = '#4a4570';
-  ctx.font = '500 11px "Lexend", sans-serif';
+  ctx.fillStyle = '#1a2a4a';
+  ctx.font = '500 11px "DM Sans", sans-serif';
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
   var yStep = 20;
@@ -1601,8 +1630,8 @@ function drawHrChart(hr, dt, player, result) {
   }
 
   // axis titles
-  ctx.fillStyle = '#1F1A4A';
-  ctx.font = '600 12px "Lexend", sans-serif';
+  ctx.fillStyle = '#0a0f1e';
+  ctx.font = '600 12px "DM Sans", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('time  (min)', m.l + plotW / 2, m.t + plotH + 30);
   ctx.save();
@@ -1613,7 +1642,7 @@ function drawHrChart(hr, dt, player, result) {
 
   // HR trace — downsample if many points
   var stride = Math.max(1, Math.floor(n / plotW));
-  ctx.strokeStyle = '#1F1A4A';
+  ctx.strokeStyle = '#0a0f1e';
   ctx.lineWidth = 1.4;
   ctx.lineJoin = 'round';
   ctx.beginPath();
