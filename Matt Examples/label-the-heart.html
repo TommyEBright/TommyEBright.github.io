@@ -3,218 +3,164 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Label the Heart — Interactive</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Label the Heart — Dr. Tommy Bright</title>
+<link rel="stylesheet" href="../css/style.css">
 <style>
-  :root {
-    --blue: #1a5f8a;
-    --dark-blue: #0d3a56;
-    --light-blue: #3a8bbf;
-    --teal-border: #c7d5d4;
-    --orange: #c2410c;
-    --orange-hover: #9a3412;
-    --green: #16a34a;
-    --green-hover: #15803d;
-    --bg: #f4f7f8;
-    --card: #ffffff;
-    --text: #2b3340;
-    --grey: #5b6675;
-    --red: #dc2626;
-    --highlight: rgba(58, 139, 191, 0.18);
-  }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* ── PAGE-SPECIFIC OVERRIDES ── */
 
-  body {
-    font-family: 'Work Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.55;
-    padding: 0;
-    min-height: 100vh;
-  }
-
-  .topbar {
-    background: var(--blue);
-    color: #fff;
-    padding: 18px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-  }
-  .topbar-left {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-  .topbar svg { width: 30px; height: 30px; }
-  .topbar h1 {
-    font-family: 'Fraunces', serif;
-    font-weight: 600;
-    font-size: 1.35rem;
-    letter-spacing: 0.2px;
-  }
-  .back-link {
-    color: #fff;
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 500;
-    padding: 6px 12px;
-    border-radius: 6px;
-    transition: background 0.2s;
-  }
-  .back-link:hover {
-    background: rgba(255,255,255,0.15);
-  }
-
-  .wrap {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 36px 24px 60px;
-  }
-
-  .lede { color: var(--grey); margin-bottom: 6px; }
-  .lede strong { color: var(--text); }
-  .tag {
-    display: inline-block;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--blue);
-    margin-bottom: 10px;
-  }
-
-  /* Score / progress */
+  /* Score bar */
   .scorebar {
     display: flex;
     flex-wrap: wrap;
-    gap: 18px;
+    gap: 24px;
     align-items: center;
-    background: var(--card);
-    border: 1px solid #e3e9ea;
-    border-radius: 12px;
-    padding: 16px 20px;
-    margin: 22px 0 28px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    background: #0a0f1e;
+    border: 1px solid rgba(42,140,74,0.25);
+    padding: 20px 28px;
+    margin-bottom: 32px;
   }
   .stat { display: flex; flex-direction: column; }
   .stat .num {
-    font-family: 'Fraunces', serif;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--blue);
+    font-family: var(--serif);
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #6bcf8f;
     line-height: 1;
   }
   .stat .lbl {
-    font-size: 0.72rem;
+    font-family: var(--mono);
+    font-size: 10px;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
-    color: var(--grey);
+    letter-spacing: 1px;
+    color: var(--muted);
     margin-top: 4px;
   }
   .progress-track {
     flex: 1;
     min-width: 160px;
-    height: 12px;
-    background: #e6ecee;
-    border-radius: 99px;
-    overflow: hidden;
+    height: 4px;
+    background: rgba(255,255,255,0.08);
   }
   .progress-fill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, var(--light-blue), var(--blue));
-    border-radius: 99px;
+    background: #2a8c4a;
     transition: width 0.4s ease;
   }
 
   /* Label bank */
+  .bank-wrap {
+    margin-bottom: 32px;
+  }
+  .bank-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
   .bank {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 28px;
-    min-height: 44px;
-    padding: 12px;
-    border: 2px dashed #d6dee0;
-    border-radius: 12px;
-    background: #fbfcfc;
+    min-height: 48px;
+    padding: 14px;
+    border: 1px dashed rgba(255,255,255,0.12);
+    background: #0a0f1e;
   }
   .label {
-    background: var(--dark-blue);
-    color: #fff;
-    font-size: 0.85rem;
+    background: rgba(42,140,74,0.15);
+    color: #6bcf8f;
+    border: 1px solid rgba(42,140,74,0.35);
+    font-family: var(--sans);
+    font-size: 13px;
     font-weight: 500;
-    border-radius: 7px;
-    padding: 7px 13px;
+    padding: 7px 14px;
     cursor: grab;
     user-select: none;
-    transition: transform 0.12s, box-shadow 0.12s, opacity 0.2s;
+    transition: transform 0.12s, background 0.15s;
     touch-action: none;
   }
-  .label:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(13,58,86,0.25); }
+  .label:hover {
+    background: rgba(42,140,74,0.3);
+    transform: translateY(-1px);
+  }
   .label.dragging { opacity: 0.4; }
   .label.placed { display: none; }
 
-  /* Main layout */
+  /* Stage layout */
   .stage {
     display: flex;
     flex-wrap: wrap;
-    gap: 30px;
+    gap: 24px;
     align-items: flex-start;
     justify-content: center;
   }
   .dropcol {
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    padding-top: 12px;
-    min-width: 180px;
+    gap: 10px;
+    padding-top: 8px;
+    min-width: 190px;
   }
 
+  /* Drop boxes */
   .dropbox {
-    border: 3px solid var(--teal-border);
-    background: #fff;
-    border-radius: 8px;
-    min-height: 42px;
-    padding: 6px 10px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: #0a0f1e;
+    min-height: 44px;
+    padding: 8px 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 500;
     transition: border-color 0.15s, background 0.15s;
     position: relative;
+    color: #fff;
   }
-  .dropbox:hover { border-color: var(--dark-blue); }
-  .dropbox.over { border-color: var(--blue); background: var(--highlight); }
+  .dropbox:hover { border-color: rgba(42,140,74,0.5); }
+  .dropbox.over {
+    border-color: #2a8c4a;
+    background: rgba(42,140,74,0.08);
+  }
   .dropbox.filled { cursor: pointer; }
-  .dropbox.correct { border-color: var(--green); background: rgba(22,163,74,0.08); }
-  .dropbox.incorrect { border-color: var(--red); background: rgba(220,38,38,0.07); }
-  .dropbox .placed-label { color: var(--text); }
+  .dropbox.correct {
+    border-color: #2a8c4a;
+    background: rgba(42,140,74,0.12);
+  }
+  .dropbox.incorrect {
+    border-color: #dc2626;
+    background: rgba(220,38,38,0.08);
+  }
+  .dropbox .placeholder {
+    color: rgba(255,255,255,0.2);
+    font-weight: 300;
+    font-size: 12px;
+  }
+  .dropbox .placed-label { color: #fff; }
   .dropbox .mark {
     position: absolute;
-    right: -10px; top: -10px;
-    width: 20px; height: 20px;
+    right: -9px; top: -9px;
+    width: 18px; height: 18px;
     border-radius: 50%;
     display: none;
     align-items: center; justify-content: center;
-    font-size: 12px; color: #fff; font-weight: 700;
+    font-size: 11px; color: #fff; font-weight: 700;
   }
-  .dropbox.correct .mark { display: flex; background: var(--green); }
-  .dropbox.incorrect .mark { display: flex; background: var(--red); }
+  .dropbox.correct .mark { display: flex; background: #2a8c4a; }
+  .dropbox.incorrect .mark { display: flex; background: #dc2626; }
 
-  /* Heart figure (real anatomical diagram with overlaid hotspots) */
+  /* Heart figure */
   .figure {
     flex-shrink: 0;
     width: 340px;
     max-width: 92vw;
     position: relative;
     aspect-ratio: 533 / 641;
+    border: 1px solid rgba(42,140,74,0.2);
   }
   .figure img {
     width: 100%;
@@ -223,7 +169,6 @@
     object-fit: contain;
     pointer-events: none;
   }
-  /* hotspots are percentage-positioned ellipses over the image */
   .region {
     position: absolute;
     border-radius: 50%;
@@ -234,32 +179,32 @@
     cursor: pointer;
   }
   .region.highlight {
-    background: rgba(255, 213, 64, 0.7);
-    border-color: #ffb300;
+    background: rgba(107, 207, 143, 0.45);
+    border-color: #6bcf8f;
     box-shadow:
-      0 0 0 4px rgba(255,179,0,0.65),
-      0 0 22px 6px rgba(255,200,40,0.95),
-      0 0 40px 12px rgba(255,200,40,0.55);
+      0 0 0 3px rgba(42,140,74,0.5),
+      0 0 20px 6px rgba(42,140,74,0.7),
+      0 0 40px 10px rgba(42,140,74,0.35);
     animation: pulseGlow 1.1s ease-in-out infinite;
   }
   @keyframes pulseGlow {
     0%, 100% {
       box-shadow:
-        0 0 0 4px rgba(255,179,0,0.65),
-        0 0 18px 5px rgba(255,200,40,0.85),
-        0 0 34px 10px rgba(255,200,40,0.45);
+        0 0 0 3px rgba(42,140,74,0.5),
+        0 0 16px 5px rgba(42,140,74,0.65),
+        0 0 30px 8px rgba(42,140,74,0.3);
     }
     50% {
       box-shadow:
-        0 0 0 5px rgba(255,179,0,0.85),
-        0 0 28px 9px rgba(255,210,60,1),
-        0 0 52px 16px rgba(255,210,60,0.7);
+        0 0 0 4px rgba(42,140,74,0.7),
+        0 0 26px 8px rgba(107,207,143,0.85),
+        0 0 48px 14px rgba(42,140,74,0.5);
     }
   }
-  /* calibration mode: show every hotspot so you can nudge them */
+  /* calibration mode */
   .figure.calibrate .region {
-    background: rgba(58,139,191,0.18);
-    border: 1px dashed var(--blue);
+    background: rgba(42,140,74,0.18);
+    border: 1px dashed #6bcf8f;
   }
   .figure.calibrate .region::after {
     content: attr(data-region);
@@ -267,155 +212,301 @@
     left: 50%; top: 50%;
     transform: translate(-50%, -50%);
     font-size: 9px;
-    color: var(--dark-blue);
+    color: #6bcf8f;
     white-space: nowrap;
     pointer-events: none;
+    font-family: var(--mono);
   }
 
-  /* Buttons */
+  /* Action buttons */
   .actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 34px;
+    gap: 10px;
+    margin-top: 32px;
   }
-  button.btn {
-    flex: 1;
-    min-width: 150px;
-    border: none;
-    border-radius: 8px;
-    padding: 13px 16px;
-    font-family: 'Work Sans', sans-serif;
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #fff;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
-  }
-  button.btn:active { transform: scale(0.98); }
-  .btn-reset { background: var(--orange); }
-  .btn-reset:hover { background: var(--orange-hover); }
-  .btn-check { background: var(--green); }
-  .btn-check:hover { background: var(--green-hover); }
-
-  .feedback {
-    margin-top: 22px;
-    padding: 16px 18px;
-    border-radius: 10px;
+  .btn-reset-incorrect {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.6);
+    font-family: var(--sans);
+    font-size: 12px;
     font-weight: 500;
+    letter-spacing: 0.3px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-reset-incorrect:hover {
+    border-color: rgba(255,255,255,0.4);
+    color: #fff;
+  }
+  .btn-reset-all {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.6);
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-reset-all:hover {
+    border-color: rgba(255,255,255,0.4);
+    color: #fff;
+  }
+  .btn-check {
+    background: #2a8c4a;
+    border: none;
+    color: #fff;
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    padding: 10px 24px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-check:hover { background: #1a5a2d; }
+
+  /* Feedback */
+  .feedback {
+    margin-top: 20px;
+    padding: 14px 18px;
+    font-size: 14px;
+    font-weight: 400;
     display: none;
+    border-left: 3px solid transparent;
   }
   .feedback.show { display: block; }
-  .feedback.win { background: rgba(22,163,74,0.1); color: var(--green-hover); border: 1px solid rgba(22,163,74,0.3); }
-  .feedback.partial { background: rgba(194,65,12,0.08); color: var(--orange-hover); border: 1px solid rgba(194,65,12,0.3); }
+  .feedback.win {
+    background: rgba(42,140,74,0.08);
+    color: #6bcf8f;
+    border-left-color: #2a8c4a;
+  }
+  .feedback.partial {
+    background: rgba(220,38,38,0.06);
+    color: #fca5a5;
+    border-left-color: #dc2626;
+  }
 
   /* Reference table */
-  h2 { font-family: 'Fraunces', serif; font-weight: 600; margin: 48px 0 14px; color: var(--text); }
-  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-  th, td { text-align: left; padding: 11px 14px; border: 1px solid #d9e0e2; }
-  th { background: #eef3f4; font-weight: 700; }
-  tr:nth-child(even) td { background: #fafcfc; }
+  .ref-section {
+    margin-top: 56px;
+    padding-top: 40px;
+    border-top: 1px solid var(--border);
+  }
+  .ref-section h2 {
+    font-family: var(--serif);
+    font-size: 26px;
+    margin-bottom: 20px;
+    color: var(--ink);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  th, td {
+    text-align: left;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+  }
+  th {
+    background: var(--surface);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  tr:nth-child(even) td { background: var(--surface); }
+  td { color: var(--ink2); font-weight: 300; }
+  td:first-child { color: var(--ink); font-weight: 500; }
 
-  .note { font-size: 0.85rem; color: var(--grey); margin-top: 18px; }
+  .note {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 20px;
+    line-height: 1.6;
+  }
+  .note a { color: var(--accent); }
+
+  /* Dark section for the exercise */
+  .exercise-section {
+    background: #0a0f1e;
+    padding: 48px 40px;
+  }
+
+  @media (max-width: 768px) {
+    .exercise-section { padding: 32px 16px; }
+    .dropcol { min-width: 150px; }
+    .figure { width: 280px; }
+  }
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="topbar-left">
-    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/></svg>
-    <h1>Label the Heart</h1>
+<!-- NAV (matches site-wide) -->
+<nav>
+  <a class="nav-brand" href="../index.html">Dr. Tommy Bright</a>
+  <ul class="nav-links">
+    <li><a href="../index.html">Home</a></li>
+    <li><a href="../teaching.html" class="active">Teaching & Learning</a></li>
+    <li><a href="../project.html">Projects</a></li>
+    <li><a href="../research.html">Research</a></li>
+  </ul>
+  <div class="nav-social">
+    <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank">LinkedIn</a>
+    <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank">ResearchGate</a>
   </div>
-  <a href="../../teaching.html" class="back-link">← Back to Teaching</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Physiology · Level 4 · 5</div>
+    <h1>Label the Heart<br><em>interactive anatomy.</em></h1>
+    <p class="hero-lead">
+      Drag each label onto the correct region of the heart diagram. Hover a drop box to highlight the matching structure. Check your answers when ready.
+    </p>
+  </div>
 </div>
 
-<div class="wrap">
-  <span class="tag">Interactive</span>
-  <p class="lede">Drag each label onto the correct box beside the diagram. Hovering over a box <strong>highlights</strong> the matching region. Click a placed label to send it back. Use <strong>Check answers</strong> when you're ready.</p>
+<!-- EXERCISE SECTION (dark) -->
+<div class="exercise-section">
+  <div class="section-inner">
 
-  <div class="scorebar">
-    <div class="stat"><span class="num" id="placedCount">0/9</span><span class="lbl">Placed</span></div>
-    <div class="stat"><span class="num" id="scoreCount">—</span><span class="lbl">Correct</span></div>
-    <div class="stat"><span class="num" id="attemptCount">0</span><span class="lbl">Attempts</span></div>
-    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-  </div>
-
-  <div class="bank" id="bank"></div>
-
-  <div class="stage">
-    <!-- left labels -->
-    <div class="dropcol" id="colLeft"></div>
-
-    <!-- figure: real anatomical heart diagram with overlaid highlight hotspots -->
-    <div class="figure">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Diagram_of_the_human_heart_%28no_labels%29.svg"
-           alt="Cross-section diagram of the human heart">
-      <!-- hotspot coords are % of the image box; sized to the structure -->
-      <span class="region" data-region="vena-cava"        style="left:30%; top:21%; width:13%; height:16%"></span>
-      <span class="region" data-region="aorta"            style="left:52%; top:13%; width:13%; height:15%"></span>
-      <span class="region" data-region="pulmonary-artery" style="left:67%; top:24%; width:15%; height:14%"></span>
-      <span class="region" data-region="pulmonary-vein"   style="left:74%; top:41%; width:13%; height:12%"></span>
-      <span class="region" data-region="right-atrium"     style="left:33%; top:46%; width:17%; height:16%"></span>
-      <span class="region" data-region="left-atrium"      style="left:65%; top:46%; width:16%; height:15%"></span>
-      <span class="region" data-region="semilunar-valve"  style="left:50%; top:55%; width:12%; height:9%"></span>
-      <span class="region" data-region="right-ventricle"  style="left:38%; top:73%; width:20%; height:22%"></span>
-      <span class="region" data-region="left-ventricle"   style="left:62%; top:74%; width:18%; height:24%"></span>
+    <!-- Score bar -->
+    <div class="scorebar">
+      <div class="stat">
+        <span class="num" id="placedCount">0/9</span>
+        <span class="lbl">Placed</span>
+      </div>
+      <div class="stat">
+        <span class="num" id="scoreCount">—</span>
+        <span class="lbl">Correct</span>
+      </div>
+      <div class="stat">
+        <span class="num" id="attemptCount">0</span>
+        <span class="lbl">Attempts</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
     </div>
 
-    <!-- right labels -->
-    <div class="dropcol" id="colRight"></div>
+    <!-- Label bank -->
+    <div class="bank-wrap">
+      <div class="bank-label">Label bank — drag to place</div>
+      <div class="bank" id="bank"></div>
+    </div>
+
+    <!-- Stage -->
+    <div class="stage">
+      <div class="dropcol" id="colLeft"></div>
+
+      <div class="figure" id="figure">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Diagram_of_the_human_heart_%28no_labels%29.svg"
+             alt="Cross-section diagram of the human heart, unlabelled">
+        <span class="region" data-region="vena-cava"        style="left:30%; top:21%; width:13%; height:16%"></span>
+        <span class="region" data-region="aorta"            style="left:52%; top:13%; width:13%; height:15%"></span>
+        <span class="region" data-region="pulmonary-artery" style="left:67%; top:24%; width:15%; height:14%"></span>
+        <span class="region" data-region="pulmonary-vein"   style="left:74%; top:41%; width:13%; height:12%"></span>
+        <span class="region" data-region="right-atrium"     style="left:33%; top:46%; width:17%; height:16%"></span>
+        <span class="region" data-region="left-atrium"      style="left:65%; top:46%; width:16%; height:15%"></span>
+        <span class="region" data-region="semilunar-valve"  style="left:50%; top:55%; width:12%; height:9%"></span>
+        <span class="region" data-region="right-ventricle"  style="left:38%; top:73%; width:20%; height:22%"></span>
+        <span class="region" data-region="left-ventricle"   style="left:62%; top:74%; width:18%; height:24%"></span>
+      </div>
+
+      <div class="dropcol" id="colRight"></div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="actions">
+      <button class="btn-reset-incorrect" id="resetIncorrect">Reset incorrect</button>
+      <button class="btn-reset-all" id="resetAll">Reset all</button>
+      <button class="btn-check" id="check">Check answers</button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <p class="note" style="margin-top:28px;">
+      <button id="calibrate" style="font-size:11px;padding:5px 12px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.4);cursor:pointer;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;">
+        Toggle calibration
+      </button>
+      &nbsp; If a highlight doesn't sit on its structure, toggle calibration to see hotspot positions.
+    </p>
+
   </div>
-
-  <div class="actions">
-    <button class="btn btn-reset" id="resetIncorrect">Reset incorrect</button>
-    <button class="btn btn-reset" id="resetAll">Reset all</button>
-    <button class="btn btn-check" id="check">Check answers</button>
-  </div>
-
-  <div class="feedback" id="feedback"></div>
-
-  <h2>Parts of the heart</h2>
-  <table>
-    <thead><tr><th>Label</th><th>Description</th></tr></thead>
-    <tbody id="refTable"></tbody>
-  </table>
-
-  <p class="note">
-    Heart diagram by Wapcaplet / Stenemo / Jmarchn, via Wikimedia Commons, licensed
-    <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>.
-    Single self-contained file — host it directly on Netlify. Best viewed on a tablet or desktop.
-  </p>
-  <p class="note">
-    <button id="calibrate" style="font-size:0.75rem;padding:6px 12px;border:1px solid var(--blue);background:#fff;color:var(--blue);border-radius:6px;cursor:pointer;font-weight:600">
-      Toggle hotspot calibration
-    </button>
-    If a highlight box doesn't sit on its structure, turn this on: each hotspot shows as a dashed box.
-    Click one to copy its <code>data-region</code>, then edit that line's <code>left/top/width/height</code> percentages in the source.
-  </p>
 </div>
 
+<!-- REFERENCE TABLE (light) -->
+<section>
+  <div class="section-inner">
+    <div class="section-label">Reference</div>
+    <h2 class="section-title">Parts of the heart.</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Structure</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody id="refTable"></tbody>
+    </table>
+
+    <p class="note" style="margin-top:24px;">
+      Heart diagram by Wapcaplet / Stenemo / Jmarchn, via Wikimedia Commons,
+      <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>.
+      Best viewed on tablet or desktop.
+    </p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">Dr. Tommy Bright</div>
+    <ul class="footer-links">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../teaching.html">Teaching & Learning</a></li>
+      <li><a href="../project.html">Projects</a></li>
+      <li><a href="../research.html">Research</a></li>
+    </ul>
+    <div class="footer-social">
+      <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank">LinkedIn</a>
+      <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank">ResearchGate</a>
+    </div>
+  </div>
+  <div class="footer-copy">Plymouth Marjon University · Cardiff Metropolitan University · Tournament Golf College</div>
+</footer>
+
 <script>
-  // ---- Data ----
   const PARTS = [
-    { id:'vena-cava',         name:'vena cava',         desc:'Carries deoxygenated blood from the body to the heart', col:'left' },
-    { id:'semilunar-valve',   name:'semilunar valve',   desc:'Flaps that prevent backflow of blood', col:'left' },
-    { id:'aorta',             name:'aorta',             desc:'The main artery carrying oxygenated blood to all parts of the body', col:'left' },
-    { id:'pulmonary-vein',    name:'pulmonary vein',    desc:'Carries oxygenated blood from the lungs', col:'left' },
-    { id:'right-atrium',      name:'right atrium',      desc:'Segment of the heart that receives deoxygenated blood', col:'left' },
-    { id:'right-ventricle',   name:'right ventricle',   desc:'Region of the heart that pumps deoxygenated blood to the lungs', col:'left' },
-    { id:'pulmonary-artery',  name:'pulmonary artery',  desc:'Carries deoxygenated blood to the lungs', col:'right' },
-    { id:'left-atrium',       name:'left atrium',       desc:'Receives oxygenated blood from the lungs', col:'right' },
-    { id:'left-ventricle',    name:'left ventricle',    desc:'Region of the heart that pumps oxygenated blood to the body', col:'right' },
+    { id:'vena-cava',         name:'Vena Cava',         desc:'Carries deoxygenated blood from the body back to the heart', col:'left' },
+    { id:'semilunar-valve',   name:'Semilunar Valve',   desc:'Prevents backflow of blood out of the ventricles', col:'left' },
+    { id:'aorta',             name:'Aorta',             desc:'The main artery carrying oxygenated blood to the whole body', col:'left' },
+    { id:'pulmonary-vein',    name:'Pulmonary Vein',    desc:'Carries oxygenated blood from the lungs to the left atrium', col:'left' },
+    { id:'right-atrium',      name:'Right Atrium',      desc:'Receives deoxygenated blood from the body via the vena cava', col:'left' },
+    { id:'right-ventricle',   name:'Right Ventricle',   desc:'Pumps deoxygenated blood to the lungs via the pulmonary artery', col:'left' },
+    { id:'pulmonary-artery',  name:'Pulmonary Artery',  desc:'Carries deoxygenated blood from the right ventricle to the lungs', col:'right' },
+    { id:'left-atrium',       name:'Left Atrium',       desc:'Receives oxygenated blood from the lungs via the pulmonary veins', col:'right' },
+    { id:'left-ventricle',    name:'Left Ventricle',    desc:'Pumps oxygenated blood to the body via the aorta — the most muscular chamber', col:'right' },
   ];
 
-  const bank = document.getElementById('bank');
-  const colLeft = document.getElementById('colLeft');
-  const colRight = document.getElementById('colRight');
-  let attempts = 0;
+  const bank      = document.getElementById('bank');
+  const colLeft   = document.getElementById('colLeft');
+  const colRight  = document.getElementById('colRight');
+  let attempts    = 0;
 
-  // ---- Build reference table ----
+  // Reference table
   const refTable = document.getElementById('refTable');
   PARTS.forEach(p => {
     const tr = document.createElement('tr');
@@ -423,9 +514,10 @@
     refTable.appendChild(tr);
   });
 
-  // ---- Build shuffled label bank ----
+  // Shuffle helper
   function shuffle(a){ return a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(p=>p[1]); }
 
+  // Build label bank
   function buildBank(){
     bank.innerHTML = '';
     shuffle([...PARTS]).forEach(p => {
@@ -439,26 +531,26 @@
     });
   }
 
-  // ---- Build drop boxes ----
+  // Build drop boxes
   function buildBoxes(){
     colLeft.innerHTML = ''; colRight.innerHTML = '';
     PARTS.forEach(p => {
       const box = document.createElement('div');
       box.className = 'dropbox';
       box.dataset.target = p.id;
-      box.innerHTML = `<span class="placeholder" style="color:#9aa6b0;font-weight:500">${p.col==='left'?'⟶':'⟵'} drop label</span><span class="mark"></span>`;
+      box.innerHTML = `<span class="placeholder">${p.col==='left'?'⟶':'⟵'} drop here</span><span class="mark"></span>`;
       (p.col === 'left' ? colLeft : colRight).appendChild(box);
       attachDropBox(box, p.id);
     });
   }
 
-  // ---- Highlighting ----
+  // Highlight hotspot
   function highlight(id, on){
     const r = document.querySelector(`.region[data-region="${id}"]`);
     if (r) r.classList.toggle('highlight', on);
   }
 
-  // ---- Drag & drop (mouse) ----
+  // Drag & drop
   let draggedId = null;
 
   function attachDragLabel(el){
@@ -468,8 +560,7 @@
       e.dataTransfer.setData('text/plain', draggedId);
     });
     el.addEventListener('dragend', () => el.classList.remove('dragging'));
-    // touch support
-    el.addEventListener('touchstart', e => { draggedId = el.dataset.id; el.classList.add('dragging'); }, {passive:true});
+    el.addEventListener('touchstart', () => { draggedId = el.dataset.id; el.classList.add('dragging'); }, {passive:true});
     el.addEventListener('touchend', e => {
       el.classList.remove('dragging');
       const t = e.changedTouches[0];
@@ -486,23 +577,18 @@
     box.addEventListener('drop', e => {
       e.preventDefault();
       box.classList.remove('over');
-      const droppedId = e.dataTransfer.getData('text/plain') || draggedId;
-      placeLabel(box, droppedId);
+      placeLabel(box, e.dataTransfer.getData('text/plain') || draggedId);
     });
     box.addEventListener('mouseenter', () => highlight(id, true));
     box.addEventListener('mouseleave', () => highlight(id, false));
-    // click placed label to return it
-    box.addEventListener('click', () => {
-      if (box.classList.contains('filled')) returnLabel(box);
-    });
+    box.addEventListener('click', () => { if (box.classList.contains('filled')) returnLabel(box); });
   }
 
   function placeLabel(box, labelId){
     if (!labelId) return;
-    // if box already filled, return its current label first
     if (box.classList.contains('filled')) returnLabel(box, true);
     const labelEl = bank.querySelector(`.label[data-id="${labelId}"]`);
-    if (!labelEl) return; // already placed elsewhere
+    if (!labelEl) return;
     labelEl.classList.add('placed');
     box.dataset.placed = labelId;
     box.classList.add('filled');
@@ -519,11 +605,10 @@
     const p = PARTS.find(x=>x.id===box.dataset.target);
     box.classList.remove('filled','correct','incorrect');
     box.dataset.placed = '';
-    box.innerHTML = `<span class="placeholder" style="color:#9aa6b0;font-weight:500">${p.col==='left'?'⟶':'⟵'} drop label</span><span class="mark"></span>`;
+    box.innerHTML = `<span class="placeholder">${p.col==='left'?'⟶':'⟵'} drop here</span><span class="mark"></span>`;
     if (!silent) updateProgress();
   }
 
-  // ---- Progress / scoring ----
   function updateProgress(){
     const boxes = document.querySelectorAll('.dropbox');
     const filled = [...boxes].filter(b=>b.classList.contains('filled')).length;
@@ -531,7 +616,7 @@
     document.getElementById('progressFill').style.width = (filled/PARTS.length*100) + '%';
   }
 
-  // ---- Buttons ----
+  // Check answers
   document.getElementById('check').addEventListener('click', () => {
     attempts++;
     document.getElementById('attemptCount').textContent = attempts;
@@ -549,7 +634,7 @@
     fb.className = 'feedback show ' + (correct === PARTS.length ? 'win' : 'partial');
     fb.textContent = correct === PARTS.length
       ? `Perfect — all ${PARTS.length} labels correct in ${attempts} attempt${attempts>1?'s':''}!`
-      : `${correct} of ${PARTS.length} correct. Incorrect labels are marked — try those again.`;
+      : `${correct} of ${PARTS.length} correct. Incorrect labels are highlighted — try again.`;
   });
 
   document.getElementById('resetIncorrect').addEventListener('click', () => {
@@ -566,12 +651,9 @@
     buildBank(); buildBoxes(); updateProgress();
   });
 
-  // ---- Calibration helper ----
-  const figure = document.querySelector('.figure');
-  document.getElementById('calibrate').addEventListener('click', () => {
-    figure.classList.toggle('calibrate');
-  });
-  // click a hotspot in calibrate mode to log its current coords
+  // Calibration helper
+  const figure = document.getElementById('figure');
+  document.getElementById('calibrate').addEventListener('click', () => figure.classList.toggle('calibrate'));
   figure.querySelectorAll('.region').forEach(r => {
     r.addEventListener('click', () => {
       if (!figure.classList.contains('calibrate')) return;
@@ -582,7 +664,6 @@
     });
   });
 
-  // ---- Init ----
   buildBank();
   buildBoxes();
   updateProgress();
