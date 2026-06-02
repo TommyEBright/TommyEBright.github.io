@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECG &amp; Cardiac Conduction — Dr. Tommy Bright</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+
+/* ── SECTION BACKGROUNDS ── */
+.dark-section {
+  background: #0a0f1e;
+  padding: 56px 40px;
+}
+.light-section {
+  background: #fff;
+  padding: 56px 40px;
+}
+.alt-section {
+  background: #f4f7fb;
+  padding: 56px 40px;
+}
+
+/* ── CONDUCTION PATHWAY ── */
+.conduction-wrap {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 40px;
+  align-items: start;
+}
+.conduction-svg-wrap {
+  background: #0a0f1e;
+  border: 1px solid rgba(42,140,74,0.2);
+  padding: 24px;
+  position: relative;
+}
+.conduction-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.step-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5);
+  padding: 14px 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--sans);
+  font-size: 13px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.step-btn:hover {
+  border-color: rgba(42,140,74,0.4);
+  color: rgba(255,255,255,0.8);
+}
+.step-btn.active {
+  background: rgba(42,140,74,0.12);
+  border-color: #2a8c4a;
+  color: #fff;
+}
+.step-num {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: #6bcf8f;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.step-title { font-weight: 500; margin-bottom: 2px; }
+.step-desc { font-size: 12px; color: rgba(255,255,255,0.45); font-weight: 300; line-height: 1.5; }
+.step-btn.active .step-desc { color: rgba(255,255,255,0.65); }
+
+.play-btn {
+  width: 100%;
+  background: #2a8c4a;
+  border: none;
+  color: #fff;
+  padding: 12px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: 16px;
+  letter-spacing: 0.3px;
+}
+.play-btn:hover { background: #1a5a2d; }
+
+/* ── CONDUCTION SVG NODES ── */
+.node {
+  cursor: pointer;
+  transition: opacity 0.3s;
+}
+.node-pulse {
+  animation: nodePulse 1s ease-in-out infinite;
+}
+@keyframes nodePulse {
+  0%, 100% { r: 8; opacity: 1; }
+  50% { r: 13; opacity: 0.6; }
+}
+.pathway-line {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  transition: stroke-dashoffset 0.8s ease;
+}
+.pathway-line.active { stroke-dashoffset: 0; }
+
+/* ── ECG WAVEFORM ── */
+.ecg-wrap {
+  position: relative;
+  background: #0a0f1e;
+  border: 1px solid rgba(42,140,74,0.2);
+  padding: 32px 24px 16px;
+}
+.ecg-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ecg-canvas-wrap {
+  position: relative;
+}
+.ecg-labels {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin-top: 24px;
+}
+.wave-btn {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+  font-family: var(--sans);
+  color: rgba(255,255,255,0.5);
+  font-size: 13px;
+}
+.wave-btn:hover {
+  border-color: rgba(42,140,74,0.4);
+  color: rgba(255,255,255,0.8);
+}
+.wave-btn.active {
+  background: rgba(42,140,74,0.12);
+  border-color: #2a8c4a;
+  color: #fff;
+}
+.wave-btn-name {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #6bcf8f;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+.wave-btn.active .wave-btn-name { color: #6bcf8f; }
+
+.wave-detail {
+  background: #0a0f1e;
+  border: 1px solid rgba(42,140,74,0.3);
+  padding: 20px 24px;
+  margin-top: 16px;
+  display: none;
+}
+.wave-detail.show { display: block; }
+.wave-detail-title {
+  font-family: var(--serif);
+  font-size: 20px;
+  color: #fff;
+  margin-bottom: 6px;
+}
+.wave-detail-val {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #6bcf8f;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+.wave-detail-text {
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  font-weight: 300;
+  line-height: 1.7;
+}
+
+/* ── RHYTHM LIBRARY ── */
+.rhythm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.rhythm-card {
+  background: #0a0f1e;
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 20px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.rhythm-card:hover { border-color: rgba(42,140,74,0.4); }
+.rhythm-card.revealed { border-color: #2a8c4a; }
+.rhythm-name {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 8px;
+}
+.rhythm-card.revealed .rhythm-name { color: #6bcf8f; }
+.rhythm-title {
+  font-family: var(--serif);
+  font-size: 18px;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 12px;
+}
+.rhythm-card.revealed .rhythm-title { color: #fff; }
+.rhythm-svg { width: 100%; margin-bottom: 12px; display: block; }
+.rhythm-desc {
+  font-size: 12px;
+  color: rgba(255,255,255,0);
+  font-weight: 300;
+  line-height: 1.6;
+  transition: color 0.3s;
+}
+.rhythm-card.revealed .rhythm-desc { color: rgba(255,255,255,0.55); }
+.rhythm-hint {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 10px;
+}
+.rhythm-card.revealed .rhythm-hint { display: none; }
+
+/* ── NORMAL VALUES TABLE ── */
+.values-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.values-table th {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  text-align: left;
+  font-weight: 500;
+}
+.values-table td {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  color: var(--ink2);
+  font-weight: 300;
+}
+.values-table td:first-child {
+  color: var(--ink);
+  font-weight: 500;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.values-table tr:nth-child(even) td { background: var(--surface); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 800px) {
+  .conduction-wrap { grid-template-columns: 1fr; }
+  .dark-section, .light-section, .alt-section { padding: 40px 16px; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-brand" href="../index.html">Dr. Tommy Bright</a>
+  <ul class="nav-links">
+    <li><a href="../index.html">Home</a></li>
+    <li><a href="../teaching.html" class="active">Teaching &amp; Learning</a></li>
+    <li><a href="../project.html">Projects</a></li>
+    <li><a href="../research.html">Research</a></li>
+  </ul>
+  <div class="nav-social">
+    <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank">LinkedIn</a>
+    <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank">ResearchGate</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Physiology · Level 4 · 5 · 6</div>
+    <h1>ECG &amp; Cardiac<br><em>conduction.</em></h1>
+    <p class="hero-lead">
+      From electrical impulse to waveform. Explore the conduction pathway,
+      learn to read the PQRST complex, and identify common rhythms.
+    </p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SECTION 1 — CONDUCTION PATHWAY
+════════════════════════════════════════════════════ -->
+<div class="dark-section">
+  <div class="section-inner">
+    <div class="section-label" style="color:#6bcf8f;">Section 1</div>
+    <h2 class="section-title" style="color:#fff;">The conduction pathway.</h2>
+    <p style="color:rgba(255,255,255,0.55); font-weight:300; max-width:560px; margin-bottom:40px; line-height:1.7;">
+      Every heartbeat is triggered by an electrical impulse that travels a precise route through the heart.
+      Click each step — or hit Play to animate the full sequence.
+    </p>
+
+    <div class="conduction-wrap">
+
+      <!-- SVG DIAGRAM -->
+      <div class="conduction-svg-wrap">
+        <svg id="conductionSVG" viewBox="0 0 420 480" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+
+          <!-- Heart outline -->
+          <path d="M 210 60
+                   C 160 60, 110 100, 110 170
+                   L 110 340
+                   C 110 420, 160 470, 210 490
+                   C 260 470, 310 420, 310 340
+                   L 310 170
+                   C 310 100, 260 60, 210 60 Z"
+                fill="#111827" stroke="rgba(42,140,74,0.25)" stroke-width="2"/>
+
+          <!-- Right Atrium label -->
+          <text x="155" y="155" font-family="DM Mono,monospace" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="middle">RA</text>
+          <!-- Left Atrium label -->
+          <text x="265" y="155" font-family="DM Mono,monospace" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="middle">LA</text>
+          <!-- RV label -->
+          <text x="155" y="330" font-family="DM Mono,monospace" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="middle">RV</text>
+          <!-- LV label -->
+          <text x="265" y="330" font-family="DM Mono,monospace" font-size="10" fill="rgba(255,255,255,0.25)" text-anchor="middle">LV</text>
+
+          <!-- Septum line -->
+          <line x1="210" y1="200" x2="210" y2="460" stroke="rgba(255,255,255,0.06)" stroke-width="2"/>
+
+          <!-- ── PATHWAY LINES ── -->
+          <!-- 1→2 SA node to AV node (down right atrium) -->
+          <path id="path-1-2" class="pathway-line" d="M 155 115 Q 175 175 195 210"
+                stroke="#6bcf8f" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <!-- 2→3 AV node to Bundle of His (short down) -->
+          <path id="path-2-3" class="pathway-line" d="M 195 210 L 210 240"
+                stroke="#6bcf8f" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <!-- 3→4 Bundle of His to Bundle branches (splits) -->
+          <path id="path-3-4-L" class="pathway-line" d="M 210 240 Q 185 280 165 360"
+                stroke="#6bcf8f" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path id="path-3-4-R" class="pathway-line" d="M 210 240 Q 235 280 255 360"
+                stroke="#6bcf8f" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <!-- 4→5 Purkinje (fan out at apex) -->
+          <path id="path-4-5" class="pathway-line" d="M 165 360 Q 190 430 210 460 Q 230 430 255 360"
+                stroke="#6bcf8f" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-dasharray="300" stroke-dashoffset="300"/>
+
+          <!-- ── NODES ── -->
+          <!-- 1. SA Node -->
+          <g class="node" id="node-sa" onclick="selectStep(0)">
+            <circle cx="155" cy="115" r="10" fill="#0a0f1e" stroke="rgba(42,140,74,0.4)" stroke-width="2"/>
+            <circle cx="155" cy="115" r="6" fill="#2a8c4a" id="node-sa-inner"/>
+            <text x="130" y="105" font-family="DM Mono,monospace" font-size="9" fill="rgba(255,255,255,0.4)" text-anchor="end">SA Node</text>
+          </g>
+
+          <!-- 2. AV Node -->
+          <g class="node" id="node-av" onclick="selectStep(1)">
+            <circle cx="195" cy="210" r="10" fill="#0a0f1e" stroke="rgba(42,140,74,0.3)" stroke-width="2"/>
+            <circle cx="195" cy="210" r="6" fill="#1a5a2d" id="node-av-inner"/>
+            <text x="175" y="230" font-family="DM Mono,monospace" font-size="9" fill="rgba(255,255,255,0.4)" text-anchor="middle">AV Node</text>
+          </g>
+
+          <!-- 3. Bundle of His -->
+          <g class="node" id="node-his" onclick="selectStep(2)">
+            <circle cx="210" cy="242" r="8" fill="#0a0f1e" stroke="rgba(42,140,74,0.3)" stroke-width="2"/>
+            <circle cx="210" cy="242" r="4" fill="#1a5a2d" id="node-his-inner"/>
+            <text x="225" y="240" font-family="DM Mono,monospace" font-size="9" fill="rgba(255,255,255,0.4)">His</text>
+          </g>
+
+          <!-- 4. Bundle Branches -->
+          <g class="node" id="node-bb-l" onclick="selectStep(3)">
+            <circle cx="165" cy="360" r="8" fill="#0a0f1e" stroke="rgba(42,140,74,0.3)" stroke-width="2"/>
+            <circle cx="165" cy="360" r="4" fill="#1a5a2d" id="node-bb-l-inner"/>
+          </g>
+          <g class="node" id="node-bb-r" onclick="selectStep(3)">
+            <circle cx="255" cy="360" r="8" fill="#0a0f1e" stroke="rgba(42,140,74,0.3)" stroke-width="2"/>
+            <circle cx="255" cy="360" r="4" fill="#1a5a2d" id="node-bb-r-inner"/>
+          </g>
+          <text x="210" y="390" font-family="DM Mono,monospace" font-size="9" fill="rgba(255,255,255,0.4)" text-anchor="middle">Bundle branches</text>
+
+          <!-- 5. Purkinje -->
+          <text x="210" y="465" font-family="DM Mono,monospace" font-size="9" fill="rgba(255,255,255,0.3)" text-anchor="middle">Purkinje fibres</text>
+
+        </svg>
+      </div>
+
+      <!-- STEP BUTTONS -->
+      <div>
+        <button class="play-btn" id="playBtn" onclick="playAnimation()">▶ Animate full pathway</button>
+        <div class="conduction-steps" id="conductionSteps"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SECTION 2 — ECG WAVEFORM
+════════════════════════════════════════════════════ -->
+<div class="alt-section">
+  <div class="section-inner">
+    <div class="section-label">Section 2</div>
+    <h2 class="section-title">Reading the ECG waveform.</h2>
+    <p style="color:var(--ink2); font-weight:300; max-width:560px; margin-bottom:36px; line-height:1.7;">
+      The PQRST complex represents one complete cardiac cycle. Click any labelled region on the waveform — or use the buttons below — to explore what each component means.
+    </p>
+
+    <div class="ecg-wrap">
+      <!-- ECG grid background -->
+      <svg class="ecg-grid" viewBox="0 0 760 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Small squares (1mm = 5px) -->
+        <defs>
+          <pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(42,140,74,0.07)" stroke-width="0.5"/>
+          </pattern>
+          <pattern id="largeGrid" width="100" height="100" patternUnits="userSpaceOnUse">
+            <rect width="100" height="100" fill="url(#smallGrid)"/>
+            <path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(42,140,74,0.14)" stroke-width="1"/>
+          </pattern>
+        </defs>
+        <rect width="760" height="200" fill="url(#largeGrid)"/>
+        <!-- Baseline -->
+        <line x1="0" y1="100" x2="760" y2="100" stroke="rgba(42,140,74,0.15)" stroke-width="1"/>
+      </svg>
+
+      <!-- ECG WAVEFORM SVG -->
+      <svg id="ecgSVG" viewBox="0 0 760 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
+
+        <!-- ── WAVEFORM PATH ── -->
+        <!-- Two full PQRST complexes -->
+        <path id="ecgTrace"
+          d="M 0,100
+             L 30,100
+             C 45,100 50,75 60,70 C 70,65 75,100 85,100
+             L 105,100
+             L 115,106 L 125,18 L 138,130 L 148,100
+             L 175,100
+             C 185,100 195,82 210,78 C 225,74 235,100 248,100
+             L 280,100
+             L 290,100
+             C 305,100 310,75 320,70 C 330,65 335,100 345,100
+             L 365,100
+             L 375,106 L 385,18 L 398,130 L 408,100
+             L 435,100
+             C 445,100 455,82 470,78 C 485,74 495,100 508,100
+             L 550,100
+             L 760,100"
+          stroke="#6bcf8f" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- ── CLICKABLE REGIONS (first complex) ── -->
+        <!-- P wave -->
+        <rect id="region-p" x="30" y="55" width="65" height="55" fill="transparent" style="cursor:pointer;"
+              onclick="selectWave('p')" onmouseover="hoverWave('p',true)" onmouseout="hoverWave('p',false)"/>
+        <rect id="highlight-p" x="30" y="55" width="65" height="55" fill="rgba(107,207,143,0)" rx="2" style="pointer-events:none;transition:fill 0.2s;"/>
+
+        <!-- PR interval -->
+        <rect id="region-pr" x="85" y="70" width="30" height="45" fill="transparent" style="cursor:pointer;"
+              onclick="selectWave('pr')" onmouseover="hoverWave('pr',true)" onmouseout="hoverWave('pr',false)"/>
+        <rect id="highlight-pr" x="85" y="70" width="30" height="45" fill="rgba(107,207,143,0)" rx="2" style="pointer-events:none;transition:fill 0.2s;"/>
+
+        <!-- QRS -->
+        <rect id="region-qrs" x="110" y="10" width="45" height="130" fill="transparent" style="cursor:pointer;"
+              onclick="selectWave('qrs')" onmouseover="hoverWave('qrs',true)" onmouseout="hoverWave('qrs',false)"/>
+        <rect id="highlight-qrs" x="110" y="10" width="45" height="130" fill="rgba(107,207,143,0)" rx="2" style="pointer-events:none;transition:fill 0.2s;"/>
+
+        <!-- ST segment -->
+        <rect id="region-st" x="148" y="75" width="32" height="45" fill="transparent" style="cursor:pointer;"
+              onclick="selectWave('st')" onmouseover="hoverWave('st',true)" onmouseout="hoverWave('st',false)"/>
+        <rect id="highlight-st" x="148" y="75" width="32" height="45" fill="rgba(107,207,143,0)" rx="2" style="pointer-events:none;transition:fill 0.2s;"/>
+
+        <!-- T wave -->
+        <rect id="region-t" x="175" y="65" width="78" height="55" fill="transparent" style="cursor:pointer;"
+              onclick="selectWave('t')" onmouseover="hoverWave('t',true)" onmouseout="hoverWave('t',false)"/>
+        <rect id="highlight-t" x="175" y="65" width="78" height="55" fill="rgba(107,207,143,0)" rx="2" style="pointer-events:none;transition:fill 0.2s;"/>
+
+        <!-- ── LABELS (visible by default on first complex) ── -->
+        <g id="ecgLabels">
+          <!-- P label -->
+          <line x1="62" y1="58" x2="62" y2="30" stroke="#6bcf8f" stroke-width="1" stroke-dasharray="3,2"/>
+          <text x="62" y="26" font-family="DM Mono,monospace" font-size="12" fill="#6bcf8f" text-anchor="middle" font-weight="500">P</text>
+
+          <!-- QRS label -->
+          <line x1="132" y1="18" x2="132" y2="6" stroke="#6bcf8f" stroke-width="1" stroke-dasharray="3,2"/>
+          <text x="132" y="14" font-family="DM Mono,monospace" font-size="12" fill="#6bcf8f" text-anchor="middle" font-weight="500">QRS</text>
+
+          <!-- T label -->
+          <line x1="212" y1="72" x2="212" y2="44" stroke="#6bcf8f" stroke-width="1" stroke-dasharray="3,2"/>
+          <text x="212" y="40" font-family="DM Mono,monospace" font-size="12" fill="#6bcf8f" text-anchor="middle" font-weight="500">T</text>
+
+          <!-- PR interval bracket -->
+          <line x1="32" y1="150" x2="148" y2="150" stroke="rgba(107,207,143,0.4)" stroke-width="1"/>
+          <line x1="32" y1="145" x2="32" y2="155" stroke="rgba(107,207,143,0.4)" stroke-width="1"/>
+          <line x1="148" y1="145" x2="148" y2="155" stroke="rgba(107,207,143,0.4)" stroke-width="1"/>
+          <text x="90" y="166" font-family="DM Mono,monospace" font-size="9" fill="rgba(107,207,143,0.5)" text-anchor="middle">PR interval</text>
+
+          <!-- QT interval bracket -->
+          <line x1="115" y1="175" x2="253" y2="175" stroke="rgba(107,207,143,0.4)" stroke-width="1"/>
+          <line x1="115" y1="170" x2="115" y2="180" stroke="rgba(107,207,143,0.4)" stroke-width="1"/>
+          <line x1="253" y1="170" x2="253" y2="180" stroke="rgba(107,207,143,0.4)" stroke-width="1"/>
+          <text x="184" y="192" font-family="DM Mono,monospace" font-size="9" fill="rgba(107,207,143,0.5)" text-anchor="middle">QT interval</text>
+
+          <!-- RR interval bracket -->
+          <line x1="125" y1="18" x2="385" y2="18" stroke="rgba(107,207,143,0.3)" stroke-width="1" stroke-dasharray="4,3"/>
+          <text x="255" y="14" font-family="DM Mono,monospace" font-size="9" fill="rgba(107,207,143,0.4)" text-anchor="middle">R–R interval (= 1 cardiac cycle)</text>
+        </g>
+
+      </svg>
+
+      <!-- Wave selector buttons -->
+      <div class="ecg-labels" id="waveButtons"></div>
+
+      <!-- Detail panel -->
+      <div class="wave-detail" id="waveDetail">
+        <div class="wave-detail-title" id="waveDetailTitle"></div>
+        <div class="wave-detail-val" id="waveDetailVal"></div>
+        <div class="wave-detail-text" id="waveDetailText"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SECTION 3 — NORMAL VALUES
+════════════════════════════════════════════════════ -->
+<div class="light-section">
+  <div class="section-inner">
+    <div class="section-label">Section 3</div>
+    <h2 class="section-title">Normal values at rest.</h2>
+    <p style="color:var(--ink2); font-weight:300; max-width:560px; margin-bottom:32px; line-height:1.7;">
+      These are the textbook ranges you need to know. Values change with age, fitness, and exercise intensity.
+    </p>
+    <table class="values-table">
+      <thead>
+        <tr>
+          <th>Measurement</th>
+          <th>Normal range</th>
+          <th>What it represents</th>
+          <th>Clinical note</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Heart rate</td>
+          <td>60–100 bpm</td>
+          <td>Beats per minute at rest</td>
+          <td>&lt;60 = bradycardia; &gt;100 = tachycardia</td>
+        </tr>
+        <tr>
+          <td>PR interval</td>
+          <td>120–200 ms</td>
+          <td>Atrial depolarisation + AV node delay</td>
+          <td>&gt;200ms = first-degree heart block</td>
+        </tr>
+        <tr>
+          <td>QRS duration</td>
+          <td>&lt;120 ms</td>
+          <td>Ventricular depolarisation</td>
+          <td>&gt;120ms = bundle branch block</td>
+        </tr>
+        <tr>
+          <td>QT interval</td>
+          <td>350–450 ms</td>
+          <td>Ventricular depolarisation + repolarisation</td>
+          <td>Corrected for HR (QTc); prolonged QT = arrhythmia risk</td>
+        </tr>
+        <tr>
+          <td>P wave</td>
+          <td>&lt;120 ms, &lt;0.25 mV</td>
+          <td>Atrial depolarisation</td>
+          <td>Absent P wave = AF or junctional rhythm</td>
+        </tr>
+        <tr>
+          <td>R–R interval</td>
+          <td>600–1000 ms</td>
+          <td>Time between successive beats</td>
+          <td>Basis for HRV (heart rate variability) analysis</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SECTION 4 — RHYTHM LIBRARY
+════════════════════════════════════════════════════ -->
+<div class="alt-section">
+  <div class="section-inner">
+    <div class="section-label">Section 4</div>
+    <h2 class="section-title">Rhythm identification.</h2>
+    <p style="color:var(--ink2); font-weight:300; max-width:560px; margin-bottom:32px; line-height:1.7;">
+      Look at each rhythm strip. Can you identify it? <strong>Click to reveal</strong> the name and explanation.
+    </p>
+    <div class="rhythm-grid" id="rhythmGrid"></div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">Dr. Tommy Bright</div>
+    <ul class="footer-links">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../teaching.html">Teaching &amp; Learning</a></li>
+      <li><a href="../project.html">Projects</a></li>
+      <li><a href="../research.html">Research</a></li>
+    </ul>
+    <div class="footer-social">
+      <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank">LinkedIn</a>
+      <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank">ResearchGate</a>
+    </div>
+  </div>
+  <div class="footer-copy">Plymouth Marjon University · Cardiff Metropolitan University · Tournament Golf College</div>
+</footer>
+
+<script>
+/* ================================================================
+   ECG & CARDIAC CONDUCTION — Interactive Learning Tool
+   Learning outcomes:
+   1. Trace the conduction pathway (SA→AV→His→BB→Purkinje)
+   2. Identify PQRST components and their physiological meaning
+   3. Recognise normal values and common rhythm abnormalities
+================================================================ */
+
+/* ── CONDUCTION PATHWAY DATA ── */
+const STEPS = [
+  {
+    id: 'sa',
+    title: 'SA Node (Sinoatrial Node)',
+    desc: 'The heart\'s natural pacemaker. Located in the upper right atrium. Fires 60–100 times per minute at rest, triggering atrial depolarisation. Produces the P wave on the ECG.',
+    paths: ['path-1-2'],
+    nodes: ['node-sa-inner']
+  },
+  {
+    id: 'av',
+    title: 'AV Node (Atrioventricular Node)',
+    desc: 'Located between the atria and ventricles. Introduces a deliberate delay (~120ms) to allow the atria to finish contracting before the ventricles fill. This delay is the PR segment on the ECG.',
+    paths: ['path-2-3'],
+    nodes: ['node-av-inner']
+  },
+  {
+    id: 'his',
+    title: 'Bundle of His',
+    desc: 'A bundle of specialised conduction fibres that carries the impulse from the AV node into the interventricular septum. The only electrical connection between the atria and ventricles.',
+    paths: ['path-3-4-L', 'path-3-4-R'],
+    nodes: ['node-his-inner']
+  },
+  {
+    id: 'bb',
+    title: 'Bundle Branches',
+    desc: 'The Bundle of His splits into left and right bundle branches, running down either side of the interventricular septum to the apex of the heart. Begin of the QRS complex.',
+    paths: ['path-4-5'],
+    nodes: ['node-bb-l-inner', 'node-bb-r-inner']
+  },
+  {
+    id: 'purkinje',
+    title: 'Purkinje Fibres',
+    desc: 'Fan out from the bundle branches across the ventricular walls, rapidly spreading the impulse (4 m/s) to cause coordinated ventricular contraction from apex to base. Completes the QRS complex.',
+    paths: [],
+    nodes: []
+  }
+];
+
+let activeStep = -1;
+let animTimer = null;
+
+function buildSteps() {
+  const wrap = document.getElementById('conductionSteps');
+  STEPS.forEach((s, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'step-btn';
+    btn.id = `step-btn-${i}`;
+    btn.onclick = () => selectStep(i);
+    btn.innerHTML = `
+      <span class="step-num">0${i+1}</span>
+      <span>
+        <div class="step-title">${s.title}</div>
+        <div class="step-desc">${s.desc}</div>
+      </span>`;
+    wrap.appendChild(btn);
+  });
+}
+
+function clearPathways() {
+  document.querySelectorAll('.pathway-line').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('[id$="-inner"]').forEach(n => {
+    n.setAttribute('fill', '#1a5a2d');
+    n.setAttribute('r', '4');
+  });
+}
+
+function selectStep(i) {
+  if (animTimer) { clearInterval(animTimer); animTimer = null; }
+  clearPathways();
+  document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
+  activeStep = i;
+  document.getElementById(`step-btn-${i}`)?.classList.add('active');
+  const s = STEPS[i];
+  // activate all paths up to this step
+  for (let j = 0; j <= i; j++) {
+    STEPS[j].paths.forEach(pid => {
+      const el = document.getElementById(pid);
+      if (el) el.classList.add('active');
+    });
+    STEPS[j].nodes.forEach(nid => {
+      const el = document.getElementById(nid);
+      if (el) { el.setAttribute('fill', '#6bcf8f'); el.setAttribute('r', '6'); }
+    });
+  }
+}
+
+function playAnimation() {
+  if (animTimer) { clearInterval(animTimer); animTimer = null; }
+  clearPathways();
+  document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
+  let i = 0;
+  selectStep(0);
+  animTimer = setInterval(() => {
+    i++;
+    if (i >= STEPS.length) { clearInterval(animTimer); animTimer = null; return; }
+    selectStep(i);
+  }, 1100);
+}
+
+/* ── WAVE DATA ── */
+const WAVES = {
+  p: {
+    name: 'P Wave',
+    val: 'Duration: 80–100 ms · Amplitude: <0.25 mV',
+    text: 'Represents atrial depolarisation — the electrical activation of both atria. Produced by the impulse spreading from the SA node across the right then left atrium. The left and right atria contract during and just after the P wave, pushing blood into the ventricles.'
+  },
+  pr: {
+    name: 'PR Interval',
+    val: 'Normal: 120–200 ms (3–5 small squares)',
+    text: 'Measured from the start of the P wave to the start of the QRS complex. Includes atrial depolarisation plus the AV node delay. A prolonged PR interval (>200ms) indicates first-degree heart block, where conduction through the AV node is slowed.'
+  },
+  qrs: {
+    name: 'QRS Complex',
+    val: 'Duration: <120 ms · R wave amplitude: 5–25 mm',
+    text: 'Represents ventricular depolarisation — both ventricles contract together. The Q wave is small septal depolarisation; the R wave is the dominant upward deflection as the main ventricular mass depolarises; the S wave reflects basal depolarisation. A wide QRS (>120ms) indicates a bundle branch block.'
+  },
+  st: {
+    name: 'ST Segment',
+    val: 'Normally isoelectric (on the baseline)',
+    text: 'The period between ventricular depolarisation and repolarisation. Normally flat on the baseline. ST elevation indicates myocardial injury (e.g. STEMI — ST-elevation myocardial infarction). ST depression can indicate ischaemia or digoxin effect. Critical to interpret in exercise testing.'
+  },
+  t: {
+    name: 'T Wave',
+    val: 'Duration: 160 ms · Amplitude: <5 mm limb leads',
+    text: 'Represents ventricular repolarisation — the ventricles recovering their resting membrane potential before the next beat. Normally upright in most leads. Inverted T waves can indicate ischaemia, ventricular hypertrophy, or bundle branch block. The QT interval (QRS start to T wave end) reflects total ventricular electrical activity.'
+  }
+};
+
+let activeWave = null;
+
+function buildWaveButtons() {
+  const wrap = document.getElementById('waveButtons');
+  Object.entries(WAVES).forEach(([key, w]) => {
+    const btn = document.createElement('button');
+    btn.className = 'wave-btn';
+    btn.id = `wave-btn-${key}`;
+    btn.onclick = () => selectWave(key);
+    btn.innerHTML = `<div class="wave-btn-name">${w.name}</div>`;
+    wrap.appendChild(btn);
+  });
+}
+
+function hoverWave(key, on) {
+  const hl = document.getElementById(`highlight-${key}`);
+  if (hl && key !== activeWave) {
+    hl.setAttribute('fill', on ? 'rgba(107,207,143,0.08)' : 'rgba(107,207,143,0)');
+  }
+}
+
+function selectWave(key) {
+  // Clear previous
+  Object.keys(WAVES).forEach(k => {
+    const hl = document.getElementById(`highlight-${k}`);
+    if (hl) hl.setAttribute('fill', 'rgba(107,207,143,0)');
+    document.getElementById(`wave-btn-${k}`)?.classList.remove('active');
+  });
+  activeWave = key;
+  const hl = document.getElementById(`highlight-${key}`);
+  if (hl) hl.setAttribute('fill', 'rgba(107,207,143,0.18)');
+  document.getElementById(`wave-btn-${key}`)?.classList.add('active');
+  const w = WAVES[key];
+  document.getElementById('waveDetailTitle').textContent = w.name;
+  document.getElementById('waveDetailVal').textContent = w.val;
+  document.getElementById('waveDetailText').textContent = w.text;
+  document.getElementById('waveDetail').classList.add('show');
+}
+
+/* ── RHYTHM LIBRARY ── */
+const RHYTHMS = [
+  {
+    name: 'Rhythm 1',
+    title: 'Normal Sinus Rhythm',
+    desc: 'Regular rate 60–100 bpm. P wave before every QRS. PR interval 120–200ms. QRS <120ms. This is the reference — all other rhythms are compared to this.',
+    rate: 75,
+    type: 'normal'
+  },
+  {
+    name: 'Rhythm 2',
+    title: 'Sinus Bradycardia',
+    desc: 'Regular rhythm, rate <60 bpm. Normal P wave morphology and PR interval — the origin is still the SA node but it\'s firing more slowly. Common in trained athletes at rest (can be <40 bpm).',
+    rate: 40,
+    type: 'normal'
+  },
+  {
+    name: 'Rhythm 3',
+    title: 'Sinus Tachycardia',
+    desc: 'Regular rhythm, rate >100 bpm. Normal P-QRS-T morphology. SA node firing faster in response to exercise, stress, fever, or dehydration. During maximal exercise HR can reach 200+ bpm.',
+    rate: 130,
+    type: 'normal'
+  },
+  {
+    name: 'Rhythm 4',
+    title: 'Atrial Fibrillation (AF)',
+    desc: 'Irregularly irregular rhythm. No distinct P waves — replaced by chaotic fibrillatory baseline. QRS complexes occur at irregular intervals. Most common arrhythmia — affects ~3% of adults.',
+    rate: 0,
+    type: 'af'
+  }
+];
+
+function drawRhythmSVG(rhythm) {
+  const W = 280, H = 80, mid = H / 2;
+  let path = `M 0,${mid} `;
+
+  if (rhythm.type === 'af') {
+    // Chaotic baseline + irregular QRS
+    let x = 0;
+    const beats = [30, 68, 95, 140, 185, 220, 260];
+    const allX = new Set(beats);
+    while (x < W) {
+      if (allX.has(Math.round(x))) {
+        // QRS spike
+        path += `L ${x},${mid+3} L ${x+4},${mid-28} L ${x+8},${mid+12} L ${x+12},${mid} `;
+        x += 12;
+      } else {
+        // Fibrillation noise
+        const noise = (Math.sin(x * 0.8) * 3 + Math.sin(x * 2.1) * 2);
+        path += `L ${x},${mid + noise} `;
+        x += 2;
+      }
+    }
+  } else {
+    // Regular rhythm
+    const bpm = rhythm.rate;
+    const cycleW = (60 / bpm) * 280 * (bpm / 75); // scale to fit strip
+    const scaledCycle = W / Math.round(W / cycleW);
+    let x = 0;
+    while (x < W) {
+      const b = x; // beat start
+      path += `L ${b},${mid} `;
+      // P wave
+      path += `C ${b+8},${mid} ${b+10},${mid-8} ${b+14},${mid-9} C ${b+18},${mid-8} ${b+20},${mid} ${b+24},${mid} `;
+      // PR segment
+      path += `L ${b+32},${mid} `;
+      // QRS
+      path += `L ${b+35},${mid+4} L ${b+39},${mid-28} L ${b+44},${mid+9} L ${b+48},${mid} `;
+      // ST + T
+      path += `L ${b+56},${mid} `;
+      path += `C ${b+60},${mid} ${b+65},${mid-10} ${b+70},${mid-11} C ${b+75},${mid-10} ${b+80},${mid} ${b+86},${mid} `;
+      x += scaledCycle;
+      path += `L ${x},${mid} `;
+    }
+  }
+
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="rhythm-svg">
+    <rect width="${W}" height="${H}" fill="#0a0f1e"/>
+    <line x1="0" y1="${mid}" x2="${W}" y2="${mid}" stroke="rgba(42,140,74,0.1)" stroke-width="0.5"/>
+    <path d="${path}" stroke="#6bcf8f" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+function buildRhythms() {
+  const grid = document.getElementById('rhythmGrid');
+  RHYTHMS.forEach(r => {
+    const card = document.createElement('div');
+    card.className = 'rhythm-card';
+    card.innerHTML = `
+      <div class="rhythm-name">${r.name}</div>
+      <div class="rhythm-title">${r.title}</div>
+      ${drawRhythmSVG(r)}
+      <div class="rhythm-desc">${r.desc}</div>
+      <div class="rhythm-hint">Click to reveal</div>`;
+    card.onclick = () => card.classList.toggle('revealed');
+    grid.appendChild(card);
+  });
+}
+
+/* ── INIT ── */
+buildSteps();
+buildWaveButtons();
+buildRhythms();
+selectStep(0);
+</script>
+</body>
+</html>
