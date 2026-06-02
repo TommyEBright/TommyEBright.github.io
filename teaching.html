@@ -57,20 +57,26 @@
       </div>
 
       <!-- PHYSIOLOGY -->
-      <div style="background:#0a0f1e; padding:40px; border:1px solid rgba(42,140,74,0.3);">
-        <div style="font-family:var(--mono); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:#6bcf8f; margin-bottom:16px;">Physiology</div>
-        <div style="font-family:'DM Serif Display', serif; font-size:28px; color:#fff; margin-bottom:12px; line-height:1.2;">Adaptation, response,<br>and function.</div>
-        <p style="font-size:14px; color:rgba(255,255,255,0.55); font-weight:300; line-height:1.7; margin-bottom:24px;">
-          Exercise physiology resources spanning cardiovascular and respiratory responses, energy systems, and training adaptation — from foundational concepts through to applied sports physiology.
-        </p>
-        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:28px;">
-          <span style="font-family:var(--mono); font-size:10px; padding:3px 8px; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.4);">Energy Systems</span>
-          <span style="font-family:var(--mono); font-size:10px; padding:3px 8px; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.4);">VO2 Max</span>
-          <span style="font-family:var(--mono); font-size:10px; padding:3px 8px; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.4);">Cardiovascular Response</span>
-          <span style="font-family:var(--mono); font-size:10px; padding:3px 8px; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.4);">Training Adaptation</span>
-          <span style="font-family:var(--mono); font-size:10px; padding:3px 8px; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.4);">Fatigue</span>
+      <div style="background:#0a0f1e; padding:40px; border:1px solid rgba(42,140,74,0.3); position:relative; overflow:hidden;">
+        <div style="position:absolute; inset:0; background:radial-gradient(ellipse 60% 80% at 85% 50%, rgba(42,140,74,0.15), transparent); pointer-events:none;"></div>
+        <svg style="position:absolute; bottom:0; left:0; right:0; width:100%; height:80px; opacity:0.12; pointer-events:none;" viewBox="0 0 800 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <polyline points="0,40 60,40 80,40 90,5 100,75 110,40 130,40 145,25 160,55 175,40 200,40 260,40 280,40 290,5 300,75 310,40 330,40 345,25 360,55 375,40 400,40 460,40 480,40 490,5 500,75 510,40 530,40 545,25 560,55 575,40 600,40 660,40 680,40 690,5 700,75 710,40 730,40 745,25 760,55 775,40 800,40" stroke="#6bcf8f" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div style="position:relative; z-index:1;">
+          <div style="font-family:var(--mono); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:#6bcf8f; margin-bottom:16px;">Physiology</div>
+          <div style="font-family:'DM Serif Display', serif; font-size:28px; color:#fff; margin-bottom:12px; line-height:1.2;">Adaptation, response,<br>and function.</div>
+          <p style="font-size:14px; color:rgba(255,255,255,0.55); font-weight:300; line-height:1.7; margin-bottom:24px;">
+            Exercise physiology resources spanning cardiovascular and respiratory responses, energy systems, and training adaptation — from foundational concepts through to applied sports physiology.
+          </p>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:28px;">
+            <span style="font-family:var(--mono); font-size:10px; padding:3px 8px; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.4);">Energy Systems</span>
+            <span style="font-family:var(--mono); font-size:10px; padding:3px 8px; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.4);">VO2 Max</span>
+            <span style="font-family:var(--mono); font-size:10px; padding:3px 8px; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.4);">Cardiovascular Response</span>
+            <span style="font-family:var(--mono); font-size:10px; padding:3px 8px; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.4);">Training Adaptation</span>
+            <span style="font-family:var(--mono); font-size:10px; padding:3px 8px; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.4);">Fatigue</span>
+          </div>
+          <a href="#physiology" class="btn" style="background:#2a8c4a; color:#fff;">Physiology Resources</a>
         </div>
-        <a href="#physiology" class="btn" style="background:#2a8c4a; color:#fff;">Physiology Resources</a>
       </div>
 
     </div>
@@ -177,16 +183,18 @@
 
     <!-- PHYSIOLOGY TOOLS -->
     <div class="tools-grid">
-      <div class="tool-card" style="opacity:0.4; cursor:default; border-color:rgba(42,140,74,0.3);">
+      <a href="Matt Examples/label-the-heart.html" class="tool-card" style="border-color:rgba(42,140,74,0.3);">
         <div class="tool-icon">❤️</div>
         <div class="tool-name">Cardiovascular Response</div>
-        <div class="tool-level" style="color:#6bcf8f;">Coming soon</div>
-      </div>
-      <div class="tool-card" style="opacity:0.4; cursor:default; border-color:rgba(42,140,74,0.3);">
-        <div class="tool-icon">🫁</div>
-        <div class="tool-name">Energy Systems</div>
-        <div class="tool-level" style="color:#6bcf8f;">Coming soon</div>
-      </div>
+        <div class="tool-level" style="color:#6bcf8f;">Level 4 · 5</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.5); margin-top:8px; font-weight:300;">Interactive heart anatomy and labelling tool.</div>
+      </a>
+      <a href="Matt Examples/ecg-learning.html" class="tool-card" style="border-color:rgba(42,140,74,0.3);">
+        <div class="tool-icon">🫀</div>
+        <div class="tool-name">ECG &amp; Conduction</div>
+        <div class="tool-level" style="color:#6bcf8f;">Level 4 · 5 · 6</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.5); margin-top:8px; font-weight:300;">Conduction pathway, waveform analysis &amp; rhythm identification.</div>
+      </a>
       <a href="Matt Examples/sport-science-reports.html" class="tool-card" style="border-color:rgba(42,140,74,0.3);">
         <div class="tool-icon">📊</div>
         <div class="tool-name">Field Based Testing</div>
@@ -195,11 +203,6 @@
       </a>
       <a href="Matt Examples/trimp.html" class="tool-card" style="border-color:rgba(42,140,74,0.3);">
         <div class="tool-icon">💪</div>
-<<<<<<< HEAD
-        <div class="tool-name">Training Adaptation</div>
-        <div class="tool-level" style="color:#6bcf8f;">Coming soon</div>
-      </div>
-=======
         <div class="tool-name">Training Load Calculator</div>
         <div class="tool-level" style="color:#6bcf8f;">Level 5 · 6 · 7</div>
         <div style="font-size:12px; color:rgba(255,255,255,0.5); margin-top:8px; font-weight:300;">TRIMP-based training load across five methods.</div>
@@ -210,7 +213,6 @@
         <div class="tool-level" style="color:#6bcf8f;">Level 5 · 6 · 7</div>
         <div style="font-size:12px; color:rgba(255,255,255,0.5); margin-top:8px; font-weight:300;">Exercise intensity threshold identification and analysis.</div>
       </a>
->>>>>>> b13e14690f0296538bb94d03ba2a6494736208ec
     </div>
     <p style="margin-top:16px; font-family:var(--mono); font-size:11px; color:var(--muted);">Physiology tools in development — check back soon.</p>
   </div>
