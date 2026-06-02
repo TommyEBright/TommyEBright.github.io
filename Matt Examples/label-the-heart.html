@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Label the Heart — Interactive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #1a5f8a;
+    --dark-blue: #0d3a56;
+    --light-blue: #3a8bbf;
+    --teal-border: #c7d5d4;
+    --orange: #c2410c;
+    --orange-hover: #9a3412;
+    --green: #16a34a;
+    --green-hover: #15803d;
+    --bg: #f4f7f8;
+    --card: #ffffff;
+    --text: #2b3340;
+    --grey: #5b6675;
+    --red: #dc2626;
+    --highlight: rgba(58, 139, 191, 0.18);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Work Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    padding: 0;
+    min-height: 100vh;
+  }
+
+  .topbar {
+    background: var(--blue);
+    color: #fff;
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .topbar svg { width: 30px; height: 30px; }
+  .topbar h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 1.35rem;
+    letter-spacing: 0.2px;
+  }
+  .back-link {
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+  .back-link:hover {
+    background: rgba(255,255,255,0.15);
+  }
+
+  .wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 36px 24px 60px;
+  }
+
+  .lede { color: var(--grey); margin-bottom: 6px; }
+  .lede strong { color: var(--text); }
+  .tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin-bottom: 10px;
+  }
+
+  /* Score / progress */
+  .scorebar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    align-items: center;
+    background: var(--card);
+    border: 1px solid #e3e9ea;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 22px 0 28px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .stat { display: flex; flex-direction: column; }
+  .stat .num {
+    font-family: 'Fraunces', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--blue);
+    line-height: 1;
+  }
+  .stat .lbl {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--grey);
+    margin-top: 4px;
+  }
+  .progress-track {
+    flex: 1;
+    min-width: 160px;
+    height: 12px;
+    background: #e6ecee;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--light-blue), var(--blue));
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+
+  /* Label bank */
+  .bank {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 28px;
+    min-height: 44px;
+    padding: 12px;
+    border: 2px dashed #d6dee0;
+    border-radius: 12px;
+    background: #fbfcfc;
+  }
+  .label {
+    background: var(--dark-blue);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 7px;
+    padding: 7px 13px;
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.12s, box-shadow 0.12s, opacity 0.2s;
+    touch-action: none;
+  }
+  .label:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(13,58,86,0.25); }
+  .label.dragging { opacity: 0.4; }
+  .label.placed { display: none; }
+
+  /* Main layout */
+  .stage {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  .dropcol {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-top: 12px;
+    min-width: 180px;
+  }
+
+  .dropbox {
+    border: 3px solid var(--teal-border);
+    background: #fff;
+    border-radius: 8px;
+    min-height: 42px;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+  }
+  .dropbox:hover { border-color: var(--dark-blue); }
+  .dropbox.over { border-color: var(--blue); background: var(--highlight); }
+  .dropbox.filled { cursor: pointer; }
+  .dropbox.correct { border-color: var(--green); background: rgba(22,163,74,0.08); }
+  .dropbox.incorrect { border-color: var(--red); background: rgba(220,38,38,0.07); }
+  .dropbox .placed-label { color: var(--text); }
+  .dropbox .mark {
+    position: absolute;
+    right: -10px; top: -10px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    display: none;
+    align-items: center; justify-content: center;
+    font-size: 12px; color: #fff; font-weight: 700;
+  }
+  .dropbox.correct .mark { display: flex; background: var(--green); }
+  .dropbox.incorrect .mark { display: flex; background: var(--red); }
+
+  /* Heart figure (real anatomical diagram with overlaid hotspots) */
+  .figure {
+    flex-shrink: 0;
+    width: 340px;
+    max-width: 92vw;
+    position: relative;
+    aspect-ratio: 533 / 641;
+  }
+  .figure img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+    pointer-events: none;
+  }
+  /* hotspots are percentage-positioned ellipses over the image */
+  .region {
+    position: absolute;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: transparent;
+    border: 2px solid transparent;
+    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+  }
+  .region.highlight {
+    background: rgba(255, 213, 64, 0.7);
+    border-color: #ffb300;
+    box-shadow:
+      0 0 0 4px rgba(255,179,0,0.65),
+      0 0 22px 6px rgba(255,200,40,0.95),
+      0 0 40px 12px rgba(255,200,40,0.55);
+    animation: pulseGlow 1.1s ease-in-out infinite;
+  }
+  @keyframes pulseGlow {
+    0%, 100% {
+      box-shadow:
+        0 0 0 4px rgba(255,179,0,0.65),
+        0 0 18px 5px rgba(255,200,40,0.85),
+        0 0 34px 10px rgba(255,200,40,0.45);
+    }
+    50% {
+      box-shadow:
+        0 0 0 5px rgba(255,179,0,0.85),
+        0 0 28px 9px rgba(255,210,60,1),
+        0 0 52px 16px rgba(255,210,60,0.7);
+    }
+  }
+  /* calibration mode: show every hotspot so you can nudge them */
+  .figure.calibrate .region {
+    background: rgba(58,139,191,0.18);
+    border: 1px dashed var(--blue);
+  }
+  .figure.calibrate .region::after {
+    content: attr(data-region);
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 9px;
+    color: var(--dark-blue);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  /* Buttons */
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 34px;
+  }
+  button.btn {
+    flex: 1;
+    min-width: 150px;
+    border: none;
+    border-radius: 8px;
+    padding: 13px 16px;
+    font-family: 'Work Sans', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+  button.btn:active { transform: scale(0.98); }
+  .btn-reset { background: var(--orange); }
+  .btn-reset:hover { background: var(--orange-hover); }
+  .btn-check { background: var(--green); }
+  .btn-check:hover { background: var(--green-hover); }
+
+  .feedback {
+    margin-top: 22px;
+    padding: 16px 18px;
+    border-radius: 10px;
+    font-weight: 500;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.win { background: rgba(22,163,74,0.1); color: var(--green-hover); border: 1px solid rgba(22,163,74,0.3); }
+  .feedback.partial { background: rgba(194,65,12,0.08); color: var(--orange-hover); border: 1px solid rgba(194,65,12,0.3); }
+
+  /* Reference table */
+  h2 { font-family: 'Fraunces', serif; font-weight: 600; margin: 48px 0 14px; color: var(--text); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 11px 14px; border: 1px solid #d9e0e2; }
+  th { background: #eef3f4; font-weight: 700; }
+  tr:nth-child(even) td { background: #fafcfc; }
+
+  .note { font-size: 0.85rem; color: var(--grey); margin-top: 18px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/></svg>
+    <h1>Label the Heart</h1>
+  </div>
+  <a href="../../teaching.html" class="back-link">← Back to Teaching</a>
+</div>
+
+<div class="wrap">
+  <span class="tag">Interactive</span>
+  <p class="lede">Drag each label onto the correct box beside the diagram. Hovering over a box <strong>highlights</strong> the matching region. Click a placed label to send it back. Use <strong>Check answers</strong> when you're ready.</p>
+
+  <div class="scorebar">
+    <div class="stat"><span class="num" id="placedCount">0/9</span><span class="lbl">Placed</span></div>
+    <div class="stat"><span class="num" id="scoreCount">—</span><span class="lbl">Correct</span></div>
+    <div class="stat"><span class="num" id="attemptCount">0</span><span class="lbl">Attempts</span></div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <div class="bank" id="bank"></div>
+
+  <div class="stage">
+    <!-- left labels -->
+    <div class="dropcol" id="colLeft"></div>
+
+    <!-- figure: real anatomical heart diagram with overlaid highlight hotspots -->
+    <div class="figure">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Diagram_of_the_human_heart_%28no_labels%29.svg"
+           alt="Cross-section diagram of the human heart">
+      <!-- hotspot coords are % of the image box; sized to the structure -->
+      <span class="region" data-region="vena-cava"        style="left:30%; top:21%; width:13%; height:16%"></span>
+      <span class="region" data-region="aorta"            style="left:52%; top:13%; width:13%; height:15%"></span>
+      <span class="region" data-region="pulmonary-artery" style="left:67%; top:24%; width:15%; height:14%"></span>
+      <span class="region" data-region="pulmonary-vein"   style="left:74%; top:41%; width:13%; height:12%"></span>
+      <span class="region" data-region="right-atrium"     style="left:33%; top:46%; width:17%; height:16%"></span>
+      <span class="region" data-region="left-atrium"      style="left:65%; top:46%; width:16%; height:15%"></span>
+      <span class="region" data-region="semilunar-valve"  style="left:50%; top:55%; width:12%; height:9%"></span>
+      <span class="region" data-region="right-ventricle"  style="left:38%; top:73%; width:20%; height:22%"></span>
+      <span class="region" data-region="left-ventricle"   style="left:62%; top:74%; width:18%; height:24%"></span>
+    </div>
+
+    <!-- right labels -->
+    <div class="dropcol" id="colRight"></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-reset" id="resetIncorrect">Reset incorrect</button>
+    <button class="btn btn-reset" id="resetAll">Reset all</button>
+    <button class="btn btn-check" id="check">Check answers</button>
+  </div>
+
+  <div class="feedback" id="feedback"></div>
+
+  <h2>Parts of the heart</h2>
+  <table>
+    <thead><tr><th>Label</th><th>Description</th></tr></thead>
+    <tbody id="refTable"></tbody>
+  </table>
+
+  <p class="note">
+    Heart diagram by Wapcaplet / Stenemo / Jmarchn, via Wikimedia Commons, licensed
+    <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>.
+    Single self-contained file — host it directly on Netlify. Best viewed on a tablet or desktop.
+  </p>
+  <p class="note">
+    <button id="calibrate" style="font-size:0.75rem;padding:6px 12px;border:1px solid var(--blue);background:#fff;color:var(--blue);border-radius:6px;cursor:pointer;font-weight:600">
+      Toggle hotspot calibration
+    </button>
+    If a highlight box doesn't sit on its structure, turn this on: each hotspot shows as a dashed box.
+    Click one to copy its <code>data-region</code>, then edit that line's <code>left/top/width/height</code> percentages in the source.
+  </p>
+</div>
+
+<script>
+  // ---- Data ----
+  const PARTS = [
+    { id:'vena-cava',         name:'vena cava',         desc:'Carries deoxygenated blood from the body to the heart', col:'left' },
+    { id:'semilunar-valve',   name:'semilunar valve',   desc:'Flaps that prevent backflow of blood', col:'left' },
+    { id:'aorta',             name:'aorta',             desc:'The main artery carrying oxygenated blood to all parts of the body', col:'left' },
+    { id:'pulmonary-vein',    name:'pulmonary vein',    desc:'Carries oxygenated blood from the lungs', col:'left' },
+    { id:'right-atrium',      name:'right atrium',      desc:'Segment of the heart that receives deoxygenated blood', col:'left' },
+    { id:'right-ventricle',   name:'right ventricle',   desc:'Region of the heart that pumps deoxygenated blood to the lungs', col:'left' },
+    { id:'pulmonary-artery',  name:'pulmonary artery',  desc:'Carries deoxygenated blood to the lungs', col:'right' },
+    { id:'left-atrium',       name:'left atrium',       desc:'Receives oxygenated blood from the lungs', col:'right' },
+    { id:'left-ventricle',    name:'left ventricle',    desc:'Region of the heart that pumps oxygenated blood to the body', col:'right' },
+  ];
+
+  const bank = document.getElementById('bank');
+  const colLeft = document.getElementById('colLeft');
+  const colRight = document.getElementById('colRight');
+  let attempts = 0;
+
+  // ---- Build reference table ----
+  const refTable = document.getElementById('refTable');
+  PARTS.forEach(p => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${p.name}</td><td>${p.desc}</td>`;
+    refTable.appendChild(tr);
+  });
+
+  // ---- Build shuffled label bank ----
+  function shuffle(a){ return a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(p=>p[1]); }
+
+  function buildBank(){
+    bank.innerHTML = '';
+    shuffle([...PARTS]).forEach(p => {
+      const el = document.createElement('div');
+      el.className = 'label';
+      el.textContent = p.name;
+      el.draggable = true;
+      el.dataset.id = p.id;
+      bank.appendChild(el);
+      attachDragLabel(el);
+    });
+  }
+
+  // ---- Build drop boxes ----
+  function buildBoxes(){
+    colLeft.innerHTML = ''; colRight.innerHTML = '';
+    PARTS.forEach(p => {
+      const box = document.createElement('div');
+      box.className = 'dropbox';
+      box.dataset.target = p.id;
+      box.innerHTML = `<span class="placeholder" style="color:#9aa6b0;font-weight:500">${p.col==='left'?'⟶':'⟵'} drop label</span><span class="mark"></span>`;
+      (p.col === 'left' ? colLeft : colRight).appendChild(box);
+      attachDropBox(box, p.id);
+    });
+  }
+
+  // ---- Highlighting ----
+  function highlight(id, on){
+    const r = document.querySelector(`.region[data-region="${id}"]`);
+    if (r) r.classList.toggle('highlight', on);
+  }
+
+  // ---- Drag & drop (mouse) ----
+  let draggedId = null;
+
+  function attachDragLabel(el){
+    el.addEventListener('dragstart', e => {
+      draggedId = el.dataset.id;
+      el.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', draggedId);
+    });
+    el.addEventListener('dragend', () => el.classList.remove('dragging'));
+    // touch support
+    el.addEventListener('touchstart', e => { draggedId = el.dataset.id; el.classList.add('dragging'); }, {passive:true});
+    el.addEventListener('touchend', e => {
+      el.classList.remove('dragging');
+      const t = e.changedTouches[0];
+      const target = document.elementFromPoint(t.clientX, t.clientY);
+      const box = target && target.closest('.dropbox');
+      if (box) placeLabel(box, draggedId);
+      draggedId = null;
+    });
+  }
+
+  function attachDropBox(box, id){
+    box.addEventListener('dragover', e => { e.preventDefault(); box.classList.add('over'); });
+    box.addEventListener('dragleave', () => box.classList.remove('over'));
+    box.addEventListener('drop', e => {
+      e.preventDefault();
+      box.classList.remove('over');
+      const droppedId = e.dataTransfer.getData('text/plain') || draggedId;
+      placeLabel(box, droppedId);
+    });
+    box.addEventListener('mouseenter', () => highlight(id, true));
+    box.addEventListener('mouseleave', () => highlight(id, false));
+    // click placed label to return it
+    box.addEventListener('click', () => {
+      if (box.classList.contains('filled')) returnLabel(box);
+    });
+  }
+
+  function placeLabel(box, labelId){
+    if (!labelId) return;
+    // if box already filled, return its current label first
+    if (box.classList.contains('filled')) returnLabel(box, true);
+    const labelEl = bank.querySelector(`.label[data-id="${labelId}"]`);
+    if (!labelEl) return; // already placed elsewhere
+    labelEl.classList.add('placed');
+    box.dataset.placed = labelId;
+    box.classList.add('filled');
+    box.classList.remove('correct','incorrect');
+    box.innerHTML = `<span class="placed-label">${labelEl.textContent}</span><span class="mark"></span>`;
+    updateProgress();
+  }
+
+  function returnLabel(box, silent){
+    const id = box.dataset.placed;
+    if (!id) return;
+    const labelEl = bank.querySelector(`.label[data-id="${id}"]`);
+    if (labelEl) labelEl.classList.remove('placed');
+    const p = PARTS.find(x=>x.id===box.dataset.target);
+    box.classList.remove('filled','correct','incorrect');
+    box.dataset.placed = '';
+    box.innerHTML = `<span class="placeholder" style="color:#9aa6b0;font-weight:500">${p.col==='left'?'⟶':'⟵'} drop label</span><span class="mark"></span>`;
+    if (!silent) updateProgress();
+  }
+
+  // ---- Progress / scoring ----
+  function updateProgress(){
+    const boxes = document.querySelectorAll('.dropbox');
+    const filled = [...boxes].filter(b=>b.classList.contains('filled')).length;
+    document.getElementById('placedCount').textContent = `${filled}/${PARTS.length}`;
+    document.getElementById('progressFill').style.width = (filled/PARTS.length*100) + '%';
+  }
+
+  // ---- Buttons ----
+  document.getElementById('check').addEventListener('click', () => {
+    attempts++;
+    document.getElementById('attemptCount').textContent = attempts;
+    let correct = 0;
+    document.querySelectorAll('.dropbox').forEach(box => {
+      if (!box.classList.contains('filled')) return;
+      const ok = box.dataset.placed === box.dataset.target;
+      box.classList.toggle('correct', ok);
+      box.classList.toggle('incorrect', !ok);
+      box.querySelector('.mark').textContent = ok ? '✓' : '✗';
+      if (ok) correct++;
+    });
+    document.getElementById('scoreCount').textContent = `${correct}/${PARTS.length}`;
+    const fb = document.getElementById('feedback');
+    fb.className = 'feedback show ' + (correct === PARTS.length ? 'win' : 'partial');
+    fb.textContent = correct === PARTS.length
+      ? `Perfect — all ${PARTS.length} labels correct in ${attempts} attempt${attempts>1?'s':''}!`
+      : `${correct} of ${PARTS.length} correct. Incorrect labels are marked — try those again.`;
+  });
+
+  document.getElementById('resetIncorrect').addEventListener('click', () => {
+    document.querySelectorAll('.dropbox.incorrect').forEach(box => returnLabel(box, true));
+    updateProgress();
+    document.getElementById('feedback').classList.remove('show');
+  });
+
+  document.getElementById('resetAll').addEventListener('click', () => {
+    attempts = 0;
+    document.getElementById('attemptCount').textContent = '0';
+    document.getElementById('scoreCount').textContent = '—';
+    document.getElementById('feedback').classList.remove('show');
+    buildBank(); buildBoxes(); updateProgress();
+  });
+
+  // ---- Calibration helper ----
+  const figure = document.querySelector('.figure');
+  document.getElementById('calibrate').addEventListener('click', () => {
+    figure.classList.toggle('calibrate');
+  });
+  // click a hotspot in calibrate mode to log its current coords
+  figure.querySelectorAll('.region').forEach(r => {
+    r.addEventListener('click', () => {
+      if (!figure.classList.contains('calibrate')) return;
+      const s = r.style;
+      const out = `${r.dataset.region}: left:${s.left}; top:${s.top}; width:${s.width}; height:${s.height}`;
+      console.log(out);
+      try { navigator.clipboard.writeText(out); } catch(e){}
+    });
+  });
+
+  // ---- Init ----
+  buildBank();
+  buildBoxes();
+  updateProgress();
+</script>
+</body>
+</html>
