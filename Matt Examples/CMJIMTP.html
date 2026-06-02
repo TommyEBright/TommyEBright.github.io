@@ -3,41 +3,41 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Force-Time Explorer — Sport &amp; Exercise Science</title>
+<title>CMJ &amp; IMTP Analysis — Dr. Tommy Bright</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --indigo:        #1F1A4A;
-    --indigo-soft:   #4a4570;
-    --magenta:       #E6007E;
-    --magenta-deep:  #b80064;
-    --magenta-tint:  rgba(230,0,126,0.10);
-    --lime:          #B6D43A;
-    --lime-deep:     #93ad2c;
-    --purple:        #6C2D8E;
-    --purple-deep:   #54226e;
-    --bg:            #f4f4f8;
+    --indigo:        #0a0f1e;
+    --indigo-soft:   #1a2a4a;
+    --magenta:       #1a5fd4;
+    --magenta-deep:  #0a3d8f;
+    --magenta-tint:  rgba(26,95,212,0.10);
+    --lime:          #6bcf8f;
+    --lime-deep:     #2a8c4a;
+    --purple:        #2a8c4a;
+    --purple-deep:   #1a5a2d;
+    --bg:            #f4f7fb;
     --card:          #ffffff;
-    --rule:          #d6d6e0;
-    --rule-soft:     #e6e6ee;
+    --rule:          #d0daea;
+    --rule-soft:     #e8eef6;
     --error:         #c63838;
-    --shadow:        0 2px 0 rgba(31,26,74,0.04), 0 14px 28px -18px rgba(31,26,74,0.25);
+    --shadow:        0 2px 0 rgba(10,15,30,0.04), 0 14px 28px -18px rgba(10,15,30,0.25);
   }
   * { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0;
     background: var(--bg);
     color: var(--indigo);
-    font-family: 'Atkinson Hyperlegible', 'Lexend', system-ui, sans-serif;
+    font-family: 'DM Sans', sans-serif;
     -webkit-font-smoothing: antialiased;
     line-height: 1.55;
   }
   .wrap { max-width: 1280px; margin: 0 auto; padding: 28px 24px 60px; }
 
   header.mast {
-    background: linear-gradient(135deg, rgba(31,26,74,0.95), rgba(31,26,74,0.85));
+    background: linear-gradient(135deg, rgba(10,15,30,0.95), rgba(10,15,30,0.85));
     color: #fff;
     border-radius: 8px;
     border-bottom: 8px solid var(--magenta);
@@ -46,7 +46,7 @@
     text-align: center;
   }
   .mast .eyebrow {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 500;
     font-size: 12px;
     letter-spacing: 0.22em;
@@ -55,7 +55,7 @@
     margin-bottom: 6px;
   }
   .mast h1 {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 700;
     font-size: clamp(28px, 4.4vw, 42px);
     line-height: 1.1;
@@ -81,7 +81,7 @@
     background: var(--card);
     border: 2px solid var(--indigo);
     padding: 12px 22px;
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 600;
     font-size: 14.5px;
     cursor: pointer;
@@ -139,7 +139,7 @@
     background: var(--indigo);
     color: #fff;
     padding: 5px 12px;
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.12em;
@@ -157,7 +157,7 @@
   .plot-axes-note {
     display: flex; justify-content: space-between;
     margin-top: 10px;
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 12px;
     color: var(--indigo-soft);
   }
@@ -178,7 +178,7 @@
   .card.accent-purple  { border-top: 6px solid var(--purple); }
 
   .card h3 {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 700;
     font-size: 19px;
     margin: 0 0 4px;
@@ -186,7 +186,7 @@
     letter-spacing: -0.01em;
   }
   .card .sublabel {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.18em;
@@ -206,12 +206,12 @@
     display: inline-flex; align-items: center; justify-content: center;
     width: 34px; height: 34px;
     background: var(--magenta); color: #fff;
-    font-family: 'Lexend', sans-serif; font-weight: 700; font-size: 16px;
+    font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 16px;
     border: 2px solid var(--magenta-deep);
     border-radius: 8px; flex-shrink: 0;
   }
   .badge-row .phase-name {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 11px; font-weight: 600;
     letter-spacing: 0.16em; text-transform: uppercase;
     color: var(--indigo-soft);
@@ -223,24 +223,24 @@
     padding: 10px 12px; border-radius: 6px;
   }
   .chip .lbl {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 10px; font-weight: 600;
     letter-spacing: 0.18em; text-transform: uppercase;
     color: var(--indigo-soft); margin-bottom: 3px;
   }
   .chip .val {
-    font-family: 'Lexend', sans-serif; font-weight: 700; font-size: 22px;
+    font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 22px;
     color: var(--indigo); line-height: 1;
   }
   .chip .unit {
-    font-family: 'Lexend', sans-serif; font-size: 11px; font-weight: 500;
+    font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500;
     color: var(--indigo-soft); margin-left: 3px;
   }
 
   .walk-nav { display: flex; gap: 8px; justify-content: space-between; align-items: center; }
   .walk-nav button {
     flex: 1; padding: 11px;
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 12px; font-weight: 600;
     letter-spacing: 0.1em; text-transform: uppercase;
     background: var(--card); border: 2px solid var(--indigo);
@@ -250,7 +250,7 @@
   .walk-nav button:hover:not(:disabled) { background: var(--indigo); color: var(--lime); }
   .walk-nav button:disabled { opacity: 0.35; cursor: not-allowed; }
   .walk-nav .step-of {
-    font-family: 'Lexend', sans-serif; font-size: 13px; font-weight: 600;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
     color: var(--indigo); padding: 0 12px; text-align: center;
   }
 
@@ -258,7 +258,7 @@
   .pill {
     width: 34px; height: 34px;
     border: 2px solid var(--indigo); background: var(--card); color: var(--indigo);
-    font-family: 'Lexend', sans-serif; font-weight: 700; font-size: 14px;
+    font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 14px;
     cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center;
     border-radius: 8px; transition: all 0.15s;
@@ -269,13 +269,13 @@
   .slider-block { margin-bottom: 16px; }
   .slider-block label {
     display: flex; justify-content: space-between; align-items: baseline;
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 11px; font-weight: 600;
     letter-spacing: 0.14em; text-transform: uppercase;
     color: var(--indigo-soft); margin-bottom: 6px;
   }
   .slider-block label .v {
-    font-family: 'Lexend', sans-serif; font-size: 14px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
     color: var(--indigo); letter-spacing: 0; text-transform: none; font-weight: 700;
   }
   .slider-block input[type="range"] {
@@ -298,7 +298,7 @@
     width: 100%; margin-top: 6px;
     background: var(--card); border: 2px dashed var(--indigo); color: var(--indigo);
     padding: 10px;
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 12px; font-weight: 600;
     letter-spacing: 0.14em; text-transform: uppercase;
     border-radius: 6px; cursor: pointer; transition: all 0.15s;
@@ -312,7 +312,7 @@
 
   .phase-legend {
     display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px;
-    font-family: 'Lexend', sans-serif; font-size: 12px; font-weight: 500;
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
   }
   .phase-legend span { display: inline-flex; align-items: center; gap: 6px; color: var(--indigo-soft); }
   .phase-legend .sw {
@@ -322,14 +322,14 @@
 
   /* Upload tab specific */
   h2.section {
-    font-family: 'Lexend', sans-serif; font-weight: 700; font-size: 22px;
+    font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 22px;
     margin: 0 0 6px; color: var(--indigo);
     border-bottom: 3px solid var(--lime); padding-bottom: 8px;
   }
   .section-intro { margin: 0 0 22px; font-size: 15px; color: var(--indigo-soft); }
 
   .btn {
-    font-family: 'Lexend', sans-serif; font-size: 13px; font-weight: 600;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
     padding: 10px 16px; border-radius: 6px;
     border: 2px solid var(--indigo); cursor: pointer;
     background: var(--card); color: var(--indigo);
@@ -358,7 +358,7 @@
   }
   .upload-zone input[type="file"] { display: none; }
   .upload-zone .file-name {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 700;
     color: var(--magenta-deep);
     word-break: break-all;
@@ -367,13 +367,13 @@
 
   .field { display: flex; flex-direction: column; gap: 4px; }
   .field label {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 600; font-size: 11px;
     letter-spacing: 0.12em; text-transform: uppercase; color: var(--indigo-soft);
   }
   .field label .opt { color: var(--lime-deep); font-weight: 500; margin-left: 4px; }
   .field input, .field select {
-    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 14px;
     padding: 9px 11px;
     border: 1.5px solid var(--rule);
@@ -391,7 +391,7 @@
     margin: 0 0 18px;
   }
   fieldset legend {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 700; font-size: 13px; color: var(--indigo);
     padding: 0 8px;
     letter-spacing: 0.06em; text-transform: uppercase;
@@ -434,7 +434,7 @@
   table.results th {
     padding: 10px;
     text-align: left;
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 600;
     font-size: 11px;
     letter-spacing: 0.1em;
@@ -448,14 +448,14 @@
   }
   table.results td:last-child {
     text-align: right;
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 700;
     color: var(--indigo);
     font-variant-numeric: tabular-nums;
   }
   table.results tr.group-header td {
     background: var(--bg);
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 700;
     font-size: 13px;
     color: var(--indigo);
@@ -484,7 +484,7 @@
   }
   details.ref-row summary {
     cursor: pointer;
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-weight: 600;
     font-size: 14px;
     color: var(--indigo);
@@ -512,7 +512,7 @@
     margin-bottom: 24px;
   }
   .ref-group h3 {
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     color: var(--magenta-deep);
     font-size: 17px;
     margin: 0 0 6px;
@@ -537,7 +537,7 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 12px;
-    font-family: 'Lexend', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     font-size: 13px;
     font-weight: 500;
   }
@@ -545,13 +545,33 @@
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <header class="mast">
-    <div class="eyebrow">Sport &amp; Exercise Science · Teaching Tool</div>
-    <h1>Force-Time Explorer</h1>
-    <p class="sub">Understand and analyse countermovement jump and isometric mid-thigh pull force-time curves</p>
-  </header>
+<!-- SITE NAV -->
+<nav style="position:sticky;top:0;z-index:200;background:#0a0f1e;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:56px;border-bottom:2px solid #1a5fd4;">
+  <a href="../index.html" style="font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:#fff;text-decoration:none;">Dr. Tommy Bright</a>
+  <ul style="display:flex;gap:32px;list-style:none;">
+    <li><a href="../index.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;">Home</a></li>
+    <li><a href="../teaching.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:#fff;text-decoration:none;border-bottom:2px solid #1a5fd4;padding-bottom:2px;">Teaching &amp; Learning</a></li>
+    <li><a href="../project.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;">Projects</a></li>
+    <li><a href="../research.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;">Research</a></li>
+  </ul>
+  <div style="display:flex;gap:14px;">
+    <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:3px 9px;">LinkedIn</a>
+    <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:3px 9px;">ResearchGate</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div style="background:#0a0f1e;padding:56px 40px 48px;border-bottom:1px solid rgba(26,95,212,0.2);position:relative;overflow:hidden;">
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 85% 50%,rgba(26,95,212,0.10),transparent);pointer-events:none;"></div>
+  <div style="max-width:860px;margin:0 auto;position:relative;z-index:1;">
+    <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#1a5fd4;margin-bottom:16px;">Biomechanics · Level 5 · 6 · 7</div>
+    <h1 style="font-family:'DM Serif Display',Georgia,serif;font-size:clamp(28px,4vw,48px);color:#fff;line-height:1.1;letter-spacing:-0.5px;margin-bottom:12px;">CMJ &amp; IMTP Analysis<br><em style="font-style:italic;color:#6b9fe4;">force-time explorer.</em></h1>
+    <p style="font-size:14px;color:rgba(255,255,255,0.55);max-width:580px;line-height:1.7;font-weight:300;">Explore and analyse countermovement jump and isometric mid-thigh pull force-time curves. Upload your own data or explore built-in examples.</p>
+  </div>
+</div>
+
+<div class="wrap">
 
   <div class="tabs">
     <button class="tab active" data-tab="explore"><span class="n">01</span>Explore</button>
@@ -583,7 +603,7 @@
         <div class="side">
           <div class="card accent-purple">
             <div class="sublabel">Test type</div>
-            <select id="ex-mode" style="width:100%; padding:10px 11px; border:1.5px solid var(--rule); border-radius:6px; font-family:'Atkinson Hyperlegible',sans-serif; font-size:14px; color:var(--indigo); background:var(--card); margin-top:4px;">
+            <select id="ex-mode" style="width:100%; padding:10px 11px; border:1.5px solid var(--rule); border-radius:6px; font-family:'DM Sans',sans-serif; font-size:14px; color:var(--indigo); background:var(--card); margin-top:4px;">
               <option value="cmj" selected>Countermovement Jump (CMJ)</option>
               <option value="imtp">Isometric Mid-Thigh Pull (IMTP)</option>
             </select>
@@ -643,7 +663,7 @@
               <input type="number" id="up-bw-window" min="0.5" max="3" step="0.1" value="1.0">
             </div>
 
-            <label style="font-family: 'Lexend', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--indigo-soft); display: block; margin-bottom: 5px;">CSV file *</label>
+            <label style="font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--indigo-soft); display: block; margin-bottom: 5px;">CSV file *</label>
             <div class="upload-zone" id="up-upload-zone">
               <input type="file" id="up-csv-file" accept=".csv,.txt,.tsv">
               <p><strong>Click or drop a CSV here</strong></p>
@@ -728,7 +748,7 @@
               <input type="number" id="im-bw-window" min="0.5" max="3" step="0.1" value="1.0">
             </div>
 
-            <label style="font-family: 'Lexend', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--indigo-soft); display: block; margin-bottom: 5px;">CSV file *</label>
+            <label style="font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--indigo-soft); display: block; margin-bottom: 5px;">CSV file *</label>
             <div class="upload-zone" id="im-upload-zone">
               <input type="file" id="im-csv-file" accept=".csv,.txt,.tsv">
               <p><strong>Click or drop a CSV here</strong></p>
@@ -798,19 +818,19 @@
 /* ===== Plot palette ===== */
 var COLOR = {
   paper:'#ffffff', bg:'#f4f4f8',
-  ink:'#1F1A4A', inkSoft:'#4a4570',
+  ink:'#0a0f1e', inkSoft:'#1a2a4a',
   grid:'#e6e6ee',
-  bandFill:'rgba(230,0,126,0.08)',
-  bandEdge:'rgba(230,0,126,0.18)',
-  bw:'#93ad2c', bwLabel:'#6b7f1f',
-  trace:'#1F1A4A',
-  landmark:'#1F1A4A', landmarkActive:'#E6007E', landmarkActiveDeep:'#b80064',
-  cursor:'#6C2D8E', cursorDeep:'#54226e',
-  phaseLabel:'#b80064', tick:'#4a4570',
+  bandFill:'rgba(26,95,212,0.08)',
+  bandEdge:'rgba(26,95,212,0.18)',
+  bw:'#2a8c4a', bwLabel:'#6b7f1f',
+  trace:'#0a0f1e',
+  landmark:'#0a0f1e', landmarkActive:'#1a5fd4', landmarkActiveDeep:'#0a3d8f',
+  cursor:'#2a8c4a', cursorDeep:'#1a5a2d',
+  phaseLabel:'#0a3d8f', tick:'#1a2a4a',
   // Phase-specific colors for 7-phase CMJ structure
   phaseColors: {
     'Weighing': {fill:'rgba(156,163,175,0.15)', edge:'rgba(156,163,175,0.35)', label:'#6b7280'},      // Gray
-    'Unweighting': {fill:'rgba(230,0,126,0.15)', edge:'rgba(230,0,126,0.35)', label:'#b80064'},       // Magenta
+    'Unweighting': {fill:'rgba(26,95,212,0.15)', edge:'rgba(26,95,212,0.35)', label:'#0a3d8f'},       // Magenta
     'Braking': {fill:'rgba(244,63,94,0.15)', edge:'rgba(244,63,94,0.35)', label:'#dc2626'},           // Red
     'Propulsion': {fill:'rgba(34,197,94,0.15)', edge:'rgba(34,197,94,0.35)', label:'#15803d'},        // Green
     'Flight': {fill:'rgba(59,130,246,0.15)', edge:'rgba(59,130,246,0.35)', label:'#1e40af'},          // Blue
@@ -1209,11 +1229,11 @@ function drawTrace(canvas, trace, opts) {
   ctx.strokeStyle = COLOR.bw; ctx.lineWidth = 1.4; ctx.setLineDash([5,5]);
   ctx.beginPath(); ctx.moveTo(m.l, yToPx(trace.BW)); ctx.lineTo(m.l+plotW, yToPx(trace.BW));
   ctx.stroke(); ctx.setLineDash([]);
-  ctx.font = '600 13px "Lexend", sans-serif'; ctx.fillStyle = COLOR.bwLabel;
+  ctx.font = '600 13px 'DM Sans', sans-serif'; ctx.fillStyle = COLOR.bwLabel;
   ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
   ctx.fillText(trace.isImtp ? 'system weight' : 'body weight', m.l+6, yToPx(trace.BW)-4);
 
-  ctx.font = '600 14px "Lexend", sans-serif';
+  ctx.font = '600 14px 'DM Sans', sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   for (var b2=0; b2<phaseBands.length; b2++) {
     var bd2 = phaseBands[b2];
@@ -1237,7 +1257,7 @@ function drawTrace(canvas, trace, opts) {
   ctx.stroke();
 
   ctx.fillStyle = COLOR.tick;
-  ctx.font = '500 13px "Lexend", sans-serif';
+  ctx.font = '500 13px 'DM Sans', sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   for (var xt=0; xt<=tMax+1e-9; xt+=xStep) {
     var pxt = xToPx(xt);
@@ -1251,7 +1271,7 @@ function drawTrace(canvas, trace, opts) {
     ctx.fillText(Math.round(yt).toString(), m.l-12, pyt);
   }
   ctx.fillStyle = COLOR.ink;
-  ctx.font = '600 14px "Lexend", sans-serif';
+  ctx.font = '600 14px 'DM Sans', sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('time  (s)', m.l+plotW/2, m.t+plotH+40);
   ctx.save();
@@ -1285,7 +1305,7 @@ function drawTrace(canvas, trace, opts) {
       ctx.lineTo(bx+r, by+badgeSize); ctx.quadraticCurveTo(bx, by+badgeSize, bx, by+badgeSize-r);
       ctx.lineTo(bx, by+r); ctx.quadraticCurveTo(bx, by, bx+r, by); ctx.closePath(); ctx.fill();
       ctx.strokeStyle = active ? COLOR.landmarkActiveDeep : COLOR.ink; ctx.lineWidth = 1.5; ctx.stroke();
-      ctx.fillStyle = '#fff'; ctx.font = '700 14px "Lexend", sans-serif';
+      ctx.fillStyle = '#fff'; ctx.font = '700 14px 'DM Sans', sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText((k+1).toString(), bx+badgeSize/2, by+badgeSize/2+1);
       ctx.strokeStyle = active ? COLOR.landmarkActive : COLOR.landmark; ctx.lineWidth = 1.4;
@@ -1296,7 +1316,7 @@ function drawTrace(canvas, trace, opts) {
   if (opts.cursorIdx !== undefined && opts.cursorIdx !== null) {
     var iC = Math.max(0, Math.min(trace.N-1, opts.cursorIdx));
     var pxC = xToPx(trace.t[iC]), pyC = yToPx(trace.f[iC]);
-    ctx.strokeStyle = 'rgba(108,45,142,0.45)'; ctx.lineWidth = 1; ctx.setLineDash([3,4]);
+    ctx.strokeStyle = 'rgba(42,140,74,0.45)'; ctx.lineWidth = 1; ctx.setLineDash([3,4]);
     ctx.beginPath();
     ctx.moveTo(pxC, m.t); ctx.lineTo(pxC, m.t+plotH);
     ctx.moveTo(m.l, pyC); ctx.lineTo(m.l+plotW, pyC);
@@ -1897,10 +1917,10 @@ function drawUploadChart(canvas, A) {
     var x0 = xToPx(A.t[a]), x1 = xToPx(A.t[b]);
     ctx.fillStyle = fill; ctx.fillRect(x0, m.t, x1-x0, plotH);
   }
-  band(A.idxUnweightStart, A.idxUnweightEnd, 'rgba(108,45,142,0.07)');  // unweighting (onset → vel min)
-  band(A.idxBrakingStart, A.idxBrakingEnd, 'rgba(230,0,126,0.10)');     // braking (vel min → bottom of CM)
+  band(A.idxUnweightStart, A.idxUnweightEnd, 'rgba(42,140,74,0.07)');  // unweighting (onset → vel min)
+  band(A.idxBrakingStart, A.idxBrakingEnd, 'rgba(26,95,212,0.10)');     // braking (vel min → bottom of CM)
   band(A.idxConcStart, A.idxTO, 'rgba(147,173,44,0.10)');               // propulsion (bottom CM → take-off)
-  band(A.idxTO, A.idxTD, 'rgba(31,26,74,0.03)');                        // flight
+  band(A.idxTO, A.idxTD, 'rgba(10,15,30,0.03)');                        // flight
   if (A.idxTD < N-1) band(A.idxTD, Math.min(A.idxStable, N-1), 'rgba(224,138,0,0.10)'); // landing
 
   // grid
@@ -1920,7 +1940,7 @@ function drawUploadChart(canvas, A) {
   ctx.beginPath(); ctx.moveTo(m.l, yToPx(A.BW)); ctx.lineTo(m.l+plotW, yToPx(A.BW));
   ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle = COLOR.bwLabel;
-  ctx.font = '600 12px "Lexend", sans-serif';
+  ctx.font = '600 12px 'DM Sans', sans-serif';
   ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
   ctx.fillText('BW = ' + Math.round(A.BW) + ' N', m.l+6, yToPx(A.BW)-4);
 
@@ -1931,7 +1951,7 @@ function drawUploadChart(canvas, A) {
   ctx.stroke();
 
   // tick labels
-  ctx.fillStyle = COLOR.tick; ctx.font = '500 12px "Lexend", sans-serif';
+  ctx.fillStyle = COLOR.tick; ctx.font = '500 12px 'DM Sans', sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   for (var xt=Math.ceil(t0/xStep)*xStep; xt<=t1+1e-9; xt+=xStep) {
     var pxt=xToPx(xt);
@@ -1945,7 +1965,7 @@ function drawUploadChart(canvas, A) {
     ctx.fillText(Math.round(yt).toString(), m.l-8, pyt);
   }
   ctx.fillStyle = COLOR.ink;
-  ctx.font = '600 13px "Lexend", sans-serif';
+  ctx.font = '600 13px 'DM Sans', sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('time (s)', m.l+plotW/2, m.t+plotH+34);
   ctx.save();
@@ -1979,11 +1999,11 @@ function drawUploadChart(canvas, A) {
     var mk = marks[mi];
     if (mk.idx < startSamp || mk.idx > endSamp) continue;
     var pxL = xToPx(A.t[mk.idx]), pyL = yToPx(force[mk.idx]);
-    ctx.fillStyle = '#E6007E';
+    ctx.fillStyle = '#1a5fd4';
     ctx.beginPath(); ctx.arc(pxL, pyL, 5, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
     var bs = 22, bx = pxL-bs/2, by = Math.max(m.t+2, pyL-32);
-    ctx.fillStyle = '#1F1A4A';
+    ctx.fillStyle = '#0a0f1e';
     ctx.beginPath();
     var rr = 4;
     ctx.moveTo(bx+rr, by); ctx.lineTo(bx+bs-rr, by);
@@ -1992,16 +2012,16 @@ function drawUploadChart(canvas, A) {
     ctx.quadraticCurveTo(bx, by+bs, bx, by+bs-rr); ctx.lineTo(bx, by+rr);
     ctx.quadraticCurveTo(bx, by, bx+rr, by); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.font = '700 12px "Lexend", sans-serif';
+    ctx.font = '700 12px 'DM Sans', sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(mk.label, bx+bs/2, by+bs/2+1);
-    ctx.strokeStyle = '#1F1A4A'; ctx.lineWidth = 1;
+    ctx.strokeStyle = '#0a0f1e'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(pxL, by+bs); ctx.lineTo(pxL, pyL-5); ctx.stroke();
   }
 
   // Phase labels at top
   ctx.fillStyle = COLOR.phaseLabel;
-  ctx.font = '600 11px "Lexend", sans-serif';
+  ctx.font = '600 11px 'DM Sans', sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   function phaseLabel(a, b, txt) {
     var x0=xToPx(A.t[a]), x1=xToPx(A.t[b]);
@@ -2488,8 +2508,8 @@ function drawIMTPChart(canvas, A) {
     var x0 = xToPx(A.t[a]), x1 = xToPx(A.t[b]);
     ctx.fillStyle = fill; ctx.fillRect(x0, m.t, x1-x0, plotH);
   }
-  band(startSamp, A.idxOnset, 'rgba(108,45,142,0.07)');     // quiet
-  band(A.idxOnset, A.idxPeak, 'rgba(230,0,126,0.10)');      // pull / force development
+  band(startSamp, A.idxOnset, 'rgba(42,140,74,0.07)');     // quiet
+  band(A.idxOnset, A.idxPeak, 'rgba(26,95,212,0.10)');      // pull / force development
   if (endSamp > A.idxPeak) band(A.idxPeak, endSamp, 'rgba(147,173,44,0.10)'); // post-peak plateau
 
   // Grid
@@ -2509,16 +2529,16 @@ function drawIMTPChart(canvas, A) {
   ctx.beginPath(); ctx.moveTo(m.l, yToPx(A.SW)); ctx.lineTo(m.l+plotW, yToPx(A.SW));
   ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle = COLOR.bwLabel;
-  ctx.font = '600 12px "Lexend", sans-serif';
+  ctx.font = '600 12px 'DM Sans', sans-serif';
   ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
   ctx.fillText('SW = ' + Math.round(A.SW) + ' N', m.l+6, yToPx(A.SW)-4);
 
   // Start threshold line
-  ctx.strokeStyle = '#54226e'; ctx.lineWidth = 1; ctx.setLineDash([2,4]);
+  ctx.strokeStyle = '#1a5a2d'; ctx.lineWidth = 1; ctx.setLineDash([2,4]);
   ctx.beginPath(); ctx.moveTo(m.l, yToPx(A.startThreshold)); ctx.lineTo(m.l+plotW, yToPx(A.startThreshold));
   ctx.stroke(); ctx.setLineDash([]);
-  ctx.fillStyle = '#54226e';
-  ctx.font = '500 11px "Lexend", sans-serif';
+  ctx.fillStyle = '#1a5a2d';
+  ctx.font = '500 11px 'DM Sans', sans-serif';
   ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
   ctx.fillText('SW + 5×SD threshold', m.l+6, yToPx(A.startThreshold)-3);
 
@@ -2529,7 +2549,7 @@ function drawIMTPChart(canvas, A) {
   ctx.stroke();
 
   // Tick labels
-  ctx.fillStyle = COLOR.tick; ctx.font = '500 12px "Lexend", sans-serif';
+  ctx.fillStyle = COLOR.tick; ctx.font = '500 12px 'DM Sans', sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   for (var xt=Math.ceil(t0/xStep)*xStep; xt<=t1+1e-9; xt+=xStep) {
     var pxt=xToPx(xt);
@@ -2543,7 +2563,7 @@ function drawIMTPChart(canvas, A) {
     ctx.fillText(Math.round(yt).toString(), m.l-8, pyt);
   }
   ctx.fillStyle = COLOR.ink;
-  ctx.font = '600 13px "Lexend", sans-serif';
+  ctx.font = '600 13px 'DM Sans', sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('time (s)', m.l+plotW/2, m.t+plotH+34);
   ctx.save();
@@ -2567,9 +2587,9 @@ function drawIMTPChart(canvas, A) {
   // Time-interval markers (vertical lines at 50, 100, 150, 200, 250 ms after onset)
   var intervals = [{t:0.050, lbl:'50'}, {t:0.100, lbl:'100'}, {t:0.150, lbl:'150'},
                    {t:0.200, lbl:'200'}, {t:0.250, lbl:'250'}];
-  ctx.strokeStyle = 'rgba(31,26,74,0.25)'; ctx.lineWidth = 1; ctx.setLineDash([2,3]);
+  ctx.strokeStyle = 'rgba(10,15,30,0.25)'; ctx.lineWidth = 1; ctx.setLineDash([2,3]);
   ctx.fillStyle = COLOR.inkSoft;
-  ctx.font = '500 10px "Lexend", sans-serif';
+  ctx.font = '500 10px 'DM Sans', sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   for (var iv=0; iv<intervals.length; iv++) {
     var iSample = A.idxOnset + Math.round(intervals[iv].t * A.N / (A.t[A.N-1] || 1));
@@ -2593,11 +2613,11 @@ function drawIMTPChart(canvas, A) {
     var mk = marks[mi];
     if (mk.idx < startSamp || mk.idx > endSamp) continue;
     var pxL = xToPx(A.t[mk.idx]), pyL = yToPx(force[mk.idx]);
-    ctx.fillStyle = '#E6007E';
+    ctx.fillStyle = '#1a5fd4';
     ctx.beginPath(); ctx.arc(pxL, pyL, 5, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
     var bs = 22, bx = pxL-bs/2, by = Math.max(m.t+2, pyL-32);
-    ctx.fillStyle = '#1F1A4A';
+    ctx.fillStyle = '#0a0f1e';
     ctx.beginPath();
     var rr = 4;
     ctx.moveTo(bx+rr, by); ctx.lineTo(bx+bs-rr, by);
@@ -2606,16 +2626,16 @@ function drawIMTPChart(canvas, A) {
     ctx.quadraticCurveTo(bx, by+bs, bx, by+bs-rr); ctx.lineTo(bx, by+rr);
     ctx.quadraticCurveTo(bx, by, bx+rr, by); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.font = '700 12px "Lexend", sans-serif';
+    ctx.font = '700 12px 'DM Sans', sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(mk.label, bx+bs/2, by+bs/2+1);
-    ctx.strokeStyle = '#1F1A4A'; ctx.lineWidth = 1;
+    ctx.strokeStyle = '#0a0f1e'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(pxL, by+bs); ctx.lineTo(pxL, pyL-5); ctx.stroke();
   }
 
   // Phase labels at top
   ctx.fillStyle = COLOR.phaseLabel;
-  ctx.font = '600 11px "Lexend", sans-serif';
+  ctx.font = '600 11px 'DM Sans', sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   function phaseLabel(a, b, txt) {
     var x0=xToPx(A.t[a]), x1=xToPx(A.t[b]);
@@ -3119,5 +3139,22 @@ renderIMTPReference();
 window.addEventListener('resize', function(){ renderExplore(); });
 </script>
 
+<!-- SITE FOOTER -->
+<footer style="background:#0a0f1e;color:rgba(255,255,255,0.4);padding:40px;border-top:2px solid #1a5fd4;margin-top:40px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:24px;margin-bottom:32px;">
+    <div style="font-size:15px;font-weight:600;color:rgba(255,255,255,0.8);font-family:'DM Sans',sans-serif;">Dr. Tommy Bright</div>
+    <ul style="display:flex;gap:24px;list-style:none;">
+      <li><a href="../index.html"    style="font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;font-family:'DM Sans',sans-serif;">Home</a></li>
+      <li><a href="../teaching.html" style="font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;font-family:'DM Sans',sans-serif;">Teaching &amp; Learning</a></li>
+      <li><a href="../project.html"  style="font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;font-family:'DM Sans',sans-serif;">Projects</a></li>
+      <li><a href="../research.html" style="font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;font-family:'DM Sans',sans-serif;">Research</a></li>
+    </ul>
+    <div style="display:flex;gap:12px;">
+      <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:5px 12px;">LinkedIn</a>
+      <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:5px 12px;">ResearchGate</a>
+    </div>
+  </div>
+  <div style="font-family:'DM Mono',monospace;font-size:11px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.08);">Plymouth Marjon University · Cardiff Metropolitan University · Tournament Golf College</div>
+</footer>
 </body>
 </html>
