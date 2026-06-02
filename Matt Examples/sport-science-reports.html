@@ -3,25 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Physical Performance Insights</title>
+<title>Field Based Testing — Dr. Tommy Bright</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600;700&family=Open+Sans:wght@400;600;700&family=Fira+Code&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 :root {
-  --navy: #0d2136;
-  --navy-deep: #081729;
-  --teal: #00b4a0;
-  --teal-dark: #008c7c;
-  --teal-light: #e0f7f5;
-  --orange: #f06c2a;
-  --orange-light: #fff3ec;
+  --navy: #0a0f1e;
+  --navy-deep: #050810;
+  --teal: #2a8c4a;
+  --teal-dark: #1a5a2d;
+  --teal-light: rgba(42,140,74,0.1);
+  --orange: #1a5fd4;
+  --orange-light: rgba(26,95,212,0.1);
   --purple: #7c3aed;
   --purple-light: #f3eeff;
-  --blue: #1d6fb5;
-  --blue-light: #e8f2fc;
+  --blue: #1a5fd4;
+  --blue-light: rgba(26,95,212,0.1);
   --green: #16a34a;
   --green-light: #edfbf2;
   --red: #dc2626;
@@ -29,28 +29,28 @@
   --amber: #d97706;
   --amber-light: #fff4d6;
   --white: #ffffff;
-  --off-white: #f4f8f9;
-  --border: #d6e8ea;
-  --rule-soft: #e6eef0;
-  --text: #1a2e3b;
-  --muted: #5a7080;
+  --off-white: #f4f7fb;
+  --border: #d0daea;
+  --rule-soft: #e8eef6;
+  --text: #0a0f1e;
+  --muted: #7a86a0;
   --shadow: 0 4px 20px rgba(0,0,0,0.06);
   --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
-  --hover-teal: rgba(0,180,160,0.1);
+  --hover-teal: rgba(42,140,74,0.1);
 }
 body.dark {
-  --navy: #0a121c;
-  --navy-deep: #050a14;
-  --teal: #00d4be;
-  --teal-dark: #00b4a0;
-  --teal-light: #082a26;
+  --navy: #0a0f1e;
+  --navy-deep: #050810;
+  --teal: #6bcf8f;
+  --teal-dark: #2a8c4a;
+  --teal-light: rgba(42,140,74,0.15);
   --off-white: #141921;
   --white: #1f2630;
   --border: #2c3744;
   --rule-soft: #2c3744;
   --text: #e8edf2;
   --muted: #9aaebf;
-  --hover-teal: rgba(0,212,190,0.15);
+  --hover-teal: rgba(42,140,74,0.15);
   --orange-light: #3a1f10;
   --purple-light: #2a163a;
   --green-light: #0e2d1f;
@@ -61,7 +61,7 @@ body.dark {
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 body {
-  font-family: 'Barlow', system-ui, -apple-system, sans-serif;
+  font-family: 'DM Sans', sans-serif;
   background: var(--off-white);
   color: var(--text);
   line-height: 1.55;
@@ -76,7 +76,7 @@ body {
   border-radius: 6px; z-index: 9999; font-weight: 700;
 }
 h1, h2, h3, h4, .hero-badge, .section-label {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'DM Serif Display', Georgia, serif;
   letter-spacing: -0.005em;
 }
 h1 { font-size: clamp(1.55rem, 3.4vw, 2.3rem); font-weight: 900; line-height: 1.08; }
@@ -96,14 +96,14 @@ code, .mono { font-family: 'Fira Code', 'Courier New', monospace; font-size: 0.8
 }
 .hero::before {
   content: ''; position: absolute; inset: 0;
-  background: radial-gradient(ellipse at 80% 10%, rgba(0,180,160,0.25), transparent 55%),
+  background: radial-gradient(ellipse at 80% 10%, rgba(42,140,74,0.25), transparent 55%),
               radial-gradient(ellipse at 10% 90%, rgba(124,58,237,0.20), transparent 55%);
   pointer-events: none;
 }
 .hero > * { position: relative; z-index: 1; }
 .hero-badge {
   display: inline-block;
-  background: rgba(0,180,160,0.22);
+  background: rgba(42,140,74,0.22);
   border: 1px solid var(--teal);
   color: var(--teal);
   font-weight: 700;
@@ -152,7 +152,7 @@ body.dark .btn-outline:hover:not(:disabled) { background: var(--teal); color: va
 .stat-item { padding: 16px 14px; border-right: 1px solid rgba(255,255,255,0.25); }
 .stat-item:last-child { border-right: none; }
 .stat-num {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'DM Serif Display', Georgia, serif;
   font-size: 1.7rem; font-weight: 900; color: var(--navy); display: block;
 }
 .stat-label {
@@ -194,7 +194,7 @@ body.dark .btn-outline:hover:not(:disabled) { background: var(--teal); color: va
   padding: 16px 12px;
   margin-bottom: 12px;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: inset 0 0 0 1px rgba(0,180,160,0.18);
+  box-shadow: inset 0 0 0 1px rgba(42,140,74,0.18);
 }
 .author-logo {
   width: 76px; height: auto; display: block;
@@ -203,13 +203,13 @@ body.dark .btn-outline:hover:not(:disabled) { background: var(--teal); color: va
 }
 .author-credit { display: flex; flex-direction: column; gap: 2px; line-height: 1.3; }
 .author-label {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'DM Serif Display', Georgia, serif;
   font-size: 0.7rem; text-transform: uppercase;
   letter-spacing: 0.12em; color: var(--muted);
   font-weight: 700;
 }
 .author-name {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'DM Serif Display', Georgia, serif;
   font-size: 1.05rem; font-weight: 800;
   color: var(--teal); letter-spacing: 0.02em;
 }
@@ -297,7 +297,7 @@ body.dark .dropzone { background: rgba(255,255,255,0.03); }
   display: block; margin-bottom: 12px;
 }
 .dropzone-title {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'DM Serif Display', Georgia, serif;
   font-size: 1.3rem; font-weight: 800; color: var(--navy);
   margin-bottom: 4px;
 }
@@ -368,7 +368,7 @@ table.squad {
 table.squad thead { background: var(--navy); color: #fff; }
 table.squad th {
   padding: 11px 12px; text-align: left;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'DM Serif Display', Georgia, serif;
   font-size: 0.82rem; text-transform: uppercase;
   letter-spacing: 0.06em; font-weight: 700;
   border-right: 1px solid rgba(255,255,255,0.1);
@@ -380,8 +380,8 @@ table.squad td {
   border-bottom: 1px solid var(--rule-soft);
   font-variant-numeric: tabular-nums;
 }
-table.squad tbody tr:nth-child(even) { background: rgba(0,180,160,0.04); }
-body.dark table.squad tbody tr:nth-child(even) { background: rgba(0,212,190,0.06); }
+table.squad tbody tr:nth-child(even) { background: rgba(42,140,74,0.04); }
+body.dark table.squad tbody tr:nth-child(even) { background: rgba(42,140,74,0.06); }
 table.squad tbody tr:hover { background: var(--hover-teal); }
 table.squad td.testname { font-weight: 700; color: var(--navy); }
 body.dark table.squad td.testname { color: #fff; }
@@ -488,7 +488,7 @@ body.dark .test-block-head h4 { color: #fff; }
   font-weight: 700; margin-bottom: 3px;
 }
 .metric-value {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'DM Serif Display', Georgia, serif;
   font-size: 1.25rem; font-weight: 800;
   color: var(--navy); font-variant-numeric: tabular-nums;
   line-height: 1.15;
@@ -517,7 +517,7 @@ body.dark .metric.change.bad .metric-value { color: #f29696; }
 }
 body.dark .radar-wrap { background: rgba(255,255,255,0.03); }
 .radar-title {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'DM Serif Display', Georgia, serif;
   font-size: 0.95rem; font-weight: 800;
   text-transform: uppercase; letter-spacing: 0.06em;
   color: var(--navy); margin-bottom: 8px;
@@ -699,7 +699,7 @@ table.tsa-table {
 table.tsa-table thead { background: var(--navy); color: #fff; }
 table.tsa-table th {
   padding: 11px 12px; text-align: left;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'DM Serif Display', Georgia, serif;
   font-size: 0.82rem; text-transform: uppercase;
   letter-spacing: 0.06em; font-weight: 700;
   border-right: 1px solid rgba(255,255,255,0.12);
@@ -735,7 +735,7 @@ body.dark tr.rag-red   td { background: rgba(220,38,38,0.10); }
   display: inline-flex; align-items: center; justify-content: center;
   width: 30px; height: 30px; border-radius: 50%;
   background: var(--navy); color: #fff;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'DM Serif Display', Georgia, serif;
   font-size: 0.95rem; font-weight: 800;
 }
 .rank-cell.medal-1 { background: linear-gradient(135deg, #ffd700, #d4af37); color: var(--navy); }
@@ -747,7 +747,7 @@ body.dark tr.rag-red   td { background: rgba(220,38,38,0.10); }
 }
 body.dark .tsa-chart-wrap { background: rgba(255,255,255,0.03); }
 .tsa-chart-title {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'DM Serif Display', Georgia, serif;
   font-size: 0.95rem; font-weight: 800;
   text-transform: uppercase; letter-spacing: 0.06em;
   color: var(--navy); margin-bottom: 10px;
@@ -774,7 +774,7 @@ body.dark .tsa-tests-note { background: rgba(255,255,255,0.03); }
   border-radius: 6px; font-size: 0.78rem;
   font-family: 'Fira Code', monospace;
 }
-body.dark .tsa-tests-note .test-chip { background: rgba(0,180,160,0.18); color: #6fdcca; }
+body.dark .tsa-tests-note .test-chip { background: rgba(42,140,74,0.18); color: #6fdcca; }
 .tsa-tests-note .test-chip.excluded { background: var(--amber-light); color: var(--amber); text-decoration: line-through; }
 .tsa-tests-note .test-chip.partial { background: var(--amber-light); color: var(--amber); }
 body.dark .tsa-tests-note .test-chip.partial { background: rgba(217,119,6,0.18); color: #f5c46a; }
@@ -791,7 +791,7 @@ body.dark .tsa-tests-note .test-chip.excluded { background: rgba(217,119,6,0.18)
 }
 .collapsible-section details summary::-webkit-details-marker { display: none; }
 .collapsible-summary-title {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'DM Serif Display', Georgia, serif;
   font-size: 1.55rem; font-weight: 800;
   color: var(--navy);
   display: inline-flex; align-items: center; gap: 12px;
@@ -818,7 +818,7 @@ body.dark .collapsible-summary-title { color: #fff; }
 .heatmap-grid .hm-cell.is-hd-col,
 .heatmap-grid .hm-cell.is-hd-row {
   background: var(--navy); color: #fff;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'DM Serif Display', Georgia, serif;
   font-weight: 800;
   font-size: 0.78rem;
   text-transform: uppercase;
@@ -876,7 +876,7 @@ body.dark .heatmap-grid .hm-cell.is-na { background: rgba(255,255,255,0.04); }
 .btn-export-athlete:hover {
   background: var(--teal-dark); color: #fff;
   transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0,180,160,0.4);
+  box-shadow: 0 2px 6px rgba(42,140,74,0.4);
 }
 .btn-export-athlete i { font-size: 0.8em; }
 
@@ -892,7 +892,7 @@ body.dark .heatmap-grid .hm-cell.is-na { background: rgba(255,255,255,0.04); }
   background-color: var(--teal-light) !important;
 }
 body.dark #tsaTable tbody tr.tsa-hover-target {
-  background-color: rgba(0,180,160,0.18) !important;
+  background-color: rgba(42,140,74,0.18) !important;
 }
 #tsaTable tbody tr.tsa-hover-dim {
   opacity: 0.42;
@@ -900,7 +900,7 @@ body.dark #tsaTable tbody tr.tsa-hover-target {
 .athlete-card.tsa-hover-target .athlete-head {
   background: var(--teal) !important;
   color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(0,180,160,0.35);
+  box-shadow: 0 0 0 3px rgba(42,140,74,0.35);
 }
 .athlete-card.tsa-hover-target .athlete-head h3,
 .athlete-card.tsa-hover-target .athlete-head h3 i,
@@ -934,7 +934,7 @@ body.dark .config-card-blue[open] .csv-helper-body { background: rgba(29,111,181
 }
 .session-mapping-row > div { display: flex; flex-direction: column; gap: 4px; }
 .session-mapping-row label {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'DM Serif Display', Georgia, serif;
   font-size: 0.75rem; text-transform: uppercase;
   letter-spacing: 0.08em; font-weight: 700;
   color: var(--blue);
@@ -974,7 +974,7 @@ body.dark .config-card-purple[open] .csv-helper-body { background: rgba(124,58,2
   display: flex; flex-direction: column; gap: 4px;
 }
 .metadata-filter-row label {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'DM Serif Display', Georgia, serif;
   font-size: 0.75rem; text-transform: uppercase;
   letter-spacing: 0.08em; font-weight: 700;
   color: var(--purple);
@@ -1004,7 +1004,7 @@ body.dark .config-card-purple[open] .csv-helper-body { background: rgba(124,58,2
   color: var(--navy);
 }
 body.dark .config-card-teal > summary {
-  background: rgba(0,180,160,0.18) !important;
+  background: rgba(42,140,74,0.18) !important;
   color: #fff;
 }
 .config-card-orange > summary {
@@ -1031,7 +1031,7 @@ body.dark .config-card-orange > summary {
   border-radius: 0 0 12px 12px;
   padding: 14px 18px;
   margin-top: -2px;
-  background: rgba(0,180,160,0.04);
+  background: rgba(42,140,74,0.04);
 }
 .config-card-orange[open] .csv-helper-body {
   border: 2px solid var(--orange);
@@ -1041,13 +1041,13 @@ body.dark .config-card-orange > summary {
   margin-top: -2px;
   background: rgba(240,108,42,0.04);
 }
-body.dark .config-card-teal[open] .csv-helper-body { background: rgba(0,180,160,0.08); }
+body.dark .config-card-teal[open] .csv-helper-body { background: rgba(42,140,74,0.08); }
 body.dark .config-card-orange[open] .csv-helper-body { background: rgba(240,108,42,0.08); }
 .config-pill {
   display: inline-block;
   padding: 3px 10px;
   border-radius: 30px;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'DM Serif Display', Georgia, serif;
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.14em;
@@ -1080,7 +1080,7 @@ body.dark .dir-row { background: rgba(255,255,255,0.03); }
 .dir-toggle {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 4px 10px; border-radius: 20px;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'DM Serif Display', Georgia, serif;
   font-size: 0.78rem; font-weight: 800;
   letter-spacing: 0.06em;
   background: var(--teal); color: var(--navy);
@@ -1267,16 +1267,34 @@ body.dark .block-badge.active { color: var(--navy); }
 <body class="dark">
 <a class="skip-link" href="#main-content">Skip to main content</a>
 
-<header class="hero">
-  <div class="hero-badge"><i class="fas fa-chart-line"></i> &nbsp;Pre-Post Analysis</div>
-  <h1>Physical Performance <span>Insights</span></h1>
-  <p class="hero-sub">Drop your CSV in &mdash; individual profiles (Z &amp; T, SWC, 95% CI) plus squad-level analysis (Cohen's d, BF<sub>10</sub>) with radar plots. Direction-aware. Runs entirely in your browser.</p>
-  <nav class="hero-nav" aria-label="Quick links">
-    <a href="#upload" class="btn-primary"><i class="fas fa-upload"></i> Upload CSV</a>
-    <a href="#squad" class="btn-ghost"><i class="fas fa-users"></i> Squad report</a>
-    <a href="#individual" class="btn-ghost"><i class="fas fa-user"></i> Individual reports</a>
-  </nav>
-</header>
+<!-- SITE NAV -->
+<nav style="position:sticky;top:0;z-index:200;background:#0a0f1e;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:56px;border-bottom:2px solid #1a5fd4;">
+  <a href="../index.html" style="font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:#fff;text-decoration:none;">Dr. Tommy Bright</a>
+  <ul style="display:flex;gap:32px;list-style:none;">
+    <li><a href="../index.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;">Home</a></li>
+    <li><a href="../teaching.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:#fff;text-decoration:none;border-bottom:2px solid #1a5fd4;padding-bottom:2px;">Teaching &amp; Learning</a></li>
+    <li><a href="../project.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;">Projects</a></li>
+    <li><a href="../research.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;">Research</a></li>
+  </ul>
+  <div style="display:flex;gap:14px;">
+    <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:3px 9px;">LinkedIn</a>
+    <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:3px 9px;">ResearchGate</a>
+  </div>
+</nav>
+
+<!-- SITE HERO -->
+<div style="background:#0a0f1e;padding:72px 40px 64px;border-bottom:1px solid rgba(255,255,255,0.06);">
+  <div style="max-width:900px;margin:0 auto;">
+    <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#2a8c4a;margin-bottom:20px;">Physiology · Level 4 · 5 · 6 · 7</div>
+    <h1 style="font-family:'DM Serif Display',Georgia,serif;font-size:clamp(32px,5vw,56px);color:#fff;line-height:1.1;letter-spacing:-0.5px;margin-bottom:20px;">Field Based Testing<br><em style="font-style:italic;color:#6b9fe4;">report generator &amp; analysis.</em></h1>
+    <p style="font-size:16px;color:rgba(255,255,255,0.6);max-width:580px;line-height:1.7;font-weight:300;margin-bottom:32px;">Drop your CSV in — individual profiles (Z &amp; T, SWC, 95% CI) plus squad-level analysis (Cohen's d, BF<sub>10</sub>) with radar plots. Direction-aware. Runs entirely in your browser.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <a href="#upload" style="background:#2a8c4a;color:#fff;padding:10px 22px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;text-decoration:none;">Upload CSV</a>
+      <a href="#squad" style="border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);padding:10px 22px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;text-decoration:none;">Squad report</a>
+      <a href="#individual" style="border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);padding:10px 22px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;text-decoration:none;">Individual reports</a>
+    </div>
+  </div>
+</div>
 
 <div class="stat-strip" id="statStrip">
   <div class="stat-item"><span class="stat-num" id="statAthletes">&mdash;</span><span class="stat-label">Athletes</span></div>
@@ -1748,10 +1766,21 @@ body.dark .block-badge.active { color: var(--navy); }
   </main>
 </div>
 
-<footer>
-  <h3>Physical Performance Insights</h3>
-  <p style="max-width:680px;margin:0 auto 6px;color:rgba(255,255,255,0.78);">Created by Dr Matthew Ellis &middot; Plymouth Marjon University</p>
-  <p style="font-size:0.84rem;color:rgba(255,255,255,0.6);">Hopkins (2000) on SWC &middot; Cohen (1988) on <em>d</em> &middot; Wagenmakers (2007) on the BIC approximation.</p>
+<footer style="background:#0a0f1e;color:rgba(255,255,255,0.4);padding:40px;border-top:2px solid #1a5fd4;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:24px;margin-bottom:32px;">
+    <div style="font-size:15px;font-weight:600;color:rgba(255,255,255,0.8);font-family:'DM Sans',sans-serif;">Dr. Tommy Bright</div>
+    <ul style="display:flex;gap:24px;list-style:none;">
+      <li><a href="../index.html" style="font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;font-family:'DM Sans',sans-serif;">Home</a></li>
+      <li><a href="../teaching.html" style="font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;font-family:'DM Sans',sans-serif;">Teaching &amp; Learning</a></li>
+      <li><a href="../project.html" style="font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;font-family:'DM Sans',sans-serif;">Projects</a></li>
+      <li><a href="../research.html" style="font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;font-family:'DM Sans',sans-serif;">Research</a></li>
+    </ul>
+    <div style="display:flex;gap:12px;">
+      <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:5px 12px;">LinkedIn</a>
+      <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:5px 12px;">ResearchGate</a>
+    </div>
+  </div>
+  <div style="font-family:'DM Mono',monospace;font-size:11px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.08);">Plymouth Marjon University · Cardiff Metropolitan University · Tournament Golf College &nbsp;·&nbsp; Statistics: Hopkins (2000) · Cohen (1988) · Wagenmakers (2007)</div>
 </footer>
 
 <button class="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top"><i class="fas fa-arrow-up"></i></button>
@@ -2904,11 +2933,11 @@ function renderSquadRadar() {
       datasets: [{
         label: '(Post − Pre) / SWC',
         data: values,
-        backgroundColor: 'rgba(0,180,160,0.16)',
-        borderColor: '#00b4a0',
+        backgroundColor: 'rgba(42,140,74,0.16)',
+        borderColor: '#2a8c4a',
         borderWidth: 2.5,
         pointBackgroundColor: colors,
-        pointBorderColor: '#0d2136',
+        pointBorderColor: '#0a0f1e',
         pointRadius: 5,
         pointHoverRadius: 7,
       }]
@@ -2934,8 +2963,8 @@ function renderSquadRadar() {
         r: {
           beginAtZero: true,
           suggestedMax: 3.0,
-          grid: { color: 'rgba(0,180,160,0.18)' },
-          angleLines: { color: 'rgba(0,180,160,0.18)' },
+          grid: { color: 'rgba(42,140,74,0.18)' },
+          angleLines: { color: 'rgba(42,140,74,0.18)' },
           pointLabels: {
             font: { size: 11, family: 'Barlow Condensed', weight: '700' },
             color: getThemeColor('--text'),
@@ -3082,7 +3111,7 @@ function renderAthleteCard(a, filterTest, search) {
          <div>
            <div class="radar-wrap"><div class="radar-title"><i class="fas fa-bullseye"></i> ${escapeHTML(a.name)} profile</div>
              <canvas class="radar-canvas" data-athlete-radar="${escapeHTML(a.id)}" aria-label="Radar of T-scores"></canvas>
-             <div class="radar-legend">Axes = tests; lines = T-scores at <span style="color:#f06c2a;font-weight:700;">pre</span> and <span style="color:#00b4a0;font-weight:700;">post</span>. The purple dashed ring marks 50 = squad mean. Higher = better (sign flipped for time tests).</div>
+             <div class="radar-legend">Axes = tests; lines = T-scores at <span style="color:#1a5fd4;font-weight:700;">pre</span> and <span style="color:#2a8c4a;font-weight:700;">post</span>. The purple dashed ring marks 50 = squad mean. Higher = better (sign flipped for time tests).</div>
            </div>
          </div>
        </div>`
@@ -3248,21 +3277,21 @@ function renderAthleteRadar(athlete) {
           label: 'Pre',
           data: preVals,
           backgroundColor: 'rgba(240,108,42,0.12)',
-          borderColor: '#f06c2a',
+          borderColor: '#1a5fd4',
           borderWidth: 2,
           borderDash: [5, 4],
-          pointBackgroundColor: '#f06c2a',
-          pointBorderColor: '#0d2136',
+          pointBackgroundColor: '#1a5fd4',
+          pointBorderColor: '#0a0f1e',
           pointRadius: 3,
         },
         {
           label: 'Post',
           data: postVals,
-          backgroundColor: 'rgba(0,180,160,0.18)',
-          borderColor: '#00b4a0',
+          backgroundColor: 'rgba(42,140,74,0.18)',
+          borderColor: '#2a8c4a',
           borderWidth: 2.5,
-          pointBackgroundColor: '#00b4a0',
-          pointBorderColor: '#0d2136',
+          pointBackgroundColor: '#2a8c4a',
+          pointBorderColor: '#0a0f1e',
           pointRadius: 4,
         }
       ]
@@ -3280,8 +3309,8 @@ function renderAthleteRadar(athlete) {
         r: {
           min: 20, max: 80,
           ticks: { stepSize: 10, color: getThemeColor('--muted'), backdropColor: 'transparent', font: { size: 9 } },
-          grid: { color: 'rgba(0,180,160,0.18)' },
-          angleLines: { color: 'rgba(0,180,160,0.18)' },
+          grid: { color: 'rgba(42,140,74,0.18)' },
+          angleLines: { color: 'rgba(42,140,74,0.18)' },
           pointLabels: { font: { size: 9, family: 'Barlow Condensed', weight: '700' }, color: getThemeColor('--text'), padding: 6 }
         }
       }
@@ -4471,27 +4500,27 @@ function exportHTML() {
   const styles = `
     @page { size: A4; margin: 14mm 12mm; }
     * { box-sizing: border-box; }
-    body { font-family: 'Barlow', system-ui, -apple-system, sans-serif; max-width: 1180px; margin: 28px auto; padding: 0 22px; color: #1a2e3b; line-height: 1.5; }
+    body { font-family: 'DM Sans', sans-serif; max-width: 1180px; margin: 28px auto; padding: 0 22px; color: #1a2e3b; line-height: 1.5; }
     .print-bar { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 18px; }
-    .print-bar button { font-family: inherit; font-weight: 700; font-size: 0.9rem; padding: 8px 18px; border-radius: 30px; cursor: pointer; border: 0; background: #00b4a0; color: #0d2136; }
-    .print-bar button:hover { background: #008c7c; color: #fff; }
-    header { border-bottom: 4px solid #00b4a0; padding-bottom: 14px; margin-bottom: 22px; }
-    header h1 { font-size: 2rem; margin: 0 0 8px; color: #0d2136; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; letter-spacing: -0.01em; }
+    .print-bar button { font-family: inherit; font-weight: 700; font-size: 0.9rem; padding: 8px 18px; border-radius: 30px; cursor: pointer; border: 0; background: #2a8c4a; color: #0a0f1e; }
+    .print-bar button:hover { background: #1a5a2d; color: #fff; }
+    header { border-bottom: 4px solid #2a8c4a; padding-bottom: 14px; margin-bottom: 22px; }
+    header h1 { font-size: 2rem; margin: 0 0 8px; color: #0a0f1e; font-family: 'DM Serif Display', Georgia, serif; font-weight: 900; letter-spacing: -0.01em; }
     header .meta { color: #5a7080; font-size: 0.92rem; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .mode-pill { display: inline-block; padding: 4px 12px; border-radius: 30px; font-size: 0.7rem; letter-spacing: 0.14em; font-weight: 800; text-transform: uppercase; }
     .mode-pill.baseline { background: #d97706; color: #fff; }
     .mode-pill.prepost  { background: #16a34a; color: #fff; }
-    h2 { color: #0d2136; margin: 28px 0 12px; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; border-left: 6px solid #00b4a0; padding-left: 10px; font-size: 1.4rem; }
-    h3 { color: #0d2136; margin: 22px 0 8px; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 1.15rem; }
+    h2 { color: #0a0f1e; margin: 28px 0 12px; font-family: 'DM Serif Display', Georgia, serif; font-weight: 800; border-left: 6px solid #2a8c4a; padding-left: 10px; font-size: 1.4rem; }
+    h3 { color: #0a0f1e; margin: 22px 0 8px; font-family: 'DM Serif Display', Georgia, serif; font-weight: 800; font-size: 1.15rem; }
     h3 .aid { font-weight: 400; color: #5a7080; font-size: 0.7em; }
-    h4 { color: #5a7080; margin: 14px 0 6px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    h4 { color: #5a7080; margin: 14px 0 6px; font-family: 'DM Serif Display', Georgia, serif; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.06em; }
     section { margin-bottom: 22px; break-inside: avoid-page; }
-    section.exec { background: #f4f8f9; border-left: 5px solid #00b4a0; padding: 14px 18px; border-radius: 0 10px 10px 0; }
+    section.exec { background: #f4f8f9; border-left: 5px solid #2a8c4a; padding: 14px 18px; border-radius: 0 10px 10px 0; }
     section.exec ul { padding-left: 18px; margin: 0; }
     section.exec li { margin: 4px 0; font-size: 0.95rem; }
     section.athlete-section { break-inside: avoid-page; }
     table.rpt-tbl { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 0.84rem; break-inside: avoid; }
-    table.rpt-tbl th { background: #0d2136; color: #fff; text-align: left; padding: 7px 9px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    table.rpt-tbl th { background: #0a0f1e; color: #fff; text-align: left; padding: 7px 9px; font-family: 'DM Serif Display', Georgia, serif; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
     table.rpt-tbl td { padding: 7px 9px; border-bottom: 1px solid #e6eef0; font-variant-numeric: tabular-nums; }
     table.rpt-tbl tr:nth-child(even) td { background: #f4f8f9; }
     .caption { color: #5a7080; font-size: 0.82rem; margin-top: -4px; }
@@ -4775,22 +4804,22 @@ function exportAthleteReport(athleteId) {
   const styles = `
     @page { size: A4; margin: 14mm 12mm; }
     * { box-sizing: border-box; }
-    body { font-family: 'Barlow', system-ui, -apple-system, sans-serif; max-width: 780px; margin: 28px auto; padding: 0 22px; color: #1a2e3b; line-height: 1.5; }
+    body { font-family: 'DM Sans', sans-serif; max-width: 780px; margin: 28px auto; padding: 0 22px; color: #1a2e3b; line-height: 1.5; }
     .print-bar { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 18px; }
-    .print-bar button { font-family: inherit; font-weight: 700; font-size: 0.9rem; padding: 8px 18px; border-radius: 30px; cursor: pointer; border: 0; background: #00b4a0; color: #0d2136; }
-    .print-bar button:hover { background: #008c7c; color: #fff; }
-    header { border-bottom: 4px solid #00b4a0; padding-bottom: 14px; margin-bottom: 18px; }
-    header h1 { font-size: 1.8rem; margin: 0 0 6px; color: #0d2136; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; }
+    .print-bar button { font-family: inherit; font-weight: 700; font-size: 0.9rem; padding: 8px 18px; border-radius: 30px; cursor: pointer; border: 0; background: #2a8c4a; color: #0a0f1e; }
+    .print-bar button:hover { background: #1a5a2d; color: #fff; }
+    header { border-bottom: 4px solid #2a8c4a; padding-bottom: 14px; margin-bottom: 18px; }
+    header h1 { font-size: 1.8rem; margin: 0 0 6px; color: #0a0f1e; font-family: 'DM Serif Display', Georgia, serif; font-weight: 900; }
     header .athlete-id { color: #5a7080; font-weight: 400; font-size: 0.65em; margin-left: 6px; }
     header .meta { color: #5a7080; font-size: 0.88rem; }
     .meta-row { color: #5a7080; font-size: 0.9rem; margin-top: 6px; }
-    h2 { color: #0d2136; margin: 24px 0 10px; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; border-left: 6px solid #00b4a0; padding-left: 10px; font-size: 1.3rem; }
-    h3 { color: #5a7080; margin: 18px 0 6px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.06em; }
-    section.narrative { background: #f4f8f9; border-left: 5px solid #00b4a0; padding: 14px 18px; border-radius: 0 10px 10px 0; }
+    h2 { color: #0a0f1e; margin: 24px 0 10px; font-family: 'DM Serif Display', Georgia, serif; font-weight: 800; border-left: 6px solid #2a8c4a; padding-left: 10px; font-size: 1.3rem; }
+    h3 { color: #5a7080; margin: 18px 0 6px; font-family: 'DM Serif Display', Georgia, serif; font-weight: 700; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    section.narrative { background: #f4f8f9; border-left: 5px solid #2a8c4a; padding: 14px 18px; border-radius: 0 10px 10px 0; }
     section.narrative p { margin: 5px 0; font-size: 0.95rem; }
     section.narrative .warn { background: #fef3c7; color: #92400e; padding: 1px 6px; border-radius: 4px; font-weight: 700; }
     table.rpt-tbl { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 0.84rem; break-inside: avoid; }
-    table.rpt-tbl th { background: #0d2136; color: #fff; text-align: left; padding: 7px 9px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    table.rpt-tbl th { background: #0a0f1e; color: #fff; text-align: left; padding: 7px 9px; font-family: 'DM Serif Display', Georgia, serif; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
     table.rpt-tbl td { padding: 7px 9px; border-bottom: 1px solid #e6eef0; font-variant-numeric: tabular-nums; }
     table.rpt-tbl tr:nth-child(even) td { background: #f4f8f9; }
     .chart-snapshot { margin: 14px auto; text-align: center; }
