@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neuromuscular System — Dr. Tommy Bright</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    .topic-section{padding:48px 40px}
+    .reading-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent2);padding:20px 24px;margin-bottom:12px}
+    .reading-title{font-size:14px;font-weight:600;margin-bottom:4px}
+    .reading-note{font-size:13px;color:var(--ink2);font-weight:300}
+    .tool-instructions{font-size:14px;color:var(--ink2);font-weight:300;line-height:1.7;margin-bottom:24px;padding:16px;background:var(--surface2);border-left:3px solid var(--accent)}
+    .quiz-option{display:block;width:100%;text-align:left;padding:12px 16px;margin-bottom:8px;background:var(--bg);border:1px solid var(--border);cursor:pointer;font-family:var(--sans);font-size:14px;transition:all 0.15s}
+    .quiz-option:hover{background:var(--surface2);border-color:var(--accent)}
+    .quiz-option.correct{background:#f0fff4;border-color:#2a8c4a;color:#1a5c30}
+    .quiz-option.incorrect{background:#fff5f5;border-color:#c0392b;color:#7b2020}
+    .quiz-feedback{display:none;padding:12px 16px;margin-top:8px;font-size:13px;line-height:1.6}
+    .quiz-feedback.show{display:block}
+    .feedback-correct{background:#f0fff4;border:1px solid #2a8c4a;color:#1a5c30}
+    .feedback-incorrect{background:#fff5f5;border:1px solid #c0392b;color:#7b2020}
+    .quiz-next{display:none;margin-top:12px;padding:10px 20px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase}
+    .quiz-next.show{display:inline-block}
+    .progress-bar{height:4px;background:var(--surface2);margin-bottom:24px}
+    .progress-fill{height:4px;background:var(--accent);transition:width 0.3s}
+    .drag-item{padding:10px 14px;background:#0a0f1e;color:#fff;cursor:grab;margin-bottom:8px;font-size:13px;border:1px solid rgba(26,95,212,0.3);user-select:none}
+    .drag-zone{min-height:120px;border:2px dashed var(--border);padding:12px;background:var(--surface2)}
+    .drag-zone.over{border-color:var(--accent);background:#eef3fc}
+    .drag-zone h4{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+    .drop-item{padding:8px 12px;background:var(--accent);color:#fff;margin-bottom:6px;font-size:12px}
+    .drop-item.wrong{background:#c0392b}
+    .drop-item.right{background:#2a8c4a}
+    .simulator-wrap{background:#0a0f1e;padding:32px;border:1px solid rgba(26,95,212,0.2);max-width:700px}
+    .mu-diagram{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}
+    .mu-unit{width:60px;height:60px;border:1px solid rgba(255,255,255,0.15);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;color:rgba(255,255,255,0.4);transition:all 0.3s;font-family:var(--mono)}
+    .mu-unit.active-slow{background:rgba(42,140,74,0.6);border-color:#2a8c4a;color:#fff}
+    .mu-unit.active-fast{background:rgba(26,95,212,0.7);border-color:var(--accent);color:#fff}
+    .mu-unit.active-power{background:rgba(200,64,26,0.7);border-color:#c8401a;color:#fff}
+  </style>
+</head>
+<body>
+<nav>
+  <a class="nav-brand" href="../../index.html">Dr. Tommy Bright</a>
+  <ul class="nav-links">
+    <li><a href="../../index.html">Home</a></li>
+    <li><a href="../../teaching.html" class="active">Teaching & Learning</a></li>
+    <li><a href="../../project.html">Projects</a></li>
+    <li><a href="../../research.html">Research</a></li>
+  </ul>
+  <div class="nav-social">
+    <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank">LinkedIn</a>
+    <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank">ResearchGate</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Biomechanics · Topic 3</div>
+    <h1>The Neuromuscular<br><em>System.</em></h1>
+    <p class="hero-lead">Motor units, muscle fibre types, contraction types, and the stretch-shortening cycle explained through the lens of athletic performance.</p>
+    <a href="../biomechanics-hub.html" style="font-family:var(--mono);font-size:11px;letter-spacing:1px;color:rgba(255,255,255,0.4);text-decoration:none;">← Back to Biomechanics Hub</a>
+  </div>
+</div>
+
+<section class="topic-section">
+  <div class="section-inner">
+    <div class="section-label">Overview</div>
+    <h2 class="section-title">How muscles produce force.</h2>
+    <div style="max-width:720px;">
+      <p style="color:var(--ink2);font-weight:300;line-height:1.8;margin-bottom:20px;">The neuromuscular system is the functional unit of movement. Understanding it bridges the gap between the biomechanical analysis of motion and the physiological mechanisms that produce it. At its core, movement is the result of electrical signals from the nervous system causing muscle fibres to contract — and the mechanical outcome depends enormously on which fibres are recruited, in what order, and at what rate.</p>
+      <p style="color:var(--ink2);font-weight:300;line-height:1.8;margin-bottom:20px;">A <strong>motor unit</strong> consists of a single motor neuron and all the muscle fibres it innervates. This is the smallest functional unit of force production. When a motor neuron fires, all of its muscle fibres contract simultaneously — this is the all-or-nothing principle. The force produced by a muscle is controlled by two mechanisms: <strong>recruitment</strong> (activating more motor units) and <strong>rate coding</strong> (increasing the firing frequency of active motor units). During low-force tasks, only a few small motor units are active. As demand increases, progressively larger units are recruited — a principle known as Henneman's size principle.</p>
+      <p style="color:var(--ink2);font-weight:300;line-height:1.8;margin-bottom:20px;">Human skeletal muscle contains a spectrum of fibre types. <strong>Type I (slow-twitch)</strong> fibres are fatigue-resistant, oxidative, and well-suited to sustained low-force activities. <strong>Type IIa</strong> fibres have intermediate properties — faster than Type I but more fatigue-resistant than Type IIx. <strong>Type IIx (fast-twitch)</strong> fibres produce the greatest force at the highest speed but fatigue rapidly. They are the dominant fibre type recruited during maximal sprinting, jumping, and throwing. Most humans have a roughly equal mix of Type I and Type II fibres in the large locomotor muscles, though this varies considerably between individuals and across muscles.</p>
+      <p style="color:var(--ink2);font-weight:300;line-height:1.8;margin-bottom:20px;">The three types of muscle contraction — <strong>concentric</strong>, <strong>eccentric</strong>, and <strong>isometric</strong> — describe the relationship between force production and length change. Concentric action involves the muscle shortening under load. Eccentric action involves the muscle lengthening under load — typically to control or decelerate a movement. Isometric action involves force production with no change in muscle length. In most sport movements, all three types occur in sequence.</p>
+      <p style="color:var(--ink2);font-weight:300;line-height:1.8;">The <strong>stretch-shortening cycle (SSC)</strong> is the mechanism that underpins most athletic movements. When a muscle is rapidly stretched (eccentric phase) immediately before a concentric action, the concentric output is enhanced — jump height is greater, sprint speed is faster. This occurs through the storage and return of elastic energy in the muscle-tendon unit, and the potentiation of muscle force via the stretch reflex. The countermovement jump is a classic SSC movement — the brief downward movement before take-off loads the system and increases jump height compared to a squat jump performed without a countermovement.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="topic-section alt-bg">
+  <div class="section-inner">
+    <div class="section-label">Recommended Reading</div>
+    <h2 class="section-title">Where to go next.</h2>
+    <div style="max-width:680px;">
+      <div class="reading-card">
+        <div class="reading-title">Hamill, J., Knutzen, K. M., & Derrick, T. R. (2015). <em>Biomechanical basis of human movement</em> (4th ed.). Wolters Kluwer.</div>
+        <div class="reading-note">Chapter 3 — Primary reference for this topic. Covers muscle structure, fibre types, motor units, and contraction types clearly and with good diagrams.</div>
+      </div>
+      <div class="reading-card">
+        <div class="reading-title">McGinnis, P. M. (2013). <em>Biomechanics of sport and exercise</em> (3rd ed.). Human Kinetics.</div>
+        <div class="reading-note">Chapter 9 (muscle mechanics section) — Good complementary read that puts neuromuscular concepts into a sport performance context.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- MOTOR UNIT SIMULATOR -->
+<section class="topic-section">
+  <div class="section-inner">
+    <div class="section-label">Interactive Task 1</div>
+    <h2 class="section-title">Motor unit recruitment simulator.</h2>
+    <div class="tool-instructions"><strong>Instructions:</strong> Use the slider to increase the required force output. Watch how motor units are progressively recruited following Henneman's size principle — slow-twitch (green) first, then fast-twitch oxidative (blue), then fast-twitch glycolytic (orange). Observe how the number of active units and the colour profile changes as force demand increases. Try to predict which units will activate before moving the slider.</div>
+    <div class="simulator-wrap">
+      <div style="margin-bottom:20px;">
+        <label style="font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.6);display:block;margin-bottom:8px;">Force Demand: <span id="force-val" style="color:var(--accent);">0%</span></label>
+        <input type="range" id="force-slider" min="0" max="100" value="0" style="width:100%;accent-color:var(--accent);" oninput="updateSim()">
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+        <div style="text-align:center;"><div style="width:16px;height:16px;background:rgba(42,140,74,0.6);border:1px solid #2a8c4a;display:inline-block;margin-right:6px;"></div><span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.6);">Type I (slow)</span></div>
+        <div style="text-align:center;"><div style="width:16px;height:16px;background:rgba(26,95,212,0.7);border:1px solid var(--accent);display:inline-block;margin-right:6px;"></div><span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.6);">Type IIa</span></div>
+        <div style="text-align:center;"><div style="width:16px;height:16px;background:rgba(200,64,26,0.7);border:1px solid #c8401a;display:inline-block;margin-right:6px;"></div><span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.6);">Type IIx (fast)</span></div>
+      </div>
+      <div class="mu-diagram" id="mu-diagram"></div>
+      <div style="margin-top:16px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.5);" id="sim-status">Move the slider to begin.</div>
+      <div style="margin-top:8px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.4);" id="sim-context"></div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- QUIZ -->
+<section class="topic-section alt-bg">
+  <div class="section-inner">
+    <div class="section-label">Interactive Task 2</div>
+    <h2 class="section-title">Neuromuscular system quiz.</h2>
+    <div class="tool-instructions"><strong>Instructions:</strong> 20 questions covering motor units, fibre types, contraction types, and the stretch-shortening cycle. Some questions present sport scenarios — apply your understanding to real movement contexts. Aim for 16/20.</div>
+    <div id="quiz" style="max-width:680px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted);" id="q-counter">Question 1 of 20</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--accent);" id="q-score">Score: 0</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+      <div id="question-container"></div>
+      <div id="quiz-complete" style="display:none;padding:32px;background:var(--surface2);border:1px solid var(--border);text-align:center;">
+        <div style="font-family:var(--serif);font-size:28px;margin-bottom:8px;">Quiz complete</div>
+        <div id="final-score" style="font-family:var(--mono);font-size:18px;color:var(--accent);margin-bottom:8px;"></div>
+        <div id="final-msg" style="font-size:14px;color:var(--ink2);font-weight:300;margin-bottom:20px;"></div>
+        <button onclick="restartQuiz()" style="padding:10px 24px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;">Try again</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="topic-section">
+  <div class="section-inner" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+    <div>
+      <div class="section-label">Up next</div>
+      <div style="font-family:var(--serif);font-size:24px;">Topic 4 — Anatomical Palpation</div>
+    </div>
+    <a href="04-palpation.html" class="btn btn-primary">Next topic →</a>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">Dr. Tommy Bright</div>
+    <ul class="footer-links">
+      <li><a href="../../index.html">Home</a></li>
+      <li><a href="../../teaching.html">Teaching & Learning</a></li>
+      <li><a href="../../project.html">Projects</a></li>
+      <li><a href="../../research.html">Research</a></li>
+    </ul>
+    <div class="footer-social">
+      <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank">LinkedIn</a>
+      <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank">ResearchGate</a>
+    </div>
+  </div>
+  <div class="footer-copy">Plymouth Marjon University · Cardiff Metropolitan University · Tournament Golf College</div>
+</footer>
+
+<script>
+// SIMULATOR
+const muData=[
+  {type:'slow',label:'I'},{type:'slow',label:'I'},{type:'slow',label:'I'},{type:'slow',label:'I'},{type:'slow',label:'I'},
+  {type:'slow',label:'I'},{type:'slow',label:'I'},{type:'slow',label:'I'},{type:'slow',label:'I'},{type:'slow',label:'I'},
+  {type:'fast',label:'IIa'},{type:'fast',label:'IIa'},{type:'fast',label:'IIa'},{type:'fast',label:'IIa'},{type:'fast',label:'IIa'},
+  {type:'fast',label:'IIa'},{type:'fast',label:'IIa'},{type:'fast',label:'IIa'},
+  {type:'power',label:'IIx'},{type:'power',label:'IIx'},{type:'power',label:'IIx'},{type:'power',label:'IIx'},
+  {type:'power',label:'IIx'},{type:'power',label:'IIx'}
+];
+const diag=document.getElementById('mu-diagram');
+muData.forEach((mu,i)=>{const el=document.createElement('div');el.className='mu-unit';el.id='mu'+i;el.innerHTML=`<div style="font-size:8px;margin-bottom:2px;">MU ${i+1}</div><div>${mu.label}</div>`;diag.appendChild(el)});
+
+function updateSim(){
+  const v=parseInt(document.getElementById('force-slider').value);
+  document.getElementById('force-val').textContent=v+'%';
+  const active=Math.round((v/100)*muData.length);
+  muData.forEach((mu,i)=>{
+    const el=document.getElementById('mu'+i);
+    el.className='mu-unit';
+    if(i<active){
+      if(mu.type==='slow')el.classList.add('active-slow');
+      else if(mu.type==='fast')el.classList.add('active-fast');
+      else el.classList.add('active-power');
+    }
+  });
+  const slowActive=Math.min(active,10);
+  const fastActive=Math.max(0,Math.min(active-10,8));
+  const powerActive=Math.max(0,active-18);
+  document.getElementById('sim-status').textContent=`Active: ${active} motor units — ${slowActive} Type I · ${fastActive} Type IIa · ${powerActive} Type IIx`;
+  const contexts=['Move the slider to begin.','Low force — only slow-twitch Type I units active. Typical of walking or light activity.','Moderate force — Type IIa units recruited alongside Type I. Typical of jogging or moderate resistance exercise.','High force — Type IIx units recruited. This level of activation occurs during sprinting, jumping, and maximal strength efforts.','Maximal effort — all available motor units recruited. This occurs briefly during maximal voluntary contractions.'];
+  document.getElementById('sim-context').textContent=v===0?contexts[0]:v<=25?contexts[1]:v<=50?contexts[2]:v<=80?contexts[3]:contexts[4];
+}
+updateSim();
+
+// QUIZ
+const allQuestions=[
+  {q:"A motor unit consists of:",options:["A single muscle fibre and its tendon","A single motor neuron and all the muscle fibres it innervates","All the motor neurons supplying a single muscle","A group of muscle fibres with similar contraction speeds"],correct:1,feedback:["A motor unit involves a motor neuron, not just a muscle fibre or tendon.","Correct. A motor unit = one motor neuron + all the muscle fibres it controls. All fibres in a motor unit contract together.","A motor neuron pool includes all motor neurons supplying one muscle — but that's not the definition of a single motor unit.","Motor units can contain fibres of different sizes, but the defining feature is the single motor neuron."]},
+  {q:"The all-or-nothing principle states that:",options:["A muscle either contracts maximally or not at all","Individual muscle fibres either contract fully or not at all when stimulated","Motor units recruit all available fibres simultaneously","Force production is either zero or maximal"],correct:1,feedback:["This applies to individual fibres, not the whole muscle. Whole muscles can produce graded force by recruiting different numbers of motor units.","Correct. A single muscle fibre responds to stimulation by contracting fully or not at all — there's no partial contraction.","Motor units recruit their fibres together, but the principle refers to individual fibres within a unit.","Whole muscle force is graded through recruitment and rate coding."]},
+  {q:"Henneman's size principle states that motor units are recruited:",options:["Largest first, then progressively smaller","In random order depending on the task","Smallest first, then progressively larger","Only fast-twitch units are recruited during sport"],correct:2,feedback:["This is the reverse of Henneman's principle.","Motor unit recruitment is orderly and predictable — smallest to largest.","Correct. Smaller, slow-twitch motor units are recruited first, with larger fast-twitch units added as force demand increases.","Fast-twitch units are only recruited when force demand cannot be met by slow-twitch units alone."]},
+  {q:"Type I muscle fibres are best described as:",options:["Fast-contracting, high force, rapidly fatiguing","Slow-contracting, low force, highly fatigue-resistant","Fast-contracting, high force, fatigue-resistant","Slow-contracting, high force, fatigue-resistant"],correct:1,feedback:["Fast-contracting and rapidly fatiguing describes Type IIx fibres.","Correct. Type I fibres are slow, produce relatively low force, but resist fatigue well — ideal for endurance activities.","This describes an intermediate that doesn't quite match any single type.","Type I fibres are fatigue-resistant but do not produce high force."]},
+  {q:"Type IIx muscle fibres are best suited to:",options:["Marathon running","Maintaining posture throughout the day","Maximal sprinting and jumping","Sustained moderate-intensity cycling"],correct:2,feedback:["Marathon running relies heavily on Type I fatigue-resistant fibres.","Postural muscles contain predominantly Type I fibres.","Correct. Type IIx fibres produce the greatest force at the highest speed but fatigue rapidly — ideal for brief maximal efforts.","Sustained moderate-intensity exercise recruits a mix of Type I and IIa fibres."]},
+  {q:"During a countermovement jump, what happens during the downward phase?",options:["The muscles shorten concentrically to prepare for take-off","The muscles lengthen eccentrically, loading the stretch-shortening cycle","The muscles work isometrically to stabilise the body","No muscle activity occurs during the downward phase"],correct:1,feedback:["Concentric action shortens — the downward phase involves lengthening under load.","Correct. During the countermovement, the leg extensors lengthen eccentrically, storing elastic energy that enhances the subsequent concentric push-off.","Some muscles work isometrically, but the primary action at the major joints is eccentric.","Significant muscle activity occurs throughout the jump, including the downward phase."]},
+  {q:"The stretch-shortening cycle enhances performance because:",options:["It allows muscles to rest briefly before the concentric phase","Elastic energy stored during the eccentric phase is returned during the concentric phase","Fast-twitch fibres are selectively activated during the stretch","It eliminates the need for motor unit recruitment"],correct:1,feedback:["There is no rest — the transition from eccentric to concentric should be rapid to maximise the SSC effect.","Correct. The SSC stores elastic energy in the muscle-tendon unit during the eccentric phase and returns it during the concentric phase, enhancing force and power output.","All fibre types contribute to SSC movements.","Motor unit recruitment still occurs — the SSC enhances the force produced by those units."]},
+  {q:"A squat jump (without countermovement) produces less height than a countermovement jump. Why?",options:["Squat jumps recruit fewer motor units","The countermovement loads the stretch-shortening cycle, enhancing subsequent force output","Squat jumps are technically more difficult","The starting position reduces quadriceps force production"],correct:1,feedback:["Motor unit recruitment is similar for maximal efforts in both cases.","Correct. The countermovement activates the SSC — elastic energy stored during the downward phase is returned at take-off, increasing jump height compared to a static start.","While technique matters, the primary reason is the SSC advantage of the countermovement.","The starting position in a squat jump can actually put muscles at a mechanically advantageous length."]},
+  {q:"Isometric muscle action involves:",options:["The muscle shortening while producing force","The muscle lengthening while producing force","The muscle producing force with no change in length","No force production"],correct:2,feedback:["Shortening under force is concentric action.","Lengthening under force is eccentric action.","Correct. Isometric means constant length — force is produced but the joint does not move.","Isometric action involves significant force production."]},
+  {q:"Which contraction type produces the greatest force?",options:["Concentric","Isometric","Eccentric","They all produce equal force"],correct:2,feedback:["Concentric produces the least force of the three types at comparable velocities.","Isometric produces intermediate force.","Correct. Eccentric contractions can produce up to 20-50% more force than concentric contractions at comparable speeds — this is why athletes can lower more weight than they can lift.","Force production varies significantly between contraction types."]},
+  {q:"Rate coding as a mechanism of force control refers to:",options:["Recruiting more motor units","Increasing the firing frequency of active motor units","Changing the type of muscle fibre used","Altering the length of the muscle"],correct:1,feedback:["Recruiting more motor units is the other mechanism — called motor unit recruitment.","Correct. Rate coding involves increasing the frequency at which motor neurons fire, causing more frequent twitches that summate to produce greater force.","The fibre types available don't change — what changes is which fibres are recruited.","Muscle length is not a primary mechanism of force grading."]},
+  {q:"A marathon runner has a high proportion of which fibre type?",options:["Type IIx","Type IIa","Type I","Equal proportions of all types"],correct:2,feedback:["Type IIx fibres fatigue rapidly — they're not suited to marathon running.","Type IIa fibres have intermediate properties — useful but not the primary type for marathon performance.","Correct. Elite endurance athletes tend to have a high proportion of Type I slow-twitch fibres, which are fatigue-resistant and rely on aerobic energy production.","Elite athletes tend to show a distribution skewed toward the fibre type suited to their sport."]},
+  {q:"The neuromuscular junction is:",options:["The point where two motor neurons connect","The connection between a motor neuron and a muscle fibre","The tendon attachment point to bone","The point of contact between two muscle fibres"],correct:1,feedback:["Synapses connect motor neurons to each other — the neuromuscular junction connects neurons to muscle.","Correct. The neuromuscular junction is the specialised synapse where a motor neuron communicates with a muscle fibre, triggering contraction.","Tendon attachment to bone is the musculotendinous or enthesis junction.","Muscle fibres do not connect directly to each other."]},
+  {q:"Why is understanding the SSC important for strength and conditioning practice?",options:["It allows practitioners to eliminate eccentric training from programmes","It explains why plyometric training improves explosive performance","It means athletes should avoid countermovement exercises","It suggests that concentric training alone is sufficient for power development"],correct:1,feedback:["Eccentric training is valuable and should not be eliminated — it specifically targets the loading phase of the SSC.","Correct. Plyometric training enhances the stretch-shortening cycle through repeated rapid eccentric-concentric sequences, improving explosive power.","Countermovement exercises are highly valuable — they develop the SSC.","Concentric training alone misses the eccentric loading component that underpins the SSC."]},
+  {q:"An athlete who 'slowly lowers' a barbell is using which type of muscle action?",options:["Concentric","Isometric","Eccentric","No muscular action is required"],correct:2,feedback:["Concentric shortens under load — lowering requires the muscle to lengthen while controlling the weight.","Isometric involves no joint movement — lowering clearly involves movement.","Correct. Slowly lowering a weight requires the muscles to lengthen under load — that's eccentric action. The muscles are controlling the descent against gravity.","Significant muscular force is required to lower a weight in a controlled manner."]},
+  {q:"Which of the following tasks would recruit the highest proportion of Type IIx fibres?",options:["Walking on a treadmill at 5 km/h","A 20-minute easy jog","A maximal vertical jump","Holding a plank position for 60 seconds"],correct:2,feedback:["Walking recruits predominantly Type I slow-twitch fibres.","Easy jogging recruits mostly Type I with some Type IIa.","Correct. A maximal jump requires maximal force in minimal time — this demands full recruitment including the largest Type IIx motor units.","Isometric endurance tasks rely predominantly on Type I fibres."]},
+  {q:"The coupling time in the SSC refers to:",options:["The time between motor neuron firing and muscle contraction","The time between the eccentric and concentric phases","The time taken to recruit all motor units","The time for elastic energy to dissipate"],correct:1,feedback:["Electromechanical delay is the term for the gap between neural signal and mechanical response.","Correct. A short coupling time (rapid transition from eccentric to concentric) is essential for maximising SSC effectiveness — a long pause allows elastic energy to dissipate as heat.","Motor unit recruitment time is a separate concept.","Elastic energy dissipating as heat is what happens when coupling time is too long."]},
+  {q:"Type IIa fibres differ from Type IIx because they:",options:["Are slower and more fatigue-resistant than Type IIx","Produce more force than Type IIx at all speeds","Are not recruited during high-intensity exercise","Are found only in the lower limbs"],correct:0,feedback:["Correct. Type IIa fibres are intermediate — faster than Type I but slower and more fatigue-resistant than Type IIx. They bridge the gap between endurance and power.","Type IIx fibres can produce greater force at high velocities.","Type IIa fibres are recruited during high-intensity exercise — before Type IIx.","All major muscle groups contain a mix of fibre types."]},
+  {q:"Which muscle action type is most associated with muscle soreness (DOMS)?",options:["Concentric","Isometric","Eccentric","All three equally"],correct:2,feedback:["Concentric exercise produces relatively little delayed onset muscle soreness.","Isometric exercise produces minimal DOMS.","Correct. Eccentric exercise produces the greatest delayed onset muscle soreness (DOMS) due to the mechanical stress of muscles lengthening under high force, causing micro-damage to the muscle fibres.","Eccentric exercise is specifically associated with greater DOMS than the other types."]},
+  {q:"The primary role of muscle spindles in the SSC is:",options:["To inhibit muscle contraction during stretching","To detect the rate of muscle stretch and trigger a reflex contraction","To control the recruitment order of motor units","To measure the force produced by the muscle"],correct:1,feedback:["Muscle spindles trigger contraction — not inhibition. Golgi tendon organs provide the inhibitory reflex.","Correct. Muscle spindles are stretch receptors that detect rapid lengthening and trigger a reflexive contraction (stretch reflex), contributing to the enhanced force output seen in SSC movements.","Motor unit recruitment order is controlled by the motor cortex following Henneman's principle.","Force is measured by Golgi tendon organs, not muscle spindles."]}
+];
+
+let questions=[],current=0,score=0,answered=false;
+function shuffle(arr){return arr.sort(()=>Math.random()-0.5)}
+function initQuiz(){questions=shuffle([...allQuestions]);current=0;score=0;document.getElementById('question-container').style.display='block';document.getElementById('quiz-complete').style.display='none';renderQuestion()}
+function renderQuestion(){const q=questions[current];document.getElementById('q-counter').textContent=`Question ${current+1} of ${questions.length}`;document.getElementById('q-score').textContent=`Score: ${score}`;document.getElementById('progress').style.width=`${(current/questions.length)*100}%`;const opts=q.options.map((o,i)=>`<button class="quiz-option" id="opt-${i}" onclick="selectAnswer(${i})">${o}</button>`).join('');document.getElementById('question-container').innerHTML=`<div style="font-size:16px;font-weight:500;margin-bottom:20px;line-height:1.5;">${q.q}</div>${opts}<div class="quiz-feedback" id="feedback"></div><button class="quiz-next" id="next-btn" onclick="nextQuestion()">${current===questions.length-1?'See results':'Next question →'}</button>`;answered=false}
+function selectAnswer(idx){if(answered)return;answered=true;const q=questions[current];q.options.forEach((_,i)=>{const btn=document.getElementById('opt-'+i);btn.disabled=true;if(i===q.correct)btn.classList.add('correct');else if(i===idx)btn.classList.add('incorrect')});if(idx===q.correct)score++;const fb=document.getElementById('feedback');fb.textContent=q.feedback[idx];fb.className='quiz-feedback show '+(idx===q.correct?'feedback-correct':'feedback-incorrect');document.getElementById('next-btn').className='quiz-next show';document.getElementById('q-score').textContent=`Score: ${score}`}
+function nextQuestion(){current++;if(current>=questions.length){document.getElementById('question-container').style.display='none';document.getElementById('quiz-complete').style.display='block';document.getElementById('progress').style.width='100%';document.getElementById('final-score').textContent=`${score} / ${questions.length} correct`;const pct=Math.round((score/questions.length)*100);document.getElementById('final-msg').textContent=pct>=80?'Excellent — strong understanding of the neuromuscular system. Move on to Topic 4.':pct>=60?'Good effort. Review the concepts you missed and try again.':'Re-read the overview, use the simulator, and attempt the quiz again before moving on.'}else renderQuestion()}
+function restartQuiz(){initQuiz()}
+initQuiz();
+</script>
+</body>
+</html>

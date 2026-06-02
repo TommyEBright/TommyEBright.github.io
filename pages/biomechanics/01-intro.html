@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Introduction to Biomechanics — Dr. Tommy Bright</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    .topic-section { padding: 48px 40px; }
+    .reading-card { background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--accent2); padding:20px 24px; margin-bottom:12px; }
+    .reading-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+    .reading-note { font-size:13px; color:var(--ink2); font-weight:300; }
+    .tool-instructions { font-size:14px; color:var(--ink2); font-weight:300; line-height:1.7; margin-bottom:24px; padding:16px; background:var(--surface2); border-left:3px solid var(--accent); }
+    .quiz-option { display:block; width:100%; text-align:left; padding:12px 16px; margin-bottom:8px; background:var(--bg); border:1px solid var(--border); cursor:pointer; font-family:var(--sans); font-size:14px; transition:all 0.15s; }
+    .quiz-option:hover { background:var(--surface2); border-color:var(--accent); }
+    .quiz-option.correct { background:#f0fff4; border-color:#2a8c4a; color:#1a5c30; }
+    .quiz-option.incorrect { background:#fff5f5; border-color:#c0392b; color:#7b2020; }
+    .quiz-feedback { display:none; padding:12px 16px; margin-top:8px; font-size:13px; line-height:1.6; }
+    .quiz-feedback.show { display:block; }
+    .feedback-correct { background:#f0fff4; border:1px solid #2a8c4a; color:#1a5c30; }
+    .feedback-incorrect { background:#fff5f5; border:1px solid #c0392b; color:#7b2020; }
+    .quiz-next { display:none; margin-top:12px; padding:10px 20px; background:var(--accent); color:#fff; border:none; cursor:pointer; font-family:var(--mono); font-size:11px; letter-spacing:1px; text-transform:uppercase; }
+    .quiz-next.show { display:inline-block; }
+    .progress-bar { height:4px; background:var(--surface2); margin-bottom:24px; }
+    .progress-fill { height:4px; background:var(--accent); transition:width 0.3s; }
+    .drag-item { padding:10px 14px; background:#0a0f1e; color:#fff; cursor:grab; margin-bottom:8px; font-size:13px; border:1px solid rgba(26,95,212,0.3); user-select:none; }
+    .drag-item:active { cursor:grabbing; opacity:0.7; }
+    .drag-zone { min-height:140px; border:2px dashed var(--border); padding:12px; background:var(--surface2); }
+    .drag-zone.over { border-color:var(--accent); background:#eef3fc; }
+    .drag-zone h4 { font-family:var(--mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+    .drop-item { padding:8px 12px; background:var(--accent); color:#fff; margin-bottom:6px; font-size:12px; }
+    .drop-item.wrong { background:#c0392b; }
+    .drop-item.right { background:#2a8c4a; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="../../index.html">Dr. Tommy Bright</a>
+  <ul class="nav-links">
+    <li><a href="../../index.html">Home</a></li>
+    <li><a href="../../teaching.html" class="active">Teaching & Learning</a></li>
+    <li><a href="../../project.html">Projects</a></li>
+    <li><a href="../../research.html">Research</a></li>
+  </ul>
+  <div class="nav-social">
+    <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank">LinkedIn</a>
+    <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank">ResearchGate</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Biomechanics · Topic 1</div>
+    <h1>Introduction to<br><em>Biomechanics.</em></h1>
+    <p class="hero-lead">What biomechanics is, why it matters in sport, and the foundational concepts you'll use throughout your studies.</p>
+    <a href="../biomechanics-hub.html" style="font-family:var(--mono);font-size:11px;letter-spacing:1px;color:rgba(255,255,255,0.4);text-decoration:none;">← Back to Biomechanics Hub</a>
+  </div>
+</div>
+
+<section class="topic-section">
+  <div class="section-inner">
+    <div class="section-label">Overview</div>
+    <h2 class="section-title">What is biomechanics?</h2>
+    <div style="max-width:720px;">
+      <p style="color:var(--ink2);font-weight:300;line-height:1.8;margin-bottom:20px;">Biomechanics is the study of the mechanical principles that govern movement in living organisms. In sport and exercise science, it gives us the tools to describe, analyse, and improve the way people move — whether that's a sprinter accelerating out of the blocks, a golfer generating clubhead speed, or a patient recovering from a knee injury. It sits at the intersection of physics and biology, and it's one of the most practically useful disciplines in the sport science toolkit.</p>
+      <p style="color:var(--ink2);font-weight:300;line-height:1.8;margin-bottom:20px;">Within biomechanics, we work with two broad categories of analysis. <strong>Kinematics</strong> describes movement without reference to the forces that cause it — how fast something moves, in what direction, and how that changes over time. <strong>Kinetics</strong> is concerned with the forces that produce or result from movement — the push of the ground against a sprinter's foot, the torque generated at a joint, the impulse that sends a javelin into the air. Both are essential, and you'll use both throughout this module.</p>
+      <p style="color:var(--ink2);font-weight:300;line-height:1.8;margin-bottom:20px;">Before we can measure anything meaningfully, we need to agree on how we measure it. Sport biomechanics uses the International System of Units (SI) — metres for distance, seconds for time, kilograms for mass, newtons for force. Being consistent with units matters more than it might seem: a measurement without a unit is meaningless, and mixing units is one of the most common sources of error in lab work.</p>
+      <p style="color:var(--ink2);font-weight:300;line-height:1.8;margin-bottom:20px;">You'll also encounter the distinction between <strong>scalar</strong> and <strong>vector</strong> quantities early and often. Scalars have magnitude only — speed, distance, mass. Vectors have both magnitude and direction — velocity, displacement, force. This distinction matters practically: knowing a force is 500 N tells you something, but knowing it's 500 N directed vertically downward tells you much more.</p>
+      <p style="color:var(--ink2);font-weight:300;line-height:1.8;">Finally, it's worth reflecting on why measurement error matters. No measurement tool is perfect — force platforms have noise, cameras have lens distortion, digitising introduces human error. A good biomechanist understands where errors come from, how to minimise them, and how to report uncertainty honestly. This isn't just academic; in applied settings, acting on bad data can lead to poor decisions about training, rehabilitation, or technique.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="topic-section alt-bg">
+  <div class="section-inner">
+    <div class="section-label">Recommended Reading</div>
+    <h2 class="section-title">Where to go next.</h2>
+    <div style="max-width:680px;">
+      <div class="reading-card">
+        <div class="reading-title">McGinnis, P. M. (2013). <em>Biomechanics of sport and exercise</em> (3rd ed.). Human Kinetics.</div>
+        <div class="reading-note">Chapter 1 — The core introductory text for this module. Broad, accessible, and well illustrated. Start here if you want a solid grounding in the fundamentals.</div>
+      </div>
+      <div class="reading-card">
+        <div class="reading-title">Bartlett, R. (2007). <em>Introduction to sports biomechanics</em> (2nd ed.). Routledge.</div>
+        <div class="reading-note">Chapter 1 — A slightly more analytical framing of the same material. Good if you want more depth or a second perspective on concepts you found tricky in McGinnis.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- QUIZ: 20 QUESTIONS -->
+<section class="topic-section">
+  <div class="section-inner">
+    <div class="section-label">Interactive Task 1</div>
+    <h2 class="section-title">Terminology quiz.</h2>
+    <div class="tool-instructions"><strong>Instructions:</strong> 20 questions covering the key concepts from this topic. Select the correct answer — you'll receive immediate feedback with an explanation before moving on. Questions are drawn in random order each attempt. Aim for 16/20 or above before moving to Topic 2.</div>
+    <div id="quiz" style="max-width:680px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted);" id="q-counter">Question 1 of 20</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--accent);" id="q-score">Score: 0</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+      <div id="question-container"></div>
+      <div id="quiz-complete" style="display:none;padding:32px;background:var(--surface2);border:1px solid var(--border);text-align:center;">
+        <div style="font-family:var(--serif);font-size:28px;margin-bottom:8px;">Quiz complete</div>
+        <div id="final-score" style="font-family:var(--mono);font-size:18px;color:var(--accent);margin-bottom:8px;"></div>
+        <div id="final-msg" style="font-size:14px;color:var(--ink2);font-weight:300;margin-bottom:20px;"></div>
+        <button onclick="restartQuiz()" style="padding:10px 24px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;">Try again</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- DRAG AND DROP SORTER: 14 ITEMS -->
+<section class="topic-section alt-bg">
+  <div class="section-inner">
+    <div class="section-label">Interactive Task 2</div>
+    <h2 class="section-title">Kinematics vs kinetics sorter.</h2>
+    <div class="tool-instructions"><strong>Instructions:</strong> Drag each of the 14 statements into the correct category. Kinematics describes motion itself — position, velocity, acceleration. Kinetics involves forces, torques, impulses, and the causes of motion. Some may seem ambiguous — think carefully before placing. Click Check Answers when all items are placed.</div>
+    <div style="display:grid;grid-template-columns:260px 1fr;gap:24px;max-width:900px;margin-bottom:20px;">
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Drag these →</div>
+        <div id="drag-source"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="drag-zone" id="zone-kinematics"><h4>Kinematics</h4></div>
+        <div class="drag-zone" id="zone-kinetics"><h4>Kinetics</h4></div>
+      </div>
+    </div>
+    <button onclick="checkSorter()" class="btn btn-primary" style="margin-right:12px;">Check answers</button>
+    <button onclick="resetSorter()" class="btn btn-outline">Reset</button>
+    <div id="sorter-feedback" style="margin-top:16px;font-size:14px;display:none;padding:16px;background:var(--surface2);border:1px solid var(--border);"></div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="topic-section">
+  <div class="section-inner" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+    <div>
+      <div class="section-label">Up next</div>
+      <div style="font-family:var(--serif);font-size:24px;">Topic 2 — Qualitative Phase Analysis</div>
+    </div>
+    <a href="02-qualitative.html" class="btn btn-primary">Next topic →</a>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">Dr. Tommy Bright</div>
+    <ul class="footer-links">
+      <li><a href="../../index.html">Home</a></li>
+      <li><a href="../../teaching.html">Teaching & Learning</a></li>
+      <li><a href="../../project.html">Projects</a></li>
+      <li><a href="../../research.html">Research</a></li>
+    </ul>
+    <div class="footer-social">
+      <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank">LinkedIn</a>
+      <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank">ResearchGate</a>
+    </div>
+  </div>
+  <div class="footer-copy">Plymouth Marjon University · Cardiff Metropolitan University · Tournament Golf College</div>
+</footer>
+
+<script>
+const allQuestions = [
+  {q:"Which of the following best describes kinematics?",options:["The study of forces that cause movement","The description of motion without reference to forces","The measurement of muscle activation during movement","The analysis of energy transfer in athletic performance"],correct:1,feedback:["Not quite — that's kinetics. Kinematics describes motion without asking why it happens.","Correct. Kinematics describes how things move — position, velocity, acceleration — without reference to forces.","That describes electromyography (EMG), not kinematics.","Energy analysis sits within kinetics, not kinematics."]},
+  {q:"Which of the following best describes kinetics?",options:["The description of how fast an athlete moves","The study of joint angles during movement","The study of the forces that cause or result from movement","The measurement of body segment lengths"],correct:2,feedback:["That's a kinematic measurement — speed is a description of motion.","Joint angles are kinematic — they describe position and movement.","Correct. Kinetics is the study of forces, torques, and impulses that cause or result from movement.","Body segment lengths are anthropometric measurements."]},
+  {q:"Which of these is a vector quantity?",options:["Speed","Distance","Mass","Velocity"],correct:3,feedback:["Speed is a scalar — magnitude only. Velocity is its vector equivalent.","Distance is scalar. Displacement is its vector equivalent.","Mass is a scalar quantity.","Correct. Velocity has both magnitude and direction — it is a vector quantity."]},
+  {q:"Which of these is a scalar quantity?",options:["Force","Velocity","Displacement","Temperature"],correct:3,feedback:["Force is a vector — it has both magnitude and direction.","Velocity is a vector — it has both magnitude and direction.","Displacement is a vector — it has both magnitude and direction.","Correct. Temperature has magnitude only — it is a scalar quantity."]},
+  {q:"A sprinter runs 100 m in 10 seconds. Their average speed is:",options:["1000 m/s","10 m/s","0.1 m/s","100 m/s"],correct:1,feedback:["That would be 100 × 10. Speed = distance ÷ time.","Correct. Speed = 100 m ÷ 10 s = 10 m/s.","That's 1 ÷ 10. You've divided the wrong way around.","That's the distance, not the speed."]},
+  {q:"Which SI unit is used to measure force?",options:["Kilogram","Joule","Newton","Pascal"],correct:2,feedback:["Kilograms measure mass. Force = mass × acceleration, measured in newtons.","Joules measure energy or work.","Correct. Force is measured in newtons (N). 1 N = 1 kg·m/s².","Pascals measure pressure (force per unit area)."]},
+  {q:"Which SI unit is used to measure energy?",options:["Newton","Watt","Joule","Pascal"],correct:2,feedback:["Newtons measure force.","Watts measure power (rate of energy transfer).","Correct. Energy is measured in joules (J).","Pascals measure pressure."]},
+  {q:"Measuring the angle of a golfer's hip at ball contact is an example of:",options:["Kinetics","Electromyography","Kinematics","Anthropometry"],correct:2,feedback:["Kinetics involves forces — measuring an angle describes position, not force.","EMG measures muscle electrical activity.","Correct. Measuring a joint angle describes the position of a body segment — that's kinematics.","Anthropometry measures body dimensions."]},
+  {q:"Measuring the ground reaction force during a sprint start is an example of:",options:["Kinematics","Kinetics","Electromyography","Anthropometry"],correct:1,feedback:["Kinematics describes motion — measuring a force is kinetics.","Correct. Ground reaction force is a force measurement — that's kinetics.","EMG measures muscle electrical activity.","Anthropometry measures body dimensions."]},
+  {q:"Why does direction matter when describing velocity?",options:["It doesn't — only speed matters in sport science","Direction determines the unit of measurement","Velocity is a vector, so both magnitude and direction are needed to fully describe it","Direction is only relevant in 3D analysis"],correct:2,feedback:["Direction always matters. A ball moving at 10 m/s upward has a very different outcome to one moving at 10 m/s downward.","Units are determined by the type of quantity, not direction.","Correct. Velocity is a vector — without direction, you only have speed, not velocity.","Direction matters in both 2D and 3D analysis."]},
+  {q:"Which of the following would be a kinematic measurement in a vertical jump?",options:["The ground reaction force at take-off","The peak force produced during the push-off phase","The height reached at the peak of the jump","The impulse generated during the propulsion phase"],correct:2,feedback:["Ground reaction force is a kinetic measurement.","Peak force is a kinetic measurement.","Correct. Jump height describes the position of the centre of mass — that's kinematics.","Impulse (force × time) is a kinetic measurement."]},
+  {q:"What does SI stand for in SI units?",options:["Standard International","Scientific Index","Système International","Sports Index"],correct:2,feedback:["Close but not quite — it's French, not English.","Not correct — SI refers to the international measurement system.","Correct. SI stands for Système International d'Unités — the international system of units.","SI is not sports-specific — it applies across all sciences."]},
+  {q:"A force of 500 N is applied at 45° to the horizontal. This is best described as:",options:["A scalar quantity because it has a specific value","A vector quantity because it has both magnitude and direction","A kinematic measurement","An anthropometric measurement"],correct:1,feedback:["Having a specific value alone makes something scalar. The addition of direction makes this a vector.","Correct. 500 N at 45° has both magnitude and direction — it is a vector quantity.","Force is kinetic, not kinematic.","Anthropometry involves body measurements."]},
+  {q:"Which of the following is NOT a base SI unit?",options:["Metre","Second","Newton","Kilogram"],correct:2,feedback:["The metre (m) is a base SI unit for length.","The second (s) is a base SI unit for time.","Correct. The newton is a derived unit (kg·m/s²), not a base SI unit.","The kilogram (kg) is a base SI unit for mass."]},
+  {q:"A researcher reports that an athlete's jump height was '0.45'. What is the problem with this measurement?",options:["The value is too small to be meaningful","No unit has been given, so the measurement is incomplete","The measurement should be expressed as a vector","Jump height should always be reported in centimetres"],correct:1,feedback:["The value is actually quite reasonable for jump height — the problem is elsewhere.","Correct. A measurement without a unit is meaningless. Is it 0.45 m, 0.45 cm, or 0.45 inches? Always include units.","Jump height is a scalar quantity — direction is not required.","Jump height can be reported in metres or centimetres — neither is wrong as long as units are stated."]},
+  {q:"Which of the following is an example of measurement error in biomechanics?",options:["Reporting velocity in m/s","A force platform that introduces electronic noise into the signal","Using SI units consistently throughout a report","Calculating impulse from a force-time curve"],correct:1,feedback:["Using correct units is good practice, not an error.","Correct. Electronic noise from force platforms is a source of measurement error that must be understood and managed.","Using SI units consistently is correct practice.","Calculating impulse is a valid analytical technique, not an error."]},
+  {q:"Displacement differs from distance because:",options:["Displacement is always larger than distance","Displacement is a vector that includes direction; distance is a scalar","Distance can be negative but displacement cannot","Displacement is measured in metres; distance is measured in kilometres"],correct:1,feedback:["Displacement can be smaller than distance — for example, running a full lap returns you to your start, so displacement is zero.","Correct. Displacement is a vector (magnitude and direction); distance is scalar (magnitude only).","Displacement can be negative depending on direction. Distance cannot be negative.","Both are measured in metres."]},
+  {q:"In biomechanics, what does the term 'mechanics' refer to?",options:["The study of machines and engines","The branch of physics dealing with forces and motion","The study of chemical reactions in the body","The analysis of sports equipment design"],correct:1,feedback:["Mechanics in physics is broader than machines — it covers all forces and motion.","Correct. Mechanics is the branch of physics dealing with the effects of forces on bodies in motion or at rest.","That's biochemistry or physiology.","Equipment design is sports engineering, not mechanics."]},
+  {q:"A sprinter's velocity changes from 0 to 10 m/s in 2 seconds. Their acceleration is:",options:["20 m/s²","5 m/s²","0.2 m/s²","2 m/s²"],correct:1,feedback:["That would be 0 + 10 × 2. Acceleration = change in velocity ÷ time.","Correct. Acceleration = (10 − 0) ÷ 2 = 5 m/s².","That's 2 ÷ 10. You've divided the wrong quantities.","That's the time, not the acceleration."]},
+  {q:"Why is biomechanics relevant to sport science practitioners?",options:["It replaces the need for physiological testing","It provides a framework for understanding and improving movement patterns","It is only relevant to academic researchers, not applied practitioners","It replaces qualitative observation with objective measurement"],correct:1,feedback:["Biomechanics complements physiology — neither replaces the other.","Correct. Biomechanics gives practitioners tools to understand why movements succeed or fail and how to improve them.","Applied biomechanics is widely used by coaches, physiotherapists, and S&C practitioners.","Biomechanics includes qualitative methods — it doesn't replace observation, it enhances it."]}
+];
+
+const sorterItems = [
+  {text:"Measuring how fast a sprinter covers the first 10 m",answer:"kinematics"},
+  {text:"Measuring the force a sprinter applies to the starting block",answer:"kinetics"},
+  {text:"Recording the angle of a golfer's hip at ball contact",answer:"kinematics"},
+  {text:"Calculating the torque at the knee during landing",answer:"kinetics"},
+  {text:"Tracking the path of a javelin through the air",answer:"kinematics"},
+  {text:"Measuring the impulse generated during a countermovement jump",answer:"kinetics"},
+  {text:"Digitising the position of a footballer's ankle joint across a sprint stride",answer:"kinematics"},
+  {text:"Calculating the ground reaction force during a drop jump landing",answer:"kinetics"},
+  {text:"Measuring the displacement of a tennis ball after a serve",answer:"kinematics"},
+  {text:"Analysing the net joint moment at the hip during a squat",answer:"kinetics"},
+  {text:"Plotting the velocity-time curve of a 100 m sprint",answer:"kinematics"},
+  {text:"Measuring the peak braking force during a change of direction",answer:"kinetics"},
+  {text:"Recording the angular velocity of the knee during a kick",answer:"kinematics"},
+  {text:"Calculating the work done during the push-off phase of a jump",answer:"kinetics"}
+];
+
+// QUIZ
+let questions = [], current = 0, score = 0, answered = false;
+
+function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
+
+function initQuiz() {
+  questions = shuffle([...allQuestions]);
+  current = 0; score = 0;
+  document.getElementById('question-container').style.display = 'block';
+  document.getElementById('quiz-complete').style.display = 'none';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[current];
+  document.getElementById('q-counter').textContent = `Question ${current + 1} of ${questions.length}`;
+  document.getElementById('q-score').textContent = `Score: ${score}`;
+  document.getElementById('progress').style.width = `${(current / questions.length) * 100}%`;
+  const opts = q.options.map((o, i) => `<button class="quiz-option" id="opt-${i}" onclick="selectAnswer(${i})">${o}</button>`).join('');
+  document.getElementById('question-container').innerHTML = `
+    <div style="font-size:16px;font-weight:500;margin-bottom:20px;line-height:1.5;">${q.q}</div>
+    ${opts}
+    <div class="quiz-feedback" id="feedback"></div>
+    <button class="quiz-next" id="next-btn" onclick="nextQuestion()">${current === questions.length - 1 ? 'See results' : 'Next question →'}</button>`;
+  answered = false;
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  const q = questions[current];
+  q.options.forEach((_, i) => {
+    const btn = document.getElementById('opt-' + i);
+    btn.disabled = true;
+    if (i === q.correct) btn.classList.add('correct');
+    else if (i === idx) btn.classList.add('incorrect');
+  });
+  if (idx === q.correct) score++;
+  const fb = document.getElementById('feedback');
+  fb.textContent = q.feedback[idx];
+  fb.className = 'quiz-feedback show ' + (idx === q.correct ? 'feedback-correct' : 'feedback-incorrect');
+  document.getElementById('next-btn').className = 'quiz-next show';
+  document.getElementById('q-score').textContent = `Score: ${score}`;
+}
+
+function nextQuestion() {
+  current++;
+  if (current >= questions.length) {
+    document.getElementById('question-container').style.display = 'none';
+    document.getElementById('quiz-complete').style.display = 'block';
+    document.getElementById('progress').style.width = '100%';
+    document.getElementById('final-score').textContent = `${score} / ${questions.length} correct`;
+    const pct = Math.round((score / questions.length) * 100);
+    document.getElementById('final-msg').textContent = pct >= 80 ? 'Excellent — you have a strong grasp of the foundational concepts. Move on to Topic 2.' : pct >= 60 ? 'Good effort. Review the questions you missed and try again before moving on.' : 'Keep going — re-read the overview section and attempt the quiz again. The concepts here underpin everything else in the module.';
+  } else { renderQuestion(); }
+}
+
+function restartQuiz() { initQuiz(); }
+
+// SORTER
+function buildSorter() {
+  const src = document.getElementById('drag-source');
+  shuffle(sorterItems).forEach((item, i) => {
+    const el = document.createElement('div');
+    el.className = 'drag-item';
+    el.draggable = true;
+    el.dataset.answer = item.answer;
+    el.dataset.id = 'si' + i;
+    el.id = 'si' + i;
+    el.textContent = item.text;
+    el.addEventListener('dragstart', () => { window._dragged = el; });
+    src.appendChild(el);
+  });
+  document.querySelectorAll('.drag-zone').forEach(zone => {
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.classList.remove('over');
+      const d = window._dragged;
+      if (!d) return;
+      const dropped = document.createElement('div');
+      dropped.className = 'drop-item';
+      dropped.textContent = d.textContent;
+      dropped.dataset.answer = d.dataset.answer;
+      dropped.dataset.zone = zone.id.replace('zone-', '');
+      dropped.dataset.src = d.id;
+      zone.appendChild(dropped);
+      d.style.display = 'none';
+    });
+  });
+}
+
+function checkSorter() {
+  const items = document.querySelectorAll('.drop-item');
+  let correct = 0;
+  items.forEach(item => {
+    if (item.dataset.answer === item.dataset.zone) { item.classList.add('right'); correct++; }
+    else item.classList.add('wrong');
+  });
+  const fb = document.getElementById('sorter-feedback');
+  fb.style.display = 'block';
+  fb.innerHTML = `<strong style="font-family:var(--mono);">${correct} / ${items.length} correct</strong> — ${correct === items.length ? 'All correct — excellent understanding of kinematics vs kinetics.' : 'Items shown in red are incorrectly placed. Remember: kinematics = description of motion (position, velocity, angle); kinetics = forces, torques, impulse, work.'}`;
+}
+
+function resetSorter() {
+  document.querySelectorAll('.drop-item').forEach(el => {
+    const orig = document.getElementById(el.dataset.src);
+    if (orig) orig.style.display = 'block';
+    el.remove();
+  });
+  document.querySelectorAll('.drop-item').forEach(el => el.classList.remove('right','wrong'));
+  document.getElementById('sorter-feedback').style.display = 'none';
+}
+
+initQuiz();
+buildSorter();
+</script>
+</body>
+</html>

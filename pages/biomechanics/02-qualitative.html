@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Qualitative Phase Analysis — Dr. Tommy Bright</title>
+  <link rel="stylesheet" href="../../css/style.css">
+  <style>
+    .topic-section{padding:48px 40px}
+    .reading-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent2);padding:20px 24px;margin-bottom:12px}
+    .reading-title{font-size:14px;font-weight:600;margin-bottom:4px}
+    .reading-note{font-size:13px;color:var(--ink2);font-weight:300}
+    .tool-instructions{font-size:14px;color:var(--ink2);font-weight:300;line-height:1.7;margin-bottom:24px;padding:16px;background:var(--surface2);border-left:3px solid var(--accent)}
+    .quiz-option{display:block;width:100%;text-align:left;padding:12px 16px;margin-bottom:8px;background:var(--bg);border:1px solid var(--border);cursor:pointer;font-family:var(--sans);font-size:14px;transition:all 0.15s}
+    .quiz-option:hover{background:var(--surface2);border-color:var(--accent)}
+    .quiz-option.correct{background:#f0fff4;border-color:#2a8c4a;color:#1a5c30}
+    .quiz-option.incorrect{background:#fff5f5;border-color:#c0392b;color:#7b2020}
+    .quiz-feedback{display:none;padding:12px 16px;margin-top:8px;font-size:13px;line-height:1.6}
+    .quiz-feedback.show{display:block}
+    .feedback-correct{background:#f0fff4;border:1px solid #2a8c4a;color:#1a5c30}
+    .feedback-incorrect{background:#fff5f5;border:1px solid #c0392b;color:#7b2020}
+    .quiz-next{display:none;margin-top:12px;padding:10px 20px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase}
+    .quiz-next.show{display:inline-block}
+    .progress-bar{height:4px;background:var(--surface2);margin-bottom:24px}
+    .progress-fill{height:4px;background:var(--accent);transition:width 0.3s}
+    .phase-card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);padding:20px 24px;margin-bottom:12px}
+    .phase-title{font-family:var(--serif);font-size:18px;margin-bottom:8px}
+    .drag-item{padding:10px 14px;background:#0a0f1e;color:#fff;cursor:grab;margin-bottom:8px;font-size:13px;border:1px solid rgba(26,95,212,0.3);user-select:none}
+    .drag-zone{min-height:120px;border:2px dashed var(--border);padding:12px;background:var(--surface2)}
+    .drag-zone.over{border-color:var(--accent);background:#eef3fc}
+    .drag-zone h4{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+    .drop-item{padding:8px 12px;background:var(--accent);color:#fff;margin-bottom:6px;font-size:12px}
+    .drop-item.wrong{background:#c0392b}
+    .drop-item.right{background:#2a8c4a}
+  </style>
+</head>
+<body>
+<nav>
+  <a class="nav-brand" href="../../index.html">Dr. Tommy Bright</a>
+  <ul class="nav-links">
+    <li><a href="../../index.html">Home</a></li>
+    <li><a href="../../teaching.html" class="active">Teaching & Learning</a></li>
+    <li><a href="../../project.html">Projects</a></li>
+    <li><a href="../../research.html">Research</a></li>
+  </ul>
+  <div class="nav-social">
+    <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank">LinkedIn</a>
+    <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank">ResearchGate</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Biomechanics · Topic 2</div>
+    <h1>Qualitative<br><em>Phase Analysis.</em></h1>
+    <p class="hero-lead">How to observe and evaluate human movement systematically — using the overhead squat as a worked example.</p>
+    <a href="../biomechanics-hub.html" style="font-family:var(--mono);font-size:11px;letter-spacing:1px;color:rgba(255,255,255,0.4);text-decoration:none;">← Back to Biomechanics Hub</a>
+  </div>
+</div>
+
+<section class="topic-section">
+  <div class="section-inner">
+    <div class="section-label">Overview</div>
+    <h2 class="section-title">Watching movement properly.</h2>
+    <div style="max-width:720px;">
+      <p style="color:var(--ink2);font-weight:300;line-height:1.8;margin-bottom:20px;"><strong>Qualitative analysis</strong> is the systematic observation and evaluation of movement quality without the use of numerical data. It is what every good coach, physiotherapist, and sport scientist does naturally when they watch an athlete move — but done well, it requires a structured approach, a clear framework, and a solid understanding of what normal and abnormal movement look like.</p>
+      <p style="color:var(--ink2);font-weight:300;line-height:1.8;margin-bottom:20px;">This sits in contrast to <strong>quantitative analysis</strong>, which uses instruments — cameras, force platforms, electromyography — to produce numerical data. Both approaches have value, but qualitative analysis is often the first tool a practitioner reaches for. It costs nothing, requires no equipment, and when done well, it reveals a great deal. Knudson's qualitative analysis model provides four stages: preparation, observation, evaluation and diagnosis, and intervention. This module focuses primarily on observation and evaluation.</p>
+      <p style="color:var(--ink2);font-weight:300;line-height:1.8;margin-bottom:20px;">The <strong>overhead squat</strong> is one of the most informative screening movements available to sport science practitioners. It loads multiple joints simultaneously and reveals compensatory movement patterns that would not be visible in simpler tests. The movement breaks naturally into two phases: the <strong>descent phase</strong> (from standing to the lowest position) and the <strong>ascent phase</strong> (return to standing). Each phase places different demands on the joints and muscles involved.</p>
+      <p style="color:var(--ink2);font-weight:300;line-height:1.8;margin-bottom:20px;">At the <strong>hip</strong>, the descent phase requires eccentric control from the gluteal muscles and hip extensors — the muscle fibres are lengthening under load to control the descent. During ascent, these same muscles work concentrically to drive extension. At the <strong>knee</strong>, the quadriceps control the rate of flexion eccentrically on the way down and produce extension concentrically on the way up. The <strong>ankle</strong> requires sufficient dorsiflexion range during descent — limited ankle mobility is one of the most common causes of the heel rising or the trunk pitching forward.</p>
+      <p style="color:var(--ink2);font-weight:300;line-height:1.8;">Understanding these mechanics makes error identification systematic rather than guesswork. Common errors include forward lean of the trunk (often caused by limited ankle mobility or weak hip extensors), valgus collapse at the knee (often associated with hip abductor weakness), and heel rise (almost always limited ankle dorsiflexion). Identifying the error is step one — the more important step is identifying its cause.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="topic-section alt-bg">
+  <div class="section-inner">
+    <div class="section-label">Movement Phases</div>
+    <h2 class="section-title">Overhead squat — phase breakdown.</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:800px;">
+      <div class="phase-card">
+        <div class="phase-title">Descent Phase</div>
+        <p style="font-size:14px;color:var(--ink2);font-weight:300;line-height:1.7;">From the standing start position to the lowest point. The hips, knees and ankles all flex simultaneously. Key muscles work eccentrically to control the rate of descent. The trunk should remain upright and the arms overhead throughout.</p>
+        <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:4px;"><span class="tag">Eccentric Control</span><span class="tag">Hip/Knee/Ankle Flexion</span><span class="tag">Trunk Stability</span></div>
+      </div>
+      <div class="phase-card" style="border-left-color:var(--accent2);">
+        <div class="phase-title">Ascent Phase</div>
+        <p style="font-size:14px;color:var(--ink2);font-weight:300;line-height:1.7;">From the lowest position back to standing. The hips, knees and ankles all extend. The same muscles that worked eccentrically on descent now work concentrically to drive the movement. The pattern of extension should mirror the descent.</p>
+        <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:4px;"><span class="tag">Concentric Drive</span><span class="tag">Hip/Knee/Ankle Extension</span><span class="tag">Symmetry</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="topic-section">
+  <div class="section-inner">
+    <div class="section-label">Recommended Reading</div>
+    <h2 class="section-title">Where to go next.</h2>
+    <div style="max-width:680px;">
+      <div class="reading-card">
+        <div class="reading-title">Hamill, J., Knutzen, K. M., & Derrick, T. R. (2015). <em>Biomechanical basis of human movement</em> (4th ed.). Wolters Kluwer.</div>
+        <div class="reading-note">Chapter 2 — Covers skeletal system and joint function clearly. Good for understanding what's happening at each joint during the squat.</div>
+      </div>
+      <div class="reading-card">
+        <div class="reading-title">McGinnis, P. M. (2013). <em>Biomechanics of sport and exercise</em> (3rd ed.). Human Kinetics.</div>
+        <div class="reading-note">Chapter 5 (qualitative analysis section) — Good applied framing of the QA model and its use in coaching and sport science practice.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- QUIZ: 20 QUESTIONS -->
+<section class="topic-section alt-bg">
+  <div class="section-inner">
+    <div class="section-label">Interactive Task 1</div>
+    <h2 class="section-title">Muscle action classifier quiz.</h2>
+    <div class="tool-instructions"><strong>Instructions:</strong> 20 questions covering qualitative analysis, movement phases, muscle actions, and error identification. For each scenario, select the correct answer. Read the feedback carefully — it explains the reasoning, not just the answer. Aim for 16/20 before moving on.</div>
+    <div id="quiz" style="max-width:680px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted);" id="q-counter">Question 1 of 20</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--accent);" id="q-score">Score: 0</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+      <div id="question-container"></div>
+      <div id="quiz-complete" style="display:none;padding:32px;background:var(--surface2);border:1px solid var(--border);text-align:center;">
+        <div style="font-family:var(--serif);font-size:28px;margin-bottom:8px;">Quiz complete</div>
+        <div id="final-score" style="font-family:var(--mono);font-size:18px;color:var(--accent);margin-bottom:8px;"></div>
+        <div id="final-msg" style="font-size:14px;color:var(--ink2);font-weight:300;margin-bottom:20px;"></div>
+        <button onclick="restartQuiz()" style="padding:10px 24px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;">Try again</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- SORTER: muscle actions -->
+<section class="topic-section">
+  <div class="section-inner">
+    <div class="section-label">Interactive Task 2</div>
+    <h2 class="section-title">Movement phase sorter.</h2>
+    <div class="tool-instructions"><strong>Instructions:</strong> 14 observations of the overhead squat are listed below. Classify each as occurring primarily in the <strong>Descent Phase</strong> or the <strong>Ascent Phase</strong>. Some may seem to apply to both — assign the phase where the observation is most relevant or most visible.</div>
+    <div style="display:grid;grid-template-columns:260px 1fr;gap:24px;max-width:900px;margin-bottom:20px;">
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Drag these →</div>
+        <div id="drag-source"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="drag-zone" id="zone-descent"><h4>Descent Phase</h4></div>
+        <div class="drag-zone" id="zone-ascent"><h4>Ascent Phase</h4></div>
+      </div>
+    </div>
+    <button onclick="checkSorter()" class="btn btn-primary" style="margin-right:12px;">Check answers</button>
+    <button onclick="resetSorter()" class="btn btn-outline">Reset</button>
+    <div id="sorter-feedback" style="margin-top:16px;font-size:14px;display:none;padding:16px;background:var(--surface2);border:1px solid var(--border);"></div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="topic-section alt-bg">
+  <div class="section-inner" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+    <div>
+      <div class="section-label">Up next</div>
+      <div style="font-family:var(--serif);font-size:24px;">Topic 3 — Neuromuscular System</div>
+    </div>
+    <a href="03-neuromuscular.html" class="btn btn-primary">Next topic →</a>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">Dr. Tommy Bright</div>
+    <ul class="footer-links">
+      <li><a href="../../index.html">Home</a></li>
+      <li><a href="../../teaching.html">Teaching & Learning</a></li>
+      <li><a href="../../project.html">Projects</a></li>
+      <li><a href="../../research.html">Research</a></li>
+    </ul>
+    <div class="footer-social">
+      <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank">LinkedIn</a>
+      <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank">ResearchGate</a>
+    </div>
+  </div>
+  <div class="footer-copy">Plymouth Marjon University · Cardiff Metropolitan University · Tournament Golf College</div>
+</footer>
+
+<script>
+const allQuestions=[
+  {q:"During the descent phase of the overhead squat, the quadriceps are working:",options:["Concentrically — shortening to produce knee flexion","Eccentrically — lengthening to control knee flexion","Isometrically — maintaining a fixed knee angle","They are not active during the descent phase"],correct:1,feedback:["Concentric action produces movement by shortening. During descent the quads are controlling — not producing — flexion.","Correct. The quadriceps lengthen under load to control the rate of knee flexion during descent — that's eccentric action.","Isometric means no change in length. During descent the knee is clearly flexing.","The quadriceps are very active during descent — they control how quickly the knee bends."]},
+  {q:"During the ascent phase of the overhead squat, the gluteus maximus is working:",options:["Eccentrically to control hip extension","Concentrically to produce hip extension","Isometrically to stabilise the pelvis","It is not active during the ascent phase"],correct:1,feedback:["Eccentric action controls movement — during ascent the glutes are driving, not controlling, hip extension.","Correct. The gluteus maximus shortens concentrically to produce hip extension during the ascent phase.","Isometric means no joint movement. The hip is clearly extending during ascent.","The gluteus maximus is the primary driver of hip extension — it's very active during ascent."]},
+  {q:"An athlete demonstrates forward trunk lean during the descent of the overhead squat. The most likely cause is:",options:["Weakness of the hip abductors","Limited ankle dorsiflexion range of motion","Excessive shoulder flexibility","Weakness of the knee extensors"],correct:1,feedback:["Hip abductor weakness typically causes valgus knee collapse, not forward trunk lean.","Correct. Limited ankle dorsiflexion prevents the tibia from tilting forward, causing the trunk to compensate by pitching forward.","Shoulder flexibility affects arm position but not trunk lean.","Weak knee extensors would affect the rate of descent but not primarily cause forward trunk lean."]},
+  {q:"Knee valgus during the overhead squat refers to:",options:["The knee moving outward away from the midline","The knee caving inward toward the midline","Excessive knee flexion beyond 90°","Forward translation of the knee beyond the toes"],correct:1,feedback:["Knee moving outward is varus, not valgus.","Correct. Valgus describes inward collapse of the knee toward the midline — often called 'knock knees'.","The degree of flexion is separate from the varus/valgus classification.","Forward knee translation is a separate observation from the varus/valgus classification."]},
+  {q:"Which muscle group is most commonly implicated in knee valgus during the squat?",options:["Quadriceps","Gastrocnemius","Hip abductors","Tibialis anterior"],correct:2,feedback:["The quadriceps extend the knee — weakness here affects the rate of descent but not typically valgus.","The gastrocnemius plantar flexes the ankle — it influences heel rise, not knee valgus.","Correct. Weakness of the hip abductors (particularly gluteus medius) allows the femur to internally rotate and adduct, causing the knee to cave inward.","Tibialis anterior dorsiflexes the ankle — relevant to heel rise, not knee valgus."]},
+  {q:"Qualitative analysis differs from quantitative analysis because:",options:["Qualitative analysis produces more accurate results","Qualitative analysis uses systematic observation rather than numerical measurement","Qualitative analysis can only be used in laboratory settings","Qualitative analysis requires more equipment"],correct:1,feedback:["Accuracy depends on the skill of the observer and the quality of the instruments used — neither is inherently more accurate.","Correct. Qualitative analysis involves systematic observation and evaluation of movement quality without numerical data.","Qualitative analysis is often most valuable in field settings — no equipment is needed.","Qualitative analysis requires no equipment — that's one of its key advantages."]},
+  {q:"In Knudson's qualitative analysis model, what is the first stage?",options:["Evaluation and diagnosis","Observation","Preparation","Intervention"],correct:2,feedback:["Evaluation comes after observation — you need to see the movement before you can evaluate it.","Observation is the second stage — you must prepare before you observe.","Correct. Preparation is the first stage — deciding what to observe, from where, and how many repetitions to watch.","Intervention is the final stage — you can't intervene before you've observed and evaluated."]},
+  {q:"During the descent phase, the ankle joint undergoes:",options:["Plantar flexion","Dorsiflexion","Inversion","Eversion"],correct:1,feedback:["Plantar flexion would point the foot downward — that's what happens when you push up onto your toes.","Correct. Dorsiflexion (toes moving toward the shin) is required during the descent to allow the tibia to travel forward over the foot.","Inversion is a frontal plane movement of the foot — not the primary motion at the ankle during squat descent.","Eversion is also a frontal plane movement — not the primary motion during descent."]},
+  {q:"Why is the overhead squat particularly useful as a screening tool?",options:["It requires specialised equipment to administer","It loads multiple joints simultaneously and reveals compensatory movement patterns","It is the only movement that tests ankle mobility","It produces quantitative force data"],correct:1,feedback:["The overhead squat requires no equipment — just enough space to move.","Correct. Loading multiple joints simultaneously means compensatory patterns are visible that might not appear in simpler tests.","Many movements test ankle mobility — the overhead squat is not the only one.","The overhead squat is a qualitative tool — it does not produce force data."]},
+  {q:"A sport scientist observes an athlete's heel rising during the descent phase. This indicates:",options:["Weakness of the quadriceps","Tightness of the hip flexors","Limited ankle dorsiflexion","Excessive lumbar extension"],correct:2,feedback:["Quadriceps weakness would affect the rate of descent — not typically cause heel rise.","Hip flexor tightness can cause anterior pelvic tilt but does not typically cause heel rise.","Correct. The heel rises when the ankle cannot dorsiflex sufficiently to allow the squat pattern — the body compensates by lifting the heel.","Lumbar extension is related to the trunk position, not the heel."]},
+  {q:"The term 'eccentric' in muscle action refers to:",options:["The muscle shortening while producing force","The muscle lengthening while producing force","The muscle maintaining constant length while producing force","The muscle relaxing completely"],correct:1,feedback:["That's concentric action — shortening while producing force.","Correct. Eccentric action involves the muscle producing force while lengthening — it controls movement rather than initiating it.","That's isometric action — constant length under force.","A relaxed muscle produces no force."]},
+  {q:"During the ascent phase of the overhead squat, which describes the primary action at the knee?",options:["Eccentric quadriceps action controlling flexion","Concentric quadriceps action producing extension","Isometric quadriceps action maintaining position","Eccentric hamstring action controlling extension"],correct:1,feedback:["Eccentric control of flexion describes the descent phase, not the ascent.","Correct. During ascent the quadriceps shorten concentrically to extend the knee and drive the body upward.","The knee is clearly extending during ascent — isometric implies no movement.","The hamstrings flex the knee — they don't primarily control extension."]},
+  {q:"Which observation would you place in the 'evaluation and diagnosis' stage of Knudson's model?",options:["Deciding how many times to observe the movement","Watching the movement from the front and side","Identifying that forward trunk lean is caused by limited ankle dorsiflexion","Cueing the athlete to push the knees out"],correct:2,feedback:["Deciding how to observe is part of the preparation stage.","Watching the movement is the observation stage.","Correct. Identifying the cause of an error (forward lean due to ankle limitation) is evaluation and diagnosis.","Cueing the athlete is the intervention stage."]},
+  {q:"From which viewing angle should you primarily assess knee valgus during the overhead squat?",options:["From the side (sagittal plane)","From behind (posterior view)","From the front (anterior view)","From above (superior view)"],correct:2,feedback:["The sagittal view is best for assessing forward lean, knee travel, and trunk angle — not frontal plane knee movement.","A posterior view gives some information but anterior is clearer for valgus.","Correct. Valgus is a frontal plane movement — it's best seen from the anterior (front) view.","Superior view is not practical for movement analysis."]},
+  {q:"An athlete demonstrates arms falling forward during the overhead squat. What does this suggest?",options:["Limited hip flexor length","Limited thoracic mobility or shoulder flexibility","Weak ankle dorsiflexors","Excessive knee flexion"],correct:1,feedback:["Hip flexor length affects pelvic position, not arm position during the squat.","Correct. Arms falling forward typically indicates limited thoracic spine mobility or restricted shoulder flexion range.","Ankle dorsiflexors affect heel rise — not arm position.","Excessive knee flexion is a separate observation."]},
+  {q:"The purpose of qualitative movement analysis is best described as:",options:["To replace quantitative force plate analysis","To provide a systematic framework for observing and improving movement quality","To diagnose medical conditions in athletes","To measure joint angles with precision"],correct:1,feedback:["Qualitative and quantitative approaches are complementary — neither replaces the other.","Correct. Qualitative analysis provides a structured approach to observing movement and identifying errors that can be corrected to improve performance.","Movement analysis is not a medical diagnostic tool — it is a performance and coaching tool.","Measuring joint angles with precision requires quantitative methods."]},
+  {q:"During the descent phase, which best describes the action of the hip extensors?",options:["Concentric — they shorten to flex the hip","Eccentric — they lengthen to control hip flexion","Isometric — they maintain hip position","They are inactive during descent"],correct:1,feedback:["Hip extensors extend the hip — concentric action would produce extension, not control descent.","Correct. The hip extensors (glutes, hamstrings) lengthen eccentrically to control the rate of hip flexion during descent.","The hip is clearly flexing during descent — isometric implies no movement.","The hip extensors are very active during descent — they control the movement."]},
+  {q:"Which of the following is NOT a common error observed during the overhead squat?",options:["Forward trunk lean","Heel rise","Knee valgus","Excessive plantarflexion at the knee"],correct:3,feedback:["Forward trunk lean is one of the most common errors — caused by limited ankle mobility or hip extensor weakness.","Heel rise is very common — almost always caused by limited ankle dorsiflexion.","Knee valgus is a very common error associated with hip abductor weakness.","Plantarflexion occurs at the ankle, not the knee — this is not a recognised squat error."]},
+  {q:"How many repetitions should typically be observed before drawing conclusions during qualitative analysis?",options:["One — the first attempt is most natural","Two — one from the front and one from the side","Multiple — to account for variability between attempts","As many as possible regardless of athlete fatigue"],correct:2,feedback:["A single observation is rarely sufficient — one attempt may not be representative.","Two observations from different angles is a good approach, but you also need multiple repetitions from each angle.","Correct. Multiple repetitions should be observed to account for natural variability and to confirm patterns are consistent rather than one-off occurrences.","Fatigued movement is not representative of normal technique — observations should be taken before fatigue affects the pattern."]},
+  {q:"A coach says 'I can see the problem but I'm not sure why it's happening.' Which stage of Knudson's model are they struggling with?",options:["Preparation","Observation","Evaluation and diagnosis","Intervention"],correct:2,feedback:["Preparation involves planning the observation — the coach has already done this.","The coach has observed the problem — they can see it.","Correct. Identifying the cause of an error is the evaluation and diagnosis stage — the coach can observe the problem but cannot yet explain it.","Intervention involves correcting the error — which requires knowing the cause first."]}
+];
+
+const sorterItems=[
+  {text:"Quadriceps working eccentrically to control knee bend",answer:"descent"},
+  {text:"Gluteus maximus working concentrically to drive hip extension",answer:"ascent"},
+  {text:"Ankle dorsiflexion range of motion being tested",answer:"descent"},
+  {text:"Quadriceps working concentrically to extend the knee",answer:"ascent"},
+  {text:"Hip extensors controlling the rate of hip flexion",answer:"descent"},
+  {text:"The pattern of joint extension returning toward standing",answer:"ascent"},
+  {text:"Heel rise is most visible during this phase",answer:"descent"},
+  {text:"Hip abductors stabilising against valgus collapse under full load",answer:"descent"},
+  {text:"Trunk remaining vertical as the athlete drives upward",answer:"ascent"},
+  {text:"Arms overhead position being tested against thoracic mobility limitations",answer:"descent"},
+  {text:"Maximum knee flexion angle reached at the transition point",answer:"descent"},
+  {text:"Gluteus medius maintaining hip abduction against gravity",answer:"ascent"},
+  {text:"Rate of descent controlled by eccentric muscle action throughout",answer:"descent"},
+  {text:"The body returning to a neutral upright stance",answer:"ascent"}
+];
+
+let questions=[],current=0,score=0,answered=false;
+function shuffle(arr){return arr.sort(()=>Math.random()-0.5)}
+function initQuiz(){questions=shuffle([...allQuestions]);current=0;score=0;document.getElementById('question-container').style.display='block';document.getElementById('quiz-complete').style.display='none';renderQuestion()}
+function renderQuestion(){const q=questions[current];document.getElementById('q-counter').textContent=`Question ${current+1} of ${questions.length}`;document.getElementById('q-score').textContent=`Score: ${score}`;document.getElementById('progress').style.width=`${(current/questions.length)*100}%`;const opts=q.options.map((o,i)=>`<button class="quiz-option" id="opt-${i}" onclick="selectAnswer(${i})">${o}</button>`).join('');document.getElementById('question-container').innerHTML=`<div style="font-size:16px;font-weight:500;margin-bottom:20px;line-height:1.5;">${q.q}</div>${opts}<div class="quiz-feedback" id="feedback"></div><button class="quiz-next" id="next-btn" onclick="nextQuestion()">${current===questions.length-1?'See results':'Next question →'}</button>`;answered=false}
+function selectAnswer(idx){if(answered)return;answered=true;const q=questions[current];q.options.forEach((_,i)=>{const btn=document.getElementById('opt-'+i);btn.disabled=true;if(i===q.correct)btn.classList.add('correct');else if(i===idx)btn.classList.add('incorrect')});if(idx===q.correct)score++;const fb=document.getElementById('feedback');fb.textContent=q.feedback[idx];fb.className='quiz-feedback show '+(idx===q.correct?'feedback-correct':'feedback-incorrect');document.getElementById('next-btn').className='quiz-next show';document.getElementById('q-score').textContent=`Score: ${score}`}
+function nextQuestion(){current++;if(current>=questions.length){document.getElementById('question-container').style.display='none';document.getElementById('quiz-complete').style.display='block';document.getElementById('progress').style.width='100%';document.getElementById('final-score').textContent=`${score} / ${questions.length} correct`;const pct=Math.round((score/questions.length)*100);document.getElementById('final-msg').textContent=pct>=80?'Excellent — you have a strong grasp of qualitative analysis. Move on to Topic 3.':pct>=60?'Good effort. Review the questions you missed and try again before moving on.':'Keep going — re-read the overview and phase breakdown sections and attempt the quiz again.'}else renderQuestion()}
+function restartQuiz(){initQuiz()}
+
+function buildSorter(){const src=document.getElementById('drag-source');shuffle([...sorterItems]).forEach((item,i)=>{const el=document.createElement('div');el.className='drag-item';el.draggable=true;el.dataset.answer=item.answer;el.dataset.id='si'+i;el.id='si'+i;el.textContent=item.text;el.addEventListener('dragstart',()=>{window._dragged=el});src.appendChild(el)});document.querySelectorAll('.drag-zone').forEach(zone=>{zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('over')});zone.addEventListener('dragleave',()=>zone.classList.remove('over'));zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('over');const d=window._dragged;if(!d)return;const dropped=document.createElement('div');dropped.className='drop-item';dropped.textContent=d.textContent;dropped.dataset.answer=d.dataset.answer;dropped.dataset.zone=zone.id.replace('zone-','');dropped.dataset.src=d.id;zone.appendChild(dropped);d.style.display='none'})})}
+function checkSorter(){const items=document.querySelectorAll('.drop-item');let correct=0;items.forEach(item=>{if(item.dataset.answer===item.dataset.zone){item.classList.add('right');correct++}else item.classList.add('wrong')});const fb=document.getElementById('sorter-feedback');fb.style.display='block';fb.innerHTML=`<strong style="font-family:var(--mono);">${correct} / ${items.length} correct</strong> — ${correct===items.length?'All correct — excellent understanding of movement phases.':'Items in red are incorrectly placed. Remember: descent = controlling movement downward (eccentric); ascent = driving movement upward (concentric).'}`}
+function resetSorter(){document.querySelectorAll('.drop-item').forEach(el=>{const orig=document.getElementById(el.dataset.src);if(orig)orig.style.display='block';el.remove()});document.getElementById('sorter-feedback').style.display='none'}
+
+initQuiz();buildSorter();
+</script>
+</body>
+</html>
