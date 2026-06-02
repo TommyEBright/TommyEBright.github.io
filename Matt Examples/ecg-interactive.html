@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECG Interactive Learning — Dr. Tommy Bright</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+/* ── LAYOUT ───────────────────────────────── */
+.ecg-page { background:#0a0f1e; min-height:100vh; }
+
+/* Tab bar */
+.tab-bar {
+  background:#0a0f1e;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+  display:flex; gap:0; overflow-x:auto;
+  padding:0 40px;
+  position:sticky; top:56px; z-index:90;
+}
+.tab-bar button {
+  background:none; border:none; border-bottom:2px solid transparent;
+  color:rgba(255,255,255,0.45); cursor:pointer;
+  font-family:var(--mono); font-size:11px; letter-spacing:1.5px;
+  padding:14px 20px; text-transform:uppercase; transition:all .2s;
+  white-space:nowrap;
+}
+.tab-bar button:hover { color:rgba(255,255,255,0.7); }
+.tab-bar button.active { border-bottom-color:#2a8c4a; color:#6bcf8f; }
+
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+
+/* ── 3-PANEL SYNC VIEW ────────────────────── */
+.sync-wrap {
+  display:grid;
+  grid-template-columns:320px 1fr 300px;
+  gap:0;
+  height:calc(100vh - 130px);
+  min-height:520px;
+}
+.panel-heart, .panel-ecg, .panel-info {
+  border-right:1px solid rgba(255,255,255,0.06);
+  display:flex; flex-direction:column;
+  overflow:hidden;
+}
+.panel-label {
+  font-family:var(--mono); font-size:9px; letter-spacing:2px;
+  text-transform:uppercase; color:rgba(255,255,255,0.3);
+  padding:10px 16px; border-bottom:1px solid rgba(255,255,255,0.06);
+  flex-shrink:0;
+}
+
+/* Heart panel */
+.heart-svg-wrap {
+  flex:1; display:flex; align-items:center; justify-content:center;
+  padding:16px; position:relative;
+}
+
+/* ECG panel */
+.ecg-canvas-wrap { flex:1; position:relative; padding:16px; }
+#ecgCanvas { width:100%; height:100%; display:block; }
+.ecg-controls {
+  flex-shrink:0; padding:12px 16px;
+  border-top:1px solid rgba(255,255,255,0.06);
+  display:flex; align-items:center; gap:12px;
+}
+.ctrl-btn {
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+  color:#fff; cursor:pointer; font-size:13px;
+  padding:6px 14px; transition:background .15s;
+  font-family:var(--mono);
+}
+.ctrl-btn:hover { background:rgba(42,140,74,.2); border-color:#2a8c4a; }
+.ctrl-btn.active { background:#2a8c4a; border-color:#2a8c4a; }
+#scrubSlider {
+  flex:1; -webkit-appearance:none; height:3px;
+  background:rgba(255,255,255,0.15); outline:none;
+  accent-color:#2a8c4a;
+}
+
+/* Info panel */
+.info-panel-inner { flex:1; overflow-y:auto; padding:20px 16px; }
+.info-component {
+  font-family:var(--mono); font-size:10px; letter-spacing:1.5px;
+  text-transform:uppercase; color:#6bcf8f; margin-bottom:6px;
+}
+.info-title {
+  font-family:var(--serif); font-size:22px; color:#fff;
+  margin-bottom:16px; line-height:1.2;
+}
+.info-row { margin-bottom:14px; }
+.info-row-label {
+  font-family:var(--mono); font-size:9px; letter-spacing:1px;
+  text-transform:uppercase; color:rgba(255,255,255,0.3);
+  margin-bottom:4px;
+}
+.info-row-val {
+  font-size:13px; color:rgba(255,255,255,0.75);
+  font-weight:300; line-height:1.6;
+}
+.info-values {
+  background:rgba(42,140,74,.08); border:1px solid rgba(42,140,74,.2);
+  padding:10px 12px; margin-top:14px;
+}
+.info-values-title {
+  font-family:var(--mono); font-size:9px; letter-spacing:1px;
+  text-transform:uppercase; color:#6bcf8f; margin-bottom:6px;
+}
+.info-values-val { font-size:12px; color:rgba(255,255,255,.6); font-weight:300; }
+
+/* ── HEART SVG NODES ─────────────────────── */
+.h-node { transition:all .3s ease; }
+.h-chamber { transition:fill .3s ease; }
+.h-pathway { transition:stroke .3s ease, stroke-width .3s ease; }
+
+/* ── SIMULATOR ────────────────────────────── */
+.sim-wrap {
+  max-width:900px; margin:0 auto; padding:40px;
+  display:grid; grid-template-columns:280px 1fr; gap:32px;
+}
+.sim-controls { display:flex; flex-direction:column; gap:20px; }
+.sim-group { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07); padding:18px; }
+.sim-group-title {
+  font-family:var(--mono); font-size:10px; letter-spacing:1.5px;
+  text-transform:uppercase; color:#6bcf8f; margin-bottom:12px;
+}
+.sim-slider-wrap { margin-bottom:12px; }
+.sim-slider-row { display:flex; justify-content:space-between; margin-bottom:4px; }
+.sim-slider-name { font-size:13px; color:rgba(255,255,255,.7); }
+.sim-slider-val {
+  font-family:var(--mono); font-size:12px; color:#6bcf8f;
+}
+input[type=range].sim-range {
+  width:100%; -webkit-appearance:none; height:3px;
+  background:rgba(255,255,255,.15); outline:none;
+  accent-color:#2a8c4a; margin:4px 0 8px;
+}
+.sim-note { font-size:12px; color:rgba(255,255,255,.35); font-weight:300; line-height:1.5; }
+.sim-canvas-wrap {
+  background:rgba(0,0,0,.3); border:1px solid rgba(42,140,74,.15);
+  position:relative; padding:20px;
+}
+#simCanvas { width:100%; display:block; }
+.sim-stats {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:8px; margin-top:12px;
+}
+.sim-stat {
+  background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07);
+  padding:10px; text-align:center;
+}
+.sim-stat-num { font-family:var(--serif); font-size:20px; color:#6bcf8f; }
+.sim-stat-lbl { font-family:var(--mono); font-size:9px; color:rgba(255,255,255,.3); letter-spacing:1px; text-transform:uppercase; margin-top:2px; }
+
+/* ── LABELLING ACTIVITY ────────────────────── */
+.label-wrap { max-width:800px; margin:0 auto; padding:40px; }
+.label-ecg-wrap {
+  background:rgba(0,0,0,.3); border:1px solid rgba(42,140,74,.15);
+  padding:24px; margin-bottom:24px; position:relative;
+}
+#labelCanvas { width:100%; display:block; cursor:pointer; }
+.label-bank {
+  display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;
+}
+.label-chip {
+  background:rgba(26,95,212,.15); border:1px solid rgba(26,95,212,.35);
+  color:#6b9fe4; font-family:var(--mono); font-size:11px;
+  letter-spacing:.5px; padding:7px 14px; cursor:pointer;
+  transition:all .15s; user-select:none;
+}
+.label-chip:hover { background:rgba(26,95,212,.3); }
+.label-chip.selected { background:#1a5fd4; color:#fff; }
+.label-chip.used { opacity:.3; cursor:default; }
+.label-drop {
+  position:absolute; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  border:2px dashed rgba(255,255,255,.2);
+  border-radius:4px; transition:all .2s;
+  font-family:var(--mono); font-size:9px; color:rgba(255,255,255,.3);
+  letter-spacing:.5px;
+}
+.label-drop:hover { border-color:rgba(26,95,212,.6); }
+.label-drop.filled { border-color:#1a5fd4; background:rgba(26,95,212,.15); }
+.label-drop.correct { border-color:#2a8c4a; background:rgba(42,140,74,.15); color:#6bcf8f; }
+.label-drop.incorrect { border-color:#dc2626; background:rgba(220,38,38,.1); color:#fca5a5; }
+.label-feedback {
+  padding:14px 18px; margin-top:12px;
+  font-size:14px; display:none;
+}
+.label-feedback.show { display:block; }
+.label-feedback.win { background:rgba(42,140,74,.1); color:#6bcf8f; border-left:3px solid #2a8c4a; }
+.label-feedback.partial { background:rgba(220,38,38,.07); color:#fca5a5; border-left:3px solid #dc2626; }
+
+/* ── CONDUCTION ORDERING ──────────────────── */
+.order-wrap { max-width:600px; margin:0 auto; padding:40px; }
+.order-list { display:flex; flex-direction:column; gap:8px; margin:24px 0; }
+.order-item {
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09);
+  padding:14px 16px; cursor:grab; display:flex; align-items:center;
+  gap:12px; transition:all .15s; user-select:none;
+}
+.order-item:hover { border-color:rgba(42,140,74,.4); }
+.order-item.dragging { opacity:.4; }
+.order-item.drag-over { border-color:#2a8c4a; background:rgba(42,140,74,.08); }
+.order-item.correct { border-color:#2a8c4a; background:rgba(42,140,74,.1); }
+.order-item.incorrect { border-color:#dc2626; background:rgba(220,38,38,.08); }
+.order-num {
+  font-family:var(--mono); font-size:11px; color:#6bcf8f;
+  width:20px; flex-shrink:0;
+}
+.order-text { font-size:13px; color:rgba(255,255,255,.75); flex:1; }
+.order-icon { font-size:14px; opacity:.4; }
+
+/* ── QUIZ ─────────────────────────────────── */
+.quiz-wrap { max-width:600px; margin:0 auto; padding:40px; }
+.quiz-q {
+  font-family:var(--serif); font-size:20px; color:#fff;
+  margin-bottom:24px; line-height:1.4;
+}
+.quiz-options { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+.quiz-opt {
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09);
+  color:rgba(255,255,255,.7); cursor:pointer; padding:14px 18px;
+  text-align:left; font-family:var(--sans); font-size:13px;
+  transition:all .15s;
+}
+.quiz-opt:hover { border-color:rgba(26,95,212,.5); color:#fff; }
+.quiz-opt.correct { border-color:#2a8c4a; background:rgba(42,140,74,.12); color:#6bcf8f; }
+.quiz-opt.incorrect { border-color:#dc2626; background:rgba(220,38,38,.08); color:#fca5a5; }
+.quiz-opt.reveal-correct { border-color:#2a8c4a; background:rgba(42,140,74,.06); color:#6bcf8f; }
+.quiz-explain {
+  padding:14px 18px; background:rgba(42,140,74,.07);
+  border-left:3px solid #2a8c4a; display:none;
+  font-size:13px; color:rgba(255,255,255,.65); line-height:1.6;
+  margin-bottom:16px;
+}
+.quiz-explain.show { display:block; }
+.quiz-progress {
+  font-family:var(--mono); font-size:10px; color:rgba(255,255,255,.3);
+  letter-spacing:1px; text-transform:uppercase; margin-bottom:24px;
+}
+.quiz-score {
+  text-align:center; padding:32px;
+}
+.quiz-score-num { font-family:var(--serif); font-size:56px; color:#6bcf8f; }
+.quiz-score-lbl { font-family:var(--mono); font-size:11px; color:rgba(255,255,255,.4); letter-spacing:1px; text-transform:uppercase; margin-top:8px; }
+
+/* ── RHYTHMS ──────────────────────────────── */
+.rhythms-wrap { max-width:900px; margin:0 auto; padding:40px; }
+.rhythm-selector {
+  display:flex; gap:8px; flex-wrap:wrap; margin-bottom:32px;
+}
+.rhythm-btn {
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09);
+  color:rgba(255,255,255,.5); cursor:pointer; font-family:var(--mono);
+  font-size:10px; letter-spacing:1px; padding:8px 16px;
+  text-transform:uppercase; transition:all .15s;
+}
+.rhythm-btn:hover { border-color:rgba(42,140,74,.4); color:rgba(255,255,255,.8); }
+.rhythm-btn.active { background:rgba(42,140,74,.15); border-color:#2a8c4a; color:#6bcf8f; }
+.rhythm-display { background:rgba(0,0,0,.3); border:1px solid rgba(42,140,74,.15); padding:24px; margin-bottom:24px; }
+#rhythmCanvas { width:100%; display:block; }
+.rhythm-info { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:12px; }
+.rhythm-info-card {
+  background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07);
+  padding:14px;
+}
+.rhythm-info-label { font-family:var(--mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:rgba(255,255,255,.3); margin-bottom:4px; }
+.rhythm-info-val { font-size:13px; color:rgba(255,255,255,.7); font-weight:300; }
+
+/* ── SHARED ───────────────────────────────── */
+.section-header { padding:32px 40px 0; max-width:860px; margin:0 auto; }
+.section-header h2 { font-family:var(--serif); font-size:28px; color:#fff; margin-bottom:8px; }
+.section-header p { font-size:14px; color:rgba(255,255,255,.5); font-weight:300; line-height:1.7; }
+.action-btn {
+  background:#2a8c4a; border:none; color:#fff; cursor:pointer;
+  font-family:var(--sans); font-size:13px; font-weight:500;
+  padding:10px 24px; transition:background .15s;
+}
+.action-btn:hover { background:#1a5a2d; }
+.action-btn-ghost {
+  background:transparent; border:1px solid rgba(255,255,255,.15);
+  color:rgba(255,255,255,.6); cursor:pointer;
+  font-family:var(--sans); font-size:13px;
+  padding:10px 24px; transition:all .15s;
+}
+.action-btn-ghost:hover { border-color:rgba(255,255,255,.35); color:#fff; }
+.btn-row { display:flex; gap:8px; margin-top:16px; }
+
+@media(max-width:900px){
+  .sync-wrap { grid-template-columns:1fr; height:auto; }
+  .panel-heart { height:300px; }
+  .sim-wrap { grid-template-columns:1fr; }
+  .tab-bar { padding:0 16px; }
+}
+</style>
+</head>
+<body class="ecg-page">
+
+<!-- SITE NAV -->
+<nav>
+  <a class="nav-brand" href="../index.html">Dr. Tommy Bright</a>
+  <ul class="nav-links">
+    <li><a href="../index.html">Home</a></li>
+    <li><a href="../teaching.html" class="active">Teaching &amp; Learning</a></li>
+    <li><a href="../project.html">Projects</a></li>
+    <li><a href="../research.html">Research</a></li>
+  </ul>
+  <div class="nav-social">
+    <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank">LinkedIn</a>
+    <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank">ResearchGate</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div style="background:#0a0f1e;padding:48px 40px 36px;border-bottom:1px solid rgba(42,140,74,0.2);position:relative;overflow:hidden;">
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 85% 50%,rgba(42,140,74,0.12),transparent);pointer-events:none;"></div>
+  <svg style="position:absolute;bottom:0;left:0;right:0;width:100%;height:60px;opacity:0.10;pointer-events:none;" viewBox="0 0 800 60" preserveAspectRatio="none">
+    <polyline points="0,30 60,30 80,30 90,4 100,56 110,30 130,30 145,18 160,42 175,30 200,30 260,30 280,30 290,4 300,56 310,30 330,30 345,18 360,42 375,30 400,30 460,30 480,30 490,4 500,56 510,30 530,30 545,18 560,42 575,30 600,30 660,30 680,30 690,4 700,56 710,30 730,30 745,18 760,42 775,30 800,30" stroke="#6bcf8f" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>
+  <div style="max-width:860px;margin:0 auto;position:relative;z-index:1;">
+    <div style="font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#2a8c4a;margin-bottom:14px;">Physiology · Level 4 · 5 · 6</div>
+    <h1 style="font-family:var(--serif);font-size:clamp(28px,4vw,46px);color:#fff;line-height:1.1;letter-spacing:-0.5px;margin-bottom:10px;">ECG Interactive Learning<br><em style="font-style:italic;color:#6b9fe4;">understand the trace.</em></h1>
+    <p style="font-size:14px;color:rgba(255,255,255,0.55);max-width:580px;line-height:1.7;font-weight:300;">Explore the ECG in real time — synchronized with cardiac conduction, mechanical events, and blood flow. Six interactive modules from beginner to clinical.</p>
+  </div>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="active" onclick="switchTab(0)">① Synchronized View</button>
+  <button onclick="switchTab(1)">② ECG Simulator</button>
+  <button onclick="switchTab(2)">③ Label Practice</button>
+  <button onclick="switchTab(3)">④ Conduction Order</button>
+  <button onclick="switchTab(4)">⑤ Quiz</button>
+  <button onclick="switchTab(5)">⑥ Rhythm Library</button>
+</div>
+
+<!-- ═══════════ TAB 0: SYNCHRONIZED VIEW ═══════════ -->
+<div class="tab-panel active" id="tab-0">
+<div class="sync-wrap">
+
+  <!-- LEFT: HEART -->
+  <div class="panel-heart">
+    <div class="panel-label">Cardiac Conduction</div>
+    <div class="heart-svg-wrap">
+      <svg id="heartSVG" viewBox="0 0 280 320" style="width:100%;max-width:260px;height:auto;">
+        <defs>
+          <radialGradient id="raGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#4a6fa8"/>
+            <stop offset="100%" stop-color="#2a4f88"/>
+          </radialGradient>
+          <radialGradient id="laGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#4a6fa8"/>
+            <stop offset="100%" stop-color="#2a4f88"/>
+          </radialGradient>
+          <radialGradient id="rvGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#3a5aa8"/>
+            <stop offset="100%" stop-color="#1a3a88"/>
+          </radialGradient>
+          <radialGradient id="lvGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#1a3a88"/>
+            <stop offset="100%" stop-color="#0a1a68"/>
+          </radialGradient>
+        </defs>
+
+        <!-- Myocardium outline -->
+        <path d="M140 38 C100 38,62 70,62 130 L62 240 C62 295,100 320,140 335 C180 320,218 295,218 240 L218 130 C218 70,180 38,140 38Z" fill="#c8607a" opacity=".9"/>
+
+        <!-- Chambers -->
+        <ellipse id="h-ra" class="h-chamber" cx="100" cy="120" rx="38" ry="44" fill="url(#raGrad)"/>
+        <ellipse id="h-la" class="h-chamber" cx="180" cy="120" rx="38" ry="44" fill="url(#laGrad)"/>
+        <ellipse id="h-rv" class="h-chamber" cx="108" cy="225" rx="44" ry="58" fill="url(#rvGrad)"/>
+        <ellipse id="h-lv" class="h-chamber" cx="172" cy="225" rx="46" ry="60" fill="url(#lvGrad)"/>
+
+        <!-- Septum -->
+        <line x1="140" y1="165" x2="140" y2="290" stroke="rgba(255,255,255,.08)" stroke-width="2"/>
+
+        <!-- Vessels -->
+        <!-- SVC top left -->
+        <rect x="68" y="20" width="22" height="36" rx="11" fill="#4a6fa8"/>
+        <!-- IVC bottom left -->
+        <rect x="68" y="296" width="22" height="36" rx="11" fill="#4a6fa8"/>
+        <!-- Pulmonary artery top -->
+        <rect x="120" y="4" width="24" height="44" rx="12" fill="#c96ba3"/>
+        <!-- Pulmonary branches -->
+        <rect x="64" y="24" width="22" height="36" rx="11" fill="#c96ba3" opacity=".7"/>
+        <rect x="194" y="24" width="22" height="36" rx="11" fill="#c96ba3" opacity=".7"/>
+        <!-- Aorta -->
+        <path d="M168 22 Q210 8,230 40" stroke="#e85555" stroke-width="16" fill="none" stroke-linecap="round"/>
+        <!-- Pulmonary veins -->
+        <rect x="210" y="80" width="20" height="52" rx="10" fill="#c9a876"/>
+        <rect x="210" y="145" width="20" height="52" rx="10" fill="#c9a876"/>
+
+        <!-- Valve lines -->
+        <line x1="100" y1="162" x2="100" y2="172" stroke="rgba(107,207,143,.5)" stroke-width="2"/>
+        <line x1="180" y1="162" x2="180" y2="172" stroke="rgba(107,207,143,.5)" stroke-width="2"/>
+
+        <!-- CONDUCTION PATHWAY LINES -->
+        <path id="path-sa-av" class="h-pathway" d="M88 98 Q100 140 128 162" stroke="rgba(107,207,143,.15)" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path id="path-av-his" class="h-pathway" d="M128 162 L140 185" stroke="rgba(107,207,143,.15)" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path id="path-his-lbb" class="h-pathway" d="M140 185 Q120 220 106 268" stroke="rgba(107,207,143,.15)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <path id="path-his-rbb" class="h-pathway" d="M140 185 Q160 220 174 268" stroke="rgba(107,207,143,.15)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <path id="path-purkinje" class="h-pathway" d="M106 268 Q130 295 140 305 Q150 295 174 268" stroke="rgba(107,207,143,.15)" stroke-width="1" fill="none" stroke-linecap="round"/>
+
+        <!-- NODES -->
+        <!-- SA node -->
+        <g id="node-sa">
+          <circle cx="88" cy="95" r="9" fill="#0a0f1e" stroke="rgba(107,207,143,.3)" stroke-width="1.5"/>
+          <circle id="node-sa-dot" cx="88" cy="95" r="5" fill="#2a8c4a"/>
+        </g>
+        <!-- AV node -->
+        <g id="node-av">
+          <circle cx="128" cy="165" r="8" fill="#0a0f1e" stroke="rgba(107,207,143,.25)" stroke-width="1.5"/>
+          <circle id="node-av-dot" cx="128" cy="165" r="4" fill="#1a5a2d"/>
+        </g>
+        <!-- Bundle of His -->
+        <g id="node-his">
+          <circle cx="140" cy="187" r="6" fill="#0a0f1e" stroke="rgba(107,207,143,.2)" stroke-width="1.5"/>
+          <circle id="node-his-dot" cx="140" cy="187" r="3" fill="#1a5a2d"/>
+        </g>
+        <!-- Bundle branches -->
+        <circle id="node-lbb" cx="106" cy="270" r="5" fill="#1a5a2d" stroke="rgba(107,207,143,.2)" stroke-width="1"/>
+        <circle id="node-rbb" cx="174" cy="270" r="5" fill="#1a5a2d" stroke="rgba(107,207,143,.2)" stroke-width="1"/>
+
+        <!-- Labels -->
+        <text x="68" y="93" font-family="DM Mono,monospace" font-size="8" fill="rgba(107,207,143,.7)">SA</text>
+        <text x="108" y="168" font-family="DM Mono,monospace" font-size="8" fill="rgba(107,207,143,.5)">AV</text>
+        <text x="100" y="120" font-family="DM Mono,monospace" font-size="9" fill="rgba(255,255,255,.35)" text-anchor="middle">RA</text>
+        <text x="180" y="120" font-family="DM Mono,monospace" font-size="9" fill="rgba(255,255,255,.35)" text-anchor="middle">LA</text>
+        <text x="108" y="228" font-family="DM Mono,monospace" font-size="9" fill="rgba(255,255,255,.35)" text-anchor="middle">RV</text>
+        <text x="172" y="228" font-family="DM Mono,monospace" font-size="9" fill="rgba(255,255,255,.35)" text-anchor="middle">LV</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- CENTRE: ECG -->
+  <div class="panel-ecg">
+    <div class="panel-label">ECG Trace — click any wave to explore</div>
+    <div class="ecg-canvas-wrap">
+      <canvas id="ecgCanvas"></canvas>
+    </div>
+    <div class="ecg-controls">
+      <button class="ctrl-btn active" id="playPauseBtn" onclick="togglePlay()">⏸ Pause</button>
+      <button class="ctrl-btn" onclick="resetECG()">↺ Reset</button>
+      <input type="range" id="scrubSlider" min="0" max="1000" value="0" oninput="scrubTo(this.value)">
+      <span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3);letter-spacing:1px;" id="hrDisplay">75 BPM</span>
+    </div>
+  </div>
+
+  <!-- RIGHT: INFO -->
+  <div class="panel-info">
+    <div class="panel-label">Learning Panel</div>
+    <div class="info-panel-inner" id="infoPanelInner">
+      <div class="info-component" id="infoComponent">Baseline</div>
+      <div class="info-title" id="infoTitle">Diastole</div>
+      <div class="info-row">
+        <div class="info-row-label">Electrical event</div>
+        <div class="info-row-val" id="infoElectrical">Heart at rest. No electrical activity.</div>
+      </div>
+      <div class="info-row">
+        <div class="info-row-label">Mechanical event</div>
+        <div class="info-row-val" id="infoMechanical">Ventricles relaxed and filling with blood.</div>
+      </div>
+      <div class="info-row">
+        <div class="info-row-label">Blood flow</div>
+        <div class="info-row-val" id="infoBlood">Blood returns via vena cava → right atrium. Pulmonary veins → left atrium.</div>
+      </div>
+      <div class="info-row">
+        <div class="info-row-label">Student explanation</div>
+        <div class="info-row-val" id="infoExplain">The heart is between beats. The SA node is about to fire and start the next cycle.</div>
+      </div>
+      <div class="info-values" id="infoValues">
+        <div class="info-values-title">Normal values</div>
+        <div class="info-values-val" id="infoValuesText">R–R interval: 600–1000 ms at rest</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div><!-- /tab-0 -->
+
+<!-- ═══════════ TAB 1: SIMULATOR ═══════════ -->
+<div class="tab-panel" id="tab-1">
+<div class="section-header">
+  <h2>ECG Simulator</h2>
+  <p>Adjust heart rate, AV node delay, and conduction speed. Watch the ECG change in real time.</p>
+</div>
+<div class="sim-wrap">
+  <div class="sim-controls">
+    <div class="sim-group">
+      <div class="sim-group-title">Heart Rate</div>
+      <div class="sim-slider-wrap">
+        <div class="sim-slider-row">
+          <span class="sim-slider-name">Rate</span>
+          <span class="sim-slider-val" id="simHRVal">75 bpm</span>
+        </div>
+        <input type="range" class="sim-range" id="simHR" min="30" max="180" value="75" oninput="updateSim()">
+        <div class="sim-note" id="simHRNote">Normal sinus rhythm. R–R interval ~800ms.</div>
+      </div>
+    </div>
+    <div class="sim-group">
+      <div class="sim-group-title">AV Node Delay</div>
+      <div class="sim-slider-wrap">
+        <div class="sim-slider-row">
+          <span class="sim-slider-name">PR Interval</span>
+          <span class="sim-slider-val" id="simPRVal">160 ms</span>
+        </div>
+        <input type="range" class="sim-range" id="simPR" min="80" max="400" value="160" oninput="updateSim()">
+        <div class="sim-note" id="simPRNote">Normal AV conduction (120–200ms).</div>
+      </div>
+    </div>
+    <div class="sim-group">
+      <div class="sim-group-title">QRS Duration</div>
+      <div class="sim-slider-wrap">
+        <div class="sim-slider-row">
+          <span class="sim-slider-name">Conduction speed</span>
+          <span class="sim-slider-val" id="simQRSVal">90 ms</span>
+        </div>
+        <input type="range" class="sim-range" id="simQRS" min="40" max="200" value="90" oninput="updateSim()">
+        <div class="sim-note" id="simQRSNote">Normal ventricular conduction (&lt;120ms).</div>
+      </div>
+    </div>
+    <div class="sim-stats">
+      <div class="sim-stat">
+        <div class="sim-stat-num" id="simStatRR">800</div>
+        <div class="sim-stat-lbl">R–R ms</div>
+      </div>
+      <div class="sim-stat">
+        <div class="sim-stat-num" id="simStatQT">380</div>
+        <div class="sim-stat-lbl">QT ms</div>
+      </div>
+      <div class="sim-stat">
+        <div class="sim-stat-num" id="simStatHR">75</div>
+        <div class="sim-stat-lbl">BPM</div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="sim-canvas-wrap">
+      <canvas id="simCanvas" height="180"></canvas>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════ TAB 2: LABELLING ═══════════ -->
+<div class="tab-panel" id="tab-2">
+<div class="section-header">
+  <h2>Label the ECG</h2>
+  <p>Select a label from the bank, then click the correct region on the ECG trace.</p>
+</div>
+<div class="label-wrap">
+  <div class="label-bank" id="labelBank"></div>
+  <div class="label-ecg-wrap" style="position:relative;">
+    <canvas id="labelCanvas" height="160"></canvas>
+    <div id="labelDropZones"></div>
+  </div>
+  <div class="btn-row">
+    <button class="action-btn" onclick="checkLabels()">Check answers</button>
+    <button class="action-btn-ghost" onclick="resetLabels()">Reset</button>
+  </div>
+  <div class="label-feedback" id="labelFeedback"></div>
+</div>
+</div>
+
+<!-- ═══════════ TAB 3: ORDERING ═══════════ -->
+<div class="tab-panel" id="tab-3">
+<div class="section-header">
+  <h2>Conduction Sequence</h2>
+  <p>Drag to reorder the steps of the cardiac conduction pathway into the correct sequence.</p>
+</div>
+<div class="order-wrap">
+  <div class="order-list" id="orderList"></div>
+  <div class="btn-row">
+    <button class="action-btn" onclick="checkOrder()">Check order</button>
+    <button class="action-btn-ghost" onclick="resetOrder()">Shuffle</button>
+  </div>
+  <div class="label-feedback" id="orderFeedback"></div>
+</div>
+</div>
+
+<!-- ═══════════ TAB 4: QUIZ ═══════════ -->
+<div class="tab-panel" id="tab-4">
+<div class="section-header">
+  <h2>Knowledge Quiz</h2>
+  <p>Test your understanding of ECG components and cardiac physiology.</p>
+</div>
+<div class="quiz-wrap">
+  <div id="quizInner"></div>
+</div>
+</div>
+
+<!-- ═══════════ TAB 5: RHYTHMS ═══════════ -->
+<div class="tab-panel" id="tab-5">
+<div class="section-header">
+  <h2>Rhythm Library</h2>
+  <p>Compare normal sinus rhythm with common abnormalities. Observe how the ECG trace changes.</p>
+</div>
+<div class="rhythms-wrap">
+  <div class="rhythm-selector" id="rhythmSelector"></div>
+  <div class="rhythm-display">
+    <canvas id="rhythmCanvas" height="120"></canvas>
+  </div>
+  <div class="rhythm-info" id="rhythmInfo"></div>
+</div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">Dr. Tommy Bright</div>
+    <ul class="footer-links">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../teaching.html">Teaching &amp; Learning</a></li>
+      <li><a href="../project.html">Projects</a></li>
+      <li><a href="../research.html">Research</a></li>
+    </ul>
+    <div class="footer-social">
+      <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank">LinkedIn</a>
+      <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank">ResearchGate</a>
+    </div>
+  </div>
+  <div class="footer-copy">Plymouth Marjon University · Cardiff Metropolitan University · Tournament Golf College</div>
+</footer>
+
+<script>
+/* ================================================================
+   ECG INTERACTIVE LEARNING TOOL
+   Educational logic: each ECG time position (0–1) maps to
+   specific cardiac events — electrical, mechanical, and vascular.
+================================================================ */
+
+// ── TAB SWITCHING ──────────────────────────────────────────────
+function switchTab(i) {
+  document.querySelectorAll('.tab-panel').forEach((p,j) => p.classList.toggle('active', j===i));
+  document.querySelectorAll('.tab-bar button').forEach((b,j) => b.classList.toggle('active', j===i));
+  if (i===1) { setTimeout(drawSimCanvas,50); }
+  if (i===2) { setTimeout(initLabels,50); }
+  if (i===3) { initOrder(); }
+  if (i===4) { initQuiz(); }
+  if (i===5) { setTimeout(()=>drawRhythm(activeRhythm),50); }
+}
+
+// ── ECG MATHS ──────────────────────────────────────────────────
+// Returns normalised y (-1 to +1) for a given cycle position t (0–1)
+// prScale: 1 = normal, >1 = longer PR
+// qrsScale: 1 = normal, >1 = wider QRS
+function ecgY(t, prScale=1, qrsScale=1) {
+  let y = 0;
+  const g = (t, mu, sig, amp) => amp * Math.exp(-((t-mu)**2)/(2*sig**2));
+
+  // Normalise timing based on scales
+  const prEnd  = 0.18 + 0.10*(prScale-1);
+  const qrsW   = 0.04 * qrsScale;
+  const qrsC   = prEnd + 0.04;
+  const sC     = qrsC + qrsW;
+  const stEnd  = sC + 0.06;
+  const tC     = stEnd + 0.10;
+
+  // P wave
+  y += g(t, 0.12, 0.025, 0.18);
+  // Q
+  y -= g(t, qrsC - qrsW*0.6, qrsW*0.4, 0.08);
+  // R
+  y += g(t, qrsC, qrsW*0.45, 1.0);
+  // S
+  y -= g(t, sC, qrsW*0.4, 0.18);
+  // T
+  y += g(t, tC, 0.045, 0.28);
+
+  return y;
+}
+
+// ── PHASE DATA ─────────────────────────────────────────────────
+// Maps cycle position to educational content and heart state
+const PHASES = [
+  {
+    tStart:0, tEnd:0.06,
+    component:'TP Segment',
+    title:'Ventricular Diastole',
+    electrical:'No electrical activity. Heart at rest.',
+    mechanical:'Both ventricles fully relaxed. Atria filling passively.',
+    blood:'Blood returns via vena cava to right atrium. Pulmonary veins drain to left atrium.',
+    explain:'Between beats — the heart refills. This quiet period is important for coronary artery perfusion.',
+    values:'R–R interval: 600–1000 ms at rest (75 bpm = 800 ms)',
+    nodes:[], chambers:['h-ra','h-la'], paths:[], pathways:[]
+  },
+  {
+    tStart:0.06, tEnd:0.20,
+    component:'P Wave',
+    title:'Atrial Depolarisation',
+    electrical:'SA node fires. Electrical impulse spreads across both atria.',
+    mechanical:'Both atria contract, pushing blood through AV valves into ventricles.',
+    blood:'Blood pushed from atria → through tricuspid (right) and mitral (left) valves → into ventricles.',
+    explain:'The SA node is the heart\'s natural pacemaker. It fires 60–100 times/min at rest. The P wave is small because the atria are thin-walled.',
+    values:'P wave duration: <120ms · Amplitude: <0.25mV',
+    nodes:['node-sa'], chambers:['h-ra','h-la'], paths:['path-sa-av'], pathways:[]
+  },
+  {
+    tStart:0.20, tEnd:0.30,
+    component:'PR Segment',
+    title:'AV Node Delay',
+    electrical:'Impulse held at AV node for ~100ms. Crucial safety delay.',
+    mechanical:'Atria finishing contraction. Ventricles filling to maximum volume (end-diastolic volume ~120mL).',
+    blood:'Final blood volume entering ventricles. AV valves about to close.',
+    explain:'The AV node deliberately slows conduction to allow ventricles to fully fill before they contract.',
+    values:'PR interval (P wave start → QRS start): 120–200ms',
+    nodes:['node-av'], chambers:['h-ra','h-la'], paths:['path-sa-av','path-av-his'], pathways:[]
+  },
+  {
+    tStart:0.30, tEnd:0.46,
+    component:'QRS Complex',
+    title:'Ventricular Depolarisation',
+    electrical:'Impulse through Bundle of His → bundle branches → Purkinje fibres. Rapid ventricular depolarisation.',
+    mechanical:'Both ventricles contract simultaneously. Pressure rises sharply. AV valves snap shut (S1 heart sound).',
+    blood:'Blood ejected: right ventricle → pulmonary artery → lungs. Left ventricle → aorta → systemic circulation.',
+    explain:'The QRS is large because the ventricles have much more muscle mass than the atria. The left ventricle generates ~120mmHg systolic pressure.',
+    values:'QRS duration: <120ms · R wave: 5–25mm · Rate: 60–100/min',
+    nodes:['node-av','node-his','node-lbb','node-rbb'], chambers:['h-rv','h-lv'], paths:['path-av-his','path-his-lbb','path-his-rbb','path-purkinje'], pathways:[]
+  },
+  {
+    tStart:0.46, tEnd:0.58,
+    component:'ST Segment',
+    title:'Ventricular Contraction Plateau',
+    electrical:'Ventricles fully depolarised — isoelectric (flat) segment on ECG.',
+    mechanical:'Ventricles at peak contraction. Semilunar valves (aortic and pulmonary) open. Blood being ejected.',
+    blood:'Blood flowing into aorta and pulmonary artery. Stroke volume ~70mL ejected per beat.',
+    explain:'ST segment should be flat on the baseline. Elevation (STEMI) indicates heart muscle injury. Depression suggests ischaemia.',
+    values:'ST segment: isoelectric (on baseline) · Any deviation is clinically significant',
+    nodes:[], chambers:['h-rv','h-lv'], paths:[], pathways:[]
+  },
+  {
+    tStart:0.58, tEnd:0.80,
+    component:'T Wave',
+    title:'Ventricular Repolarisation',
+    electrical:'Ventricles recover resting membrane potential. Electrical reset for next beat.',
+    mechanical:'Ventricles begin relaxing. Semilunar valves close (S2 heart sound). Ventricular pressure falls.',
+    blood:'Backflow prevented by semilunar valve closure. Coronary arteries begin refilling (occurs in diastole).',
+    explain:'The T wave is upright in most leads. Inverted T waves can indicate ischaemia, ventricular hypertrophy, or bundle branch block.',
+    values:'T wave: upright in V1–V6 · Duration ~160ms · QT interval: 350–450ms',
+    nodes:[], chambers:['h-rv','h-lv'], paths:[], pathways:[]
+  }
+];
+
+function getPhase(t) {
+  return PHASES.find(p => t >= p.tStart && t <= p.tEnd) || PHASES[0];
+}
+
+// ── MAIN ECG ANIMATION ────────────────────────────────────────
+let animPlaying = true;
+let animT = 0; // 0–1 within one cycle
+let animRaf = null;
+let lastTimestamp = null;
+const CYCLE_MS = 800; // 75 bpm default
+let selectedPhaseKey = null;
+
+const canvas = document.getElementById('ecgCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const wrap = canvas.parentElement;
+  canvas.width = wrap.clientWidth * devicePixelRatio;
+  canvas.height = wrap.clientHeight * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+}
+
+function drawECG(t) {
+  const W = canvas.width / devicePixelRatio;
+  const H = canvas.height / devicePixelRatio;
+  ctx.clearRect(0, 0, W, H);
+
+  const padX = 32, padY = 24;
+  const tw = W - padX*2, th = H - padY*2;
+  const mid = padY + th/2;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(42,140,74,0.07)';
+  ctx.lineWidth = 0.5;
+  const gridSm = 20;
+  for (let x = padX; x <= W-padX; x += gridSm) { ctx.beginPath(); ctx.moveTo(x,padY); ctx.lineTo(x,H-padY); ctx.stroke(); }
+  for (let y = padY; y <= H-padY; y += gridSm) { ctx.beginPath(); ctx.moveTo(padX,y); ctx.lineTo(W-padX,y); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(42,140,74,0.14)';
+  ctx.lineWidth = 1;
+  for (let x = padX; x <= W-padX; x += gridSm*5) { ctx.beginPath(); ctx.moveTo(x,padY); ctx.lineTo(x,H-padY); ctx.stroke(); }
+  for (let y = padY; y <= H-padY; y += gridSm*5) { ctx.beginPath(); ctx.moveTo(padX,y); ctx.lineTo(W-padX,y); ctx.stroke(); }
+
+  // Baseline
+  ctx.strokeStyle = 'rgba(42,140,74,0.2)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.moveTo(padX,mid); ctx.lineTo(W-padX,mid); ctx.stroke();
+
+  // Phase highlights
+  PHASES.forEach(p => {
+    const x0 = padX + p.tStart * tw;
+    const x1 = padX + p.tEnd * tw;
+    ctx.fillStyle = selectedPhaseKey === p.component
+      ? 'rgba(42,140,74,0.18)' : 'rgba(42,140,74,0.04)';
+    ctx.fillRect(x0, padY, x1-x0, th);
+  });
+
+  // Draw ECG trace (two cycles shown)
+  const amp = th * 0.38;
+  ctx.strokeStyle = '#6bcf8f';
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  const steps = 600;
+  for (let i = 0; i <= steps; i++) {
+    const tx = i/steps; // 0–1 for whole canvas
+    const cy = tx; // cycle position same as tx for one cycle shown
+    const y = ecgY(cy);
+    const px = padX + tx * tw;
+    const py = mid - y * amp;
+    i === 0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+
+  // Cursor line
+  const cursorX = padX + t * tw;
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4,3]);
+  ctx.beginPath(); ctx.moveTo(cursorX, padY); ctx.lineTo(cursorX, H-padY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Cursor dot
+  const cursorY_val = ecgY(t);
+  const cursorY = mid - cursorY_val * amp;
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(cursorX, cursorY, 4, 0, Math.PI*2); ctx.fill();
+
+  // Wave labels
+  const labels = [
+    {t:0.12, label:'P'},
+    {t:0.25, label:'PR'},
+    {t:0.38, label:'QRS'},
+    {t:0.52, label:'ST'},
+    {t:0.68, label:'T'}
+  ];
+  ctx.font = '500 11px DM Mono, monospace';
+  ctx.textAlign = 'center';
+  labels.forEach(lb => {
+    const lx = padX + lb.t * tw;
+    ctx.fillStyle = selectedPhaseKey && PHASES.find(p=>p.component.startsWith(lb.label) && selectedPhaseKey===p.component)
+      ? '#6bcf8f' : 'rgba(107,207,143,0.45)';
+    ctx.fillText(lb.label, lx, padY - 6);
+  });
+}
+
+function animateECG(ts) {
+  if (!lastTimestamp) lastTimestamp = ts;
+  const dt = ts - lastTimestamp;
+  lastTimestamp = ts;
+  if (animPlaying) {
+    animT += dt / CYCLE_MS;
+    if (animT > 1) animT -= 1;
+  }
+  drawECG(animT);
+  updateHeartFromT(animT);
+  updateInfoPanel(animT);
+  document.getElementById('scrubSlider').value = Math.round(animT * 1000);
+  animRaf = requestAnimationFrame(animateECG);
+}
+
+function togglePlay() {
+  animPlaying = !animPlaying;
+  const btn = document.getElementById('playPauseBtn');
+  btn.textContent = animPlaying ? '⏸ Pause' : '▶ Play';
+  btn.classList.toggle('active', animPlaying);
+  if (animPlaying) lastTimestamp = null;
+}
+
+function resetECG() {
+  animT = 0; lastTimestamp = null;
+  animPlaying = true;
+  document.getElementById('playPauseBtn').textContent = '⏸ Pause';
+  document.getElementById('playPauseBtn').classList.add('active');
+}
+
+function scrubTo(val) {
+  animT = val / 1000;
+  lastTimestamp = null;
+  drawECG(animT);
+  updateHeartFromT(animT);
+  updateInfoPanel(animT);
+}
+
+// ── HEART ANIMATION ──────────────────────────────────────────
+const NODE_IDS = ['node-sa-dot','node-av-dot','node-his-dot','node-lbb','node-rbb'];
+const CHAMBER_IDS = ['h-ra','h-la','h-rv','h-lv'];
+const PATH_IDS = ['path-sa-av','path-av-his','path-his-lbb','path-his-rbb','path-purkinje'];
+
+const CHAMBER_BASE = {
+  'h-ra':'url(#raGrad)', 'h-la':'url(#laGrad)',
+  'h-rv':'url(#rvGrad)', 'h-lv':'url(#lvGrad)'
+};
+const CHAMBER_ACTIVE = {
+  'h-ra':'#8aacdd','h-la':'#8aacdd',
+  'h-rv':'#6b8dcc','h-lv':'#4a70bb'
+};
+
+function updateHeartFromT(t) {
+  const phase = getPhase(t);
+
+  // Reset all
+  CHAMBER_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('fill', CHAMBER_BASE[id]);
+  });
+  NODE_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.setAttribute('fill','#1a5a2d'); el.setAttribute('r', id.endsWith('dot') ? '4':'3'); }
+  });
+  PATH_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.setAttribute('stroke','rgba(107,207,143,.15)'); el.setAttribute('stroke-width','1.5'); }
+  });
+
+  // Activate nodes
+  phase.nodes.forEach(id => {
+    const dot = document.getElementById(id+'-dot') || document.getElementById(id);
+    if (dot) {
+      dot.setAttribute('fill','#6bcf8f');
+      dot.setAttribute('r', '7');
+    }
+  });
+
+  // Activate chambers
+  phase.chambers.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('fill', CHAMBER_ACTIVE[id]);
+  });
+
+  // Activate pathways
+  phase.paths.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.setAttribute('stroke','rgba(107,207,143,.7)'); el.setAttribute('stroke-width','3'); }
+  });
+}
+
+// ── INFO PANEL ────────────────────────────────────────────────
+function updateInfoPanel(t) {
+  const p = getPhase(t);
+  document.getElementById('infoComponent').textContent = p.component;
+  document.getElementById('infoTitle').textContent = p.title;
+  document.getElementById('infoElectrical').textContent = p.electrical;
+  document.getElementById('infoMechanical').textContent = p.mechanical;
+  document.getElementById('infoBlood').textContent = p.blood;
+  document.getElementById('infoExplain').textContent = p.explain;
+  document.getElementById('infoValuesText').textContent = p.values;
+}
+
+// Canvas click → highlight phase
+canvas.addEventListener('click', e => {
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const W = rect.width;
+  const padX = 32;
+  const tw = W - padX*2;
+  const t = Math.max(0, Math.min(1, (x - padX)/tw));
+  animT = t;
+  selectedPhaseKey = getPhase(t).component;
+  lastTimestamp = null;
+});
+
+// ── SIMULATOR ─────────────────────────────────────────────────
+const simCanvas = document.getElementById('simCanvas');
+const simCtx = simCanvas.getContext('2d');
+
+function updateSim() {
+  const hr   = +document.getElementById('simHR').value;
+  const prMs = +document.getElementById('simPR').value;
+  const qrsMs= +document.getElementById('simQRS').value;
+
+  document.getElementById('simHRVal').textContent  = hr + ' bpm';
+  document.getElementById('simPRVal').textContent  = prMs + ' ms';
+  document.getElementById('simQRSVal').textContent = qrsMs + ' ms';
+
+  const rr = Math.round(60000/hr);
+  const qt = Math.round(prMs + qrsMs + 160);
+  document.getElementById('simStatRR').textContent = rr;
+  document.getElementById('simStatQT').textContent = qt;
+  document.getElementById('simStatHR').textContent = hr;
+
+  // HR note
+  let hrNote = 'Normal sinus rhythm.';
+  if (hr < 60) hrNote = 'Sinus bradycardia (<60 bpm). Common in fit athletes; also hypothyroidism or beta-blockers.';
+  else if (hr > 100) hrNote = 'Sinus tachycardia (>100 bpm). Normal during exercise; at rest consider anxiety, fever, or cardiac causes.';
+  document.getElementById('simHRNote').textContent = hrNote + ` R–R interval: ${rr}ms.`;
+
+  // PR note
+  let prNote = 'Normal AV conduction (120–200ms).';
+  if (prMs < 120) prNote = 'Short PR (<120ms). May indicate pre-excitation (WPW syndrome) — impulse bypassing AV node.';
+  else if (prMs > 200) prNote = `Prolonged PR (${prMs}ms > 200ms) = First-degree heart block. Slow AV conduction — benign but monitor.`;
+  document.getElementById('simPRNote').textContent = prNote;
+
+  // QRS note
+  let qrsNote = 'Normal ventricular conduction (<120ms).';
+  if (qrsMs > 120) qrsNote = `Wide QRS (${qrsMs}ms > 120ms) = Bundle branch block. One ventricle activating late via abnormal pathway.`;
+  document.getElementById('simQRSNote').textContent = qrsNote;
+
+  drawSimCanvas();
+}
+
+function drawSimCanvas() {
+  const hr   = +document.getElementById('simHR').value;
+  const prMs = +document.getElementById('simPR').value;
+  const qrsMs= +document.getElementById('simQRS').value;
+
+  const W = simCanvas.parentElement.clientWidth - 40;
+  const H = 180;
+  simCanvas.width = W * devicePixelRatio;
+  simCanvas.height = H * devicePixelRatio;
+  simCanvas.style.width = W+'px';
+  simCanvas.style.height = H+'px';
+  simCtx.scale(devicePixelRatio, devicePixelRatio);
+  simCtx.clearRect(0,0,W,H);
+
+  const padX=24, padY=20;
+  const tw=W-padX*2, th=H-padY*2;
+  const mid=padY+th/2;
+
+  // Grid
+  simCtx.strokeStyle='rgba(42,140,74,0.06)'; simCtx.lineWidth=0.5;
+  for(let x=padX;x<=W-padX;x+=20){simCtx.beginPath();simCtx.moveTo(x,padY);simCtx.lineTo(x,H-padY);simCtx.stroke();}
+  for(let y=padY;y<=H-padY;y+=20){simCtx.beginPath();simCtx.moveTo(padX,y);simCtx.lineTo(W-padX,y);simCtx.stroke();}
+
+  const prScale  = prMs  / 160;
+  const qrsScale = qrsMs / 90;
+  const cycleMs  = 60000 / hr;
+  const cycles   = 3;
+
+  const amp = th * 0.38;
+  const steps = Math.round(tw * cycles);
+
+  simCtx.strokeStyle = '#6bcf8f'; simCtx.lineWidth = 2;
+  simCtx.beginPath();
+  for (let i=0; i<=steps; i++) {
+    const tc = (i/steps) * cycles; // total cycle position
+    const t  = tc % 1;
+    const y  = ecgY(t, prScale, qrsScale);
+    const px = padX + (i/steps)*tw;
+    const py = mid - y*amp;
+    i===0 ? simCtx.moveTo(px,py) : simCtx.lineTo(px,py);
+  }
+  simCtx.stroke();
+
+  // Baseline
+  simCtx.strokeStyle='rgba(42,140,74,0.2)'; simCtx.lineWidth=0.5;
+  simCtx.beginPath(); simCtx.moveTo(padX,mid); simCtx.lineTo(W-padX,mid); simCtx.stroke();
+}
+
+// ── LABELLING ACTIVITY ────────────────────────────────────────
+const LABEL_ITEMS = [
+  {key:'P Wave',        t:0.12, x_pct:0.12, w_pct:0.14},
+  {key:'PR Interval',   t:0.22, x_pct:0.06, w_pct:0.24},
+  {key:'QRS Complex',   t:0.38, x_pct:0.31, w_pct:0.14},
+  {key:'ST Segment',    t:0.52, x_pct:0.46, w_pct:0.10},
+  {key:'T Wave',        t:0.68, x_pct:0.57, w_pct:0.14},
+  {key:'QT Interval',   t:0.55, x_pct:0.32, w_pct:0.38},
+];
+
+const lCanvas = document.getElementById('labelCanvas');
+const lCtx = lCanvas.getContext('2d');
+let selectedLabel = null;
+let labelState = {}; // key→placed label text
+
+function initLabels() {
+  const bank = document.getElementById('labelBank');
+  bank.innerHTML = '';
+  labelState = {};
+  selectedLabel = null;
+
+  const shuffled = [...LABEL_ITEMS].sort(()=>Math.random()-.5);
+  shuffled.forEach(item => {
+    const chip = document.createElement('div');
+    chip.className = 'label-chip';
+    chip.textContent = item.key;
+    chip.dataset.label = item.key;
+    chip.onclick = () => selectLabel(item.key, chip);
+    bank.appendChild(chip);
+  });
+
+  buildDropZones();
+  drawLabelCanvas();
+}
+
+function selectLabel(key, chip) {
+  selectedLabel = key;
+  document.querySelectorAll('.label-chip').forEach(c => c.classList.remove('selected'));
+  chip.classList.add('selected');
+}
+
+function buildDropZones() {
+  const wrap = document.getElementById('labelDropZones');
+  wrap.innerHTML = '';
+  const canvasRect = lCanvas.getBoundingClientRect();
+
+  LABEL_ITEMS.forEach(item => {
+    const zone = document.createElement('div');
+    zone.className = 'label-drop';
+    zone.dataset.key = item.key;
+    zone.style.left   = (item.x_pct * 100) + '%';
+    zone.style.top    = '60%';
+    zone.style.width  = (item.w_pct * 100) + '%';
+    zone.style.height = '30%';
+    zone.textContent  = 'drop here';
+    zone.onclick = () => placeLabel(item.key, zone);
+    wrap.appendChild(zone);
+  });
+}
+
+function placeLabel(zoneKey, zone) {
+  if (!selectedLabel) return;
+  labelState[zoneKey] = selectedLabel;
+  zone.textContent = selectedLabel;
+  zone.classList.add('filled');
+  zone.classList.remove('correct','incorrect');
+
+  // Mark chip as used
+  document.querySelectorAll('.label-chip').forEach(c => {
+    if (c.dataset.label === selectedLabel) c.classList.add('used');
+  });
+  selectedLabel = null;
+  document.querySelectorAll('.label-chip').forEach(c => c.classList.remove('selected'));
+  document.getElementById('labelFeedback').classList.remove('show');
+}
+
+function checkLabels() {
+  let correct = 0;
+  document.querySelectorAll('.label-drop').forEach(zone => {
+    const key = zone.dataset.key;
+    const placed = labelState[key];
+    if (!placed) return;
+    const ok = placed === key;
+    zone.classList.toggle('correct', ok);
+    zone.classList.toggle('incorrect', !ok);
+    if (ok) correct++;
+  });
+  const total = Object.keys(labelState).length;
+  const fb = document.getElementById('labelFeedback');
+  fb.classList.add('show');
+  if (correct === LABEL_ITEMS.length) {
+    fb.className = 'label-feedback show win';
+    fb.textContent = `Perfect! All ${LABEL_ITEMS.length} labels correctly placed.`;
+  } else {
+    fb.className = 'label-feedback show partial';
+    fb.textContent = `${correct} of ${total} placed labels correct. Incorrect ones are highlighted.`;
+  }
+}
+
+function resetLabels() {
+  labelState = {};
+  document.getElementById('labelFeedback').classList.remove('show');
+  initLabels();
+}
+
+function drawLabelCanvas() {
+  const W = lCanvas.parentElement.clientWidth;
+  const H = 160;
+  lCanvas.width = W * devicePixelRatio;
+  lCanvas.height = H * devicePixelRatio;
+  lCanvas.style.width = W+'px';
+  lCanvas.style.height = H+'px';
+  lCtx.scale(devicePixelRatio, devicePixelRatio);
+  lCtx.clearRect(0,0,W,H);
+
+  const padX=24, padY=20, tw=W-padX*2, th=H-padY*2, mid=padY+th*0.45;
+  const amp = th * 0.38;
+
+  // Grid
+  lCtx.strokeStyle='rgba(42,140,74,0.06)'; lCtx.lineWidth=0.5;
+  for(let x=padX;x<=W-padX;x+=20){lCtx.beginPath();lCtx.moveTo(x,padY);lCtx.lineTo(x,H-padY);lCtx.stroke();}
+  for(let y=padY;y<=H-padY;y+=20){lCtx.beginPath();lCtx.moveTo(padX,y);lCtx.lineTo(W-padX,y);lCtx.stroke();}
+
+  // Trace
+  lCtx.strokeStyle='#6bcf8f'; lCtx.lineWidth=2.5;
+  lCtx.beginPath();
+  for(let i=0;i<=400;i++){
+    const t=i/400;
+    const y=ecgY(t);
+    const px=padX+t*tw, py=mid-y*amp;
+    i===0 ? lCtx.moveTo(px,py) : lCtx.lineTo(px,py);
+  }
+  lCtx.stroke();
+
+  // Baseline
+  lCtx.strokeStyle='rgba(42,140,74,0.2)'; lCtx.lineWidth=0.5;
+  lCtx.beginPath(); lCtx.moveTo(padX,mid); lCtx.lineTo(W-padX,mid); lCtx.stroke();
+}
+
+// ── CONDUCTION ORDERING ───────────────────────────────────────
+const ORDER_CORRECT = [
+  {text:'SA node fires — initiates the heartbeat', icon:'⚡'},
+  {text:'Atrial depolarisation — P wave on ECG', icon:'〰️'},
+  {text:'AV node delay — allows ventricles to fill', icon:'⏳'},
+  {text:'Bundle of His conducts to ventricles', icon:'↓'},
+  {text:'Bundle branches + Purkinje fibres activate', icon:'⚡'},
+  {text:'Ventricular depolarisation — QRS complex', icon:'📈'},
+  {text:'Ventricular repolarisation — T wave', icon:'↩️'},
+];
+
+let orderItems = [];
+let dragSrc = null;
+
+function initOrder() {
+  orderItems = [...ORDER_CORRECT].sort(()=>Math.random()-.5);
+  renderOrder();
+  document.getElementById('orderFeedback').classList.remove('show');
+}
+
+function renderOrder() {
+  const list = document.getElementById('orderList');
+  list.innerHTML = '';
+  orderItems.forEach((item, i) => {
+    const el = document.createElement('div');
+    el.className = 'order-item';
+    el.draggable = true;
+    el.dataset.idx = i;
+    el.innerHTML = `<span class="order-num">${String(i+1).padStart(2,'0')}</span><span class="order-text">${item.text}</span><span class="order-icon">⠿</span>`;
+    el.addEventListener('dragstart', e => { dragSrc = i; el.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
+    el.addEventListener('dragend',   () => el.classList.remove('dragging'));
+    el.addEventListener('dragover',  e => { e.preventDefault(); el.classList.add('drag-over'); });
+    el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      el.classList.remove('drag-over');
+      if (dragSrc === null || dragSrc === i) return;
+      const tmp = orderItems[dragSrc];
+      orderItems[dragSrc] = orderItems[i];
+      orderItems[i] = tmp;
+      dragSrc = null;
+      renderOrder();
+    });
+    list.appendChild(el);
+  });
+}
+
+function checkOrder() {
+  let correct = 0;
+  const items = document.querySelectorAll('.order-item');
+  orderItems.forEach((item, i) => {
+    const el = items[i];
+    const ok = item.text === ORDER_CORRECT[i].text;
+    el.classList.toggle('correct', ok);
+    el.classList.toggle('incorrect', !ok);
+    if (ok) correct++;
+  });
+  const fb = document.getElementById('orderFeedback');
+  fb.classList.add('show');
+  if (correct === ORDER_CORRECT.length) {
+    fb.className = 'label-feedback show win';
+    fb.textContent = `Perfect sequence! All ${ORDER_CORRECT.length} steps in the correct order.`;
+  } else {
+    fb.className = 'label-feedback show partial';
+    fb.textContent = `${correct} of ${ORDER_CORRECT.length} steps in the correct position. Incorrect steps are highlighted.`;
+  }
+}
+
+function resetOrder() { initOrder(); }
+
+// ── QUIZ ──────────────────────────────────────────────────────
+const QUESTIONS = [
+  {
+    q: 'What does the P wave represent on the ECG?',
+    options: ['Ventricular depolarisation','Atrial depolarisation','AV node delay','Ventricular repolarisation'],
+    correct: 1,
+    explain: 'The P wave represents atrial depolarisation — the electrical activation spreading from the SA node across both atria, causing atrial contraction.'
+  },
+  {
+    q: 'What is the normal duration of the PR interval?',
+    options: ['<80 ms','80–120 ms','120–200 ms','>200 ms'],
+    correct: 2,
+    explain: 'The PR interval (P wave start to QRS start) normally measures 120–200ms. A prolonged PR interval (>200ms) indicates first-degree heart block.'
+  },
+  {
+    q: 'A QRS complex lasting 140ms is most likely to indicate:',
+    options: ['Normal conduction','First-degree heart block','Bundle branch block','Atrial fibrillation'],
+    correct: 2,
+    explain: 'A QRS >120ms is wide and indicates bundle branch block — one ventricle is activated late via an abnormal (slow) pathway rather than the Purkinje system.'
+  },
+  {
+    q: 'Which structure is responsible for the normal delay between atrial and ventricular contraction?',
+    options: ['SA node','Bundle of His','AV node','Purkinje fibres'],
+    correct: 2,
+    explain: 'The AV node introduces a deliberate delay (~100ms) to allow the atria to finish contracting and the ventricles to fill before ventricular contraction begins.'
+  },
+  {
+    q: 'The T wave on the ECG represents:',
+    options: ['Atrial repolarisation','Ventricular depolarisation','Ventricular repolarisation','AV node conduction'],
+    correct: 2,
+    explain: 'The T wave represents ventricular repolarisation — the recovery of the ventricles to their resting electrical state, ready for the next beat.'
+  },
+  {
+    q: 'At a heart rate of 75 bpm, what is the approximate R–R interval?',
+    options: ['400 ms','600 ms','800 ms','1000 ms'],
+    correct: 2,
+    explain: '60,000 ms ÷ 75 bpm = 800ms per cycle. This represents the time between two consecutive R waves (one complete cardiac cycle).'
+  },
+  {
+    q: 'An elevated ST segment is most associated with:',
+    options: ['Normal sinus rhythm','Ventricular repolarisation','Myocardial infarction (STEMI)','First-degree heart block'],
+    correct: 2,
+    explain: 'ST elevation indicates acute myocardial injury — the classic finding in a STEMI (ST-elevation myocardial infarction). The ST segment should normally be flat on the baseline.'
+  },
+  {
+    q: 'The SA node has an intrinsic firing rate of approximately:',
+    options: ['20–40 bpm','40–60 bpm','60–100 bpm','100–150 bpm'],
+    correct: 2,
+    explain: 'The SA node fires 60–100 times per minute at rest — giving us our normal heart rate range. Below 60 = bradycardia; above 100 = tachycardia.'
+  }
+];
+
+let quizIdx = 0;
+let quizScore = 0;
+let quizAnswered = false;
+
+function initQuiz() {
+  quizIdx = 0; quizScore = 0; quizAnswered = false;
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const inner = document.getElementById('quizInner');
+  if (quizIdx >= QUESTIONS.length) {
+    inner.innerHTML = `
+      <div class="quiz-score">
+        <div class="quiz-score-num">${quizScore}/${QUESTIONS.length}</div>
+        <div class="quiz-score-lbl">Questions correct</div>
+        <div style="margin-top:24px;font-size:14px;color:rgba(255,255,255,.5);font-weight:300;">
+          ${quizScore===QUESTIONS.length ? 'Perfect score! Excellent understanding of ECG physiology.' :
+            quizScore >= QUESTIONS.length*0.7 ? 'Good work! Review the questions you missed.' :
+            'Keep practising — revisit the Synchronized View to reinforce the concepts.'}
+        </div>
+        <div class="btn-row" style="justify-content:center;margin-top:24px;">
+          <button class="action-btn" onclick="initQuiz()">Retry quiz</button>
+        </div>
+      </div>`;
+    return;
+  }
+  const q = QUESTIONS[quizIdx];
+  quizAnswered = false;
+  inner.innerHTML = `
+    <div class="quiz-progress">${quizIdx+1} / ${QUESTIONS.length}</div>
+    <div class="quiz-q">${q.q}</div>
+    <div class="quiz-options" id="quizOptions">
+      ${q.options.map((o,i)=>`<button class="quiz-opt" onclick="answerQuiz(${i})">${o}</button>`).join('')}
+    </div>
+    <div class="quiz-explain" id="quizExplain">${q.explain}</div>
+    <div class="btn-row" id="quizNextRow" style="display:none;">
+      <button class="action-btn" onclick="nextQuestion()">${quizIdx+1<QUESTIONS.length?'Next question →':'See results'}</button>
+    </div>`;
+}
+
+function answerQuiz(i) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const q = QUESTIONS[quizIdx];
+  const opts = document.querySelectorAll('.quiz-opt');
+  opts[i].classList.add(i===q.correct ? 'correct' : 'incorrect');
+  if (i !== q.correct) opts[q.correct].classList.add('reveal-correct');
+  if (i === q.correct) quizScore++;
+  document.getElementById('quizExplain').classList.add('show');
+  document.getElementById('quizNextRow').style.display = 'flex';
+}
+
+function nextQuestion() { quizIdx++; renderQuestion(); }
+
+// ── RHYTHM LIBRARY ────────────────────────────────────────────
+const RHYTHMS = [
+  {
+    id:'nsr', name:'Normal Sinus Rhythm',
+    hr:75, prScale:1, qrsScale:1, type:'normal',
+    info:[
+      {label:'Heart Rate', val:'60–100 bpm'},
+      {label:'P wave', val:'Normal, upright, before every QRS'},
+      {label:'PR interval', val:'120–200 ms'},
+      {label:'QRS duration', val:'<120 ms'},
+      {label:'Origin', val:'SA node'},
+      {label:'Clinical', val:'Normal. Seen at rest in healthy adults.'}
+    ]
+  },
+  {
+    id:'brady', name:'Sinus Bradycardia',
+    hr:42, prScale:1, qrsScale:1, type:'normal',
+    info:[
+      {label:'Heart Rate', val:'<60 bpm'},
+      {label:'P wave', val:'Normal morphology — still from SA node'},
+      {label:'PR interval', val:'Normal (120–200 ms)'},
+      {label:'QRS duration', val:'Normal (<120 ms)'},
+      {label:'Origin', val:'SA node (firing slowly)'},
+      {label:'Clinical', val:'Common in fit athletes. Also: hypothyroidism, beta-blockers, inferior MI.'}
+    ]
+  },
+  {
+    id:'tachy', name:'Sinus Tachycardia',
+    hr:140, prScale:1, qrsScale:1, type:'normal',
+    info:[
+      {label:'Heart Rate', val:'>100 bpm'},
+      {label:'P wave', val:'Normal, may merge with preceding T wave'},
+      {label:'PR interval', val:'Normal or slightly short'},
+      {label:'QRS duration', val:'Normal (<120 ms)'},
+      {label:'Origin', val:'SA node (firing fast)'},
+      {label:'Clinical', val:'Normal during exercise. At rest: anxiety, fever, pain, dehydration, anaemia.'}
+    ]
+  },
+  {
+    id:'block1', name:'1st Degree AV Block',
+    hr:70, prScale:2.0, qrsScale:1, type:'normal',
+    info:[
+      {label:'Heart Rate', val:'Normal (60–100 bpm)'},
+      {label:'P wave', val:'Normal, before every QRS'},
+      {label:'PR interval', val:'>200 ms (prolonged)'},
+      {label:'QRS duration', val:'Normal (<120 ms)'},
+      {label:'Origin', val:'SA node; delayed AV conduction'},
+      {label:'Clinical', val:'Often benign. Associated with vagal tone, beta-blockers, electrolyte disturbance.'}
+    ]
+  },
+  {
+    id:'bbb', name:'Bundle Branch Block',
+    hr:72, prScale:1, qrsScale:2.2, type:'normal',
+    info:[
+      {label:'Heart Rate', val:'Normal'},
+      {label:'P wave', val:'Normal'},
+      {label:'PR interval', val:'Normal'},
+      {label:'QRS duration', val:'>120 ms (wide, notched)'},
+      {label:'Origin', val:'SA → AV node normal; one bundle branch blocked'},
+      {label:'Clinical', val:'RBBB may be normal variant. LBBB often indicates underlying cardiac disease.'}
+    ]
+  },
+  {
+    id:'af', name:'Atrial Fibrillation',
+    hr:0, prScale:1, qrsScale:1, type:'af',
+    info:[
+      {label:'Heart Rate', val:'Irregularly irregular (70–170 bpm typical)'},
+      {label:'P wave', val:'Absent — replaced by chaotic fibrillatory baseline'},
+      {label:'PR interval', val:'Not measurable'},
+      {label:'QRS duration', val:'Normal (if no aberrant conduction)'},
+      {label:'Origin', val:'Multiple chaotic re-entry circuits in atria'},
+      {label:'Clinical', val:'Most common arrhythmia. Risk of stroke — atrial blood pools. Treat with rate control, anticoagulation, or cardioversion.'}
+    ]
+  }
+];
+
+let activeRhythm = 'nsr';
+
+function initRhythms() {
+  const sel = document.getElementById('rhythmSelector');
+  sel.innerHTML = '';
+  RHYTHMS.forEach(r => {
+    const btn = document.createElement('button');
+    btn.className = 'rhythm-btn' + (r.id===activeRhythm?' active':'');
+    btn.textContent = r.name;
+    btn.onclick = () => {
+      activeRhythm = r.id;
+      document.querySelectorAll('.rhythm-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      drawRhythm(r.id);
+      renderRhythmInfo(r.id);
+    };
+    sel.appendChild(btn);
+  });
+  drawRhythm('nsr');
+  renderRhythmInfo('nsr');
+}
+
+function drawRhythm(id) {
+  const r = RHYTHMS.find(x=>x.id===id);
+  if (!r) return;
+
+  const rc = document.getElementById('rhythmCanvas');
+  const W  = rc.parentElement.clientWidth - 48;
+  const H  = 120;
+  rc.width = W * devicePixelRatio;
+  rc.height= H * devicePixelRatio;
+  rc.style.width = W+'px';
+  rc.style.height= H+'px';
+  const rctx = rc.getContext('2d');
+  rctx.scale(devicePixelRatio, devicePixelRatio);
+  rctx.clearRect(0,0,W,H);
+
+  const padX=20,padY=16,tw=W-padX*2,th=H-padY*2,mid=padY+th/2;
+  const amp=th*0.4;
+
+  // Grid
+  rctx.strokeStyle='rgba(42,140,74,0.06)'; rctx.lineWidth=0.5;
+  for(let x=padX;x<=W-padX;x+=20){rctx.beginPath();rctx.moveTo(x,padY);rctx.lineTo(x,H-padY);rctx.stroke();}
+  for(let y=padY;y<=H-padY;y+=20){rctx.beginPath();rctx.moveTo(padX,y);rctx.lineTo(W-padX,y);rctx.stroke();}
+
+  // Baseline
+  rctx.strokeStyle='rgba(42,140,74,0.18)'; rctx.lineWidth=0.5;
+  rctx.beginPath(); rctx.moveTo(padX,mid); rctx.lineTo(W-padX,mid); rctx.stroke();
+
+  // Trace
+  rctx.strokeStyle='#6bcf8f'; rctx.lineWidth=2;
+  rctx.beginPath();
+
+  if (r.type==='af') {
+    // Chaotic baseline + irregular QRS
+    let px=padX;
+    const beatPos=[0.08,0.18,0.32,0.44,0.53,0.67,0.79,0.91];
+    const steps=tw*2;
+    for(let i=0;i<=steps;i++){
+      const tx=i/steps;
+      const bx=padX+tx*tw;
+      // Check if near a beat
+      let nearBeat=false;
+      beatPos.forEach(bp=>{
+        if(Math.abs(tx-bp)<0.015) nearBeat=true;
+      });
+      let y=0;
+      if(nearBeat){
+        // Find which beat
+        let closestBeat=beatPos.reduce((a,b)=>Math.abs(tx-b)<Math.abs(tx-a)?b:a);
+        const dt=(tx-closestBeat)/0.01;
+        y=dt>-1&&dt<1 ? (dt<0?-0.1+dt*(-0.3):dt<0.3?1.0-dt*3:(dt-0.3)*(-0.6/(0.7))):0;
+      } else {
+        y=(Math.sin(tx*120)*0.04+Math.sin(tx*200)*0.03+Math.sin(tx*89)*0.03);
+      }
+      const bpy=mid-y*amp;
+      i===0?rctx.moveTo(bx,bpy):rctx.lineTo(bx,bpy);
+    }
+  } else {
+    const cycles=r.hr>0?Math.max(2,Math.min(5,Math.floor(r.hr/25))):3;
+    const steps=600;
+    for(let i=0;i<=steps;i++){
+      const tc=(i/steps)*cycles;
+      const t=tc%1;
+      const y=ecgY(t,r.prScale,r.qrsScale);
+      const bx=padX+(i/steps)*tw;
+      const by=mid-y*amp;
+      i===0?rctx.moveTo(bx,by):rctx.lineTo(bx,by);
+    }
+  }
+  rctx.stroke();
+}
+
+function renderRhythmInfo(id) {
+  const r = RHYTHMS.find(x=>x.id===id);
+  if (!r) return;
+  const el = document.getElementById('rhythmInfo');
+  el.innerHTML = r.info.map(row=>`
+    <div class="rhythm-info-card">
+      <div class="rhythm-info-label">${row.label}</div>
+      <div class="rhythm-info-val">${row.val}</div>
+    </div>`).join('');
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  drawSimCanvas();
+  drawLabelCanvas();
+  drawRhythm(activeRhythm);
+});
+
+resizeCanvas();
+initRhythms();
+updateSim();
+
+// Start animation
+requestAnimationFrame(ts => {
+  lastTimestamp = ts;
+  animRaf = requestAnimationFrame(animateECG);
+});
+</script>
+</body>
+</html>
