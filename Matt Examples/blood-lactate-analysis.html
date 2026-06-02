@@ -25,9 +25,9 @@
   --lt1-dim:   rgba(16,185,129,0.15);
   --lt2:       #EF4444;
   --lt2-dim:   rgba(239,68,68,0.15);
-  --hr-blue:   #3B82F6;
-  --brand:     #E6007E;
-  --lime:      #B6D43A;
+  --hr-blue:   #1a5fd4;
+  --brand:     #2a8c4a;
+  --lime:      #6bcf8f;
   --z1c: #0D9488; --z2c: #10B981; --z3c: #F59E0B; --z4c: #EF4444; --z5c: #8B5CF6;
   --txt:   #F1F5F9;
   --muted: #64748B;
@@ -49,7 +49,7 @@ body {
 body::before {
   content: '';
   position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(230,0,126,0.06), transparent),
+  background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(42,140,74,0.06), transparent),
               radial-gradient(ellipse 60% 40% at 80% 90%, rgba(16,185,129,0.04), transparent);
 }
 
@@ -61,7 +61,7 @@ header.mast {
   background: linear-gradient(135deg, rgba(31,20,74,0.9) 0%, rgba(9,10,15,0.7) 100%);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(230,0,126,0.3);
+  border: 1px solid rgba(42,140,74,0.3);
   border-radius: 20px;
   border-bottom: 3px solid var(--brand);
   padding: 36px 32px 30px;
@@ -124,7 +124,7 @@ table.dt input[type="number"] {
 }
 table.dt input[type="number"]::-webkit-inner-spin-button,
 table.dt input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
-table.dt input[type="number"]:focus { outline: none; border-color: var(--brand); background: rgba(230,0,126,.05); }
+table.dt input[type="number"]:focus { outline: none; border-color: var(--brand); background: rgba(42,140,74,.05); }
 .btn-del { background: none; border: none; color: var(--muted); font-size: 16px; cursor: pointer;
   padding: 3px 8px; border-radius: 4px; transition: color .2s; }
 .btn-del:hover { color: var(--lt2); }
@@ -160,12 +160,12 @@ table.dt input[type="number"]:focus { outline: none; border-color: var(--brand);
 .btn-analyse {
   font-family: 'Lexend', sans-serif; font-weight: 700; font-size: 16px;
   padding: 15px 56px; border-radius: 12px; border: none;
-  background: linear-gradient(135deg, var(--brand) 0%, #a0006e 100%);
+  background: linear-gradient(135deg, var(--brand) 0%, #1a5a2d 100%);
   color: #fff; cursor: pointer; letter-spacing: .05em;
-  box-shadow: 0 0 32px rgba(230,0,126,.25), 0 4px 20px rgba(0,0,0,.4);
+  box-shadow: 0 0 32px rgba(42,140,74,.25), 0 4px 20px rgba(0,0,0,.4);
   transition: box-shadow .3s ease, transform .15s ease;
 }
-.btn-analyse:hover { box-shadow: 0 0 48px rgba(230,0,126,.4), 0 6px 28px rgba(0,0,0,.5); }
+.btn-analyse:hover { box-shadow: 0 0 48px rgba(42,140,74,.4), 0 6px 28px rgba(0,0,0,.5); }
 .btn-analyse:active { transform: scale(.97); }
 .error-box {
   margin-top: 10px; display: none;
@@ -297,8 +297,8 @@ table.rt tr:hover td { background: rgba(255,255,255,.02); }
 }
 .btn-export:hover { background: rgba(16,185,129,.2); border-color: var(--lt1); box-shadow: 0 0 20px rgba(16,185,129,.15); }
 .btn-export:active { transform: scale(.97); }
-.btn-csv { border-color: rgba(59,130,246,.4); background: rgba(59,130,246,.08); color: var(--hr-blue); }
-.btn-csv:hover { background: rgba(59,130,246,.18); border-color: var(--hr-blue); box-shadow: 0 0 20px rgba(59,130,246,.15); }
+.btn-csv { border-color: rgba(26,95,212,.4); background: rgba(26,95,212,.08); color: var(--hr-blue); }
+.btn-csv:hover { background: rgba(26,95,212,.18); border-color: var(--hr-blue); box-shadow: 0 0 20px rgba(26,95,212,.15); }
 
 /* ── REFS ── */
 .refs-card { margin-bottom: 16px; }
@@ -307,8 +307,8 @@ table.rt tr:hover td { background: rgba(255,255,255,.02); }
 
 .btn-compare { border-color: rgba(139,92,246,.4); background: rgba(139,92,246,.08); color: #a78bfa; }
 .btn-compare:hover { background: rgba(139,92,246,.18); border-color: #a78bfa; box-shadow: 0 0 20px rgba(139,92,246,.15); }
-.btn-combined { border-color: rgba(230,0,126,.4); background: rgba(230,0,126,.08); color: #f472b6; }
-.btn-combined:hover { background: rgba(230,0,126,.18); border-color: #f472b6; box-shadow: 0 0 20px rgba(230,0,126,.15); }
+.btn-combined { border-color: rgba(42,140,74,.4); background: rgba(42,140,74,.08); color: #6bcf8f; }
+.btn-combined:hover { background: rgba(42,140,74,.18); border-color: #6bcf8f; box-shadow: 0 0 20px rgba(42,140,74,.15); }
 
 /* ── SESSION ITEM ── */
 .session-item {
@@ -371,7 +371,7 @@ table.rt tr:hover td { background: rgba(255,255,255,.02); }
   }
   .pd-title { font-size: 20px; font-weight: 700; color: #1F1A4A; letter-spacing: -.01em; }
   .pd-subtitle { font-size: 10px; color: #64748B; text-transform: uppercase; letter-spacing: .12em; margin-top: 2px; }
-  .pd-badge { background: #E6007E; color: #fff; padding: 4px 12px; border-radius: 4px;
+  .pd-badge { background: #2a8c4a; color: #fff; padding: 4px 12px; border-radius: 4px;
     font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
 
   /* Athlete grid */
@@ -425,7 +425,7 @@ table.rt tr:hover td { background: rgba(255,255,255,.02); }
   .pd-coaching { page-break-inside: avoid; }
   .pd-coaching h3 { font-size: 11px; font-weight: 700; text-transform: uppercase;
     letter-spacing: .1em; color: #1E293B; margin-bottom: 10px; padding-bottom: 6px;
-    border-bottom: 2px solid #3B82F6; }
+    border-bottom: 2px solid #1a5fd4; }
   .pd-coaching-text { font-size: 11px; color: #374151; line-height: 1.7;
     white-space: pre-wrap; min-height: 80px; border: 1px solid #E2E8F0;
     border-radius: 6px; padding: 10px 12px; }
@@ -482,9 +482,9 @@ header.mast { position: relative; }
 }
 .tab-btn:hover { color: var(--txt); background: rgba(255,255,255,.04); }
 .tab-btn.active {
-  background: linear-gradient(135deg, rgba(230,0,126,.2), rgba(230,0,126,.06));
-  border-color: rgba(230,0,126,.4); color: #fff;
-  box-shadow: 0 0 16px rgba(230,0,126,.12);
+  background: linear-gradient(135deg, rgba(42,140,74,.2), rgba(42,140,74,.06));
+  border-color: rgba(42,140,74,.4); color: #fff;
+  box-shadow: 0 0 16px rgba(42,140,74,.12);
 }
 .tab-icon { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.75; transition: opacity .2s; }
 .tab-btn:hover .tab-icon { opacity: 0.9; }
@@ -521,8 +521,8 @@ header.mast { position: relative; }
 }
 .cpet-badge {
   font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em;
-  padding: 2px 7px; border-radius: 4px; background: rgba(59,130,246,.12);
-  border: 1px solid rgba(59,130,246,.3); color: var(--hr-blue); margin-left: 6px;
+  padding: 2px 7px; border-radius: 4px; background: rgba(26,95,212,.12);
+  border: 1px solid rgba(26,95,212,.3); color: var(--hr-blue); margin-left: 6px;
 }
 .cpet-col-map { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
 .cpet-col-chip {
@@ -530,7 +530,7 @@ header.mast { position: relative; }
   border: 1px solid var(--border); background: rgba(255,255,255,.03); color: #64748B;
 }
 .cpet-col-chip.ok { border-color: rgba(16,185,129,.4); background: rgba(16,185,129,.07); color: var(--lt1); }
-.cpet-col-chip.opt { border-color: rgba(59,130,246,.3); background: rgba(59,130,246,.06); color: var(--hr-blue); }
+.cpet-col-chip.opt { border-color: rgba(26,95,212,.3); background: rgba(26,95,212,.06); color: var(--hr-blue); }
 .cpet-col-chip.miss { opacity: .4; }
 .mc-cpet::before { background: var(--hr-blue); box-shadow: 0 0 20px var(--hr-blue); }
 .mc-cpet { border-color: rgba(59,130,246,.25); }
@@ -539,7 +539,7 @@ header.mast { position: relative; }
   height: 4px; background: rgba(255,255,255,.07); border-radius: 2px; overflow: hidden; margin-top: 6px;
 }
 .cpet-progress-fill {
-  height: 100%; background: linear-gradient(90deg, var(--hr-blue), #818CF8);
+  height: 100%; background: linear-gradient(90deg, var(--hr-blue), #6b9fe4);
   border-radius: 2px; width: 0%; transition: width .4s ease;
 }
 
@@ -561,7 +561,7 @@ table.vt-dt input[type="number"] {
 }
 table.vt-dt input[type="number"]::-webkit-inner-spin-button,
 table.vt-dt input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
-table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--brand); background: rgba(230,0,126,.05); }
+table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--brand); background: rgba(42,140,74,.05); }
 
 .vt-results-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;
@@ -608,7 +608,7 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
   border-radius: 3px; overflow: hidden; margin: 6px 0;
 }
 .vt-progress-fill {
-  height: 100%; background: linear-gradient(90deg, var(--brand), #a0006e);
+  height: 100%; background: linear-gradient(90deg, var(--brand), #1a5a2d);
   border-radius: 3px; transition: width .3s ease;
 }
 .vt-progress-label {
@@ -676,9 +676,9 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
             <th>Lactate (mmol/L)</th>
             <th>Heart Rate (bpm)</th>
             <th>RPE (6–20)</th>
-            <th style="border-left:2px solid rgba(99,102,241,.35);padding-left:10px;color:#818CF8;">V̇O₂ (ml/min)</th>
-            <th style="color:#818CF8;">V̇CO₂ (ml/min)</th>
-            <th style="color:#818CF8;">RER</th>
+            <th style="border-left:2px solid rgba(99,102,241,.35);padding-left:10px;color:#6b9fe4;">V̇O₂ (ml/min)</th>
+            <th style="color:#6b9fe4;">V̇CO₂ (ml/min)</th>
+            <th style="color:#6b9fe4;">RER</th>
             <th style="width:32px"></th>
           </tr></thead>
           <tbody id="dataBody"></tbody>
@@ -1193,7 +1193,7 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
         <div class="card-label">V-Slope · V̇CO₂ vs V̇O₂ — Beaver et al. (1986)</div>
         <div class="vt-legend" id="vtVSlopeLegend">
           <div class="vt-legend-item">
-            <div class="vt-legend-line" style="background:#3B82F6;"></div>
+            <div class="vt-legend-line" style="background:#1a5fd4;"></div>
             <span>Below VT1 — regression line 1</span>
           </div>
           <div class="vt-legend-item">
@@ -1213,7 +1213,7 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
         <div class="card-label">Ventilatory Equivalents · V̇E/V̇O₂ &amp; V̇E/V̇CO₂ vs Time</div>
         <div class="vt-legend" id="vtVELegend">
           <div class="vt-legend-item">
-            <div class="vt-legend-line" style="background:#B6D43A;"></div>
+            <div class="vt-legend-line" style="background:#6bcf8f;"></div>
             <span>V̇E/V̇O₂</span>
           </div>
           <div class="vt-legend-item">
@@ -1903,7 +1903,7 @@ function renderChart(lt1,lt2,pdfMode=false){
      pointBackgroundColor:'#E2E8F0',pointBorderColor:'#1E293B',pointBorderWidth:1.5,
      pointRadius:6,pointHoverRadius:8,type:'scatter',order:2},
     {label:'Polynomial Fit',data:curveData,type:'line',
-     borderColor:'#E6007E',borderWidth:2.5,pointRadius:0,fill:false,tension:0.4,order:1,yAxisID:'y'},
+     borderColor:'#2a8c4a',borderWidth:2.5,pointRadius:0,fill:false,tension:0.4,order:1,yAxisID:'y'},
     {label:'LT1',data:lt1Dot,type:'scatter',
      pointBackgroundColor:'#10B981',pointBorderColor:'#fff',pointBorderWidth:2,
      pointRadius:9,pointHoverRadius:11,order:0},
@@ -1915,8 +1915,8 @@ function renderChart(lt1,lt2,pdfMode=false){
   if(hasHR){
     datasets.push({
       label:'Heart Rate',data:vhr.map(d=>({x:d.x,y:d.h})),type:'line',
-      borderColor:'#3B82F6',borderWidth:1.5,borderDash:[4,3],pointRadius:3,
-      pointBackgroundColor:'#3B82F6',fill:false,tension:0.3,yAxisID:'y2',order:3
+      borderColor:'#1a5fd4',borderWidth:1.5,borderDash:[4,3],pointRadius:3,
+      pointBackgroundColor:'#1a5fd4',fill:false,tension:0.3,yAxisID:'y2',order:3
     });
   }
 
@@ -1970,9 +1970,9 @@ function renderChart(lt1,lt2,pdfMode=false){
           border:{display:false},
           ticks:{color:'#64748B',font:{size:11}}},
         ...(hasHR?{y2:{type:'linear',position:'right',
-          title:{display:true,text:'Heart Rate (bpm)',color:'#3B82F6',font:{size:11,weight:'600'}},
+          title:{display:true,text:'Heart Rate (bpm)',color:'#1a5fd4',font:{size:11,weight:'600'}},
           grid:{display:false},border:{display:false},
-          ticks:{color:'#3B82F6',font:{size:11}}}}:{}),
+          ticks:{color:'#1a5fd4',font:{size:11}}}}:{}),
         ...(hasRPE?{yRPE:{type:'linear',position:'right',min:6,max:20,
           title:{display:true,text:'RPE (Borg)',color:'#F59E0B',font:{size:11,weight:'600'}},
           grid:{display:false},border:{display:false},
@@ -3235,10 +3235,10 @@ function renderComparison(){
   compareChartInstance=new Chart(ctx,{
     type:'scatter',
     data:{datasets:[
-      makeCurve(pA,'#E6007E',`${sA.profile.name} (${sA.profile.date}) — Fit`),
-      makeScatter(pA,'#E6007E',`${sA.profile.name} — Measured`),
-      makeCurve(pB,'#3B82F6',`${sB.profile.name} (${sB.profile.date}) — Fit`,[6,4]),
-      makeScatter(pB,'#3B82F6',`${sB.profile.name} — Measured`)
+      makeCurve(pA,'#2a8c4a',`${sA.profile.name} (${sA.profile.date}) — Fit`),
+      makeScatter(pA,'#2a8c4a',`${sA.profile.name} — Measured`),
+      makeCurve(pB,'#1a5fd4',`${sB.profile.name} (${sB.profile.date}) — Fit`,[6,4]),
+      makeScatter(pB,'#1a5fd4',`${sB.profile.name} — Measured`)
     ]},
     options:{
       responsive:true,maintainAspectRatio:false,
@@ -4330,7 +4330,7 @@ function renderVTCharts(valid, vo2s, vco2s, rawVeVo2, rawVeVco2, times, bpIdx, v
           label:'V̇CO₂ vs V̇O₂',
           data: vo2s.map((x,i)=>({x, y: vco2s[i]})),
           pointRadius:4, pointHoverRadius:7,
-          pointBackgroundColor: vo2s.map((_,i)=>i<bpIdx ? '#3B82F6' : '#EF4444'),
+          pointBackgroundColor: vo2s.map((_,i)=>i<bpIdx ? '#1a5fd4' : '#EF4444'),
           pointBorderColor:'transparent'
         },
         {
@@ -4392,7 +4392,7 @@ function renderVTCharts(valid, vo2s, vco2s, rawVeVo2, rawVeVco2, times, bpIdx, v
         {
           label:'V̇E/V̇O₂',
           data: smoothVeVo2.map(v => isFinite(v) ? +v.toFixed(2) : null),
-          borderColor:'#B6D43A', backgroundColor:'rgba(182,212,58,0.07)',
+          borderColor:'#6bcf8f', backgroundColor:'rgba(182,212,58,0.07)',
           fill:false, tension:0.35, pointRadius:2, pointHoverRadius:5,
           borderWidth:2, spanGaps:true
         },
@@ -4432,8 +4432,8 @@ function renderVTCharts(valid, vo2s, vco2s, rawVeVo2, rawVeVco2, times, bpIdx, v
   const ctx = canvas.getContext('2d');
 
   // Palette — matches the app: magenta (brand), lime, deep purple
-  const MAG  = [230,   0, 126];   // --brand  #E6007E
-  const LIME = [182, 212,  58];   // --lime   #B6D43A
+  const MAG  = [230,   0, 126];   // --brand  #2a8c4a
+  const LIME = [182, 212,  58];   // --lime   #6bcf8f
   const PRP  = [ 99,  40, 200];   // purple accent
 
   // Six blobs: fractional centre, radius, colour, phase offsets, drift speeds
