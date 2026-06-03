@@ -1229,11 +1229,11 @@ function drawTrace(canvas, trace, opts) {
   ctx.strokeStyle = COLOR.bw; ctx.lineWidth = 1.4; ctx.setLineDash([5,5]);
   ctx.beginPath(); ctx.moveTo(m.l, yToPx(trace.BW)); ctx.lineTo(m.l+plotW, yToPx(trace.BW));
   ctx.stroke(); ctx.setLineDash([]);
-  ctx.font = '600 13px 'DM Sans', sans-serif'; ctx.fillStyle = COLOR.bwLabel;
+  ctx.font = '600 13px "DM Sans", sans-serif'; ctx.fillStyle = COLOR.bwLabel;
   ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
   ctx.fillText(trace.isImtp ? 'system weight' : 'body weight', m.l+6, yToPx(trace.BW)-4);
 
-  ctx.font = '600 14px 'DM Sans', sans-serif';
+  ctx.font = '600 14px "DM Sans", sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   for (var b2=0; b2<phaseBands.length; b2++) {
     var bd2 = phaseBands[b2];
@@ -1257,7 +1257,7 @@ function drawTrace(canvas, trace, opts) {
   ctx.stroke();
 
   ctx.fillStyle = COLOR.tick;
-  ctx.font = '500 13px 'DM Sans', sans-serif';
+  ctx.font = '500 13px "DM Sans", sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   for (var xt=0; xt<=tMax+1e-9; xt+=xStep) {
     var pxt = xToPx(xt);
@@ -1271,7 +1271,7 @@ function drawTrace(canvas, trace, opts) {
     ctx.fillText(Math.round(yt).toString(), m.l-12, pyt);
   }
   ctx.fillStyle = COLOR.ink;
-  ctx.font = '600 14px 'DM Sans', sans-serif';
+  ctx.font = '600 14px "DM Sans", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('time  (s)', m.l+plotW/2, m.t+plotH+40);
   ctx.save();
@@ -1305,7 +1305,7 @@ function drawTrace(canvas, trace, opts) {
       ctx.lineTo(bx+r, by+badgeSize); ctx.quadraticCurveTo(bx, by+badgeSize, bx, by+badgeSize-r);
       ctx.lineTo(bx, by+r); ctx.quadraticCurveTo(bx, by, bx+r, by); ctx.closePath(); ctx.fill();
       ctx.strokeStyle = active ? COLOR.landmarkActiveDeep : COLOR.ink; ctx.lineWidth = 1.5; ctx.stroke();
-      ctx.fillStyle = '#fff'; ctx.font = '700 14px 'DM Sans', sans-serif';
+      ctx.fillStyle = '#fff'; ctx.font = '700 14px "DM Sans", sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText((k+1).toString(), bx+badgeSize/2, by+badgeSize/2+1);
       ctx.strokeStyle = active ? COLOR.landmarkActive : COLOR.landmark; ctx.lineWidth = 1.4;
@@ -1940,7 +1940,7 @@ function drawUploadChart(canvas, A) {
   ctx.beginPath(); ctx.moveTo(m.l, yToPx(A.BW)); ctx.lineTo(m.l+plotW, yToPx(A.BW));
   ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle = COLOR.bwLabel;
-  ctx.font = '600 12px 'DM Sans', sans-serif';
+  ctx.font = '600 12px "DM Sans", sans-serif';
   ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
   ctx.fillText('BW = ' + Math.round(A.BW) + ' N', m.l+6, yToPx(A.BW)-4);
 
@@ -1951,7 +1951,7 @@ function drawUploadChart(canvas, A) {
   ctx.stroke();
 
   // tick labels
-  ctx.fillStyle = COLOR.tick; ctx.font = '500 12px 'DM Sans', sans-serif';
+  ctx.fillStyle = COLOR.tick; ctx.font = '500 12px "DM Sans", sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   for (var xt=Math.ceil(t0/xStep)*xStep; xt<=t1+1e-9; xt+=xStep) {
     var pxt=xToPx(xt);
@@ -1965,7 +1965,7 @@ function drawUploadChart(canvas, A) {
     ctx.fillText(Math.round(yt).toString(), m.l-8, pyt);
   }
   ctx.fillStyle = COLOR.ink;
-  ctx.font = '600 13px 'DM Sans', sans-serif';
+  ctx.font = '600 13px "DM Sans", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('time (s)', m.l+plotW/2, m.t+plotH+34);
   ctx.save();
@@ -2012,7 +2012,7 @@ function drawUploadChart(canvas, A) {
     ctx.quadraticCurveTo(bx, by+bs, bx, by+bs-rr); ctx.lineTo(bx, by+rr);
     ctx.quadraticCurveTo(bx, by, bx+rr, by); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.font = '700 12px 'DM Sans', sans-serif';
+    ctx.font = '700 12px "DM Sans", sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(mk.label, bx+bs/2, by+bs/2+1);
     ctx.strokeStyle = '#0a0f1e'; ctx.lineWidth = 1;
@@ -2021,7 +2021,7 @@ function drawUploadChart(canvas, A) {
 
   // Phase labels at top
   ctx.fillStyle = COLOR.phaseLabel;
-  ctx.font = '600 11px 'DM Sans', sans-serif';
+  ctx.font = '600 11px "DM Sans", sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   function phaseLabel(a, b, txt) {
     var x0=xToPx(A.t[a]), x1=xToPx(A.t[b]);
@@ -2529,7 +2529,7 @@ function drawIMTPChart(canvas, A) {
   ctx.beginPath(); ctx.moveTo(m.l, yToPx(A.SW)); ctx.lineTo(m.l+plotW, yToPx(A.SW));
   ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle = COLOR.bwLabel;
-  ctx.font = '600 12px 'DM Sans', sans-serif';
+  ctx.font = '600 12px "DM Sans", sans-serif';
   ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
   ctx.fillText('SW = ' + Math.round(A.SW) + ' N', m.l+6, yToPx(A.SW)-4);
 
@@ -2538,7 +2538,7 @@ function drawIMTPChart(canvas, A) {
   ctx.beginPath(); ctx.moveTo(m.l, yToPx(A.startThreshold)); ctx.lineTo(m.l+plotW, yToPx(A.startThreshold));
   ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle = '#1a5a2d';
-  ctx.font = '500 11px 'DM Sans', sans-serif';
+  ctx.font = '500 11px "DM Sans", sans-serif';
   ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
   ctx.fillText('SW + 5×SD threshold', m.l+6, yToPx(A.startThreshold)-3);
 
@@ -2549,7 +2549,7 @@ function drawIMTPChart(canvas, A) {
   ctx.stroke();
 
   // Tick labels
-  ctx.fillStyle = COLOR.tick; ctx.font = '500 12px 'DM Sans', sans-serif';
+  ctx.fillStyle = COLOR.tick; ctx.font = '500 12px "DM Sans", sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   for (var xt=Math.ceil(t0/xStep)*xStep; xt<=t1+1e-9; xt+=xStep) {
     var pxt=xToPx(xt);
@@ -2563,7 +2563,7 @@ function drawIMTPChart(canvas, A) {
     ctx.fillText(Math.round(yt).toString(), m.l-8, pyt);
   }
   ctx.fillStyle = COLOR.ink;
-  ctx.font = '600 13px 'DM Sans', sans-serif';
+  ctx.font = '600 13px "DM Sans", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('time (s)', m.l+plotW/2, m.t+plotH+34);
   ctx.save();
@@ -2589,7 +2589,7 @@ function drawIMTPChart(canvas, A) {
                    {t:0.200, lbl:'200'}, {t:0.250, lbl:'250'}];
   ctx.strokeStyle = 'rgba(10,15,30,0.25)'; ctx.lineWidth = 1; ctx.setLineDash([2,3]);
   ctx.fillStyle = COLOR.inkSoft;
-  ctx.font = '500 10px 'DM Sans', sans-serif';
+  ctx.font = '500 10px "DM Sans", sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   for (var iv=0; iv<intervals.length; iv++) {
     var iSample = A.idxOnset + Math.round(intervals[iv].t * A.N / (A.t[A.N-1] || 1));
@@ -2626,7 +2626,7 @@ function drawIMTPChart(canvas, A) {
     ctx.quadraticCurveTo(bx, by+bs, bx, by+bs-rr); ctx.lineTo(bx, by+rr);
     ctx.quadraticCurveTo(bx, by, bx+rr, by); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.font = '700 12px 'DM Sans', sans-serif';
+    ctx.font = '700 12px "DM Sans", sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(mk.label, bx+bs/2, by+bs/2+1);
     ctx.strokeStyle = '#0a0f1e'; ctx.lineWidth = 1;
@@ -2635,7 +2635,7 @@ function drawIMTPChart(canvas, A) {
 
   // Phase labels at top
   ctx.fillStyle = COLOR.phaseLabel;
-  ctx.font = '600 11px 'DM Sans', sans-serif';
+  ctx.font = '600 11px "DM Sans", sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   function phaseLabel(a, b, txt) {
     var x0=xToPx(A.t[a]), x1=xToPx(A.t[b]);
