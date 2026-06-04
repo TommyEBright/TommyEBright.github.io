@@ -620,36 +620,37 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
 <body>
 <canvas id="bg-canvas" aria-hidden="true"></canvas>
 
+<!-- SITE NAV -->
+<nav style="position:sticky;top:0;z-index:200;background:#0a0f1e;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:56px;border-bottom:2px solid #1a5fd4;">
+  <a href="../index.html" style="font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:#fff;text-decoration:none;">Dr. Tommy Bright</a>
+  <ul style="display:flex;gap:32px;list-style:none;">
+    <li><a href="../index.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;">Home</a></li>
+    <li><a href="../teaching.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:#fff;text-decoration:none;border-bottom:2px solid #1a5fd4;padding-bottom:2px;">Teaching &amp; Learning</a></li>
+    <li><a href="../project.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;">Projects</a></li>
+    <li><a href="../research.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;">Research</a></li>
+  </ul>
+  <div style="display:flex;gap:14px;">
+    <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:3px 9px;">LinkedIn</a>
+    <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:3px 9px;">ResearchGate</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div style="background:#0a0f1e;padding:48px 40px 40px;border-bottom:1px solid rgba(42,140,74,0.2);position:relative;overflow:hidden;">
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 85% 50%, rgba(42,140,74,0.12), transparent);pointer-events:none;"></div>
+  <svg style="position:absolute;bottom:0;left:0;right:0;width:100%;height:60px;opacity:0.10;pointer-events:none;" viewBox="0 0 800 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <polyline points="0,30 60,30 80,30 90,4 100,56 110,30 130,30 145,18 160,42 175,30 200,30 260,30 280,30 290,4 300,56 310,30 330,30 345,18 360,42 375,30 400,30 460,30 480,30 490,4 500,56 510,30 530,30 545,18 560,42 575,30 600,30 660,30 680,30 690,4 700,56 710,30 730,30 745,18 760,42 775,30 800,30" stroke="#6bcf8f" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <div style="max-width:860px;margin:0 auto;position:relative;z-index:1;">
+    <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#2a8c4a;margin-bottom:16px;">Physiology · Level 6 · 7</div>
+    <h1 style="font-family:'DM Serif Display',Georgia,serif;font-size:clamp(28px,4vw,46px);color:#fff;line-height:1.1;letter-spacing:-0.5px;margin-bottom:12px;">Exercise Thresholds Analysis<br><em style="font-style:italic;color:#6b9fe4;">lactate · ventilatory · DFA.</em></h1>
+    <p style="font-size:14px;color:rgba(255,255,255,0.55);max-width:600px;line-height:1.7;font-weight:300;">Blood lactate · Ventilatory thresholds · DFA-alpha1 · Expert consensus zone frameworks. Runs entirely in your browser.</p>
+  </div>
+</div>
+
 <!-- ══ SCREEN APP ══ -->
 <div id="app">
 <div id="ltTooltip"></div>
-  <!-- SITE NAV -->
-  <nav style="position:sticky;top:0;z-index:200;background:#0a0f1e;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:56px;border-bottom:2px solid #1a5fd4;flex-shrink:0;">
-    <a href="../index.html" style="font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:#fff;text-decoration:none;">Dr. Tommy Bright</a>
-    <ul style="display:flex;gap:32px;list-style:none;">
-      <li><a href="../index.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;">Home</a></li>
-      <li><a href="../teaching.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:#fff;text-decoration:none;border-bottom:2px solid #1a5fd4;padding-bottom:2px;">Teaching &amp; Learning</a></li>
-      <li><a href="../project.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;">Projects</a></li>
-      <li><a href="../research.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;">Research</a></li>
-    </ul>
-    <div style="display:flex;gap:14px;">
-      <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:3px 9px;">LinkedIn</a>
-      <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:3px 9px;">ResearchGate</a>
-    </div>
-  </nav>
-
-  <!-- HERO -->
-  <div style="background:#0a0f1e;padding:48px 40px 40px;border-bottom:1px solid rgba(42,140,74,0.2);position:relative;overflow:hidden;flex-shrink:0;">
-    <div style="position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 85% 50%, rgba(42,140,74,0.12), transparent);pointer-events:none;"></div>
-    <svg style="position:absolute;bottom:0;left:0;right:0;width:100%;height:60px;opacity:0.10;pointer-events:none;" viewBox="0 0 800 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <polyline points="0,30 60,30 80,30 90,4 100,56 110,30 130,30 145,18 160,42 175,30 200,30 260,30 280,30 290,4 300,56 310,30 330,30 345,18 360,42 375,30 400,30 460,30 480,30 490,4 500,56 510,30 530,30 545,18 560,42 575,30 600,30 660,30 680,30 690,4 700,56 710,30 730,30 745,18 760,42 775,30 800,30" stroke="#6bcf8f" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <div style="max-width:860px;margin:0 auto;position:relative;z-index:1;">
-      <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#2a8c4a;margin-bottom:16px;">Physiology · Level 6 · 7</div>
-      <h1 style="font-family:'DM Serif Display',Georgia,serif;font-size:clamp(28px,4vw,46px);color:#fff;line-height:1.1;letter-spacing:-0.5px;margin-bottom:12px;">Exercise Thresholds Analysis<br><em style="font-style:italic;color:#6b9fe4;">lactate · ventilatory · DFA.</em></h1>
-      <p style="font-size:14px;color:rgba(255,255,255,0.55);max-width:600px;line-height:1.7;font-weight:300;">Blood lactate · Ventilatory thresholds · DFA-alpha1 · Expert consensus zone frameworks. Runs entirely in your browser.</p>
-    </div>
-  </div>
 
   <!-- Tab Navigation -->
   <nav class="tab-nav">
