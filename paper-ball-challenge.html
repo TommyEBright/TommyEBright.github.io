@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paper Ball Challenge</title>
+<style>
+  :root{
+    --navy:#003d50; --teal:#00857e; --blue:#0071bc; --plum:#8b3556;
+    --ink:#1d1d1b; --muted:#5a6b73; --line:#d9e2e7; --bg:#f7fbfd; --tint:#f2faf9; --card:#ffffff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif;line-height:1.5}
+  .wrap{max-width:980px;margin:0 auto;padding:16px}
+  header.top{background:var(--navy);color:#fff;border-radius:14px 14px 0 0;padding:18px 20px;border-bottom:5px solid var(--teal)}
+  header.top h1{margin:0;font-size:1.5rem}
+  header.top p{margin:4px 0 0;opacity:.9;font-size:.95rem}
+  nav.steps{display:flex;background:#fff;border:1px solid var(--line);border-top:0;border-radius:0 0 14px 14px;overflow:hidden;margin-bottom:16px}
+  nav.steps button{flex:1;border:0;background:#fff;padding:12px 6px;font:inherit;font-size:.9rem;color:var(--muted);cursor:pointer;border-bottom:4px solid transparent}
+  nav.steps button .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--line);color:var(--navy);font-weight:700;margin-right:6px;font-size:.8rem}
+  nav.steps button.active{color:var(--navy);font-weight:700;border-bottom-color:var(--teal)}
+  nav.steps button.active .n{background:var(--teal);color:#fff}
+  nav.steps button.done .n{background:var(--navy);color:#fff}
+  nav.steps button:disabled{cursor:not-allowed;opacity:.55}
+  .panel{display:none}
+  .panel.show{display:block}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+  .intro{background:var(--tint);border-left:6px solid var(--teal);border-radius:10px;padding:12px 14px;margin-bottom:14px}
+  .intro p{margin:0}
+  h2{color:var(--navy);font-size:1.25rem;margin:0 0 8px}
+  h3{color:var(--navy);font-size:1.05rem;margin:18px 0 8px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:680px){.grid2{grid-template-columns:1fr} nav.steps button .lbl{display:none}}
+  label.name{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px}
+  input.name{width:100%;font:inherit;font-size:1.05rem;padding:8px 10px;border:2px solid var(--line);border-radius:8px;color:var(--navy);font-weight:700}
+  input.name:focus{outline:none;border-color:var(--blue)}
+  .score{font-size:2.6rem;font-weight:700;color:var(--navy);margin:10px 0 4px;line-height:1}
+  .score small{font-size:1rem;color:var(--muted);font-weight:400}
+  .dots{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin:10px 0 12px}
+  .dot{aspect-ratio:1;border-radius:50%;border:2px dashed var(--line);display:grid;place-items:center;font-size:.7rem;color:var(--muted);font-weight:700}
+  .dot.g{background:var(--teal);border:2px solid var(--teal);color:#fff}
+  .dot.m{background:#fff;border:2px solid var(--plum);color:var(--plum)}
+  .dot.next{border-color:var(--blue);border-style:solid}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{font:inherit;font-weight:700;border:0;border-radius:10px;padding:12px 16px;cursor:pointer;min-height:48px}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn.goal{background:var(--teal);color:#fff;flex:1}
+  .btn.miss{background:var(--plum);color:#fff;flex:1}
+  .btn.undo{background:#fff;color:var(--navy);border:2px solid var(--line)}
+  .btn.primary{background:var(--navy);color:#fff}
+  .btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+  .navrow{display:flex;justify-content:space-between;gap:10px;margin-top:6px;flex-wrap:wrap}
+  .hint{color:var(--muted);font-size:.9rem;margin:6px 0 0}
+  .complete{color:var(--teal);font-weight:700;font-size:.9rem;margin-top:8px;min-height:1.3em}
+  /* result */
+  .podium{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:680px){.podium{grid-template-columns:1fr}}
+  .pod{border-radius:12px;padding:18px;border:2px solid var(--line);background:#fff}
+  .pod.win{border-color:var(--teal);background:var(--tint)}
+  .pod .tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.8rem;font-weight:700;color:#fff;background:var(--plum)}
+  .pod.win .tag{background:var(--teal)}
+  .pod .who{font-size:1.5rem;font-weight:700;color:var(--navy);margin:8px 0 2px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px;text-align:center}
+  .stat b{display:block;font-size:1.2rem;color:var(--navy)}
+  .stat span{font-size:.75rem;color:var(--muted)}
+  .tie{background:#fff7e6;border:1px solid #f0c36d;border-radius:10px;padding:12px 14px;margin-top:14px}
+  /* checklist */
+  .item{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#fff}
+  .item.answered{border-color:#abd6d9}
+  .item .q{font-weight:700;color:var(--navy);margin:0 0 2px}
+  .item .ptag{display:inline-block;font-size:.75rem;background:#eef5f9;color:var(--blue);border-radius:999px;padding:2px 9px;margin-bottom:8px;font-weight:700}
+  .opts{display:flex;gap:6px;flex-wrap:wrap}
+  .opt{font:inherit;font-size:.9rem;border:2px solid var(--line);background:#fff;color:var(--navy);border-radius:999px;padding:8px 14px;cursor:pointer;min-height:40px}
+  .opt[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+  .opt.w[aria-pressed="true"]{background:var(--teal);border-color:var(--teal)}
+  .opt.l[aria-pressed="true"]{background:var(--plum);border-color:var(--plum)}
+  details.why{margin-top:8px}
+  details.why summary{cursor:pointer;color:var(--blue);font-size:.9rem;font-weight:700}
+  details.why p{margin:6px 0 0;font-size:.92rem;color:#33444b;background:#f8fcfe;border-radius:8px;padding:8px 10px}
+  .interp{margin-top:8px;font-size:.92rem;background:var(--tint);border-radius:8px;padding:8px 10px;display:none}
+  .progress{font-size:.9rem;color:var(--muted);margin:0 0 10px}
+  /* summary */
+  .headline{background:var(--navy);color:#fff;border-radius:12px;padding:16px 18px;font-size:1.1rem}
+  .headline p{margin:0 0 8px}
+  .headline p:last-child{margin:0}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .chip{background:#fff;color:var(--navy);border-radius:999px;padding:3px 10px;font-size:.8rem;font-weight:700}
+  ul.clean{margin:6px 0 0;padding-left:1.2rem}
+  ul.clean li{margin-bottom:4px}
+  .copied{color:var(--teal);font-weight:700;margin-left:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Paper Ball Challenge</h1>
+    <p>SESD52 · Performance and Technique Analysis for Sport · work in pairs</p>
+  </header>
+  <nav class="steps" aria-label="Task steps">
+    <button type="button" data-go="1" class="active"><span class="n">1</span><span class="lbl">Shoot</span></button>
+    <button type="button" data-go="2" disabled><span class="n">2</span><span class="lbl">Result</span></button>
+    <button type="button" data-go="3" disabled><span class="n">3</span><span class="lbl">Technique</span></button>
+    <button type="button" data-go="4" disabled><span class="n">4</span><span class="lbl">Summary</span></button>
+  </nav>
+
+  <!-- STEP 1 -->
+  <section class="panel show" id="p1" aria-labelledby="h1s">
+    <div class="intro"><p><strong>Notational analysis.</strong> Take 10 shots each from the line. While one of you throws, the other taps <strong>Goal</strong> or <strong>Miss</strong> and films every shot on their phone (side-on, whole body in view, slow-mo if you have it). Then swap.</p></div>
+    <h2 id="h1s" class="sr" style="position:absolute;left:-9999px">Shoot and record</h2>
+    <div class="grid2" id="throwers"></div>
+    <div class="navrow">
+      <button type="button" class="btn ghost" id="reset1">Start again</button>
+      <button type="button" class="btn primary" id="to2" disabled>See the result →</button>
+    </div>
+    <p class="hint" id="hint1">Finish all 10 shots for both throwers to see who won.</p>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="panel" id="p2" aria-labelledby="h2s">
+    <h2 id="h2s">And the winner is…</h2>
+    <div class="podium" id="podium"></div>
+    <div class="tie" id="tie" style="display:none">
+      <p style="margin:0 0 8px"><strong>It’s a draw!</strong> Sudden death. Take one shot each until one of you scores and the other misses. Who won?</p>
+      <div class="row" id="tiebtns"></div>
+    </div>
+    <div class="intro" style="margin-top:14px"><p>Your notation tells you <strong>what</strong> happened. It can’t tell you <strong>why</strong>. For that you need the video and some biomechanics.</p></div>
+    <div class="navrow">
+      <button type="button" class="btn ghost" data-go="1">← Back</button>
+      <button type="button" class="btn primary" id="to3" disabled>Compare technique →</button>
+    </div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="panel" id="p3" aria-labelledby="h3s">
+    <h2 id="h3s">Compare technique</h2>
+    <div class="intro"><p>Put the winner’s and loser’s videos side by side. Pause just before release and step through frame by frame. For each statement, tap who it describes best. Open <strong>Why it matters</strong> if you’re not sure what to look for.</p></div>
+    <p class="progress" id="prog"></p>
+    <div id="checklist"></div>
+    <div class="navrow">
+      <button type="button" class="btn ghost" data-go="2">← Back</button>
+      <button type="button" class="btn primary" id="to4">See your summary →</button>
+    </div>
+  </section>
+
+  <!-- STEP 4 -->
+  <section class="panel" id="p4" aria-labelledby="h4s">
+    <h2 id="h4s">Your summary</h2>
+    <div class="headline" id="headline"></div>
+    <div class="row" style="margin:10px 0 14px;align-items:center">
+      <button type="button" class="btn ghost" id="copy">Copy summary</button><span class="copied" id="copied"></span>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Share with the class</h3>
+      <p style="margin:0">Pick <strong>one</strong> difference and the biomechanical principle behind it (e.g. “More consistent release speed, because distance is very sensitive to release speed”).</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Critique your method</h3>
+      <ul class="clean">
+        <li>Is 10 shots enough to say who is really the better thrower? What would happen with 50?</li>
+        <li>Could your phone’s frame rate capture the exact moment of release?</li>
+        <li>Were you judging technique by eye? How could you <em>measure</em> it instead (e.g. release angle in Kinovea)?</li>
+      </ul>
+    </div>
+    <div class="intro"><p><strong>That’s your Case Study in miniature.</strong> Notation → video analysis → biomechanical principles → recommendations.</p></div>
+    <div class="navrow">
+      <button type="button" class="btn ghost" data-go="3">← Back</button>
+      <button type="button" class="btn primary" id="reset4">New pair / start again</button>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  var ITEMS = [
+    {group:'The ball at release', id:'point', q:'Released the ball from the same point (height and position) every shot', short:'a more repeatable release point', p:'Projectile motion',
+     why:'Once the ball leaves the hand, its flight is set by release height, speed, angle and direction (plus air resistance). If the release point shifts between shots, the landing point shifts too, even when everything else is identical.'},
+    {group:'The ball at release', id:'arc', q:'Threw with a higher, arcing flight rather than a flat one', short:'a higher, arcing trajectory', p:'Release angle',
+     why:'A ball dropping in steeply "sees" more of the target opening (e.g. a bin or box) than one arriving flat, so there is more margin for error. A flat, fast throw is less forgiving, as small errors send it long. A paper ball also slows quickly because of air resistance, so it comes down more steeply than it went up.'},
+    {group:'The ball at release', id:'speed', q:'Used a similar, controlled throwing speed every shot', short:'more consistent release speed', p:'Release speed',
+     why:'Release speed has the biggest effect on how far a projectile travels. In the simple drag-free model, range increases with the square of release speed, so a small change in speed produces a large change in distance.'},
+    {group:'The ball at release', id:'dir', q:'Released the ball in line with the target', short:'a release more in line with the target', p:'Release direction',
+     why:'Left and right misses come from the horizontal direction the ball is travelling at release, not from its speed or angle. If the hand is moving slightly across the body at release, the ball goes off line.'},
+    {group:'The body', id:'stance', q:'Had a set, stable stance and did not step or sway', short:'a more stable base of support', p:'Stability',
+     why:'Balance isn’t really challenged in a short throw, but any sway moves the shoulder, and that moves the release point. A stable base keeps the start of the movement in the same place every shot.'},
+    {group:'The body', id:'trunk', q:'Kept the trunk and shoulder fairly still, throwing mainly from the elbow and wrist', short:'fewer moving segments (a quieter trunk and shoulder)', p:'Degrees of freedom',
+     why:'In maximal throws, speed builds up through the kinetic chain from trunk to hand (proximal-to-distal sequencing). This task needs accuracy, not maximal speed. Throwers often “freeze” some joints to reduce the number of segments they have to coordinate, which reduces variability at the hand.'},
+    {group:'The body', id:'path', q:'Moved the hand in a straight line towards the target just before release', short:'a straighter hand path towards the target', p:'Hand path and timing',
+     why:'If the hand travels straight towards the target, releasing a fraction early or late still sends the ball in the right direction. With a curved hand path, the release direction depends on exactly when the ball leaves the hand, so small timing errors become direction errors.'},
+    {group:'The body', id:'follow', q:'Followed through smoothly towards the target', short:'a smoother follow-through towards the target', p:'Follow-through',
+     why:'The follow-through happens after release, so it can’t change the ball’s flight. It is still a useful clue, as it shows which way the arm was moving at release and whether the arm slowed gradually rather than stopping early.'},
+    {group:'Consistency', id:'repeat', q:'Looked the same on every shot', short:'a more repeatable action', p:'Movement variability',
+     why:'Better performers are usually more consistent at the release, which is the part that matters. They aren’t always less variable at every joint, though. Small joint differences can cancel each other out so the hand still does the same thing (functional variability).'}
+  ];
+  var MISS = {id:'miss', q:'Check the loser’s videos. Where did most of their misses go?',
+    opts:[['short','Mostly short'],['long','Mostly long'],['side','Left or right'],['mixed','All over the place']],
+    interp:{
+      short:'Mostly short suggests the ball left the hand too slowly, or the release angle didn’t suit the speed. Compare release speed and arc.',
+      long:'Mostly long suggests too much release speed, or a flat trajectory with little margin for error. Compare release speed and arc.',
+      side:'Left or right misses are a direction problem, not a distance problem. Compare release direction and hand path.',
+      mixed:'Misses everywhere point to general inconsistency rather than one fault. Compare the release point and whether the action looked the same each shot.'
+    }};
+
+  var S = load() || fresh();
+  function fresh(){return {names:{A:'',B:''}, shots:{A:[],B:[]}, tie:null, ans:{}, step:1};}
+  function save(){try{sessionStorage.setItem('pbc',JSON.stringify(S));}catch(e){}}
+  function load(){try{var s=sessionStorage.getItem('pbc');return s?JSON.parse(s):null;}catch(e){return null;}}
+  function $(id){return document.getElementById(id);}
+  function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function nm(k){return S.names[k].trim() || ('Thrower '+k);}
+  function goals(k){return S.shots[k].filter(function(x){return x==='g';}).length;}
+  function done(){return S.shots.A.length===10 && S.shots.B.length===10;}
+  function result(){
+    var a=goals('A'), b=goals('B');
+    if(a>b) return {w:'A',l:'B'}; if(b>a) return {w:'B',l:'A'};
+    if(S.tie) return {w:S.tie,l:S.tie==='A'?'B':'A',tie:true};
+    return null;
+  }
+
+  // ---------- Step 1
+  function renderThrowers(){
+    var h='';
+    ['A','B'].forEach(function(k){
+      var s=S.shots[k], dots='';
+      for(var i=0;i<10;i++){
+        var c = s[i]==='g'?'g':(s[i]==='m'?'m':(i===s.length?'next':''));
+        dots+='<div class="dot '+c+'" aria-hidden="true">'+(s[i]==='g'?'✓':(s[i]==='m'?'✗':(i+1)))+'</div>';
+      }
+      h+='<div class="card"><label class="name" for="n'+k+'">Thrower '+k+' name</label>'+
+        '<input class="name" id="n'+k+'" data-k="'+k+'" maxlength="24" placeholder="Thrower '+k+'" value="'+esc(S.names[k])+'">'+
+        '<div class="score" aria-live="polite">'+goals(k)+'<small> / 10 goals · '+(s.length===10?'all shots taken':'next: shot '+(s.length+1))+'</small></div>'+
+        '<div class="dots">'+dots+'</div>'+
+        '<div class="row"><button type="button" class="btn goal" data-k="'+k+'" data-v="g" '+(s.length>=10?'disabled':'')+'>✓ Goal</button>'+
+        '<button type="button" class="btn miss" data-k="'+k+'" data-v="m" '+(s.length>=10?'disabled':'')+'>✗ Miss</button>'+
+        '<button type="button" class="btn undo" data-k="'+k+'" data-v="u" '+(s.length===0?'disabled':'')+' aria-label="Undo last shot for thrower '+k+'">Undo</button></div>'+
+        '<div class="complete">'+(s.length===10?'All 10 shots recorded':'')+'</div></div>';
+    });
+    $('throwers').innerHTML=h;
+    $('to2').disabled=!done();
+    $('hint1').style.display=done()?'none':'block';
+  }
+  $('throwers').addEventListener('click',function(e){
+    var b=e.target.closest('button[data-k]'); if(!b) return;
+    var k=b.dataset.k, v=b.dataset.v;
+    if(v==='u'){S.shots[k].pop();} else if(S.shots[k].length<10){S.shots[k].push(v);}
+    S.tie=null; save(); renderThrowers(); renderNav();
+  });
+  $('throwers').addEventListener('input',function(e){
+    if(e.target.classList.contains('name')){S.names[e.target.dataset.k]=e.target.value; save();}
+  });
+
+  // ---------- Step 2
+  function streak(s){var m=0,c=0;s.forEach(function(x){c=x==='g'?c+1:0;if(c>m)m=c;});return m;}
+  function half(s,a,b){return s.slice(a,b).filter(function(x){return x==='g';}).length;}
+  function pod(k,win){
+    var s=S.shots[k];
+    return '<div class="pod '+(win?'win':'')+'"><span class="tag">'+(win?'Winner':'Loser')+'</span>'+
+      '<div class="who">'+esc(nm(k))+'</div><div>'+goals(k)+' / 10 goals ('+goals(k)*10+'%)</div>'+
+      '<div class="stats"><div class="stat"><b>'+streak(s)+'</b><span>longest streak</span></div>'+
+      '<div class="stat"><b>'+half(s,0,5)+'</b><span>goals, shots 1–5</span></div>'+
+      '<div class="stat"><b>'+half(s,5,10)+'</b><span>goals, shots 6–10</span></div></div></div>';
+  }
+  function renderResult(){
+    var r=result();
+    var a=goals('A'), b=goals('B');
+    if(a===b){
+      $('tie').style.display='block';
+      $('tiebtns').innerHTML=['A','B'].map(function(k){return '<button type="button" class="btn '+(S.tie===k?'primary':'ghost')+'" data-tie="'+k+'">'+esc(nm(k))+' won</button>';}).join('');
+    } else $('tie').style.display='none';
+    if(r){ $('podium').innerHTML=pod(r.w,true)+pod(r.l,false); }
+    else { $('podium').innerHTML=pod('A',false).replace('Loser','Level')+pod('B',false).replace('Loser','Level'); }
+    $('to3').disabled=!r;
+  }
+  $('tiebtns').addEventListener('click',function(e){var b=e.target.closest('[data-tie]');if(!b)return;S.tie=b.dataset.tie;save();renderResult();renderNav();});
+
+  // ---------- Step 3
+  function renderChecklist(){
+    var r=result(); if(!r) return;
+    var W=esc(nm(r.w)), L=esc(nm(r.l)), h='', g='';
+    ITEMS.forEach(function(it,i){
+      if(it.group!==g){g=it.group;h+='<h3>'+g+'</h3>';}
+      var a=S.ans[it.id];
+      h+='<div class="item '+(a?'answered':'')+'"><p class="q">'+(i+1)+'. '+it.q+'</p><span class="ptag">'+it.p+'</span>'+
+        '<div class="opts" role="group" aria-label="'+esc(it.q)+'">'+
+        opt(it.id,'W',W+' (winner)','w',a)+opt(it.id,'L',L+' (loser)','l',a)+opt(it.id,'Both','Both the same','',a)+opt(it.id,'Unsure','Can’t tell','',a)+
+        '</div><details class="why"><summary>Why it matters</summary><p>'+it.why+'</p></details></div>';
+    });
+    var m=S.ans.miss;
+    h+='<h3>Link it back to your notation</h3><div class="item '+(m?'answered':'')+'"><p class="q">'+(ITEMS.length+1)+'. '+MISS.q.replace('the loser’s','<strong>'+L+'’s</strong>')+'</p>'+
+      '<div class="opts" role="group" aria-label="Miss pattern">'+MISS.opts.map(function(o){return opt('miss',o[0],o[1],'',m);}).join('')+'</div>'+
+      '<div class="interp" style="display:'+(m?'block':'none')+'">'+(m?MISS.interp[m]:'')+'</div></div>';
+    $('checklist').innerHTML=h;
+    var n=Object.keys(S.ans).length;
+    $('prog').textContent=n+' of '+(ITEMS.length+1)+' answered';
+  }
+  function opt(id,v,label,cls,cur){return '<button type="button" class="opt '+cls+'" data-id="'+id+'" data-v="'+v+'" aria-pressed="'+(cur===v)+'">'+label+'</button>';}
+  $('checklist').addEventListener('click',function(e){
+    var b=e.target.closest('.opt'); if(!b) return;
+    S.ans[b.dataset.id]=b.dataset.v; save();
+    var y=window.scrollY; renderChecklist(); window.scrollTo(0,y);
+  });
+
+  // ---------- Step 4
+  function list(a){if(a.length<=1)return a.join('');return a.slice(0,-1).join(', ')+' and '+a[a.length-1];}
+  function summaryText(){
+    var r=result(); if(!r) return {html:'',text:''};
+    var W=nm(r.w), L=nm(r.l);
+    var wi=ITEMS.filter(function(it){return S.ans[it.id]==='W';});
+    var li=ITEMS.filter(function(it){return S.ans[it.id]==='L';});
+    var p1=W+' beat '+L+' '+goals(r.w)+'–'+goals(r.l)+(r.tie?' (after sudden death)':'')+'.';
+    var p2 = wi.length ? 'Key technique differences: '+W+' showed '+list(wi.map(function(x){return x.short;}))+'.'
+                       : 'No clear technique advantages spotted for '+W+'. Look again frame by frame around release, or ask whether 10 shots was enough to separate you.';
+    var p3 = li.length ? 'Interestingly, '+L+' showed '+list(li.map(function(x){return x.short;}))+'.' : '';
+    var p4 = S.ans.miss ? MISS.interp[S.ans.miss] : '';
+    var chips = wi.map(function(x){return x.p;});
+    var paras=[p1,p2,p3,p4].filter(Boolean);
+    return {html: paras.map(function(t){return '<p>'+esc(t)+'</p>';}).join('')+(chips.length?'<div class="chips">'+chips.map(function(c){return '<span class="chip">'+esc(c)+'</span>';}).join('')+'</div>':''),
+            text: paras.join(' ')+(chips.length?' Principles: '+chips.join(', ')+'.':'')};
+  }
+  function renderSummary(){ $('headline').innerHTML=summaryText().html; $('copied').textContent=''; }
+  $('copy').addEventListener('click',function(){
+    var t=summaryText().text;
+    function fallback(){var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');$('copied').textContent='Copied';}catch(e){$('copied').textContent='Select and copy the text above';}document.body.removeChild(ta);}
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){$('copied').textContent='Copied';},fallback);} else fallback();
+  });
+
+  // ---------- Navigation
+  function allowed(n){ if(n===1) return true; if(n===2) return done(); return done() && !!result(); }
+  function renderNav(){
+    document.querySelectorAll('nav.steps button').forEach(function(b){
+      var n=+b.dataset.go; b.disabled=!allowed(n);
+      b.classList.toggle('active',n===S.step); b.classList.toggle('done',n<S.step);
+      if(n===S.step) b.setAttribute('aria-current','step'); else b.removeAttribute('aria-current');
+    });
+  }
+  function go(n){
+    if(!allowed(n)) return;
+    S.step=n; save();
+    for(var i=1;i<=4;i++) $('p'+i).classList.toggle('show',i===n);
+    if(n===1) renderThrowers(); if(n===2) renderResult(); if(n===3) renderChecklist(); if(n===4) renderSummary();
+    renderNav(); window.scrollTo(0,0);
+  }
+  document.addEventListener('click',function(e){var b=e.target.closest('[data-go]');if(b&&!b.disabled)go(+b.dataset.go);});
+  $('to2').addEventListener('click',function(){go(2);});
+  $('to3').addEventListener('click',function(){go(3);});
+  $('to4').addEventListener('click',function(){go(4);});
+  function reset(){ S=fresh(); save(); go(1); }
+  $('reset1').addEventListener('click',function(){
+    if(this.dataset.arm){reset();delete this.dataset.arm;this.textContent='Start again';}
+    else{this.dataset.arm='1';this.textContent='Tap again to clear';var b=this;setTimeout(function(){delete b.dataset.arm;b.textContent='Start again';},3000);}
+  });
+  $('reset4').addEventListener('click',reset);
+
+  go(allowed(S.step)?S.step:1);
+})();
+</script>
+</body>
+</html>
