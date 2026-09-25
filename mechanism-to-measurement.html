@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mechanism to Measurement Lab</title>
+<meta name="description" content="Interactive biomechanics lab for RSEH51: what we want to know about tissue loading versus what we can actually measure.">
+<style>
+:root{
+  --navy:#003d50; --teal:#00857e; --blue:#0071bc; --plum:#8b3556; --amber:#b86e00;
+  --bg:#f5f9fb; --card:#ffffff; --ink:#1d1d1b; --muted:#5a6770; --line:#d9e2e7; --soft:#eef5f8;
+  --grid:#e3eaee; --good:#2e7d32; --warn:#b86e00; --bad:#b3261e;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --navy:#7cc3d6; --teal:#4cc2b8; --blue:#6fb3ff; --plum:#e58bb0; --amber:#f0b35a;
+    --bg:#0f1a1f; --card:#162429; --ink:#e7eef1; --muted:#9fb1ba; --line:#2a3d45; --soft:#1c2e34;
+    --grid:#24363d; --good:#6fcf73; --warn:#f0b35a; --bad:#ff8a80;
+  }
+}
+:root[data-theme="dark"]{
+  --navy:#7cc3d6; --teal:#4cc2b8; --blue:#6fb3ff; --plum:#e58bb0; --amber:#f0b35a;
+  --bg:#0f1a1f; --card:#162429; --ink:#e7eef1; --muted:#9fb1ba; --line:#2a3d45; --soft:#1c2e34;
+  --grid:#24363d; --good:#6fcf73; --warn:#f0b35a; --bad:#ff8a80;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;line-height:1.55;font-size:16px}
+.wrap{max-width:1180px;margin:0 auto;padding:16px}
+header.top{background:#003d50;color:#fff;border-radius:14px;padding:22px 22px 18px;border-bottom:6px solid #00857e;position:relative}
+header.top .tag{display:inline-block;background:#fff;color:#003d50;font-weight:700;font-size:.8rem;padding:3px 10px;border-radius:8px;border-left:5px solid #0071bc}
+header.top h1{margin:10px 0 4px;font-size:1.7rem;line-height:1.2}
+header.top p{margin:0;opacity:.92;max-width:760px}
+.themebtn{position:absolute;top:16px;right:16px;background:transparent;border:1.5px solid rgba(255,255,255,.6);color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;font:inherit;font-size:.85rem}
+nav.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+nav.tabs button{flex:1 1 170px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-bottom:4px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-weight:600;cursor:pointer;text-align:left}
+nav.tabs button small{display:block;font-weight:400;color:var(--muted);font-size:.8rem}
+nav.tabs button[aria-selected="true"]{border-bottom-color:var(--teal);background:var(--soft)}
+section.lab{display:none}
+section.lab.active{display:block}
+.intro{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--blue);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.intro h2{margin:0 0 6px;font-size:1.3rem;color:var(--navy)}
+.intro p{margin:0}
+.grid{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:14px}
+@media (max-width:820px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
+.card h3{margin:0 0 10px;font-size:1.02rem;color:var(--navy)}
+.ctl{margin-bottom:12px}
+.ctl label{display:flex;justify-content:space-between;gap:8px;font-size:.92rem;font-weight:600}
+.ctl label output{font-variant-numeric:tabular-nums;color:var(--teal);font-weight:700;white-space:nowrap}
+.ctl input[type=range]{width:100%;accent-color:var(--teal)}
+.ctl .hint{font-size:.8rem;color:var(--muted);margin-top:1px}
+.btnrow{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px}
+.btn{background:var(--soft);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.btn:hover{border-color:var(--teal)}
+.btn.primary{background:var(--teal);color:#fff;border-color:var(--teal)}
+svg{width:100%;height:auto;display:block}
+.readouts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:10px}
+.ro{background:var(--soft);border-radius:10px;padding:8px 10px}
+.ro .k{font-size:.78rem;color:var(--muted)}
+.ro .v{font-size:1.2rem;font-weight:700;font-variant-numeric:tabular-nums}
+.ro .s{font-size:.78rem;color:var(--muted)}
+.discuss{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--plum);border-radius:12px;padding:12px 16px;margin-top:14px}
+.discuss h3{margin:0 0 6px;color:var(--plum);font-size:1rem}
+.discuss ol{margin:0;padding-left:1.2rem}
+.discuss li{margin-bottom:4px}
+details.bio{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:14px}
+details.bio summary{cursor:pointer;padding:10px 16px;font-weight:700;color:var(--navy)}
+details.bio .inner{padding:0 16px 14px}
+.eq{font-family:"Cambria Math","Times New Roman",serif;background:var(--soft);padding:6px 10px;border-radius:8px;display:inline-block;margin:3px 0}
+.verdict{margin-top:10px;padding:10px 12px;border-radius:10px;font-weight:600;border:1px solid var(--line)}
+.verdict.good{border-left:6px solid var(--good)} .verdict.warn{border-left:6px solid var(--warn)} .verdict.bad{border-left:6px solid var(--bad)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.82rem;color:var(--muted);margin-top:6px}
+.legend span::before{content:"";display:inline-block;width:12px;height:4px;border-radius:2px;margin-right:5px;vertical-align:middle;background:var(--c)}
+table.chain{width:100%;border-collapse:collapse;font-size:.88rem}
+table.chain th{background:var(--soft);text-align:left;padding:6px;border:1px solid var(--line);vertical-align:bottom}
+table.chain td{border:1px solid var(--line);padding:0;vertical-align:top}
+table.chain textarea,table.chain select{width:100%;min-height:64px;border:0;background:transparent;color:var(--ink);font:inherit;font-size:.86rem;padding:6px;resize:vertical}
+table.chain select{min-height:40px}
+.tablewrap{overflow-x:auto}
+.tablewrap table{min-width:980px}
+.del{background:none;border:0;color:var(--bad);cursor:pointer;font-size:1rem;padding:6px}
+footer{color:var(--muted);font-size:.82rem;text-align:center;padding:22px 8px}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <span class="tag">RSEH51</span>
+  <h1>Mechanism to Measurement Lab</h1>
+  <p>Injury happens in tissue, but most of what we measure happens outside it. Use these five labs to work out how far each measure sits from the tissue, and whether you measure it well enough to trust.</p>
+  <button class="themebtn" id="themeBtn" type="button" aria-label="Toggle light or dark theme">Theme</button>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Labs">
+  <button role="tab" aria-selected="true" data-tab="lab1">1. Same moment, different knee<small>Net moments vs tissue load</small></button>
+  <button role="tab" aria-selected="false" data-tab="lab2">2. Angle ≠ moment<small>Kinematics vs kinetics</small></button>
+  <button role="tab" aria-selected="false" data-tab="lab3">3. Load × cycles<small>Acute vs overuse</small></button>
+  <button role="tab" aria-selected="false" data-tab="lab4">4. Is the change real?<small>SEM, MDC and SWC</small></button>
+  <button role="tab" aria-selected="false" data-tab="lab5">5. Chain builder<small>Mechanism → measure</small></button>
+</nav>
+
+<!-- ============ LAB 1 ============ -->
+<section class="lab active" id="lab1" role="tabpanel">
+  <div class="intro">
+    <h2>Same moment, different knee</h2>
+    <p>Inverse dynamics gives you a <strong>net</strong> joint moment, meaning the combined effect of every muscle and passive structure crossing the joint. It cannot tell you how that moment was produced. Keep the net knee extensor moment fixed, then change how much the hamstrings co-contract and see what happens to the loads inside the knee.</p>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <h3>Controls</h3>
+      <div class="ctl"><label for="l1M">Net knee extensor moment <output id="l1Mo"></output></label><input type="range" id="l1M" min="0" max="300" step="5" value="150"><div class="hint">This is what inverse dynamics reports.</div></div>
+      <div class="ctl"><label for="l1H">Hamstring co-contraction force <output id="l1Ho"></output></label><input type="range" id="l1H" min="0" max="2500" step="50" value="0"><div class="hint">You can't get this from a force plate. EMG gives an indication, not a force.</div></div>
+      <div class="ctl"><label for="l1T">Knee flexion angle <output id="l1To"></output></label><input type="range" id="l1T" min="0" max="90" step="1" value="25"></div>
+      <div class="ctl"><label for="l1G">Axial load through the shank <output id="l1Go"></output></label><input type="range" id="l1G" min="0" max="4" step="0.1" value="2"><div class="hint">Body mass fixed at 75 kg.</div></div>
+      <div class="btnrow">
+        <button class="btn" type="button" data-l1="150,0,25,2">Quad-dominant landing</button>
+        <button class="btn" type="button" data-l1="150,1500,25,2">Same moment, co-contraction</button>
+        <button class="btn" type="button" data-l1="150,0,80,2">Deep flexion</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Sagittal knee (athlete facing right)</h3>
+      <svg id="l1svg" viewBox="0 0 520 400" role="img" aria-label="Knee free body diagram"></svg>
+      <div class="legend">
+        <span style="--c:var(--teal)">Patellar tendon force</span>
+        <span style="--c:var(--plum)">Hamstring force</span>
+        <span style="--c:var(--amber)">Anterior tibial shear (ACL loading direction)</span>
+        <span style="--c:var(--blue)">Tibiofemoral compression</span>
+      </div>
+      <div class="readouts" id="l1ro"></div>
+    </div>
+  </div>
+  <div class="discuss">
+    <h3>Discuss in your group</h3>
+    <ol>
+      <li>Set the "same moment" preset and compare it with 0 N co-contraction. What has inverse dynamics missed, and does it matter for your injury?</li>
+      <li>Co-contraction lowers anterior shear but raises compression. Which tissue does that protect, and which does it load? Could an intervention that is "good" for the ACL be bad for another structure?</li>
+      <li>Move to deep flexion. Why does the patellar tendon stop pulling the tibia forwards? What does that mean for the knee angles at which you should test?</li>
+      <li>You have a force plate, 3D motion capture and EMG. Which of the loads on screen can you measure, which can you estimate, and which can you only guess?</li>
+    </ol>
+  </div>
+  <details class="bio"><summary>The biomechanics behind this model</summary><div class="inner">
+    <p>This is a quasi-static, sagittal-plane model of the tibia, with the patellar tendon (<em>F</em><sub>PT</sub>) and hamstrings (<em>F</em><sub>H</sub>) as the only active structures. Moment balance about the tibiofemoral contact point gives</p>
+    <p><span class="eq">M<sub>net</sub> = F<sub>PT</sub>·d<sub>PT</sub> − F<sub>H</sub>·d<sub>H</sub> &nbsp;⇒&nbsp; F<sub>PT</sub> = (M<sub>net</sub> + F<sub>H</sub>·d<sub>H</sub>) / d<sub>PT</sub></span></p>
+    <p>so every newton of hamstring force has to be matched by extra quadriceps force to keep the same net moment. Loads on the tibia are then resolved along and across its long axis.</p>
+    <p><span class="eq">Shear<sub>ant</sub> = F<sub>PT</sub>·sin(α<sub>PT</sub>) − F<sub>H</sub>·sin(α<sub>H</sub>)</span><br><span class="eq">Compression = F<sub>axial</sub> + F<sub>PT</sub>·cos(α<sub>PT</sub>) + F<sub>H</sub>·cos(α<sub>H</sub>)</span></p>
+    <p class="small muted">Assumptions: moment arms are held constant (d<sub>PT</sub> = 4.5 cm, d<sub>H</sub> = 3.5 cm). The patellar tendon angle falls roughly linearly from about +20° near full extension to slightly negative by 90° flexion, and the hamstring line of action becomes more oblique with flexion. These follow the general trends in cadaver and imaging studies, but the exact values vary between people. The model ignores gastrocnemius, ligament and external shear forces, and inertia. It's a teaching model and shouldn't be used to estimate real ACL force. That's the point of the lab. This is the same idea as Winter's distinction between joint reaction and bone-on-bone forces, and his point about the indeterminacy of muscle forces (Winter, 2009, Sections 5.0.3 and 5.3).</p>
+  </div></details>
+</section>
+
+<!-- ============ LAB 2 ============ -->
+<section class="lab" id="lab2" role="tabpanel">
+  <div class="intro">
+    <h2>Angle ≠ moment</h2>
+    <p>2D video gives you a knee <strong>angle</strong> (the frontal plane projection angle, FPPA). The load on the knee depends on the external <strong>moment</strong>, which is the ground reaction force multiplied by its perpendicular distance from the knee. Trunk position and foot placement move the ground reaction force without changing the knee angle.</p>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <h3>Controls (single-leg landing, right leg)</h3>
+      <div class="ctl"><label for="l2K">Knee medial displacement <output id="l2Ko"></output></label><input type="range" id="l2K" min="-4" max="12" step="0.5" value="0"><div class="hint">Positive = knee moves medially ("valgus").</div></div>
+      <div class="ctl"><label for="l2L">Trunk lean over the stance leg <output id="l2Lo"></output></label><input type="range" id="l2L" min="-10" max="35" step="1" value="0"><div class="hint">Positive = trunk leans towards the landing leg.</div></div>
+      <div class="ctl"><label for="l2F">Foot placement <output id="l2Fo"></output></label><input type="range" id="l2F" min="-5" max="12" step="0.5" value="5"><div class="hint">Positive = foot placed more medially (under the body).</div></div>
+      <div class="ctl"><label for="l2G">Resultant GRF <output id="l2Go"></output></label><input type="range" id="l2G" min="1" max="5" step="0.1" value="2.5"><div class="hint">Body mass fixed at 70 kg.</div></div>
+      <div class="btnrow">
+        <button class="btn" type="button" data-l2="8,0,5,2.5">Knee in, trunk upright</button>
+        <button class="btn" type="button" data-l2="4,25,5,2.5">Knee barely in, trunk lean</button>
+        <button class="btn" type="button" data-l2="0,0,5,2.5">Neutral</button>
+      </div>
+      <p class="small muted" style="margin:8px 0 0">Challenge: find two positions with the <strong>same FPPA</strong> but at least a twofold difference in knee abduction moment.</p>
+    </div>
+    <div class="card">
+      <h3>Frontal view</h3>
+      <svg id="l2svg" viewBox="0 0 520 440" role="img" aria-label="Frontal plane landing model"></svg>
+      <div class="legend">
+        <span style="--c:var(--amber)">GRF line of action</span>
+        <span style="--c:var(--plum)">Moment arm about the knee</span>
+        <span style="--c:var(--navy)">Segments</span>
+      </div>
+      <div class="readouts" id="l2ro"></div>
+    </div>
+  </div>
+  <div class="discuss">
+    <h3>Discuss in your group</h3>
+    <ol>
+      <li>Your chosen screening test uses FPPA from 2D video. What part of the mechanism does it capture, and what does it miss?</li>
+      <li>The trunk-lean preset has a small FPPA but a large moment. What would you need to measure to detect this athlete, and could you do it outside the lab?</li>
+      <li>A knee abduction moment is still not ACL load (see Lab 1). How many steps is it from the tissue? Use Winter's levels (measurement, description, analysis and assessment) to place it.</li>
+      <li>If a cheap field test tracks the moment only loosely, is it still useful? What would you need to know about its reliability and validity first?</li>
+    </ol>
+  </div>
+  <details class="bio"><summary>The biomechanics behind this model</summary><div class="inner">
+    <p>This is a quasi-static approximation in which the resultant ground reaction force acts from the centre of pressure (COP) through the whole-body centre of mass (COM). The COM is a mass-weighted sum of the head, arms and trunk (62%), pelvis (6%), stance leg (16%) and swing leg (16%). Leaning the trunk moves the COM, and so the GRF line of action, laterally. The external frontal-plane moment about the knee is</p>
+    <p><span class="eq">M<sub>knee</sub> = |F<sub>GRF</sub>| · d<sub>⊥</sub></span></p>
+    <p>where d<sub>⊥</sub> is the perpendicular distance from the knee joint centre to the GRF line. If the line passes lateral to the knee, the external moment is an abduction (valgus) moment. If it passes medial to the knee, it is an adduction (varus) moment. FPPA is the angle between the thigh and shank projected onto the frontal plane.</p>
+    <p class="small muted">Assumptions: the model ignores segment inertia, horizontal forces that don't pass through the COM, and transverse-plane rotation. Real landings are dynamic, so inverse dynamics with 3D motion capture is needed for real values. The model shows why a kinematic variable and a kinetic variable can separate, which is the key idea behind choosing between 2D video and lab-based measures.</p>
+  </div></details>
+</section>
+
+<!-- ============ LAB 3 ============ -->
+<section class="lab" id="lab3" role="tabpanel">
+  <div class="intro">
+    <h2>Load × cycles</h2>
+    <p>Tissue can fail after one very high load or after thousands of moderate ones (Hamill et al., 2015, Fig. 2-37). Where your injury sits on this curve decides what you should measure. That could be peak load, loading rate, the number of loading cycles, or all three.</p>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <h3>Controls</h3>
+      <div class="ctl"><label for="l3S">Peak load per cycle <output id="l3So"></output></label><input type="range" id="l3S" min="10" max="100" step="0.5" value="35"><div class="hint">Shown as a percentage of the tissue's single-load failure strength.</div></div>
+      <div class="ctl"><label for="l3N">Loading cycles per session <output id="l3No"></output></label><input type="range" id="l3N" min="0" max="4.3" step="0.01" value="3.7"><div class="hint">Log scale (e.g. strides, landings, throws).</div></div>
+      <div class="ctl"><label for="l3W">Sessions per week <output id="l3Wo"></output></label><input type="range" id="l3W" min="1" max="10" step="1" value="5"></div>
+      <div class="ctl"><label for="l3R">Weekly repair <output id="l3Ro"></output></label><input type="range" id="l3R" min="0" max="60" step="1" value="20"><div class="hint">The fraction of damage the tissue repairs each week.</div></div>
+      <div class="ctl"><label for="l3K">Fatigue exponent <em>k</em> <output id="l3Ko"></output></label><input type="range" id="l3K" min="6" max="16" step="0.5" value="12"><div class="hint">How steep the curve is. This is an illustrative value.</div></div>
+      <div class="btnrow">
+        <button class="btn" type="button" data-l3="100,0,1,20,12">Single high load (acute)</button>
+        <button class="btn" type="button" data-l3="35,3.7,5,20,12">Running block (overuse)</button>
+        <button class="btn" type="button" data-l3="38.5,3.7,5,20,12">Same running, +10% load</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Fatigue (S–N) curve and damage over 12 weeks</h3>
+      <svg id="l3svg" viewBox="0 0 520 250" role="img" aria-label="Load versus cycles to failure"></svg>
+      <svg id="l3svg2" viewBox="0 0 520 170" role="img" aria-label="Cumulative damage over 12 weeks"></svg>
+      <div class="readouts" id="l3ro"></div>
+    </div>
+  </div>
+  <div class="discuss">
+    <h3>Discuss in your group</h3>
+    <ol>
+      <li>Compare "Running block" with "+10% load". A 10% increase in load per cycle has a much bigger effect on damage. Why, and what does it mean for how precisely you need to measure load?</li>
+      <li>Put your injury on the curve. Is it mainly acute, overuse or both? Should your battery measure peak load, loading rate, the number of cycles, or tissue capacity?</li>
+      <li>Most screening tests capture one maximal effort. For an overuse injury, what are they missing?</li>
+      <li>Tissue strength and repair rate differ between people and change with training. What does that mean for a fixed injury-risk threshold?</li>
+    </ol>
+  </div>
+  <details class="bio"><summary>The biomechanics behind this model</summary><div class="inner">
+    <p>Tissue fatigue is often described with a power-law S–N curve, where the number of cycles to failure at a relative load <em>S</em> is</p>
+    <p><span class="eq">N<sub>f</sub> = S<sup>−k</sup></span></p>
+    <p>Damage adds up following Miner's rule. Each cycle uses up 1/N<sub>f</sub> of the tissue's life, and failure is predicted when total damage reaches 1. In this lab a fraction of the accumulated damage is repaired each week.</p>
+    <p><span class="eq">D<sub>week+1</sub> = D<sub>week</sub>·(1 − r) + sessions · n · S<sup>k</sup></span></p>
+    <p>Because <em>k</em> is large, damage per cycle is very sensitive to load. For example, 1.1<sup>12</sup> ≈ 3.1, so each cycle does about three times as much damage. Probabilistic models of tibial stress fracture use the same logic (e.g. Edwards et al., 2009).</p>
+    <p class="small muted">Assumptions: <em>k</em> and the repair rate are illustrative. Real values depend on the tissue, the strain rate, temperature and the biology (bone remodels, tendon adapts slowly), and they vary widely between people. Use this lab for reasoning, not for predictions.</p>
+  </div></details>
+</section>
+
+<!-- ============ LAB 4 ============ -->
+<section class="lab" id="lab4" role="tabpanel">
+  <div class="intro">
+    <h2>Is the change real?</h2>
+    <p>Every measurement includes some noise. Before a retest can inform a decision, you need to know how big a change has to be before it is bigger than the measurement error. Enter reliability values from the paper you are using for your test, then test an athlete's change against them.</p>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <h3>Reliability inputs</h3>
+      <div class="ctl"><label for="l4SD">Between-athlete SD <output id="l4SDo"></output></label><input type="range" id="l4SD" min="1" max="200" step="1" value="60"><div class="hint">Enter this in the units of your variable (e.g. N, cm, °, N·m).</div></div>
+      <div class="ctl"><label for="l4ICC">ICC (test–retest) <output id="l4ICCo"></output></label><input type="range" id="l4ICC" min="0.5" max="0.99" step="0.01" value="0.85"></div>
+      <h3 style="margin-top:14px">Athlete</h3>
+      <div class="ctl"><label for="l4B">Baseline <output id="l4Bo"></output></label><input type="range" id="l4B" min="0" max="1000" step="5" value="300"></div>
+      <div class="ctl"><label for="l4R">Retest <output id="l4Ro"></output></label><input type="range" id="l4R" min="0" max="1000" step="5" value="340"></div>
+      <h3 style="margin-top:14px">Simulation</h3>
+      <div class="ctl"><label for="l4T">True change in the athlete <output id="l4To"></output></label><input type="range" id="l4T" min="-150" max="150" step="1" value="0"><div class="hint">We repeat the retest 2,000 times with this true change plus measurement noise.</div></div>
+      <div class="btnrow"><button class="btn primary" type="button" id="l4sim">Re-run simulation</button></div>
+    </div>
+    <div class="card">
+      <h3>What the numbers mean</h3>
+      <div class="readouts" id="l4ro"></div>
+      <div id="l4verdict"></div>
+      <svg id="l4svg" viewBox="0 0 520 240" role="img" aria-label="Distribution of observed change"></svg>
+      <p class="small muted" style="margin:4px 0 0">Distribution of observed changes. Bars beyond the dashed lines (±MDC<sub>95</sub>) would be flagged as a "real" change.</p>
+    </div>
+  </div>
+  <div class="discuss">
+    <h3>Discuss in your group</h3>
+    <ol>
+      <li>Set the true change to 0. How often would you wrongly flag a change? Now make the true change equal to the SWC. How often would you miss it?</li>
+      <li>If the MDC is bigger than the change you care about, is the test useful for monitoring? Is it still useful as a one-off screen?</li>
+      <li>Where would you get the SD and ICC for your own test, and is that sample like your athlete (e.g. sex, age, sport, injury status)?</li>
+      <li>In Session 4 your decision tree checks the MDC <em>before</em> the threshold. Why does that order matter?</li>
+    </ol>
+  </div>
+  <details class="bio"><summary>The statistics behind this lab</summary><div class="inner">
+    <p><span class="eq">SEM = SD · √(1 − ICC)</span> &nbsp; <span class="eq">MDC<sub>95</sub> = 1.96 · √2 · SEM</span> &nbsp; <span class="eq">SWC = 0.2 · SD</span></p>
+    <p>The √2 appears because a change score has error from <em>two</em> measurements. The SWC here uses 0.2 × between-athlete SD, which is a common convention for the smallest worthwhile change. When the SEM is smaller than the SWC, the test can detect worthwhile changes (Hopkins, 2000). The simulation adds normally distributed noise with SD = √2 · SEM to the true change.</p>
+    <p class="small muted">The SEM calculated from an ICC depends on the SD of the sample it came from, so reliability values only transfer to a similar population. The MDC from another study tells you about that study's protocol. If your protocol is different (e.g. equipment, familiarisation, number of trials), your error will be different too.</p>
+  </div></details>
+</section>
+
+<!-- ============ LAB 5 ============ -->
+<section class="lab" id="lab5" role="tabpanel">
+  <div class="intro">
+    <h2>Chain builder</h2>
+    <p>Build your group's mechanism-to-measurement chain, with one row per variable. Your work saves in this browser only, so export it before you leave. You'll need it in Session 4, where it becomes your decision tree.</p>
+  </div>
+  <div class="card">
+    <div class="btnrow">
+      <button class="btn primary" type="button" id="l5add">Add row</button>
+      <button class="btn" type="button" id="l5csv">Download CSV</button>
+      <button class="btn" type="button" id="l5copy">Copy as table</button>
+      <button class="btn" type="button" id="l5clear">Clear all</button>
+      <span class="small muted" id="l5msg" aria-live="polite"></span>
+    </div>
+    <div class="ctl" style="max-width:520px"><label for="l5scen">Scenario</label><input id="l5scen" type="text" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit" placeholder="e.g. hamstring strain prevention in academy footballers"></div>
+    <div class="tablewrap">
+      <table class="chain" id="l5table">
+        <thead><tr>
+          <th>Mechanism &amp; tissue</th>
+          <th>Tissue load we want to know</th>
+          <th>Load type<br><span class="muted small">(Lab 3)</span></th>
+          <th>Measurable variable</th>
+          <th>Winter level</th>
+          <th>Tool &amp; setting</th>
+          <th>Reliability / MDC + source<br><span class="muted small">(Lab 4)</span></th>
+          <th>Value that would change my decision</th>
+          <th></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="discuss">
+    <h3>Before you leave</h3>
+    <ol>
+      <li>For every row, how many steps is it from the tissue to the variable? Could you shorten any chain?</li>
+      <li>Does every row have a reliability source from a population like yours? If not, what will you do about it?</li>
+      <li>Is there a row whose result would never change what you do? If so, cross it out.</li>
+    </ol>
+  </div>
+</section>
+
+<footer>Built for RSEH51, Plymouth Marjon University. These are teaching models, simplified so the idea is clear. Don't use them to estimate real tissue loads.<br>
+Winter, D. A. (2009). <em>Biomechanics and motor control of human movement</em> (4th ed.). Wiley. · Hamill, J., Knutzen, K. M., &amp; Derrick, T. R. (2015). <em>Biomechanical basis of human movement</em> (4th ed.). Wolters Kluwer. · Hopkins, W. G. (2000). Measures of reliability in sports medicine and science. <em>Sports Medicine, 30</em>(1), 1–15.</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const fmt = (x, d=0) => Number(x).toLocaleString("en-GB",{minimumFractionDigits:d,maximumFractionDigits:d});
+const deg = r => r*180/Math.PI, rad = d => d*Math.PI/180;
+
+/* ---------- theme ---------- */
+const root = document.documentElement;
+try{ const t = localStorage.getItem("m2m-theme"); if(t) root.setAttribute("data-theme", t); }catch(e){}
+$("themeBtn").addEventListener("click", ()=>{
+  const dark = root.getAttribute("data-theme") ? root.getAttribute("data-theme")==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  const next = dark ? "light" : "dark";
+  root.setAttribute("data-theme", next);
+  try{ localStorage.setItem("m2m-theme", next); }catch(e){}
+  renderAll();
+});
+
+/* ---------- tabs ---------- */
+const tabs = document.querySelectorAll("nav.tabs button");
+tabs.forEach(b => b.addEventListener("click", ()=>{
+  tabs.forEach(x => x.setAttribute("aria-selected", x===b ? "true":"false"));
+  document.querySelectorAll("section.lab").forEach(s => s.classList.toggle("active", s.id===b.dataset.tab));
+  try{ history.replaceState(null,"","#"+b.dataset.tab); }catch(e){}
+  renderAll();
+}));
+if(location.hash){ const t=[...tabs].find(b=>"#"+b.dataset.tab===location.hash); if(t) t.click(); }
+
+/* ---------- svg helpers ---------- */
+function S(tag, attrs, parent, text){
+  const e = document.createElementNS(NS, tag);
+  for(const k in attrs) e.setAttribute(k, attrs[k]);
+  if(text!==undefined) e.textContent = text;
+  if(parent) parent.appendChild(e);
+  return e;
+}
+function clear(svg){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
+function arrow(svg, x1, y1, x2, y2, color, width, label, lx, ly){
+  const len = Math.hypot(x2-x1, y2-y1);
+  if(len < 2) return;
+  const ux=(x2-x1)/len, uy=(y2-y1)/len, h=Math.min(12, len*0.5);
+  S("line",{x1,y1,x2:x2-ux*h*0.8,y2:y2-uy*h*0.8,stroke:color,"stroke-width":width,"stroke-linecap":"round"},svg);
+  S("polygon",{points:`${x2},${y2} ${x2-ux*h-uy*h*0.55},${y2-uy*h+ux*h*0.55} ${x2-ux*h+uy*h*0.55},${y2-uy*h-ux*h*0.55}`,fill:color},svg);
+  if(label) S("text",{x:lx!==undefined?lx:x2+6,y:ly!==undefined?ly:y2,fill:color,"font-size":13,"font-weight":700},svg,label);
+}
+function ro(container, items){
+  container.innerHTML = items.map(i => `<div class="ro"><div class="k">${i.k}</div><div class="v" style="${i.c?`color:${i.c}`:""}">${i.v}</div>${i.s?`<div class="s">${i.s}</div>`:""}</div>`).join("");
+}
+function bindSliders(ids, fn){
+  ids.forEach(id => $(id).addEventListener("input", fn));
+}
+
+/* ================= LAB 1 ================= */
+const BM1 = 75, g = 9.81, dPT = 0.045, dH = 0.035;
+function lab1(){
+  const M = +$("l1M").value, FH = +$("l1H").value, th = +$("l1T").value, Gbw = +$("l1G").value;
+  $("l1Mo").textContent = fmt(M)+" N·m";
+  $("l1Ho").textContent = fmt(FH)+" N";
+  $("l1To").textContent = th+"°";
+  $("l1Go").textContent = fmt(Gbw,1)+" × BW";
+  const aPT = rad(20 - 0.28*th);          // patellar tendon angle to tibial axis (+ = anterior pull)
+  const aH  = rad(8 + 0.30*th);           // hamstring angle to tibial axis (posterior pull)
+  const FPT = (M + FH*dH)/dPT;
+  const Faxial = Gbw*BM1*g;
+  const shear = FPT*Math.sin(aPT) - FH*Math.sin(aH);
+  const comp  = Faxial + FPT*Math.cos(aPT) + FH*Math.cos(aH);
+  const BW = BM1*g;
+
+  const svg = $("l1svg"); clear(svg);
+  const teal=css("--teal"), plum=css("--plum"), amber=css("--amber"), blue=css("--blue"), navy=css("--navy"), muted=css("--muted"), ink=css("--ink");
+  const kx=260, ky=175, L=150;
+  // tibia (vertical)
+  S("line",{x1:kx,y1:ky+6,x2:kx,y2:ky+L+40,stroke:navy,"stroke-width":22,"stroke-linecap":"round",opacity:.9},svg);
+  // femur
+  const fx = kx - Math.sin(rad(th))*L, fy = ky - Math.cos(rad(th))*L;
+  S("line",{x1:kx,y1:ky-6,x2:fx,y2:fy,stroke:navy,"stroke-width":24,"stroke-linecap":"round",opacity:.9},svg);
+  S("circle",{cx:kx,cy:ky,r:9,fill:css("--card"),stroke:navy,"stroke-width":3},svg);
+  S("text",{x:kx-10,y:ky+L+62,fill:muted,"font-size":12},svg,"tibia");
+  S("text",{x:fx-14,y:fy-2,fill:muted,"font-size":12,"text-anchor":"end"},svg,"femur");
+  S("text",{x:470,y:20,fill:muted,"font-size":12,"text-anchor":"end"},svg,"anterior →");
+  const sc = F => Math.min(170, Math.max(0, F/28));
+  // patellar tendon from tibial tuberosity
+  const tx=kx+13, ty=ky+38;
+  arrow(svg, tx, ty, tx+Math.sin(aPT)*sc(FPT), ty-Math.cos(aPT)*sc(FPT), teal, 5, "F_PT "+fmt(FPT)+" N", tx+Math.sin(aPT)*sc(FPT)+8, ty-Math.cos(aPT)*sc(FPT));
+  // hamstrings
+  if(FH>0){
+    const hx=kx-13, hy=ky+30;
+    arrow(svg, hx, hy, hx-Math.sin(aH)*sc(FH), hy-Math.cos(aH)*sc(FH), plum, 5, "F_H "+fmt(FH)+" N", hx-Math.sin(aH)*sc(FH)-110, hy-Math.cos(aH)*sc(FH)-6);
+  }
+  // shear on tibia at joint
+  const shs = Math.max(-150, Math.min(150, shear/12));
+  if(Math.abs(shs)>2) arrow(svg, kx, ky+70, kx+shs, ky+70, amber, 6);
+  S("text",{x:kx+(shs>=0?shs+10:shs-10),y:ky+75,fill:amber,"font-size":13,"font-weight":700,"text-anchor":shs>=0?"start":"end"},svg, (shear>=0?"anterior shear ":"posterior shear ")+fmt(Math.abs(shear))+" N");
+  // compression
+  const cs = Math.min(115, comp/65);
+  arrow(svg, kx-42, ky+12, kx-42, ky+12+cs, blue, 6);
+  S("text",{x:kx-52,y:ky+12+cs*0.6,fill:blue,"font-size":13,"font-weight":700,"text-anchor":"end"},svg,"compression "+fmt(comp)+" N");
+  // net moment label
+  S("rect",{x:10,y:318,width:215,height:70,rx:10,fill:css("--soft")},svg);
+  S("text",{x:22,y:338,fill:muted,"font-size":12},svg,"What inverse dynamics reports");
+  S("text",{x:22,y:361,fill:ink,"font-size":16,"font-weight":700},svg,"M_net = "+fmt(M)+" N·m");
+  S("text",{x:22,y:379,fill:muted,"font-size":12},svg,"unchanged by co-contraction");
+
+  ro($("l1ro"),[
+    {k:"Patellar tendon force",v:fmt(FPT)+" N",s:fmt(FPT/BW,1)+" × BW",c:teal},
+    {k:"Anterior tibial shear",v:fmt(shear)+" N",s:shear>=0?"towards ACL loading":"posterior (PCL direction)",c:amber},
+    {k:"Tibiofemoral compression",v:fmt(comp)+" N",s:fmt(comp/BW,1)+" × BW",c:blue},
+    {k:"Patellar tendon angle",v:fmt(deg(aPT),1)+"°",s:"relative to tibial axis"}
+  ]);
+}
+bindSliders(["l1M","l1H","l1T","l1G"], lab1);
+document.querySelectorAll("[data-l1]").forEach(b=>b.addEventListener("click",()=>{
+  const [m,h,t,gg]=b.dataset.l1.split(",");
+  $("l1M").value = m; $("l1H").value=h; $("l1T").value=t; $("l1G").value=gg; lab1();
+}));
+
+/* ================= LAB 2 ================= */
+const BM2 = 70;
+function lab2(){
+  const kmed = +$("l2K").value/100, lean = +$("l2L").value, foot = +$("l2F").value/100, Gbw = +$("l2G").value;
+  $("l2Ko").textContent = (kmed>=0?"+":"")+fmt(kmed*100,1)+" cm";
+  $("l2Lo").textContent = (lean>=0?"+":"")+lean+"°";
+  $("l2Fo").textContent = (foot>=0?"+":"")+fmt(foot*100,1)+" cm";
+  $("l2Go").textContent = fmt(Gbw,1)+" × BW";
+  // world coords: x positive = medial (towards midline), metres; y up
+  const hip = {x:0, y:0.90}, ankle = {x:foot, y:0.07}, cop = {x:foot, y:0};
+  const kneeY = 0.48;
+  const tK = (hip.y-kneeY)/(hip.y-ankle.y);
+  const knee = {x: hip.x + (ankle.x-hip.x)*tK + kmed, y:kneeY};
+  const pelvis = {x:0.09, y:0.95};
+  const trunkDir = {x:-Math.sin(rad(lean)), y:Math.cos(rad(lean))};
+  const hat = {x:pelvis.x + 0.30*trunkDir.x, y:pelvis.y + 0.30*trunkDir.y};
+  const shoulder = {x:pelvis.x + 0.50*trunkDir.x, y:pelvis.y + 0.50*trunkDir.y};
+  const stanceLeg = {x:(hip.x+knee.x+ankle.x)/3, y:(hip.y+knee.y+ankle.y)/3};
+  const swing = {x:0.15, y:0.60};
+  const com = {
+    x: 0.62*hat.x + 0.06*pelvis.x + 0.16*stanceLeg.x + 0.16*swing.x,
+    y: 0.62*hat.y + 0.06*pelvis.y + 0.16*stanceLeg.y + 0.16*swing.y
+  };
+  // GRF line from COP to COM
+  const dx = com.x-cop.x, dy = com.y-cop.y, dl = Math.hypot(dx,dy);
+  const ux = dx/dl, uy = dy/dl;
+  // signed perpendicular distance of knee from GRF line (+ = knee medial of line -> external abduction)
+  const rx = knee.x-cop.x, ry = knee.y-cop.y;
+  const cross = ux*ry - uy*rx;        // z of u x r
+  const dperp = -cross;                // positive when knee is medial (+x) of line
+  const F = Gbw*BM2*g;
+  const Mk = F*dperp;                  // + = external abduction (valgus)
+  // foot of perpendicular
+  const t = rx*ux + ry*uy; const px = cop.x+ux*t, py = cop.y+uy*t;
+  // FPPA: deviation from straight; + = valgus (knee medial of hip-ankle line)
+  const a1 = Math.atan2(knee.x-hip.x, hip.y-knee.y), a2 = Math.atan2(ankle.x-knee.x, knee.y-ankle.y);
+  const fppa = deg(a1 - a2);
+
+  const svg = $("l2svg"); clear(svg);
+  const SC = 250, ox = 230, gy = 420;
+  const P = p => [ox + p.x*SC, gy - p.y*SC];
+  const navy=css("--navy"), amber=css("--amber"), plum=css("--plum"), muted=css("--muted"), teal=css("--teal"), ink=css("--ink");
+  S("line",{x1:10,y1:gy,x2:510,y2:gy,stroke:css("--line"),"stroke-width":2},svg);
+  const [mx] = P({x:0.09,y:0});
+  S("line",{x1:mx,y1:30,x2:mx,y2:gy,stroke:css("--line"),"stroke-dasharray":"4 5"},svg);
+  S("text",{x:mx+6,y:gy-30,fill:muted,"font-size":12},svg,"midline");
+  S("text",{x:14,y:gy-8,fill:muted,"font-size":12},svg,"← lateral");
+  S("text",{x:506,y:gy-8,fill:muted,"font-size":12,"text-anchor":"end"},svg,"medial →");
+  // GRF line extended
+  const e1 = P({x:cop.x-ux*0.05,y:cop.y-uy*0.05}), e2 = P({x:cop.x+ux*1.1,y:cop.y+uy*1.1});
+  S("line",{x1:e1[0],y1:e1[1],x2:e2[0],y2:e2[1],stroke:amber,"stroke-width":2,"stroke-dasharray":"6 5"},svg);
+  const gl = Math.min(0.55, 0.12*Gbw);
+  const a = P(cop), b = P({x:cop.x+ux*gl,y:cop.y+uy*gl});
+  arrow(svg,a[0],a[1],b[0],b[1],amber,5,"GRF",b[0]+8,b[1]);
+  // segments
+  const H=P(hip),K=P(knee),A=P(ankle),Pe=P(pelvis),Sh=P(shoulder);
+  S("line",{x1:Pe[0],y1:Pe[1],x2:Sh[0],y2:Sh[1],stroke:navy,"stroke-width":20,"stroke-linecap":"round",opacity:.55},svg);
+  S("circle",{cx:Sh[0]+ (Sh[0]-Pe[0])*0.25,cy:Sh[1]+(Sh[1]-Pe[1])*0.25,r:20,fill:navy,opacity:.55},svg);
+  const Hr = P({x:0.18,y:0.90});
+  S("line",{x1:H[0],y1:H[1],x2:Hr[0],y2:Hr[1],stroke:navy,"stroke-width":14,"stroke-linecap":"round",opacity:.55},svg);
+  const Sw1 = P({x:0.17,y:0.68}), Sw2 = P({x:0.14,y:0.46});
+  S("polyline",{points:`${Hr[0]},${Hr[1]} ${Sw1[0]},${Sw1[1]} ${Sw2[0]},${Sw2[1]}`,fill:"none",stroke:navy,"stroke-width":11,"stroke-linecap":"round","stroke-linejoin":"round",opacity:.3},svg);
+  S("polyline",{points:`${H[0]},${H[1]} ${K[0]},${K[1]} ${A[0]},${A[1]}`,fill:"none",stroke:navy,"stroke-width":13,"stroke-linecap":"round","stroke-linejoin":"round"},svg);
+  S("line",{x1:A[0]-18,y1:gy-4,x2:A[0]+22,y2:gy-4,stroke:navy,"stroke-width":8,"stroke-linecap":"round"},svg);
+  // hip-ankle reference
+  S("line",{x1:H[0],y1:H[1],x2:A[0],y2:A[1],stroke:muted,"stroke-width":1,"stroke-dasharray":"2 4"},svg);
+  // moment arm
+  const Pp = P({x:px,y:py});
+  S("line",{x1:K[0],y1:K[1],x2:Pp[0],y2:Pp[1],stroke:plum,"stroke-width":4},svg);
+  S("circle",{cx:K[0],cy:K[1],r:7,fill:css("--card"),stroke:plum,"stroke-width":3},svg);
+  S("text",{x:K[0]+(dperp>=0?12:-12),y:K[1]-12,fill:plum,"font-size":13,"font-weight":700,"text-anchor":dperp>=0?"start":"end"},svg,"d⊥ = "+fmt(Math.abs(dperp)*100,1)+" cm");
+  // COM
+  const C = P(com);
+  S("circle",{cx:C[0],cy:C[1],r:9,fill:css("--card"),stroke:ink,"stroke-width":2},svg);
+  S("path",{d:`M${C[0]},${C[1]-9} A9,9 0 0,1 ${C[0]+9},${C[1]} L${C[0]},${C[1]} Z M${C[0]},${C[1]+9} A9,9 0 0,1 ${C[0]-9},${C[1]} L${C[0]},${C[1]} Z`,fill:ink},svg);
+  S("text",{x:C[0]+14,y:C[1]+4,fill:ink,"font-size":12},svg,"COM");
+
+  const type = Mk>=0 ? "abduction (valgus)" : "adduction (varus)";
+  ro($("l2ro"),[
+    {k:"FPPA (2D video would see)",v:(fppa<=-0.05?"−":"")+fmt(Math.abs(fppa),1)+"°",s:Math.abs(fppa)<0.05?"neutral":(fppa>0?"valgus":"varus"),c:teal},
+    {k:"External knee moment",v:fmt(Math.abs(Mk))+" N·m",s:type,c:plum},
+    {k:"Normalised moment",v:fmt(Math.abs(Mk)/BM2,2)+" N·m/kg",s:type},
+    {k:"Moment arm",v:fmt(Math.abs(dperp)*100,1)+" cm",s:"GRF passes "+(dperp>=0?"lateral":"medial")+" to knee"}
+  ]);
+}
+bindSliders(["l2K","l2L","l2F","l2G"], lab2);
+document.querySelectorAll("[data-l2]").forEach(b=>b.addEventListener("click",()=>{
+  const v=b.dataset.l2.split(","); ["l2K","l2L","l2F","l2G"].forEach((id,i)=>$(id).value=v[i]); lab2();
+}));
+
+/* ================= LAB 3 ================= */
+function lab3(){
+  const Sp = +$("l3S").value, nlog = +$("l3N").value, W = +$("l3W").value, R = +$("l3R").value/100, k = +$("l3K").value;
+  const n = Math.max(1, Math.round(Math.pow(10,nlog)));
+  $("l3So").textContent = fmt(Sp,1)+"%";
+  $("l3No").textContent = fmt(n);
+  $("l3Wo").textContent = W;
+  $("l3Ro").textContent = Math.round(R*100)+"%";
+  $("l3Ko").textContent = fmt(k,1);
+  const s = Sp/100;
+  const Nf = Math.pow(s,-k);
+  const dSession = n/Nf;
+  const plus10 = Math.pow(1.1,k);
+  const svg = $("l3svg"); clear(svg);
+  const muted=css("--muted"), gridc=css("--grid"), teal=css("--teal"), plum=css("--plum"), amber=css("--amber"), ink=css("--ink"), bad=css("--bad");
+  const L=58,R0=500,T=14,B=210, xmax=10;
+  const X = lx => L + (lx/xmax)*(R0-L), Y = p => B - (p/100)*(B-T);
+  for(let i=0;i<=xmax;i+=2){ S("line",{x1:X(i),y1:T,x2:X(i),y2:B,stroke:gridc},svg); S("text",{x:X(i),y:B+16,fill:muted,"font-size":11,"text-anchor":"middle"},svg,"10"+ ["⁰","¹","²","³","⁴","⁵","⁶","⁷","⁸","⁹","¹⁰"][i]); }
+  for(let p=0;p<=100;p+=25){ S("line",{x1:L,y1:Y(p),x2:R0,y2:Y(p),stroke:gridc},svg); S("text",{x:L-6,y:Y(p)+4,fill:muted,"font-size":11,"text-anchor":"end"},svg,p+"%"); }
+  S("text",{x:(L+R0)/2,y:B+32,fill:muted,"font-size":12,"text-anchor":"middle"},svg,"cycles to failure (log scale)");
+  S("text",{x:14,y:(T+B)/2,fill:muted,"font-size":12,"text-anchor":"middle",transform:`rotate(-90 14 ${(T+B)/2})`},svg,"load per cycle");
+  // curve
+  let d=""; for(let lx=0; lx<=xmax; lx+=0.05){ const p = 100*Math.pow(10,-lx/k); d += (d?"L":"M")+X(lx)+","+Y(p); }
+  S("path",{d:d+`L${X(xmax)},${Y(0)}L${X(0)},${Y(0)}Z`,fill:teal,opacity:.08},svg);
+  S("path",{d,fill:"none",stroke:teal,"stroke-width":3},svg);
+  S("text",{x:X(7.5),y:Y(100*Math.pow(10,-7.5/k))-8,fill:teal,"font-size":12,"font-weight":700},svg,"failure line");
+  // session point and failure point
+  const lnf = Math.log10(Nf);
+  if(lnf<=xmax) { S("line",{x1:X(nlog),y1:Y(Sp),x2:X(Math.min(xmax,lnf)),y2:Y(Sp),stroke:amber,"stroke-width":2,"stroke-dasharray":"5 4"},svg); }
+  S("circle",{cx:X(Math.min(nlog,xmax)),cy:Y(Sp),r:7,fill:plum},svg);
+  S("text",{x:X(Math.min(nlog,xmax)),y:Y(Sp)+22,fill:plum,"font-size":12,"font-weight":700,"text-anchor":"middle"},svg,"one session");
+  if(lnf<=xmax) S("circle",{cx:X(lnf),cy:Y(Sp),r:5,fill:"none",stroke:amber,"stroke-width":2.5},svg);
+
+  // weekly damage
+  const svg2 = $("l3svg2"); clear(svg2);
+  const L2=58,R2=500,T2=12,B2=140, weeks=12;
+  const wk = W*n*Math.pow(s,k);
+  const D=[0]; let failWeek=null;
+  for(let w=1; w<=weeks; w++){ const v = D[w-1]*(1-R)+wk; D.push(v); if(v>=1 && failWeek===null) failWeek=w; }
+  const ymax = Math.max(1.2, Math.min(3, Math.max(...D)*1.1));
+  const X2 = w => L2 + (w/weeks)*(R2-L2), Y2 = v => B2 - (Math.min(v,ymax)/ymax)*(B2-T2);
+  for(let w=0; w<=weeks; w+=2){ S("text",{x:X2(w),y:B2+15,fill:muted,"font-size":11,"text-anchor":"middle"},svg2,w); }
+  S("text",{x:(L2+R2)/2,y:B2+29,fill:muted,"font-size":12,"text-anchor":"middle"},svg2,"week");
+  S("line",{x1:L2,y1:Y2(1),x2:R2,y2:Y2(1),stroke:bad,"stroke-width":1.5,"stroke-dasharray":"6 4"},svg2);
+  S("text",{x:R2,y:Y2(1)-5,fill:bad,"font-size":11,"text-anchor":"end"},svg2,"predicted failure (D = 1)");
+  S("line",{x1:L2,y1:B2,x2:R2,y2:B2,stroke:gridc},svg2);
+  S("text",{x:L2-6,y:Y2(0)+4,fill:muted,"font-size":11,"text-anchor":"end"},svg2,"0");
+  S("text",{x:L2-6,y:Y2(1)+4,fill:muted,"font-size":11,"text-anchor":"end"},svg2,"1");
+  S("polyline",{points:D.map((v,w)=>X2(w)+","+Y2(v)).join(" "),fill:"none",stroke:plum,"stroke-width":3,"stroke-linejoin":"round"},svg2);
+  S("text",{x:14,y:(T2+B2)/2,fill:muted,"font-size":12,"text-anchor":"middle",transform:`rotate(-90 14 ${(T2+B2)/2})`},svg2,"damage");
+
+  const steady = R>0 ? wk/R : Infinity;
+  ro($("l3ro"),[
+    {k:"Cycles to failure at this load",v:Nf>1e9?">10⁹":fmt(Nf),c:teal},
+    {k:"Damage per session",v:dSession<1e-4?dSession.toExponential(1):fmt(dSession,4),s:"fraction of tissue life"},
+    {k:"Predicted failure",v:dSession>=1?"in one session":(failWeek?("week "+failWeek):"not in 12 weeks"),c:(failWeek||dSession>=1)?bad:css("--good")},
+    {k:"Effect of +10% load per cycle",v:"× "+fmt(plus10,1),s:"damage per cycle",c:amber}
+  ]);
+}
+bindSliders(["l3S","l3N","l3W","l3R","l3K"], lab3);
+document.querySelectorAll("[data-l3]").forEach(b=>b.addEventListener("click",()=>{
+  const v=b.dataset.l3.split(","); ["l3S","l3N","l3W","l3R","l3K"].forEach((id,i)=>$(id).value=v[i]); lab3();
+}));
+
+/* ================= LAB 4 ================= */
+let simSeed = 1;
+function randn(){ let u=0,v=0; while(u===0)u=Math.random(); while(v===0)v=Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+let simData = null;
+function runSim(){
+  const SD=+$("l4SD").value, ICC=+$("l4ICC").value, T=+$("l4T").value;
+  const SEM = SD*Math.sqrt(1-ICC), sdc = Math.SQRT2*SEM;
+  simData = {T, sdc, v:Array.from({length:2000},()=>T+sdc*randn())};
+}
+function lab4(resim){
+  const SD=+$("l4SD").value, ICC=+$("l4ICC").value, B=+$("l4B").value, Rt=+$("l4R").value, T=+$("l4T").value;
+  $("l4SDo").textContent = fmt(SD); $("l4ICCo").textContent = fmt(ICC,2);
+  $("l4Bo").textContent = fmt(B); $("l4Ro").textContent = fmt(Rt); $("l4To").textContent = (T>=0?"+":"")+fmt(T);
+  const SEM = SD*Math.sqrt(1-ICC), MDC = 1.96*Math.SQRT2*SEM, MDC90 = 1.645*Math.SQRT2*SEM, SWC = 0.2*SD;
+  const ch = Rt-B;
+  const good=css("--good"), warn=css("--warn"), bad=css("--bad");
+  ro($("l4ro"),[
+    {k:"SEM (typical error)",v:fmt(SEM,1),s:"SD·√(1−ICC)"},
+    {k:"MDC₉₅",v:fmt(MDC,1),s:"change needed to be 95% sure",c:css("--plum")},
+    {k:"SWC (0.2 × SD)",v:fmt(SWC,1),s:"smallest worthwhile change",c:css("--teal")},
+    {k:"Observed change",v:(ch>=0?"+":"")+fmt(ch),s:fmt(B?100*ch/B:0,1)+"% of baseline",c:Math.abs(ch)>MDC?good:warn}
+  ]);
+  const cap = SEM < SWC ? ["good","Capable: the SEM is smaller than the SWC, so this test can detect worthwhile changes."] :
+              SEM < 1.5*SWC ? ["warn","Marginal: the noise is about the same size as the smallest worthwhile change. Use multiple trials or look for consistent trends over several tests."] :
+              ["bad","Poor for monitoring: the noise is bigger than a worthwhile change, so small real changes will be missed or misread."];
+  const dec = Math.abs(ch) > MDC ? `The observed change of ${fmt(Math.abs(ch))} is bigger than the MDC₉₅ (${fmt(MDC,1)}), so it's probably a real change.` :
+              Math.abs(ch) > MDC90 ? `The observed change is bigger than the MDC₉₀ but not the MDC₉₅, so treat it as a possible change and retest.` :
+              `The observed change is within the measurement error, so treat it as no change.`;
+  $("l4verdict").innerHTML = `<div class="verdict ${cap[0]}">${cap[1]}</div><div class="verdict ${Math.abs(ch)>MDC?"good":"warn"}">${dec}</div>`;
+  if(resim || !simData || simData.T!==T || Math.abs(simData.sdc-Math.SQRT2*SEM)>1e-9) runSim();
+  // histogram
+  const svg=$("l4svg"); clear(svg);
+  const muted=css("--muted"), gridc=css("--grid"), teal=css("--teal"), plum=css("--plum");
+  const L=40,R0=505,Tt=30,Bt=200;
+  const span = Math.max(MDC*2.6, Math.abs(T)+simData.sdc*4, SWC*3, 1);
+  const lo=Math.min(-span, T-simData.sdc*4), hi=Math.max(span, T+simData.sdc*4);
+  const nb=44, w=(hi-lo)/nb, bins=new Array(nb).fill(0);
+  let flagged=0;
+  simData.v.forEach(x=>{ const i=Math.floor((x-lo)/w); if(i>=0&&i<nb) bins[i]++; if(Math.abs(x)>MDC) flagged++; });
+  const mx=Math.max(...bins,1);
+  const X = v => L + (v-lo)/(hi-lo)*(R0-L), Y = c => Bt - c/mx*(Bt-Tt);
+  S("line",{x1:L,y1:Bt,x2:R0,y2:Bt,stroke:gridc},svg);
+  bins.forEach((c,i)=>{
+    const x0=lo+i*w, mid=x0+w/2, out=Math.abs(mid)>MDC;
+    S("rect",{x:X(x0)+0.5,y:Y(c),width:Math.max(0,X(x0+w)-X(x0)-1),height:Bt-Y(c),fill:out?plum:teal,opacity:out?.85:.55},svg);
+  });
+  [-MDC,MDC].forEach(m=>{ if(m>lo&&m<hi){ S("line",{x1:X(m),y1:Tt-6,x2:X(m),y2:Bt,stroke:plum,"stroke-width":2,"stroke-dasharray":"5 4"},svg);} });
+  if(0>lo&&0<hi) S("line",{x1:X(0),y1:Tt,x2:X(0),y2:Bt,stroke:muted,"stroke-width":1},svg);
+  const ticks=5; for(let i=0;i<=ticks;i++){ const v=lo+(hi-lo)*i/ticks; S("text",{x:X(v),y:Bt+16,fill:muted,"font-size":11,"text-anchor":"middle"},svg,fmt(v)); }
+  S("text",{x:(L+R0)/2,y:Bt+32,fill:muted,"font-size":12,"text-anchor":"middle"},svg,"observed change (units of your variable)");
+  const pct = 100*flagged/simData.v.length;
+  const lab = T===0 ? `False alarms: ${fmt(pct,1)}% flagged when nothing changed` : `Detected: ${fmt(pct,1)}% of retests flag this ${T>0?"+":""}${fmt(T)} change`;
+  S("text",{x:R0,y:15,fill:plum,"font-size":13,"font-weight":700,"text-anchor":"end"},svg,lab);
+}
+bindSliders(["l4SD","l4ICC","l4B","l4R","l4T"], ()=>lab4(false));
+$("l4sim").addEventListener("click", ()=>lab4(true));
+
+/* ================= LAB 5 ================= */
+const COLS = ["mech","load","type","var","level","tool","rel","decide"];
+const PH = {
+  mech:"e.g. high eccentric load on biceps femoris long head in late swing",
+  load:"e.g. muscle–tendon unit force and strain",
+  var:"e.g. peak eccentric knee flexor force",
+  tool:"e.g. Nordic test, force device, 3 trials",
+  rel:"e.g. ICC, SEM or MDC with the author and year",
+  decide:"e.g. below X N, or a drop bigger than the MDC"
+};
+const KEY="rseh51-chain-v1";
+function save(){
+  const rows=[...document.querySelectorAll("#l5table tbody tr")].map(tr=>{
+    const o={}; COLS.forEach(c=>{ o[c]=tr.querySelector(`[data-c="${c}"]`).value; }); return o;
+  });
+  try{ localStorage.setItem(KEY, JSON.stringify({scen:$("l5scen").value, rows})); }catch(e){}
+}
+function addRow(d){
+  d = d||{};
+  const first = !document.querySelector("#l5table tbody tr");
+  const tr=document.createElement("tr");
+  COLS.forEach(c=>{
+    const td=document.createElement("td"); let inp;
+    if(c==="type"){ inp=document.createElement("select"); ["","Peak magnitude","Loading rate","Exposure (cycles)","Capacity","Mixed"].forEach(o=>{const op=document.createElement("option"); op.value=o; op.textContent=o||"Choose…"; inp.appendChild(op);}); }
+    else if(c==="level"){ inp=document.createElement("select"); ["","Measurement / description","Analysis","Assessment"].forEach(o=>{const op=document.createElement("option"); op.value=o; op.textContent=o||"Choose…"; inp.appendChild(op);}); }
+    else { inp=document.createElement("textarea"); inp.placeholder=first?(PH[c]||""):""; }
+    inp.dataset.c=c; inp.value=d[c]||""; inp.setAttribute("aria-label", c);
+    inp.addEventListener("input", save); inp.addEventListener("change", save);
+    td.appendChild(inp); tr.appendChild(td);
+  });
+  const td=document.createElement("td"); const b=document.createElement("button"); b.className="del"; b.type="button"; b.textContent="✕"; b.setAttribute("aria-label","Delete row");
+  b.addEventListener("click",()=>{ tr.remove(); save(); }); td.appendChild(b); tr.appendChild(td);
+  document.querySelector("#l5table tbody").appendChild(tr);
+}
+function rowsData(){
+  return [...document.querySelectorAll("#l5table tbody tr")].map(tr=>COLS.map(c=>tr.querySelector(`[data-c="${c}"]`).value));
+}
+const HEAD=["Mechanism & tissue","Tissue load","Load type","Measurable variable","Winter level","Tool & setting","Reliability / MDC + source","Decision value"];
+function msg(t){ $("l5msg").textContent=t; setTimeout(()=>{$("l5msg").textContent="";},2500); }
+$("l5add").addEventListener("click",()=>{ addRow(); save(); });
+$("l5clear").addEventListener("click",()=>{ if(confirmClear()){ document.querySelector("#l5table tbody").innerHTML=""; $("l5scen").value=""; addRow(); save(); msg("Cleared."); } });
+let clearArmed=false;
+function confirmClear(){ if(clearArmed){ clearArmed=false; $("l5clear").textContent="Clear all"; return true; } clearArmed=true; $("l5clear").textContent="Click again to clear"; setTimeout(()=>{clearArmed=false; $("l5clear").textContent="Clear all";},3000); return false; }
+$("l5csv").addEventListener("click",()=>{
+  const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const lines=[q("Scenario")+","+q($("l5scen").value), HEAD.map(q).join(","), ...rowsData().map(r=>r.map(q).join(","))];
+  const blob=new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="mechanism-to-measurement-chain.csv"; document.body.appendChild(a); a.click(); a.remove();
+  msg("CSV downloaded.");
+});
+$("l5copy").addEventListener("click",()=>{
+  const tsv=[HEAD.join("\t"), ...rowsData().map(r=>r.map(v=>v.replace(/\s+/g," ")).join("\t"))].join("\n");
+  const done=()=>msg("Copied. Paste into Word or Excel.");
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(tsv).then(done,()=>msg("Copy blocked by the browser. Use Download CSV.")); }
+  else msg("Copy isn't available here. Use Download CSV.");
+});
+$("l5scen").addEventListener("input", save);
+(function load(){
+  let data=null; try{ data=JSON.parse(localStorage.getItem(KEY)||"null"); }catch(e){}
+  if(data && data.rows && data.rows.length){ $("l5scen").value=data.scen||""; data.rows.forEach(addRow); }
+  else { addRow(); addRow(); addRow(); }
+})();
+
+/* ---------- init ---------- */
+function renderAll(){ lab1(); lab2(); lab3(); lab4(false); }
+renderAll();
+})();
+</script>
+</body>
+</html>
