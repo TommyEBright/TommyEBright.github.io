@@ -3,115 +3,264 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mechanism to Measurement Lab</title>
+<title>Mechanism to Measurement</title>
 <meta name="description" content="Interactive biomechanics lab for RSEH51: what we want to know about tissue loading versus what we can actually measure.">
 <style>
 :root{
-  --navy:#003d50; --teal:#00857e; --blue:#0071bc; --plum:#8b3556; --amber:#b86e00;
-  --bg:#f5f9fb; --card:#ffffff; --ink:#1d1d1b; --muted:#5a6770; --line:#d9e2e7; --soft:#eef5f8;
-  --grid:#e3eaee; --good:#2e7d32; --warn:#b86e00; --bad:#b3261e;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --navy:#7cc3d6; --teal:#4cc2b8; --blue:#6fb3ff; --plum:#e58bb0; --amber:#f0b35a;
-    --bg:#0f1a1f; --card:#162429; --ink:#e7eef1; --muted:#9fb1ba; --line:#2a3d45; --soft:#1c2e34;
-    --grid:#24363d; --good:#6fcf73; --warn:#f0b35a; --bad:#ff8a80;
-  }
-}
-:root[data-theme="dark"]{
-  --navy:#7cc3d6; --teal:#4cc2b8; --blue:#6fb3ff; --plum:#e58bb0; --amber:#f0b35a;
-  --bg:#0f1a1f; --card:#162429; --ink:#e7eef1; --muted:#9fb1ba; --line:#2a3d45; --soft:#1c2e34;
-  --grid:#24363d; --good:#6fcf73; --warn:#f0b35a; --bad:#ff8a80;
+  --navy:#003d50; --navy-d:#002c3a; --teal:#00857e; --teal-d:#005f5a; --blue:#0071bc; --blue-d:#00568f;
+  --plum:#8b3556; --plum-d:#682840; --amber:#b86e00;
+  --bg:#f7fbfd; --card:#ffffff; --ink:#1d1d1b; --muted:#516c73; --line:#d9e2e7; --soft:#f8fcfe; --tealsoft:#f2faf9; --frame:#abd6d9;
+  --grid:#e6eef2; --good:#2e7d32; --warn:#b86e00; --bad:#b3261e;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;line-height:1.55;font-size:16px}
-.wrap{max-width:1180px;margin:0 auto;padding:16px}
-header.top{background:#003d50;color:#fff;border-radius:14px;padding:22px 22px 18px;border-bottom:6px solid #00857e;position:relative}
-header.top .tag{display:inline-block;background:#fff;color:#003d50;font-weight:700;font-size:.8rem;padding:3px 10px;border-radius:8px;border-left:5px solid #0071bc}
-header.top h1{margin:10px 0 4px;font-size:1.7rem;line-height:1.2}
-header.top p{margin:0;opacity:.92;max-width:760px}
-.themebtn{position:absolute;top:16px;right:16px;background:transparent;border:1.5px solid rgba(255,255,255,.6);color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;font:inherit;font-size:.85rem}
-nav.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
-nav.tabs button{flex:1 1 170px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-bottom:4px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-weight:600;cursor:pointer;text-align:left}
-nav.tabs button small{display:block;font-weight:400;color:var(--muted);font-size:.8rem}
-nav.tabs button[aria-selected="true"]{border-bottom-color:var(--teal);background:var(--soft)}
-section.lab{display:none}
+body{background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif;line-height:1.58;font-size:16px}
+.wrap{max-width:1220px;margin:0 auto;padding:12px}
+.frame{background:var(--bg);border:2px solid var(--frame);border-radius:1rem;padding:1.1rem}
+header.top{background:var(--navy);color:#fff;border-radius:.9rem .9rem 0 0;padding:2rem 1.9rem;border-bottom:.4rem solid var(--teal)}
+.pill{display:inline-block;background:#fff;color:var(--navy);font-weight:700;font-size:.85em;padding:.3rem .8rem;border-radius:.65rem;border-left:.35rem solid var(--blue)}
+header.top h1{margin:.8rem 0 .4rem;font-size:2em;line-height:1.18}
+header.top p{margin:0;font-size:1.05em;max-width:820px}
+nav.tabs{background:#fff;border:1px solid var(--line);border-top:0;border-radius:0 0 .9rem .9rem;padding:1rem;margin-bottom:1.4rem;display:flex;gap:.65rem;flex-wrap:wrap}
+nav.tabs button{flex:1 1 160px;background:#fff;color:var(--c);border:2px solid var(--c);border-bottom-width:.25rem;border-radius:.75rem;padding:.6rem .8rem;font:inherit;font-weight:700;cursor:pointer;text-align:center;line-height:1.3}
+nav.tabs button small{display:block;font-weight:400;font-size:.8rem;opacity:.9}
+nav.tabs button[aria-selected="true"]{background:var(--c);color:#fff;border-bottom-color:var(--cd)}
+nav.tabs button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+section.lab{display:none;background:#fff;border:1px solid var(--line);border-radius:1rem;overflow:hidden}
 section.lab.active{display:block}
-.intro{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--blue);border-radius:12px;padding:14px 16px;margin-bottom:14px}
-.intro h2{margin:0 0 6px;font-size:1.3rem;color:var(--navy)}
+.bar{background:var(--bc);color:#fff;padding:1.3rem 1.6rem}
+.bar .pill{color:var(--bc);border-left-color:var(--navy)}
+.bar h2{margin:.5rem 0 0;font-size:1.55em;color:#fff}
+.body{padding:1.4rem 1.6rem}
+@media (max-width:640px){.body{padding:1rem}.bar{padding:1rem}header.top{padding:1.4rem 1.1rem}.frame{padding:.6rem}}
+.intro{margin:0 0 1rem}
 .intro p{margin:0}
-.grid{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:14px}
-@media (max-width:820px){.grid{grid-template-columns:1fr}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
-.card h3{margin:0 0 10px;font-size:1.02rem;color:var(--navy)}
+.plain{background:var(--tealsoft);border-left:.4rem solid var(--teal);border-radius:.75rem;padding:1rem 1.1rem;margin:0 0 1.2rem}
+.plain p{margin:0 0 .4rem}.plain p:last-child{margin:0}
+.linkbtn{background:none;border:0;padding:0;color:var(--blue);text-decoration:underline;font:inherit;cursor:pointer}
+.grid{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:1rem}
+.grid.even{grid-template-columns:1fr 1fr}
+@media (max-width:820px){.grid,.grid.even{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid var(--line);border-left:.4rem solid var(--kc,var(--blue));border-radius:.75rem;padding:1rem 1.1rem;min-width:0}
+.card.plainborder{border-left-width:1px}
+.card h3{margin:0 0 .6rem;font-size:1.08rem;color:var(--navy)}
+.card h4{margin:0 0 .4rem;color:var(--navy)}
 .ctl{margin-bottom:12px}
-.ctl label{display:flex;justify-content:space-between;gap:8px;font-size:.92rem;font-weight:600}
+.ctl label{display:flex;justify-content:space-between;gap:8px;font-size:.93rem;font-weight:700;color:var(--navy)}
 .ctl label output{font-variant-numeric:tabular-nums;color:var(--teal);font-weight:700;white-space:nowrap}
 .ctl input[type=range]{width:100%;accent-color:var(--teal)}
-.ctl .hint{font-size:.8rem;color:var(--muted);margin-top:1px}
+.ctl .hint{font-size:.82rem;color:var(--muted);margin-top:1px}
 .btnrow{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px}
-.btn{background:var(--soft);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.btn{background:var(--soft);color:var(--navy);border:1px solid var(--line);border-radius:.6rem;padding:.4rem .7rem;font:inherit;font-size:.86rem;cursor:pointer}
 .btn:hover{border-color:var(--teal)}
-.btn.primary{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn.primary{background:var(--teal);color:#fff;border-color:var(--teal);border-bottom:.2rem solid var(--teal-d)}
 svg{width:100%;height:auto;display:block}
+svg text{paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+.mini{max-width:280px;margin:0 auto}
 .readouts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:10px}
-.ro{background:var(--soft);border-radius:10px;padding:8px 10px}
+.ro{background:var(--soft);border:1px solid var(--line);border-radius:.6rem;padding:8px 10px}
 .ro .k{font-size:.78rem;color:var(--muted)}
 .ro .v{font-size:1.2rem;font-weight:700;font-variant-numeric:tabular-nums}
 .ro .s{font-size:.78rem;color:var(--muted)}
-.discuss{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--plum);border-radius:12px;padding:12px 16px;margin-top:14px}
-.discuss h3{margin:0 0 6px;color:var(--plum);font-size:1rem}
-.discuss ol{margin:0;padding-left:1.2rem}
-.discuss li{margin-bottom:4px}
-details.bio{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:14px}
-details.bio summary{cursor:pointer;padding:10px 16px;font-weight:700;color:var(--navy)}
-details.bio .inner{padding:0 16px 14px}
-.eq{font-family:"Cambria Math","Times New Roman",serif;background:var(--soft);padding:6px 10px;border-radius:8px;display:inline-block;margin:3px 0}
-.verdict{margin-top:10px;padding:10px 12px;border-radius:10px;font-weight:600;border:1px solid var(--line)}
-.verdict.good{border-left:6px solid var(--good)} .verdict.warn{border-left:6px solid var(--warn)} .verdict.bad{border-left:6px solid var(--bad)}
+.discuss{background:#fff;border:1px solid var(--line);border-left:.4rem solid var(--plum);border-radius:.75rem;padding:1rem 1.1rem;margin-top:1.2rem}
+.discuss h3{margin:0 0 .5rem;color:var(--plum);font-size:1.1rem}
+.discuss ol{margin:0;padding-left:1.25rem}
+.discuss li{margin-bottom:5px}
+details.bio{background:#fff;border:1px solid var(--line);border-radius:.75rem;margin-top:1rem;overflow:hidden}
+details.bio summary{cursor:pointer;padding:.9rem 1.1rem;font-weight:700;color:var(--navy);background:var(--soft)}
+details.bio .inner{padding:.9rem 1.1rem;border-top:1px solid var(--line)}
+.eq{font-family:"Cambria Math","Times New Roman",serif;background:var(--soft);border:1px solid var(--line);padding:4px 10px;border-radius:.5rem;display:inline-block;margin:3px 0}
+.verdict{margin-top:10px;padding:10px 12px;border-radius:.6rem;font-weight:600;border:1px solid var(--line);background:#fff}
+.verdict.good{border-left:.4rem solid var(--good)} .verdict.warn{border-left:.4rem solid var(--warn)} .verdict.bad{border-left:.4rem solid var(--bad)}
 .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.82rem;color:var(--muted);margin-top:6px}
 .legend span::before{content:"";display:inline-block;width:12px;height:4px;border-radius:2px;margin-right:5px;vertical-align:middle;background:var(--c)}
+.key{background:var(--soft);border:1px solid var(--line);border-radius:.6rem;padding:.7rem .9rem;margin-top:.8rem;font-size:.95rem}
+.key strong{color:var(--navy)}
+.step{display:inline-block;background:var(--navy);color:#fff;border-radius:50%;width:1.7rem;height:1.7rem;text-align:center;line-height:1.7rem;font-weight:700;margin-right:.4rem;font-size:.9rem}
+h3.stephead{display:flex;align-items:center;color:var(--navy);margin:1.6rem 0 .7rem;font-size:1.2rem}
+h3.stephead:first-of-type{margin-top:.4rem}
+dl.gloss{margin:0;display:grid;grid-template-columns:minmax(150px,220px) 1fr;gap:.35rem 1rem}
+dl.gloss dt{font-weight:700;color:var(--navy)}
+dl.gloss dd{margin:0}
+@media (max-width:640px){dl.gloss{grid-template-columns:1fr}dl.gloss dd{margin-bottom:.4rem}}
 table.chain{width:100%;border-collapse:collapse;font-size:.88rem}
-table.chain th{background:var(--soft);text-align:left;padding:6px;border:1px solid var(--line);vertical-align:bottom}
+table.chain th{background:var(--teal);color:#fff;text-align:left;padding:6px;border:1px solid var(--line);vertical-align:bottom}
+table.chain th .small{color:#e6f5f4}
 table.chain td{border:1px solid var(--line);padding:0;vertical-align:top}
 table.chain textarea,table.chain select{width:100%;min-height:64px;border:0;background:transparent;color:var(--ink);font:inherit;font-size:.86rem;padding:6px;resize:vertical}
 table.chain select{min-height:40px}
 .tablewrap{overflow-x:auto}
 .tablewrap table{min-width:980px}
 .del{background:none;border:0;color:var(--bad);cursor:pointer;font-size:1rem;padding:6px}
-footer{color:var(--muted);font-size:.82rem;text-align:center;padding:22px 8px}
+footer{text-align:center;padding:1.2rem;margin-top:1.2rem;background:#fff;border:2px solid var(--navy);border-top-width:6px;border-radius:10px;color:var(--ink);font-size:.86rem}
 .muted{color:var(--muted)}
 .small{font-size:.85rem}
 </style>
 </head>
 <body>
 <div class="wrap">
+<div class="frame">
 <header class="top">
-  <span class="tag">RSEH51</span>
-  <h1>Mechanism to Measurement Lab</h1>
-  <p>Injury happens in tissue, but most of what we measure happens outside it. Use these five labs to work out how far each measure sits from the tissue, and whether you measure it well enough to trust.</p>
-  <button class="themebtn" id="themeBtn" type="button" aria-label="Toggle light or dark theme">Theme</button>
+  <span class="pill">RSEH51</span>
+  <h1>Mechanism to Measurement</h1>
+  <p>Injury happens inside tissue, but almost everything we measure happens outside it. New to forces and moments? Begin with <strong>Start here</strong>, then work through the five parts.</p>
 </header>
 
-<nav class="tabs" role="tablist" aria-label="Labs">
-  <button role="tab" aria-selected="true" data-tab="lab1">1. Same moment, different knee<small>Net moments vs tissue load</small></button>
-  <button role="tab" aria-selected="false" data-tab="lab2">2. Angle ≠ moment<small>Kinematics vs kinetics</small></button>
-  <button role="tab" aria-selected="false" data-tab="lab3">3. Load × cycles<small>Acute vs overuse</small></button>
-  <button role="tab" aria-selected="false" data-tab="lab4">4. Is the change real?<small>SEM, MDC and SWC</small></button>
-  <button role="tab" aria-selected="false" data-tab="lab5">5. Chain builder<small>Mechanism → measure</small></button>
+<nav class="tabs" role="tablist" aria-label="Parts">
+  <button role="tab" aria-selected="true" data-tab="lab0" style="--c:var(--navy);--cd:var(--navy-d)">Start here<small>Forces and moments</small></button>
+  <button role="tab" aria-selected="false" data-tab="lab1" style="--c:var(--teal);--cd:var(--teal-d)">1. Same moment, different knee<small>Net moments vs tissue load</small></button>
+  <button role="tab" aria-selected="false" data-tab="lab2" style="--c:var(--blue);--cd:var(--blue-d)">2. Angle ≠ moment<small>Kinematics vs kinetics</small></button>
+  <button role="tab" aria-selected="false" data-tab="lab3" style="--c:var(--plum);--cd:var(--plum-d)">3. Load × cycles<small>Acute vs overuse</small></button>
+  <button role="tab" aria-selected="false" data-tab="lab4" style="--c:var(--navy);--cd:var(--navy-d)">4. Is the change real?<small>SEM, MDC and SWC</small></button>
+  <button role="tab" aria-selected="false" data-tab="lab5" style="--c:var(--teal);--cd:var(--teal-d)">5. Chain builder<small>Mechanism → measure</small></button>
 </nav>
 
+<!-- ============ START HERE ============ -->
+<section class="lab active" id="lab0" role="tabpanel">
+  <div class="bar" style="--bc:var(--navy)"><span class="pill">Start here</span><h2>Forces and moments: the basics</h2></div>
+  <div class="body">
+  <div class="intro"><p>Every lab uses one idea, the <strong>moment</strong>. Work through these three short steps first. Each one builds on the last, and the third takes you inside the knee.</p></div>
+
+  <h3 class="stephead"><span class="step">1</span>What is a moment?</h3>
+  <div class="plain"><p>A <strong>moment</strong> (also called a torque) is the <strong>turning effect of a force</strong>. Think of undoing a stiff bolt with a spanner. You push harder, push further along the handle, or push at a right angle to it. All three make it turn more easily.</p>
+  <p><span class="eq">moment = force × moment arm</span> &nbsp; measured in newton-metres (N·m)</p>
+  <p>The <strong>moment arm</strong> is the shortest (perpendicular) distance from the pivot to the line the force acts along. It is not always the same as the distance to where you push.</p></div>
+  <div class="grid">
+    <div class="card" style="--kc:var(--blue)">
+      <h3>Controls</h3>
+      <div class="ctl"><label for="pAF">How hard you push <output id="pAFo"></output></label><input type="range" id="pAF" min="0" max="300" step="5" value="200"></div>
+      <div class="ctl"><label for="pAr">Where you push along the handle <output id="pAro"></output></label><input type="range" id="pAr" min="5" max="30" step="1" value="30"><div class="hint">Distance from the bolt.</div></div>
+      <div class="ctl"><label for="pAa">Angle of your push <output id="pAao"></output></label><input type="range" id="pAa" min="0" max="180" step="1" value="90"><div class="hint">90° = at a right angle to the handle.</div></div>
+      <div class="btnrow">
+        <button class="btn" type="button" data-pa="200,30,90">End of handle, right angle</button>
+        <button class="btn" type="button" data-pa="200,8,90">Near the bolt</button>
+        <button class="btn" type="button" data-pa="200,30,35">At an angle</button>
+        <button class="btn" type="button" data-pa="200,30,0">Pull along the handle</button>
+      </div>
+    </div>
+    <div class="card" style="--kc:var(--teal)">
+      <h3>Spanner seen from above</h3>
+      <svg id="pAsvg" viewBox="0 0 520 250" role="img" aria-label="Spanner turning a bolt"></svg>
+      <div class="legend"><span style="--c:var(--amber)">Your push (force)</span><span style="--c:var(--plum)">Moment arm</span><span style="--c:var(--teal)">Turning effect</span></div>
+      <div class="readouts" id="pAro2"></div>
+    </div>
+  </div>
+  <div class="key"><strong>Try this:</strong> pull straight along the handle. The force is still 200 N, but the moment is zero because its line passes straight through the bolt. In Part 2 the same thing happens with the ground reaction force and the knee.</div>
+
+  <h3 class="stephead"><span class="step">2</span>Net moment: two forces fighting</h3>
+  <div class="plain"><p>Joints usually have muscles pulling on <strong>both sides</strong>. Each muscle makes its own moment, and they turn in opposite directions. What's left over after they cancel is the <strong>net moment</strong>. It decides which way the joint turns.</p>
+  <p>Here's the catch. The pivot has to hold up <strong>both</strong> forces, not just the difference between them.</p></div>
+  <div class="grid">
+    <div class="card" style="--kc:var(--blue)">
+      <h3>Controls</h3>
+      <div class="ctl"><label for="pBL">Left force <output id="pBLo"></output></label><input type="range" id="pBL" min="0" max="1000" step="10" value="0"></div>
+      <div class="ctl"><label for="pBR">Right force <output id="pBRo"></output></label><input type="range" id="pBR" min="0" max="1000" step="10" value="400"></div>
+      <div class="hint" style="margin-bottom:8px">Both forces act 25 cm from the pivot.</div>
+      <div class="btnrow">
+        <button class="btn" type="button" data-pb="0,400">One side only</button>
+        <button class="btn" type="button" data-pb="500,900">Both sides pulling</button>
+        <button class="btn" type="button" data-pb="600,600">Balanced</button>
+      </div>
+    </div>
+    <div class="card" style="--kc:var(--teal)">
+      <h3>A beam on a pivot</h3>
+      <svg id="pBsvg" viewBox="0 0 520 250" role="img" aria-label="Beam balanced on a pivot"></svg>
+      <div class="legend"><span style="--c:var(--plum)">Left force</span><span style="--c:var(--teal)">Right force</span><span style="--c:var(--blue)">Pivot pushing back</span></div>
+      <div class="readouts" id="pBro"></div>
+    </div>
+  </div>
+  <div class="key"><strong>Try this:</strong> compare "One side only" with "Both sides pulling". The net moment is the same (100 N·m), but the pivot is squeezed three and a half times as hard. In the knee, the two forces are the quadriceps and hamstrings, and the pivot is the joint surface. That's the whole idea behind Part 1.</div>
+
+  <h3 class="stephead"><span class="step">3</span>The knee is a lever</h3>
+  <div class="plain"><p>When you land, the ground pushes up on your foot (the <strong>ground reaction force</strong>, or GRF). If that push passes <strong>behind</strong> the knee, it tries to bend the knee. This is an <strong>external moment</strong>.</p>
+  <p>To stop you collapsing, the quadriceps pull through the patellar tendon and create an <strong>internal moment</strong> that resists it. The tendon's moment arm is tiny (about 4.5 cm), so it has to pull far harder than the ground pushes.</p></div>
+  <div class="grid">
+    <div class="card" style="--kc:var(--blue)">
+      <h3>Controls</h3>
+      <div class="ctl"><label for="pCG">Ground reaction force <output id="pCGo"></output></label><input type="range" id="pCG" min="1" max="4" step="0.1" value="2"><div class="hint">Shown as a multiple of body weight (75 kg).</div></div>
+      <div class="ctl"><label for="pCd">How far the knee is in front of the force line <output id="pCdo"></output></label><input type="range" id="pCd" min="0" max="20" step="0.5" value="8"><div class="hint">More knee bend usually means a bigger distance.</div></div>
+      <div class="btnrow">
+        <button class="btn" type="button" data-pc="2,3">Stiff landing</button>
+        <button class="btn" type="button" data-pc="2,15">Deep landing</button>
+      </div>
+    </div>
+    <div class="card" style="--kc:var(--teal)">
+      <h3>Side view (facing right)</h3>
+      <svg id="pCsvg" viewBox="0 0 520 330" role="img" aria-label="Knee lever during landing"></svg>
+      <div class="legend"><span style="--c:var(--amber)">Ground reaction force</span><span style="--c:var(--plum)">GRF moment arm</span><span style="--c:var(--teal)">Patellar tendon</span></div>
+      <div class="readouts" id="pCro"></div>
+    </div>
+  </div>
+  <div class="key"><strong>Notice:</strong> the patellar tendon force is several times body weight, even though the ground force is only about twice body weight. That's what happens with a short lever. It's also why the loads <em>inside</em> a joint are much bigger than anything a force plate shows. Note that "knee in front of the force line" is a sagittal-plane (side view) moment. Part 2 looks at the frontal plane (front view), which is where knee valgus happens.</div>
+
+  <h3 class="stephead"><span class="step">+</span>Two more ideas you'll need</h3>
+  <div class="grid even">
+    <div class="card" style="--kc:var(--plum)">
+      <h4>Stress: how concentrated the force is</h4>
+      <svg class="mini" viewBox="0 0 260 150" role="img" aria-label="Same force on a thick and a thin tendon">
+        <rect x="45" y="30" width="44" height="90" rx="8" fill="#00857e" opacity=".35"/><rect x="175" y="30" width="16" height="90" rx="6" fill="#8b3556" opacity=".55"/>
+        <line x1="67" y1="28" x2="67" y2="8" stroke="#b86e00" stroke-width="4"/><polygon points="67,2 61,12 73,12" fill="#b86e00"/>
+        <line x1="183" y1="28" x2="183" y2="8" stroke="#b86e00" stroke-width="4"/><polygon points="183,2 177,12 189,12" fill="#b86e00"/>
+        <text x="67" y="140" text-anchor="middle" font-size="12" fill="#516c73">thick: lower stress</text><text x="183" y="140" text-anchor="middle" font-size="12" fill="#516c73">thin: higher stress</text>
+      </svg>
+      <p class="small" style="margin:.4rem 0 0"><span class="eq">stress = force ÷ area</span><br>The same force through a thinner tendon or a smaller joint contact area produces more stress. Tissue fails when stress gets too high, not simply when force does.</p>
+    </div>
+    <div class="card" style="--kc:var(--plum)">
+      <h4>Strain: how much the tissue stretches</h4>
+      <svg class="mini" viewBox="0 0 260 150" role="img" aria-label="A tendon before and after stretching">
+        <rect x="20" y="35" width="150" height="16" rx="8" fill="#00857e" opacity=".45"/><text x="175" y="47" font-size="12" fill="#516c73">100 mm</text>
+        <rect x="20" y="85" width="165" height="12" rx="6" fill="#8b3556" opacity=".55"/><text x="190" y="95" font-size="12" fill="#516c73">110 mm</text>
+        <text x="20" y="130" font-size="12" fill="#516c73">stretched by 10 mm → strain = 10%</text>
+      </svg>
+      <p class="small" style="margin:.4rem 0 0"><span class="eq">strain = change in length ÷ original length</span><br>Stress and strain are what the tissue actually experiences. We can almost never measure them in athletes, which is the problem this whole session is about.</p>
+    </div>
+  </div>
+
+  <details class="bio"><summary>Glossary (open when you need it)</summary><div class="inner">
+    <dl class="gloss">
+      <dt>Force</dt><dd>A push or pull, measured in newtons (N). Body weight for a 75 kg person is about 736 N.</dd>
+      <dt>Moment (torque)</dt><dd>The turning effect of a force about a pivot or joint. Moment = force × moment arm (N·m).</dd>
+      <dt>Moment arm</dt><dd>The perpendicular (shortest) distance from the pivot to the line of the force.</dd>
+      <dt>Net moment</dt><dd>What's left when all the moments about a joint are added together, taking direction into account. It's what inverse dynamics calculates.</dd>
+      <dt>External moment</dt><dd>The moment created by forces from outside the body (e.g. the ground reaction force).</dd>
+      <dt>Internal moment</dt><dd>The moment created by muscles, tendons and ligaments to resist an external moment.</dd>
+      <dt>Ground reaction force (GRF)</dt><dd>The force the ground pushes back on the body with. It's what a force plate measures.</dd>
+      <dt>Centre of mass (COM)</dt><dd>The single point where the body's mass can be treated as acting.</dd>
+      <dt>Kinematics</dt><dd>A description of motion (angles, positions, velocities) without the forces that cause it. You can get this from video.</dd>
+      <dt>Kinetics</dt><dd>The forces and moments that cause motion. You usually need a force plate, and often motion capture too.</dd>
+      <dt>Inverse dynamics</dt><dd>Working backwards from motion and ground reaction force to calculate net joint moments.</dd>
+      <dt>Co-contraction</dt><dd>Muscles on both sides of a joint working at the same time.</dd>
+      <dt>Stress / strain</dt><dd>Force per unit area / stretch relative to the original length. What the tissue actually experiences.</dd>
+      <dt>FPPA</dt><dd>Frontal plane projection angle. The knee angle seen from the front on 2D video.</dd>
+      <dt>Reliability</dt><dd>How consistent a measurement is when it's repeated.</dd>
+      <dt>SEM, MDC, SWC</dt><dd>The typical measurement error, the smallest change you can be confident is real, and the smallest change that matters in practice (Part 4).</dd>
+    </dl>
+  </div></details>
+
+  <div class="discuss">
+    <h3>Check you've got it</h3>
+    <ol>
+      <li>Give two ways of doubling a moment without changing the force.</li>
+      <li>Why can the force be large but the moment zero?</li>
+      <li>Two joints have the same net moment. Why might one still be under much more load than the other?</li>
+      <li>Why is the patellar tendon force so much bigger than the ground reaction force?</li>
+    </ol>
+  </div>
+  </div>
+</section>
+
 <!-- ============ LAB 1 ============ -->
-<section class="lab active" id="lab1" role="tabpanel">
+<section class="lab" id="lab1" role="tabpanel">
+  <div class="bar" style="--bc:var(--teal)"><span class="pill">Part 1</span><h2>Same moment, different knee</h2></div>
+  <div class="body">
   <div class="intro">
-    <h2>Same moment, different knee</h2>
     <p>Inverse dynamics gives you a <strong>net</strong> joint moment, meaning the combined effect of every muscle and passive structure crossing the joint. It cannot tell you how that moment was produced. Keep the net knee extensor moment fixed, then change how much the hamstrings co-contract and see what happens to the loads inside the knee.</p>
   </div>
+  <div class="plain"><p><strong>In plain English:</strong> think back to the seesaw in <button class="linkbtn" type="button" data-goto="lab0">Start here</button>. The quadriceps pull on the front of the knee and the hamstrings pull on the back. A force plate and motion capture can only tell you the <em>overall</em> turning effect at the knee (the net moment). They can't tell you how hard each side pulled.</p><p>So two athletes can have exactly the same net moment but very different loads inside the knee.</p></div>
   <div class="grid">
-    <div class="card">
+    <div class="card" style="--kc:var(--blue)">
       <h3>Controls</h3>
-      <div class="ctl"><label for="l1M">Net knee extensor moment <output id="l1Mo"></output></label><input type="range" id="l1M" min="0" max="300" step="5" value="150"><div class="hint">This is what inverse dynamics reports.</div></div>
+      <div class="ctl"><label for="l1M">Net knee extensor moment <output id="l1Mo"></output></label><input type="range" id="l1M" min="0" max="300" step="5" value="150"><div class="hint">The overall turning effect at the knee. This is all that inverse dynamics (force plate + motion capture) can tell you.</div></div>
       <div class="ctl"><label for="l1H">Hamstring co-contraction force <output id="l1Ho"></output></label><input type="range" id="l1H" min="0" max="2500" step="50" value="0"><div class="hint">You can't get this from a force plate. EMG gives an indication, not a force.</div></div>
       <div class="ctl"><label for="l1T">Knee flexion angle <output id="l1To"></output></label><input type="range" id="l1T" min="0" max="90" step="1" value="25"></div>
       <div class="ctl"><label for="l1G">Axial load through the shank <output id="l1Go"></output></label><input type="range" id="l1G" min="0" max="4" step="0.1" value="2"><div class="hint">Body mass fixed at 75 kg.</div></div>
@@ -121,7 +270,7 @@ footer{color:var(--muted);font-size:.82rem;text-align:center;padding:22px 8px}
         <button class="btn" type="button" data-l1="150,0,80,2">Deep flexion</button>
       </div>
     </div>
-    <div class="card">
+    <div class="card" style="--kc:var(--teal)">
       <h3>Sagittal knee (athlete facing right)</h3>
       <svg id="l1svg" viewBox="0 0 520 400" role="img" aria-label="Knee free body diagram"></svg>
       <div class="legend">
@@ -149,16 +298,19 @@ footer{color:var(--muted);font-size:.82rem;text-align:center;padding:22px 8px}
     <p><span class="eq">Shear<sub>ant</sub> = F<sub>PT</sub>·sin(α<sub>PT</sub>) − F<sub>H</sub>·sin(α<sub>H</sub>)</span><br><span class="eq">Compression = F<sub>axial</sub> + F<sub>PT</sub>·cos(α<sub>PT</sub>) + F<sub>H</sub>·cos(α<sub>H</sub>)</span></p>
     <p class="small muted">Assumptions: moment arms are held constant (d<sub>PT</sub> = 4.5 cm, d<sub>H</sub> = 3.5 cm). The patellar tendon angle falls roughly linearly from about +20° near full extension to slightly negative by 90° flexion, and the hamstring line of action becomes more oblique with flexion. These follow the general trends in cadaver and imaging studies, but the exact values vary between people. The model ignores gastrocnemius, ligament and external shear forces, and inertia. It's a teaching model and shouldn't be used to estimate real ACL force. That's the point of the lab. This is the same idea as Winter's distinction between joint reaction and bone-on-bone forces, and his point about the indeterminacy of muscle forces (Winter, 2009, Sections 5.0.3 and 5.3).</p>
   </div></details>
+</div>
 </section>
 
 <!-- ============ LAB 2 ============ -->
 <section class="lab" id="lab2" role="tabpanel">
+  <div class="bar" style="--bc:var(--blue)"><span class="pill">Part 2</span><h2>Angle ≠ moment</h2></div>
+  <div class="body">
   <div class="intro">
-    <h2>Angle ≠ moment</h2>
     <p>2D video gives you a knee <strong>angle</strong> (the frontal plane projection angle, FPPA). The load on the knee depends on the external <strong>moment</strong>, which is the ground reaction force multiplied by its perpendicular distance from the knee. Trunk position and foot placement move the ground reaction force without changing the knee angle.</p>
   </div>
+  <div class="plain"><p><strong>In plain English:</strong> the ground pushes up on the foot. If that push passes to the <em>outside</em> of the knee, it tries to make the knee collapse inwards. How strongly depends on the size of the push and how far its line passes from the knee (the moment arm).</p><p>A phone video can see the knee <em>angle</em>, but it can't see where that force line goes.</p></div>
   <div class="grid">
-    <div class="card">
+    <div class="card" style="--kc:var(--blue)">
       <h3>Controls (single-leg landing, right leg)</h3>
       <div class="ctl"><label for="l2K">Knee medial displacement <output id="l2Ko"></output></label><input type="range" id="l2K" min="-4" max="12" step="0.5" value="0"><div class="hint">Positive = knee moves medially ("valgus").</div></div>
       <div class="ctl"><label for="l2L">Trunk lean over the stance leg <output id="l2Lo"></output></label><input type="range" id="l2L" min="-10" max="35" step="1" value="0"><div class="hint">Positive = trunk leans towards the landing leg.</div></div>
@@ -171,7 +323,7 @@ footer{color:var(--muted);font-size:.82rem;text-align:center;padding:22px 8px}
       </div>
       <p class="small muted" style="margin:8px 0 0">Challenge: find two positions with the <strong>same FPPA</strong> but at least a twofold difference in knee abduction moment.</p>
     </div>
-    <div class="card">
+    <div class="card" style="--kc:var(--teal)">
       <h3>Frontal view</h3>
       <svg id="l2svg" viewBox="0 0 520 440" role="img" aria-label="Frontal plane landing model"></svg>
       <div class="legend">
@@ -187,7 +339,7 @@ footer{color:var(--muted);font-size:.82rem;text-align:center;padding:22px 8px}
     <ol>
       <li>Your chosen screening test uses FPPA from 2D video. What part of the mechanism does it capture, and what does it miss?</li>
       <li>The trunk-lean preset has a small FPPA but a large moment. What would you need to measure to detect this athlete, and could you do it outside the lab?</li>
-      <li>A knee abduction moment is still not ACL load (see Lab 1). How many steps is it from the tissue? Use Winter's levels (measurement, description, analysis and assessment) to place it.</li>
+      <li>A knee abduction moment is still not ACL load (see Part 1). How many steps is it from the tissue? Use Winter's levels (observation, measurement and description, or analysis) to place it.</li>
       <li>If a cheap field test tracks the moment only loosely, is it still useful? What would you need to know about its reliability and validity first?</li>
     </ol>
   </div>
@@ -197,16 +349,19 @@ footer{color:var(--muted);font-size:.82rem;text-align:center;padding:22px 8px}
     <p>where d<sub>⊥</sub> is the perpendicular distance from the knee joint centre to the GRF line. If the line passes lateral to the knee, the external moment is an abduction (valgus) moment. If it passes medial to the knee, it is an adduction (varus) moment. FPPA is the angle between the thigh and shank projected onto the frontal plane.</p>
     <p class="small muted">Assumptions: the model ignores segment inertia, horizontal forces that don't pass through the COM, and transverse-plane rotation. Real landings are dynamic, so inverse dynamics with 3D motion capture is needed for real values. The model shows why a kinematic variable and a kinetic variable can separate, which is the key idea behind choosing between 2D video and lab-based measures.</p>
   </div></details>
+</div>
 </section>
 
 <!-- ============ LAB 3 ============ -->
 <section class="lab" id="lab3" role="tabpanel">
+  <div class="bar" style="--bc:var(--plum)"><span class="pill">Part 3</span><h2>Load × cycles</h2></div>
+  <div class="body">
   <div class="intro">
-    <h2>Load × cycles</h2>
     <p>Tissue can fail after one very high load or after thousands of moderate ones (Hamill et al., 2015, Fig. 2-37). Where your injury sits on this curve decides what you should measure. That could be peak load, loading rate, the number of loading cycles, or all three.</p>
   </div>
+  <div class="plain"><p><strong>In plain English:</strong> bend a paperclip hard once and it can snap. Bend it gently back and forth many times and it snaps too. Bone, tendon and ligament behave in a similar way. Either a few very high loads or lots of moderate ones can cause injury.</p></div>
   <div class="grid">
-    <div class="card">
+    <div class="card" style="--kc:var(--blue)">
       <h3>Controls</h3>
       <div class="ctl"><label for="l3S">Peak load per cycle <output id="l3So"></output></label><input type="range" id="l3S" min="10" max="100" step="0.5" value="35"><div class="hint">Shown as a percentage of the tissue's single-load failure strength.</div></div>
       <div class="ctl"><label for="l3N">Loading cycles per session <output id="l3No"></output></label><input type="range" id="l3N" min="0" max="4.3" step="0.01" value="3.7"><div class="hint">Log scale (e.g. strides, landings, throws).</div></div>
@@ -219,7 +374,7 @@ footer{color:var(--muted);font-size:.82rem;text-align:center;padding:22px 8px}
         <button class="btn" type="button" data-l3="38.5,3.7,5,20,12">Same running, +10% load</button>
       </div>
     </div>
-    <div class="card">
+    <div class="card" style="--kc:var(--teal)">
       <h3>Fatigue (S–N) curve and damage over 12 weeks</h3>
       <svg id="l3svg" viewBox="0 0 520 250" role="img" aria-label="Load versus cycles to failure"></svg>
       <svg id="l3svg2" viewBox="0 0 520 170" role="img" aria-label="Cumulative damage over 12 weeks"></svg>
@@ -243,16 +398,19 @@ footer{color:var(--muted);font-size:.82rem;text-align:center;padding:22px 8px}
     <p>Because <em>k</em> is large, damage per cycle is very sensitive to load. For example, 1.1<sup>12</sup> ≈ 3.1, so each cycle does about three times as much damage. Probabilistic models of tibial stress fracture use the same logic (e.g. Edwards et al., 2009).</p>
     <p class="small muted">Assumptions: <em>k</em> and the repair rate are illustrative. Real values depend on the tissue, the strain rate, temperature and the biology (bone remodels, tendon adapts slowly), and they vary widely between people. Use this lab for reasoning, not for predictions.</p>
   </div></details>
+</div>
 </section>
 
 <!-- ============ LAB 4 ============ -->
 <section class="lab" id="lab4" role="tabpanel">
+  <div class="bar" style="--bc:var(--navy)"><span class="pill">Part 4</span><h2>Is the change real?</h2></div>
+  <div class="body">
   <div class="intro">
-    <h2>Is the change real?</h2>
     <p>Every measurement includes some noise. Before a retest can inform a decision, you need to know how big a change has to be before it is bigger than the measurement error. Enter reliability values from the paper you are using for your test, then test an athlete's change against them.</p>
   </div>
+  <div class="plain"><p><strong>In plain English:</strong> step on the bathroom scales twice and you'll get slightly different numbers, even though your weight hasn't changed. Every test has this noise. A change in an athlete's score only means something if it's bigger than the noise.</p></div>
   <div class="grid">
-    <div class="card">
+    <div class="card" style="--kc:var(--blue)">
       <h3>Reliability inputs</h3>
       <div class="ctl"><label for="l4SD">Between-athlete SD <output id="l4SDo"></output></label><input type="range" id="l4SD" min="1" max="200" step="1" value="60"><div class="hint">Enter this in the units of your variable (e.g. N, cm, °, N·m).</div></div>
       <div class="ctl"><label for="l4ICC">ICC (test–retest) <output id="l4ICCo"></output></label><input type="range" id="l4ICC" min="0.5" max="0.99" step="0.01" value="0.85"></div>
@@ -263,7 +421,7 @@ footer{color:var(--muted);font-size:.82rem;text-align:center;padding:22px 8px}
       <div class="ctl"><label for="l4T">True change in the athlete <output id="l4To"></output></label><input type="range" id="l4T" min="-150" max="150" step="1" value="0"><div class="hint">We repeat the retest 2,000 times with this true change plus measurement noise.</div></div>
       <div class="btnrow"><button class="btn primary" type="button" id="l4sim">Re-run simulation</button></div>
     </div>
-    <div class="card">
+    <div class="card" style="--kc:var(--teal)">
       <h3>What the numbers mean</h3>
       <div class="readouts" id="l4ro"></div>
       <div id="l4verdict"></div>
@@ -285,15 +443,18 @@ footer{color:var(--muted);font-size:.82rem;text-align:center;padding:22px 8px}
     <p>The √2 appears because a change score has error from <em>two</em> measurements. The SWC here uses 0.2 × between-athlete SD, which is a common convention for the smallest worthwhile change. When the SEM is smaller than the SWC, the test can detect worthwhile changes (Hopkins, 2000). The simulation adds normally distributed noise with SD = √2 · SEM to the true change.</p>
     <p class="small muted">The SEM calculated from an ICC depends on the SD of the sample it came from, so reliability values only transfer to a similar population. The MDC from another study tells you about that study's protocol. If your protocol is different (e.g. equipment, familiarisation, number of trials), your error will be different too.</p>
   </div></details>
+</div>
 </section>
 
 <!-- ============ LAB 5 ============ -->
 <section class="lab" id="lab5" role="tabpanel">
+  <div class="bar" style="--bc:var(--teal)"><span class="pill">Part 5</span><h2>Chain builder</h2></div>
+  <div class="body">
   <div class="intro">
-    <h2>Chain builder</h2>
     <p>Build your group's mechanism-to-measurement chain, with one row per variable. Your work saves in this browser only, so export it before you leave. You'll need it in Session 4, where it becomes your decision tree.</p>
   </div>
-  <div class="card">
+  <div class="plain"><p><strong>In plain English:</strong> for each variable you want to test, work back to the tissue it is meant to tell you about. Then check that you can measure it well enough to act on the result.</p></div>
+  <div class="card" style="--kc:var(--teal)">
     <div class="btnrow">
       <button class="btn primary" type="button" id="l5add">Add row</button>
       <button class="btn" type="button" id="l5csv">Download CSV</button>
@@ -307,11 +468,11 @@ footer{color:var(--muted);font-size:.82rem;text-align:center;padding:22px 8px}
         <thead><tr>
           <th>Mechanism &amp; tissue</th>
           <th>Tissue load we want to know</th>
-          <th>Load type<br><span class="muted small">(Lab 3)</span></th>
+          <th>Load type<br><span class="muted small">(Part 3)</span></th>
           <th>Measurable variable</th>
           <th>Winter level</th>
           <th>Tool &amp; setting</th>
-          <th>Reliability / MDC + source<br><span class="muted small">(Lab 4)</span></th>
+          <th>Reliability / MDC + source<br><span class="muted small">(Part 4)</span></th>
           <th>Value that would change my decision</th>
           <th></th>
         </tr></thead>
@@ -327,10 +488,12 @@ footer{color:var(--muted);font-size:.82rem;text-align:center;padding:22px 8px}
       <li>Is there a row whose result would never change what you do? If so, cross it out.</li>
     </ol>
   </div>
+</div>
 </section>
 
 <footer>Built for RSEH51, Plymouth Marjon University. These are teaching models, simplified so the idea is clear. Don't use them to estimate real tissue loads.<br>
 Winter, D. A. (2009). <em>Biomechanics and motor control of human movement</em> (4th ed.). Wiley. · Hamill, J., Knutzen, K. M., &amp; Derrick, T. R. (2015). <em>Biomechanical basis of human movement</em> (4th ed.). Wolters Kluwer. · Hopkins, W. G. (2000). Measures of reliability in sports medicine and science. <em>Sports Medicine, 30</em>(1), 1–15.</footer>
+</div>
 </div>
 
 <script>
@@ -341,17 +504,6 @@ const NS = "http://www.w3.org/2000/svg";
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 const fmt = (x, d=0) => Number(x).toLocaleString("en-GB",{minimumFractionDigits:d,maximumFractionDigits:d});
 const deg = r => r*180/Math.PI, rad = d => d*Math.PI/180;
-
-/* ---------- theme ---------- */
-const root = document.documentElement;
-try{ const t = localStorage.getItem("m2m-theme"); if(t) root.setAttribute("data-theme", t); }catch(e){}
-$("themeBtn").addEventListener("click", ()=>{
-  const dark = root.getAttribute("data-theme") ? root.getAttribute("data-theme")==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
-  const next = dark ? "light" : "dark";
-  root.setAttribute("data-theme", next);
-  try{ localStorage.setItem("m2m-theme", next); }catch(e){}
-  renderAll();
-});
 
 /* ---------- tabs ---------- */
 const tabs = document.querySelectorAll("nav.tabs button");
@@ -418,11 +570,11 @@ function lab1(){
   const sc = F => Math.min(170, Math.max(0, F/28));
   // patellar tendon from tibial tuberosity
   const tx=kx+13, ty=ky+38;
-  arrow(svg, tx, ty, tx+Math.sin(aPT)*sc(FPT), ty-Math.cos(aPT)*sc(FPT), teal, 5, "F_PT "+fmt(FPT)+" N", tx+Math.sin(aPT)*sc(FPT)+8, ty-Math.cos(aPT)*sc(FPT));
+  arrow(svg, tx, ty, tx+Math.sin(aPT)*sc(FPT), ty-Math.cos(aPT)*sc(FPT), teal, 5, "patellar tendon "+fmt(FPT)+" N", tx+Math.sin(aPT)*sc(FPT)+8, ty-Math.cos(aPT)*sc(FPT));
   // hamstrings
   if(FH>0){
     const hx=kx-13, hy=ky+30;
-    arrow(svg, hx, hy, hx-Math.sin(aH)*sc(FH), hy-Math.cos(aH)*sc(FH), plum, 5, "F_H "+fmt(FH)+" N", hx-Math.sin(aH)*sc(FH)-110, hy-Math.cos(aH)*sc(FH)-6);
+    arrow(svg, hx, hy, hx-Math.sin(aH)*sc(FH), hy-Math.cos(aH)*sc(FH), plum, 5, "hamstrings "+fmt(FH)+" N", hx-Math.sin(aH)*sc(FH)-130, hy-Math.cos(aH)*sc(FH)-6);
   }
   // shear on tibia at joint
   const shs = Math.max(-150, Math.min(150, shear/12));
@@ -686,7 +838,7 @@ function addRow(d){
   COLS.forEach(c=>{
     const td=document.createElement("td"); let inp;
     if(c==="type"){ inp=document.createElement("select"); ["","Peak magnitude","Loading rate","Exposure (cycles)","Capacity","Mixed"].forEach(o=>{const op=document.createElement("option"); op.value=o; op.textContent=o||"Choose…"; inp.appendChild(op);}); }
-    else if(c==="level"){ inp=document.createElement("select"); ["","Measurement / description","Analysis","Assessment"].forEach(o=>{const op=document.createElement("option"); op.value=o; op.textContent=o||"Choose…"; inp.appendChild(op);}); }
+    else if(c==="level"){ inp=document.createElement("select"); ["","Observation","Measurement / description","Analysis"].forEach(o=>{const op=document.createElement("option"); op.value=o; op.textContent=o||"Choose…"; inp.appendChild(op);}); }
     else { inp=document.createElement("textarea"); inp.placeholder=first?(PH[c]||""):""; }
     inp.dataset.c=c; inp.value=d[c]||""; inp.setAttribute("aria-label", c);
     inp.addEventListener("input", save); inp.addEventListener("change", save);
@@ -725,8 +877,139 @@ $("l5scen").addEventListener("input", save);
   else { addRow(); addRow(); addRow(); }
 })();
 
+
+/* ================= START HERE ================= */
+function arcArrow(svg, cx, cy, r, a0, a1, color, width){
+  // angles in degrees, svg coords (clockwise positive)
+  const pt = a => [cx + r*Math.cos(rad(a)), cy + r*Math.sin(rad(a))];
+  const [x0,y0]=pt(a0), [x1,y1]=pt(a1);
+  const large = Math.abs(a1-a0)>180?1:0, sweep = a1>a0?1:0;
+  S("path",{d:`M${x0},${y0} A${r},${r} 0 ${large} ${sweep} ${x1},${y1}`,fill:"none",stroke:color,"stroke-width":width,"stroke-linecap":"round"},svg);
+  const dir = a1>a0?1:-1, ta = rad(a1), tx = -Math.sin(ta)*dir, ty = Math.cos(ta)*dir, h=11;
+  S("polygon",{points:`${x1+tx*h},${y1+ty*h} ${x1-ty*h*0.55},${y1+tx*h*0.55} ${x1+ty*h*0.55},${y1-tx*h*0.55}`,fill:color},svg);
+}
+function primerA(){
+  const F=+$("pAF").value, rcm=+$("pAr").value, ang=+$("pAa").value;
+  $("pAFo").textContent=fmt(F)+" N"; $("pAro").textContent=rcm+" cm"; $("pAao").textContent=ang+"°";
+  const r=rcm/100, dperp=r*Math.sin(rad(ang)), M=F*dperp;
+  const svg=$("pAsvg"); clear(svg);
+  const teal=css("--teal"), plum=css("--plum"), amber=css("--amber"), navy=css("--navy"), muted=css("--muted");
+  const bx=95, by=125, SC=1100;
+  // handle
+  S("rect",{x:bx,y:by-11,width:0.32*SC,height:22,rx:11,fill:navy,opacity:.85},svg);
+  S("circle",{cx:bx,cy:by,r:30,fill:"none",stroke:navy,"stroke-width":12,opacity:.85},svg);
+  S("polygon",{points:[0,1,2,3,4,5].map(i=>`${bx+13*Math.cos(i*Math.PI/3)},${by+13*Math.sin(i*Math.PI/3)}`).join(" "),fill:muted},svg);
+  S("text",{x:bx,y:by+56,fill:muted,"font-size":12,"text-anchor":"middle"},svg,"bolt (pivot)");
+  // distance ticks
+  for(let c=5;c<=30;c+=5){ const x=bx+c/100*SC; S("line",{x1:x,y1:by+13,x2:x,y2:by+19,stroke:"#fff","stroke-width":2},svg); }
+  const px=bx+r*SC, py=by;
+  const ux=Math.cos(rad(ang)), uy=Math.sin(rad(ang));
+  // line of action
+  S("line",{x1:px-ux*600,y1:py-uy*600,x2:px+ux*600,y2:py+uy*600,stroke:amber,"stroke-width":1.5,"stroke-dasharray":"6 5",opacity:.8},svg);
+  // perpendicular from bolt
+  const t=(bx-px)*ux+(by-py)*uy, fx=px+ux*t, fy=py+uy*t;
+  if(Math.abs(dperp)>0.002){ S("line",{x1:bx,y1:by,x2:fx,y2:fy,stroke:plum,"stroke-width":4},svg);
+    S("text",{x:(bx+fx)/2,y:Math.min(by,fy)-24,fill:plum,"font-size":13,"font-weight":700,"text-anchor":"middle"},svg,"moment arm "+fmt(Math.abs(dperp)*100,1)+" cm"); }
+  // force arrow ending at push point
+  const L=30+F/3.2;
+  arrow(svg, px-ux*L, py-uy*L, px, py, amber, 6);
+  S("circle",{cx:px,cy:py,r:5,fill:amber},svg);
+  S("text",{x:px-ux*L+(ux>=0?-6:6),y:py-uy*L-8,fill:amber,"font-size":13,"font-weight":700,"text-anchor":ux>=0?"end":"start"},svg,fmt(F)+" N");
+  // turning arrow
+  if(M>0.5){ const sweep=Math.min(300, 40+M*4); arcArrow(svg,bx,by,48,-110,-110+sweep,teal,5); }
+  ro($("pAro2"),[
+    {k:"Force",v:fmt(F)+" N",c:amber},
+    {k:"Distance to push point",v:rcm+" cm"},
+    {k:"Moment arm",v:fmt(Math.abs(dperp)*100,1)+" cm",s:"perpendicular distance",c:plum},
+    {k:"Moment",v:fmt(M,1)+" N·m",s:M<0.5?"no turning effect":"turning effect",c:teal}
+  ]);
+}
+bindSliders(["pAF","pAr","pAa"], primerA);
+document.querySelectorAll("[data-pa]").forEach(b=>b.addEventListener("click",()=>{const v=b.dataset.pa.split(","); ["pAF","pAr","pAa"].forEach((id,i)=>$(id).value=v[i]); primerA();}));
+
+function primerB(){
+  const FL=+$("pBL").value, FR=+$("pBR").value, d=0.25;
+  $("pBLo").textContent=fmt(FL)+" N"; $("pBRo").textContent=fmt(FR)+" N";
+  const ML=FL*d, MR=FR*d, net=MR-ML, piv=FL+FR;
+  const svg=$("pBsvg"); clear(svg);
+  const teal=css("--teal"), plum=css("--plum"), blue=css("--blue"), navy=css("--navy"), muted=css("--muted");
+  const cx=260, cy=120, half=190;
+  const tilt=Math.max(-9,Math.min(9, net/15));
+  const g=S("g",{transform:`rotate(${tilt} ${cx} ${cy})`},svg);
+  S("rect",{x:cx-half-10,y:cy-9,width:2*half+20,height:18,rx:9,fill:navy,opacity:.85},g);
+  const sc=F=>Math.min(95, F/9);
+  if(FL>0) arrow(g, cx-half+10, cy-12-sc(FL), cx-half+10, cy-10, plum, 6);
+  if(FR>0) arrow(g, cx+half-10, cy-12-sc(FR), cx+half-10, cy-10, teal, 6);
+  S("text",{x:cx-half+10,y:cy-18-sc(FL)-4,fill:plum,"font-size":13,"font-weight":700,"text-anchor":"middle"},g,fmt(FL)+" N");
+  S("text",{x:cx+half-10,y:cy-18-sc(FR)-4,fill:teal,"font-size":13,"font-weight":700,"text-anchor":"middle"},g,fmt(FR)+" N");
+  S("polygon",{points:`${cx},${cy+9} ${cx-26},${cy+58} ${cx+26},${cy+58}`,fill:muted,opacity:.6},svg);
+  S("line",{x1:cx-80,y1:cy+60,x2:cx+80,y2:cy+60,stroke:muted,"stroke-width":3},svg);
+  const pl=Math.min(80, piv/18);
+  if(piv>0){ arrow(svg, cx+42, cy+12+pl, cx+42, cy+12, blue, 6);
+    S("text",{x:cx+54,y:cy+34+pl*0.4,fill:blue,"font-size":13,"font-weight":700},svg,"pivot pushes back "+fmt(piv)+" N"); }
+  const dir = Math.abs(net)<0.5 ? "balanced, no turning" : (net>0?"turns clockwise (right side down)":"turns anticlockwise (left side down)");
+  S("text",{x:cx,y:238,fill:muted,"font-size":13,"text-anchor":"middle"},svg,"net moment: "+fmt(Math.abs(net))+" N·m, "+dir);
+  ro($("pBro"),[
+    {k:"Left moment",v:fmt(ML)+" N·m",s:fmt(FL)+" N × 0.25 m",c:plum},
+    {k:"Right moment",v:fmt(MR)+" N·m",s:fmt(FR)+" N × 0.25 m",c:teal},
+    {k:"Net moment",v:fmt(Math.abs(net))+" N·m",s:"right − left"},
+    {k:"Load on the pivot",v:fmt(piv)+" N",s:"left + right",c:blue}
+  ]);
+}
+bindSliders(["pBL","pBR"], primerB);
+document.querySelectorAll("[data-pb]").forEach(b=>b.addEventListener("click",()=>{const v=b.dataset.pb.split(","); $("pBL").value=v[0]; $("pBR").value=v[1]; primerB();}));
+
+function primerC(){
+  const Gbw=+$("pCG").value, dcm=+$("pCd").value, BM=75;
+  $("pCGo").textContent=fmt(Gbw,1)+" × BW"; $("pCdo").textContent=fmt(dcm,1)+" cm";
+  const G=Gbw*BM*g, d=dcm/100, M=G*d, dPTc=0.045, FPT=M/dPTc;
+  const svg=$("pCsvg"); clear(svg);
+  const teal=css("--teal"), plum=css("--plum"), amber=css("--amber"), navy=css("--navy"), muted=css("--muted"), line=css("--line");
+  const gy=305, copx=175, SC=900, ky=140;
+  const kx=copx + d*SC;
+  const ax=copx+12, ay=gy-18;
+  // ground and foot
+  S("line",{x1:20,y1:gy,x2:500,y2:gy,stroke:line,"stroke-width":3},svg);
+  S("line",{x1:ax-40,y1:gy-6,x2:ax+70,y2:gy-6,stroke:navy,"stroke-width":10,"stroke-linecap":"round"},svg);
+  // shank and thigh
+  S("line",{x1:ax,y1:ay,x2:kx,y2:ky,stroke:navy,"stroke-width":16,"stroke-linecap":"round",opacity:.9},svg);
+  const hx=kx-150+ (15-dcm)*2, hy=ky-95+dcm*2.2;
+  S("line",{x1:kx,y1:ky,x2:hx,y2:hy,stroke:navy,"stroke-width":18,"stroke-linecap":"round",opacity:.9},svg);
+  S("circle",{cx:kx,cy:ky,r:8,fill:"#fff",stroke:navy,"stroke-width":3},svg);
+  S("text",{x:kx-14,y:ky-12,fill:muted,"font-size":12,"text-anchor":"end"},svg,"knee");
+  // GRF line and arrow
+  S("line",{x1:copx,y1:gy,x2:copx,y2:20,stroke:amber,"stroke-width":1.5,"stroke-dasharray":"6 5"},svg);
+  const gl=Math.min(150, 30+Gbw*30);
+  arrow(svg, copx, gy, copx, gy-gl, amber, 6);
+  S("text",{x:copx-8,y:gy-gl+4,fill:amber,"font-size":13,"font-weight":700,"text-anchor":"end"},svg,"GRF "+fmt(G)+" N");
+  // moment arm
+  if(d>0.002){ S("line",{x1:copx,y1:ky,x2:kx,y2:ky,stroke:plum,"stroke-width":4},svg);
+    S("text",{x:(copx+kx)/2,y:ky+22,fill:plum,"font-size":13,"font-weight":700,"text-anchor":"middle"},svg,fmt(dcm,1)+" cm"); }
+  // external moment arc (knee flexion = thigh rotates back/down: shown as arc)
+  if(M>1){ const sw=Math.min(200, 30+M/2); arcArrow(svg,kx,ky,34,-60,-60-sw*0.6,plum,4); }
+  // patellar tendon (front of knee)
+  const sx=(ax-kx), sy=(ay-ky), sl=Math.hypot(sx,sy), ux=sx/sl, uy=sy/sl; // shank direction knee->ankle
+  const nx=-uy, ny=ux; // normal; choose the anterior side (right)
+  const ant = nx>0?1:-1;
+  const tt=[kx+ux*40+nx*ant*14, ky+uy*40+ny*ant*14];
+  const pat=[kx+nx*ant*26-ux*6, ky+ny*ant*26-uy*6-18];
+  const tl=Math.min(120, 20+FPT/60);
+  const tdx=pat[0]-tt[0], tdy=pat[1]-tt[1], tdl=Math.hypot(tdx,tdy);
+  arrow(svg, tt[0], tt[1], tt[0]+tdx/tdl*tl, tt[1]+tdy/tdl*tl, teal, 6);
+  S("text",{x:tt[0]+tdx/tdl*tl+8,y:tt[1]+tdy/tdl*tl,fill:teal,"font-size":13,"font-weight":700},svg,"patellar tendon "+fmt(FPT)+" N");
+  S("text",{x:tt[0]+14,y:tt[1]+26,fill:teal,"font-size":12},svg,"lever ≈ 4.5 cm");
+  ro($("pCro"),[
+    {k:"External moment",v:fmt(M)+" N·m",s:"GRF × "+fmt(dcm,1)+" cm",c:plum},
+    {k:"Patellar tendon force needed",v:fmt(FPT)+" N",s:fmt(FPT/(BM*g),1)+" × body weight",c:teal},
+    {k:"Tendon force ÷ GRF",v:"× "+fmt(G>0?FPT/G:0,1),s:"because the tendon's lever is short"}
+  ]);
+}
+bindSliders(["pCG","pCd"], primerC);
+document.querySelectorAll("[data-pc]").forEach(b=>b.addEventListener("click",()=>{const v=b.dataset.pc.split(","); $("pCG").value=v[0]; $("pCd").value=v[1]; primerC();}));
+document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>{ const t=[...document.querySelectorAll("nav.tabs button")].find(x=>x.dataset.tab===b.dataset.goto); if(t){ t.click(); window.scrollTo({top:0,behavior:"smooth"}); } }));
+
 /* ---------- init ---------- */
-function renderAll(){ lab1(); lab2(); lab3(); lab4(false); }
+function renderAll(){ primerA(); primerB(); primerC(); lab1(); lab2(); lab3(); lab4(false); }
 renderAll();
 })();
 </script>
