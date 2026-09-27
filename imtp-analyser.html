@@ -1,0 +1,1146 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IMTP Force–Time Analyser | SESD56</title>
+<meta name="description" content="Analyse isometric mid-thigh pull force–time data and check reliability. SESD56, Plymouth Marjon University.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --navy:#003d50; --navy-d:#002c3a; --teal:#00857e; --blue:#0071bc; --blue-d:#00568f; --plum:#8b3556; --plum-d:#682840;
+  --bg:#f7fbfd; --card:#ffffff; --soft:#f2faf9; --soft2:#f8fcfe; --line:#d9e2e7; --edge:#abd6d9;
+  --ink:#1d1d1b; --ink2:#3d4a52; --muted:#5b6770; --grid:#e8eef1;
+  --good:#1b7a45; --good-bg:#eaf6ef; --warn:#8a5a00; --warn-bg:#fff5e0; --bad:#b42318; --bad-bg:#fdecea; --info-bg:#eef3f6;
+  --left:#0071bc; --right:#8b3556; --total:#003d50;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#eaf3f7;color:var(--ink);line-height:1.55;font-size:16px}
+.wrap{max-width:1220px;margin:1rem auto;padding:1.2rem;background:var(--bg);border:2px solid var(--edge);border-radius:1rem}
+header.hero{background:var(--navy);color:#fff;padding:2rem 1.8rem;border-radius:.9rem .9rem 0 0;border-bottom:.4rem solid var(--teal)}
+.badge{display:inline-block;background:#fff;color:var(--navy);padding:.35rem .85rem;margin:0 0 .8rem;font-size:.88em;border-left:.35rem solid var(--blue);border-radius:.65rem;font-weight:bold}
+header.hero h1{margin:0 0 .4rem;font-size:2.1em;line-height:1.18}
+header.hero p{margin:0;font-size:1.05em;max-width:62rem}
+nav.tabs{background:#fff;padding:1rem;margin-bottom:1.4rem;border:1px solid var(--line);border-top:0;border-radius:0 0 .9rem .9rem;display:flex;gap:.75rem;flex-wrap:wrap}
+nav.tabs button{flex:1 1 220px;min-height:2.75rem;border:0;border-radius:.75rem;color:#fff;font:bold 1em Arial,Helvetica,sans-serif;cursor:pointer;padding:.7rem 1rem;opacity:.72}
+nav.tabs button[aria-selected="true"]{opacity:1;outline:3px solid #fff;box-shadow:0 0 0 3px var(--ink)}
+nav.tabs button:focus-visible{outline:3px solid var(--ink)}
+#tab-analyse{background:var(--navy);border-bottom:.25rem solid var(--navy-d)}
+#tab-reliab{background:var(--teal);border-bottom:.25rem solid #00625d}
+#tab-help{background:var(--plum);border-bottom:.25rem solid var(--plum-d)}
+.panel{display:none}.panel.active{display:block}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:1rem;margin-bottom:1.4rem;overflow:hidden}
+.card-head{color:#fff;padding:1.1rem 1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem}
+.card-head .chip{display:inline-block;background:#fff;padding:.25rem .7rem;font-size:.82em;margin:0 0 .4rem;border-left:.3rem solid var(--navy);border-radius:.55rem;font-weight:bold}
+.card-head h2{margin:0;font-size:1.4em}
+.card-body{padding:1.4rem 1.5rem}
+.h-navy{background:var(--navy)}.h-navy .chip{color:var(--navy);border-left-color:var(--blue)}
+.h-blue{background:var(--blue)}.h-blue .chip{color:var(--blue)}
+.h-teal{background:var(--teal)}.h-teal .chip{color:var(--teal)}
+.h-plum{background:var(--plum)}.h-plum .chip{color:var(--plum)}
+p.lead{margin-top:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.grid-chart{display:grid;grid-template-columns:3fr 2fr;gap:1rem}
+@media (max-width:860px){.grid2,.grid-chart{grid-template-columns:1fr}}
+.box{background:#fff;border:1px solid var(--line);border-left:.4rem solid var(--blue);border-radius:.75rem;padding:1rem}
+.box.teal{border-left-color:var(--teal)}.box.plum{border-left-color:var(--plum)}.box.navy{border-left-color:var(--navy)}
+.box h3{margin:0 0 .5rem;color:var(--navy);font-size:1.08em}
+.aside{background:var(--soft);border-left:.4rem solid var(--teal);padding:.85rem 1rem;border-radius:.75rem;margin:1rem 0 0}
+.drop{border:2px dashed var(--edge);border-radius:.9rem;background:var(--soft2);padding:1.4rem;text-align:center;transition:background .15s}
+.drop.over{background:#e3f3f2;border-color:var(--teal)}
+.drop p{margin:.3rem 0}
+.btn{display:inline-block;border:0;border-radius:.75rem;padding:.6rem 1rem;font:bold .95em Arial,Helvetica,sans-serif;cursor:pointer;color:#fff;background:var(--navy);border-bottom:.2rem solid var(--navy-d)}
+.btn.teal{background:var(--teal);border-bottom-color:#00625d}.btn.blue{background:var(--blue);border-bottom-color:var(--blue-d)}.btn.plum{background:var(--plum);border-bottom-color:var(--plum-d)}
+.btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.btn-row{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;margin-top:.8rem}
+label.fld{display:block;font-weight:bold;color:var(--navy);font-size:.92em;margin-bottom:.25rem}
+input[type=number],input[type=text],select,textarea{font:1em Arial,Helvetica,sans-serif;padding:.45rem .55rem;border:1px solid #b9c7cf;border-radius:.5rem;background:#fff;color:var(--ink);width:100%}
+textarea{min-height:7rem;font-family:Consolas,Menlo,monospace;font-size:.9em}
+.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.9rem 1rem;align-items:end}
+.radio-row{display:flex;gap:1rem;flex-wrap:wrap;font-size:.95em}
+.hint{color:var(--muted);font-size:.86em;margin:.25rem 0 0}
+.trials{display:flex;gap:.55rem;flex-wrap:wrap;margin:.2rem 0 0}
+.tchip{display:flex;align-items:center;gap:.45rem;border:2px solid var(--line);background:#fff;border-radius:.7rem;padding:.35rem .55rem;cursor:pointer;font-size:.92em}
+.tchip.sel{border-color:var(--navy);background:#eef6f9}
+.tchip input{margin:0}
+.tchip .x{border:0;background:none;color:var(--muted);cursor:pointer;font-size:1.1em;line-height:1;padding:0 .15rem}
+.st{display:inline-flex;align-items:center;gap:.3rem;font-weight:bold;font-size:.85em;border-radius:.45rem;padding:.1rem .45rem;white-space:nowrap}
+.st.good{color:var(--good);background:var(--good-bg)}.st.warn{color:var(--warn);background:var(--warn-bg)}.st.bad{color:var(--bad);background:var(--bad-bg)}.st.info{color:var(--muted);background:var(--info-bg)}
+.chartbox{background:#fff;border:1px solid var(--line);border-radius:.75rem;padding:.8rem .8rem .4rem;position:relative}
+.chartbox h3{margin:0 0 .15rem;font-size:1em;color:var(--navy)}
+.chartbox .sub{margin:0 0 .4rem;color:var(--muted);font-size:.85em}
+canvas{display:block;width:100%}
+.legend{display:flex;gap:1rem;flex-wrap:wrap;font-size:.85em;color:var(--ink2);margin:.2rem 0 .5rem;align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:.35rem}
+.key{display:inline-block;width:18px;height:0;border-top:2px solid}
+.key.dash{border-top-style:dashed}
+.key.band{width:14px;height:10px;border:0;border-radius:2px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 2px #fff}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.8rem;margin:0 0 1rem}
+.tile{background:#fff;border:1px solid var(--line);border-top:.3rem solid var(--navy);border-radius:.75rem;padding:.75rem .9rem}
+.tile .lab{font-size:.82em;color:var(--muted);font-weight:bold}
+.tile .val{font-size:1.55em;font-weight:bold;color:var(--ink);line-height:1.2;margin-top:.15rem}
+.tile .unit{font-size:.6em;color:var(--muted);font-weight:bold;margin-left:.2rem}
+.tile .note{font-size:.8em;color:var(--muted)}
+table.data{width:100%;border-collapse:collapse;font-size:.92em;background:#fff}
+table.data th{background:var(--navy);color:#fff;text-align:left;padding:.45rem .55rem;border:1px solid var(--line);font-weight:bold}
+table.data td{padding:.4rem .55rem;border:1px solid var(--line);vertical-align:top}
+table.data td.num,table.data th.num{text-align:right;font-variant-numeric:tabular-nums}
+table.data tr.best td{background:#f2faf9}
+table.data tr.off td{color:#9aa6ad}
+.scroll{overflow-x:auto}
+.qc{list-style:none;margin:0;padding:0}
+.qc li{display:grid;grid-template-columns:auto 1fr;gap:.6rem;align-items:start;padding:.5rem 0;border-bottom:1px solid var(--grid)}
+.qc li:last-child{border-bottom:0}
+.qc b{color:var(--navy)}
+.qc p{margin:.1rem 0 0;font-size:.9em;color:var(--ink2)}
+.empty{color:var(--muted);text-align:center;padding:1.2rem;border:1px dashed var(--line);border-radius:.75rem;background:#fff}
+.err{color:var(--bad);background:var(--bad-bg);border-radius:.6rem;padding:.6rem .8rem;margin:.6rem 0 0;font-size:.92em}
+.tip{position:fixed;pointer-events:none;z-index:50;background:#fff;border:1px solid var(--line);box-shadow:0 4px 16px rgba(0,40,55,.16);border-radius:.55rem;padding:.5rem .65rem;font-size:.85em;min-width:130px;display:none}
+.tip .tv{font-weight:bold;color:var(--ink)}
+.tip .tl{color:var(--muted)}
+.tip .row{display:flex;align-items:center;gap:.4rem;justify-content:space-between}
+.tip .row .k{display:inline-flex;align-items:center;gap:.35rem;color:var(--muted)}
+.verdict{border-radius:.75rem;padding:.9rem 1rem;margin:.8rem 0 0;border:1px solid var(--line)}
+.verdict.good{background:var(--good-bg);border-color:#bfe2cd}.verdict.warn{background:var(--warn-bg);border-color:#f0d9a8}.verdict.bad{background:var(--bad-bg);border-color:#f3c3be}
+.verdict h3{margin:0 0 .3rem;font-size:1.1em}
+.verdict.good h3{color:var(--good)}.verdict.warn h3{color:var(--warn)}.verdict.bad h3{color:var(--bad)}
+.verdict p{margin:0}
+.editable input{border:1px solid transparent;background:transparent;padding:.25rem .35rem;border-radius:.35rem}
+.editable input:hover{border-color:#c9d6dc}
+.editable input:focus{background:#fff;border-color:var(--blue)}
+.small{font-size:.88em}
+details.more{margin-top:1rem;border:1px solid var(--line);border-radius:.75rem;background:#fff}
+details.more summary{cursor:pointer;padding:.75rem 1rem;color:var(--navy);font-weight:bold}
+details.more > div{padding:0 1rem 1rem}
+.help h3{color:var(--navy);margin:1.2rem 0 .4rem}
+.help h3:first-child{margin-top:0}
+code{background:var(--info-bg);padding:.05rem .3rem;border-radius:.3rem;font-size:.92em}
+footer{text-align:center;padding:1.2rem;border:2px solid var(--navy);border-top-width:6px;border-radius:10px;background:#fff;margin-top:1rem;font-size:.92em}
+footer p{margin:.2rem 0}
+.sr{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <span class="badge">SESD56 &middot; Strength Testing</span>
+  <h1>IMTP Force–Time Analyser</h1>
+  <p>Upload your isometric mid-thigh pull trials, see exactly where onset, time-specific forces and peak force sit on the curve, then check how reliable your scores are and how big a change needs to be before you can call it real.</p>
+</header>
+<nav class="tabs" role="tablist" aria-label="Tool pages">
+  <button id="tab-analyse" role="tab" aria-selected="true" aria-controls="p-analyse">1. Analyse trials</button>
+  <button id="tab-reliab" role="tab" aria-selected="false" aria-controls="p-reliab">2. Reliability &amp; real change</button>
+  <button id="tab-help" role="tab" aria-selected="false" aria-controls="p-help">How it works</button>
+</nav>
+
+<!-- ============ PAGE 1 ============ -->
+<div id="p-analyse" class="panel active" role="tabpanel" aria-labelledby="tab-analyse">
+
+<section class="card">
+  <div class="card-head h-navy"><div><span class="chip">Step 1</span><h2>Load your trials</h2></div></div>
+  <div class="card-body">
+    <div class="grid2">
+      <div>
+        <div id="drop" class="drop" tabindex="0" role="button" aria-label="Upload force files">
+          <p><strong>Drag and drop your files here</strong></p>
+          <p class="small">.txt, .csv, .xlsx or .xls &middot; one file per trial &middot; add all your trials at once</p>
+          <div class="btn-row">
+            <button class="btn" id="pick">Choose files</button>
+            <button class="btn teal" id="demo">Load demo trials</button>
+          </div>
+          <input type="file" id="file" multiple accept=".txt,.csv,.tsv,.dat,.xlsx,.xls" hidden>
+        </div>
+        <div id="loadErr"></div>
+      </div>
+      <div class="box teal">
+        <h3>What your file needs</h3>
+        <ul class="small" style="margin:0;padding-left:1.2rem">
+          <li><strong>Column A</strong> time (s or ms), <strong>column B</strong> vertical force (N).</li>
+          <li><strong>Column C</strong> (optional) second plate. B is treated as left and C as right, and they are added together for total force.</li>
+          <li>Kistler BioWare exports are read automatically (Fz columns are found by name). Header and unit rows are skipped.</li>
+          <li>At least <strong>1 s of still standing</strong> before the pull, sampled at &ge;1000 Hz.</li>
+        </ul>
+        <p class="hint">Nothing is uploaded anywhere. All analysis happens in your browser. <a href="#" id="dlExample">Download an example file</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-head h-blue"><div><span class="chip">Step 2</span><h2>Analysis settings</h2></div></div>
+  <div class="card-body">
+    <div class="settings">
+      <div><label class="fld" for="qStart">Quiet stance starts at (s)</label><input type="number" id="qStart" value="0" step="0.1" min="0"></div>
+      <div><label class="fld" for="qDur">Quiet stance length (s)</label><input type="number" id="qDur" value="1" step="0.1" min="0.2"></div>
+      <div>
+        <span class="fld">Onset threshold</span>
+        <div class="radio-row" role="radiogroup" aria-label="Onset threshold method">
+          <label><input type="radio" name="om" value="sd" checked> Mean + <input type="number" id="kSD" value="5" step="1" min="1" style="width:3.6rem;display:inline-block"> SD</label>
+          <label><input type="radio" name="om" value="fixed"> Fixed <input type="number" id="fixN" value="20" step="5" min="1" style="width:4.2rem;display:inline-block"> N</label>
+        </div>
+      </div>
+      <div><label class="fld" for="mass">Body mass (kg, optional)</label><input type="number" id="mass" placeholder="e.g. 78.5" step="0.1" min="20"></div>
+      <div id="fsWrap" hidden><label class="fld" for="fs">Sampling rate (Hz)</label><input type="number" id="fs" value="1000" step="1" min="50"><p class="hint">Only used when there is no time column.</p></div>
+    </div>
+    <p class="hint">Try switching between <strong>5 SD</strong> and a <strong>fixed 20 N</strong> threshold and watch how F50&ndash;F250 change while peak force barely moves. Onset choice matters most for the early time points.</p>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-head h-teal"><div><span class="chip">Step 3</span><h2>Inspect each trial</h2></div></div>
+  <div class="card-body">
+    <div id="noTrials" class="empty">Load your files (or the demo trials) to see the force–time curve.</div>
+    <div id="trialArea" hidden>
+      <p class="lead small">Click a trial to inspect it. Untick a trial to leave it out of the reliability analysis (e.g. a trial that failed a quality check).</p>
+      <div id="trialChips" class="trials" aria-label="Trials"></div>
+      <div id="spreadNote"></div>
+
+      <details class="more" id="colMap">
+        <summary>Column settings for this trial</summary>
+        <div>
+          <div class="settings">
+            <div><label class="fld" for="timeCol">Time column</label><select id="timeCol"></select></div>
+            <div><span class="fld">Force column(s) (summed)</span><div id="forceCols" class="radio-row"></div></div>
+          </div>
+          <div class="btn-row" style="justify-content:flex-start"><button class="btn ghost" id="applyAll">Apply these columns to all trials</button></div>
+          <p class="hint" id="colInfo"></p>
+        </div>
+      </details>
+
+      <div id="trialErr"></div>
+
+      <div id="trialView">
+        <div class="legend" id="legend" aria-label="Chart key"></div>
+        <div class="grid-chart" style="margin-bottom:1rem">
+          <div class="chartbox">
+            <h3>Whole trial</h3>
+            <p class="sub">Shaded area is the quiet stance used for baseline and threshold.</p>
+            <canvas id="cFull" height="320" aria-label="Force–time curve for the whole trial"></canvas>
+          </div>
+          <div class="chartbox">
+            <h3>First 300 ms after onset</h3>
+            <p class="sub">Where F50 to F250 sit. Small shifts in onset move these values.</p>
+            <canvas id="cZoom" height="320" aria-label="Force–time curve zoomed on the first 300 ms after onset"></canvas>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div>
+            <h3 style="color:var(--navy);margin:0 0 .6rem">Key results</h3>
+            <div class="tiles" id="tiles"></div>
+            <div class="scroll"><table class="data" id="tpTable"></table></div>
+          </div>
+          <div class="box navy">
+            <h3>Trial quality checks</h3>
+            <p class="hint" style="margin:0 0 .4rem">Based on the NSCA IMTP rejection criteria (<em>Essentials</em>, 5th ed., Chapter 14).</p>
+            <ul class="qc" id="qcList"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-head h-plum"><div><span class="chip">Step 4</span><h2>All trials</h2></div><button class="btn ghost" id="exportCsv" style="background:#fff">Download results (.csv)</button></div>
+  <div class="card-body">
+    <div id="allEmpty" class="empty">Your trial results will appear here.</div>
+    <div class="scroll"><table class="data" id="allTable"></table></div>
+    <p class="hint">The trial with the highest peak force is shaded. Take these values to page 2 to see how consistent they are.</p>
+  </div>
+</section>
+</div>
+
+<!-- ============ PAGE 2 ============ -->
+<div id="p-reliab" class="panel" role="tabpanel" aria-labelledby="tab-reliab">
+
+<section class="card">
+  <div class="card-head h-navy"><div><span class="chip">Part A</span><h2>How consistent were my trials today?</h2></div></div>
+  <div class="card-body">
+    <p class="lead">This uses the trials you loaded on page 1 (ticked trials only). The <strong>coefficient of variation (CV%)</strong> is the trial-to-trial spread as a percentage of your mean: CV% = SD &divide; mean &times; 100.</p>
+    <div id="wsEmpty" class="empty">Load at least two trials on page 1 to see within-session reliability.</div>
+    <div id="wsArea" hidden>
+      <div class="grid-chart">
+        <div class="scroll"><table class="data" id="wsTable"></table></div>
+        <div class="chartbox">
+          <h3>Trial-to-trial CV% by variable</h3>
+          <p class="sub">Dashed lines at 5% and 10%. Shorter bars mean a steadier measure.</p>
+          <div id="cvChart"></div>
+        </div>
+      </div>
+      <div class="aside small"><strong>Rule of thumb:</strong> CV &le;5% good, 5&ndash;10% acceptable, &gt;10% too noisy to track small changes. Expect peak force to be the steadiest and F50/F100 the noisiest. This is within-session variation only, and day-to-day variation is almost always bigger. That is why Part B uses two separate test days.</div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-head h-teal"><div><span class="chip">Part B</span><h2>Class test–retest: typical error and smallest worthwhile change</h2></div></div>
+  <div class="card-body">
+    <p class="lead">To know how big a change must be, you need two things. The <strong>typical error (TE)</strong> is the noise in the test from one day to the next. The <strong>smallest worthwhile change (SWC)</strong> is the smallest change that matters in practice. Both need scores from <strong>several people tested on two days</strong>, so paste in the class data (e.g. everyone&rsquo;s best peak force on day 1 and day 2).</p>
+    <div class="grid2">
+      <div>
+        <div class="settings" style="margin-bottom:.8rem">
+          <div><label class="fld" for="varName">Variable</label><input type="text" id="varName" value="IMTP peak force"></div>
+          <div><label class="fld" for="varUnit">Units</label><input type="text" id="varUnit" value="N"></div>
+        </div>
+        <div class="scroll editable"><table class="data" id="classTable"></table></div>
+        <div class="btn-row" style="justify-content:flex-start">
+          <button class="btn ghost" id="addRow">Add row</button>
+          <button class="btn teal" id="exClass">Load example class data</button>
+          <button class="btn ghost" id="clearClass">Clear</button>
+        </div>
+        <details class="more">
+          <summary>Paste from Excel instead</summary>
+          <div>
+            <p class="hint">Copy two columns (Day 1, Day 2) or three columns (Name, Day 1, Day 2) from Excel and paste below.</p>
+            <textarea id="pasteBox" aria-label="Paste class data"></textarea>
+            <div class="btn-row" style="justify-content:flex-start"><button class="btn" id="pasteGo">Use pasted data</button></div>
+          </div>
+        </details>
+      </div>
+      <div>
+        <div class="tiles" id="classTiles"></div>
+        <div id="classVerdict"></div>
+        <div class="chartbox" style="margin-top:.8rem">
+          <h3>Day 1 vs Day 2</h3>
+          <p class="sub">Points on the dashed line scored the same on both days.</p>
+          <div id="scatter"></div>
+        </div>
+      </div>
+    </div>
+    <details class="more">
+      <summary>How these are calculated</summary>
+      <div class="small">
+        <ul>
+          <li><strong>Typical error (TE)</strong> = SD of the Day 2 &minus; Day 1 differences &divide; &radic;2 (Hopkins, 2000). TE% expresses it relative to the overall mean.</li>
+          <li><strong>Smallest worthwhile change (SWC)</strong> = 0.2 &times; between-subject SD (<em>Essentials</em>, Chapter 14). The Day 1 SD is used here.</li>
+          <li><strong>Minimal detectable change (MDC<sub>95</sub>)</strong> = TE &times; 1.96 &times; &radic;2. A change bigger than this is beyond test noise with 95% confidence.</li>
+          <li><strong>ICC(3,1)</strong> is a two-way mixed, consistency, single-measure ICC. Guide: &lt;0.5 poor, 0.5&ndash;0.75 moderate, 0.75&ndash;0.9 good, &gt;0.9 excellent (Koo &amp; Li, 2016).</li>
+          <li><strong>Mean bias</strong> is the average Day 2 &minus; Day 1 difference. A clear bias suggests a learning effect, so more familiarisation was needed.</li>
+        </ul>
+      </div>
+    </details>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-head h-plum"><div><span class="chip">Part C</span><h2>Is my athlete&rsquo;s change real?</h2></div></div>
+  <div class="card-body">
+    <p class="lead">Enter your athlete&rsquo;s pre- and post-test scores. TE and SWC fill in from Part B, or you can type your own (e.g. from a published reliability study of a similar group).</p>
+    <div class="settings">
+      <div><label class="fld" for="pre">Pre-test</label><input type="number" id="pre" step="any"></div>
+      <div><label class="fld" for="post">Post-test</label><input type="number" id="post" step="any"></div>
+      <div><label class="fld" for="teIn">Typical error (TE)</label><input type="number" id="teIn" step="any"></div>
+      <div><label class="fld" for="swcIn">Smallest worthwhile change (SWC)</label><input type="number" id="swcIn" step="any"></div>
+    </div>
+    <div class="btn-row" style="justify-content:flex-start">
+      <button class="btn teal" id="useClass">Use TE and SWC from Part B</button>
+      <button class="btn ghost" id="useWS">Use my within-session peak force CV as TE</button>
+    </div>
+    <p class="hint" id="useWSNote">The within-session option only needs your own trials, but it <strong>underestimates</strong> day-to-day noise, so treat the verdict as optimistic.</p>
+    <div id="changeOut"></div>
+  </div>
+</section>
+</div>
+
+<!-- ============ HELP ============ -->
+<div id="p-help" class="panel help" role="tabpanel" aria-labelledby="tab-help">
+<section class="card">
+  <div class="card-head h-plum"><div><span class="chip">Guide</span><h2>How the analysis works</h2></div></div>
+  <div class="card-body">
+    <h3>1. Baseline and quiet stance</h3>
+    <p>The tool averages force over the quiet stance (default 0&ndash;1 s) to get the baseline, which is your body weight plus any pre-tension on the bar. The SD of that period tells us how still you were.</p>
+    <h3>2. Onset</h3>
+    <p>Onset is the first point after the quiet stance where force rises above the baseline by the threshold and stays above it for at least 10 ms. The default threshold is the <strong>mean + 5 SD</strong> of the quiet stance (Dos&rsquo;Santos et al., 2017). A fixed threshold (e.g. 20 N) is also available so you can see how much the choice matters.</p>
+    <h3>3. Metrics</h3>
+    <ul>
+      <li><strong>Peak force (PF):</strong> the highest total force after onset. <em>Net PF</em> subtracts the baseline. <em>Relative PF</em> is PF &divide; body mass (N/kg), using your entered body mass or, if blank, baseline &divide; 9.81.</li>
+      <li><strong>F50&ndash;F250:</strong> total force 50, 100, 150, 200 and 250 ms after onset (linearly interpolated).</li>
+      <li><strong>RFD 0&ndash;x ms:</strong> (force at x ms &minus; force at onset) &divide; x. <strong>Peak RFD</strong> uses a 20 ms moving window between onset and peak force.</li>
+      <li><strong>Impulse 0&ndash;x ms:</strong> area under the net force (force &minus; baseline) curve from onset to x ms.</li>
+      <li><strong>Asymmetry</strong> (two plates only): (left &minus; right) &divide; (left + right) &times; 100 at the moment of peak force. Positive means left-dominant.</li>
+    </ul>
+    <h3>4. Quality checks</h3>
+    <ul>
+      <li><strong>Quiet stance:</strong> force should change by no more than 50 N during the quiet second.</li>
+      <li><strong>Pre-tension:</strong> with body mass entered, baseline minus body weight should be under 50 N. Too much and the pull starts from a partly loaded position.</li>
+      <li><strong>Countermovement or bar slack:</strong> force must not dip below baseline before the pull. A dip means you unloaded or dropped into the bar before pulling, which inflates early force.</li>
+      <li><strong>Peak force at the end:</strong> if peak force falls in the final 150 ms of the effort, the pull was probably cut short.</li>
+      <li><strong>Pull duration:</strong> aim for 3&ndash;5 s of maximal effort.</li>
+      <li><strong>Trial spread:</strong> if peak force differs by more than 15% between trials, do another trial.</li>
+    </ul>
+    <h3>5. Reliability</h3>
+    <p>Part A tells you how consistent your trials were within one session. Part B uses the class test&ndash;retest data to get the typical error and smallest worthwhile change. Part C puts them together: a change is worth reporting when it is larger than both the TE and the SWC. It is very likely real when it also exceeds the MDC<sub>95</sub>.</p>
+    <h3>References</h3>
+    <ul class="small">
+      <li>Bruno, J., Montoro-Bomb&uacute;, R., Thapa, R. K., &amp; Sarmento, H. (2025). Reliability of isometric mid-thigh pull for maximal strength testing in youth athletes: A systematic review. <em>International Journal of Sports Science &amp; Coaching, 20</em>(6).</li>
+      <li>Comfort, P., Dos&rsquo;Santos, T., Beckham, G. K., Stone, M. H., Guppy, S. N., &amp; Haff, G. G. (2019). Standardization and methodological considerations for the isometric midthigh pull. <em>Strength and Conditioning Journal, 41</em>(2), 57&ndash;79.</li>
+      <li>Dos&rsquo;Santos, T., Jones, P. A., Comfort, P., &amp; Thomas, C. (2017). Effect of different onset thresholds on isometric midthigh pull force-time variables. <em>Journal of Strength and Conditioning Research, 31</em>(12), 3463&ndash;3473.</li>
+      <li>Haff, G. G. (Ed.). <em>Essentials of Strength Training and Conditioning</em> (5th ed.). Human Kinetics. Chapters 13, 14 and 18.</li>
+      <li>Hopkins, W. G. (2000). Measures of reliability in sports medicine and science. <em>Sports Medicine, 30</em>(1), 1&ndash;15.</li>
+      <li>Koo, T. K., &amp; Li, M. Y. (2016). A guideline of selecting and reporting intraclass correlation coefficients for reliability research. <em>Journal of Chiropractic Medicine, 15</em>(2), 155&ndash;163.</li>
+    </ul>
+  </div>
+</section>
+</div>
+
+<footer>
+  <p><strong style="color:var(--navy)">SESD56 | Applied Strength and Conditioning for Sport and Exercise</strong></p>
+  <p>Plymouth Marjon University &middot; For teaching use. Always check the curve by eye before trusting a number.</p>
+</footer>
+</div>
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script>
+(function(){
+"use strict";
+const G = 9.81;
+const TP = [50,100,150,200,250];
+const RW = [50,100,200,250];
+const state = { trials: [], sel: -1 };
+const $ = id => document.getElementById(id);
+const fmt = (v,dp=0) => (v==null||!isFinite(v)) ? '–' : Number(v).toLocaleString('en-GB',{minimumFractionDigits:dp,maximumFractionDigits:dp});
+const el = (tag, attrs={}, text) => { const e=document.createElement(tag); for(const k in attrs){ if(k==='class') e.className=attrs[k]; else e.setAttribute(k,attrs[k]); } if(text!=null) e.textContent=text; return e; };
+
+/* ---------------- Variables ---------------- */
+const VARS = [
+  {k:'PF', lab:'Peak force', u:'N', dp:0},
+  {k:'PFnet', lab:'Net peak force', u:'N', dp:0},
+  {k:'PFrel', lab:'Relative peak force', u:'N/kg', dp:1},
+  {k:'tPF', lab:'Time to peak force', u:'s', dp:2},
+  ...TP.map(t=>({k:'F'+t, lab:'F'+t, u:'N', dp:0})),
+  ...RW.map(t=>({k:'RFD'+t, lab:'RFD 0–'+t+' ms', u:'N/s', dp:0})),
+  {k:'pRFD', lab:'Peak RFD (20 ms)', u:'N/s', dp:0},
+  ...RW.map(t=>({k:'IMP'+t, lab:'Impulse 0–'+t+' ms', u:'N·s', dp:1})),
+  {k:'ASYM', lab:'Asymmetry at PF', u:'%', dp:1, lr:true}
+];
+
+/* ---------------- Tabs ---------------- */
+const tabs = [['tab-analyse','p-analyse'],['tab-reliab','p-reliab'],['tab-help','p-help']];
+tabs.forEach(([b,p])=>{
+  $(b).addEventListener('click',()=>{
+    tabs.forEach(([b2,p2])=>{ $(b2).setAttribute('aria-selected', b2===b ? 'true':'false'); $(p2).classList.toggle('active', p2===p); });
+    if(p==='p-analyse') drawCharts();
+    if(p==='p-reliab'){ renderWithin(); renderClass(); renderChange(); }
+  });
+});
+
+/* ---------------- Parsing ---------------- */
+function toNum(v, decComma){
+  if(typeof v==='number') return v;
+  if(v==null) return NaN;
+  let s=String(v).trim().replace(/^"|"$/g,'');
+  if(s==='') return NaN;
+  if(decComma) s=s.replace(',', '.');
+  return /^[-+]?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?$/.test(s) ? parseFloat(s) : NaN;
+}
+function splitText(text){
+  const lines = text.split(/\r\n|\n|\r/);
+  const sample = lines.filter(l=>l.trim()).slice(0,300);
+  const cnt = ch => sample.reduce((a,l)=>a+(l.split(ch).length-1),0);
+  let delim;
+  if(cnt('\t') >= sample.length*0.5) delim='\t';
+  else if(cnt(';') >= sample.length*0.5) delim=';';
+  else if(cnt(',') >= sample.length*0.5) delim=',';
+  else delim=null;
+  const rows = lines.map(l => delim ? l.split(delim).map(c=>c.trim()) : l.trim().split(/\s+/));
+  return { rows, decComma: delim!==',' };
+}
+function buildTable(rows, decComma){
+  const nNum = r => r ? r.reduce((a,c)=>a+(isNaN(toNum(c,decComma))?0:1),0) : 0;
+  let start=-1;
+  for(let i=0;i<rows.length;i++){
+    if(nNum(rows[i])>=2 && [1,2,3].every(j=> i+j>=rows.length || nNum(rows[i+j])>=2)){ start=i; break; }
+  }
+  if(start<0) throw new Error('No columns of numbers were found in this file.');
+  let ncol=0;
+  for(let i=start;i<Math.min(rows.length,start+50);i++) ncol=Math.max(ncol, rows[i].length);
+  const cols = Array.from({length:ncol},()=>[]);
+  for(let i=start;i<rows.length;i++){
+    const r=rows[i];
+    if(!r || r.every(c=>String(c).trim()==='')) continue;
+    if(nNum(r)<2) break;
+    for(let c=0;c<ncol;c++) cols[c].push(toNum(r[c],decComma));
+  }
+  // header search
+  let headers = new Array(ncol).fill('');
+  const hasLetters = r => r && r.filter(c=>/[a-z]/i.test(String(c))).length>=2;
+  let hRow=-1;
+  for(let i=start-1;i>=Math.max(0,start-25);i--){
+    if(hasLetters(rows[i]) && rows[i].some(c=>/time|f\s*z|force|fz/i.test(String(c)))){ hRow=i; break; }
+  }
+  if(hRow<0){ for(let i=start-1;i>=Math.max(0,start-3);i--){ if(hasLetters(rows[i])){ hRow=i; break; } } }
+  if(hRow>=0){
+    const hr=rows[hRow];
+    // align header if its length differs (e.g. leading empty cell)
+    for(let c=0;c<ncol;c++) headers[c]= hr[c]!=null ? String(hr[c]).trim() : '';
+  }
+  const valid=[];
+  cols.forEach((col,c)=>{ const ok=col.filter(v=>isFinite(v)).length; if(ok >= col.length*0.9 && col.length>10) valid.push(c); });
+  const letter = c => String.fromCharCode(65+(c%26));
+  const names = headers.map((h,c)=> (h ? h+' ' : '') + '(col '+letter(c)+')');
+  return { cols, headers, names, valid };
+}
+function isMonotonic(a){ let inc=0; const n=Math.min(a.length,2000); for(let i=1;i<n;i++) if(a[i]>a[i-1]) inc++; return inc >= (n-1)*0.98; }
+function autoMap(tb){
+  const {headers, valid, cols} = tb;
+  let t = valid.find(i=>/time/i.test(headers[i]));
+  let f = valid.filter(i=>/(^|[^a-z])f\s*z/i.test(headers[i]) && !/\|/.test(headers[i]));
+  if(!f.length) f = valid.filter(i=>/force|vertical/i.test(headers[i]) && i!==t);
+  if(t===undefined && valid.length && isMonotonic(cols[valid[0]])) t = valid[0];
+  if(!f.length){
+    const rest = valid.filter(i=>i!==t);
+    f = rest.length<=2 ? rest : [rest[0]];
+  }
+  return { timeCol: t===undefined ? -1 : t, forceCols: f.slice(0,4) };
+}
+
+async function readFile(file){
+  const name = file.name;
+  const ext = name.split('.').pop().toLowerCase();
+  let rows, decComma=false;
+  if(ext==='xlsx' || ext==='xls'){
+    if(typeof XLSX==='undefined') throw new Error('The Excel reader did not load (check your internet connection), so save the file as .csv instead.');
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf,{type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    rows = XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
+  } else {
+    const text = await file.text();
+    const s = splitText(text); rows=s.rows; decComma=s.decComma;
+  }
+  const tb = buildTable(rows, decComma);
+  const map = autoMap(tb);
+  return { name, tb, timeCol: map.timeCol, forceCols: map.forceCols, include:true };
+}
+
+/* ---------------- Signals & analysis ---------------- */
+function settings(){
+  const om = document.querySelector('input[name=om]:checked').value;
+  const mass = parseFloat($('mass').value);
+  return {
+    qStart: Math.max(0, parseFloat($('qStart').value)||0),
+    qDur: Math.max(0.2, parseFloat($('qDur').value)||1),
+    method: om, k: Math.max(1, parseFloat($('kSD').value)||5), fixedN: Math.max(1, parseFloat($('fixN').value)||20),
+    mass: isFinite(mass) && mass>20 ? mass : null,
+    fs: Math.max(50, parseFloat($('fs').value)||1000)
+  };
+}
+function signals(tr, S){
+  const {cols} = tr.tb;
+  if(!tr.forceCols.length) throw new Error('Choose at least one force column.');
+  const n = cols[tr.forceCols[0]].length;
+  let t = new Float64Array(n);
+  const notes=[];
+  if(tr.timeCol>=0){
+    const tc = cols[tr.timeCol];
+    const d=[]; for(let i=1;i<Math.min(n,500);i++) d.push(tc[i]-tc[i-1]);
+    d.sort((a,b)=>a-b);
+    const dt=d[Math.floor(d.length/2)];
+    const scale = dt>=0.5 ? 0.001 : 1;
+    if(scale!==1) notes.push('Time looked like milliseconds, so it was converted to seconds.');
+    for(let i=0;i<n;i++) t[i]=(tc[i]-tc[0])*scale;
+  } else { for(let i=0;i<n;i++) t[i]=i/S.fs; }
+  const sides = tr.forceCols.map(c=>{
+    const a = Float64Array.from(cols[c]);
+    let m=0,k=0; for(let i=0;i<a.length;i++){ if(isFinite(a[i])){ m+=a[i]; k++; } }
+    if(k && m/k < 0){ for(let i=0;i<a.length;i++) a[i]=-a[i]; notes.push('Force values were negative, so the sign was flipped.'); }
+    return a;
+  });
+  // drop rows with NaN
+  const keep=[];
+  for(let i=0;i<n;i++){ if(isFinite(t[i]) && sides.every(s=>isFinite(s[i]))) keep.push(i); }
+  const m = keep.length;
+  const T=new Float64Array(m), F=new Float64Array(m);
+  const L = sides.length===2 ? new Float64Array(m) : null, R = sides.length===2 ? new Float64Array(m) : null;
+  keep.forEach((i,j)=>{ T[j]=t[i]; let s=0; sides.forEach(a=>s+=a[i]); F[j]=s; if(L){ L[j]=sides[0][i]; R[j]=sides[1][i]; } });
+  const fs = m>1 ? (m-1)/(T[m-1]-T[0]) : S.fs;
+  return { t:T, F, L, R, fs, n:m, notes: [...new Set(notes)] };
+}
+function idxAt(t, x){ // first index with t>=x
+  let lo=0, hi=t.length-1;
+  if(x<=t[0]) return 0; if(x>=t[hi]) return hi;
+  while(hi-lo>1){ const mid=(lo+hi)>>1; if(t[mid]<x) lo=mid; else hi=mid; }
+  return hi;
+}
+function interp(t, F, x){
+  const i = idxAt(t,x); if(i===0) return F[0];
+  const t0=t[i-1], t1=t[i]; const w = t1===t0 ? 0 : (x-t0)/(t1-t0);
+  return F[i-1] + w*(F[i]-F[i-1]);
+}
+function integrateNet(t, F, base, a, b){ // trapezoid of (F-base) from time a to b
+  let s=0; const ia=idxAt(t,a), ib=idxAt(t,b);
+  let px=a, py=interp(t,F,a)-base;
+  for(let i=ia;i<ib;i++){ if(t[i]<=a) continue; const y=F[i]-base; s+=(t[i]-px)*(y+py)/2; px=t[i]; py=y; }
+  const yb=interp(t,F,b)-base; s+=(b-px)*(yb+py)/2;
+  return s;
+}
+function analyse(sig, S){
+  const {t,F,L,R,fs,n} = sig;
+  const tEnd = t[n-1];
+  if(S.qStart + S.qDur >= tEnd - 0.5) throw new Error('The quiet stance window runs past the end of the recording. Check the quiet stance settings.');
+  const i0=idxAt(t,S.qStart), i1=idxAt(t,S.qStart+S.qDur);
+  let sum=0,mn=Infinity,mx=-Infinity; for(let i=i0;i<i1;i++){ sum+=F[i]; mn=Math.min(mn,F[i]); mx=Math.max(mx,F[i]); }
+  const cnt=i1-i0, bw=sum/cnt;
+  let ss=0; for(let i=i0;i<i1;i++) ss+=(F[i]-bw)**2;
+  const sd=Math.sqrt(ss/(cnt-1));
+  const thr = S.method==='sd' ? S.k*sd : S.fixedN;
+  const sustain = Math.max(1, Math.round(0.01*fs));
+  let on=-1;
+  for(let i=i1;i<n-sustain;i++){
+    if(F[i]>bw+thr){ let ok=true; for(let j=1;j<=sustain;j++){ if(F[i+j]<=bw+thr){ ok=false; i=i+j; break; } } if(ok){ on=i; break; } }
+  }
+  if(on<0) throw new Error('No clear pull was found after the quiet stance. Check the quiet stance settings or the force column.');
+  const t0=t[on];
+  let ipf=on; for(let i=on;i<n;i++) if(F[i]>F[ipf]) ipf=i;
+  let iend=n-1; for(let i=ipf;i<n;i++){ if(F[i]<bw+thr){ iend=i; break; } }
+  const PF=F[ipf];
+  const mass = S.mass ? S.mass : bw/G;
+  const r = { bw, sd, thr, on, t0, ipf, iend, qStart:t[i0], qEnd:t[i1], rangeQ:mx-mn, massUsed:mass, massEntered:!!S.mass };
+  r.PF=PF; r.PFnet=PF-bw; r.PFrel=PF/mass; r.tPF=t[ipf]-t0;
+  const F0=interp(t,F,t0);
+  TP.forEach(ms=>{ r['F'+ms] = (t0+ms/1000<=tEnd) ? interp(t,F,t0+ms/1000) : NaN; });
+  RW.forEach(ms=>{ const fx=interp(t,F,t0+ms/1000); r['RFD'+ms]=(fx-F0)/(ms/1000); r['IMP'+ms]=integrateNet(t,F,bw,t0,t0+ms/1000); });
+  const w=Math.max(1,Math.round(0.02*fs)); let p=0;
+  for(let i=on;i+w<=ipf;i++){ const v=(F[i+w]-F[i])/(t[i+w]-t[i]); if(v>p) p=v; }
+  r.pRFD = p;
+  if(L){ const l=L[ipf], rr=R[ipf]; r.ASYM=(l-rr)/(l+rr)*100; r.Lpf=l; r.Rpf=rr; } else r.ASYM=NaN;
+  // ---- QC ----
+  const qc=[];
+  qc.push(fs>=995 ? {s:'good', t:'Sampling rate', d:fmt(fs,0)+' Hz'} : {s:'warn', t:'Sampling rate', d:fmt(fs,0)+' Hz. At least 1000 Hz is recommended for time-specific force and RFD.'});
+  qc.push(r.rangeQ<=50 ? {s:'good', t:'Quiet stance', d:'Force changed by '+fmt(r.rangeQ,0)+' N (limit 50 N).'} : {s:'bad', t:'Quiet stance', d:'Force changed by '+fmt(r.rangeQ,0)+' N during the quiet second (limit 50 N). Stand still before the pull, or move the quiet window.'});
+  if(S.mass){
+    const pre = bw - S.mass*G;
+    if(pre>50) qc.push({s:'bad', t:'Pre-tension', d:fmt(pre,0)+' N above body weight (limit 50 N). The pull started from a partly loaded position.'});
+    else if(pre<-15) qc.push({s:'warn', t:'Pre-tension', d:'Baseline is '+fmt(-pre,0)+' N below body weight. Check the body mass, or whether weight was taken through the bar.'});
+    else qc.push({s:'good', t:'Pre-tension', d:fmt(Math.max(pre,0),0)+' N above body weight (limit 50 N).'});
+  } else qc.push({s:'info', t:'Pre-tension', d:'Enter body mass above to check pre-tension.'});
+  let dip=Infinity, idip=-1; const s0=Math.max(i0, on-Math.round(0.5*fs));
+  for(let i=s0;i<on;i++){ if(F[i]<dip){ dip=F[i]; idip=i; } }
+  const dipBy = bw-dip;
+  r.dipIdx = dipBy>thr ? idip : -1;
+  qc.push(dipBy>thr ? {s:'bad', t:'Countermovement / bar slack', d:'Force dropped '+fmt(dipBy,0)+' N below baseline just before the pull. Take the slack out of the bar and pull without dipping first.'} : {s:'good', t:'Countermovement / bar slack', d:'No dip below baseline before the pull.'});
+  const effortDur = t[iend]-t0;
+  const lateBy = t[iend]-t[ipf];
+  qc.push(lateBy<0.15 ? {s:'bad', t:'Peak force timing', d:'Peak force came in the last '+fmt(lateBy*1000,0)+' ms of the effort, so the pull may have been cut short.'} : {s:'good', t:'Peak force timing', d:'Peak force at '+fmt(r.tPF,2)+' s, well before the end of the effort.'});
+  qc.push(effortDur>=2.9 ? {s:'good', t:'Pull duration', d:fmt(effortDur,1)+' s of effort (aim for 3–5 s).'} : {s:'warn', t:'Pull duration', d:'Only '+fmt(effortDur,1)+' s of effort. Aim for 3–5 s so peak force is reached.'});
+  r.qc=qc;
+  r.status = qc.some(q=>q.s==='bad') ? 'bad' : qc.some(q=>q.s==='warn') ? 'warn' : 'good';
+  return r;
+}
+function runAll(){
+  const S=settings();
+  let anyNoTime=false;
+  state.trials.forEach(tr=>{
+    tr.err=null; tr.res=null; tr.sig=null;
+    if(tr.timeCol<0) anyNoTime=true;
+    try{ tr.sig=signals(tr,S); tr.res=analyse(tr.sig,S); }
+    catch(e){ tr.err=e.message; }
+  });
+  $('fsWrap').hidden = !anyNoTime;
+  renderAnalyse();
+  if($('p-reliab').classList.contains('active')){ renderWithin(); renderChange(); }
+}
+
+/* ---------------- Page 1 rendering ---------------- */
+const ICON = {good:'✓', warn:'!', bad:'✕', info:'i'};
+const SLAB = {good:'Pass', warn:'Check', bad:'Reject', info:'Info'};
+function stBadge(s, text){ const b=el('span',{class:'st '+s}); b.textContent=ICON[s]+' '+(text||SLAB[s]); return b; }
+
+function renderAnalyse(){
+  const has = state.trials.length>0;
+  $('noTrials').hidden = has; $('trialArea').hidden = !has;
+  $('allEmpty').hidden = has;
+  if(!has){ $('allTable').innerHTML=''; return; }
+  if(state.sel<0 || state.sel>=state.trials.length) state.sel=0;
+  // chips
+  const wrap=$('trialChips'); wrap.innerHTML='';
+  state.trials.forEach((tr,i)=>{
+    const c=el('div',{class:'tchip'+(i===state.sel?' sel':''), role:'button', tabindex:'0', 'aria-pressed': i===state.sel?'true':'false'});
+    const cb=el('input',{type:'checkbox','aria-label':'Include '+tr.name+' in reliability'}); cb.checked=tr.include;
+    cb.addEventListener('click',e=>{ e.stopPropagation(); tr.include=cb.checked; renderAllTable(); renderSpread(); });
+    c.appendChild(cb);
+    c.appendChild(el('span',{},'T'+(i+1)+' · '+tr.name));
+    c.appendChild(tr.err ? stBadge('bad','Error') : stBadge(tr.res.status));
+    const x=el('button',{class:'x','aria-label':'Remove '+tr.name, title:'Remove'},'×');
+    x.addEventListener('click',e=>{ e.stopPropagation(); state.trials.splice(i,1); if(state.sel>=state.trials.length) state.sel=state.trials.length-1; renderAnalyse(); });
+    c.appendChild(x);
+    const pick=()=>{ state.sel=i; renderAnalyse(); };
+    c.addEventListener('click',pick);
+    c.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); pick(); } });
+    wrap.appendChild(c);
+  });
+  renderSpread();
+  renderColMap();
+  const tr=state.trials[state.sel];
+  $('trialErr').innerHTML='';
+  if(tr.err){ $('trialView').hidden=true; const d=el('div',{class:'err'}); d.textContent=tr.name+': '+tr.err; $('trialErr').appendChild(d); }
+  else {
+    $('trialView').hidden=false;
+    if(tr.sig.notes.length){ const d=el('p',{class:'hint'}); d.textContent=tr.sig.notes.join(' '); $('trialErr').appendChild(d); }
+    renderLegend(tr); renderTiles(tr); renderTP(tr); renderQC(tr); drawCharts();
+  }
+  renderAllTable();
+}
+function renderSpread(){
+  const box=$('spreadNote'); box.innerHTML='';
+  const ok=state.trials.filter(t=>t.include && t.res);
+  if(ok.length<2) return;
+  const pf=ok.map(t=>t.res.PF); const mx=Math.max(...pf), mn=Math.min(...pf);
+  const sp=(mx-mn)/mn*100;
+  const p=el('p',{class:'small',style:'margin:.6rem 0 0'});
+  p.appendChild(stBadge(sp>15?'warn':'good', sp>15?'Check':'Pass'));
+  p.appendChild(document.createTextNode(' Peak force spread across ticked trials: '+fmt(sp,1)+'% '+(sp>15?'(more than 15%, so do an extra trial).':'(within 15%).')));
+  box.appendChild(p);
+}
+function renderColMap(){
+  const tr=state.trials[state.sel]; const {names, valid}=tr.tb;
+  const ts=$('timeCol'); ts.innerHTML='';
+  const o=el('option',{value:'-1'},'No time column (use sampling rate)'); ts.appendChild(o);
+  valid.forEach(c=>{ const op=el('option',{value:String(c)},names[c]); if(c===tr.timeCol) op.selected=true; ts.appendChild(op); });
+  if(tr.timeCol<0) o.selected=true;
+  const fc=$('forceCols'); fc.innerHTML='';
+  valid.filter(c=>c!==tr.timeCol).forEach(c=>{
+    const lab=el('label'); const cb=el('input',{type:'checkbox',value:String(c)}); cb.checked=tr.forceCols.includes(c);
+    cb.addEventListener('change',()=>{ const sel=[...fc.querySelectorAll('input:checked')].map(x=>+x.value); tr.forceCols=sel; runAll(); });
+    lab.appendChild(cb); lab.appendChild(document.createTextNode(' '+names[c])); fc.appendChild(lab);
+  });
+  $('colInfo').textContent = tr.forceCols.length===2 ? 'Two force columns: the first is shown as left and the second as right.' : tr.forceCols.length>2 ? 'More than two force columns are summed for total force (no left/right split).' : '';
+}
+$('timeCol').addEventListener('change',e=>{ const tr=state.trials[state.sel]; tr.timeCol=+e.target.value; tr.forceCols=tr.forceCols.filter(c=>c!==tr.timeCol); runAll(); });
+$('applyAll').addEventListener('click',()=>{ const tr=state.trials[state.sel]; state.trials.forEach(o=>{ if(o!==tr){ o.timeCol = o.tb.valid.includes(tr.timeCol) ? tr.timeCol : -1; o.forceCols = tr.forceCols.filter(c=>o.tb.valid.includes(c)); } }); runAll(); });
+
+function renderLegend(tr){
+  const lg=$('legend'); lg.innerHTML='';
+  const add=(html)=>{ const s=el('span'); s.innerHTML=html; lg.appendChild(s); };
+  add('<i class="key" style="border-color:var(--total);border-top-width:2px"></i>Total force');
+  if(tr.sig.L){ add('<i class="key" style="border-color:var(--left)"></i>Left (col B)'); add('<i class="key" style="border-color:var(--right)"></i>Right (col C)'); }
+  add('<i class="key dash" style="border-color:#7a8a93"></i>Baseline');
+  add('<i class="key dash" style="border-color:var(--teal)"></i>Onset threshold');
+  add('<i class="key" style="border-color:var(--teal);width:2px;height:12px;border-top:0;border-left:2px solid var(--teal)"></i>Onset');
+  add('<i class="dot" style="background:var(--blue)"></i>F50–F250');
+  add('<i class="dot" style="background:var(--plum)"></i>Peak force');
+}
+function tile(lab,val,unit,note){
+  const d=el('div',{class:'tile'}); d.appendChild(el('div',{class:'lab'},lab));
+  const v=el('div',{class:'val'},val); if(unit) v.appendChild(el('span',{class:'unit'},unit)); d.appendChild(v);
+  if(note) d.appendChild(el('div',{class:'note'},note)); return d;
+}
+function renderTiles(tr){
+  const r=tr.res; const t=$('tiles'); t.innerHTML='';
+  t.appendChild(tile('Peak force',fmt(r.PF,0),'N','Net '+fmt(r.PFnet,0)+' N'));
+  t.appendChild(tile('Relative peak force',fmt(r.PFrel,1),'N/kg', r.massEntered?'Using '+fmt(r.massUsed,1)+' kg':'Mass from baseline: '+fmt(r.massUsed,1)+' kg'));
+  t.appendChild(tile('Time to peak force',fmt(r.tPF,2),'s'));
+  t.appendChild(tile('Peak RFD (20 ms)',fmt(r.pRFD,0),'N/s'));
+  t.appendChild(tile('Baseline',fmt(r.bw,0),'N','Quiet SD '+fmt(r.sd,1)+' N · threshold +'+fmt(r.thr,1)+' N'));
+  if(isFinite(r.ASYM)) t.appendChild(tile('Asymmetry at PF',(r.ASYM>0?'+':'')+fmt(r.ASYM,1),'%', r.ASYM>0?'Left-dominant':'Right-dominant'));
+}
+function renderTP(tr){
+  const r=tr.res; const tb=$('tpTable'); tb.innerHTML='';
+  const thead=el('thead'); const hr=el('tr');
+  ['Time after onset','Force (N)','Net force (N)','RFD 0–x (N/s)','Impulse 0–x (N·s)'].forEach((h,i)=>hr.appendChild(el('th',{class:i?'num':''},h)));
+  thead.appendChild(hr); tb.appendChild(thead);
+  const body=el('tbody');
+  TP.forEach(ms=>{
+    const row=el('tr'); row.appendChild(el('td',{},ms+' ms'));
+    row.appendChild(el('td',{class:'num'},fmt(r['F'+ms],0)));
+    row.appendChild(el('td',{class:'num'},fmt(r['F'+ms]-r.bw,0)));
+    row.appendChild(el('td',{class:'num'},RW.includes(ms)?fmt(r['RFD'+ms],0):'–'));
+    row.appendChild(el('td',{class:'num'},RW.includes(ms)?fmt(r['IMP'+ms],1):'–'));
+    body.appendChild(row);
+  });
+  tb.appendChild(body);
+}
+function renderQC(tr){
+  const ul=$('qcList'); ul.innerHTML='';
+  tr.res.qc.forEach(q=>{ const li=el('li'); li.appendChild(stBadge(q.s)); const d=el('div'); d.appendChild(el('b',{},q.t)); d.appendChild(el('p',{},q.d)); li.appendChild(d); ul.appendChild(li); });
+}
+const TABLE_VARS = ['PF','PFrel','tPF','F50','F100','F150','F200','F250','RFD100','RFD200','pRFD','IMP100','IMP250','ASYM'];
+function renderAllTable(){
+  const tb=$('allTable'); tb.innerHTML='';
+  const ok=state.trials.filter(t=>t.res);
+  const hasLR = ok.some(t=>isFinite(t.res.ASYM));
+  const vars = TABLE_VARS.filter(k=>k!=='ASYM'||hasLR).map(k=>VARS.find(v=>v.k===k));
+  const thead=el('thead'); const hr=el('tr');
+  hr.appendChild(el('th',{},'Trial')); hr.appendChild(el('th',{},'Quality'));
+  vars.forEach(v=>hr.appendChild(el('th',{class:'num'},v.lab+' ('+v.u+')')));
+  thead.appendChild(hr); tb.appendChild(thead);
+  let best=-1,bv=-Infinity; state.trials.forEach((t,i)=>{ if(t.res && t.include && t.res.PF>bv){ bv=t.res.PF; best=i; } });
+  const body=el('tbody');
+  state.trials.forEach((t,i)=>{
+    const row=el('tr',{class:(i===best?'best':'')+(t.include?'':' off')});
+    row.appendChild(el('td',{},'T'+(i+1)+' · '+t.name+(t.include?'':' (excluded)')));
+    const q=el('td'); q.appendChild(t.err?stBadge('bad','Error'):stBadge(t.res.status)); row.appendChild(q);
+    vars.forEach(v=>row.appendChild(el('td',{class:'num'}, t.res ? fmt(t.res[v.k],v.dp) : '–')));
+    body.appendChild(row);
+  });
+  tb.appendChild(body);
+}
+$('exportCsv').addEventListener('click',()=>{
+  if(!state.trials.length) return;
+  const S=settings();
+  const vars=VARS.filter(v=>!v.lr || state.trials.some(t=>t.res&&isFinite(t.res.ASYM)));
+  const head=['Trial','File','Included','Quality','Baseline (N)','Quiet SD (N)','Onset threshold (N)','Onset time (s)',...vars.map(v=>v.lab+' ('+v.u+')')];
+  const lines=[head];
+  state.trials.forEach((t,i)=>{
+    const r=t.res;
+    lines.push(['T'+(i+1),t.name,t.include?'yes':'no', t.err?'error':SLAB[r.status], r?r.bw.toFixed(1):'', r?r.sd.toFixed(2):'', r?r.thr.toFixed(2):'', r?r.t0.toFixed(4):'', ...vars.map(v=> r&&isFinite(r[v.k]) ? (+r[v.k]).toFixed(Math.max(v.dp,2)) : '')]);
+  });
+  lines.push([]); lines.push(['Settings','Quiet stance '+S.qStart+'–'+(S.qStart+S.qDur)+' s', S.method==='sd'?'Onset = mean + '+S.k+' SD':'Onset = baseline + '+S.fixedN+' N', S.mass?'Body mass '+S.mass+' kg':'Body mass from baseline']);
+  const csv=lines.map(r=>r.map(c=>{ const s=String(c); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }).join(',')).join('\n');
+  download('imtp_results.csv', csv);
+});
+function download(name, text){ const a=el('a',{href:URL.createObjectURL(new Blob([text],{type:'text/csv'})),download:name}); document.body.appendChild(a); a.click(); a.remove(); }
+
+/* ---------------- Canvas charts ---------------- */
+function niceTicks(min,max,n){
+  const span=max-min; if(span<=0) return [min];
+  const step0=span/n; const mag=Math.pow(10,Math.floor(Math.log10(step0)));
+  const err=step0/mag; const step=(err>=7.5?10:err>=3.5?5:err>=1.5?2:1)*mag;
+  const out=[]; for(let v=Math.ceil(min/step)*step; v<=max+1e-9; v+=step) out.push(+v.toFixed(10));
+  return out;
+}
+function setupCanvas(c){
+  const dpr=window.devicePixelRatio||1; const w=c.clientWidth; const h=+c.getAttribute('height');
+  c.style.height=h+'px'; c.width=Math.round(w*dpr); c.height=Math.round(h*dpr);
+  const ctx=c.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,w,h};
+}
+function drawForce(c, tr, mode, hoverX){
+  const {ctx,w,h}=setupCanvas(c);
+  const sig=tr.sig, r=tr.res, {t,F,L,R}=sig;
+  const m={l:58,r:14,t:22,b:40};
+  let x0,x1,i0,i1;
+  if(mode==='full'){ x0=t[0]; x1=t[sig.n-1]; i0=0; i1=sig.n-1; }
+  else { x0=r.t0-0.1; x1=r.t0+0.3; i0=idxAt(t,x0); i1=idxAt(t,x1); }
+  let ymin=Infinity,ymax=-Infinity;
+  for(let i=i0;i<=i1;i++){ ymin=Math.min(ymin,F[i]); ymax=Math.max(ymax,F[i]); if(L&&mode==='full'){ ymin=Math.min(ymin,L[i],R[i]); } }
+  if(mode==='full'){ ymin=0; ymax*=1.08; } else { const pad=(ymax-ymin)*0.12||20; ymin-=pad; ymax+=pad; }
+  const X=v=>m.l+(v-x0)/(x1-x0)*(w-m.l-m.r);
+  const Y=v=>m.t+(1-(v-ymin)/(ymax-ymin))*(h-m.t-m.b);
+  c._geo={X,Y,x0,x1,m,w,h,mode,tr};
+  ctx.clearRect(0,0,w,h);
+  ctx.font='12px Arial'; ctx.fillStyle='#5b6770'; ctx.strokeStyle='#e8eef1'; ctx.lineWidth=1;
+  // grid + y ticks
+  niceTicks(ymin,ymax,5).forEach(v=>{ const y=Math.round(Y(v))+.5; ctx.beginPath(); ctx.moveTo(m.l,y); ctx.lineTo(w-m.r,y); ctx.stroke(); ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText(fmt(v,0),m.l-6,y); });
+  // x ticks
+  const xt = mode==='full' ? niceTicks(x0,x1,6) : [-100,0,50,100,150,200,250,300].map(ms=>r.t0+ms/1000);
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  xt.forEach(v=>{ const x=X(v); if(x<m.l-1||x>w-m.r+1) return; ctx.fillText(mode==='full'?fmt(v,1):fmt(Math.round((v-r.t0)*1000),0), x, h-m.b+6); });
+  ctx.fillText(mode==='full'?'Time (s)':'Time from onset (ms)', m.l+(w-m.l-m.r)/2, h-16);
+  ctx.save(); ctx.translate(14,m.t+(h-m.t-m.b)/2); ctx.rotate(-Math.PI/2); ctx.textBaseline='middle'; ctx.fillText('Force (N)',0,0); ctx.restore();
+  // axis line
+  ctx.strokeStyle='#b9c7cf'; ctx.beginPath(); ctx.moveTo(m.l,h-m.b+.5); ctx.lineTo(w-m.r,h-m.b+.5); ctx.stroke();
+  ctx.save(); ctx.beginPath(); ctx.rect(m.l,m.t-4,w-m.l-m.r,h-m.t-m.b+4); ctx.clip();
+  // quiet window shade
+  if(mode==='full'){ ctx.fillStyle='rgba(0,133,126,0.09)'; ctx.fillRect(X(r.qStart),m.t,X(r.qEnd)-X(r.qStart),h-m.t-m.b); }
+  else { ctx.fillStyle='rgba(0,113,188,0.06)'; ctx.fillRect(X(r.t0),m.t,X(r.t0+0.25)-X(r.t0),h-m.t-m.b); }
+  // baseline & threshold
+  ctx.setLineDash([5,4]); ctx.lineWidth=1.5;
+  ctx.strokeStyle='#7a8a93'; ctx.beginPath(); ctx.moveTo(m.l,Y(r.bw)); ctx.lineTo(w-m.r,Y(r.bw)); ctx.stroke();
+  ctx.strokeStyle='#00857e'; ctx.beginPath(); ctx.moveTo(m.l,Y(r.bw+r.thr)); ctx.lineTo(w-m.r,Y(r.bw+r.thr)); ctx.stroke();
+  ctx.setLineDash([]);
+  // traces
+  const trace=(arr,col,lw)=>{
+    ctx.strokeStyle=col; ctx.lineWidth=lw; ctx.lineJoin='round'; ctx.beginPath();
+    const npx=w-m.l-m.r; const cnt=i1-i0+1;
+    if(cnt>npx*2){ // min-max decimation
+      const per=cnt/npx;
+      for(let p=0;p<npx;p++){ const a=i0+Math.floor(p*per), b=Math.min(i1,i0+Math.floor((p+1)*per)); let lo=Infinity,hi=-Infinity; for(let i=a;i<=b;i++){ lo=Math.min(lo,arr[i]); hi=Math.max(hi,arr[i]); } const x=m.l+p+.5; if(p===0) ctx.moveTo(x,Y(hi)); ctx.lineTo(x,Y(hi)); ctx.lineTo(x,Y(lo)); }
+    } else { for(let i=i0;i<=i1;i++){ const x=X(t[i]), y=Y(arr[i]); if(i===i0) ctx.moveTo(x,y); else ctx.lineTo(x,y); } }
+    ctx.stroke();
+  };
+  if(L && mode==='full'){ trace(L,'#0071bc',1.5); trace(R,'#8b3556',1.5); }
+  trace(F,'#003d50',2);
+  // onset line
+  ctx.strokeStyle='#00857e'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(X(r.t0),m.t); ctx.lineTo(X(r.t0),h-m.b); ctx.stroke();
+  // dip marker
+  if(r.dipIdx>=0 && t[r.dipIdx]>=x0 && t[r.dipIdx]<=x1){ ctx.fillStyle='#b42318'; ctx.beginPath(); ctx.arc(X(t[r.dipIdx]),Y(F[r.dipIdx]),5,0,Math.PI*2); ctx.fill(); }
+  ctx.restore();
+  // labels (outside clip so text isn't cut)
+  const label=(txt,x,y,col,align='left')=>{ ctx.font='bold 12px Arial'; ctx.textAlign=align; ctx.textBaseline='bottom'; const tw=ctx.measureText(txt).width; const bx=align==='left'?x:align==='right'?x-tw:x-tw/2; ctx.fillStyle='rgba(255,255,255,.88)'; ctx.fillRect(bx-3,y-15,tw+6,16); ctx.fillStyle=col; ctx.fillText(txt,x,y); };
+  label('Onset',Math.min(X(r.t0)+5,w-m.r-40),m.t+14,'#00625d');
+  if(mode==='full'){
+    if(X(r.qEnd)-X(r.qStart)>70) label('Quiet stance',X(r.qStart)+5,h-m.b-6,'#00625d');
+    const px=X(t[r.ipf]), py=Y(r.PF);
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(px,py,7,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#8b3556'; ctx.beginPath(); ctx.arc(px,py,5,0,Math.PI*2); ctx.fill();
+    label('Peak force '+fmt(r.PF,0)+' N', px>w*0.6?px-9:px+9, py-6, '#682840', px>w*0.6?'right':'left');
+    if(r.dipIdx>=0) label('Dip before pull', X(t[r.dipIdx])-6, Y(F[r.dipIdx])+22, '#b42318', 'right');
+  } else {
+    TP.forEach((ms,j)=>{ const tx=r.t0+ms/1000, fv=r['F'+ms]; if(!isFinite(fv)) return; const x=X(tx), y=Y(fv);
+      ctx.strokeStyle='rgba(0,113,188,.35)'; ctx.lineWidth=1; ctx.setLineDash([3,3]); ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,h-m.b); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x,y,6.5,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#0071bc'; ctx.beginPath(); ctx.arc(x,y,4.5,0,Math.PI*2); ctx.fill();
+      label('F'+ms, x-6, y-8, '#00568f', 'right');
+    });
+  }
+  // hover
+  if(hoverX!=null){
+    const tv=x0+(hoverX-m.l)/(w-m.l-m.r)*(x1-x0); const i=idxAt(t,tv); const x=X(t[i]);
+    ctx.strokeStyle='rgba(29,29,27,.45)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(x,m.t); ctx.lineTo(x,h-m.b); ctx.stroke();
+    ctx.fillStyle='#003d50'; ctx.beginPath(); ctx.arc(x,Y(F[i]),4,0,Math.PI*2); ctx.fill();
+    return i;
+  }
+  return -1;
+}
+function drawCharts(){
+  const tr=state.trials[state.sel]; if(!tr||!tr.res||$('trialView').hidden) return;
+  drawForce($('cFull'),tr,'full'); drawForce($('cZoom'),tr,'zoom');
+}
+const tip=$('tip');
+function showTip(x,y,rows){
+  tip.innerHTML='';
+  rows.forEach(rw=>{ const d=el('div',{class:'row'}); const k=el('span',{class:'k'}); if(rw.col){ const kk=el('i',{class:'key',style:'border-color:'+rw.col}); k.appendChild(kk);} k.appendChild(document.createTextNode(rw.l)); d.appendChild(k); d.appendChild(el('span',{class:'tv'},rw.v)); tip.appendChild(d); });
+  tip.style.display='block';
+  const tw=tip.offsetWidth, th=tip.offsetHeight;
+  let lx=x+14, ly=y+14; if(lx+tw>window.innerWidth-8) lx=x-tw-14; if(ly+th>window.innerHeight-8) ly=y-th-14;
+  tip.style.left=lx+'px'; tip.style.top=ly+'px';
+}
+function hideTip(){ tip.style.display='none'; }
+['cFull','cZoom'].forEach(id=>{
+  const c=$(id);
+  c.addEventListener('pointermove',e=>{
+    const g=c._geo; if(!g) return; const rect=c.getBoundingClientRect(); const x=e.clientX-rect.left;
+    if(x<g.m.l||x>g.w-g.m.r){ drawForce(c,g.tr,g.mode); hideTip(); return; }
+    const i=drawForce(c,g.tr,g.mode,x); const s=g.tr.sig, r=g.tr.res;
+    const rows=[{l:g.mode==='full'?'Time':'From onset', v: g.mode==='full'? fmt(s.t[i],3)+' s' : fmt((s.t[i]-r.t0)*1000,0)+' ms'},{l:'Total',v:fmt(s.F[i],0)+' N',col:'#003d50'}];
+    if(s.L){ rows.push({l:'Left',v:fmt(s.L[i],0)+' N',col:'#0071bc'}); rows.push({l:'Right',v:fmt(s.R[i],0)+' N',col:'#8b3556'}); }
+    rows.push({l:'Net',v:fmt(s.F[i]-r.bw,0)+' N'});
+    showTip(e.clientX,e.clientY,rows);
+  });
+  c.addEventListener('pointerleave',()=>{ const g=c._geo; if(g) drawForce(c,g.tr,g.mode); hideTip(); });
+});
+let rsz; window.addEventListener('resize',()=>{ clearTimeout(rsz); rsz=setTimeout(()=>{ drawCharts(); if($('p-reliab').classList.contains('active')){ renderWithin(); renderClass(); renderChange(); } },120); });
+
+/* ---------------- Loading ---------------- */
+async function addFiles(files){
+  $('loadErr').innerHTML='';
+  for(const f of files){
+    try{ state.trials.push(await readFile(f)); }
+    catch(e){ const d=el('div',{class:'err'}); d.textContent=f.name+': '+e.message; $('loadErr').appendChild(d); }
+  }
+  if(state.sel<0) state.sel=0;
+  runAll();
+}
+$('pick').addEventListener('click',e=>{ e.stopPropagation(); $('file').click(); });
+$('file').addEventListener('change',e=>{ addFiles([...e.target.files]); e.target.value=''; });
+const drop=$('drop');
+drop.addEventListener('keydown',e=>{ if(e.target===drop && (e.key==='Enter'||e.key===' ')){ e.preventDefault(); $('file').click(); } });
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{ e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{ e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop',e=>addFiles([...e.dataTransfer.files]));
+['qStart','qDur','kSD','fixN','mass','fs'].forEach(id=>$(id).addEventListener('input',()=>{ clearTimeout(window._rt); window._rt=setTimeout(runAll,250); }));
+document.querySelectorAll('input[name=om]').forEach(r=>r.addEventListener('change',runAll));
+
+/* ---------------- Demo data ---------------- */
+function rng(seed){ return ()=>{ seed=(seed*1664525+1013904223)%4294967296; return seed/4294967296; }; }
+function gauss(r){ let u=0,v=0; while(u===0) u=r(); v=r(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+function demoTrial(seed, pf, tau, onset, dip, pw=1.7){
+  const r=rng(seed), fs=1000, dur=6.2, base=806, n=Math.round(dur*fs);
+  const rows=[]; let drift=0;
+  for(let i=0;i<n;i++){
+    const t=i/fs; let f=base+gauss(r)*2.2;
+    if(dip && t>onset-0.16 && t<onset){ const p=(t-(onset-0.16))/0.16; f-=dip*Math.sin(Math.PI*p); }
+    if(t>=onset){ const x=t-onset; let rise=(pf-base)*(1-Math.exp(-Math.pow(x/tau,pw))); const relax = t>onset+3.9 ? Math.min(1,(t-onset-3.9)/0.25) : 0; drift += gauss(r)*0.6; f=base+rise*(1-0.06*Math.min(1,Math.max(0,(x-1.4)/2.4)))*(1-relax)+gauss(r)*4.5+drift*(1-relax); }
+    const share=0.512+0.004*Math.sin(t*3.1);
+    rows.push([t, f*share, f*(1-share)]);
+  }
+  return rows;
+}
+function demoText(rows){
+  return 'Kistler BioWare style export (demo)\nSampling rate: 1000 Hz\n\nabs time (s)\tFz1 (N)\tFz2 (N)\n'+rows.map(r=>r[0].toFixed(3)+'\t'+r[1].toFixed(2)+'\t'+r[2].toFixed(2)).join('\n');
+}
+function loadDemo(){
+  const specs=[[11,2480,0.37,1.62,0,1.95],[23,2545,0.31,1.55,0,1.55],[37,2410,0.27,1.70,70,1.75]];
+  specs.forEach((s,i)=>{
+    const {rows,decComma}=splitText(demoText(demoTrial(...s)));
+    const tb=buildTable(rows,decComma); const map=autoMap(tb);
+    state.trials.push({name:'demo_trial_'+(i+1)+'.txt', tb, timeCol:map.timeCol, forceCols:map.forceCols, include:true});
+  });
+  if(state.sel<0) state.sel=0; runAll();
+}
+$('demo').addEventListener('click',e=>{ e.stopPropagation(); loadDemo(); });
+$('dlExample').addEventListener('click',e=>{ e.preventDefault(); const rows=demoTrial(11,2480,0.37,1.62,0,1.95); download('example_imtp_trial.csv','Time (s),Left Fz (N),Right Fz (N)\n'+rows.map(r=>r[0].toFixed(3)+','+r[1].toFixed(2)+','+r[2].toFixed(2)).join('\n')); });
+
+/* ---------------- Page 2: Part A ---------------- */
+const mean=a=>a.reduce((s,v)=>s+v,0)/a.length;
+const sdev=a=>{ const m=mean(a); return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1)); };
+function wsStats(){
+  const ok=state.trials.filter(t=>t.include&&t.res);
+  if(ok.length<2) return null;
+  const hasLR=ok.every(t=>isFinite(t.res.ASYM));
+  return VARS.filter(v=>(!v.lr||hasLR) && v.k!=='PFnet').map(v=>{ const a=ok.map(t=>t.res[v.k]).filter(isFinite); const m=mean(a), s=sdev(a); return {...v, n:a.length, m, s, cv: v.k==='ASYM'? NaN : Math.abs(s/m*100)}; });
+}
+function cvRate(cv){ return !isFinite(cv)?['info','n/a']: cv<=5?['good','Good']: cv<=10?['warn','Acceptable']:['bad','Poor']; }
+function renderWithin(){
+  const st=wsStats();
+  $('wsEmpty').hidden=!!st; $('wsArea').hidden=!st;
+  if(!st) return;
+  const tb=$('wsTable'); tb.innerHTML='';
+  const hr=el('tr'); ['Variable','Mean','SD','CV%','Rating'].forEach((h,i)=>hr.appendChild(el('th',{class:i&&i<4?'num':''},h)));
+  const th=el('thead'); th.appendChild(hr); tb.appendChild(th);
+  const body=el('tbody');
+  st.forEach(v=>{ const row=el('tr'); row.appendChild(el('td',{},v.lab+' ('+v.u+')')); row.appendChild(el('td',{class:'num'},fmt(v.m,v.dp))); row.appendChild(el('td',{class:'num'},fmt(v.s,v.dp+1))); row.appendChild(el('td',{class:'num'},isFinite(v.cv)?fmt(v.cv,1):'–')); const rc=cvRate(v.cv); const td=el('td'); td.appendChild(stBadge(rc[0],rc[1])); row.appendChild(td); body.appendChild(row); });
+  tb.appendChild(body);
+  const cap=el('caption',{class:'sr'},'Within-session reliability across '+st[0].n+' trials'); tb.prepend(cap);
+  drawCV(st.filter(v=>isFinite(v.cv)));
+}
+function svgEl(tag,attrs){ const e=document.createElementNS('http://www.w3.org/2000/svg',tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
+function bindTip(node, rows){ node.addEventListener('pointermove',e=>showTip(e.clientX,e.clientY,rows)); node.addEventListener('pointerleave',hideTip); node.addEventListener('focus',()=>{ const r=node.getBoundingClientRect(); showTip(r.right,r.top,rows); }); node.addEventListener('blur',hideTip); }
+function drawCV(st){
+  const box=$('cvChart'); box.innerHTML='';
+  const w=Math.max(280,box.clientWidth||420), rowH=24, m={l:150,r:52,t:10,b:30}, h=m.t+m.b+rowH*st.length;
+  const maxCV=Math.max(12,...st.map(v=>v.cv))*1.08;
+  const X=v=>m.l+v/maxCV*(w-m.l-m.r);
+  const svg=svgEl('svg',{viewBox:`0 0 ${w} ${h}`,width:'100%',role:'img','aria-label':'Bar chart of trial-to-trial CV% for each variable'});
+  niceTicks(0,maxCV,5).forEach(v=>{ const x=X(v); svg.appendChild(svgEl('line',{x1:x,x2:x,y1:m.t,y2:h-m.b,stroke:'#e8eef1'})); const tx=svgEl('text',{x,y:h-m.b+16,'text-anchor':'middle','font-size':11,fill:'#5b6770'}); tx.textContent=v+'%'; svg.appendChild(tx); });
+  [5,10].forEach(v=>svg.appendChild(svgEl('line',{x1:X(v),x2:X(v),y1:m.t,y2:h-m.b,stroke:'#5b6770','stroke-dasharray':'4 3','stroke-width':1})));
+  st.forEach((v,i)=>{
+    const y=m.t+i*rowH+4, bh=rowH-8;
+    const lab=svgEl('text',{x:m.l-8,y:y+bh/2+4,'text-anchor':'end','font-size':12,fill:'#3d4a52'}); lab.textContent=v.lab; svg.appendChild(lab);
+    const bw=Math.max(2,X(v.cv)-m.l);
+    const g=svgEl('g',{tabindex:'0'});
+    g.appendChild(svgEl('rect',{x:m.l,y:m.t+i*rowH,width:w-m.l-m.r+40,height:rowH,fill:'transparent'}));
+    g.appendChild(svgEl('path',{d:`M${m.l},${y} h${bw-4} a4,4 0 0 1 4,4 v${bh-8} a4,4 0 0 1 -4,4 h${-(bw-4)} z`,fill:'#0071bc'}));
+    const vt=svgEl('text',{x:m.l+bw+5,y:y+bh/2+4,'font-size':11,fill:'#3d4a52','font-weight':'bold'}); vt.textContent=fmt(v.cv,1)+'%'; g.appendChild(vt);
+    bindTip(g,[{l:v.lab,v:fmt(v.cv,1)+'%'},{l:'Mean',v:fmt(v.m,v.dp)+' '+v.u},{l:'SD',v:fmt(v.s,v.dp+1)+' '+v.u}]);
+    svg.appendChild(g);
+  });
+  const xl=svgEl('text',{x:m.l+(w-m.l-m.r)/2,y:h-2,'text-anchor':'middle','font-size':11,fill:'#5b6770'}); xl.textContent='CV%'; svg.appendChild(xl);
+  box.appendChild(svg);
+}
+
+/* ---------------- Page 2: Part B ---------------- */
+let classRows = Array.from({length:10},(_,i)=>({id:'Student '+(i+1),d1:'',d2:''}));
+function renderClassTable(){
+  const tb=$('classTable'); tb.innerHTML='';
+  const hr=el('tr'); ['Name','Day 1','Day 2','Change',''].forEach((h,i)=>hr.appendChild(el('th',{class:i&&i<4?'num':''},h)));
+  const th=el('thead'); th.appendChild(hr); tb.appendChild(th);
+  const body=el('tbody');
+  classRows.forEach((r,i)=>{
+    const row=el('tr');
+    ['id','d1','d2'].forEach(k=>{ const td=el('td',{class:k==='id'?'':'num'}); const inp=el('input',{type:k==='id'?'text':'number',step:'any','aria-label':k==='id'?'Name row '+(i+1):(k==='d1'?'Day 1':'Day 2')+' row '+(i+1)}); inp.value=r[k]; inp.style.textAlign=k==='id'?'left':'right';
+      inp.addEventListener('input',()=>{ r[k]=inp.value; updChange(row,r); renderClass(false); }); td.appendChild(inp); row.appendChild(td); });
+    row.appendChild(el('td',{class:'num'}));
+    const td=el('td'); const x=el('button',{class:'x btn ghost',style:'padding:.1rem .45rem','aria-label':'Remove row '+(i+1)},'×'); x.addEventListener('click',()=>{ classRows.splice(i,1); renderClassTable(); renderClass(false); }); td.appendChild(x); row.appendChild(td);
+    updChange(row,r); body.appendChild(row);
+  });
+  tb.appendChild(body);
+}
+function updChange(row,r){ const a=parseFloat(r.d1), b=parseFloat(r.d2); row.children[3].textContent = isFinite(a)&&isFinite(b) ? ((b-a>0?'+':'')+fmt(b-a,1)) : ''; }
+let classRes=null;
+function classStats(){
+  const p=classRows.map(r=>[parseFloat(r.d1),parseFloat(r.d2),r.id]).filter(r=>isFinite(r[0])&&isFinite(r[1]));
+  if(p.length<3) return null;
+  const d=p.map(r=>r[1]-r[0]); const n=p.length;
+  const all=p.flatMap(r=>[r[0],r[1]]); const gm=mean(all);
+  const te=sdev(d)/Math.SQRT2; const sdB=sdev(p.map(r=>r[0]));
+  const swc=0.2*sdB; const mdc=te*1.96*Math.SQRT2;
+  // ICC(3,1)
+  const k=2; let ssr=0, sst=0; p.forEach(r=>{ const rm=(r[0]+r[1])/2; ssr+=k*(rm-gm)**2; sst+=(r[0]-gm)**2+(r[1]-gm)**2; });
+  const cm=[mean(p.map(r=>r[0])),mean(p.map(r=>r[1]))]; const ssc=n*cm.reduce((s,v)=>s+(v-gm)**2,0);
+  const sse=sst-ssr-ssc; const msr=ssr/(n-1), mse=sse/((n-1)*(k-1));
+  const icc=(msr-mse)/(msr+(k-1)*mse);
+  return {p,n,bias:mean(d),te,tePct:te/gm*100,swc,mdc,icc,sdB,gm};
+}
+function iccRate(v){ return v>0.9?['good','Excellent']:v>0.75?['good','Good']:v>0.5?['warn','Moderate']:['bad','Poor']; }
+function renderClass(redrawTable=true){
+  if(redrawTable && !$('classTable').children.length) renderClassTable();
+  const u=$('varUnit').value||''; const st=classStats(); classRes=st;
+  const tiles=$('classTiles'); tiles.innerHTML=''; $('classVerdict').innerHTML=''; $('scatter').innerHTML='';
+  if(!st){ tiles.appendChild(el('div',{class:'empty',style:'grid-column:1/-1'},'Enter Day 1 and Day 2 scores for at least 3 people (10+ is better).')); return; }
+  const dp = st.gm>200?0:st.gm>20?1:2;
+  tiles.appendChild(tile('Typical error',fmt(st.te,dp+1),u,'TE% '+fmt(st.tePct,1)+'%'));
+  tiles.appendChild(tile('Smallest worthwhile change',fmt(st.swc,dp+1),u,'0.2 × SD ('+fmt(st.sdB,dp)+')'));
+  tiles.appendChild(tile('MDC95',fmt(st.mdc,dp+1),u,'TE × 1.96 × √2'));
+  const ir=iccRate(st.icc); const it=tile('ICC(3,1)',fmt(st.icc,2),'',ir[1]+' · n = '+st.n); tiles.appendChild(it);
+  tiles.appendChild(tile('Mean bias (Day 2 − Day 1)',(st.bias>0?'+':'')+fmt(st.bias,dp+1),u, Math.abs(st.bias)>st.te?'Bigger than TE, so a learning effect is likely':'Small relative to TE'));
+  const ratio=st.te/st.swc; let cls,h,txt;
+  if(ratio<=1){ cls='good'; h='✓ This test can detect a worthwhile change'; txt='The noise (TE '+fmt(st.te,dp+1)+' '+u+') is smaller than the smallest worthwhile change ('+fmt(st.swc,dp+1)+' '+u+'), so a change just above the SWC is likely to be real.'; }
+  else if(ratio<=2){ cls='warn'; h='! Adequate, but only for larger changes'; txt='The noise (TE '+fmt(st.te,dp+1)+' '+u+') is bigger than the smallest worthwhile change ('+fmt(st.swc,dp+1)+' '+u+'). Small real changes can be hidden by noise, so look for changes bigger than the TE.'; }
+  else { cls='bad'; h='✕ Too noisy to track small changes'; txt='The noise (TE '+fmt(st.te,dp+1)+' '+u+') is more than double the smallest worthwhile change ('+fmt(st.swc,dp+1)+' '+u+'). Improve standardisation and familiarisation, or use a steadier variable.'; }
+  const v=el('div',{class:'verdict '+cls}); v.appendChild(el('h3',{},h)); v.appendChild(el('p',{},txt)); $('classVerdict').appendChild(v);
+  drawScatter(st,u,dp);
+}
+function drawScatter(st,u,dp){
+  const box=$('scatter'); const w=Math.max(260,box.clientWidth||380), h=280, m={l:62,r:14,t:10,b:44};
+  const all=st.p.flatMap(r=>[r[0],r[1]]); let lo=Math.min(...all), hi=Math.max(...all); const pad=(hi-lo)*0.1||1; lo-=pad; hi+=pad;
+  const X=v=>m.l+(v-lo)/(hi-lo)*(w-m.l-m.r), Y=v=>m.t+(1-(v-lo)/(hi-lo))*(h-m.t-m.b);
+  const svg=svgEl('svg',{viewBox:`0 0 ${w} ${h}`,width:'100%',role:'img','aria-label':'Scatter plot of Day 1 against Day 2 scores'});
+  niceTicks(lo,hi,5).forEach(v=>{ svg.appendChild(svgEl('line',{x1:m.l,x2:w-m.r,y1:Y(v),y2:Y(v),stroke:'#e8eef1'})); const t1=svgEl('text',{x:m.l-6,y:Y(v)+4,'text-anchor':'end','font-size':11,fill:'#5b6770'}); t1.textContent=fmt(v,dp); svg.appendChild(t1); const t2=svgEl('text',{x:X(v),y:h-m.b+16,'text-anchor':'middle','font-size':11,fill:'#5b6770'}); t2.textContent=fmt(v,dp); svg.appendChild(t2); });
+  svg.appendChild(svgEl('line',{x1:X(lo),y1:Y(lo),x2:X(hi),y2:Y(hi),stroke:'#5b6770','stroke-dasharray':'5 4'}));
+  const xl=svgEl('text',{x:m.l+(w-m.l-m.r)/2,y:h-6,'text-anchor':'middle','font-size':12,fill:'#5b6770'}); xl.textContent='Day 1 ('+u+')'; svg.appendChild(xl);
+  const yl=svgEl('text',{x:14,y:m.t+(h-m.t-m.b)/2,'text-anchor':'middle','font-size':12,fill:'#5b6770',transform:`rotate(-90 14 ${m.t+(h-m.t-m.b)/2})`}); yl.textContent='Day 2 ('+u+')'; svg.appendChild(yl);
+  st.p.forEach(r=>{ const g=svgEl('g',{tabindex:'0'}); g.appendChild(svgEl('circle',{cx:X(r[0]),cy:Y(r[1]),r:12,fill:'transparent'})); g.appendChild(svgEl('circle',{cx:X(r[0]),cy:Y(r[1]),r:5,fill:'#00857e',stroke:'#fff','stroke-width':2}));
+    bindTip(g,[{l:r[2]||'',v:''},{l:'Day 1',v:fmt(r[0],dp)+' '+u},{l:'Day 2',v:fmt(r[1],dp)+' '+u},{l:'Change',v:(r[1]-r[0]>0?'+':'')+fmt(r[1]-r[0],dp)+' '+u}]); svg.appendChild(g); });
+  box.appendChild(svg);
+}
+$('addRow').addEventListener('click',()=>{ classRows.push({id:'Student '+(classRows.length+1),d1:'',d2:''}); renderClassTable(); });
+$('clearClass').addEventListener('click',()=>{ classRows=Array.from({length:10},(_,i)=>({id:'Student '+(i+1),d1:'',d2:''})); renderClassTable(); renderClass(false); });
+$('exClass').addEventListener('click',()=>{
+  const ex=[[2450,2510],[1980,2035],[2890,2850],[1760,1810],[2230,2195],[3120,3205],[2045,2090],[2610,2575],[1890,1945],[2380,2440]];
+  classRows=ex.map((r,i)=>({id:'Student '+(i+1),d1:String(r[0]),d2:String(r[1])})); $('varName').value='IMTP peak force'; $('varUnit').value='N'; renderClassTable(); renderClass(false);
+});
+$('pasteGo').addEventListener('click',()=>{
+  const lines=$('pasteBox').value.split(/\r?\n/).filter(l=>l.trim()); const out=[];
+  lines.forEach((l,i)=>{ const c=l.split(/\t|,|;/).map(s=>s.trim()); const nums=c.map(x=>toNum(x,true));
+    if(c.length>=3 && isFinite(nums[1]) && isFinite(nums[2])) out.push({id:c[0]||('Row '+(i+1)),d1:String(nums[1]),d2:String(nums[2])});
+    else if(c.length>=2 && isFinite(nums[0]) && isFinite(nums[1])) out.push({id:'Row '+(i+1),d1:String(nums[0]),d2:String(nums[1])}); });
+  if(out.length){ classRows=out; renderClassTable(); renderClass(false); }
+});
+$('varUnit').addEventListener('input',()=>renderClass(false));
+
+/* ---------------- Page 2: Part C ---------------- */
+$('useClass').addEventListener('click',()=>{ if(!classRes){ alertInline('Enter class data in Part B first.'); return; } $('teIn').value=+classRes.te.toFixed(2); $('swcIn').value=+classRes.swc.toFixed(2); renderChange(); });
+$('useWS').addEventListener('click',()=>{
+  const st=wsStats(); const pre=parseFloat($('pre').value);
+  if(!st){ alertInline('Load at least two trials on page 1 first.'); return; }
+  if(!isFinite(pre)){ alertInline('Enter the pre-test score first. TE is estimated as CV% × pre-test.'); return; }
+  const pf=st.find(v=>v.k==='PF'); $('teIn').value=+(pf.cv/100*pre).toFixed(2); renderChange();
+});
+function alertInline(msg){ const o=$('changeOut'); o.innerHTML=''; const d=el('div',{class:'err'}); d.textContent=msg; o.appendChild(d); }
+['pre','post','teIn','swcIn'].forEach(id=>$(id).addEventListener('input',renderChange));
+function renderChange(){
+  const o=$('changeOut'); const pre=parseFloat($('pre').value), post=parseFloat($('post').value), te=parseFloat($('teIn').value), swc=parseFloat($('swcIn').value);
+  o.innerHTML='';
+  if(![pre,post,te,swc].every(isFinite)){ o.appendChild(el('div',{class:'empty',style:'margin-top:1rem'},'Enter pre, post, TE and SWC to see the verdict.')); return; }
+  const ch=post-pre, pct=ch/pre*100, mdc=te*1.96*Math.SQRT2, a=Math.abs(ch), u=$('varUnit').value||'';
+  const dir = ch>0?'increase':'decrease';
+  const tiles=el('div',{class:'tiles',style:'margin-top:1rem'});
+  tiles.appendChild(tile('Change',(ch>0?'+':'')+fmt(ch,1),u,(pct>0?'+':'')+fmt(pct,1)+'%'));
+  tiles.appendChild(tile('Typical error',fmt(te,1),u)); tiles.appendChild(tile('SWC',fmt(swc,1),u)); tiles.appendChild(tile('MDC95',fmt(mdc,1),u));
+  o.appendChild(tiles);
+  const box=el('div',{class:'chartbox'}); box.appendChild(el('h3',{},'Where the change sits')); box.appendChild(el('p',{class:'sub'},'Shaded band = ± smallest worthwhile change. Dashed = ± typical error. Dotted = ± MDC95.'));
+  const holder=el('div'); box.appendChild(holder); o.appendChild(box);
+  let cls,h,txt;
+  if(a<=te || a<=swc){ cls='bad'; h='✕ Not clearly a real change';
+    txt = a<=te && a<=swc ? 'The '+dir+' of '+fmt(a,1)+' '+u+' is within the test noise (TE) and smaller than the smallest worthwhile change.' : a<=te ? 'The '+dir+' of '+fmt(a,1)+' '+u+' is bigger than the SWC but still within the test noise (TE), so it could just be measurement error.' : 'The '+dir+' of '+fmt(a,1)+' '+u+' is bigger than the test noise but smaller than the smallest worthwhile change, so it may be real but too small to matter.'; }
+  else if(a<mdc){ cls='warn'; h='! Likely a real, worthwhile '+dir; txt='The '+dir+' of '+fmt(a,1)+' '+u+' is bigger than both the TE and the SWC, so it is worth reporting. It is below the MDC95 ('+fmt(mdc,1)+' '+u+'), so be cautious about how certain you sound.'; }
+  else { cls='good'; h='✓ Very likely a real, worthwhile '+dir; txt='The '+dir+' of '+fmt(a,1)+' '+u+' is bigger than the SWC and beyond the MDC95 ('+fmt(mdc,1)+' '+u+'), so it is very unlikely to be measurement noise.'; }
+  const v=el('div',{class:'verdict '+cls}); v.appendChild(el('h3',{},h)); v.appendChild(el('p',{},txt)); o.appendChild(v);
+  // number line
+  const w=Math.max(280,holder.clientWidth||600), H=130, m={l:24,r:24,t:34,b:36};
+  const R=Math.max(a,mdc,swc,te)*1.35;
+  const X=v=>m.l+(v+R)/(2*R)*(w-m.l-m.r); const yM=m.t+(H-m.t-m.b)/2;
+  const svg=svgEl('svg',{viewBox:`0 0 ${w} ${H}`,width:'100%',role:'img','aria-label':'Number line showing the change relative to the typical error, smallest worthwhile change and MDC'});
+  svg.appendChild(svgEl('rect',{x:X(-swc),y:m.t,width:X(swc)-X(-swc),height:H-m.t-m.b,fill:'rgba(0,133,126,.14)',rx:4}));
+  [[te,'5 4','TE'],[mdc,'2 3','MDC95']].forEach(([val,da,lab])=>[-1,1].forEach(sg=>{ const x=X(sg*val); svg.appendChild(svgEl('line',{x1:x,x2:x,y1:m.t-4,y2:H-m.b+4,stroke:'#3d4a52','stroke-dasharray':da})); if(sg>0){ const t=svgEl('text',{x,y:m.t-8,'text-anchor':'middle','font-size':11,fill:'#3d4a52'}); t.textContent=lab; svg.appendChild(t);} }));
+  const ts=svgEl('text',{x:X(swc)-4,y:H-m.b-6,'text-anchor':'end','font-size':11,fill:'#00625d','font-weight':'bold'}); ts.textContent='SWC'; svg.appendChild(ts);
+  svg.appendChild(svgEl('line',{x1:m.l,x2:w-m.r,y1:yM,y2:yM,stroke:'#b9c7cf'}));
+  svg.appendChild(svgEl('line',{x1:X(0),x2:X(0),y1:yM-8,y2:yM+8,stroke:'#1d1d1b'}));
+  const z=svgEl('text',{x:X(0),y:H-m.b+18,'text-anchor':'middle','font-size':11,fill:'#5b6770'}); z.textContent='0 (no change)'; svg.appendChild(z);
+  const col=cls==='good'?'#1b7a45':cls==='warn'?'#8a5a00':'#b42318';
+  svg.appendChild(svgEl('circle',{cx:X(ch),cy:yM,r:8,fill:col,stroke:'#fff','stroke-width':2}));
+  const lt=svgEl('text',{x:X(ch),y:yM+26,'text-anchor':'middle','font-size':12,fill:'#1d1d1b','font-weight':'bold'}); lt.textContent=(ch>0?'+':'')+fmt(ch,1)+' '+u; svg.appendChild(lt);
+  holder.appendChild(svg);
+}
+
+/* init */
+renderClassTable();
+})();
+</script>
+</body>
+</html>
