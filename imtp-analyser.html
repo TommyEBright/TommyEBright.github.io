@@ -121,6 +121,12 @@ code{background:var(--info-bg);padding:.05rem .3rem;border-radius:.3rem;font-siz
 footer{text-align:center;padding:1.2rem;border:2px solid var(--navy);border-top-width:6px;border-radius:10px;background:#fff;margin-top:1rem;font-size:.92em}
 footer p{margin:.2rem 0}
 .sr{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.formula{background:var(--soft2);border:1px solid var(--line);border-radius:.55rem;padding:.55rem .75rem;margin:.5rem 0;font-size:.95em}
+.formula .step{display:block;font-weight:bold;color:var(--navy);font-size:.9em;margin-bottom:.15rem}
+.formula .res{font-weight:bold;color:var(--ink)}
+.ans{margin:.7rem 0 0;font-weight:bold}
+.ans.yes{color:var(--good)}.ans.no{color:var(--bad)}
+.tchip select{width:auto;padding:.15rem .3rem;font-size:.85em;border-radius:.4rem}
 </style>
 </head>
 <body>
@@ -128,11 +134,11 @@ footer p{margin:.2rem 0}
 <header class="hero">
   <span class="badge">SESD56 &middot; Strength Testing</span>
   <h1>IMTP Force–Time Analyser</h1>
-  <p>Upload your isometric mid-thigh pull trials, see exactly where onset, time-specific forces and peak force sit on the curve, then check how reliable your scores are and how big a change needs to be before you can call it real.</p>
+  <p>Upload your isometric mid-thigh pull trials, check each one on the force–time curve, then find out whether your athlete really improved from pre-test to post-test.</p>
 </header>
 <nav class="tabs" role="tablist" aria-label="Tool pages">
   <button id="tab-analyse" role="tab" aria-selected="true" aria-controls="p-analyse">1. Analyse trials</button>
-  <button id="tab-reliab" role="tab" aria-selected="false" aria-controls="p-reliab">2. Reliability &amp; real change</button>
+  <button id="tab-reliab" role="tab" aria-selected="false" aria-controls="p-reliab">2. Did my athlete improve?</button>
   <button id="tab-help" role="tab" aria-selected="false" aria-controls="p-help">How it works</button>
 </nav>
 
@@ -154,6 +160,7 @@ footer p{margin:.2rem 0}
           <input type="file" id="file" multiple accept=".txt,.csv,.tsv,.dat,.xlsx,.xls" hidden>
         </div>
         <div id="loadErr"></div>
+        <div style="margin-top:1rem;max-width:16rem"><label class="fld" for="mass">Athlete&rsquo;s body mass (kg)</label><input type="number" id="mass" placeholder="e.g. 78.5" step="0.1" min="20"><p class="hint">Used for relative peak force and the pre-tension check.</p></div>
       </div>
       <div class="box teal">
         <h3>What your file needs</h3>
@@ -162,39 +169,39 @@ footer p{margin:.2rem 0}
           <li><strong>Column C</strong> (optional) second plate. B is treated as left and C as right, and they are added together for total force.</li>
           <li>Kistler BioWare exports are read automatically (Fz columns are found by name). Header and unit rows are skipped.</li>
           <li>At least <strong>1 s of still standing</strong> before the pull, sampled at &ge;1000 Hz.</li>
+          <li>Load your pre-test and post-test trials together. Files with &ldquo;post&rdquo; in the name are labelled Post automatically, and you can change any label below.</li>
         </ul>
         <p class="hint">Nothing is uploaded anywhere. All analysis happens in your browser. <a href="#" id="dlExample">Download an example file</a></p>
       </div>
     </div>
-  </div>
-</section>
-
-<section class="card">
-  <div class="card-head h-blue"><div><span class="chip">Step 2</span><h2>Analysis settings</h2></div></div>
-  <div class="card-body">
-    <div class="settings">
-      <div><label class="fld" for="qStart">Quiet stance starts at (s)</label><input type="number" id="qStart" value="0" step="0.1" min="0"></div>
-      <div><label class="fld" for="qDur">Quiet stance length (s)</label><input type="number" id="qDur" value="1" step="0.1" min="0.2"></div>
+    <details class="more">
+      <summary>Analysis settings (optional, the defaults are fine)</summary>
       <div>
-        <span class="fld">Onset threshold</span>
-        <div class="radio-row" role="radiogroup" aria-label="Onset threshold method">
-          <label><input type="radio" name="om" value="sd" checked> Mean + <input type="number" id="kSD" value="5" step="1" min="1" style="width:3.6rem;display:inline-block"> SD</label>
-          <label><input type="radio" name="om" value="fixed"> Fixed <input type="number" id="fixN" value="20" step="5" min="1" style="width:4.2rem;display:inline-block"> N</label>
+        <div class="settings">
+          <div><label class="fld" for="qStart">Quiet stance starts at (s)</label><input type="number" id="qStart" value="0" step="0.1" min="0"></div>
+          <div><label class="fld" for="qDur">Quiet stance length (s)</label><input type="number" id="qDur" value="1" step="0.1" min="0.2"></div>
+          <div>
+            <span class="fld">Onset threshold</span>
+            <div class="radio-row" role="radiogroup" aria-label="Onset threshold method">
+              <label><input type="radio" name="om" value="sd" checked> Mean + <input type="number" id="kSD" value="5" step="1" min="1" style="width:3.6rem;display:inline-block"> SD</label>
+              <label><input type="radio" name="om" value="fixed"> Fixed <input type="number" id="fixN" value="20" step="5" min="1" style="width:4.2rem;display:inline-block"> N</label>
+            </div>
+          </div>
+          <div id="fsWrap" hidden><label class="fld" for="fs">Sampling rate (Hz)</label><input type="number" id="fs" value="1000" step="1" min="50"><p class="hint">Only used when there is no time column.</p></div>
         </div>
+        <p class="hint">Try switching between <strong>5 SD</strong> and a <strong>fixed 20 N</strong> threshold and watch F50&ndash;F250 change while peak force barely moves.</p>
       </div>
-      <div><label class="fld" for="mass">Body mass (kg, optional)</label><input type="number" id="mass" placeholder="e.g. 78.5" step="0.1" min="20"></div>
-      <div id="fsWrap" hidden><label class="fld" for="fs">Sampling rate (Hz)</label><input type="number" id="fs" value="1000" step="1" min="50"><p class="hint">Only used when there is no time column.</p></div>
-    </div>
-    <p class="hint">Try switching between <strong>5 SD</strong> and a <strong>fixed 20 N</strong> threshold and watch how F50&ndash;F250 change while peak force barely moves. Onset choice matters most for the early time points.</p>
+    </details>
   </div>
 </section>
 
+
 <section class="card">
-  <div class="card-head h-teal"><div><span class="chip">Step 3</span><h2>Inspect each trial</h2></div></div>
+  <div class="card-head h-teal"><div><span class="chip">Step 2</span><h2>Check each trial</h2></div></div>
   <div class="card-body">
     <div id="noTrials" class="empty">Load your files (or the demo trials) to see the force–time curve.</div>
     <div id="trialArea" hidden>
-      <p class="lead small">Click a trial to inspect it. Untick a trial to leave it out of the reliability analysis (e.g. a trial that failed a quality check).</p>
+      <p class="lead small">Click a trial to look at it. Set each one to <strong>Pre</strong> or <strong>Post</strong>, and untick any trial that fails a quality check so it&rsquo;s left out of page 2.</p>
       <div id="trialChips" class="trials" aria-label="Trials"></div>
       <div id="spreadNote"></div>
 
@@ -245,11 +252,11 @@ footer p{margin:.2rem 0}
 </section>
 
 <section class="card">
-  <div class="card-head h-plum"><div><span class="chip">Step 4</span><h2>All trials</h2></div><button class="btn ghost" id="exportCsv" style="background:#fff">Download results (.csv)</button></div>
+  <div class="card-head h-plum"><div><span class="chip">Step 3</span><h2>All trials</h2></div><button class="btn ghost" id="exportCsv" style="background:#fff">Download results (.csv)</button></div>
   <div class="card-body">
     <div id="allEmpty" class="empty">Your trial results will appear here.</div>
     <div class="scroll"><table class="data" id="allTable"></table></div>
-    <p class="hint">The trial with the highest peak force is shaded. Take these values to page 2 to see how consistent they are.</p>
+    <p class="hint">The best peak force in each session is shaded. Go to page 2 to see whether your athlete improved.</p>
   </div>
 </section>
 </div>
@@ -258,90 +265,80 @@ footer p{margin:.2rem 0}
 <div id="p-reliab" class="panel" role="tabpanel" aria-labelledby="tab-reliab">
 
 <section class="card">
-  <div class="card-head h-navy"><div><span class="chip">Part A</span><h2>How consistent were my trials today?</h2></div></div>
+  <div class="card-head h-navy"><div><span class="chip">The question</span><h2>Did my athlete really improve?</h2></div></div>
   <div class="card-body">
-    <p class="lead">This uses the trials you loaded on page 1 (ticked trials only). The <strong>coefficient of variation (CV%)</strong> is the trial-to-trial spread as a percentage of your mean: CV% = SD &divide; mean &times; 100.</p>
-    <div id="wsEmpty" class="empty">Load at least two trials on page 1 to see within-session reliability.</div>
-    <div id="wsArea" hidden>
-      <div class="grid-chart">
-        <div class="scroll"><table class="data" id="wsTable"></table></div>
-        <div class="chartbox">
-          <h3>Trial-to-trial CV% by variable</h3>
-          <p class="sub">Dashed lines at 5% and 10%. Shorter bars mean a steadier measure.</p>
-          <div id="cvChart"></div>
-        </div>
-      </div>
-      <div class="aside small"><strong>Rule of thumb:</strong> CV &le;5% good, 5&ndash;10% acceptable, &gt;10% too noisy to track small changes. Expect peak force to be the steadiest and F50/F100 the noisiest. This is within-session variation only, and day-to-day variation is almost always bigger. That is why Part B uses two separate test days.</div>
-    </div>
-  </div>
-</section>
-
-<section class="card">
-  <div class="card-head h-teal"><div><span class="chip">Part B</span><h2>Class test–retest: typical error and smallest worthwhile change</h2></div></div>
-  <div class="card-body">
-    <p class="lead">To know how big a change must be, you need two things. The <strong>typical error (TE)</strong> is the noise in the test from one day to the next. The <strong>smallest worthwhile change (SWC)</strong> is the smallest change that matters in practice. Both need scores from <strong>several people tested on two days</strong>, so paste in the class data (e.g. everyone&rsquo;s best peak force on day 1 and day 2).</p>
+    <p class="lead">You test your athlete <strong>once before</strong> the 4-week programme and <strong>once after</strong>, with at least <strong>3 good trials</strong> each time. Every score has some noise in it, so a higher number on its own doesn&rsquo;t prove anything. This page runs two simple checks recommended for single athletes (Harry et al.):</p>
     <div class="grid2">
-      <div>
-        <div class="settings" style="margin-bottom:.8rem">
-          <div><label class="fld" for="varName">Variable</label><input type="text" id="varName" value="IMTP peak force"></div>
-          <div><label class="fld" for="varUnit">Units</label><input type="text" id="varUnit" value="N"></div>
-        </div>
-        <div class="scroll editable"><table class="data" id="classTable"></table></div>
-        <div class="btn-row" style="justify-content:flex-start">
-          <button class="btn ghost" id="addRow">Add row</button>
-          <button class="btn teal" id="exClass">Load example class data</button>
-          <button class="btn ghost" id="clearClass">Clear</button>
-        </div>
-        <details class="more">
-          <summary>Paste from Excel instead</summary>
-          <div>
-            <p class="hint">Copy two columns (Day 1, Day 2) or three columns (Name, Day 1, Day 2) from Excel and paste below.</p>
-            <textarea id="pasteBox" aria-label="Paste class data"></textarea>
-            <div class="btn-row" style="justify-content:flex-start"><button class="btn" id="pasteGo">Use pasted data</button></div>
-          </div>
-        </details>
-      </div>
-      <div>
-        <div class="tiles" id="classTiles"></div>
-        <div id="classVerdict"></div>
-        <div class="chartbox" style="margin-top:.8rem">
-          <h3>Day 1 vs Day 2</h3>
-          <p class="sub">Points on the dashed line scored the same on both days.</p>
-          <div id="scatter"></div>
-        </div>
-      </div>
+      <div class="box navy"><h3>Check 1 · Is the change bigger than chance?</h3><p class="small" style="margin:0">Compares the change with how much the trials bounced around in both sessions.</p></div>
+      <div class="box teal"><h3>Check 2 · Is it big enough to matter?</h3><p class="small" style="margin:0">Compares the % change with your athlete&rsquo;s normal variation at pre-test (their CV%).</p></div>
     </div>
-    <details class="more">
-      <summary>How these are calculated</summary>
-      <div class="small">
-        <ul>
-          <li><strong>Typical error (TE)</strong> = SD of the Day 2 &minus; Day 1 differences &divide; &radic;2 (Hopkins, 2000). TE% expresses it relative to the overall mean.</li>
-          <li><strong>Smallest worthwhile change (SWC)</strong> = 0.2 &times; between-subject SD (<em>Essentials</em>, Chapter 14). The Day 1 SD is used here.</li>
-          <li><strong>Minimal detectable change (MDC<sub>95</sub>)</strong> = TE &times; 1.96 &times; &radic;2. A change bigger than this is beyond test noise with 95% confidence.</li>
-          <li><strong>ICC(3,1)</strong> is a two-way mixed, consistency, single-measure ICC. Guide: &lt;0.5 poor, 0.5&ndash;0.75 moderate, 0.75&ndash;0.9 good, &gt;0.9 excellent (Koo &amp; Li, 2016).</li>
-          <li><strong>Mean bias</strong> is the average Day 2 &minus; Day 1 difference. A clear bias suggests a learning effect, so more familiarisation was needed.</li>
-        </ul>
-      </div>
-    </details>
+    <p class="hint">Pass both and you can call it a real, meaningful change. This is why you keep every good trial, not just the best one.</p>
   </div>
 </section>
 
 <section class="card">
-  <div class="card-head h-plum"><div><span class="chip">Part C</span><h2>Is my athlete&rsquo;s change real?</h2></div></div>
+  <div class="card-head h-blue"><div><span class="chip">Step 1</span><h2>Enter the pre- and post-test trials</h2></div></div>
   <div class="card-body">
-    <p class="lead">Enter your athlete&rsquo;s pre- and post-test scores. TE and SWC fill in from Part B, or you can type your own (e.g. from a published reliability study of a similar group).</p>
-    <div class="settings">
-      <div><label class="fld" for="pre">Pre-test</label><input type="number" id="pre" step="any"></div>
-      <div><label class="fld" for="post">Post-test</label><input type="number" id="post" step="any"></div>
-      <div><label class="fld" for="teIn">Typical error (TE)</label><input type="number" id="teIn" step="any"></div>
-      <div><label class="fld" for="swcIn">Smallest worthwhile change (SWC)</label><input type="number" id="swcIn" step="any"></div>
+    <div class="btn-row" style="justify-content:flex-start;margin-top:0;align-items:center">
+      <button class="btn" id="usePage1">Use my trials from page 1</button>
+      <label class="small" for="p1var" style="font-weight:bold;color:var(--navy)">Variable</label>
+      <select id="p1var" style="width:auto"></select>
+      <button class="btn ghost" id="exN1">Load an example</button>
     </div>
-    <div class="btn-row" style="justify-content:flex-start">
-      <button class="btn teal" id="useClass">Use TE and SWC from Part B</button>
-      <button class="btn ghost" id="useWS">Use my within-session peak force CV as TE</button>
+    <p class="hint" id="p1note">Label each trial Pre or Post on page 1 and untick any rejected trials first. Or just type the values in below.</p>
+    <div class="settings" style="margin:.9rem 0">
+      <div><label class="fld" for="n1Name">What you measured</label><input type="text" id="n1Name" value="IMTP peak force"></div>
+      <div><label class="fld" for="n1Unit">Units</label><input type="text" id="n1Unit" value="N"></div>
+      <div><label class="fld" for="n1Dir">Better when the score is</label><select id="n1Dir"><option value="higher">Higher</option><option value="lower">Lower (e.g. a time)</option></select></div>
     </div>
-    <p class="hint" id="useWSNote">The within-session option only needs your own trials, but it <strong>underestimates</strong> day-to-day noise, so treat the verdict as optimistic.</p>
-    <div id="changeOut"></div>
+    <div class="grid2">
+      <div><label class="fld" for="preTrials">Pre-test trials</label><textarea id="preTrials" placeholder="e.g. 2480, 2545, 2410" style="min-height:4.5rem"></textarea></div>
+      <div><label class="fld" for="postTrials">Post-test trials</label><textarea id="postTrials" placeholder="e.g. 2610, 2655, 2580" style="min-height:4.5rem"></textarea></div>
+    </div>
+    <p class="hint">One number per trial, separated by commas or new lines. At least 3 in each box.</p>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-head h-teal"><div><span class="chip">Step 2</span><h2>The working</h2></div></div>
+  <div class="card-body">
+    <div id="n1Empty" class="empty">Enter at least 3 pre-test and 3 post-test trials to see the working.</div>
+    <div id="n1Work" hidden>
+      <div class="scroll"><table class="data" id="sessTable"></table></div>
+      <div class="grid2" style="margin-top:1rem">
+        <div class="box navy" id="check1"></div>
+        <div class="box teal" id="check2"></div>
+      </div>
+      <details class="more">
+        <summary>Make the checks stricter or more sensitive (optional)</summary>
+        <div>
+          <div class="settings">
+            <div><label class="fld" for="n1Alpha">Check 1 confidence</label><select id="n1Alpha"><option value="0">90% (more sensitive)</option><option value="1" selected>95% (default)</option><option value="2">99% (stricter)</option></select></div>
+            <div><label class="fld" for="n1K">Check 2 threshold</label><select id="n1K"><option value="1" selected>1 × CV (default)</option><option value="1.5">1.5 × CV</option><option value="2">2 × CV (stricter)</option></select></div>
+          </div>
+          <p class="small" style="margin:.8rem 0 0">Stricter settings mean you&rsquo;ll rarely call a change real when it isn&rsquo;t (a <strong>Type I error</strong>, a false positive), but you&rsquo;ll miss more small real changes (a <strong>Type II error</strong>, a false negative). There&rsquo;s no right answer. Decide <strong>before</strong> you post-test and stick with it (Turner, 2022).</p>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-head h-plum"><div><span class="chip">Step 3</span><h2>The answer</h2></div></div>
+  <div class="card-body">
+    <div id="n1Verdict"><div class="empty">Your verdict will appear here.</div></div>
+    <div class="chartbox" id="n1ChartBox" style="margin-top:1rem" hidden>
+      <h3>Pre vs post</h3>
+      <p class="sub">Dots are trials. Each band is the mean &plusmn; 1 SD, the athlete&rsquo;s normal range that day (Turner, 2022).</p>
+      <div id="n1Chart"></div>
+      <p class="small" id="overlapNote" style="margin:.3rem 0 .4rem"></p>
+    </div>
+    <div class="box plum" id="writeBox" style="margin-top:1rem" hidden>
+      <h3>How you could write it up</h3>
+      <p id="writeUp" style="margin:0 0 .6rem"></p>
+      <button class="btn ghost" id="copyWrite">Copy text</button>
+    </div>
+    <div class="aside small"><strong>Only one number, like a 1RM?</strong> These checks need at least 3 trials per session, so they can&rsquo;t be used on a single 1RM. Report the change and the % change, and use your IMTP (or another multi-trial test) to judge whether strength really changed.</div>
   </div>
 </section>
 </div>
@@ -372,16 +369,22 @@ footer p{margin:.2rem 0}
       <li><strong>Pull duration:</strong> aim for 3&ndash;5 s of maximal effort.</li>
       <li><strong>Trial spread:</strong> if peak force differs by more than 15% between trials, do another trial.</li>
     </ul>
-    <h3>5. Reliability</h3>
-    <p>Part A tells you how consistent your trials were within one session. Part B uses the class test&ndash;retest data to get the typical error and smallest worthwhile change. Part C puts them together: a change is worth reporting when it is larger than both the TE and the SWC. It is very likely real when it also exceeds the MDC<sub>95</sub>.</p>
+    <h3>5. Did my athlete improve?</h3>
+    <p>Page 2 uses the two checks that Harry et al. recommend using together for a single athlete. Both need at least 3 trials in each session, and only one pre-test and one post-test session.</p>
+    <ul>
+      <li><strong>Check 1 (model statistic):</strong> the change in the mean is compared with a <em>critical difference</em> = critical value &times; average SD, where average SD = &radic;[(SD<sub>pre</sub>&sup2; + SD<sub>post</sub>&sup2;) &divide; 2]. The critical value comes from Table 1 of Harry et al. (from Bates et al., 1992) and depends on the number of trials and the confidence level (95% by default). If the sessions have different numbers of trials, the smaller number is used, which is the more cautious choice. The critical values were built from running force data, which is a limitation worth mentioning in your write-up.</li>
+      <li><strong>Check 2 (CV):</strong> the % change is compared with the athlete&rsquo;s pre-test CV (SD &divide; mean &times; 100). This is the same as asking whether the change is bigger than one pre-test SD (Turner, 2022).</li>
+      <li><strong>Why both?</strong> Check 1 tells you whether the change is likely to be more than random variation. Check 2 tells you whether it is large relative to the athlete&rsquo;s normal variation. Harry et al. found the different methods often disagree, so pick your method before you test and don&rsquo;t swap between them.</li>
+    </ul>
     <h3>References</h3>
     <ul class="small">
+      <li>Bates, B. T., Dufek, J. S., &amp; Davis, H. P. (1992). The effect of trial size on statistical power. <em>Medicine &amp; Science in Sports &amp; Exercise, 24</em>(9), 1059&ndash;1065.</li>
       <li>Bruno, J., Montoro-Bomb&uacute;, R., Thapa, R. K., &amp; Sarmento, H. (2025). Reliability of isometric mid-thigh pull for maximal strength testing in youth athletes: A systematic review. <em>International Journal of Sports Science &amp; Coaching, 20</em>(6).</li>
       <li>Comfort, P., Dos&rsquo;Santos, T., Beckham, G. K., Stone, M. H., Guppy, S. N., &amp; Haff, G. G. (2019). Standardization and methodological considerations for the isometric midthigh pull. <em>Strength and Conditioning Journal, 41</em>(2), 57&ndash;79.</li>
       <li>Dos&rsquo;Santos, T., Jones, P. A., Comfort, P., &amp; Thomas, C. (2017). Effect of different onset thresholds on isometric midthigh pull force-time variables. <em>Journal of Strength and Conditioning Research, 31</em>(12), 3463&ndash;3473.</li>
       <li>Haff, G. G. (Ed.). <em>Essentials of Strength Training and Conditioning</em> (5th ed.). Human Kinetics. Chapters 13, 14 and 18.</li>
-      <li>Hopkins, W. G. (2000). Measures of reliability in sports medicine and science. <em>Sports Medicine, 30</em>(1), 1&ndash;15.</li>
-      <li>Koo, T. K., &amp; Li, M. Y. (2016). A guideline of selecting and reporting intraclass correlation coefficients for reliability research. <em>Journal of Chiropractic Medicine, 15</em>(2), 155&ndash;163.</li>
+      <li>Harry, J. R., Hurwitz, J., Agnew, C., &amp; Bishop, C. (in press). Statistical tests for sports science practitioners: Identifying performance gains in individual athletes. <em>Journal of Strength and Conditioning Research</em>.</li>
+      <li>Turner, A. (2022). But did my athlete improve? Assessing performance changes when N = 1. <em>Professional Strength &amp; Conditioning, 63</em>, 27&ndash;31.</li>
     </ul>
   </div>
 </section>
@@ -424,7 +427,7 @@ tabs.forEach(([b,p])=>{
   $(b).addEventListener('click',()=>{
     tabs.forEach(([b2,p2])=>{ $(b2).setAttribute('aria-selected', b2===b ? 'true':'false'); $(p2).classList.toggle('active', p2===p); });
     if(p==='p-analyse') drawCharts();
-    if(p==='p-reliab'){ renderWithin(); renderClass(); renderChange(); }
+    if(p==='p-reliab'){ renderN1(); }
   });
 });
 
@@ -514,7 +517,7 @@ async function readFile(file){
   }
   const tb = buildTable(rows, decComma);
   const map = autoMap(tb);
-  return { name, tb, timeCol: map.timeCol, forceCols: map.forceCols, include:true };
+  return { name, tb, timeCol: map.timeCol, forceCols: map.forceCols, include:true, session: /post/i.test(name) ? 'Post' : 'Pre' };
 }
 
 /* ---------------- Signals & analysis ---------------- */
@@ -642,7 +645,7 @@ function runAll(){
   });
   $('fsWrap').hidden = !anyNoTime;
   renderAnalyse();
-  if($('p-reliab').classList.contains('active')){ renderWithin(); renderChange(); }
+  if($('p-reliab').classList.contains('active')){ renderN1(); }
 }
 
 /* ---------------- Page 1 rendering ---------------- */
@@ -664,6 +667,10 @@ function renderAnalyse(){
     cb.addEventListener('click',e=>{ e.stopPropagation(); tr.include=cb.checked; renderAllTable(); renderSpread(); });
     c.appendChild(cb);
     c.appendChild(el('span',{},'T'+(i+1)+' · '+tr.name));
+    const ss=el('select',{'aria-label':'Session for '+tr.name}); ['Pre','Post'].forEach(v=>{ const o=el('option',{value:v},v); if(tr.session===v) o.selected=true; ss.appendChild(o); });
+    ss.addEventListener('click',e=>e.stopPropagation()); ss.addEventListener('keydown',e=>e.stopPropagation());
+    ss.addEventListener('change',e=>{ tr.session=ss.value; renderAllTable(); renderSpread(); });
+    c.appendChild(ss);
     c.appendChild(tr.err ? stBadge('bad','Error') : stBadge(tr.res.status));
     const x=el('button',{class:'x','aria-label':'Remove '+tr.name, title:'Remove'},'×');
     x.addEventListener('click',e=>{ e.stopPropagation(); state.trials.splice(i,1); if(state.sel>=state.trials.length) state.sel=state.trials.length-1; renderAnalyse(); });
@@ -687,14 +694,16 @@ function renderAnalyse(){
 }
 function renderSpread(){
   const box=$('spreadNote'); box.innerHTML='';
-  const ok=state.trials.filter(t=>t.include && t.res);
-  if(ok.length<2) return;
-  const pf=ok.map(t=>t.res.PF); const mx=Math.max(...pf), mn=Math.min(...pf);
-  const sp=(mx-mn)/mn*100;
-  const p=el('p',{class:'small',style:'margin:.6rem 0 0'});
-  p.appendChild(stBadge(sp>15?'warn':'good', sp>15?'Check':'Pass'));
-  p.appendChild(document.createTextNode(' Peak force spread across ticked trials: '+fmt(sp,1)+'% '+(sp>15?'(more than 15%, so do an extra trial).':'(within 15%).')));
-  box.appendChild(p);
+  ['Pre','Post'].forEach(ses=>{
+    const ok=state.trials.filter(t=>t.include && t.res && t.session===ses);
+    if(ok.length<2) return;
+    const pf=ok.map(t=>t.res.PF); const mx=Math.max(...pf), mn=Math.min(...pf);
+    const sp=(mx-mn)/mn*100;
+    const p=el('p',{class:'small',style:'margin:.6rem 0 0'});
+    p.appendChild(stBadge(sp>15?'warn':'good', sp>15?'Check':'Pass'));
+    p.appendChild(document.createTextNode(' '+ses+'-test peak force spread: '+fmt(sp,1)+'% '+(sp>15?'(more than 15%, so do an extra trial).':'(within 15%).')));
+    box.appendChild(p);
+  });
 }
 function renderColMap(){
   const tr=state.trials[state.sel]; const {names, valid}=tr.tb;
@@ -765,14 +774,15 @@ function renderAllTable(){
   const hasLR = ok.some(t=>isFinite(t.res.ASYM));
   const vars = TABLE_VARS.filter(k=>k!=='ASYM'||hasLR).map(k=>VARS.find(v=>v.k===k));
   const thead=el('thead'); const hr=el('tr');
-  hr.appendChild(el('th',{},'Trial')); hr.appendChild(el('th',{},'Quality'));
+  hr.appendChild(el('th',{},'Trial')); hr.appendChild(el('th',{},'Session')); hr.appendChild(el('th',{},'Quality'));
   vars.forEach(v=>hr.appendChild(el('th',{class:'num'},v.lab+' ('+v.u+')')));
   thead.appendChild(hr); tb.appendChild(thead);
-  let best=-1,bv=-Infinity; state.trials.forEach((t,i)=>{ if(t.res && t.include && t.res.PF>bv){ bv=t.res.PF; best=i; } });
+  const best=new Set(); ['Pre','Post'].forEach(ses=>{ let b=-1,bv=-Infinity; state.trials.forEach((t,i)=>{ if(t.res && t.include && t.session===ses && t.res.PF>bv){ bv=t.res.PF; b=i; } }); if(b>=0) best.add(b); });
   const body=el('tbody');
   state.trials.forEach((t,i)=>{
-    const row=el('tr',{class:(i===best?'best':'')+(t.include?'':' off')});
+    const row=el('tr',{class:(best.has(i)?'best':'')+(t.include?'':' off')});
     row.appendChild(el('td',{},'T'+(i+1)+' · '+t.name+(t.include?'':' (excluded)')));
+    row.appendChild(el('td',{},t.session));
     const q=el('td'); q.appendChild(t.err?stBadge('bad','Error'):stBadge(t.res.status)); row.appendChild(q);
     vars.forEach(v=>row.appendChild(el('td',{class:'num'}, t.res ? fmt(t.res[v.k],v.dp) : '–')));
     body.appendChild(row);
@@ -783,11 +793,11 @@ $('exportCsv').addEventListener('click',()=>{
   if(!state.trials.length) return;
   const S=settings();
   const vars=VARS.filter(v=>!v.lr || state.trials.some(t=>t.res&&isFinite(t.res.ASYM)));
-  const head=['Trial','File','Included','Quality','Baseline (N)','Quiet SD (N)','Onset threshold (N)','Onset time (s)',...vars.map(v=>v.lab+' ('+v.u+')')];
+  const head=['Trial','File','Session','Included','Quality','Baseline (N)','Quiet SD (N)','Onset threshold (N)','Onset time (s)',...vars.map(v=>v.lab+' ('+v.u+')')];
   const lines=[head];
   state.trials.forEach((t,i)=>{
     const r=t.res;
-    lines.push(['T'+(i+1),t.name,t.include?'yes':'no', t.err?'error':SLAB[r.status], r?r.bw.toFixed(1):'', r?r.sd.toFixed(2):'', r?r.thr.toFixed(2):'', r?r.t0.toFixed(4):'', ...vars.map(v=> r&&isFinite(r[v.k]) ? (+r[v.k]).toFixed(Math.max(v.dp,2)) : '')]);
+    lines.push(['T'+(i+1),t.name,t.session,t.include?'yes':'no', t.err?'error':SLAB[r.status], r?r.bw.toFixed(1):'', r?r.sd.toFixed(2):'', r?r.thr.toFixed(2):'', r?r.t0.toFixed(4):'', ...vars.map(v=> r&&isFinite(r[v.k]) ? (+r[v.k]).toFixed(Math.max(v.dp,2)) : '')]);
   });
   lines.push([]); lines.push(['Settings','Quiet stance '+S.qStart+'–'+(S.qStart+S.qDur)+' s', S.method==='sd'?'Onset = mean + '+S.k+' SD':'Onset = baseline + '+S.fixedN+' N', S.mass?'Body mass '+S.mass+' kg':'Body mass from baseline']);
   const csv=lines.map(r=>r.map(c=>{ const s=String(c); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }).join(',')).join('\n');
@@ -913,7 +923,7 @@ function hideTip(){ tip.style.display='none'; }
   });
   c.addEventListener('pointerleave',()=>{ const g=c._geo; if(g) drawForce(c,g.tr,g.mode); hideTip(); });
 });
-let rsz; window.addEventListener('resize',()=>{ clearTimeout(rsz); rsz=setTimeout(()=>{ drawCharts(); if($('p-reliab').classList.contains('active')){ renderWithin(); renderClass(); renderChange(); } },120); });
+let rsz; window.addEventListener('resize',()=>{ clearTimeout(rsz); rsz=setTimeout(()=>{ drawCharts(); if($('p-reliab').classList.contains('active')){ renderN1(); } },120); });
 
 /* ---------------- Loading ---------------- */
 async function addFiles(files){
@@ -954,192 +964,142 @@ function demoText(rows){
   return 'Kistler BioWare style export (demo)\nSampling rate: 1000 Hz\n\nabs time (s)\tFz1 (N)\tFz2 (N)\n'+rows.map(r=>r[0].toFixed(3)+'\t'+r[1].toFixed(2)+'\t'+r[2].toFixed(2)).join('\n');
 }
 function loadDemo(){
-  const specs=[[11,2480,0.37,1.62,0,1.95],[23,2545,0.31,1.55,0,1.55],[37,2410,0.27,1.70,70,1.75]];
-  specs.forEach((s,i)=>{
-    const {rows,decComma}=splitText(demoText(demoTrial(...s)));
-    const tb=buildTable(rows,decComma); const map=autoMap(tb);
-    state.trials.push({name:'demo_trial_'+(i+1)+'.txt', tb, timeCol:map.timeCol, forceCols:map.forceCols, include:true});
+  const specs=[['Pre',[11,2480,0.37,1.62,0,1.95]],['Pre',[23,2545,0.31,1.55,0,1.55]],['Pre',[37,2410,0.27,1.70,70,1.75]],['Pre',[91,2450,0.34,1.60,0,1.7]],
+               ['Post',[41,2605,0.33,1.58,0,1.8]],['Post',[53,2660,0.30,1.60,0,1.6]],['Post',[67,2590,0.32,1.66,0,1.85]]];
+  const cnt={Pre:0,Post:0};
+  specs.forEach(([ses,sp])=>{
+    const {rows,decComma}=splitText(demoText(demoTrial(...sp)));
+    const tb=buildTable(rows,decComma); const map=autoMap(tb); cnt[ses]++;
+    state.trials.push({name:'demo_'+ses.toLowerCase()+'_'+cnt[ses]+'.txt', tb, timeCol:map.timeCol, forceCols:map.forceCols, include:true, session:ses});
   });
   if(state.sel<0) state.sel=0; runAll();
 }
 $('demo').addEventListener('click',e=>{ e.stopPropagation(); loadDemo(); });
 $('dlExample').addEventListener('click',e=>{ e.preventDefault(); const rows=demoTrial(11,2480,0.37,1.62,0,1.95); download('example_imtp_trial.csv','Time (s),Left Fz (N),Right Fz (N)\n'+rows.map(r=>r[0].toFixed(3)+','+r[1].toFixed(2)+','+r[2].toFixed(2)).join('\n')); });
 
-/* ---------------- Page 2: Part A ---------------- */
-const mean=a=>a.reduce((s,v)=>s+v,0)/a.length;
-const sdev=a=>{ const m=mean(a); return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1)); };
-function wsStats(){
-  const ok=state.trials.filter(t=>t.include&&t.res);
-  if(ok.length<2) return null;
-  const hasLR=ok.every(t=>isFinite(t.res.ASYM));
-  return VARS.filter(v=>(!v.lr||hasLR) && v.k!=='PFnet').map(v=>{ const a=ok.map(t=>t.res[v.k]).filter(isFinite); const m=mean(a), s=sdev(a); return {...v, n:a.length, m, s, cv: v.k==='ASYM'? NaN : Math.abs(s/m*100)}; });
-}
-function cvRate(cv){ return !isFinite(cv)?['info','n/a']: cv<=5?['good','Good']: cv<=10?['warn','Acceptable']:['bad','Poor']; }
-function renderWithin(){
-  const st=wsStats();
-  $('wsEmpty').hidden=!!st; $('wsArea').hidden=!st;
-  if(!st) return;
-  const tb=$('wsTable'); tb.innerHTML='';
-  const hr=el('tr'); ['Variable','Mean','SD','CV%','Rating'].forEach((h,i)=>hr.appendChild(el('th',{class:i&&i<4?'num':''},h)));
-  const th=el('thead'); th.appendChild(hr); tb.appendChild(th);
-  const body=el('tbody');
-  st.forEach(v=>{ const row=el('tr'); row.appendChild(el('td',{},v.lab+' ('+v.u+')')); row.appendChild(el('td',{class:'num'},fmt(v.m,v.dp))); row.appendChild(el('td',{class:'num'},fmt(v.s,v.dp+1))); row.appendChild(el('td',{class:'num'},isFinite(v.cv)?fmt(v.cv,1):'–')); const rc=cvRate(v.cv); const td=el('td'); td.appendChild(stBadge(rc[0],rc[1])); row.appendChild(td); body.appendChild(row); });
+/* ---------------- Page 2: did my athlete improve? (n = 1) ---------------- */
+// Model statistic critical values: Harry et al. (in press), Table 1, from Bates et al. (1992). [90%, 95%, 99%]
+const CRIT = {3:[1.3733,1.6533,2.2133],4:[1.2643,1.5058,1.9867],5:[1.1597,1.3662,1.7788],6:[1.0629,1.2408,1.6044],7:[0.9751,1.1306,1.4623],
+  8:[0.8960,1.0351,1.3473],9:[0.8270,0.9536,1.2542],10:[0.7673,0.8857,1.1776],11:[0.7172,0.8307,1.1129],12:[0.6757,0.7867,1.0581],
+  13:[0.6415,0.7516,1.0117],14:[0.6132,0.7234,0.9720],15:[0.5896,0.7001,0.9375],16:[0.5695,0.6798,0.9070],17:[0.5522,0.6618,0.8796],
+  18:[0.5371,0.6458,0.8548],19:[0.5237,0.6311,0.8318],20:[0.5114,0.6175,0.8102],25:[0.4592,0.5572,0.7145],30:[0.4194,0.5097,0.6437],
+  35:[0.3896,0.4729,0.5949],40:[0.3673,0.4442,0.5626],45:[0.3500,0.4207,0.5414],50:[0.3352,0.4000,0.5256]};
+const CONF = ['90%','95%','99%'];
+const mean = a => a.reduce((s,v)=>s+v,0)/a.length;
+const sdev = a => { const m=mean(a); return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1)); };
+const esc = t => String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function critValue(n, li){ const k=Math.max(...Object.keys(CRIT).map(Number).filter(x=>x<=n)); return { k, v:CRIT[k][li] }; }
+function parseTrials(txt){ return String(txt).split(/[\s,;]+/).map(x=>toNum(x,false)).filter(v=>isFinite(v)); }
+
+// variable picker for page 1 data
+VARS.filter(v=>!v.lr).forEach(v=>{ const o=el('option',{value:v.k},v.lab+' ('+v.u+')'); if(v.k==='PF') o.selected=true; $('p1var').appendChild(o); });
+
+$('usePage1').addEventListener('click',()=>{
+  const k=$('p1var').value, v=VARS.find(x=>x.k===k);
+  const ok=state.trials.filter(t=>t.include && t.res && isFinite(t.res[k]));
+  const pre=ok.filter(t=>t.session==='Pre').map(t=>t.res[k]), post=ok.filter(t=>t.session==='Post').map(t=>t.res[k]);
+  const note=$('p1note');
+  if(!pre.length && !post.length){ note.textContent='No trials found. Load your trials on page 1, label them Pre or Post, and make sure the good ones are ticked.'; return; }
+  const r=x=>+x.toFixed(v.dp+1);
+  $('preTrials').value=pre.map(r).join(', '); $('postTrials').value=post.map(r).join(', ');
+  $('n1Name').value=v.k==='PF'?'IMTP peak force':'IMTP '+v.lab; $('n1Unit').value=v.u; $('n1Dir').value=v.k==='tPF'?'lower':'higher';
+  note.textContent='Used '+pre.length+' pre-test and '+post.length+' post-test trials from page 1 (ticked trials only).'+(pre.length<3||post.length<3?' You need at least 3 in each.':'');
+  renderN1();
+});
+$('exN1').addEventListener('click',()=>{
+  $('preTrials').value='2480, 2545, 2410'; $('postTrials').value='2610, 2655, 2580';
+  $('n1Name').value='IMTP peak force'; $('n1Unit').value='N'; $('n1Dir').value='higher';
+  $('p1note').textContent='Example values loaded. Replace them with your own.'; renderN1();
+});
+['preTrials','postTrials','n1Name','n1Unit','n1Dir','n1Alpha','n1K'].forEach(id=>$(id).addEventListener('input',renderN1));
+['n1Dir','n1Alpha','n1K'].forEach(id=>$(id).addEventListener('change',renderN1));
+
+let lastWrite='';
+function renderN1(){
+  const pre=parseTrials($('preTrials').value), post=parseTrials($('postTrials').value);
+  const name=$('n1Name').value.trim()||'The score', u=$('n1Unit').value.trim(), U=u?' '+esc(u):'';
+  const higher=$('n1Dir').value==='higher', li=+$('n1Alpha').value, kCV=+$('n1K').value;
+  const ready = pre.length>=3 && post.length>=3;
+  $('n1Empty').hidden=ready; $('n1Work').hidden=!ready; $('n1ChartBox').hidden=!ready; $('writeBox').hidden=!ready;
+  if(!ready){
+    $('n1Empty').textContent='Enter at least 3 pre-test and 3 post-test trials to see the working (you have '+pre.length+' pre and '+post.length+' post).';
+    $('n1Verdict').innerHTML='<div class="empty">Your verdict will appear here.</div>'; return;
+  }
+  const m1=mean(pre), m2=mean(post), s1=sdev(pre), s2=sdev(post);
+  const big=Math.max(Math.abs(m1),Math.abs(m2)); const dp = big>=100?0 : big>=10?1 : 2; const f=(x,d=dp)=>fmt(x,d); const fs=x=>fmt(x,dp+1);
+  // session table
+  const tb=$('sessTable'); tb.innerHTML='';
+  const hr=el('tr'); ['Session','Trials','n','Mean','SD','CV%'].forEach((h,i)=>hr.appendChild(el('th',{class:i>=2?'num':''},h)));
+  const th=el('thead'); th.appendChild(hr); tb.appendChild(th); const body=el('tbody');
+  [['Pre-test',pre,m1,s1],['Post-test',post,m2,s2]].forEach(([lab,a,m,s])=>{ const r=el('tr'); r.appendChild(el('td',{},lab)); r.appendChild(el('td',{},a.map(x=>f(x,dp+1)).join(', '))); r.appendChild(el('td',{class:'num'},String(a.length))); r.appendChild(el('td',{class:'num'},f(m))); r.appendChild(el('td',{class:'num'},fs(s))); r.appendChild(el('td',{class:'num'},fmt(s/m*100,1)+'%')); body.appendChild(r); });
   tb.appendChild(body);
-  const cap=el('caption',{class:'sr'},'Within-session reliability across '+st[0].n+' trials'); tb.prepend(cap);
-  drawCV(st.filter(v=>isFinite(v.cv)));
+  // check 1: model statistic
+  const diff=Math.abs(m2-m1), sdm=Math.sqrt((s1*s1+s2*s2)/2), n=Math.min(pre.length,post.length), cv=critValue(n,li), cd=cv.v*sdm, real=diff>cd;
+  $('check1').innerHTML =
+    '<h3>Check 1 · Is the change bigger than chance?</h3>'+
+    '<div class="formula"><span class="step">a. Change</span>|mean<sub>post</sub> &minus; mean<sub>pre</sub>| = |'+f(m2)+' &minus; '+f(m1)+'| = <span class="res">'+f(diff)+U+'</span></div>'+
+    '<div class="formula"><span class="step">b. Average SD</span>&radic;[(SD<sub>pre</sub>&sup2; + SD<sub>post</sub>&sup2;) &divide; 2] = &radic;[('+fs(s1)+'&sup2; + '+fs(s2)+'&sup2;) &divide; 2] = <span class="res">'+fs(sdm)+U+'</span></div>'+
+    '<div class="formula"><span class="step">c. Critical difference</span>critical value &times; average SD = '+cv.v.toFixed(4)+' &times; '+fs(sdm)+' = <span class="res">'+f(cd,dp+1)+U+'</span>'+
+      '<br><span class="hint">Critical value for '+cv.k+' trials at '+CONF[li]+' confidence (Harry et al., Table 1).'+(pre.length!==post.length?' The smaller number of trials is used.':'')+(cv.k!==n?' Nearest listed value below '+n+' trials.':'')+'</span></div>'+
+    '<p class="ans '+(real?'yes':'no')+'">'+(real?'✓ Yes. ':'✕ No. ')+f(diff)+U+(real?' is bigger than ':' is not bigger than ')+f(cd,dp+1)+U+'.</p>';
+  // check 2: CV
+  const pct=(m2-m1)/m1*100, cv1=s1/m1*100, thr=kCV*cv1, meaningful=Math.abs(pct)>thr, sgn=pct>0?'+':'';
+  $('check2').innerHTML =
+    '<h3>Check 2 · Is it big enough to matter?</h3>'+
+    '<div class="formula"><span class="step">a. % change</span>(mean<sub>post</sub> &minus; mean<sub>pre</sub>) &divide; mean<sub>pre</sub> &times; 100 = ('+f(m2)+' &minus; '+f(m1)+') &divide; '+f(m1)+' &times; 100 = <span class="res">'+sgn+fmt(pct,1)+'%</span></div>'+
+    '<div class="formula"><span class="step">b. Pre-test CV</span>SD<sub>pre</sub> &divide; mean<sub>pre</sub> &times; 100 = '+fs(s1)+' &divide; '+f(m1)+' &times; 100 = <span class="res">'+fmt(cv1,1)+'%</span></div>'+
+    (kCV!==1?'<div class="formula"><span class="step">c. Threshold</span>'+kCV+' &times; CV = '+kCV+' &times; '+fmt(cv1,1)+' = <span class="res">'+fmt(thr,1)+'%</span></div>':'')+
+    '<p class="ans '+(meaningful?'yes':'no')+'">'+(meaningful?'✓ Yes. ':'✕ No. ')+'A '+fmt(Math.abs(pct),1)+'% change'+(meaningful?' is bigger than ':' is not bigger than ')+fmt(thr,1)+'%.</p>';
+  // verdict
+  const better = higher ? m2>m1 : m2<m1;
+  let cls, h, txt, phrase;
+  if(real && meaningful){ cls=better?'good':'bad'; h=better?'✓ A real, meaningful improvement':'✕ A real, meaningful decline';
+    txt='The change passed both checks: it is bigger than chance and bigger than the athlete’s normal variation.'; phrase=better?'a real and meaningful improvement':'a real and meaningful decline'; }
+  else if(real){ cls='warn'; h='! A real change, but a small one'; txt='The change is bigger than chance, but no bigger than the athlete’s normal variation at pre-test. Report it cautiously.'; phrase='a real but small change'; }
+  else if(meaningful){ cls='warn'; h='! Looks meaningful, but could be chance'; txt='The change is bigger than the athlete’s normal variation, but the trials varied too much to rule out chance. More consistent trials (or more of them) would help.'; phrase='a possible change that could not be separated from chance'; }
+  else { cls='bad'; h='✕ No clear change'; txt='The change is within the noise of the test, so you can’t say the athlete improved or got worse.'; phrase='no clear change'; }
+  if(!(real&&meaningful)) cls = cls==='bad' ? 'bad' : 'warn';
+  $('n1Verdict').innerHTML='<div class="verdict '+cls+'" style="margin-top:0"><h3>'+h+'</h3><p>'+txt+'</p></div>';
+  // write-up
+  lastWrite = name+' '+(m2>m1?'increased':m2<m1?'decreased':'did not change')+' from '+f(m1)+(u?' '+u:'')+' (SD '+fs(s1)+') at pre-test to '+f(m2)+(u?' '+u:'')+' (SD '+fs(s2)+') at post-test, a change of '+(m2-m1>0?'+':'')+f(m2-m1)+(u?' '+u:'')+' ('+sgn+fmt(pct,1)+'%). '+
+    'This was '+(real?'larger':'smaller')+' than the critical difference of '+f(cd,dp+1)+(u?' '+u:'')+' (model statistic, '+CONF[li]+' confidence, '+cv.k+' trials) and '+(meaningful?'larger':'smaller')+' than '+(kCV!==1?kCV+' × ':'')+'the pre-test CV ('+fmt(cv1,1)+'%), so it was classed as '+phrase+' (Harry et al., in press).';
+  $('writeUp').textContent=lastWrite;
+  drawN1(pre,post,m1,m2,s1,s2,u,dp);
 }
+$('copyWrite').addEventListener('click',()=>{
+  const b=$('copyWrite');
+  const done=()=>{ b.textContent='Copied'; setTimeout(()=>b.textContent='Copy text',1500); };
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(lastWrite).then(done,()=>{});
+  else { const r=document.createRange(); r.selectNodeContents($('writeUp')); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+});
+
 function svgEl(tag,attrs){ const e=document.createElementNS('http://www.w3.org/2000/svg',tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
 function bindTip(node, rows){ node.addEventListener('pointermove',e=>showTip(e.clientX,e.clientY,rows)); node.addEventListener('pointerleave',hideTip); node.addEventListener('focus',()=>{ const r=node.getBoundingClientRect(); showTip(r.right,r.top,rows); }); node.addEventListener('blur',hideTip); }
-function drawCV(st){
-  const box=$('cvChart'); box.innerHTML='';
-  const w=Math.max(280,box.clientWidth||420), rowH=24, m={l:150,r:52,t:10,b:30}, h=m.t+m.b+rowH*st.length;
-  const maxCV=Math.max(12,...st.map(v=>v.cv))*1.08;
-  const X=v=>m.l+v/maxCV*(w-m.l-m.r);
-  const svg=svgEl('svg',{viewBox:`0 0 ${w} ${h}`,width:'100%',role:'img','aria-label':'Bar chart of trial-to-trial CV% for each variable'});
-  niceTicks(0,maxCV,5).forEach(v=>{ const x=X(v); svg.appendChild(svgEl('line',{x1:x,x2:x,y1:m.t,y2:h-m.b,stroke:'#e8eef1'})); const tx=svgEl('text',{x,y:h-m.b+16,'text-anchor':'middle','font-size':11,fill:'#5b6770'}); tx.textContent=v+'%'; svg.appendChild(tx); });
-  [5,10].forEach(v=>svg.appendChild(svgEl('line',{x1:X(v),x2:X(v),y1:m.t,y2:h-m.b,stroke:'#5b6770','stroke-dasharray':'4 3','stroke-width':1})));
-  st.forEach((v,i)=>{
-    const y=m.t+i*rowH+4, bh=rowH-8;
-    const lab=svgEl('text',{x:m.l-8,y:y+bh/2+4,'text-anchor':'end','font-size':12,fill:'#3d4a52'}); lab.textContent=v.lab; svg.appendChild(lab);
-    const bw=Math.max(2,X(v.cv)-m.l);
-    const g=svgEl('g',{tabindex:'0'});
-    g.appendChild(svgEl('rect',{x:m.l,y:m.t+i*rowH,width:w-m.l-m.r+40,height:rowH,fill:'transparent'}));
-    g.appendChild(svgEl('path',{d:`M${m.l},${y} h${bw-4} a4,4 0 0 1 4,4 v${bh-8} a4,4 0 0 1 -4,4 h${-(bw-4)} z`,fill:'#0071bc'}));
-    const vt=svgEl('text',{x:m.l+bw+5,y:y+bh/2+4,'font-size':11,fill:'#3d4a52','font-weight':'bold'}); vt.textContent=fmt(v.cv,1)+'%'; g.appendChild(vt);
-    bindTip(g,[{l:v.lab,v:fmt(v.cv,1)+'%'},{l:'Mean',v:fmt(v.m,v.dp)+' '+v.u},{l:'SD',v:fmt(v.s,v.dp+1)+' '+v.u}]);
-    svg.appendChild(g);
+function drawN1(pre,post,m1,m2,s1,s2,u,dp){
+  const box=$('n1Chart'); box.innerHTML='';
+  const w=Math.max(300, box.clientWidth||600), h=190, m={l:78,r:20,t:14,b:46};
+  const all=[...pre,...post,m1-s1,m1+s1,m2-s2,m2+s2]; let lo=Math.min(...all), hi=Math.max(...all); const pad=(hi-lo)*0.12||1; lo-=pad; hi+=pad;
+  const X=v=>m.l+(v-lo)/(hi-lo)*(w-m.l-m.r);
+  const svg=svgEl('svg',{viewBox:`0 0 ${w} ${h}`,width:'100%',role:'img','aria-label':'Pre-test and post-test trials with mean plus or minus one SD'});
+  niceTicks(lo,hi,5).forEach(v=>{ const x=X(v); svg.appendChild(svgEl('line',{x1:x,x2:x,y1:m.t,y2:h-m.b,stroke:'#e8eef1'})); const t=svgEl('text',{x,y:h-m.b+16,'text-anchor':'middle','font-size':11,fill:'#5b6770'}); t.textContent=fmt(v,dp); svg.appendChild(t); });
+  const xl=svgEl('text',{x:m.l+(w-m.l-m.r)/2,y:h-8,'text-anchor':'middle','font-size':12,fill:'#5b6770'}); xl.textContent=($('n1Name').value||'Score')+(u?' ('+u+')':''); svg.appendChild(xl);
+  const rowH=(h-m.t-m.b)/2;
+  [['Pre-test',pre,m1,s1,'#0071bc','rgba(0,113,188,.14)'],['Post-test',post,m2,s2,'#8b3556','rgba(139,53,86,.14)']].forEach(([lab,a,mm,s,col,fill],i)=>{
+    const yc=m.t+rowH*(i+.5);
+    const lt=svgEl('text',{x:m.l-10,y:yc+4,'text-anchor':'end','font-size':12.5,'font-weight':'bold',fill:'#1d1d1b'}); lt.textContent=lab; svg.appendChild(lt);
+    svg.appendChild(svgEl('rect',{x:X(mm-s),y:yc-17,width:Math.max(2,X(mm+s)-X(mm-s)),height:34,rx:6,fill,stroke:col,'stroke-width':1}));
+    svg.appendChild(svgEl('line',{x1:X(mm),x2:X(mm),y1:yc-19,y2:yc+19,stroke:col,'stroke-width':3}));
+    a.forEach((v,j)=>{ const g=svgEl('g',{tabindex:'0'}); g.appendChild(svgEl('circle',{cx:X(v),cy:yc,r:12,fill:'transparent'})); g.appendChild(svgEl('circle',{cx:X(v),cy:yc,r:6,fill:col,stroke:'#fff','stroke-width':2}));
+      bindTip(g,[{l:lab+' trial '+(j+1),v:fmt(v,dp+1)+(u?' '+u:''),col}]); svg.appendChild(g); });
+    const band=svgEl('rect',{x:X(mm-s),y:yc-17,width:Math.max(2,X(mm+s)-X(mm-s)),height:34,fill:'transparent'}); bindTip(band,[{l:lab+' mean',v:fmt(mm,dp)+(u?' '+u:''),col},{l:'± 1 SD',v:fmt(mm-s,dp)+' to '+fmt(mm+s,dp)}]);
+    svg.insertBefore(band, svg.children[svg.children.length-a.length]);
   });
-  const xl=svgEl('text',{x:m.l+(w-m.l-m.r)/2,y:h-2,'text-anchor':'middle','font-size':11,fill:'#5b6770'}); xl.textContent='CV%'; svg.appendChild(xl);
   box.appendChild(svg);
+  const clear = (m2-s2>m1+s1) || (m2+s2<m1-s1);
+  $('overlapNote').textContent = clear ? 'The two bands don’t overlap, so the change is bigger than both sessions’ normal variation.' : 'The two bands overlap, so part of the change sits within the athlete’s normal day-to-day range.';
 }
 
-/* ---------------- Page 2: Part B ---------------- */
-let classRows = Array.from({length:10},(_,i)=>({id:'Student '+(i+1),d1:'',d2:''}));
-function renderClassTable(){
-  const tb=$('classTable'); tb.innerHTML='';
-  const hr=el('tr'); ['Name','Day 1','Day 2','Change',''].forEach((h,i)=>hr.appendChild(el('th',{class:i&&i<4?'num':''},h)));
-  const th=el('thead'); th.appendChild(hr); tb.appendChild(th);
-  const body=el('tbody');
-  classRows.forEach((r,i)=>{
-    const row=el('tr');
-    ['id','d1','d2'].forEach(k=>{ const td=el('td',{class:k==='id'?'':'num'}); const inp=el('input',{type:k==='id'?'text':'number',step:'any','aria-label':k==='id'?'Name row '+(i+1):(k==='d1'?'Day 1':'Day 2')+' row '+(i+1)}); inp.value=r[k]; inp.style.textAlign=k==='id'?'left':'right';
-      inp.addEventListener('input',()=>{ r[k]=inp.value; updChange(row,r); renderClass(false); }); td.appendChild(inp); row.appendChild(td); });
-    row.appendChild(el('td',{class:'num'}));
-    const td=el('td'); const x=el('button',{class:'x btn ghost',style:'padding:.1rem .45rem','aria-label':'Remove row '+(i+1)},'×'); x.addEventListener('click',()=>{ classRows.splice(i,1); renderClassTable(); renderClass(false); }); td.appendChild(x); row.appendChild(td);
-    updChange(row,r); body.appendChild(row);
-  });
-  tb.appendChild(body);
-}
-function updChange(row,r){ const a=parseFloat(r.d1), b=parseFloat(r.d2); row.children[3].textContent = isFinite(a)&&isFinite(b) ? ((b-a>0?'+':'')+fmt(b-a,1)) : ''; }
-let classRes=null;
-function classStats(){
-  const p=classRows.map(r=>[parseFloat(r.d1),parseFloat(r.d2),r.id]).filter(r=>isFinite(r[0])&&isFinite(r[1]));
-  if(p.length<3) return null;
-  const d=p.map(r=>r[1]-r[0]); const n=p.length;
-  const all=p.flatMap(r=>[r[0],r[1]]); const gm=mean(all);
-  const te=sdev(d)/Math.SQRT2; const sdB=sdev(p.map(r=>r[0]));
-  const swc=0.2*sdB; const mdc=te*1.96*Math.SQRT2;
-  // ICC(3,1)
-  const k=2; let ssr=0, sst=0; p.forEach(r=>{ const rm=(r[0]+r[1])/2; ssr+=k*(rm-gm)**2; sst+=(r[0]-gm)**2+(r[1]-gm)**2; });
-  const cm=[mean(p.map(r=>r[0])),mean(p.map(r=>r[1]))]; const ssc=n*cm.reduce((s,v)=>s+(v-gm)**2,0);
-  const sse=sst-ssr-ssc; const msr=ssr/(n-1), mse=sse/((n-1)*(k-1));
-  const icc=(msr-mse)/(msr+(k-1)*mse);
-  return {p,n,bias:mean(d),te,tePct:te/gm*100,swc,mdc,icc,sdB,gm};
-}
-function iccRate(v){ return v>0.9?['good','Excellent']:v>0.75?['good','Good']:v>0.5?['warn','Moderate']:['bad','Poor']; }
-function renderClass(redrawTable=true){
-  if(redrawTable && !$('classTable').children.length) renderClassTable();
-  const u=$('varUnit').value||''; const st=classStats(); classRes=st;
-  const tiles=$('classTiles'); tiles.innerHTML=''; $('classVerdict').innerHTML=''; $('scatter').innerHTML='';
-  if(!st){ tiles.appendChild(el('div',{class:'empty',style:'grid-column:1/-1'},'Enter Day 1 and Day 2 scores for at least 3 people (10+ is better).')); return; }
-  const dp = st.gm>200?0:st.gm>20?1:2;
-  tiles.appendChild(tile('Typical error',fmt(st.te,dp+1),u,'TE% '+fmt(st.tePct,1)+'%'));
-  tiles.appendChild(tile('Smallest worthwhile change',fmt(st.swc,dp+1),u,'0.2 × SD ('+fmt(st.sdB,dp)+')'));
-  tiles.appendChild(tile('MDC95',fmt(st.mdc,dp+1),u,'TE × 1.96 × √2'));
-  const ir=iccRate(st.icc); const it=tile('ICC(3,1)',fmt(st.icc,2),'',ir[1]+' · n = '+st.n); tiles.appendChild(it);
-  tiles.appendChild(tile('Mean bias (Day 2 − Day 1)',(st.bias>0?'+':'')+fmt(st.bias,dp+1),u, Math.abs(st.bias)>st.te?'Bigger than TE, so a learning effect is likely':'Small relative to TE'));
-  const ratio=st.te/st.swc; let cls,h,txt;
-  if(ratio<=1){ cls='good'; h='✓ This test can detect a worthwhile change'; txt='The noise (TE '+fmt(st.te,dp+1)+' '+u+') is smaller than the smallest worthwhile change ('+fmt(st.swc,dp+1)+' '+u+'), so a change just above the SWC is likely to be real.'; }
-  else if(ratio<=2){ cls='warn'; h='! Adequate, but only for larger changes'; txt='The noise (TE '+fmt(st.te,dp+1)+' '+u+') is bigger than the smallest worthwhile change ('+fmt(st.swc,dp+1)+' '+u+'). Small real changes can be hidden by noise, so look for changes bigger than the TE.'; }
-  else { cls='bad'; h='✕ Too noisy to track small changes'; txt='The noise (TE '+fmt(st.te,dp+1)+' '+u+') is more than double the smallest worthwhile change ('+fmt(st.swc,dp+1)+' '+u+'). Improve standardisation and familiarisation, or use a steadier variable.'; }
-  const v=el('div',{class:'verdict '+cls}); v.appendChild(el('h3',{},h)); v.appendChild(el('p',{},txt)); $('classVerdict').appendChild(v);
-  drawScatter(st,u,dp);
-}
-function drawScatter(st,u,dp){
-  const box=$('scatter'); const w=Math.max(260,box.clientWidth||380), h=280, m={l:62,r:14,t:10,b:44};
-  const all=st.p.flatMap(r=>[r[0],r[1]]); let lo=Math.min(...all), hi=Math.max(...all); const pad=(hi-lo)*0.1||1; lo-=pad; hi+=pad;
-  const X=v=>m.l+(v-lo)/(hi-lo)*(w-m.l-m.r), Y=v=>m.t+(1-(v-lo)/(hi-lo))*(h-m.t-m.b);
-  const svg=svgEl('svg',{viewBox:`0 0 ${w} ${h}`,width:'100%',role:'img','aria-label':'Scatter plot of Day 1 against Day 2 scores'});
-  niceTicks(lo,hi,5).forEach(v=>{ svg.appendChild(svgEl('line',{x1:m.l,x2:w-m.r,y1:Y(v),y2:Y(v),stroke:'#e8eef1'})); const t1=svgEl('text',{x:m.l-6,y:Y(v)+4,'text-anchor':'end','font-size':11,fill:'#5b6770'}); t1.textContent=fmt(v,dp); svg.appendChild(t1); const t2=svgEl('text',{x:X(v),y:h-m.b+16,'text-anchor':'middle','font-size':11,fill:'#5b6770'}); t2.textContent=fmt(v,dp); svg.appendChild(t2); });
-  svg.appendChild(svgEl('line',{x1:X(lo),y1:Y(lo),x2:X(hi),y2:Y(hi),stroke:'#5b6770','stroke-dasharray':'5 4'}));
-  const xl=svgEl('text',{x:m.l+(w-m.l-m.r)/2,y:h-6,'text-anchor':'middle','font-size':12,fill:'#5b6770'}); xl.textContent='Day 1 ('+u+')'; svg.appendChild(xl);
-  const yl=svgEl('text',{x:14,y:m.t+(h-m.t-m.b)/2,'text-anchor':'middle','font-size':12,fill:'#5b6770',transform:`rotate(-90 14 ${m.t+(h-m.t-m.b)/2})`}); yl.textContent='Day 2 ('+u+')'; svg.appendChild(yl);
-  st.p.forEach(r=>{ const g=svgEl('g',{tabindex:'0'}); g.appendChild(svgEl('circle',{cx:X(r[0]),cy:Y(r[1]),r:12,fill:'transparent'})); g.appendChild(svgEl('circle',{cx:X(r[0]),cy:Y(r[1]),r:5,fill:'#00857e',stroke:'#fff','stroke-width':2}));
-    bindTip(g,[{l:r[2]||'',v:''},{l:'Day 1',v:fmt(r[0],dp)+' '+u},{l:'Day 2',v:fmt(r[1],dp)+' '+u},{l:'Change',v:(r[1]-r[0]>0?'+':'')+fmt(r[1]-r[0],dp)+' '+u}]); svg.appendChild(g); });
-  box.appendChild(svg);
-}
-$('addRow').addEventListener('click',()=>{ classRows.push({id:'Student '+(classRows.length+1),d1:'',d2:''}); renderClassTable(); });
-$('clearClass').addEventListener('click',()=>{ classRows=Array.from({length:10},(_,i)=>({id:'Student '+(i+1),d1:'',d2:''})); renderClassTable(); renderClass(false); });
-$('exClass').addEventListener('click',()=>{
-  const ex=[[2450,2510],[1980,2035],[2890,2850],[1760,1810],[2230,2195],[3120,3205],[2045,2090],[2610,2575],[1890,1945],[2380,2440]];
-  classRows=ex.map((r,i)=>({id:'Student '+(i+1),d1:String(r[0]),d2:String(r[1])})); $('varName').value='IMTP peak force'; $('varUnit').value='N'; renderClassTable(); renderClass(false);
-});
-$('pasteGo').addEventListener('click',()=>{
-  const lines=$('pasteBox').value.split(/\r?\n/).filter(l=>l.trim()); const out=[];
-  lines.forEach((l,i)=>{ const c=l.split(/\t|,|;/).map(s=>s.trim()); const nums=c.map(x=>toNum(x,true));
-    if(c.length>=3 && isFinite(nums[1]) && isFinite(nums[2])) out.push({id:c[0]||('Row '+(i+1)),d1:String(nums[1]),d2:String(nums[2])});
-    else if(c.length>=2 && isFinite(nums[0]) && isFinite(nums[1])) out.push({id:'Row '+(i+1),d1:String(nums[0]),d2:String(nums[1])}); });
-  if(out.length){ classRows=out; renderClassTable(); renderClass(false); }
-});
-$('varUnit').addEventListener('input',()=>renderClass(false));
 
-/* ---------------- Page 2: Part C ---------------- */
-$('useClass').addEventListener('click',()=>{ if(!classRes){ alertInline('Enter class data in Part B first.'); return; } $('teIn').value=+classRes.te.toFixed(2); $('swcIn').value=+classRes.swc.toFixed(2); renderChange(); });
-$('useWS').addEventListener('click',()=>{
-  const st=wsStats(); const pre=parseFloat($('pre').value);
-  if(!st){ alertInline('Load at least two trials on page 1 first.'); return; }
-  if(!isFinite(pre)){ alertInline('Enter the pre-test score first. TE is estimated as CV% × pre-test.'); return; }
-  const pf=st.find(v=>v.k==='PF'); $('teIn').value=+(pf.cv/100*pre).toFixed(2); renderChange();
-});
-function alertInline(msg){ const o=$('changeOut'); o.innerHTML=''; const d=el('div',{class:'err'}); d.textContent=msg; o.appendChild(d); }
-['pre','post','teIn','swcIn'].forEach(id=>$(id).addEventListener('input',renderChange));
-function renderChange(){
-  const o=$('changeOut'); const pre=parseFloat($('pre').value), post=parseFloat($('post').value), te=parseFloat($('teIn').value), swc=parseFloat($('swcIn').value);
-  o.innerHTML='';
-  if(![pre,post,te,swc].every(isFinite)){ o.appendChild(el('div',{class:'empty',style:'margin-top:1rem'},'Enter pre, post, TE and SWC to see the verdict.')); return; }
-  const ch=post-pre, pct=ch/pre*100, mdc=te*1.96*Math.SQRT2, a=Math.abs(ch), u=$('varUnit').value||'';
-  const dir = ch>0?'increase':'decrease';
-  const tiles=el('div',{class:'tiles',style:'margin-top:1rem'});
-  tiles.appendChild(tile('Change',(ch>0?'+':'')+fmt(ch,1),u,(pct>0?'+':'')+fmt(pct,1)+'%'));
-  tiles.appendChild(tile('Typical error',fmt(te,1),u)); tiles.appendChild(tile('SWC',fmt(swc,1),u)); tiles.appendChild(tile('MDC95',fmt(mdc,1),u));
-  o.appendChild(tiles);
-  const box=el('div',{class:'chartbox'}); box.appendChild(el('h3',{},'Where the change sits')); box.appendChild(el('p',{class:'sub'},'Shaded band = ± smallest worthwhile change. Dashed = ± typical error. Dotted = ± MDC95.'));
-  const holder=el('div'); box.appendChild(holder); o.appendChild(box);
-  let cls,h,txt;
-  if(a<=te || a<=swc){ cls='bad'; h='✕ Not clearly a real change';
-    txt = a<=te && a<=swc ? 'The '+dir+' of '+fmt(a,1)+' '+u+' is within the test noise (TE) and smaller than the smallest worthwhile change.' : a<=te ? 'The '+dir+' of '+fmt(a,1)+' '+u+' is bigger than the SWC but still within the test noise (TE), so it could just be measurement error.' : 'The '+dir+' of '+fmt(a,1)+' '+u+' is bigger than the test noise but smaller than the smallest worthwhile change, so it may be real but too small to matter.'; }
-  else if(a<mdc){ cls='warn'; h='! Likely a real, worthwhile '+dir; txt='The '+dir+' of '+fmt(a,1)+' '+u+' is bigger than both the TE and the SWC, so it is worth reporting. It is below the MDC95 ('+fmt(mdc,1)+' '+u+'), so be cautious about how certain you sound.'; }
-  else { cls='good'; h='✓ Very likely a real, worthwhile '+dir; txt='The '+dir+' of '+fmt(a,1)+' '+u+' is bigger than the SWC and beyond the MDC95 ('+fmt(mdc,1)+' '+u+'), so it is very unlikely to be measurement noise.'; }
-  const v=el('div',{class:'verdict '+cls}); v.appendChild(el('h3',{},h)); v.appendChild(el('p',{},txt)); o.appendChild(v);
-  // number line
-  const w=Math.max(280,holder.clientWidth||600), H=130, m={l:24,r:24,t:34,b:36};
-  const R=Math.max(a,mdc,swc,te)*1.35;
-  const X=v=>m.l+(v+R)/(2*R)*(w-m.l-m.r); const yM=m.t+(H-m.t-m.b)/2;
-  const svg=svgEl('svg',{viewBox:`0 0 ${w} ${H}`,width:'100%',role:'img','aria-label':'Number line showing the change relative to the typical error, smallest worthwhile change and MDC'});
-  svg.appendChild(svgEl('rect',{x:X(-swc),y:m.t,width:X(swc)-X(-swc),height:H-m.t-m.b,fill:'rgba(0,133,126,.14)',rx:4}));
-  [[te,'5 4','TE'],[mdc,'2 3','MDC95']].forEach(([val,da,lab])=>[-1,1].forEach(sg=>{ const x=X(sg*val); svg.appendChild(svgEl('line',{x1:x,x2:x,y1:m.t-4,y2:H-m.b+4,stroke:'#3d4a52','stroke-dasharray':da})); if(sg>0){ const t=svgEl('text',{x,y:m.t-8,'text-anchor':'middle','font-size':11,fill:'#3d4a52'}); t.textContent=lab; svg.appendChild(t);} }));
-  const ts=svgEl('text',{x:X(swc)-4,y:H-m.b-6,'text-anchor':'end','font-size':11,fill:'#00625d','font-weight':'bold'}); ts.textContent='SWC'; svg.appendChild(ts);
-  svg.appendChild(svgEl('line',{x1:m.l,x2:w-m.r,y1:yM,y2:yM,stroke:'#b9c7cf'}));
-  svg.appendChild(svgEl('line',{x1:X(0),x2:X(0),y1:yM-8,y2:yM+8,stroke:'#1d1d1b'}));
-  const z=svgEl('text',{x:X(0),y:H-m.b+18,'text-anchor':'middle','font-size':11,fill:'#5b6770'}); z.textContent='0 (no change)'; svg.appendChild(z);
-  const col=cls==='good'?'#1b7a45':cls==='warn'?'#8a5a00':'#b42318';
-  svg.appendChild(svgEl('circle',{cx:X(ch),cy:yM,r:8,fill:col,stroke:'#fff','stroke-width':2}));
-  const lt=svgEl('text',{x:X(ch),y:yM+26,'text-anchor':'middle','font-size':12,fill:'#1d1d1b','font-weight':'bold'}); lt.textContent=(ch>0?'+':'')+fmt(ch,1)+' '+u; svg.appendChild(lt);
-  holder.appendChild(svg);
-}
-
-/* init */
-renderClassTable();
 })();
 </script>
 </body>
