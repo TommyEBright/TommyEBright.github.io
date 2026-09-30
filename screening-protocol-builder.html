@@ -35,6 +35,9 @@ section.lab.active{display:block}
 @media (max-width:640px){.body{padding:1rem}.bar{padding:1rem}header.top{padding:1.4rem 1.1rem}.frame{padding:.6rem}}
 .plain{background:var(--tealsoft);border-left:.4rem solid var(--teal);border-radius:.75rem;padding:1rem 1.1rem;margin:0 0 1.2rem}
 .plain p{margin:0 0 .45rem}.plain p:last-child{margin:0}
+.task{background:#fff;border:2px solid var(--plum);border-radius:.75rem;padding:.9rem 1.1rem;margin:0 0 1.2rem}
+.task .tl{display:inline-block;background:var(--plum);color:#fff;font-weight:700;font-size:.82rem;padding:.2rem .6rem;border-radius:.5rem;margin-bottom:.45rem}
+.task p{margin:0 0 .35rem}.task p:last-child{margin:0}
 .card{background:#fff;border:1px solid var(--line);border-left:.4rem solid var(--kc,var(--blue));border-radius:.75rem;padding:1rem 1.1rem;min-width:0;margin-bottom:1rem}
 .card h3{margin:0 0 .6rem;font-size:1.08rem;color:var(--navy)}
 .card h4{margin:.2rem 0 .4rem;color:var(--navy)}
@@ -122,6 +125,7 @@ footer{text-align:center;padding:1.2rem;margin-top:1.2rem;background:#fff;border
 <section class="lab active" id="p0" role="tabpanel">
   <div class="bar" style="--bc:var(--navy)"><span class="pill">Start here</span><h2>What makes a screening protocol defensible?</h2></div>
   <div class="body">
+    <div class="task"><span class="tl">Task 2 (10 minutes)</span><p>Read the three cards, then scroll down to the example tree. Press each of the four example buttons and watch the path change.</p><p><strong>Group output:</strong> an answer to "Notice" question 2. Is "no real change" the right call for that athlete?</p></div>
     <div class="plain">
       <p><strong>In plain English:</strong> a screening protocol is a small set of tests (the <strong>battery</strong>) plus a clear plan for what you'll do with each result (the <strong>decision tree</strong>).</p>
       <p>A test earns its place only if it's linked to your injury mechanism, measured well enough to trust, possible with the kit and time you have, and would actually change what you do.</p>
@@ -178,7 +182,8 @@ footer{text-align:center;padding:1.2rem;margin-top:1.2rem;background:#fff;border
 <section class="lab" id="p1" role="tabpanel">
   <div class="bar" style="--bc:var(--teal)"><span class="pill">Part 1</span><h2>Filter your tests</h2></div>
   <div class="body">
-    <div class="plain"><p><strong>In plain English:</strong> bring in every test from your chain, rate each one on the five principles, then decide whether to keep it. Aim for three or four tests. For every test you drop, write one line saying why. You'll need that for section 3 of the case study.</p></div>
+    <div class="task"><span class="tl">Task 3 (30 minutes)</span><p>Import your chain CSV (or press <strong>Load a practice example</strong> if you don't have one). Rate every test on the five principles and decide whether to keep it.</p><p><strong>Group output:</strong> three or four kept tests you can run with our kit, and one line for every test you dropped.</p></div>
+    <div class="plain"><p><strong>In plain English:</strong> bring in every test from your chain, rate each one on the five principles, then decide whether to keep it. Aim for three or four tests. For every test you drop, write one line saying why. You'll need that for the "Proposed Biomechanical Testing Battery" section of the case study.</p></div>
     <div class="card noprint" style="--kc:var(--blue)">
       <h3>Get your tests in</h3>
       <div class="btnrow">
@@ -217,6 +222,7 @@ footer{text-align:center;padding:1.2rem;margin-top:1.2rem;background:#fff;border
 <section class="lab" id="p2" role="tabpanel">
   <div class="bar" style="--bc:var(--blue)"><span class="pill">Part 2</span><h2>Build a decision tree</h2></div>
   <div class="body">
+    <div class="task"><span class="tl">Task 4 (30 minutes)</span><p>Pick the test your group thinks matters most and build its tree. Work until every item in the <strong>Rule check</strong> box is ticked.</p><p><strong>Group output:</strong> one complete tree, with a source for every number. Build the trees for your other tests after the session.</p></div>
     <div class="plain"><p><strong>In plain English:</strong> for each test you kept, decide in advance what each result will make you do. Fill in the numbers and actions. The tree draws itself and checks the rules as you go.</p></div>
     <div class="card noprint" style="--kc:var(--blue)">
       <label class="f" for="treeSel">Which test?</label>
@@ -279,6 +285,7 @@ footer{text-align:center;padding:1.2rem;margin-top:1.2rem;background:#fff;border
 <section class="lab" id="p3" role="tabpanel">
   <div class="bar" style="--bc:var(--plum)"><span class="pill">Part 3</span><h2>Stress test: try to break your tree</h2></div>
   <div class="body">
+    <div class="task"><span class="tl">Task 5 (20 minutes)</span><p>Run each made-up athlete through your tree. Then swap laptops with another group and try to break their tree.</p><p><strong>Group output:</strong> at least one change to your tree, written in the "Your verdict" box, and a reason for it.</p></div>
     <div class="plain"><p><strong>In plain English:</strong> these made-up athletes are built from <em>your</em> numbers, deliberately sitting in awkward places (e.g. just past the threshold, a change smaller than the MDC). Run each one through your tree. Does it reach a clear action, and is it the right one? Swap with another group and try to break theirs too.</p></div>
     <div class="card noprint" style="--kc:var(--blue)">
       <label class="f" for="stSel">Which test?</label>
