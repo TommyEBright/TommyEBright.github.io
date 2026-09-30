@@ -37,6 +37,9 @@ section.lab.active{display:block}
 .intro p{margin:0}
 .plain{background:var(--tealsoft);border-left:.4rem solid var(--teal);border-radius:.75rem;padding:1rem 1.1rem;margin:0 0 1.2rem}
 .plain p{margin:0 0 .4rem}.plain p:last-child{margin:0}
+.task{background:#fff;border:2px solid var(--plum);border-radius:.75rem;padding:.9rem 1.1rem;margin:0 0 1.2rem}
+.task .tl{display:inline-block;background:var(--plum);color:#fff;font-weight:700;font-size:.82rem;padding:.2rem .6rem;border-radius:.5rem;margin-bottom:.45rem}
+.task p{margin:0 0 .35rem}.task p:last-child{margin:0}
 .linkbtn{background:none;border:0;padding:0;color:var(--blue);text-decoration:underline;font:inherit;cursor:pointer}
 .grid{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:1rem}
 .grid.even{grid-template-columns:1fr 1fr}
@@ -121,6 +124,7 @@ footer{text-align:center;padding:1.2rem;margin-top:1.2rem;background:#fff;border
   <div class="body">
   <div class="intro"><p>Every lab uses one idea, the <strong>moment</strong>. Work through these three short steps first. Each one builds on the last, and the third takes you inside the knee.</p></div>
 
+  <div class="task"><span class="tl">Before the session (about 15 minutes)</span><p>Work through the three steps below before the session. The rest of the tool assumes you are comfortable with moments. If a step doesn't make sense, come back to it or ask at the start of the session.</p></div>
   <h3 class="stephead"><span class="step">1</span>What is a moment?</h3>
   <div class="plain"><p>A <strong>moment</strong> (also called a torque) is the <strong>turning effect of a force</strong>. Think of undoing a stiff bolt with a spanner. You push harder, push further along the handle, or push at a right angle to it. All three make it turn more easily.</p>
   <p><span class="eq">moment = force × moment arm</span> &nbsp; measured in newton-metres (N·m)</p>
@@ -234,6 +238,7 @@ footer{text-align:center;padding:1.2rem;margin-top:1.2rem;background:#fff;border
       <dt>FPPA</dt><dd>Frontal plane projection angle. The knee angle seen from the front on 2D video.</dd>
       <dt>Reliability</dt><dd>How consistent a measurement is when it's repeated.</dd>
       <dt>SEM, MDC, SWC</dt><dd>The typical measurement error, the smallest change you can be confident is real, and the smallest change that matters in practice (Part 4).</dd>
+      <dt>MCID</dt><dd>Minimal clinically important difference. The smallest change that matters to the patient or athlete, taken from published studies rather than calculated from reliability data.</dd>
     </dl>
   </div></details>
 
@@ -256,6 +261,7 @@ footer{text-align:center;padding:1.2rem;margin-top:1.2rem;background:#fff;border
   <div class="intro">
     <p>Inverse dynamics gives you a <strong>net</strong> joint moment, meaning the combined effect of every muscle and passive structure crossing the joint. It cannot tell you how that moment was produced. Keep the net knee extensor moment fixed, then change how much the hamstrings co-contract and see what happens to the loads inside the knee.</p>
   </div>
+  <div class="task"><span class="tl">Task 2, step 1 of 2 (about 10 minutes)</span><p>Try the "same moment" preset, then talk through discussion questions 1 and 2 at the bottom of this part. You don't need to write anything yet.</p></div>
   <div class="plain"><p><strong>In plain English:</strong> think back to the seesaw in <button class="linkbtn" type="button" data-goto="lab0">Start here</button>. The quadriceps pull on the front of the knee and the hamstrings pull on the back. A force plate and motion capture can only tell you the <em>overall</em> turning effect at the knee (the net moment). They can't tell you how hard each side pulled.</p><p>So two athletes can have exactly the same net moment but very different loads inside the knee.</p></div>
   <div class="grid">
     <div class="card" style="--kc:var(--blue)">
@@ -308,6 +314,7 @@ footer{text-align:center;padding:1.2rem;margin-top:1.2rem;background:#fff;border
   <div class="intro">
     <p>2D video gives you a knee <strong>angle</strong> (the frontal plane projection angle, FPPA). The load on the knee depends on the external <strong>moment</strong>, which is the ground reaction force multiplied by its perpendicular distance from the knee. Trunk position and foot placement move the ground reaction force without changing the knee angle.</p>
   </div>
+  <div class="task"><span class="tl">Task 2, step 2 of 2 (about 10 minutes)</span><p>Try the challenge under the controls, then talk through discussion question 1.</p><p><strong>Group output:</strong> two sentences for your injury. The first names the tissue load you would ideally want to know. The second explains why you can't measure it directly and what you would measure instead.</p></div>
   <div class="plain"><p><strong>In plain English:</strong> the ground pushes up on the foot. If that push passes to the <em>outside</em> of the knee, it tries to make the knee collapse inwards. How strongly depends on the size of the push and how far its line passes from the knee (the moment arm).</p><p>A phone video can see the knee <em>angle</em>, but it can't see where that force line goes.</p></div>
   <div class="grid">
     <div class="card" style="--kc:var(--blue)">
@@ -359,6 +366,7 @@ footer{text-align:center;padding:1.2rem;margin-top:1.2rem;background:#fff;border
   <div class="intro">
     <p>Tissue can fail after one very high load or after thousands of moderate ones (Hamill et al., 2015, Fig. 2-37). Where your injury sits on this curve decides what you should measure. That could be peak load, loading rate, the number of loading cycles, or all three.</p>
   </div>
+  <div class="task"><span class="tl">Task 3 (15 minutes)</span><p>Compare the presets, then talk through discussion question 2.</p><p><strong>Group output:</strong> whether your mechanism needs measures of peak load, loading rate, exposure, tissue capacity or a mix, with one reason. Did your pre-session decision survive?</p></div>
   <div class="plain"><p><strong>In plain English:</strong> bend a paperclip hard once and it can snap. Bend it gently back and forth many times and it snaps too. Bone, tendon and ligament behave in a similar way. Either a few very high loads or lots of moderate ones can cause injury.</p></div>
   <div class="grid">
     <div class="card" style="--kc:var(--blue)">
@@ -408,7 +416,8 @@ footer{text-align:center;padding:1.2rem;margin-top:1.2rem;background:#fff;border
   <div class="intro">
     <p>Every measurement includes some noise. Before a retest can inform a decision, you need to know how big a change has to be before it is bigger than the measurement error. Enter reliability values from the paper you are using for your test, then test an athlete's change against them.</p>
   </div>
-  <div class="plain"><p><strong>In plain English:</strong> step on the bathroom scales twice and you'll get slightly different numbers, even though your weight hasn't changed. Every test has this noise. A change in an athlete's score only means something if it's bigger than the noise.</p></div>
+  <div class="task"><span class="tl">Task 4 (20 minutes)</span><p>Press <strong>Class example</strong> under the controls. Record the SEM, MDC<sub>95</sub> and SWC, then work through discussion questions 1 and 2.</p><p><strong>Group output:</strong> those three numbers, and one plain-English sentence explaining what you would conclude if an athlete improved by less than the MDC.</p></div>
+  <div class="plain"><p><strong>In plain English:</strong> step on the bathroom scales twice and you'll get slightly different numbers, even though your weight hasn't changed. Every test has this noise. A change in an athlete's score only means something if it's bigger than the noise.</p><p><strong>One more term.</strong> The case study brief also asks for the minimal clinically important difference (MCID). The MDC and SWC are calculated from reliability data. The MCID comes from asking whether a change matters to the patient or athlete (e.g. less pain or better function), so it has to come from a published study. It can be bigger or smaller than the MDC.</p></div>
   <div class="grid">
     <div class="card" style="--kc:var(--blue)">
       <h3>Reliability inputs</h3>
@@ -419,7 +428,7 @@ footer{text-align:center;padding:1.2rem;margin-top:1.2rem;background:#fff;border
       <div class="ctl"><label for="l4R">Retest <output id="l4Ro"></output></label><input type="range" id="l4R" min="0" max="1000" step="5" value="340"></div>
       <h3 style="margin-top:14px">Simulation</h3>
       <div class="ctl"><label for="l4T">True change in the athlete <output id="l4To"></output></label><input type="range" id="l4T" min="-150" max="150" step="1" value="0"><div class="hint">We repeat the retest 2,000 times with this true change plus measurement noise.</div></div>
-      <div class="btnrow"><button class="btn primary" type="button" id="l4sim">Re-run simulation</button></div>
+      <div class="btnrow"><button class="btn" type="button" id="l4ex">Class example</button><button class="btn primary" type="button" id="l4sim">Re-run simulation</button></div>
     </div>
     <div class="card" style="--kc:var(--teal)">
       <h3>What the numbers mean</h3>
@@ -435,7 +444,7 @@ footer{text-align:center;padding:1.2rem;margin-top:1.2rem;background:#fff;border
       <li>Set the true change to 0. How often would you wrongly flag a change? Now make the true change equal to the SWC. How often would you miss it?</li>
       <li>If the MDC is bigger than the change you care about, is the test useful for monitoring? Is it still useful as a one-off screen?</li>
       <li>Where would you get the SD and ICC for your own test, and is that sample like your athlete (e.g. sex, age, sport, injury status)?</li>
-      <li>In Session 4 your decision tree checks the MDC <em>before</em> the threshold. Why does that order matter?</li>
+      <li>In the next session (Designing Evidence-Based Screening Protocols), your decision tree checks the MDC <em>before</em> the threshold. Why does that order matter?</li>
     </ol>
   </div>
   <details class="bio"><summary>The statistics behind this lab</summary><div class="inner">
@@ -451,8 +460,9 @@ footer{text-align:center;padding:1.2rem;margin-top:1.2rem;background:#fff;border
   <div class="bar" style="--bc:var(--teal)"><span class="pill">Part 5</span><h2>Chain builder</h2></div>
   <div class="body">
   <div class="intro">
-    <p>Build your group's mechanism-to-measurement chain, with one row per variable. Your work saves in this browser only, so export it before you leave. You'll need it in Session 4, where it becomes your decision tree.</p>
+    <p>Build your mechanism-to-measurement chain, with one row per variable. Your work saves in this browser only, so export it before you leave. You'll need it in the next session, where it becomes your decision tree.</p>
   </div>
+  <div class="task"><span class="tl">Task 5 (35 minutes)</span><p>Add at least three variables for your injury and complete the first six columns. The last two (reliability and decision value) are finished after the session. The Canvas page has a worked example row if you get stuck.</p><p><strong>Before you leave:</strong> press <strong>Download CSV</strong>. Your work is only saved in this browser.</p></div>
   <div class="plain"><p><strong>In plain English:</strong> for each variable you want to test, work back to the tissue it is meant to tell you about. Then check that you can measure it well enough to act on the result.</p></div>
   <div class="card" style="--kc:var(--teal)">
     <div class="btnrow">
@@ -813,6 +823,7 @@ function lab4(resim){
 }
 bindSliders(["l4SD","l4ICC","l4B","l4R","l4T"], ()=>lab4(false));
 $("l4sim").addEventListener("click", ()=>lab4(true));
+$("l4ex").addEventListener("click", ()=>{ $("l4SD").value=60; $("l4ICC").value=0.85; $("l4B").value=300; $("l4R").value=340; $("l4T").value=0; lab4(true); });
 
 /* ================= LAB 5 ================= */
 const COLS = ["mech","load","type","var","level","tool","rel","decide"];
