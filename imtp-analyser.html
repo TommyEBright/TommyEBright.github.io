@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IMTP Force–Time Analyser | SESD56</title>
+<title>Isometric Force–Time Analyser | SESD56</title>
 <meta name="description" content="Analyse isometric mid-thigh pull force–time data and check reliability. SESD56, Plymouth Marjon University.">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -103,6 +103,9 @@ table.data tr.off td{color:#9aa6ad}
 .tip .tl{color:var(--muted)}
 .tip .row{display:flex;align-items:center;gap:.4rem;justify-content:space-between}
 .tip .row .k{display:inline-flex;align-items:center;gap:.35rem;color:var(--muted)}
+.task{background:#fff;border:2px solid var(--plum);border-radius:.75rem;padding:.9rem 1.1rem;margin:0 0 1rem}
+.task .tl{display:inline-block;background:var(--plum);color:#fff;font-weight:700;font-size:.82rem;padding:.2rem .6rem;border-radius:.5rem;margin-bottom:.45rem}
+.task p{margin:0 0 .35rem}.task p:last-child{margin:0}
 .verdict{border-radius:.75rem;padding:.9rem 1rem;margin:.8rem 0 0;border:1px solid var(--line)}
 .verdict.good{background:var(--good-bg);border-color:#bfe2cd}.verdict.warn{background:var(--warn-bg);border-color:#f0d9a8}.verdict.bad{background:var(--bad-bg);border-color:#f3c3be}
 .verdict h3{margin:0 0 .3rem;font-size:1.1em}
@@ -133,8 +136,8 @@ footer p{margin:.2rem 0}
 <div class="wrap">
 <header class="hero">
   <span class="badge">SESD56 &middot; Strength Testing</span>
-  <h1>IMTP Force–Time Analyser</h1>
-  <p>Upload your isometric mid-thigh pull trials, check each one on the force–time curve, then find out whether your athlete really improved from pre-test to post-test.</p>
+  <h1>Isometric Force–Time Analyser</h1>
+  <p>Upload your IMTP or other isometric trials (e.g. isometric squat, calf raise, hamstring), check each one on the force–time curve, then find out whether your athlete really improved from pre-test to post-test.</p>
 </header>
 <nav class="tabs" role="tablist" aria-label="Tool pages">
   <button id="tab-analyse" role="tab" aria-selected="true" aria-controls="p-analyse">1. Analyse trials</button>
@@ -145,6 +148,7 @@ footer p{margin:.2rem 0}
 <!-- ============ PAGE 1 ============ -->
 <div id="p-analyse" class="panel active" role="tabpanel" aria-labelledby="tab-analyse">
 
+<div class="task"><span class="tl">Task 2 (force plate stations)</span><p>Choose the test, enter body mass, then load each lifter's trials. Label the first 3 trials <strong>Pre</strong> and the 3 repeat trials <strong>Post</strong>. Untick any trial the checks reject.</p><p><strong>Output:</strong> at least 3 good trials in each block, and the CSV downloaded (Step 3).</p></div>
 <section class="card">
   <div class="card-head h-navy"><div><span class="chip">Step 1</span><h2>Load your trials</h2></div></div>
   <div class="card-body">
@@ -160,7 +164,8 @@ footer p{margin:.2rem 0}
           <input type="file" id="file" multiple accept=".txt,.csv,.tsv,.dat,.xlsx,.xls" hidden>
         </div>
         <div id="loadErr"></div>
-        <div style="margin-top:1rem;max-width:16rem"><label class="fld" for="mass">Athlete&rsquo;s body mass (kg)</label><input type="number" id="mass" placeholder="e.g. 78.5" step="0.1" min="20"><p class="hint">Used for relative peak force and the pre-tension check.</p></div>
+        <div style="margin-top:1rem;max-width:20rem"><label class="fld" for="test">Which test?</label><select id="test"><option value="imtp">Isometric mid-thigh pull (IMTP)</option><option value="squat">Isometric squat</option><option value="calf">Isometric calf raise (standing or seated)</option><option value="ham">Supine hamstring isometric (heel on plate)</option></select><p class="hint" id="testHint">Standing on the plate, so the baseline is body weight plus any pre-tension on the bar.</p></div>
+        <div style="margin-top:.6rem;max-width:16rem"><label class="fld" for="mass">Athlete&rsquo;s body mass (kg)</label><input type="number" id="mass" placeholder="e.g. 78.5" step="0.1" min="20"><p class="hint">Used for relative peak force and the pre-tension check.</p></div>
       </div>
       <div class="box teal">
         <h3>What your file needs</h3>
@@ -168,7 +173,7 @@ footer p{margin:.2rem 0}
           <li><strong>Column A</strong> time (s or ms), <strong>column B</strong> vertical force (N).</li>
           <li><strong>Column C</strong> (optional) second plate. B is treated as left and C as right, and they are added together for total force.</li>
           <li>Kistler BioWare exports are read automatically (Fz columns are found by name). Header and unit rows are skipped.</li>
-          <li>At least <strong>1 s of still standing</strong> before the pull, sampled at &ge;1000 Hz.</li>
+          <li>At least <strong>1 s of keeping still</strong> before the effort (standing, or with the heel resting on the plate), sampled at &ge;1000 Hz.</li>
           <li>Load your pre-test and post-test trials together. Files with &ldquo;post&rdquo; in the name are labelled Post automatically, and you can change any label below.</li>
         </ul>
         <p class="hint">Nothing is uploaded anywhere. All analysis happens in your browser. <a href="#" id="dlExample">Download an example file</a></p>
@@ -242,7 +247,7 @@ footer p{margin:.2rem 0}
           </div>
           <div class="box navy">
             <h3>Trial quality checks</h3>
-            <p class="hint" style="margin:0 0 .4rem">Based on the NSCA IMTP rejection criteria (<em>Essentials</em>, 5th ed., Chapter 14).</p>
+            <p class="hint" style="margin:0 0 .4rem">Based on the NSCA IMTP rejection criteria (<em>Essentials</em>, 5th ed., Chapter 14), applied in the same way to the other isometric tests.</p>
             <ul class="qc" id="qcList"></ul>
           </div>
         </div>
@@ -267,12 +272,14 @@ footer p{margin:.2rem 0}
 <section class="card">
   <div class="card-head h-navy"><div><span class="chip">The question</span><h2>Did my athlete really improve?</h2></div></div>
   <div class="card-body">
+    <div class="task"><span class="tl">Task 4 (did it change?)</span><p>Press <strong>Use my trials from page 1</strong>. Your Pre and Post here are two blocks from the same day, so nothing should have changed. Does the tool agree? Then try the 1RM box at the bottom of this page.</p><p><strong>Output:</strong> the verdict for each lifter, and the change their RM would need to count as real.</p></div>
     <p class="lead">You test your athlete <strong>once before</strong> the 4-week programme and <strong>once after</strong>, with at least <strong>3 good trials</strong> each time. No two trials are ever identical, so a higher number on its own doesn&rsquo;t prove anything.</p>
     <div class="grid2">
       <div class="box navy"><h3>1 · Find each session&rsquo;s normal range</h3><p class="small" style="margin:0">Mean &plusmn; 1 SD of the trials. This is the range your athlete&rsquo;s score would usually land in on that day.</p></div>
       <div class="box teal"><h3>2 · Do the two ranges overlap?</h3><p class="small" style="margin:0">If the post-test range sits completely above the pre-test range, your athlete improved. If they overlap, you can&rsquo;t tell the change apart from normal variation.</p></div>
     </div>
     <p class="hint">This is the single-athlete method described by Turner (2022). It&rsquo;s why you keep every good trial, not just the best one.</p>
+    <p class="hint"><strong>What is the SD?</strong> The standard deviation is the typical distance of your trials from their average. A small SD means a consistent athlete. Example: trials of 2,480, 2,545 and 2,410 N have a mean of 2,478 N and an SD of 68 N, so the normal range is 2,410 to 2,546 N. The tool works it out for you (in Excel, <code>=AVERAGE()</code> and <code>=STDEV.S()</code>).</p>
   </div>
 </section>
 
@@ -341,7 +348,15 @@ footer p{margin:.2rem 0}
       <p id="writeUp" style="margin:0 0 .6rem"></p>
       <button class="btn ghost" id="copyWrite">Copy text</button>
     </div>
-    <div class="aside small"><strong>Only one number, like a 1RM?</strong> This method needs at least 3 trials per session, so they can&rsquo;t be used on a single 1RM. Report the change and the % change, and use your IMTP (or another multi-trial test) to judge whether strength really changed.</div>
+    <div class="aside small"><strong>Only one number, like a 1RM?</strong> The range method needs at least 3 trials per session, so it can&rsquo;t be used on a 1RM or 3RM. Instead, compare the change with the test&rsquo;s normal day-to-day &ldquo;noise&rdquo;. Your noise is the biggest of these three: the difference between two baseline tests on separate days (if you did two), about 4% of the 1RM (the typical day-to-day variation across 32 studies; Grgic et al., 2020), or your smallest load jump.
+      <div class="row3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:.6rem;margin:.7rem 0 .4rem">
+        <div><label class="fld" for="rmB1">Baseline test (kg)</label><input type="number" id="rmB1" step="0.5" placeholder="e.g. 100"></div>
+        <div><label class="fld" for="rmB2">2nd baseline (optional)</label><input type="number" id="rmB2" step="0.5" placeholder="e.g. 102.5"></div>
+        <div><label class="fld" for="rmPost">Post-test (kg)</label><input type="number" id="rmPost" step="0.5" placeholder="e.g. 107.5"></div>
+        <div><label class="fld" for="rmJump">Smallest load jump (kg)</label><input type="number" id="rmJump" step="0.5" value="2.5"></div>
+      </div>
+      <div id="rmOut"></div>
+    </div>
   </div>
 </section>
 </div>
@@ -352,7 +367,7 @@ footer p{margin:.2rem 0}
   <div class="card-head h-plum"><div><span class="chip">Guide</span><h2>How the analysis works</h2></div></div>
   <div class="card-body">
     <h3>1. Baseline and quiet stance</h3>
-    <p>The tool averages force over the quiet stance (default 0&ndash;1 s) to get the baseline, which is your body weight plus any pre-tension on the bar. The SD of that period tells us how still you were.</p>
+    <p>The tool averages force over the quiet stance (default 0&ndash;1 s) to get the baseline. For standing tests this is your body weight plus any pre-tension on the bar. For the supine hamstring test it is just the weight of the leg on the plate. The SD of that period tells us how still you were.</p>
     <h3>2. Onset</h3>
     <p>Onset is the first point after the quiet stance where force rises above the baseline by the threshold and stays above it for at least 10 ms. The default threshold is the <strong>mean + 5 SD</strong> of the quiet stance (Dos&rsquo;Santos et al., 2017). A fixed threshold (e.g. 20 N) is also available so you can see how much the choice matters.</p>
     <h3>3. Metrics</h3>
@@ -389,6 +404,7 @@ footer p{margin:.2rem 0}
       <li>Dos&rsquo;Santos, T., Jones, P. A., Comfort, P., &amp; Thomas, C. (2017). Effect of different onset thresholds on isometric midthigh pull force-time variables. <em>Journal of Strength and Conditioning Research, 31</em>(12), 3463&ndash;3473.</li>
       <li>Haff, G. G. (Ed.). <em>Essentials of Strength Training and Conditioning</em> (5th ed.). Human Kinetics. Chapters 13, 14 and 18.</li>
       <li>Harry, J. R., Hurwitz, J., Agnew, C., &amp; Bishop, C. (in press). Statistical tests for sports science practitioners: Identifying performance gains in individual athletes. <em>Journal of Strength and Conditioning Research</em>.</li>
+      <li>Grgic, J., Lazinica, B., Schoenfeld, B. J., &amp; Pedisic, Z. (2020). Test&ndash;retest reliability of the one-repetition maximum (1RM) strength assessment: A systematic review. <em>Sports Medicine &ndash; Open, 6</em>, 31.</li>
       <li>Turner, A. (2022). But did my athlete improve? Assessing performance changes when N = 1. <em>Professional Strength &amp; Conditioning, 63</em>, 27&ndash;31.</li>
     </ul>
   </div>
@@ -534,6 +550,7 @@ function settings(){
     qDur: Math.max(0.2, parseFloat($('qDur').value)||1),
     method: om, k: Math.max(1, parseFloat($('kSD').value)||5), fixedN: Math.max(1, parseFloat($('fixN').value)||20),
     mass: isFinite(mass) && mass>20 ? mass : null,
+    test: $('test').value,
     fs: Math.max(50, parseFloat($('fs').value)||1000)
   };
 }
@@ -606,9 +623,10 @@ function analyse(sig, S){
   let ipf=on; for(let i=on;i<n;i++) if(F[i]>F[ipf]) ipf=i;
   let iend=n-1; for(let i=ipf;i<n;i++){ if(F[i]<bw+thr){ iend=i; break; } }
   const PF=F[ipf];
-  const mass = S.mass ? S.mass : bw/G;
-  const r = { bw, sd, thr, on, t0, ipf, iend, qStart:t[i0], qEnd:t[i1], rangeQ:mx-mn, massUsed:mass, massEntered:!!S.mass };
-  r.PF=PF; r.PFnet=PF-bw; r.PFrel=PF/mass; r.tPF=t[ipf]-t0;
+  const ham = S.test==='ham';
+  const mass = S.mass ? S.mass : (ham ? NaN : bw/G);
+  const r = { bw, sd, thr, on, t0, ipf, iend, qStart:t[i0], qEnd:t[i1], rangeQ:mx-mn, massUsed:mass, massEntered:!!S.mass, ham };
+  r.PF=PF; r.PFnet=PF-bw; r.PFrel=(ham ? PF-bw : PF)/mass; r.tPF=t[ipf]-t0;
   const F0=interp(t,F,t0);
   TP.forEach(ms=>{ r['F'+ms] = (t0+ms/1000<=tEnd) ? interp(t,F,t0+ms/1000) : NaN; });
   RW.forEach(ms=>{ const fx=interp(t,F,t0+ms/1000); r['RFD'+ms]=(fx-F0)/(ms/1000); r['IMP'+ms]=integrateNet(t,F,bw,t0,t0+ms/1000); });
@@ -620,7 +638,9 @@ function analyse(sig, S){
   const qc=[];
   qc.push(fs>=995 ? {s:'good', t:'Sampling rate', d:fmt(fs,0)+' Hz'} : {s:'warn', t:'Sampling rate', d:fmt(fs,0)+' Hz. At least 1000 Hz is recommended for time-specific force and RFD.'});
   qc.push(r.rangeQ<=50 ? {s:'good', t:'Quiet stance', d:'Force changed by '+fmt(r.rangeQ,0)+' N (limit 50 N).'} : {s:'bad', t:'Quiet stance', d:'Force changed by '+fmt(r.rangeQ,0)+' N during the quiet second (limit 50 N). Stand still before the pull, or move the quiet window.'});
-  if(S.mass){
+  if(ham){
+    qc.push({s:'info', t:'Pre-tension', d:'Not checked for this test. The baseline is the weight of the leg resting on the plate, not body weight.'});
+  } else if(S.mass){
     const pre = bw - S.mass*G;
     if(pre>50) qc.push({s:'bad', t:'Pre-tension', d:fmt(pre,0)+' N above body weight (limit 50 N). The pull started from a partly loaded position.'});
     else if(pre<-15) qc.push({s:'warn', t:'Pre-tension', d:'Baseline is '+fmt(-pre,0)+' N below body weight. Check the body mass, or whether weight was taken through the bar.'});
@@ -746,7 +766,7 @@ function tile(lab,val,unit,note){
 function renderTiles(tr){
   const r=tr.res; const t=$('tiles'); t.innerHTML='';
   t.appendChild(tile('Peak force',fmt(r.PF,0),'N','Net '+fmt(r.PFnet,0)+' N'));
-  t.appendChild(tile('Relative peak force',fmt(r.PFrel,1),'N/kg', r.massEntered?'Using '+fmt(r.massUsed,1)+' kg':'Mass from baseline: '+fmt(r.massUsed,1)+' kg'));
+  t.appendChild(tile(r.ham?'Relative net peak force':'Relative peak force', isFinite(r.PFrel)?fmt(r.PFrel,1):'–','N/kg', r.ham ? (r.massEntered?'Net PF ÷ '+fmt(r.massUsed,1)+' kg':'Enter body mass to see this') : (r.massEntered?'Using '+fmt(r.massUsed,1)+' kg':'Mass from baseline: '+fmt(r.massUsed,1)+' kg')));
   t.appendChild(tile('Time to peak force',fmt(r.tPF,2),'s'));
   t.appendChild(tile('Peak RFD (20 ms)',fmt(r.pRFD,0),'N/s'));
   t.appendChild(tile('Baseline',fmt(r.bw,0),'N','Quiet SD '+fmt(r.sd,1)+' N · threshold +'+fmt(r.thr,1)+' N'));
@@ -948,6 +968,9 @@ drop.addEventListener('keydown',e=>{ if(e.target===drop && (e.key==='Enter'||e.k
 ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{ e.preventDefault(); drop.classList.remove('over'); }));
 drop.addEventListener('drop',e=>addFiles([...e.dataTransfer.files]));
 ['qStart','qDur','kSD','fixN','mass','fs'].forEach(id=>$(id).addEventListener('input',()=>{ clearTimeout(window._rt); window._rt=setTimeout(runAll,250); }));
+const TESTS={imtp:{n:'IMTP',h:'Standing on the plate, so the baseline is body weight plus any pre-tension on the bar.'},squat:{n:'Isometric squat',h:'Standing on the plate under a bar fixed against the pins. Record the pin height and knee angle.'},calf:{n:'Isometric calf raise',h:'Standing (knees straight) or seated (knee at 90°) against a fixed bar. Record which, and the pin height.'},ham:{n:'Supine hamstring isometric',h:'Heel on the plate. The baseline is only the weight of the leg, so the pre-tension check is switched off and relative force uses net peak force.'}};
+function testName(){ return TESTS[$('test').value].n; }
+$('test').addEventListener('change',()=>{ $('testHint').textContent=TESTS[$('test').value].h; $('n1Name').value=testName()+' peak force'; runAll(); });
 document.querySelectorAll('input[name=om]').forEach(r=>r.addEventListener('change',runAll));
 
 /* ---------------- Demo data ---------------- */
@@ -1007,7 +1030,7 @@ $('usePage1').addEventListener('click',()=>{
   if(!pre.length && !post.length){ note.textContent='No trials found. Load your trials on page 1, label them Pre or Post, and make sure the good ones are ticked.'; return; }
   const r=x=>+x.toFixed(v.dp+1);
   $('preTrials').value=pre.map(r).join(', '); $('postTrials').value=post.map(r).join(', ');
-  $('n1Name').value=v.k==='PF'?'IMTP peak force':'IMTP '+v.lab; $('n1Unit').value=v.u; $('n1Dir').value=v.k==='tPF'?'lower':'higher';
+  $('n1Name').value=v.k==='PF'?testName()+' peak force':testName()+' '+v.lab.toLowerCase(); $('n1Unit').value=v.u; $('n1Dir').value=v.k==='tPF'?'lower':'higher';
   note.textContent='Used '+pre.length+' pre-test and '+post.length+' post-test trials from page 1 (ticked trials only).'+(pre.length<3||post.length<3?' You need at least 3 in each.':'');
   renderN1();
 });
@@ -1017,6 +1040,18 @@ $('exN1').addEventListener('click',()=>{
   $('p1note').textContent='Example values loaded. Replace them with your own.'; renderN1();
 });
 ['preTrials','postTrials','n1Name','n1Unit','n1Dir','n1K'].forEach(id=>$(id).addEventListener('input',renderN1));
+function renderRM(){
+  const b1=parseFloat($('rmB1').value), b2=parseFloat($('rmB2').value), po=parseFloat($('rmPost').value), j=parseFloat($('rmJump').value)||0;
+  const out=$('rmOut');
+  if(!isFinite(b1)||!isFinite(po)){ out.innerHTML='<p class="hint" style="margin:0">Enter a baseline and a post-test result to see the working.</p>'; return; }
+  const two=isFinite(b2), base=two?(b1+b2)/2:b1, pct=0.04*base, diff=two?Math.abs(b1-b2):NaN;
+  const parts=[['4% of the baseline',pct],['your smallest load jump',j]]; if(two) parts.unshift(['the difference between your two baseline tests',diff]);
+  let noise=0, src=''; parts.forEach(([n,v])=>{ if(v>noise){ noise=v; src=n; } });
+  const ch=po-base, real=Math.abs(ch)>noise, f1=x=>fmt(x,1);
+  out.innerHTML='<div class="formula"><span class="step">Baseline</span>'+(two?'average of '+f1(b1)+' and '+f1(b2)+' = ':'')+'<span class="res">'+f1(base)+' kg</span><br><span class="step">Noise</span>biggest of '+parts.map(([n,v])=>n+' ('+f1(v)+' kg)').join(', ')+' = <span class="res">'+f1(noise)+' kg</span><br><span class="step">Change</span>'+f1(po)+' &minus; '+f1(base)+' = <span class="res">'+(ch>0?'+':'')+f1(ch)+' kg</span> ('+(ch>0?'+':'')+fmt(ch/base*100,1)+'%)</div>'+
+    '<div class="verdict '+(real?(ch>0?'good':'bad'):'warn')+'"><h3>'+(real?(ch>0?'✓ Bigger than the noise: a real increase':'✕ Bigger than the noise: a real decrease'):'! Within the noise: can&rsquo;t tell')+'</h3><p>'+(real?'The change is bigger than '+src+'. Now ask whether it is big enough to matter for your client&rsquo;s goal.':'The change is no bigger than '+src+', so it could just be a normal day-to-day difference.')+'</p></div>';
+}
+['rmB1','rmB2','rmPost','rmJump'].forEach(id=>$(id).addEventListener('input',renderRM)); renderRM();
 ['n1Dir','n1K'].forEach(id=>$(id).addEventListener('change',renderN1));
 
 let lastWrite='';
