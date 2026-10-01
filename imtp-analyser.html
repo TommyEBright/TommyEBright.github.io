@@ -40,8 +40,8 @@ section.card{background:var(--card);border:1px solid var(--line);border-radius:1
 .h-teal{background:var(--teal)}.h-teal .chip{color:var(--teal)}
 .h-plum{background:var(--plum)}.h-plum .chip{color:var(--plum)}
 p.lead{margin-top:0}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-.grid-chart{display:grid;grid-template-columns:3fr 2fr;gap:1rem}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem}
+.grid-chart{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:1rem}
 @media (max-width:860px){.grid2,.grid-chart{grid-template-columns:1fr}}
 .box{background:#fff;border:1px solid var(--line);border-left:.4rem solid var(--blue);border-radius:.75rem;padding:1rem}
 .box.teal{border-left-color:var(--teal)}.box.plum{border-left-color:var(--plum)}.box.navy{border-left-color:var(--navy)}
@@ -71,7 +71,9 @@ textarea{min-height:7rem;font-family:Consolas,Menlo,monospace;font-size:.9em}
 .chartbox{background:#fff;border:1px solid var(--line);border-radius:.75rem;padding:.8rem .8rem .4rem;position:relative}
 .chartbox h3{margin:0 0 .15rem;font-size:1em;color:var(--navy)}
 .chartbox .sub{margin:0 0 .4rem;color:var(--muted);font-size:.85em}
-canvas{display:block;width:100%}
+canvas{display:block;width:100%;max-width:100%}
+.grid2>*,.card-body>*,.grid-chart>*{min-width:0}
+.chartbox{overflow:hidden}
 .legend{display:flex;gap:1rem;flex-wrap:wrap;font-size:.85em;color:var(--ink2);margin:.2rem 0 .5rem;align-items:center}
 .legend span{display:inline-flex;align-items:center;gap:.35rem}
 .key{display:inline-block;width:18px;height:0;border-top:2px solid}
@@ -839,8 +841,12 @@ function niceTicks(min,max,n){
   return out;
 }
 function setupCanvas(c){
-  const dpr=window.devicePixelRatio||1; const w=c.clientWidth; const h=+c.getAttribute('height');
-  c.style.height=h+'px'; c.width=Math.round(w*dpr); c.height=Math.round(h*dpr);
+  const dpr=window.devicePixelRatio||1; const h=+c.dataset.h||+c.getAttribute('height'); c.dataset.h=h;
+  const pe=c.parentElement||c, cs=getComputedStyle(pe);
+  const w=Math.max(200, Math.floor(pe.clientWidth-parseFloat(cs.paddingLeft||0)-parseFloat(cs.paddingRight||0)));
+  c.style.width=w+'px'; c.style.height=h+'px';
+  const W=Math.round(w*dpr), H=Math.round(h*dpr);
+  if(c.width!==W) c.width=W; if(c.height!==H) c.height=H;
   const ctx=c.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,w,h};
 }
 function drawForce(c, tr, mode, hoverX){
