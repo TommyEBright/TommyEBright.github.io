@@ -657,6 +657,10 @@ function logExpModDmax(xs,ys){
 }
 
 /* -- SECTION: FORMAT HELPERS --------------------------------------- */
+// Workload is watts on a cycle ergometer or km/h on a treadmill; each lactate curve carries its unit.
+const workLabel=u=>u==='km/h'?'Speed (km/h)':'Workload (W)';
+const fmtWork=(v,u)=>v==null||isNaN(v)?'—':u==='km/h'?(+v).toFixed(1):String(Math.round(v));
+const unitSlug=u=>u==='km/h'?'kmh':'W';
 const fmt1=v=>isNaN(v)||v==null?'—':v.toFixed(1);
 const fmt2=v=>isNaN(v)||v==null?'—':v.toFixed(2);
 const fmt3=v=>isNaN(v)||v==null?'—':v.toFixed(3);
@@ -680,7 +684,7 @@ function cvLabel(cv){
 const STORE = {
   s1:{ rows:[], thr:{icc:.90, cv:10}, refl:{} },
   s2:{ rows:[], thr:{loa:2, icc:.90, cv:10}, refl:{} },
-  s3:{ rows:[], thr:{cv:10}, refl:{} },
+  s3:{ rows:[], thr:{cv:10}, refl:{}, unit:'W' },
   s4:{ refl:{} },
   s5:{ curves:[], picks:{}, thr:{cv:15}, ratingMode:false, refl:{} }
 };
@@ -1109,7 +1113,7 @@ const REFLECTIONS={
       <li><strong>If agreement is similar in every band</strong>, one set of limits describes the device fairly.</li>
       <li><strong>If the bias shifts or the limits widen at higher concentrations</strong>, the full-range limits misrepresent agreement at threshold. Judge threshold use from the 2-4 mmol/L band.</li>
       <li><strong>If the handheld under-reads above 4 mmol/L</strong>, a fixed 4 mmol/L threshold read from the handheld occurs at a higher workload than the lab would give, so training zones set from it would be too hard.</li>
-      <li>Translate lactate error into workload: on the flat early part of the curve a small lactate error moves the threshold by many watts, on the steep part by only a few. Methods relying on small rises (such as baseline + 0.5 mmol/L) are therefore more sensitive to device error.</li></ul>`},
+      <li>Translate lactate error into workload: on the flat early part of the curve a small lactate error moves the threshold by a large amount of workload, on the steep part by very little. Methods relying on small rises (such as baseline + 0.5 mmol/L) are therefore more sensitive to device error.</li></ul>`},
     {q:'Compare the within-device CV% (duplicate samples) for the handheld vs. the lab analyser. Does the device with the wider limits of agreement also have higher within-device variability?',
      guide:`<ul>
       <li>Limits of agreement combine both devices' random error, any sample-specific differences between them, and bias. Duplicate CV% captures only one device's random error.</li>
@@ -1155,14 +1159,14 @@ const REFLECTIONS={
      guide:`<ul>
       <li><strong>If the between-rater SD is below about half a stage</strong>, disagreement is smaller than the test's resolution and unlikely to change training prescription.</li>
       <li><strong>If it approaches one stage or more</strong>, raters would prescribe different training zones; visual identification then needs agreed criteria, or an algorithm.</li>
-      <li><strong>A high ICC can coexist with practically important disagreement</strong>, because the curves differ a lot between athletes. Check the SD in watts, not just the ICC.</li>
+      <li><strong>A high ICC can coexist with practically important disagreement</strong>, because the curves differ a lot between athletes. Check the SD in workload units (W or km/h), not just the ICC.</li>
       <li>LT1 is often harder to agree on than LT2 because the first rise is subtle. With few curves or raters, expect wide CIs.</li></ul>`},
     {q:'Why might two valid methods for identifying LT2 (e.g., 4 mmol/L vs Dmax) give different training recommendations for the same athlete?',
      guide:`<ul>
       <li><strong>They define different things:</strong> 4 mmol/L is a fixed concentration, Dmax is based on curve shape. Neither corresponds to the same physiological event in every athlete.</li>
       <li><strong>Individual factors</strong> (baseline lactate, training status, diet and glycogen) shift fixed-concentration thresholds more than shape-based ones.</li>
       <li><strong>Protocol matters:</strong> stage length, increment size and the final stage reached all change where each method lands.</li>
-      <li>Zones anchored to different methods can differ by tens of watts. Using the same method consistently across retests matters more than which one is chosen; ideally a method is checked against a criterion such as maximal lactate steady state.</li></ul>`},
+      <li>Zones anchored to different methods can differ by a whole stage or more. Using the same method consistently across retests matters more than which one is chosen; ideally a method is checked against a criterion such as maximal lactate steady state.</li></ul>`},
   ],
 };
 
@@ -2008,7 +2012,7 @@ function demoS3(){
     const rpe0=u(7.5,9.5), rpeSlope=u(1.1,1.9);
     let lastRPE=0;
     for(let s=1;s<=7;s++){
-      const work=80+s*25+(i%3)*10;
+      const work=STORE.s3.unit==='km/h'?7+s+(i%3)*.5:80+s*25+(i%3)*10;
       const T=Math.min(base+amp*(Math.exp(k*(s-1))-1),maxLac);
       // Analyser error scales with concentration. Lab: ~2% random error per sample.
       // Handheld: ~4.5% random error per sample, plus a sample-specific difference from the lab
@@ -2050,6 +2054,14 @@ function initS3(){
       <button class="btn btn-s" onclick="exportCSVS3()">Export CSV</button>
       <button class="btn btn-d btn-sm" onclick="clearS3()">Clear</button>
     </div>
+    <div class="f-row" style="align-items:flex-end;margin-bottom:.8rem">
+      <div class="f-grp"><label for="s3-unit">Workload unit</label>
+        <select id="s3-unit" onchange="s3SetUnit(this.value)">
+          <option value="W">Watts (cycle ergometer)</option>
+          <option value="km/h">km/h (treadmill)</option>
+        </select></div>
+      <div style="font-size:.8rem;color:var(--muted);max-width:420px">Choose before entering data. Station 5 uses this unit for these participants' lactate curves. Demo data follows the chosen unit.</div>
+    </div>
     <div id="s3-grid"></div>
   </div>
 
@@ -2057,6 +2069,7 @@ function initS3(){
   <div id="s3-reflections"></div>`;
 
   _s3Grid=buildGrid(document.getElementById('s3-grid'),S3_COLS,56,analyseS3);
+  s3ApplyUnit();
   buildReflections(
     document.getElementById('s3-reflections'),
     REFLECTIONS.s3,
@@ -2067,6 +2080,13 @@ function initS3(){
   analyseS3();
 }
 
+function s3SetUnit(u){ STORE.s3.unit=u; saveStore(); s3ApplyUnit(); }
+function s3ApplyUnit(){
+  const u=STORE.s3.unit||'W';
+  const sel=document.getElementById('s3-unit'); if(sel) sel.value=u;
+  const th=document.querySelectorAll('#s3-grid th')[S3_COLS.findIndex(c=>c.key==='work')];
+  if(th) th.textContent=workLabel(u);
+}
 function loadDemoS3(){ const r=demoS3(); STORE.s3.rows=r; _s3Grid.setRows(r); analyseS3(); }
 function clearS3(){ _s3Grid.clearRows(); STORE.s3.rows=[]; analyseS3(); }
 function dlTemplateS3(){ downloadTemplate(S3_COLS.map(c=>c.key),'lactate-template.csv'); }
@@ -2151,18 +2171,18 @@ function analyseS3(){
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:.75rem">
       <div>
         <div style="font-weight:600;font-size:.83rem;margin-bottom:.4rem;color:var(--muted)">&lt;2 mmol/L (n=${low.length})</div>
-        ${baLow?`<div class="sc-ci">Bias ${fmt2(baLow.bias)}  LoA ${fmt2(baLow.loa_l)} to ${fmt2(baLow.loa_u)}</div>`:'<div class="sc-ci" style="color:var(--muted)">Insufficient data (&lt;4 pairs)</div>'}
-        <div id="s3-ch-ba-low" class="ch-wrap" style="margin-top:.4rem"><div class="ch-title">Band &lt;2 mmol/L</div></div>
+        ${baLow?`<div class="sc-ci">Bias ${fmt2(baLow.bias)}  LoA ${fmt2(baLow.loa_l)} to ${fmt2(baLow.loa_u)}</div>`:'<div class="sc-ci" style="color:var(--muted)">Fewer than 4 samples in this band, so agreement here cannot be assessed.</div>'}
+        ${baLow?`<div id="s3-ch-ba-low" class="ch-wrap" style="margin-top:.4rem"><div class="ch-title">Band &lt;2 mmol/L</div></div>`:''}
       </div>
       <div>
         <div style="font-weight:600;font-size:.83rem;margin-bottom:.4rem;color:var(--muted)">2 to 4 mmol/L (n=${mid.length})</div>
-        ${baMid?`<div class="sc-ci">Bias ${fmt2(baMid.bias)}  LoA ${fmt2(baMid.loa_l)} to ${fmt2(baMid.loa_u)}</div>`:'<div class="sc-ci" style="color:var(--muted)">Insufficient data (&lt;4 pairs)</div>'}
-        <div id="s3-ch-ba-mid" class="ch-wrap" style="margin-top:.4rem"><div class="ch-title">Band 2–4 mmol/L</div></div>
+        ${baMid?`<div class="sc-ci">Bias ${fmt2(baMid.bias)}  LoA ${fmt2(baMid.loa_l)} to ${fmt2(baMid.loa_u)}</div>`:'<div class="sc-ci" style="color:var(--muted)">Fewer than 4 samples in this band, so agreement here cannot be assessed.</div>'}
+        ${baMid?`<div id="s3-ch-ba-mid" class="ch-wrap" style="margin-top:.4rem"><div class="ch-title">Band 2–4 mmol/L</div></div>`:''}
       </div>
       <div>
         <div style="font-weight:600;font-size:.83rem;margin-bottom:.4rem;color:var(--muted)">&gt;4 mmol/L (n=${high.length})</div>
-        ${baHigh?`<div class="sc-ci">Bias ${fmt2(baHigh.bias)}  LoA ${fmt2(baHigh.loa_l)} to ${fmt2(baHigh.loa_u)}</div>`:'<div class="sc-ci" style="color:var(--muted)">Insufficient data (&lt;4 pairs)</div>'}
-        <div id="s3-ch-ba-high" class="ch-wrap" style="margin-top:.4rem"><div class="ch-title">Band &gt;4 mmol/L</div></div>
+        ${baHigh?`<div class="sc-ci">Bias ${fmt2(baHigh.bias)}  LoA ${fmt2(baHigh.loa_l)} to ${fmt2(baHigh.loa_u)}</div>`:'<div class="sc-ci" style="color:var(--muted)">Fewer than 4 samples in this band, so agreement here cannot be assessed.</div>'}
+        ${baHigh?`<div id="s3-ch-ba-high" class="ch-wrap" style="margin-top:.4rem"><div class="ch-title">Band &gt;4 mmol/L</div></div>`:''}
       </div>
     </div>
   </div>
@@ -2369,7 +2389,7 @@ function initS5(){
       <div class="f-grp">
         <label>X axis</label>
         <select id="s5-xaxis" onchange="s5SetXAxis(this.value)">
-          <option value="work">Workload (W)</option>
+          <option value="work">Workload</option>
           <option value="hr">Heart rate</option>
         </select>
       </div>
@@ -2467,7 +2487,7 @@ function s5PopulateCurveList(){
   s3Ids.forEach(id=>{
     const pts=STORE.s3.rows.filter(r=>r.id===id&&r.work&&r.lab).sort((a,b)=>+a.work-+b.work);
     if(pts.length>=4) _s5State.curves.push({
-      id,work:pts.map(r=>+r.work),hr:pts.map(r=>+r.hr||0),lac:pts.map(r=>+r.lab)
+      id,unit:STORE.s3.unit||'W',work:pts.map(r=>+r.work),hr:pts.map(r=>+r.hr||0),lac:pts.map(r=>+r.lab)
     });
   });
   sel.innerHTML=_s5State.curves.map((c,i)=>`<option value="${i}">${c.id}</option>`).join('');
@@ -2484,6 +2504,7 @@ function s5Interp(x,X,Y){
   return Y[i]+(x-X[i])*(Y[i+1]-Y[i])/(X[i+1]-X[i]);
 }
 function s5CurrentCurve(){ return _s5State.curves[_s5State.selectedCurve]; }
+function unitOf(curve){ return curve?.unit||'W'; }
 function s5CurrentRater(){ return document.getElementById('s5-rater-name')?.value.trim()||'Rater 1'; }
 function s5SavedPick(rater,curveId){ return STORE.s5.picks[rater]?.[curveId]||null; }
 
@@ -2548,7 +2569,7 @@ function s5Draw(){
   const hrOk=s5HrValid(curve);
   const axisSel=document.getElementById('s5-xaxis');
   if(_s5State.xAxis==='hr'&&!hrOk){ _s5State.xAxis='work'; if(axisSel) axisSel.value='work'; }
-  if(axisSel) axisSel.querySelector('option[value="hr"]').disabled=!hrOk;
+  if(axisSel){ axisSel.querySelector('option[value="hr"]').disabled=!hrOk; axisSel.querySelector('option[value="work"]').textContent=workLabel(unitOf(curve)); }
   const useHR=_s5State.xAxis==='hr';
   const xs=useHR?curve.hr:curve.work, ys=curve.lac;
   const toDisp=w=>useHR?s5Interp(w,curve.work,curve.hr):w;
@@ -2583,11 +2604,11 @@ function s5Draw(){
   xs.forEach(v=>{
     g.appendChild(svgEl('line',{x1:sx(v),x2:sx(v),y1:H,y2:H+4,stroke:'#94a3b8'}));
     const t=svgEl('text',{x:sx(v),y:H+16,textAnchor:'middle',fontSize:10,fill:'#64748b'});
-    t.textContent=Math.round(v); g.appendChild(t);
+    t.textContent=useHR?Math.round(v):fmtWork(v,unitOf(curve)); g.appendChild(t);
   });
   g.appendChild(svgEl('rect',{x:0,y:0,width:W,height:H,fill:'none',stroke:'#cbd5e1',strokeWidth:1}));
   const xl=svgEl('text',{x:W/2,y:H+40,textAnchor:'middle',fontSize:11,fill:'#475569',fontWeight:600});
-  xl.textContent=useHR?'Heart rate (bpm)':'Workload (W)'; g.appendChild(xl);
+  xl.textContent=useHR?'Heart rate (bpm)':workLabel(unitOf(curve)); g.appendChild(xl);
   const yl=svgEl('text',{x:0,y:0,textAnchor:'middle',fontSize:11,fill:'#475569',fontWeight:600,
     transform:`translate(${-M.left+15},${H/2}) rotate(-90)`});
   yl.textContent='Lactate (mmol/L)'; g.appendChild(yl);
@@ -2630,7 +2651,7 @@ function s5Draw(){
     plot.appendChild(svgEl('circle',{cx:sx(x),cy:sy(y),r:4.5,fill:'#334155',stroke:'#fff',strokeWidth:1.5}));
   });
 
-  // Rater markers (stored in watts, drawn on the current axis)
+  // Rater markers (stored in the curve's workload unit, drawn on the current axis)
   [['LT1','#0072B2'],['LT2','#CC3311']].forEach(([name,col])=>{
     const w=_s5State.markers[name]; if(w==null) return;
     const dx=toDisp(w), cx=sx(dx), cy=fit?sy(fit.predict(dx)):H/2;
@@ -2659,12 +2680,12 @@ function s5RenderAlgoTable(curve,est,showAlgo){
     if(d==null) return `<tr><td>${a.lbl}</td><td class="mono" colspan="3">Not reached on this curve</td></tr>`;
     const w=fromDisp(d), lac=s5Interp(w,curve.work,curve.lac);
     return `<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${a.col};margin-right:.4rem"></span>${a.lbl}</td>
-      <td class="mono">${Math.round(w)}</td><td class="mono">${hrOk?Math.round(s5Interp(w,curve.work,curve.hr)):'—'}</td>
+      <td class="mono">${fmtWork(w,unitOf(curve))}</td><td class="mono">${hrOk?Math.round(s5Interp(w,curve.work,curve.hr)):'—'}</td>
       <td class="mono">${fmt2(lac)}</td></tr>`;
   });
   el.innerHTML=`<details style="margin-top:.8rem"><summary style="cursor:pointer;font-size:.85rem;font-weight:600">Method estimates for ${curve.id}</summary>
     <div class="tbl-wrap" style="margin-top:.5rem"><table class="rtbl">
-    <thead><tr><th>Method</th><th>Workload (W)</th><th>HR (bpm)</th><th>Lactate (mmol/L, observed)</th></tr></thead>
+    <thead><tr><th>Method</th><th>${workLabel(unitOf(curve))}</th><th>HR (bpm)</th><th>Lactate (mmol/L, observed)</th></tr></thead>
     <tbody>${rows.join('')}</tbody></table></div>
     <div style="font-size:.78rem;color:var(--muted);margin-top:.4rem">Log-Exp-ModDmax: exponential curve fit, with the Dmax line drawn from the log-log lactate threshold (Beaver et al. 1985) to the final stage (Jamnick et al. 2018). Fixed and baseline-plus methods use the selected curve fit.</div>
     </details>`;
@@ -2727,7 +2748,7 @@ function s5UpdateReadout(curve){
     const hr=hrOk?Math.round(s5Interp(w,curve.work,curve.hr)):null;
     return `<div class="lt-readout" style="border-left:3px solid ${col}">
       <strong style="color:${col}">${name}</strong><br>
-      Work: ${Math.round(w)} W<br>
+      ${unitOf(curve)==='km/h'?'Speed':'Work'}: ${fmtWork(w,unitOf(curve))} ${unitOf(curve)}<br>
       Lactate: ${fmt2(lac)} mmol/L<br>
       ${hr!=null?`HR: ${hr} bpm (${Math.round(hr/peakHR*100)}% peak HR)`:'HR: not recorded'}
     </div>`;
@@ -2747,7 +2768,7 @@ function s5SavePicks(){
   if(LT1==null||LT2==null){ s5UpdateProgress('Place both LT1 and LT2 before saving.'); return; }
   if(LT1>LT2) [LT1,LT2]=[LT2,LT1];
   if(!STORE.s5.picks[name]) STORE.s5.picks[name]={};
-  STORE.s5.picks[name][curve.id]={rater:name,curveId:curve.id,LT1:Math.round(LT1*10)/10,LT2:Math.round(LT2*10)/10};
+  STORE.s5.picks[name][curve.id]={rater:name,curveId:curve.id,unit:unitOf(curve),LT1:Math.round(LT1*100)/100,LT2:Math.round(LT2*100)/100};
   saveStore();
   s5UpdatePicksSummary();
   s5AnalysePooled();
@@ -2805,12 +2826,12 @@ function s5UpdatePicksSummary(){
   if(!raters.length){ el.innerHTML=''; return; }
   const rows=raters.flatMap(r=>Object.values(STORE.s5.picks[r]).map(p=>
     `<tr><td>${escapeHTML(p.rater)}</td><td>${escapeHTML(p.curveId)}</td>
-     <td class="mono">${p.LT1!=null?Math.round(p.LT1):'—'}</td>
-     <td class="mono">${p.LT2!=null?Math.round(p.LT2):'—'}</td></tr>`
+     <td class="mono">${fmtWork(p.LT1,p.unit)}</td>
+     <td class="mono">${fmtWork(p.LT2,p.unit)}</td><td>${p.unit||'W'}</td></tr>`
   ));
   el.innerHTML=`<details style="margin-top:.8rem"><summary style="cursor:pointer;font-size:.85rem;font-weight:600">All saved picks (${rows.length})</summary>
   <div class="tbl-wrap" style="margin-top:.5rem">
-  <table class="rtbl"><thead><tr><th>Rater</th><th>Curve</th><th>LT1 (W)</th><th>LT2 (W)</th></tr></thead>
+  <table class="rtbl"><thead><tr><th>Rater</th><th>Curve</th><th>LT1</th><th>LT2</th><th>Unit</th></tr></thead>
   <tbody>${rows.join('')}</tbody></table></div></details>`;
 }
 
@@ -2818,10 +2839,10 @@ function s5ExportPicks(){
   const rows=[];
   Object.values(STORE.s5.picks).forEach(rater=>{
     Object.values(rater).forEach(p=>{
-      rows.push(`${p.rater},${p.curveId},${p.LT1??''},${p.LT2??''}`);
+      rows.push(`${p.rater},${p.curveId},${p.LT1??''},${p.LT2??''},${p.unit||'W'}`);
     });
   });
-  downloadCSV('rater,curve,LT1_W,LT2_W\n'+rows.join('\n'),'lt-rater-picks.csv');
+  downloadCSV('rater,curve,LT1,LT2,unit\n'+rows.join('\n'),'lt-rater-picks.csv');
 }
 
 function s5ImportPicks(inp){
@@ -2830,10 +2851,10 @@ function s5ImportPicks(inp){
   rd.onload=e=>{
     const rows=parseCSV(e.target.result).slice(1);
     rows.forEach(r=>{
-      const [rater,curveId,lt1,lt2]=r;
+      const [rater,curveId,lt1,lt2,unit]=r;
       if(!rater||!curveId) return;
       if(!STORE.s5.picks[rater]) STORE.s5.picks[rater]={};
-      STORE.s5.picks[rater][curveId]={rater,curveId,LT1:lt1?+lt1:null,LT2:lt2?+lt2:null};
+      STORE.s5.picks[rater][curveId]={rater,curveId,unit:unit==='km/h'?'km/h':'W',LT1:lt1?+lt1:null,LT2:lt2?+lt2:null};
     });
     saveStore(); s5UpdatePicksSummary(); s5AnalysePooled(); s5SelectCurve(_s5State.selectedCurve);
   };
@@ -2841,7 +2862,10 @@ function s5ImportPicks(inp){
   inp.value='';
 }
 
-/** Pooled inter-rater analysis across every curve that at least two raters have saved. */
+/**
+ * Pooled inter-rater analysis across every curve that at least two raters have saved.
+ * Curves in W and km/h are analysed separately because they cannot share one ICC.
+ */
 function s5AnalysePooled(){
   const el=document.getElementById('s5-pooled-results'); if(!el) return;
   el.innerHTML='';
@@ -2853,64 +2877,78 @@ function s5AnalysePooled(){
   }
   const known=_s5State.curves.map(c=>c.id);
   const allIds=[...new Set([...known,...raters.flatMap(r=>Object.keys(picks[r]))])];
-  const shared=allIds.filter(cid=>raters.filter(r=>picks[r][cid]).length>=2);
-  const complete=shared.filter(cid=>raters.every(r=>picks[r][cid]?.LT1!=null&&picks[r][cid]?.LT2!=null));
-
-  const cards=['LT1','LT2'].map(th=>{
-    if(complete.length<3) return '';
-    const mat=complete.map(cid=>raters.map(r=>picks[r][cid][th]));
-    const ir=icc(mat,'2,1'), cv=cvPercent(mat);
-    const meanSD=mean(complete.map(cid=>sd(raters.map(r=>picks[r][cid][th]))));
-    return `<div class="sc ${ratingLabel(ir.icc).cls}">
-      <div class="sc-lbl">${th}: ICC(2,1)</div>
-      <div class="sc-val">${fmt2(ir.icc)}</div>
-      <div class="sc-ci">95% CI ${fmtCI(ir.ci_l,ir.ci_u)}</div>
-      <div class="sc-int">CV% ${fmt1(cv.cv)} ${fmtCI(cv.ci_l,cv.ci_u,1)}%. Mean between-rater SD ${Math.round(meanSD)} W.</div>
-    </div>`;
-  }).join('');
-
-  const stageRows=shared.map(cid=>{
-    const c=_s5State.curves.find(x=>x.id===cid);
-    const inc=c?mean(c.work.slice(1).map((w,i)=>w-c.work[i])):NaN;
-    const cell=th=>{
-      const v=raters.map(r=>picks[r][cid]?.[th]).filter(x=>x!=null);
-      if(v.length<2) return '<td class="mono">—</td><td class="mono">—</td>';
-      const s=sd(v), st=s/inc;
-      const cls=isNaN(st)?'':st<.5?'good':st<1?'warn':'bad';
-      return `<td class="mono">${Math.round(s)}</td><td class="mono" style="color:var(--${cls||'muted'})">${isNaN(st)?'—':fmt2(st)}</td>`;
-    };
-    return `<tr><td>${escapeHTML(cid)}</td><td class="mono">${isNaN(inc)?'—':Math.round(inc)}</td>${cell('LT1')}${cell('LT2')}</tr>`;
-  }).join('');
+  const unitFor=cid=>_s5State.curves.find(c=>c.id===cid)?.unit||raters.map(r=>picks[r][cid]?.unit).find(Boolean)||'W';
 
   const baA=_s5State.baA&&raters.includes(_s5State.baA)?_s5State.baA:raters[0];
   const baB=_s5State.baB&&raters.includes(_s5State.baB)&&_s5State.baB!==baA?_s5State.baB:raters.find(r=>r!==baA);
   const baT=_s5State.baT||'LT2';
   const opt=(sel)=>raters.map(r=>`<option${r===sel?' selected':''}>${escapeHTML(r)}</option>`).join('');
-
-  el.innerHTML=`
-    <div style="font-size:.85rem;margin-bottom:.7rem">${raters.length} raters; ${shared.length} curves rated by two or more; ${complete.length} rated by every rater.</div>
-    ${complete.length<3?`<div class="co co-note">ICC and CV% need at least 3 curves rated by every rater (currently ${complete.length}).</div>`:`<div class="sg">${cards}</div>`}
-    <div class="tbl-wrap" style="margin:.8rem 0"><table class="rtbl">
-      <thead><tr><th>Curve</th><th>Stage increment (W)</th><th>LT1 SD (W)</th><th>LT1 SD (stages)</th><th>LT2 SD (W)</th><th>LT2 SD (stages)</th></tr></thead>
-      <tbody>${stageRows}</tbody></table></div>
-    <div style="font-size:.78rem;color:var(--muted);margin-bottom:.8rem">Between-rater SD expressed in stage increments: below 0.5 is unlikely to change a training prescription; above 1 is practically meaningful.</div>
-    <div id="s5-dots"></div>
-    <div class="f-row" style="align-items:flex-end;margin-top:.6rem">
+  const baControls=`<div class="f-row" style="align-items:flex-end;margin-top:.6rem">
       <div class="f-grp"><label>Bland-Altman: rater A</label><select onchange="_s5State.baA=this.value;s5AnalysePooled()">${opt(baA)}</select></div>
       <div class="f-grp"><label>minus rater B</label><select onchange="_s5State.baB=this.value;s5AnalysePooled()">${opt(baB)}</select></div>
       <div class="f-grp"><label>Threshold</label><select onchange="_s5State.baT=this.value;s5AnalysePooled()">
         <option${baT==='LT1'?' selected':''}>LT1</option><option${baT==='LT2'?' selected':''}>LT2</option></select></div>
-    </div>
-    <div id="s5-ba-raters" class="ch-wrap"><div class="ch-title">Bland-Altman: ${escapeHTML(baA)} minus ${escapeHTML(baB)} (${baT}, W)</div></div>`;
+    </div>`;
 
-  const dots=document.getElementById('s5-dots');
-  ['LT1','LT2'].forEach(th=>drawS5DotPlot(th,shared,raters,dots));
-  const common=allIds.filter(cid=>picks[baA]?.[cid]?.[baT]!=null&&picks[baB]?.[cid]?.[baT]!=null);
-  const ba=blandAltman(common.map(c=>picks[baA][c][baT]),common.map(c=>picks[baB][c][baT]));
-  drawBAChart(document.getElementById('s5-ba-raters'),ba,`Mean ${baT} (W)`,'s5-ba-raters');
+  const groups=['W','km/h'].map(u=>{
+    const ids=allIds.filter(cid=>unitFor(cid)===u);
+    const shared=ids.filter(cid=>raters.filter(r=>picks[r][cid]).length>=2);
+    const complete=shared.filter(cid=>raters.every(r=>picks[r][cid]?.LT1!=null&&picks[r][cid]?.LT2!=null));
+    return {u,ids,shared,complete};
+  }).filter(g=>g.shared.length);
+  if(!groups.length){
+    el.innerHTML=`<div class="co co-note">${raters.length} raters have saved picks, but no curve has been rated by two of them yet.</div>`;
+    return;
+  }
+
+  el.innerHTML=groups.map(({u,shared,complete},gi)=>{
+    const cards=['LT1','LT2'].map(th=>{
+      if(complete.length<3) return '';
+      const mat=complete.map(cid=>raters.map(r=>picks[r][cid][th]));
+      const ir=icc(mat,'2,1'), cv=cvPercent(mat);
+      const meanSD=mean(complete.map(cid=>sd(raters.map(r=>picks[r][cid][th]))));
+      return `<div class="sc ${ratingLabel(ir.icc).cls}">
+        <div class="sc-lbl">${th}: ICC(2,1)</div>
+        <div class="sc-val">${fmt2(ir.icc)}</div>
+        <div class="sc-ci">95% CI ${fmtCI(ir.ci_l,ir.ci_u)}</div>
+        <div class="sc-int">CV% ${fmt1(cv.cv)} ${fmtCI(cv.ci_l,cv.ci_u,1)}%. Mean between-rater SD ${fmtWork(meanSD,u)} ${u}.</div>
+      </div>`;
+    }).join('');
+    const stageRows=shared.map(cid=>{
+      const cv=_s5State.curves.find(x=>x.id===cid);
+      const inc=cv?mean(cv.work.slice(1).map((w,i)=>w-cv.work[i])):NaN;
+      const cell=th=>{
+        const v=raters.map(r=>picks[r][cid]?.[th]).filter(x=>x!=null);
+        if(v.length<2) return '<td class="mono">—</td><td class="mono">—</td>';
+        const s=sd(v), st=s/inc;
+        const cls=isNaN(st)?'':st<.5?'good':st<1?'warn':'bad';
+        return `<td class="mono">${u==='km/h'?fmt2(s):fmtWork(s,u)}</td><td class="mono" style="color:var(--${cls||'muted'})">${isNaN(st)?'—':fmt2(st)}</td>`;
+      };
+      return `<tr><td>${escapeHTML(cid)}</td><td class="mono">${fmtWork(inc,u)}</td>${cell('LT1')}${cell('LT2')}</tr>`;
+    }).join('');
+    return `<div${gi?' style="margin-top:1.4rem;padding-top:1rem;border-top:1px solid var(--border)"':''}>
+      ${groups.length>1?`<div class="card-sub" style="font-weight:700;margin-bottom:.5rem">Curves measured in ${u}</div>`:''}
+      <div style="font-size:.85rem;margin-bottom:.7rem">${raters.length} raters; ${shared.length} curve${shared.length===1?'':'s'} rated by two or more; ${complete.length} rated by every rater.</div>
+      ${complete.length<3?`<div class="co co-note">ICC and CV% need at least 3 curves rated by every rater (currently ${complete.length}).</div>`:`<div class="sg">${cards}</div>`}
+      <div class="tbl-wrap" style="margin:.8rem 0"><table class="rtbl">
+        <thead><tr><th>Curve</th><th>Stage increment (${u})</th><th>LT1 SD (${u})</th><th>LT1 SD (stages)</th><th>LT2 SD (${u})</th><th>LT2 SD (stages)</th></tr></thead>
+        <tbody>${stageRows}</tbody></table></div>
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:.8rem">Between-rater SD expressed in stage increments: below 0.5 is unlikely to change a training prescription; above 1 is practically meaningful.</div>
+      <div id="s5-dots-${gi}"></div>
+      ${baControls}
+      <div id="s5-ba-raters-${gi}" class="ch-wrap"><div class="ch-title">Bland-Altman: ${escapeHTML(baA)} minus ${escapeHTML(baB)} (${baT}, ${u})</div></div>
+    </div>`;
+  }).join('');
+
+  groups.forEach(({u,shared},gi)=>{
+    const dots=document.getElementById('s5-dots-'+gi);
+    ['LT1','LT2'].forEach(th=>drawS5DotPlot(th,shared,raters,dots,u));
+    const common=shared.filter(cid=>picks[baA]?.[cid]?.[baT]!=null&&picks[baB]?.[cid]?.[baT]!=null);
+    const ba=blandAltman(common.map(cid=>picks[baA][cid][baT]),common.map(cid=>picks[baB][cid][baT]));
+    drawBAChart(document.getElementById('s5-ba-raters-'+gi),ba,`Mean ${baT} (${u})`,'s5-ba-raters-'+unitSlug(u));
+  });
 }
-
-function drawS5DotPlot(thresh,curveIds,raters,container){
+function drawS5DotPlot(thresh,curveIds,raters,container,unit='W'){
   const COLS=['#0072B2','#E69F00','#009E73','#D55E00','#56B4E9','#CC79A7'];
   const allVals=raters.flatMap(r=>curveIds.map(c=>STORE.s5.picks[r]?.[c]?.[thresh])).filter(v=>v!=null);
   if(allVals.length<2) return;
@@ -2946,10 +2984,10 @@ function drawS5DotPlot(thresh,curveIds,raters,container){
   linspace(mn,mx,6).forEach(v=>{
     g.appendChild(svgEl('line',{x1:sx(v),x2:sx(v),y1:H,y2:H+4,stroke:'#94a3b8'}));
     const t=svgEl('text',{x:sx(v),y:H+14,textAnchor:'middle',fontSize:9,fill:'#64748b'});
-    t.textContent=Math.round(v); g.appendChild(t);
+    t.textContent=fmtWork(v,unit); g.appendChild(t);
   });
   const xl=svgEl('text',{x:W/2,y:H+28,textAnchor:'middle',fontSize:10,fill:'#475569',fontWeight:600});
-  xl.textContent='Workload (W)'; g.appendChild(xl);
+  xl.textContent=workLabel(unit); g.appendChild(xl);
   svg.appendChild(g);
 
   const wrap=document.createElement('div');
@@ -2962,7 +3000,7 @@ function drawS5DotPlot(thresh,curveIds,raters,container){
   legend.innerHTML=raters.map((r,i)=>`<span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${COLS[i%COLS.length]};margin-right:.3rem"></span>${escapeHTML(r)}</span>`).join('');
   wrap.appendChild(legend);
   container.appendChild(wrap);
-  chartActions(wrap,svg,`lt-dot-${thresh}`);
+  chartActions(wrap,svg,`lt-dot-${thresh}-${unitSlug(unit)}`);
 }
 
 /** Generic Bland-Altman chart */
