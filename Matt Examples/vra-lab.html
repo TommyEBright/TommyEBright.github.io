@@ -93,6 +93,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:
 .dgrid td input{width:100%;border:none;padding:.42rem .6rem;background:transparent;
   font-size:.83rem;font-family:var(--font);color:var(--text)}
 .dgrid td input:focus{background:var(--primary-lt);outline:none}
+.dgrid td input.calc{background:#f1f5f9;color:#334155;font-weight:600;cursor:default}
+.dgrid th.calc{background:#e8eef6;color:#334155}
 .dgrid tr:hover td{background:#fafafa}
 .dgrid tr:hover td input:not(:focus){background:#fafafa}
 
@@ -958,6 +960,21 @@ function downloadTemplate(headers,filename,sample=[]){
  * @param {Function} onChange  called on any cell change
  */
 function buildGrid(container,cols,nRows,onChange){
+  // Columns with a compute(row) function are read-only and skipped by paste, so pasted
+  // spreadsheet columns line up with the columns students actually type into.
+  const inputCols=cols.filter(c=>!c.compute);
+  const readRow=tr=>{
+    const row={};
+    cols.forEach((c,ci)=>{ if(c.compute) return;
+      const v=tr.cells[ci].querySelector('input').value.trim();
+      row[c.key]=c.type==='number'?(v===''?null:+v):v; });
+    cols.forEach(c=>{ if(c.compute) row[c.key]=c.compute(row); });
+    return row;
+  };
+  const refreshComputed=tr=>{
+    const row=readRow(tr);
+    cols.forEach((c,ci)=>{ if(c.compute){ const v=row[c.key]; tr.cells[ci].querySelector('input').value=v==null||isNaN(v)?'':v; } });
+  };
   const wrap=document.createElement('div');
   wrap.className='grid-wrap';
   const tbl=document.createElement('table');
@@ -967,7 +984,9 @@ function buildGrid(container,cols,nRows,onChange){
   const hr=thead.insertRow();
   cols.forEach(c=>{
     const th=document.createElement('th');
-    th.textContent=c.label; hr.appendChild(th);
+    th.textContent=c.label;
+    if(c.compute){ th.className='calc'; th.title='Calculated automatically'; }
+    hr.appendChild(th);
   });
   // Body
   const tbody=tbl.createTBody();
@@ -978,7 +997,11 @@ function buildGrid(container,cols,nRows,onChange){
       const inp=document.createElement('input');
       inp.type='text'; inp.placeholder='';
       inp.dataset.col=c.key; inp.dataset.row=r;
-      inp.addEventListener('change',onChange);
+      if(c.compute){ inp.readOnly=true; inp.tabIndex=-1; inp.className='calc'; inp.setAttribute('aria-label',c.label+' (calculated)'); }
+      else{
+        inp.addEventListener('input',()=>refreshComputed(tr));
+        inp.addEventListener('change',onChange);
+      }
       td.appendChild(inp);
     });
   }
@@ -988,44 +1011,35 @@ function buildGrid(container,cols,nRows,onChange){
     e.preventDefault();
     const tsv=e.clipboardData.getData('text/plain');
     const pasted=parseTSV(tsv);
-    const active=wrap.querySelector('input:focus');
+    const ae=document.activeElement, active=ae&&ae.tagName==='INPUT'&&wrap.contains(ae)?ae:null;
     let startRow=active?+active.dataset.row:0;
-    let startCol=active?cols.findIndex(c=>c.key===active.dataset.col):0;
+    let startCol=active?inputCols.findIndex(c=>c.key===active.dataset.col):0;
     if(startCol<0) startCol=0;
     pasted.forEach((row,ri)=>{
+      const tr=tbody.rows[startRow+ri]; if(!tr) return;
       row.forEach((val,ci)=>{
-        const inp=tbody.rows[startRow+ri]?.cells[startCol+ci]?.querySelector('input');
-        if(inp){ inp.value=val.trim(); inp.dispatchEvent(new Event('change')); }
+        const col=inputCols[startCol+ci]; if(!col) return;
+        const inp=tr.cells[cols.indexOf(col)].querySelector('input');
+        inp.value=val.trim();
       });
+      refreshComputed(tr);
     });
+    onChange();
   });
   container.appendChild(wrap);
   return {
     tbl, tbody,
-    getRows(){
-      const out=[];
-      Array.from(tbody.rows).forEach(tr=>{
-        const row={};
-        cols.forEach((c,ci)=>{
-          const v=tr.cells[ci].querySelector('input').value.trim();
-          row[c.key]=c.type==='number'?(v===''?null:+v):v;
-        });
-        out.push(row);
-      });
-      return out;
-    },
+    getRows(){ return Array.from(tbody.rows).map(readRow); },
     setRows(data){
       Array.from(tbody.rows).forEach((tr,ri)=>{
-        cols.forEach((c,ci)=>{
-          const inp=tr.cells[ci].querySelector('input');
-          inp.value=data[ri]??(data[ri]&&data[ri][c.key]!=null?data[ri][c.key]:'');
-          if(data[ri]) inp.value=data[ri][c.key]??'';
-        });
+        cols.forEach((c,ci)=>{ if(!c.compute) tr.cells[ci].querySelector('input').value=data[ri]?.[c.key]??''; });
+        refreshComputed(tr);
       });
     },
     clearRows(){
       Array.from(tbody.rows).forEach(tr=>{
         Array.from(tr.querySelectorAll('input')).forEach(i=>i.value='');
+        refreshComputed(tr);
       });
     }
   };
@@ -1069,12 +1083,13 @@ const REFLECTIONS={
       <li>Look at individual lines as well as the mean: a few participants improving markedly can create an apparent group learning effect.</li></ul>`},
   ],
   s2:[
-    {q:'The Bland-Altman plot shows systematic bias between the app and force plate. Does the pattern of bias (proportional vs. fixed) affect whether you would use the app in practice?',
+    {q:'Compare jump height from flight time with jump height from the force plate. Does the pattern of bias (proportional vs. fixed) affect whether you would use flight time in practice?',
      guide:`<ul>
-      <li><strong>Fixed bias</strong> (a similar offset at all jump heights) can be removed by subtracting the mean bias. Change scores measured with the app alone are unaffected by a fixed offset.</li>
-      <li><strong>Proportional bias</strong> (the difference grows with jump height, shown by the proportional bias r and the sloping line) cannot be fixed by one subtraction; it needs a regression-based correction. It also scales change scores, so a real 2 cm improvement could appear larger or smaller on the app.</li>
-      <li><strong>If neither is present and the limits are narrow</strong> compared with a meaningful change in jump height, the app may be usable on its own.</li>
-      <li>Whatever the pattern, app and force plate values should not be mixed within one athlete's record. Even after removing bias, the width of the limits is random disagreement that remains.</li></ul>`},
+      <li><strong>Why they can differ:</strong> the force plate usually derives height from take-off velocity, whereas flight time assumes the body leaves and lands in the same position. Landing with flexed hips, knees or ankles, or tucking the legs, lengthens flight time and inflates height.</li>
+      <li><strong>Fixed bias</strong> (a similar offset at all jump heights) can be removed by subtracting the mean bias. Change scores measured with flight time alone are unaffected by a fixed offset.</li>
+      <li><strong>Proportional bias</strong> (the difference grows with jump height, shown by the proportional bias r and the sloping line) cannot be fixed by one subtraction; it needs a regression-based correction. It also scales change scores, so a real 2 cm improvement could appear larger or smaller with flight time.</li>
+      <li><strong>If neither is present and the limits are narrow</strong> compared with a meaningful change in jump height, flight time may be usable on its own, provided landing technique is standardised.</li>
+      <li>Whatever the pattern, flight-time and force plate heights should not be mixed within one athlete's record. Even after removing bias, the width of the limits is random disagreement that remains.</li></ul>`},
     {q:'Which force-time variables show the highest reliability (lowest CV%)? What biomechanical reasons might explain differences in reliability between variables?',
      guide:`<ul>
       <li><strong>Often most reliable:</strong> variables reflecting the whole movement or a large, well-defined peak (jump height, peak force, peak and mean power).</li>
@@ -1241,7 +1256,7 @@ function initOverview(){
       </tr>
       <tr>
         <td><strong>2 &mdash; Jump Height</strong></td>
-        <td>Agreement between a phone app and a force plate; reliability of force-time variables</td>
+        <td>Agreement between flight-time jump height and force plate jump height; reliability of force-time variables</td>
         <td>
           <span class="tag t-agr">Agreement</span>
           <span class="tag t-rel">Reliability</span>
@@ -1617,7 +1632,8 @@ function drawS1BAInterRater(a,b,ba){
 const S2_FIXED=[
   {key:'id',   label:'Participant',       type:'text'},
   {key:'trial',label:'Trial',             type:'number'},
-  {key:'app',  label:'App height (cm)',   type:'number'},
+  {key:'ft',   label:'Flight time (ms)',  type:'number'},
+  {key:'fth',  label:'FT jump height (cm)',type:'number',compute:r=>flightTimeHeight(r.ft)},
   {key:'fp',   label:'FP height (cm)',    type:'number'},
   {key:'pf',   label:'Peak force (N)',    type:'number'},
   {key:'pp',   label:'Peak power (W)',    type:'number'},
@@ -1629,6 +1645,14 @@ const S2_FIXED=[
 ];
 
 let _s2Grid=null;
+const S2_INPUT=S2_FIXED.filter(c=>!c.compute);
+
+/** Jump height from flight time: h = g*t^2/8 (t in s), returned in cm to 0.1 cm. */
+function flightTimeHeight(ms){
+  if(ms==null||isNaN(ms)||ms<=0) return null;
+  const t=ms/1000;
+  return Math.round(9.81*t*t/8*1000)/10;
+}
 
 function demoS2(){
   const ids='P01,P02,P03,P04,P05,P06,P07,P08,P09,P10,P11,P12,P13,P14,P15,P16'.split(',');
@@ -1638,10 +1662,12 @@ function demoS2(){
     for(let t=1;t<=3;t++){
       const n=()=>(Math.random()-.5)*1.5;
       const fp=+(base_fp+n()).toFixed(1);
-      // App overestimates proportionally (~8% + 1.5 cm fixed offset)
-      const app=+(fp*1.08+1.5+n()).toFixed(1);
+      // Flight time reads higher than the force plate's take-off velocity method, and more so for
+      // higher jumps (e.g. landing with flexed hips, knees or ankles lengthens time in the air)
+      const ftH=fp*1.05+1.0+n();
+      const ft=Math.round(Math.sqrt(ftH/100*8/9.81)*1000);
       rows.push({
-        id,trial:t,app,fp,
+        id,trial:t,ft,fp,
         pf:+(2200+i*30+(Math.random()-.5)*60).toFixed(0),
         pp:+(3800+i*50+(Math.random()-.5)*100).toFixed(0),
         mp:+(2100+i*25+(Math.random()-.5)*80).toFixed(0),
@@ -1663,7 +1689,7 @@ function initS2(){
     <div class="stn-badge">2</div>
     <div>
       <div class="stn-title">Countermovement Jump</div>
-      <div class="stn-desc">Agreement between phone app and force plate for jump height; reliability of force-time variables across trials.</div>
+      <div class="stn-desc">Agreement between jump height calculated from flight time and jump height from the force plate; reliability of force-time variables across trials.</div>
     </div>
   </div>
 
@@ -1680,6 +1706,8 @@ function initS2(){
       <button class="btn btn-s" onclick="exportCSVS2()">Export CSV</button>
       <button class="btn btn-d btn-sm" onclick="clearS2()">Clear</button>
     </div>
+    <div class="co co-note" style="margin-bottom:.8rem">Enter <strong>flight time in milliseconds</strong> (for example 512). The shaded column fills in automatically using
+      <em>h = g&middot;t&sup2;/8</em> (g = 9.81 m/s&sup2;). When pasting from a spreadsheet, use the column order Participant, Trial, Flight time, FP height, then the force-time variables; the calculated column is skipped.</div>
     <div id="s2-grid"></div>
   </div>
 
@@ -1716,10 +1744,10 @@ function initS2(){
 
 function loadDemoS2(){ const r=demoS2(); STORE.s2.rows=r; _s2Grid.setRows(r); analyseS2(); }
 function clearS2(){ _s2Grid.clearRows(); STORE.s2.rows=[]; analyseS2(); }
-function dlTemplateS2(){ downloadTemplate(S2_FIXED.map(c=>c.key),'cmj-template.csv'); }
+function dlTemplateS2(){ downloadTemplate(S2_INPUT.map(c=>c.key),'cmj-template.csv'); }
 function exportCSVS2(){
-  const rows=_s2Grid.getRows().filter(r=>r.fp!=null);
-  downloadCSV(toCSV(rows,S2_FIXED.map(c=>c.key)),'cmj-data.csv');
+  const rows=_s2Grid.getRows().filter(r=>r.fp!=null||r.ft!=null);
+  downloadCSV(toCSV(rows,[...S2_INPUT.map(c=>c.key),'fth']),'cmj-data.csv');
 }
 function importCSVS2(inp){
   const f=inp.files[0]; if(!f) return;
@@ -1727,7 +1755,7 @@ function importCSVS2(inp){
   rd.onload=e=>{
     const rows=parseCSV(e.target.result);
     const mapped=rows.slice(1).map(r=>{
-      const o={}; S2_FIXED.forEach((c,i)=>{o[c.key]=r[i]??'';});return o;
+      const o={}; S2_INPUT.forEach((c,i)=>{o[c.key]=r[i]??'';});return o;
     });
     STORE.s2.rows=mapped; _s2Grid.setRows(mapped); analyseS2();
   };
@@ -1742,12 +1770,16 @@ function analyseS2(){
   const all=_s2Grid.getRows(); STORE.s2.rows=all; saveStore();
   const res=document.getElementById('s2-results'); if(!res) return;
 
-  const valid=all.filter(r=>r.fp!=null&&r.app!=null&&!isNaN(r.fp)&&!isNaN(r.app));
-  if(valid.length<4){ res.innerHTML=`<div class="co co-note">Enter at least 4 rows with both App and FP height values.</div>`; return; }
+  // Flight times typed in seconds (0.5) or far outside a plausible jump give misleading heights
+  const oddFT=all.filter(r=>r.ft!=null&&(r.ft<150||r.ft>1200)).length;
+  const ftWarn=oddFT?`<div class="co co-warn">${oddFT} flight time${oddFT===1?' is':'s are'} outside 150 to 1200 ms. Check they are entered in milliseconds (for example 512, not 0.512).</div>`:'';
 
-  // Agreement: app vs FP (use trial 1 only or all)
-  const appVals=valid.map(r=>+r.app), fpVals=valid.map(r=>+r.fp);
-  const ba=blandAltman(appVals,fpVals);
+  const valid=all.filter(r=>r.fp!=null&&r.fth!=null&&!isNaN(r.fp)&&!isNaN(r.fth));
+  if(valid.length<4){ res.innerHTML=ftWarn+`<div class="co co-note">Enter at least 4 rows with both a flight time and an FP height.</div>`; return; }
+
+  // Agreement: flight-time height vs force plate height
+  const ftVals=valid.map(r=>+r.fth), fpVals=valid.map(r=>+r.fp);
+  const ba=blandAltman(ftVals,fpVals);
 
   // Reliability: FP height across trials per participant
   const byPart={};
@@ -1758,17 +1790,17 @@ function analyseS2(){
   const matFP=Object.values(byPart).filter(t=>t.length>=2);
   const iccFP=icc(matFP,iccModel), cvFP=cvPercent(matFP);
 
-  // Reliability: App height
-  const byPartApp={};
-  all.filter(r=>r.id&&r.app!=null&&!isNaN(r.app)).forEach(r=>{
-    if(!byPartApp[r.id]) byPartApp[r.id]=[];
-    byPartApp[r.id].push(+r.app);
+  // Reliability: flight-time height
+  const byPartFT={};
+  all.filter(r=>r.id&&r.fth!=null&&!isNaN(r.fth)).forEach(r=>{
+    if(!byPartFT[r.id]) byPartFT[r.id]=[];
+    byPartFT[r.id].push(+r.fth);
   });
-  const matApp=Object.values(byPartApp).filter(t=>t.length>=2);
-  const iccApp=icc(matApp,iccModel), cvApp=cvPercent(matApp);
+  const matFT=Object.values(byPartFT).filter(t=>t.length>=2);
+  const iccFT=icc(matFT,iccModel), cvFT=cvPercent(matFT);
 
   // Force-time variable reliability
-  const ftVars=S2_FIXED.filter(c=>!['id','trial','app','fp'].includes(c.key));
+  const ftVars=S2_FIXED.filter(c=>!['id','trial','ft','fth','fp'].includes(c.key));
   const ftResults=ftVars.map(col=>{
     const byP={};
     all.filter(r=>r.id&&r[col.key]!=null&&!isNaN(+r[col.key])&&+r[col.key]>0).forEach(r=>{
@@ -1784,15 +1816,15 @@ function analyseS2(){
 
   const loaOk=Math.abs(ba.loa_u)<=thrLoA&&Math.abs(ba.loa_l)<=thrLoA;
 
-  res.innerHTML=`
+  res.innerHTML=ftWarn+`
   <div class="card">
-    <div class="card-title">Agreement — Phone App vs Force Plate (Jump Height)</div>
+    <div class="card-title">Agreement: Flight-Time vs Force Plate Jump Height</div>
     <div class="sg">
       <div class="sc ${loaOk?'good':'bad'}">
-        <div class="sc-lbl">Bias (app – FP)</div>
+        <div class="sc-lbl">Bias (flight time minus FP)</div>
         <div class="sc-val">${fmt1(ba.bias)} cm</div>
         <div class="sc-ci">95% CI ${fmtCI(ba.ci_bias[0],ba.ci_bias[1],1)}</div>
-        <div class="sc-int">${Math.abs(ba.bias)<1?'Negligible bias.':'The app overestimates by approximately '+fmt1(Math.abs(ba.bias))+' cm on average.'}</div>
+        <div class="sc-int">${Math.abs(ba.bias)<1?'Negligible bias.':`The flight-time method reads ${ba.bias>0?'higher':'lower'} by about ${fmt1(Math.abs(ba.bias))} cm on average.`}</div>
       </div>
       <div class="sc ${loaOk?'good':'warn'}">
         <div class="sc-lbl">Limits of agreement</div>
@@ -1807,24 +1839,35 @@ function analyseS2(){
         <div class="sc-int">A relationship between the mean and the difference suggests bias changes with jump height.</div>
       </div>
     </div>
-    <div id="s2-ch-ba" class="ch-wrap"><div class="ch-title">Bland-Altman — App minus Force Plate (cm)</div></div>
-    <div id="s2-ch-scatter" class="ch-wrap" style="margin-top:.7rem"><div class="ch-title">Scatter — App vs Force Plate with identity line</div></div>
+    <div id="s2-ch-ba" class="ch-wrap"><div class="ch-title">Bland-Altman: Flight Time minus Force Plate (cm)</div></div>
+    <div id="s2-ch-scatter" class="ch-wrap" style="margin-top:.7rem"><div class="ch-title">Scatter: Flight-Time vs Force Plate Height with identity line</div></div>
   </div>
 
   <div class="card">
-    <div class="card-title">Force Plate Jump Height Reliability</div>
+    <div class="card-title">Jump Height Reliability Across Trials</div>
     <div class="sg">
       <div class="sc ${ratingLabel(iccFP.icc).cls}">
-        <div class="sc-lbl">ICC (${iccModel})</div>
+        <div class="sc-lbl">Force plate: ICC (${iccModel})</div>
         <div class="sc-val">${fmt2(iccFP.icc)}</div>
         <div class="sc-ci">95% CI ${fmtCI(iccFP.ci_l,iccFP.ci_u)}</div>
       </div>
       <div class="sc ${cvLabel(cvFP.cv).cls}">
-        <div class="sc-lbl">CV%</div>
+        <div class="sc-lbl">Force plate: CV%</div>
         <div class="sc-val">${fmt1(cvFP.cv)}%</div>
         <div class="sc-ci">95% CI ${fmtCI(cvFP.ci_l,cvFP.ci_u,1)}%</div>
       </div>
+      <div class="sc ${ratingLabel(iccFT.icc).cls}">
+        <div class="sc-lbl">Flight time: ICC (${iccModel})</div>
+        <div class="sc-val">${fmt2(iccFT.icc)}</div>
+        <div class="sc-ci">95% CI ${fmtCI(iccFT.ci_l,iccFT.ci_u)}</div>
+      </div>
+      <div class="sc ${cvLabel(cvFT.cv).cls}">
+        <div class="sc-lbl">Flight time: CV%</div>
+        <div class="sc-val">${fmt1(cvFT.cv)}%</div>
+        <div class="sc-ci">95% CI ${fmtCI(cvFT.ci_l,cvFT.ci_u,1)}%</div>
+      </div>
     </div>
+    <div style="font-size:.8rem;color:var(--muted);margin-top:.6rem">Good reliability for both methods does not mean they agree: a method can repeat itself closely while reading consistently higher than the other.</div>
   </div>
 
   <div class="card">
@@ -1854,20 +1897,20 @@ function analyseS2(){
   </div>`;
 
   drawBAChart(document.getElementById('s2-ch-ba'),ba,'Mean height (cm)','cmj-ba');
-  drawS2Scatter(appVals,fpVals,ba,thrLoA);
+  drawS2Scatter(ftVals,fpVals,ba,thrLoA);
   if(ftResults.length>=2) drawS2CVRank(ftResults,thrCV);
 }
 
-function drawS2Scatter(app,fp,ba,thrLoA){
+function drawS2Scatter(ftH,fp,ba,thrLoA){
   const c=document.getElementById('s2-ch-scatter'); if(!c) return;
-  const all=[...app,...fp]; const mn=Math.min(...all)*.95,mx=Math.max(...all)*1.05;
+  const all=[...ftH,...fp]; const mn=Math.min(...all)*.95,mx=Math.max(...all)*1.05;
   const ch=makeChart(c,{vw:460,vh:320,xDomain:[mn,mx],yDomain:[mn,mx],
-    xLabel:'Force plate (cm)',yLabel:'Phone app (cm)'});
+    xLabel:'Force plate height (cm)',yLabel:'Flight-time height (cm)'});
   ch.addLine([[mn,mn],[mx,mx]],'#94a3b8',1.5,'4,3');
   ch.addLine([[mn,mn+ba.bias],[mx,mx+ba.bias]],'#0072B2',1.5,'3,2');
   ch.addLine([[mn,mn+ba.loa_u],[mx,mx+ba.loa_u]],'#D55E00',1,'4,3');
   ch.addLine([[mn,mn+ba.loa_l],[mx,mx+ba.loa_l]],'#D55E00',1,'4,3');
-  ch.addPoints(zip(fp,app),'#009E73',4);
+  ch.addPoints(zip(fp,ftH),'#009E73',4);
   chartActions(c,ch.svg,'cmj-scatter');
 }
 
