@@ -1,0 +1,3078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Validity, Reliability and Agreement</title>
+<style>
+/* -- TOKENS ------------------------------------------------------- */
+:root {
+  --bg:#f0f4f8; --surface:#fff; --surface2:#f8fafc; --border:#e2e8f0;
+  --border-dark:#cbd5e1; --text:#1e293b; --muted:#64748b; --light:#94a3b8;
+  --primary:#1d4ed8; --primary-dk:#1e40af; --primary-lt:#eff6ff;
+  --c1:#0072B2; --c2:#E69F00; --c3:#009E73; --c4:#D55E00;
+  --c5:#56B4E9; --c6:#CC79A7; --c7:#F0E442;
+  --good:#059669; --warn:#d97706; --bad:#dc2626;
+  --good-bg:#ecfdf5; --warn-bg:#fffbeb; --bad-bg:#fef2f2;
+  --r:8px; --r-lg:12px;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 2px 8px rgba(0,0,0,.05);
+  --font:system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'Menlo','Consolas',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+
+/* -- HEADER ------------------------------------------------------- */
+#hdr{background:var(--primary-dk);color:#fff;position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.hdr-inner{max-width:1120px;margin:0 auto;padding:0 1rem;display:flex;
+  align-items:center;gap:2rem}
+.hdr-title{font-size:.95rem;font-weight:700;white-space:nowrap;padding:.75rem 0;
+  letter-spacing:-.01em}
+.snav{display:flex;overflow-x:auto;scrollbar-width:none}
+.snav::-webkit-scrollbar{display:none}
+.snav button{background:none;border:none;color:rgba(255,255,255,.65);
+  padding:.75rem .95rem;font-size:.82rem;font-family:var(--font);cursor:pointer;
+  white-space:nowrap;border-bottom:2px solid transparent;font-weight:500;
+  transition:color .15s,border-color .15s}
+.snav button:hover{color:#fff}
+.snav button.act{color:#fff;border-bottom-color:#93c5fd}
+.snav button:focus-visible{outline:2px solid #93c5fd;outline-offset:-2px}
+
+/* -- LAYOUT ------------------------------------------------------- */
+#main{max-width:1120px;margin:0 auto;padding:1.5rem 1rem 3rem}
+.pane{display:none}.pane.act{display:block}
+
+/* -- CARDS -------------------------------------------------------- */
+.card{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-lg);box-shadow:var(--shadow);padding:1.5rem;
+  margin-bottom:1.25rem}
+.card-title{font-size:1rem;font-weight:600;margin-bottom:.75rem;
+  padding-bottom:.75rem;border-bottom:1px solid var(--border)}
+.card-sub{font-size:.85rem;color:var(--muted);margin-bottom:1rem}
+
+/* -- STATION HEADER ----------------------------------------------- */
+.stn-hdr{display:flex;align-items:flex-start;gap:1rem;margin-bottom:1.5rem}
+.stn-badge{background:var(--primary);color:#fff;width:2.5rem;height:2.5rem;
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:1.1rem;flex-shrink:0}
+.stn-title{font-size:1.35rem;font-weight:700}
+.stn-desc{font-size:.875rem;color:var(--muted);margin-top:.2rem}
+
+/* -- BUTTONS ------------------------------------------------------ */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.42rem .95rem;
+  border-radius:var(--r);border:none;font-family:var(--font);font-size:.83rem;
+  font-weight:500;cursor:pointer;white-space:nowrap;transition:background .15s}
+.btn:active{transform:translateY(1px)}
+.btn-p{background:var(--primary);color:#fff}
+.btn-p:hover{background:var(--primary-dk)}
+.btn-s{background:var(--surface2);color:var(--text);border:1px solid var(--border-dark)}
+.btn-s:hover{background:var(--border)}
+.btn-d{background:#fef2f2;color:var(--bad);border:1px solid #fecaca}
+.btn-d:hover{background:#fee2e2}
+.btn-sm{padding:.28rem .65rem;font-size:.78rem}
+.btn-grp{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.btn:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+
+/* -- FORM --------------------------------------------------------- */
+.f-row{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
+.f-grp{display:flex;flex-direction:column;gap:.3rem}
+.f-grp label{font-size:.8rem;font-weight:500;color:var(--muted)}
+.f-grp input,.f-grp select{padding:.38rem .6rem;border:1px solid var(--border-dark);
+  border-radius:var(--r);font-family:var(--font);font-size:.875rem;color:var(--text);
+  background:var(--surface)}
+.f-grp input:focus,.f-grp select:focus{outline:2px solid var(--primary);outline-offset:1px}
+
+/* -- DATA GRID ---------------------------------------------------- */
+.grid-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--r)}
+.dgrid{border-collapse:collapse;width:100%;font-size:.83rem}
+.dgrid th{background:var(--surface2);border-bottom:2px solid var(--border-dark);
+  padding:.45rem .6rem;text-align:left;font-weight:600;color:var(--muted);white-space:nowrap}
+.dgrid td{border-bottom:1px solid var(--border);padding:0}
+.dgrid td input{width:100%;border:none;padding:.42rem .6rem;background:transparent;
+  font-size:.83rem;font-family:var(--font);color:var(--text)}
+.dgrid td input:focus{background:var(--primary-lt);outline:none}
+.dgrid tr:hover td{background:#fafafa}
+.dgrid tr:hover td input:not(:focus){background:#fafafa}
+
+/* -- STAT CARDS --------------------------------------------------- */
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.7rem;margin-bottom:1rem}
+.sc{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:.85rem 1rem}
+.sc.good{border-left:3px solid var(--good)}
+.sc.warn{border-left:3px solid var(--warn)}
+.sc.bad{border-left:3px solid var(--bad)}
+.sc-lbl{font-size:.75rem;color:var(--muted);font-weight:500;text-transform:uppercase;
+  letter-spacing:.04em;margin-bottom:.2rem}
+.sc-val{font-size:1.55rem;font-weight:700;line-height:1.2}
+.sc-ci{font-size:.75rem;color:var(--muted);margin-top:.12rem}
+.sc-int{font-size:.75rem;color:var(--muted);margin-top:.35rem;padding-top:.35rem;
+  border-top:1px solid var(--border);line-height:1.4}
+
+/* -- CHART WRAP --------------------------------------------------- */
+.ch-wrap{position:relative;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;margin-bottom:1rem}
+.ch-wrap svg{display:block;width:100%;height:auto}
+.ch-actions{display:flex;gap:.4rem;position:absolute;top:.5rem;right:.5rem;
+  opacity:0;transition:opacity .2s}
+.ch-wrap:hover .ch-actions{opacity:1}
+.ch-title{font-size:.82rem;font-weight:600;color:var(--muted);padding:.6rem .75rem .25rem;
+  background:var(--surface2);border-bottom:1px solid var(--border)}
+.ch2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+@media(max-width:680px){.ch2{grid-template-columns:1fr}}
+
+/* -- RESULTS TABLE ------------------------------------------------ */
+.rtbl{width:100%;border-collapse:collapse;font-size:.83rem}
+.rtbl th{background:var(--surface2);padding:.45rem .7rem;text-align:left;
+  font-weight:600;color:var(--muted);border-bottom:2px solid var(--border-dark)}
+.rtbl td{padding:.45rem .7rem;border-bottom:1px solid var(--border)}
+.rtbl tr:last-child td{border-bottom:none}
+.rtbl .mono{font-family:var(--mono)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--r);margin-bottom:1rem}
+
+/* -- CALLOUTS ----------------------------------------------------- */
+.co{padding:.7rem .95rem;border-radius:var(--r);font-size:.83rem;margin-bottom:.9rem;border-left:3px solid}
+.co-info{background:#eff6ff;border-color:var(--primary);color:#1e40af}
+.co-warn{background:var(--warn-bg);border-color:var(--warn);color:#92400e}
+.co-note{background:var(--surface2);border-color:var(--border-dark);color:var(--muted)}
+
+/* -- THRESHOLDS --------------------------------------------------- */
+.thr-row{display:flex;gap:1rem;align-items:center;padding:.65rem 1rem;
+  background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);
+  margin-bottom:.9rem;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}
+.thr-row input[type=number]{width:68px;padding:.28rem .45rem;border:1px solid var(--border-dark);
+  border-radius:4px;font-size:.83rem;font-family:var(--font)}
+
+/* -- TOGGLES ------------------------------------------------------ */
+.tog-grp{display:flex;gap:.35rem;flex-wrap:wrap}
+.tog{padding:.28rem .75rem;border-radius:100px;border:1px solid var(--border-dark);
+  background:var(--surface);font-size:.78rem;font-family:var(--font);cursor:pointer;
+  font-weight:500;color:var(--muted);transition:all .15s}
+.tog.act{background:var(--primary);border-color:var(--primary);color:#fff}
+.tog:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+
+/* -- PASTE AREA --------------------------------------------------- */
+.paste-zone{border:2px dashed var(--border-dark);border-radius:var(--r);
+  padding:1.25rem;text-align:center;color:var(--muted);font-size:.83rem;
+  cursor:pointer;transition:border-color .15s,background .15s;position:relative}
+.paste-zone:hover,.paste-zone.over{border-color:var(--primary);
+  background:var(--primary-lt);color:var(--primary)}
+.paste-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+/* -- REFLECTIONS -------------------------------------------------- */
+.refl-card{background:#fefce8;border:1px solid #fef08a;border-radius:var(--r);
+  padding:.95rem;margin-bottom:.7rem}
+.refl-guide-row{display:flex;align-items:center;gap:.6rem;margin-top:.5rem}
+.refl-guide-row .btn:disabled{opacity:.5;cursor:not-allowed}
+.refl-hint{font-size:.75rem;color:#a16207}
+.refl-guide{margin-top:.6rem;background:#fff;border:1px solid #fde68a;border-left:3px solid #0072B2;border-radius:4px;padding:.6rem .8rem;font-size:.82rem;line-height:1.5;color:var(--text)}
+.refl-guide-ttl{font-weight:700;font-size:.78rem;color:#0072B2;text-transform:uppercase;letter-spacing:.03em;margin-bottom:.3rem}
+.refl-guide ul{margin:0;padding-left:1.1rem}
+.refl-guide li{margin:.25rem 0}
+.refl-q{font-weight:600;font-size:.875rem;color:#713f12;margin-bottom:.45rem}
+.refl-card textarea{width:100%;border:1px solid #fde047;border-radius:4px;
+  padding:.45rem;font-family:var(--font);font-size:.83rem;background:#fff;
+  resize:vertical;min-height:70px}
+
+/* -- OVERVIEW TABLE ----------------------------------------------- */
+.ovtbl{width:100%;border-collapse:collapse;font-size:.875rem}
+.ovtbl th{background:var(--primary-dk);color:#fff;padding:.55rem .85rem;text-align:left;font-weight:600}
+.ovtbl td{padding:.55rem .85rem;border-bottom:1px solid var(--border);vertical-align:top}
+.ovtbl tr:nth-child(even) td{background:var(--surface2)}
+.tag{display:inline-block;padding:.18rem .5rem;border-radius:100px;font-size:.72rem;font-weight:600;margin:.1rem}
+.t-rel{background:#dbeafe;color:#1e40af}
+.t-agr{background:#dcfce7;color:#166534}
+.t-ir{background:#fce7f3;color:#831843}
+.t-cor{background:#fef9c3;color:#713f12}
+
+/* -- STATION 5 ---------------------------------------------------- */
+#lt-wrap{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--r)}
+#lt-svg{display:block;width:100%;cursor:crosshair;touch-action:none}
+.lt-readout{background:rgba(255,255,255,.97);border:1px solid var(--border-dark);
+  border-radius:var(--r);padding:.45rem .7rem;font-size:.78rem;line-height:1.85;
+  min-width:155px;box-shadow:var(--shadow);pointer-events:none}
+
+/* -- RESPONSIVE --------------------------------------------------- */
+@media(max-width:600px){
+  .hdr-title{display:none}
+  .sc-val{font-size:1.25rem}
+  #main{padding:1rem .7rem 3rem}
+  .card{padding:1rem}
+}
+
+/* -- PRINT -------------------------------------------------------- */
+@media print{
+  #hdr,.btn,.btn-grp,.paste-zone,.thr-row,.tog-grp{display:none!important}
+  .pane{display:block!important}
+  .card{box-shadow:none;border:1px solid #ccc;break-inside:avoid}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <div class="hdr-inner">
+    <div class="hdr-title">Validity, Reliability &amp; Agreement</div>
+    <nav class="snav" role="tablist" aria-label="Stations">
+      <button role="tab" data-tab="overview" class="act">Overview</button>
+      <button role="tab" data-tab="s1">1&nbsp;Grip Strength</button>
+      <button role="tab" data-tab="s2">2&nbsp;Jump Height</button>
+      <button role="tab" data-tab="s3">3&nbsp;Lactate</button>
+      <button role="tab" data-tab="s4">4&nbsp;RPE</button>
+      <button role="tab" data-tab="s5">5&nbsp;LT Threshold</button>
+    </nav>
+  </div>
+</div>
+
+<div id="main">
+  <div id="pane-overview" class="pane act"></div>
+  <div id="pane-s1"       class="pane"></div>
+  <div id="pane-s2"       class="pane"></div>
+  <div id="pane-s3"       class="pane"></div>
+  <div id="pane-s4"       class="pane"></div>
+  <div id="pane-s5"       class="pane"></div>
+</div>
+
+<script>
+'use strict';
+/* ===================================================================
+   VALIDITY, RELIABILITY AND AGREEMENT — LAB TOOL
+   Sport & Exercise Science · Postgraduate Session
+   Single file, no dependencies. British English throughout.
+=================================================================== */
+
+/* -- SECTION: MATH UTILS ------------------------------------------- */
+const sum  = a => a.reduce((s,x)=>s+x, 0);
+const mean = a => sum(a)/a.length;
+const sq   = x => x*x;
+
+function variance(a, ddof=1){
+  const m=mean(a); return sum(a.map(x=>sq(x-m)))/(a.length-ddof);
+}
+function sd(a,ddof=1){ return Math.sqrt(variance(a,ddof)); }
+function cov(x,y){
+  const mx=mean(x),my=mean(y);
+  return sum(x.map((xi,i)=>(xi-mx)*(y[i]-my)))/(x.length-1);
+}
+function zip(a,b){ return a.map((v,i)=>[v,b[i]]); }
+function linspace(a,b,n){
+  return Array.from({length:n},(_,i)=>a+(b-a)*i/(n-1));
+}
+
+/* -- SECTION: SPECIAL FUNCTIONS ----------------------------------- */
+function lgamma(x){
+  if(x<.5) return Math.log(Math.PI/Math.sin(Math.PI*x))-lgamma(1-x);
+  x-=1;
+  const c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,
+    771.32342877765313,-176.61502916214059,12.507343278686905,
+    -.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  let a=c[0];
+  const t=x+7.5;
+  for(let i=1;i<9;i++) a+=c[i]/(x+i);
+  return .5*Math.log(2*Math.PI)+(x+.5)*Math.log(t)-t+Math.log(a);
+}
+
+function betaCF(x,a,b){
+  const MAXIT=200,EPS=3e-7,FP=1e-30;
+  const qab=a+b,qap=a+1,qam=a-1;
+  let c=1,d=Math.max(1-qab*x/qap,FP); d=1/d; let h=d;
+  for(let m=1;m<=MAXIT;m++){
+    const m2=2*m;
+    let aa=m*(b-m)*x/((qam+m2)*(a+m2));
+    d=Math.max(1+aa*d,FP); c=Math.max(1+aa/c,FP); d=1/d; h*=d*c;
+    aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));
+    d=Math.max(1+aa*d,FP); c=Math.max(1+aa/c,FP); d=1/d;
+    const del=d*c; h*=del;
+    if(Math.abs(del-1)<EPS) break;
+  }
+  return h;
+}
+
+function betaInc(x,a,b){
+  if(x<=0) return 0; if(x>=1) return 1;
+  const lb=lgamma(a)+lgamma(b)-lgamma(a+b);
+  if(x<(a+1)/(a+b+2))
+    return Math.exp(a*Math.log(x)+b*Math.log(1-x)-lb)*betaCF(x,a,b)/a;
+  return 1-Math.exp(b*Math.log(1-x)+a*Math.log(x)-lb)*betaCF(1-x,b,a)/b;
+}
+
+function betaInv(p,a,b){
+  if(p<=0) return 0; if(p>=1) return 1;
+  let x=a/(a+b);
+  for(let i=0;i<200;i++){
+    const err=betaInc(x,a,b)-p;
+    if(Math.abs(err)<1e-9) break;
+    const deriv=Math.exp((a-1)*Math.log(Math.max(x,1e-15))
+      +(b-1)*Math.log(Math.max(1-x,1e-15))+lgamma(a+b)-lgamma(a)-lgamma(b));
+    x=Math.max(1e-10,Math.min(1-1e-10,x-err/Math.max(deriv,1e-15)));
+  }
+  return x;
+}
+
+// F-distribution quantile via regularised incomplete beta
+function fQ(p,d1,d2){
+  const x=betaInv(p,d1/2,d2/2);
+  return (x*d2)/((1-x)*d1);
+}
+// t-distribution quantile
+function tQ(p,df){
+  if(p<.5) return -tQ(1-p,df);
+  const x=betaInv(2*(1-p),df/2,.5);
+  return Math.sqrt(df*(1-x)/x);
+}
+// chi-squared quantile (F(df,large) * df → chi2)
+function chi2Q(p,df){ return df*fQ(p,df,1e6); }
+
+/* -- SECTION: STATS LIBRARY ---------------------------------------- */
+
+/**
+ * Intraclass correlation coefficient.
+ * @param {number[][]} mat  rows=subjects, cols=raters/trials
+ * @param {'1,1'|'2,1'|'3,1'} model
+ * @returns {object} icc, ci_l, ci_u, warning
+ */
+function icc(mat, model='2,1'){
+  const validRows=mat.filter(r=>r.every(v=>v!=null&&!isNaN(v)));
+  if(validRows.length<3) return {icc:NaN,ci_l:NaN,ci_u:NaN,warning:'Minimum 3 complete rows needed.'};
+  const n=validRows.length, k=validRows[0].length;
+  if(k<2) return {icc:NaN,ci_l:NaN,ci_u:NaN,warning:'At least 2 trials/raters required.'};
+
+  const grand=mean(validRows.flat());
+  const rowM=validRows.map(r=>mean(r));
+  const colM=Array.from({length:k},(_,j)=>mean(validRows.map(r=>r[j])));
+
+  const SSB=k*sum(rowM.map(m=>sq(m-grand)));
+  const SSR=n*sum(colM.map(m=>sq(m-grand)));
+  const SST=sum(validRows.flat().map(v=>sq(v-grand)));
+  const SSW=SST-SSB;
+  const SSE=SST-SSB-SSR;
+
+  const MSB=SSB/(n-1);
+  const MSW=SSW/(n*(k-1));
+  const MSR=SSR/(k-1);
+  const MSE=Math.max(SSE/((n-1)*(k-1)),1e-12);
+
+  let iccVal, F, df1, df2;
+  const warn=[];
+  if(n<10) warn.push('n is small; confidence intervals will be wide.');
+
+  if(model==='1,1'){
+    iccVal=(MSB-MSW)/(MSB+(k-1)*MSW);
+    F=MSB/MSW; df1=n-1; df2=n*(k-1);
+  } else if(model==='2,1'){
+    iccVal=(MSB-MSE)/(MSB+(k-1)*MSE+k*(MSR-MSE)/n);
+    F=MSB/MSE; df1=n-1; df2=(n-1)*(k-1);
+  } else { // 3,1
+    iccVal=(MSB-MSE)/(MSB+(k-1)*MSE);
+    F=MSB/MSE; df1=n-1; df2=(n-1)*(k-1);
+  }
+
+  let ci_l,ci_u;
+  if(model==='2,1'){
+    // Absolute agreement: rater variance enters the CI via Satterthwaite df (Shrout & Fleiss 1979; McGraw & Wong 1996)
+    const r=Math.min(iccVal,1-1e-9);
+    const a=k*r/(n*(1-r)), b=1+k*r*(n-1)/(n*(1-r));
+    const v=sq(a*MSR+b*MSE)/(sq(a*MSR)/(k-1)+sq(b*MSE)/((n-1)*(k-1)));
+    const Fs=fQ(.975,n-1,v), Fss=fQ(.975,v,n-1);
+    const denom=k*MSR+(k*n-k-n)*MSE;
+    ci_l=n*(MSB-Fs*MSE)/(Fs*denom+n*MSB);
+    ci_u=n*(Fss*MSB-MSE)/(denom+n*Fss*MSB);
+  } else {
+    const Fl=F/fQ(.975,df1,df2);
+    const Fu=F*fQ(.975,df2,df1);
+    ci_l=(Fl-1)/(Fl+k-1);
+    ci_u=(Fu-1)/(Fu+k-1);
+  }
+
+  return {icc:iccVal,ci_l:Math.max(-1,ci_l),ci_u:Math.min(1,ci_u),
+    F,df1,df2,MSB,MSW,MSR,MSE,n,k,warning:warn.join(' ')};
+}
+
+/**
+ * Coefficient of variation from log-transformed data.
+ * @param {number[][]} mat  rows=subjects, cols=trials
+ */
+function cvPercent(mat){
+  const valid=mat.filter(r=>r.every(v=>v>0&&!isNaN(v)));
+  if(valid.length<3) return {cv:NaN,ci_l:NaN,ci_u:NaN,warning:'Minimum 3 complete rows with positive values.'};
+  const n=valid.length, k=valid[0].length;
+  const logMat=valid.map(r=>r.map(Math.log));
+  const rowLogM=logMat.map(r=>mean(r));
+  const grandLogM=mean(rowLogM);
+  const SSW_log=sum(logMat.map((r,i)=>sum(r.map(v=>sq(v-rowLogM[i])))));
+  const df=n*(k-1);
+  const msw_log=SSW_log/df;
+  const swLog=Math.sqrt(msw_log);
+  const cvVal=(Math.sqrt(Math.exp(msw_log)-1))*100;
+  // CI via chi-squared on MSW
+  const chi_l=chi2Q(.025,df), chi_u=chi2Q(.975,df);
+  const sw_l=Math.sqrt(msw_log*df/chi_u);
+  const sw_u=Math.sqrt(msw_log*df/chi_l);
+  const cv_l=Math.sqrt(Math.exp(sq(sw_l))-1)*100;
+  const cv_u=Math.sqrt(Math.exp(sq(sw_u))-1)*100;
+  const warn=df<10?'Few degrees of freedom; interval is wide.':'';
+  return {cv:cvVal,ci_l:cv_l,ci_u:cv_u,n,k,df,warning:warn};
+}
+
+/**
+ * Bland-Altman analysis.
+ * @param {number[]} a  method/device A values
+ * @param {number[]} b  method/device B values
+ */
+function blandAltman(a,b){
+  const pairs=zip(a,b).filter(([x,y])=>x!=null&&y!=null&&!isNaN(x)&&!isNaN(y));
+  if(pairs.length<4) return {n:pairs.length,warning:'Minimum 4 pairs needed.'};
+  const n=pairs.length;
+  const diffs=pairs.map(([x,y])=>x-y);
+  const means=pairs.map(([x,y])=>(x+y)/2);
+  const bias=mean(diffs);
+  const s=sd(diffs);
+  const loa_u=bias+1.96*s, loa_l=bias-1.96*s;
+  const t=tQ(.975,n-1);
+  const se_bias=s/Math.sqrt(n);
+  const se_loa=Math.sqrt(3*sq(s)/n);
+  // Proportional bias via regression of diff on mean
+  const pb=linearRegress(means,diffs);
+  const warn=[];
+  if(n<15) warn.push('n is small; limits of agreement may be imprecise.');
+  if(Math.abs(pb.r)>.3) warn.push('Possible proportional bias (r='+pb.r.toFixed(2)+').');
+  return {
+    n, bias, sd:s, loa_u, loa_l,
+    ci_bias:[bias-t*se_bias, bias+t*se_bias],
+    ci_loa_u:[loa_u-t*se_loa, loa_u+t*se_loa],
+    ci_loa_l:[loa_l-t*se_loa, loa_l+t*se_loa],
+    propBias:pb, diffs, means, warning:warn.join(' ')
+  };
+}
+
+/**
+ * Pearson correlation with 95% CI (Fisher z).
+ */
+function pearsonR(x,y){
+  const pairs=zip(x,y).filter(([a,b])=>!isNaN(a)&&!isNaN(b)&&a!=null&&b!=null);
+  if(pairs.length<4) return {r:NaN,ci_l:NaN,ci_u:NaN,warning:'Minimum 4 pairs needed.'};
+  const n=pairs.length;
+  const xs=pairs.map(p=>p[0]),ys=pairs.map(p=>p[1]);
+  const r=cov(xs,ys)/(sd(xs)*sd(ys));
+  const z=Math.atanh(Math.max(-1+1e-8,Math.min(1-1e-8,r)));
+  const se=1/Math.sqrt(n-3);
+  const warn=n<10?'n is small; interval is wide.':'';
+  return {r,ci_l:Math.tanh(z-1.96*se),ci_u:Math.tanh(z+1.96*se),n,warning:warn};
+}
+
+/**
+ * Spearman correlation with 95% CI (Bonett & Wright 2000).
+ */
+function rankArray(a){
+  const sorted=[...a].map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v);
+  const ranks=new Array(a.length);
+  let i=0;
+  while(i<sorted.length){
+    let j=i;
+    while(j<sorted.length-1&&sorted[j+1].v===sorted[j].v) j++;
+    const r=(i+j)/2+1;
+    for(let k=i;k<=j;k++) ranks[sorted[k].i]=r;
+    i=j+1;
+  }
+  return ranks;
+}
+
+function spearmanR(x,y){
+  const pairs=zip(x,y).filter(([a,b])=>!isNaN(a)&&!isNaN(b)&&a!=null&&b!=null);
+  if(pairs.length<4) return {rs:NaN,ci_l:NaN,ci_u:NaN,warning:'Minimum 4 pairs needed.'};
+  const n=pairs.length;
+  const xs=pairs.map(p=>p[0]),ys=pairs.map(p=>p[1]);
+  const rx=rankArray(xs),ry=rankArray(ys);
+  const rs=cov(rx,ry)/(sd(rx)*sd(ry));
+  const z=Math.atanh(Math.max(-1+1e-8,Math.min(1-1e-8,rs)));
+  const se=Math.sqrt((1+sq(rs)/2)/(n-3));  // Bonett-Wright SE
+  const warn=n<10?'n is small; interval is wide.':'';
+  return {rs,ci_l:Math.tanh(z-1.96*se),ci_u:Math.tanh(z+1.96*se),n,warning:warn};
+}
+
+/**
+ * Simple linear regression.
+ */
+function linearRegress(x,y){
+  const n=x.length;
+  const mx=mean(x),my=mean(y);
+  const slope=cov(x,y)/variance(x);
+  const intercept=my-slope*mx;
+  const r=cov(x,y)/(sd(x)*sd(y));
+  const yhat=x.map(xi=>slope*xi+intercept);
+  const ssTot=sum(y.map(yi=>sq(yi-my)));
+  const ssRes=sum(y.map((yi,i)=>sq(yi-yhat[i])));
+  const r2=1-ssRes/ssTot;
+  return {slope,intercept,r,r2,n};
+}
+
+/**
+ * Polynomial least-squares fit (Gauss-Jordan on normal equations).
+ * @param {number[]} x
+ * @param {number[]} y
+ * @param {number}   deg  degree (2 or 3)
+ * @returns {{coeffs:number[], predict:(x:number)=>number, r2:number}}
+ */
+function polyFit(x,y,deg=3){
+  const d=deg+1;
+  // Build normal equations matrix A (d×d) and RHS b (d)
+  const A=Array.from({length:d},()=>new Array(d).fill(0));
+  const b=new Array(d).fill(0);
+  for(let i=0;i<d;i++){
+    for(let j=0;j<d;j++) A[i][j]=sum(x.map(xi=>Math.pow(xi,i+j)));
+    b[i]=sum(x.map((xi,k)=>Math.pow(xi,i)*y[k]));
+  }
+  // Gauss-Jordan elimination
+  const aug=A.map((row,i)=>[...row,b[i]]);
+  for(let col=0;col<d;col++){
+    let pivot=col;
+    for(let r=col+1;r<d;r++) if(Math.abs(aug[r][col])>Math.abs(aug[pivot][col])) pivot=r;
+    [aug[col],aug[pivot]]=[aug[pivot],aug[col]];
+    const pv=aug[col][col];
+    if(Math.abs(pv)<1e-12) continue;
+    for(let j=col;j<=d;j++) aug[col][j]/=pv;
+    for(let r=0;r<d;r++) if(r!==col){
+      const f=aug[r][col];
+      for(let j=col;j<=d;j++) aug[r][j]-=f*aug[col][j];
+    }
+  }
+  const coeffs=aug.map(r=>r[d]);
+  const predict=xv=>coeffs.reduce((s,c,i)=>s+c*Math.pow(xv,i),0);
+  const yhat=x.map(predict);
+  const my=mean(y);
+  const r2=1-sum(y.map((yi,i)=>sq(yi-yhat[i])))/sum(y.map(yi=>sq(yi-my)));
+  return {coeffs,predict,r2};
+}
+
+/**
+ * Dmax lactate threshold.
+ * Find point on fitted curve with maximum perpendicular distance
+ * from the straight line between first and last data point.
+ */
+function dmax(xs,ys,deg=3){
+  if(xs.length<4) return null;
+  const fit=polyFit(xs,ys,deg);
+  const x1=xs[0],y1=ys[0],x2=xs[xs.length-1],y2=fit.predict(x2);
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(sq(dx)+sq(dy));
+  const pts=linspace(x1,x2,200);
+  let maxD=0,maxX=x1;
+  for(const px of pts){
+    const py=fit.predict(px);
+    const d=Math.abs((py-y1)*dx-(px-x1)*dy)/len;
+    if(d>maxD){maxD=d;maxX=px;}
+  }
+  return {x:maxX,y:fit.predict(maxX),fit};
+}
+
+/**
+ * Modified Dmax — line starts from first point where lactate exceeds
+ * resting+0.5 mmol/L (or a supplied baseline).
+ */
+function modDmax(xs,ys,baseline=null,deg=3){
+  if(xs.length<4) return null;
+  const fit=polyFit(xs,ys,deg);
+  const bl=baseline??ys[0];
+  let startIdx=ys.findIndex(y=>y>bl+0.5);
+  if(startIdx<0) startIdx=0;
+  const x1=xs[startIdx],y1=fit.predict(x1);
+  const x2=xs[xs.length-1],y2=fit.predict(x2);
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(sq(dx)+sq(dy));
+  if(len<1e-8) return null;
+  const pts=linspace(x1,x2,200);
+  let maxD=0,maxX=x1;
+  for(const px of pts){
+    const py=fit.predict(px);
+    const d=Math.abs((py-y1)*dx-(px-x1)*dy)/len;
+    if(d>maxD){maxD=d;maxX=px;}
+  }
+  return {x:maxX,y:fit.predict(maxX),fit};
+}
+
+/**
+ * Exponential lactate fit y = a + b*exp(c*u), with u = x rescaled to 0..1 so exp() cannot overflow.
+ * For a given c the model is linear in a and b, so c is found by golden-section search on the SSE.
+ */
+function expFit(xs,ys){
+  const x0=Math.min(...xs), span=(Math.max(...xs)-x0)||1;
+  const us=xs.map(x=>(x-x0)/span);
+  const solve=c=>{
+    const e=us.map(u=>Math.exp(c*u));
+    const lr=linearRegress(e,ys);
+    return {a:lr.intercept,b:lr.slope,sse:sum(ys.map((y,i)=>sq(y-(lr.intercept+lr.slope*e[i]))))};
+  };
+  const gr=(Math.sqrt(5)-1)/2;
+  let lo=0.05,hi=15;
+  let c1=hi-gr*(hi-lo),c2=lo+gr*(hi-lo),f1=solve(c1).sse,f2=solve(c2).sse;
+  for(let i=0;i<80;i++){
+    if(f1<f2){ hi=c2; c2=c1; f2=f1; c1=hi-gr*(hi-lo); f1=solve(c1).sse; }
+    else     { lo=c1; c1=c2; f1=f2; c2=lo+gr*(hi-lo); f2=solve(c2).sse; }
+  }
+  const c=(lo+hi)/2,{a,b}=solve(c);
+  return {a,b,c,predict:x=>a+b*Math.exp(c*(x-x0)/span)};
+}
+
+/**
+ * Log-log lactate threshold (Beaver, Wasserman & Whipp 1985): two-segment linear regression of
+ * log(lactate) on log(x); the threshold is where the best-fitting pair of lines intersect.
+ */
+function logLogLT(xs,ys){
+  const n=xs.length;
+  if(n<4||xs.some(x=>!(x>0))||ys.some(y=>!(y>0))) return null;
+  const lx=xs.map(Math.log),ly=ys.map(Math.log);
+  const minSeg=n>=6?3:2;
+  const sse=(x,y,lr)=>sum(y.map((v,i)=>sq(v-(lr.intercept+lr.slope*x[i]))));
+  let best=null;
+  for(let k=minSeg;k<=n-minSeg;k++){
+    const L=linearRegress(lx.slice(0,k),ly.slice(0,k)),R=linearRegress(lx.slice(k),ly.slice(k));
+    const tot=sse(lx.slice(0,k),ly.slice(0,k),L)+sse(lx.slice(k),ly.slice(k),R);
+    if(!best||tot<best.tot) best={k,L,R,tot};
+  }
+  if(!best) return null;
+  const {k,L,R}=best;
+  let lxT=Math.abs(L.slope-R.slope)>1e-9?(R.intercept-L.intercept)/(L.slope-R.slope):(lx[k-1]+lx[k])/2;
+  if(!isFinite(lxT)||lxT<lx[0]||lxT>lx[n-1]) lxT=(lx[k-1]+lx[k])/2;
+  return {x:Math.exp(lxT),split:k};
+}
+
+/**
+ * Log-Exp-ModDmax (Jamnick et al. 2018): exponential curve fit; the Dmax line runs from the
+ * log-log threshold on that curve to the final stage.
+ */
+function logExpModDmax(xs,ys){
+  if(xs.length<4) return null;
+  const ll=logLogLT(xs,ys); if(!ll) return null;
+  const fit=expFit(xs,ys);
+  const x1=ll.x,y1=fit.predict(x1),x2=xs[xs.length-1],y2=fit.predict(x2);
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(sq(dx)+sq(dy));
+  if(len<1e-8) return null;
+  let maxD=0,maxX=x1;
+  for(const px of linspace(x1,x2,300)){
+    const d=Math.abs((fit.predict(px)-y1)*dx-(px-x1)*dy)/len;
+    if(d>maxD){maxD=d;maxX=px;}
+  }
+  return {x:maxX,y:fit.predict(maxX),fit,start:x1};
+}
+
+/* -- SECTION: FORMAT HELPERS --------------------------------------- */
+const fmt1=v=>isNaN(v)||v==null?'—':v.toFixed(1);
+const fmt2=v=>isNaN(v)||v==null?'—':v.toFixed(2);
+const fmt3=v=>isNaN(v)||v==null?'—':v.toFixed(3);
+function fmtCI(l,u,digits=2){
+  const f=digits===1?fmt1:digits===3?fmt3:fmt2;
+  return isNaN(l)||isNaN(u)?'—':`[${f(l)}, ${f(u)}]`;
+}
+function ratingLabel(r){
+  if(r>=.9)  return {txt:'Excellent',cls:'good'};
+  if(r>=.75) return {txt:'Good',cls:'good'};
+  if(r>=.5)  return {txt:'Moderate',cls:'warn'};
+  return            {txt:'Poor',cls:'bad'};
+}
+function cvLabel(cv){
+  if(cv<=5)  return {txt:'Low',cls:'good'};
+  if(cv<=10) return {txt:'Acceptable',cls:'warn'};
+  return            {txt:'High',cls:'bad'};
+}
+
+/* -- SECTION: DATA STORE ------------------------------------------- */
+const STORE = {
+  s1:{ rows:[], thr:{icc:.90, cv:10}, refl:{} },
+  s2:{ rows:[], thr:{loa:2, icc:.90, cv:10}, refl:{} },
+  s3:{ rows:[], thr:{cv:10}, refl:{} },
+  s4:{ refl:{} },
+  s5:{ curves:[], picks:{}, thr:{cv:15}, ratingMode:false, refl:{} }
+};
+
+function saveStore(){
+  try{ localStorage.setItem('vra_store',JSON.stringify(STORE)); }catch(e){}
+}
+function loadStore(){
+  try{
+    const s=localStorage.getItem('vra_store');
+    if(s){ const d=JSON.parse(s);
+      ['s1','s2','s3','s4','s5'].forEach(k=>{ if(d[k]) Object.assign(STORE[k],d[k]); });
+    }
+  }catch(e){}
+}
+
+/* -- SECTION: SVG CHART HELPERS ------------------------------------ */
+const NS='http://www.w3.org/2000/svg';
+
+// SVG presentation attributes are kebab-case; viewBox-style names must keep their case.
+const SVG_CAMEL_ATTRS=new Set(['viewBox','preserveAspectRatio','clipPathUnits','gradientUnits','patternUnits','markerWidth','markerHeight','refX','refY']);
+function svgEl(tag,attrs={}){
+  const el=document.createElementNS(NS,tag);
+  Object.entries(attrs).forEach(([k,v])=>{
+    const name=SVG_CAMEL_ATTRS.has(k)?k:k.replace(/[A-Z]/g,c=>'-'+c.toLowerCase());
+    el.setAttribute(name,v);
+  });
+  return el;
+}
+
+function scaleLin(domain,range){
+  const [d0,d1]=domain,[r0,r1]=range;
+  const fn=v=>r0+(v-d0)*(r1-r0)/(d1-d0);
+  fn.invert=p=>d0+(p-r0)*(d1-d0)/(r1-r0);
+  fn.domain=domain; fn.range=range;
+  return fn;
+}
+
+/** Round-number ticks (steps of 1, 2 or 5 x 10^n) inside [min,max]. */
+function niceTicks(min,max,count=5){
+  const span=max-min; if(!(span>0)) return [min];
+  const raw=span/Math.max(1,count-1), mag=Math.pow(10,Math.floor(Math.log10(raw)));
+  const f=raw/mag, step=(f<1.5?1:f<3?2:f<7?5:10)*mag;
+  const out=[];
+  for(let v=Math.ceil(min/step-1e-9)*step;v<=max+step*1e-9;v+=step) out.push(+v.toFixed(10));
+  out.step=step;
+  return out;
+}
+function tickFmt(step){
+  const d=Math.max(0,-Math.floor(Math.log10(step)+1e-9));
+  return v=>v.toFixed(d);
+}
+
+/**
+ * Create an SVG chart scaffold with axes.
+ * @returns {{svg,sx,sy,W,H,M,g}}
+ */
+function makeChart(container,opts={}){
+  const VW=opts.vw||500,VH=opts.vh||340;
+  const M=opts.margin||{top:20,right:20,bottom:50,left:55};
+  const W=VW-M.left-M.right, H=VH-M.top-M.bottom;
+
+  const svg=svgEl('svg',{viewBox:`0 0 ${VW} ${VH}`,role:'img',
+    'aria-label':opts.ariaLabel||'Chart'});
+  svg.style.fontFamily='inherit';
+
+  // Background
+  svg.appendChild(svgEl('rect',{x:0,y:0,width:VW,height:VH,fill:'white'}));
+
+  const g=svgEl('g',{transform:`translate(${M.left},${M.top})`});
+  svg.appendChild(g);
+
+  // Axis clip
+  const clipId='clip-'+Math.random().toString(36).slice(2);
+  const defs=svgEl('defs');
+  const clip=svgEl('clipPath',{id:clipId});
+  clip.appendChild(svgEl('rect',{x:0,y:0,width:W,height:H}));
+  defs.appendChild(clip);
+  svg.insertBefore(defs,g);
+
+  const [xMin,xMax]=opts.xDomain||[0,1];
+  const [yMin,yMax]=opts.yDomain||[0,1];
+  const sx=scaleLin([xMin,xMax],[0,W]);
+  const sy=scaleLin([yMin,yMax],[H,0]);
+
+  // Ticks: explicit positions if given, otherwise round numbers inside the domain
+  const xT=opts.xTicks||niceTicks(xMin,xMax,opts.ntx||6);
+  const yT=opts.yTicks||niceTicks(yMin,yMax,opts.nty||6);
+  const xF=opts.xFmt||(xT.step?tickFmt(xT.step):fmt1);
+  const yF=opts.yFmt||(yT.step?tickFmt(yT.step):fmt1);
+
+  if(opts.grid!==false){
+    const gridG=svgEl('g');
+    xT.forEach(v=>gridG.appendChild(svgEl('line',{x1:sx(v),x2:sx(v),y1:0,y2:H,stroke:'#eef2f6',strokeWidth:1})));
+    yT.forEach(v=>gridG.appendChild(svgEl('line',{x1:0,x2:W,y1:sy(v),y2:sy(v),stroke:'#eef2f6',strokeWidth:1})));
+    g.appendChild(gridG);
+  }
+
+  g.appendChild(svgEl('rect',{x:0,y:0,width:W,height:H,fill:'none',stroke:'#cbd5e1',strokeWidth:1}));
+
+  xT.forEach(v=>{
+    const tx=svgEl('text',{x:sx(v),y:H+16,textAnchor:'middle',fontSize:10,fill:'#64748b'});
+    tx.textContent=xF(v); g.appendChild(tx);
+    g.appendChild(svgEl('line',{x1:sx(v),x2:sx(v),y1:H,y2:H+4,stroke:'#94a3b8'}));
+  });
+  yT.forEach(v=>{
+    const ty=svgEl('text',{x:-7,y:sy(v)+3.5,textAnchor:'end',fontSize:10,fill:'#64748b'});
+    ty.textContent=yF(v); g.appendChild(ty);
+    g.appendChild(svgEl('line',{x1:0,x2:-4,y1:sy(v),y2:sy(v),stroke:'#94a3b8'}));
+  });
+
+  // Axis labels
+  if(opts.xLabel){
+    const xl=svgEl('text',{x:W/2,y:H+38,textAnchor:'middle',fontSize:11,
+      fill:'#475569',fontWeight:600});
+    xl.textContent=opts.xLabel; g.appendChild(xl);
+  }
+  if(opts.yLabel){
+    const ylr=svgEl('text',{x:0,y:0,textAnchor:'middle',fontSize:11,
+      fill:'#475569',fontWeight:600,transform:`translate(${-M.left+14},${H/2}) rotate(-90)`});
+    ylr.textContent=opts.yLabel;
+    g.appendChild(ylr);
+  }
+
+  // Helpers on the returned object
+  function addPoints(pts,color='#0072B2',r=4,shape='circle',opacity=1){
+    const gp=svgEl('g',{'clip-path':`url(#${clipId})`});
+    pts.forEach(([px,py])=>{
+      if(px==null||py==null||isNaN(px)||isNaN(py)) return;
+      const cx=sx(px),cy=sy(py);
+      if(shape==='circle'){
+        gp.appendChild(svgEl('circle',{cx,cy,r,fill:color,opacity,
+          stroke:'white',strokeWidth:1}));
+      } else if(shape==='cross'){
+        const d=r+1;
+        const el=svgEl('path',{d:`M${cx-d},${cy} L${cx+d},${cy} M${cx},${cy-d} L${cx},${cy+d}`,
+          stroke:color,strokeWidth:2,opacity});
+        gp.appendChild(el);
+      }
+    });
+    g.appendChild(gp);
+    return gp;
+  }
+
+  function addLine(pts,color='#1d4ed8',sw=2,dash=''){
+    const gp=svgEl('g',{'clip-path':`url(#${clipId})`});
+    const valid=pts.filter(([x,y])=>x!=null&&y!=null&&!isNaN(x)&&!isNaN(y));
+    if(valid.length<2){g.appendChild(gp);return gp;}
+    const d='M'+valid.map(([x,y])=>`${sx(x)},${sy(y)}`).join('L');
+    gp.appendChild(svgEl('path',{d,stroke:color,strokeWidth:sw,fill:'none',
+      strokeDasharray:dash}));
+    g.appendChild(gp);
+    return gp;
+  }
+
+  function addHLine(yv,color='#dc2626',sw=1.5,dash='4,3',label=''){
+    const gp=svgEl('g',{'clip-path':`url(#${clipId})`});
+    gp.appendChild(svgEl('line',{x1:0,x2:W,y1:sy(yv),y2:sy(yv),
+      stroke:color,strokeWidth:sw,strokeDasharray:dash}));
+    if(label){
+      const t=svgEl('text',{x:W-3,y:sy(yv)-3,textAnchor:'end',
+        fontSize:9,fill:color});
+      t.textContent=label; gp.appendChild(t);
+    }
+    g.appendChild(gp);
+    return gp;
+  }
+
+  function addVLine(xv,color='#dc2626',sw=1.5,dash='4,3',label=''){
+    const gp=svgEl('g',{'clip-path':`url(#${clipId})`});
+    gp.appendChild(svgEl('line',{x1:sx(xv),x2:sx(xv),y1:0,y2:H,
+      stroke:color,strokeWidth:sw,strokeDasharray:dash}));
+    if(label){
+      const t=svgEl('text',{x:sx(xv)+3,y:10,textAnchor:'start',fontSize:9,fill:color});
+      t.textContent=label; gp.appendChild(t);
+    }
+    g.appendChild(gp);
+    return gp;
+  }
+
+  function addArea(upper,lower,color='#0072B2',opacity=.12){
+    const gp=svgEl('g',{'clip-path':`url(#${clipId})`});
+    const uv=upper.filter(([x,y])=>!isNaN(x)&&!isNaN(y));
+    const lv=lower.filter(([x,y])=>!isNaN(x)&&!isNaN(y));
+    if(uv.length<2||lv.length<2){g.appendChild(gp);return gp;}
+    const d='M'+uv.map(([x,y])=>`${sx(x)},${sy(y)}`).join('L')
+      +'L'+[...lv].reverse().map(([x,y])=>`${sx(x)},${sy(y)}`).join('L')+'Z';
+    gp.appendChild(svgEl('path',{d,fill:color,opacity,stroke:'none'}));
+    g.appendChild(gp);
+    return gp;
+  }
+
+  if(container){
+    [...container.childNodes].forEach(n=>{ if(!n.classList?.contains('ch-title')) container.removeChild(n); });
+    container.appendChild(svg);
+  }
+
+  return {svg,sx,sy,W,H,M,g,clipId,addPoints,addLine,addHLine,addVLine,addArea,VW,VH};
+}
+
+/* Download SVG */
+function dlSVG(svg,name){
+  const s=new XMLSerializer().serializeToString(svg);
+  const a=document.createElement('a');
+  a.href='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s);
+  a.download=(name||'chart')+'.svg'; a.click();
+}
+/* Download PNG */
+function dlPNG(svg,name,w=900,h=600){
+  const s=new XMLSerializer().serializeToString(svg);
+  const img=new Image();
+  img.onload=()=>{
+    const c=document.createElement('canvas');
+    c.width=w; c.height=h;
+    c.getContext('2d').drawImage(img,0,0,w,h);
+    const a=document.createElement('a');
+    a.href=c.toDataURL('image/png');
+    a.download=(name||'chart')+'.png'; a.click();
+  };
+  img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s);
+}
+
+function chartActions(wrap,svg,name){
+  const div=document.createElement('div');
+  div.className='ch-actions';
+  div.innerHTML=`<button class="btn btn-sm btn-s" title="Download SVG">SVG</button>
+    <button class="btn btn-sm btn-s" title="Download PNG">PNG</button>`;
+  div.children[0].onclick=()=>dlSVG(svg,name);
+  div.children[1].onclick=()=>dlPNG(svg,name);
+  wrap.appendChild(div);
+}
+
+/* -- SECTION: CSV UTILITIES ---------------------------------------- */
+function parseTSV(text){
+  return text.trim().split('\n').map(r=>r.split('\t'));
+}
+function parseCSV(text){
+  const rows=[];
+  text.trim().split('\n').forEach(line=>{
+    const cells=[]; let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'){ inQ=!inQ; }
+      else if(c===','&&!inQ){ cells.push(cur.trim()); cur=''; }
+      else cur+=c;
+    }
+    cells.push(cur.trim());
+    rows.push(cells);
+  });
+  return rows;
+}
+function toCSV(rows,headers){
+  const lines=[headers.join(',')];
+  rows.forEach(r=>lines.push(headers.map(h=>{
+    const v=r[h]??'';
+    return String(v).includes(',')?`"${v}"`:v;
+  }).join(',')));
+  return lines.join('\n');
+}
+function downloadCSV(text,filename){
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(text);
+  a.download=filename; a.click();
+}
+function downloadTemplate(headers,filename,sample=[]){
+  const rows=[headers.join(',')];
+  sample.forEach(r=>rows.push(headers.map(h=>r[h]??'').join(',')));
+  downloadCSV(rows.join('\n'),filename);
+}
+
+/* -- SECTION: GRID HELPERS ----------------------------------------- */
+/**
+ * Build an editable data grid inside container.
+ * @param {HTMLElement} container
+ * @param {Array<{key,label,type}>} cols
+ * @param {number} nRows
+ * @param {Function} onChange  called on any cell change
+ */
+function buildGrid(container,cols,nRows,onChange){
+  const wrap=document.createElement('div');
+  wrap.className='grid-wrap';
+  const tbl=document.createElement('table');
+  tbl.className='dgrid';
+  // Header
+  const thead=tbl.createTHead();
+  const hr=thead.insertRow();
+  cols.forEach(c=>{
+    const th=document.createElement('th');
+    th.textContent=c.label; hr.appendChild(th);
+  });
+  // Body
+  const tbody=tbl.createTBody();
+  for(let r=0;r<nRows;r++){
+    const tr=tbody.insertRow();
+    cols.forEach(c=>{
+      const td=tr.insertCell();
+      const inp=document.createElement('input');
+      inp.type='text'; inp.placeholder='';
+      inp.dataset.col=c.key; inp.dataset.row=r;
+      inp.addEventListener('change',onChange);
+      td.appendChild(inp);
+    });
+  }
+  wrap.appendChild(tbl);
+  // Paste support
+  wrap.addEventListener('paste',e=>{
+    e.preventDefault();
+    const tsv=e.clipboardData.getData('text/plain');
+    const pasted=parseTSV(tsv);
+    const active=wrap.querySelector('input:focus');
+    let startRow=active?+active.dataset.row:0;
+    let startCol=active?cols.findIndex(c=>c.key===active.dataset.col):0;
+    if(startCol<0) startCol=0;
+    pasted.forEach((row,ri)=>{
+      row.forEach((val,ci)=>{
+        const inp=tbody.rows[startRow+ri]?.cells[startCol+ci]?.querySelector('input');
+        if(inp){ inp.value=val.trim(); inp.dispatchEvent(new Event('change')); }
+      });
+    });
+  });
+  container.appendChild(wrap);
+  return {
+    tbl, tbody,
+    getRows(){
+      const out=[];
+      Array.from(tbody.rows).forEach(tr=>{
+        const row={};
+        cols.forEach((c,ci)=>{
+          const v=tr.cells[ci].querySelector('input').value.trim();
+          row[c.key]=c.type==='number'?(v===''?null:+v):v;
+        });
+        out.push(row);
+      });
+      return out;
+    },
+    setRows(data){
+      Array.from(tbody.rows).forEach((tr,ri)=>{
+        cols.forEach((c,ci)=>{
+          const inp=tr.cells[ci].querySelector('input');
+          inp.value=data[ri]??(data[ri]&&data[ri][c.key]!=null?data[ri][c.key]:'');
+          if(data[ri]) inp.value=data[ri][c.key]??'';
+        });
+      });
+    },
+    clearRows(){
+      Array.from(tbody.rows).forEach(tr=>{
+        Array.from(tr.querySelectorAll('input')).forEach(i=>i.value='');
+      });
+    }
+  };
+}
+
+/** Read valid numeric rows as a matrix [participants × trials] */
+function gridToMatrix(rows,trialKeys){
+  const mat=[];
+  rows.forEach(r=>{
+    const vals=trialKeys.map(k=>r[k]);
+    if(vals.some(v=>v==null||isNaN(v)||v==='')) return;
+    mat.push(vals.map(Number));
+  });
+  return mat;
+}
+
+/* -- SECTION: REFLECTIONS ------------------------------------------ */
+/* -- SECTION: REFLECTIVE QUESTIONS AND GUIDANCE --------------------- */
+// Guidance is written conditionally because each class collects its own data.
+const REFLECTIONS={
+  s1:[
+    {q:'Based on the ICC and CV% values, would you consider this grip dynamometer reliable enough to track an individual athlete across a season? What evidence would you cite?',
+     guide:`<ul>
+      <li><strong>Tracking one athlete depends on CV% (or typical error) more than ICC.</strong> ICC describes how well the test ranks people within this group; CV% describes the noise around one person's score.</li>
+      <li><strong>If CV% is low with a narrow CI</strong>, convert it to a smallest detectable change: about 2.77 &times; CV% (that is, 1.96 &times; &radic;2 &times; CV%). If the changes you expect over a season are larger than this, the test is fit for purpose.</li>
+      <li><strong>If ICC is high but CV% is moderate</strong>, the high ICC may reflect a wide spread of strength in your group rather than a precise test. A more homogeneous squad would give a lower ICC with the same measurement error.</li>
+      <li><strong>If the CIs are wide</strong> (common with small samples), base your judgement on the less favourable end of the interval.</li>
+      <li>Check which ICC model you used: ICC(3,1) ignores systematic shifts between trials (such as learning), ICC(2,1) penalises them.</li></ul>`},
+    {q:'What does the Bland-Altman plot between testers tell you about inter-rater reliability? Could you interchange Tester A and Tester B in a longitudinal study?',
+     guide:`<ul>
+      <li><strong>If the bias CI excludes zero</strong>, one tester systematically records higher values (for example through grip position, encouragement or dynamometer handle setting). Switching testers between sessions would add that bias to any change you measure.</li>
+      <li><strong>If the bias is near zero but the limits are wide</strong>, testers disagree randomly. Interchanging them adds noise; compare the limits' width with the size of change you hope to detect.</li>
+      <li><strong>If the bias is consistent across the range</strong>, it could be corrected, but standardising the protocol or keeping the same tester is better practice.</li>
+      <li><strong>If bias and limits are both small</strong> relative to a meaningful change, the testers can reasonably be interchanged.</li>
+      <li>Note that a consistency ICC can be high even when one tester reads a few kilograms higher; the Bland-Altman plot exposes what the ICC can hide.</li></ul>`},
+    {q:'The individual change plot shows trial-to-trial differences. Is there evidence of a learning effect, and how would you account for this in a testing protocol?',
+     guide:`<ul>
+      <li><strong>If scores rise from trial 1 to trial 2 and then level off</strong>, and the trial 1 vs trial 2 bias CI excludes zero, that suggests familiarisation. Options: a familiarisation session, discarding the first trial, or using the best or mean of later trials.</li>
+      <li><strong>If scores fall across trials</strong>, fatigue is more likely than learning; consider longer rest between attempts.</li>
+      <li><strong>If there is no consistent direction</strong>, differences are random variation; averaging several trials reduces noise.</li>
+      <li>Look at individual lines as well as the mean: a few participants improving markedly can create an apparent group learning effect.</li></ul>`},
+  ],
+  s2:[
+    {q:'The Bland-Altman plot shows systematic bias between the app and force plate. Does the pattern of bias (proportional vs. fixed) affect whether you would use the app in practice?',
+     guide:`<ul>
+      <li><strong>Fixed bias</strong> (a similar offset at all jump heights) can be removed by subtracting the mean bias. Change scores measured with the app alone are unaffected by a fixed offset.</li>
+      <li><strong>Proportional bias</strong> (the difference grows with jump height, shown by the proportional bias r and the sloping line) cannot be fixed by one subtraction; it needs a regression-based correction. It also scales change scores, so a real 2 cm improvement could appear larger or smaller on the app.</li>
+      <li><strong>If neither is present and the limits are narrow</strong> compared with a meaningful change in jump height, the app may be usable on its own.</li>
+      <li>Whatever the pattern, app and force plate values should not be mixed within one athlete's record. Even after removing bias, the width of the limits is random disagreement that remains.</li></ul>`},
+    {q:'Which force-time variables show the highest reliability (lowest CV%)? What biomechanical reasons might explain differences in reliability between variables?',
+     guide:`<ul>
+      <li><strong>Often most reliable:</strong> variables reflecting the whole movement or a large, well-defined peak (jump height, peak force, peak and mean power).</li>
+      <li><strong>Often least reliable:</strong> rate and timing variables (braking RFD, time to take-off, RSI-mod). They depend on where phase boundaries are detected, and small changes in movement strategy (countermovement depth, speed of unweighting) alter them.</li>
+      <li><strong>If your ranking differs</strong>, consider sample size (wide CIs overlap), number of trials, participant familiarity, arm swing rules, and the force threshold used to detect movement onset.</li>
+      <li>Reliable is not the same as useful: a reliable variable may still change too little with training to be informative.</li></ul>`},
+    {q:'A colleague wants to use peak power as an outcome in a training study. Based on the CV% and its confidence interval, what is the minimum change you would need to see before concluding a true change had occurred?',
+     guide:`<ul>
+      <li>For an <strong>individual</strong>, the smallest detectable change (95%) is about 2.77 &times; CV%. For example, a CV% of 3% gives roughly 8%.</li>
+      <li>Using the <strong>upper limit</strong> of the CV% CI gives a conservative estimate, which is sensible with small samples.</li>
+      <li><strong>If the expected training effect is smaller than this</strong>, individual changes cannot be distinguished from noise, although a group mean change may still be detectable with enough participants.</li>
+      <li>These trials were collected within one session; day-to-day variation is usually larger, so the true minimum change across a training study is likely bigger than this estimate.</li></ul>`},
+  ],
+  s3:[
+    {q:'The Bland-Altman split by concentration band shows whether agreement is constant across the range. How does this affect the clinical usefulness of the handheld device for identifying lactate threshold?',
+     guide:`<ul>
+      <li><strong>If agreement is similar in every band</strong>, one set of limits describes the device fairly.</li>
+      <li><strong>If the bias shifts or the limits widen at higher concentrations</strong>, the full-range limits misrepresent agreement at threshold. Judge threshold use from the 2-4 mmol/L band.</li>
+      <li><strong>If the handheld under-reads above 4 mmol/L</strong>, a fixed 4 mmol/L threshold read from the handheld occurs at a higher workload than the lab would give, so training zones set from it would be too hard.</li>
+      <li>Translate lactate error into workload: on the flat early part of the curve a small lactate error moves the threshold by many watts, on the steep part by only a few. Methods relying on small rises (such as baseline + 0.5 mmol/L) are therefore more sensitive to device error.</li></ul>`},
+    {q:'Compare the within-device CV% (duplicate samples) for the handheld vs. the lab analyser. Does the device with the wider limits of agreement also have higher within-device variability?',
+     guide:`<ul>
+      <li>Limits of agreement combine both devices' random error, any sample-specific differences between them, and bias. Duplicate CV% captures only one device's random error.</li>
+      <li><strong>If the handheld CV% is clearly higher than the lab's</strong>, much of the width of the limits comes from handheld imprecision.</li>
+      <li><strong>If both CV% values are small but the limits are wide</strong>, the disagreement is systematic or sample-related (calibration, sampling site, technique) rather than imprecision. A device can be precise and still disagree with the reference.</li>
+      <li><strong>If the CV% intervals overlap substantially</strong>, you cannot conclude which device is more variable.</li>
+      <li>For monitoring with one device, its own precision matters most; for swapping between devices, the limits of agreement matter.</li></ul>`},
+    {q:'A coach wants to use the handheld device at lactate threshold (~2-4 mmol/L) to monitor training intensity weekly. Based on the limits of agreement, what change in lactate would you consider meaningful?',
+     guide:`<ul>
+      <li><strong>Use the 2-4 mmol/L band</strong>, not the full-range limits.</li>
+      <li><strong>If handheld readings are compared with lab-derived zones</strong>, differences smaller than the half-width of the limits (plus any bias) cannot be separated from device disagreement.</li>
+      <li><strong>If the same handheld is used every week</strong>, a constant bias cancels out. The relevant noise is the handheld's own error: estimate a typical error from the duplicates (SD of duplicate differences &divide; &radic;2) and multiply by 2.77 for the smallest detectable change.</li>
+      <li><strong>Compare the two figures.</strong> If the same-device detectable change is much smaller than the limits, weekly monitoring is more sensitive than the agreement data suggest. If they are similar, using one device does not rescue small changes.</li>
+      <li>Day-to-day biological variation in lactate (diet, glycogen, prior training) is not captured here and is likely larger again, so test-retest data from the athlete are needed. Because the curve is steep at 2-4 mmol/L, tracking workload or heart rate at a fixed lactate may be more practical than tracking lactate itself.</li></ul>`},
+  ],
+  s4:[
+    {q:'The pooled scatter mixes data from multiple participants. Does colouring by participant change your interpretation of the correlation strength?',
+     guide:`<ul>
+      <li><strong>If each participant forms a tight line offset from the others</strong>, relationships within each person are strong, and between-person differences (fitness, how people use the RPE scale) are what weaken or strengthen the pooled r.</li>
+      <li><strong>If colours intermix along one band</strong>, the relationship is similar across people and the pooled r is a reasonable summary.</li>
+      <li>Repeated stages from the same person are not independent, so the pooled CI is too narrow. Repeated-measures correlation or multilevel models handle this properly.</li></ul>`},
+    {q:'Compare Pearson r and Spearman rs for RPE vs lactate. If they differ, what does this suggest about the shape of the RPE-lactate relationship, and which coefficient better describes it?',
+     guide:`<ul>
+      <li><strong>If Spearman is clearly higher than Pearson</strong>, the relationship is consistently rising but curved: lactate rises steeply at higher intensities while RPE rises more evenly. Spearman describes this better; log-transforming lactate and recalculating Pearson is another option.</li>
+      <li><strong>If Pearson is higher than Spearman</strong>, a few extreme points may be driving the linear association; check for outliers.</li>
+      <li><strong>If they are similar</strong>, the relationship is close to linear.</li>
+      <li>RPE is an ordinal whole-number scale with many tied values, which is an argument for Spearman regardless.</li></ul>`},
+    {q:'A strong correlation between RPE and lactate is sometimes cited as evidence that RPE is a valid measure of exercise intensity. Identify two reasons why this reasoning is limited.',
+     guide:`<ul>
+      <li><strong>Shared cause:</strong> both rise because workload rises during an incremental test, so a high correlation is almost guaranteed even if RPE tracks lactate poorly at a given workload or across days.</li>
+      <li><strong>Association is not agreement:</strong> the same RPE can correspond to different lactate values in different people; correlation does not show RPE can prescribe a target lactate.</li>
+      <li><strong>Pooling and range:</strong> combining repeated stages across a wide intensity range inflates r.</li>
+      <li><strong>Criterion choice:</strong> lactate is itself only one marker of intensity; validity depends on the purpose (for example, prescribing training at threshold) and on whether RPE detects change over time.</li></ul>`},
+  ],
+  s5:[
+    {q:'Compare your LT1 and LT2 picks to the algorithmic estimates (Dmax, fixed thresholds). In which regions do the methods agree, and where do they diverge most?',
+     guide:`<ul>
+      <li><strong>Agreement is usually better</strong> on curves with a clear, sharp bend and worse on curves that rise gradually or have few stages.</li>
+      <li><strong>Fixed concentrations</strong> (2 and 4 mmol/L) ignore an athlete's baseline and curve shape: an athlete with low lactate reaches 4 mmol/L late, one with high baseline lactate early.</li>
+      <li><strong>Dmax</strong> depends on the final stage reached and the curve fit; Mod-Dmax and Log-Exp-ModDmax start their line later and so usually sit at higher workloads.</li>
+      <li><strong>If your picks sit close to one method</strong>, think about which visual cue you used (first rise, or the sharpest bend) and which method formalises it. Try switching the curve fit to see how sensitive the algorithms are.</li></ul>`},
+    {q:'The inter-rater ICC and CV% describe how consistently different people identify the same threshold. How does the variability in picks compare to the stage increment of the test? Does the disagreement matter practically?',
+     guide:`<ul>
+      <li><strong>If the between-rater SD is below about half a stage</strong>, disagreement is smaller than the test's resolution and unlikely to change training prescription.</li>
+      <li><strong>If it approaches one stage or more</strong>, raters would prescribe different training zones; visual identification then needs agreed criteria, or an algorithm.</li>
+      <li><strong>A high ICC can coexist with practically important disagreement</strong>, because the curves differ a lot between athletes. Check the SD in watts, not just the ICC.</li>
+      <li>LT1 is often harder to agree on than LT2 because the first rise is subtle. With few curves or raters, expect wide CIs.</li></ul>`},
+    {q:'Why might two valid methods for identifying LT2 (e.g., 4 mmol/L vs Dmax) give different training recommendations for the same athlete?',
+     guide:`<ul>
+      <li><strong>They define different things:</strong> 4 mmol/L is a fixed concentration, Dmax is based on curve shape. Neither corresponds to the same physiological event in every athlete.</li>
+      <li><strong>Individual factors</strong> (baseline lactate, training status, diet and glycogen) shift fixed-concentration thresholds more than shape-based ones.</li>
+      <li><strong>Protocol matters:</strong> stage length, increment size and the final stage reached all change where each method lands.</li>
+      <li>Zones anchored to different methods can differ by tens of watts. Using the same method consistently across retests matters more than which one is chosen; ideally a method is checked against a criterion such as maximal lactate steady state.</li></ul>`},
+  ],
+};
+
+function buildReflections(container, questions, storeRef){
+  const card=document.createElement('div');
+  card.className='card';
+  card.innerHTML=`<div class="card-title">Reflective Questions</div>
+    <div style="font-size:.8rem;color:var(--muted);margin:-.3rem 0 .8rem">Write your answer first. Guidance on possible outcomes unlocks once you have written at least a sentence; your own data may lead to any of them.</div>`;
+  questions.forEach(({q,guide},i)=>{
+    const d=document.createElement('div');
+    d.className='refl-card';
+    d.innerHTML=`<div class="refl-q">${i+1}. ${q}</div>
+      <textarea rows="3" placeholder="Write your response here…" aria-label="Question ${i+1}"></textarea>
+      <div class="refl-guide-row">
+        <button type="button" class="btn btn-s btn-sm" aria-expanded="false">Show possible outcomes</button>
+        <span class="refl-hint">Write at least a sentence to unlock</span>
+      </div>
+      <div class="refl-guide" hidden><div class="refl-guide-ttl">Possible outcomes: compare with your answer</div>${guide}</div>`;
+    const ta=d.querySelector('textarea'), btn=d.querySelector('button'), hint=d.querySelector('.refl-hint'), box=d.querySelector('.refl-guide');
+    const unlocked=()=>ta.value.trim().length>=40;
+    const sync=()=>{ btn.disabled=!unlocked(); hint.hidden=unlocked(); };
+    const show=open=>{ box.hidden=!open; btn.setAttribute('aria-expanded',open); btn.textContent=open?'Hide possible outcomes':'Show possible outcomes'; };
+    ta.value=storeRef[i]||'';
+    ta.addEventListener('input',()=>{ storeRef[i]=ta.value; saveStore(); sync(); });
+    btn.addEventListener('click',()=>{ const open=box.hidden; storeRef['g'+i]=open; saveStore(); show(open); });
+    sync();
+    show(!!storeRef['g'+i]&&unlocked());
+    card.appendChild(d);
+  });
+  container.appendChild(card);
+}
+
+/* -- SECTION: NAVIGATION ------------------------------------------- */
+let _activeTab='overview';
+function switchTab(id){
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('act'));
+  document.querySelectorAll('.snav button').forEach(b=>b.classList.remove('act'));
+  const pane=document.getElementById('pane-'+id);
+  const btn=document.querySelector(`.snav button[data-tab="${id}"]`);
+  if(pane) pane.classList.add('act');
+  if(btn) btn.classList.add('act');
+  _activeTab=id;
+  if(id==='s4') renderS4();
+  if(id==='s5'&&_s5State.curves.length){
+    const cur=s5CurrentCurve()?.id;
+    s5PopulateCurveList();
+    const i=_s5State.curves.findIndex(c=>c.id===cur);
+    s5SelectCurve(i<0?0:i);
+  }
+  location.hash=id;
+}
+
+document.querySelectorAll('.snav button').forEach(btn=>{
+  btn.addEventListener('click',()=>switchTab(btn.dataset.tab));
+  btn.addEventListener('keydown',e=>{
+    if(e.key==='Enter'||e.key===' '){ e.preventDefault(); switchTab(btn.dataset.tab); }
+  });
+});
+
+/* -- PLACEHOLDER: station modules rendered below ------------------- */
+/* (Station modules appended after this comment) */
+
+/* ===================================================================
+   SECTION: OVERVIEW PAGE
+=================================================================== */
+function initOverview(){
+  const p=document.getElementById('pane-overview');
+  p.innerHTML=`
+  <div class="stn-hdr" style="margin-bottom:1rem">
+    <div>
+      <div class="stn-title">Lab Overview</div>
+      <div class="stn-desc">Five stations examining the key concepts in measurement validity, reliability and agreement in sport and exercise science.</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Concept Map</div>
+    <div class="tbl-wrap">
+    <table class="ovtbl">
+      <thead><tr>
+        <th>Station</th><th>Focus</th><th>Concepts</th><th>Key Analyses</th>
+      </tr></thead>
+      <tbody>
+      <tr>
+        <td><strong>1 &mdash; Grip Strength</strong></td>
+        <td>Within- and between-rater reliability of a maximal strength test</td>
+        <td>
+          <span class="tag t-rel">Reliability</span>
+          <span class="tag t-ir">Inter-rater</span>
+        </td>
+        <td>ICC, CV%, Bland-Altman, learning effect plot</td>
+      </tr>
+      <tr>
+        <td><strong>2 &mdash; Jump Height</strong></td>
+        <td>Agreement between a phone app and a force plate; reliability of force-time variables</td>
+        <td>
+          <span class="tag t-agr">Agreement</span>
+          <span class="tag t-rel">Reliability</span>
+        </td>
+        <td>Bland-Altman, ICC, CV% ranked table, proportional bias</td>
+      </tr>
+      <tr>
+        <td><strong>3 &mdash; Blood Lactate</strong></td>
+        <td>Agreement between a handheld analyser and a laboratory reference across exercise intensities</td>
+        <td>
+          <span class="tag t-agr">Agreement</span>
+          <span class="tag t-rel">Reliability</span>
+        </td>
+        <td>Bland-Altman (full range and by band), proportional bias, duplicate CV%</td>
+      </tr>
+      <tr>
+        <td><strong>4 &mdash; RPE</strong></td>
+        <td>Relationships between perceived exertion, heart rate and lactate during incremental exercise</td>
+        <td>
+          <span class="tag t-cor">Correlation</span>
+        </td>
+        <td>Pearson and Spearman r, pooled and per-participant scatter, colour-by-participant</td>
+      </tr>
+      <tr>
+        <td><strong>5 &mdash; Lactate Threshold</strong></td>
+        <td>Interactive threshold identification; comparison of methods and inter-rater agreement</td>
+        <td>
+          <span class="tag t-ir">Inter-rater</span>
+          <span class="tag t-agr">Agreement</span>
+          <span class="tag t-rel">Reliability</span>
+        </td>
+        <td>Draggable markers, algorithmic overlays, rater ICC, Bland-Altman between raters</td>
+      </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Key Terms</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.75rem;font-size:.875rem">
+      <div><strong>Reliability</strong> &mdash; the consistency of a measure when repeated under the same conditions. Quantified with ICC and CV%.</div>
+      <div><strong>Agreement</strong> &mdash; whether two devices or methods produce the same absolute values. Quantified with Bland-Altman limits of agreement.</div>
+      <div><strong>Validity</strong> &mdash; whether a measure reflects the true value. Requires a criterion standard; correlation alone is insufficient evidence.</div>
+      <div><strong>ICC</strong> &mdash; intraclass correlation coefficient. Reflects both consistency and absolute agreement; highly sensitive to the range of scores in the sample.</div>
+      <div><strong>CV%</strong> &mdash; coefficient of variation. Expresses within-subject variability as a percentage; calculated on log-transformed data to account for proportional noise.</div>
+      <div><strong>Limits of agreement</strong> &mdash; the interval within which 95% of differences between two methods are expected to fall (bias &#177; 1.96 SD of differences).</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Data Management</div>
+    <div class="btn-grp">
+      <button class="btn btn-p" onclick="printReport()">Print / Save report</button>
+      <button class="btn btn-d" onclick="clearAllData()">Clear all data</button>
+      <button class="btn btn-s" onclick="exportAll()">Export all data (JSON)</button>
+      <label class="btn btn-s" style="cursor:pointer">
+        Import JSON <input type="file" accept=".json" style="display:none" onchange="importAll(this)">
+      </label>
+    </div>
+    <p style="font-size:.8rem;color:var(--muted);margin-top:.6rem">Data lives in memory only. Use Export to save your work; it will be cleared if you close the tab without exporting. Print Report generates a printable summary including all entered reflections.</p>
+  </div>`;
+}
+
+function clearAllData(){
+  if(!confirm('Clear all entered data? This cannot be undone.')) return;
+  ['s1','s2','s3','s5'].forEach(k=>{ STORE[k].rows=[]; });
+  STORE.s5.picks={}; STORE.s5.curves=[];
+  saveStore();
+  location.reload();
+}
+function exportAll(){
+  downloadCSV(JSON.stringify(STORE,null,2),'vra-lab-data.json');
+}
+function importAll(inp){
+  const f=inp.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      ['s1','s2','s3','s4','s5'].forEach(k=>{ if(d[k]) Object.assign(STORE[k],d[k]); });
+      saveStore(); location.reload();
+    }catch(ex){ alert('Could not parse file: '+ex.message); }
+  };
+  r.readAsText(f);
+}
+
+/* ===================================================================
+   SECTION: STATION 1 — GRIP STRENGTH
+=================================================================== */
+const S1_COLS=[
+  {key:'id',     label:'Participant', type:'text'},
+  {key:'tester', label:'Tester (A/B)',type:'text'},
+  {key:'hand',   label:'Hand (L/R)',  type:'text'},
+  {key:'t1',     label:'Trial 1 (kg)',type:'number'},
+  {key:'t2',     label:'Trial 2 (kg)',type:'number'},
+  {key:'t3',     label:'Trial 3 (kg)',type:'number'},
+];
+
+let _s1Grid=null;
+
+function demoS1(){
+  // n=18, 2 testers, right hand dominant, tester B biased +3 kg, learning effect across trials
+  const names='P01,P02,P03,P04,P05,P06,P07,P08,P09,P10,P11,P12,P13,P14,P15,P16,P17,P18'.split(',');
+  const base=[42,38,55,31,47,52,36,44,48,39,53,41,35,50,46,37,43,49];
+  const rows=[];
+  names.forEach((id,i)=>{
+    const b=base[i], noise=()=>(Math.random()-.5)*2;
+    // Tester A, right hand
+    rows.push({id,tester:'A',hand:'R',
+      t1:+(b+noise()).toFixed(1),
+      t2:+(b+.8+noise()).toFixed(1),   // learning +0.8
+      t3:+(b+1.2+noise()).toFixed(1)}); // learning +1.2
+    // Tester B, right hand — systematic bias +3
+    rows.push({id,tester:'B',hand:'R',
+      t1:+(b+3+noise()).toFixed(1),
+      t2:+(b+3+.8+noise()).toFixed(1),
+      t3:+(b+3+1.2+noise()).toFixed(1)});
+  });
+  return rows;
+}
+
+function initS1(){
+  const p=document.getElementById('pane-s1');
+  p.innerHTML=`
+  <div class="stn-hdr">
+    <div class="stn-badge">1</div>
+    <div>
+      <div class="stn-title">Grip Strength</div>
+      <div class="stn-desc">Reliability across trials and inter-rater agreement between two testers. Enter force in kg (convert N by dividing by 9.81).</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Data Entry</div>
+    <div class="co co-note">Paste directly from Excel or Google Sheets into the grid, or use the buttons below. Columns must be in this order: Participant, Tester, Hand, Trial 1, Trial 2, Trial 3.</div>
+    <div class="btn-grp" style="margin-bottom:.9rem">
+      <button class="btn btn-p" onclick="loadDemoS1()">Load demo data</button>
+      <button class="btn btn-s" onclick="dlTemplateS1()">Download template</button>
+      <label class="btn btn-s" style="cursor:pointer">Import CSV
+        <input type="file" accept=".csv,.tsv,.txt" style="display:none" onchange="importCSVS1(this)">
+      </label>
+      <button class="btn btn-s" onclick="exportCSVS1()">Export CSV</button>
+      <button class="btn btn-d btn-sm" onclick="clearS1()">Clear</button>
+    </div>
+    <div id="s1-grid"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Thresholds and Model</div>
+    <div class="thr-row">
+      <label>ICC model
+        <select id="s1-icc-model" onchange="analyseS1()" style="margin-left:.4rem;padding:.28rem .5rem;border:1px solid var(--border-dark);border-radius:4px;font-size:.83rem">
+          <option value="3,1" selected>ICC(3,1) — two-way mixed, single measures (typical test-retest)</option>
+          <option value="2,1">ICC(2,1) — two-way random, single measures (raters sampled from a population)</option>
+          <option value="1,1">ICC(1,1) — one-way random, single measures (each participant rated by different raters)</option>
+        </select>
+      </label>
+    </div>
+    <div class="thr-row">
+      <label>ICC acceptable threshold <input type="number" id="s1-thr-icc" value="0.90" step="0.01" min="0" max="1" onchange="analyseS1()"></label>
+      <label>CV% acceptable threshold <input type="number" id="s1-thr-cv" value="10" step="1" min="0" onchange="analyseS1()"></label>
+    </div>
+    <div class="co co-note" style="font-size:.78rem">ICC(3,1) is appropriate for most test-retest reliability studies where the same fixed raters or equipment are used. ICC(2,1) is appropriate when raters are considered a random sample of all possible raters. ICC(1,1) assumes each subject is rated by a different set of raters drawn at random. All three are sensitive to the range of scores in the sample — a heterogeneous group inflates ICC.</div>
+  </div>
+
+  <div id="s1-results"></div>
+
+  <div id="s1-reflections"></div>`;
+
+  _s1Grid=buildGrid(document.getElementById('s1-grid'),S1_COLS,36,analyseS1);
+
+  buildReflections(
+    document.getElementById('s1-reflections'),
+    REFLECTIONS.s1,
+    STORE.s1.refl
+  );
+
+  if(STORE.s1.rows.length) _s1Grid.setRows(STORE.s1.rows);
+  analyseS1();
+}
+
+function loadDemoS1(){
+  const rows=demoS1();
+  STORE.s1.rows=rows;
+  _s1Grid.setRows(rows);
+  analyseS1();
+}
+function clearS1(){ _s1Grid.clearRows(); STORE.s1.rows=[]; analyseS1(); }
+function dlTemplateS1(){
+  downloadTemplate(S1_COLS.map(c=>c.key),'grip-strength-template.csv',
+    [{id:'P01',tester:'A',hand:'R',t1:42.1,t2:43.0,t3:43.5}]);
+}
+function exportCSVS1(){
+  const rows=_s1Grid.getRows().filter(r=>r.t1!=null);
+  downloadCSV(toCSV(rows,S1_COLS.map(c=>c.key)),'grip-strength-data.csv');
+}
+function importCSVS1(inp){
+  const f=inp.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=e=>{
+    const rows=parseCSV(e.target.result);
+    const hdr=rows[0].map(h=>h.trim().toLowerCase());
+    const keys=S1_COLS.map(c=>c.key);
+    const mapped=rows.slice(1).map(r=>{
+      const obj={};
+      S1_COLS.forEach((c,i)=>{ obj[c.key]=r[hdr.indexOf(c.key)??i]??''; });
+      return obj;
+    });
+    STORE.s1.rows=mapped;
+    _s1Grid.setRows(mapped);
+    analyseS1();
+  };
+  rd.readAsText(f);
+}
+
+function analyseS1(){
+  const thrICC=+document.getElementById('s1-thr-icc')?.value||.9;
+  const thrCV =+document.getElementById('s1-thr-cv')?.value||10;
+  const all=_s1Grid.getRows();
+  STORE.s1.rows=all; saveStore();
+
+  const res=document.getElementById('s1-results');
+  if(!res) return;
+
+  // Split by tester
+  const A=all.filter(r=>r.tester&&r.tester.toUpperCase()==='A');
+  const B=all.filter(r=>r.tester&&r.tester.toUpperCase()==='B');
+  const all_valid=all.filter(r=>r.t1!=null&&r.t2!=null&&!isNaN(r.t1)&&!isNaN(r.t2));
+
+  if(all_valid.length<3){
+    res.innerHTML=`<div class="co co-note">Enter at least 3 rows with Trial 1 and Trial 2 values to see analyses.</div>`;
+    return;
+  }
+
+  // Build matrices
+  const matAll=gridToMatrix(all_valid,['t1','t2','t3'].filter(k=>all_valid.some(r=>r[k]!=null)));
+  const matA=gridToMatrix(A.filter(r=>r.t1!=null&&!isNaN(r.t1)),['t1','t2','t3'].filter(k=>A.some(r=>r[k]!=null)));
+  const matB=gridToMatrix(B.filter(r=>r.t1!=null&&!isNaN(r.t1)),['t1','t2','t3'].filter(k=>B.some(r=>r[k]!=null)));
+
+  // ICC model from select
+  const iccModel=document.getElementById('s1-icc-model')?.value||'3,1';
+  const iccAll=icc(matAll,iccModel);
+  const cvAll=cvPercent(matAll);
+
+  // Inter-rater: match participants
+  const matchedA=[],matchedB=[];
+  A.forEach(a=>{
+    const b=B.find(bb=>bb.id===a.id&&bb.hand===a.hand);
+    if(b&&a.t1!=null&&b.t1!=null&&!isNaN(a.t1)&&!isNaN(b.t1)){
+      matchedA.push(a.t1); matchedB.push(b.t1);
+    }
+  });
+  const ba=blandAltman(matchedA,matchedB);
+
+  const iccLbl=ratingLabel(iccAll.icc);
+  const cvLbl=cvLabel(cvAll.cv);
+
+  res.innerHTML=`
+  <div class="card">
+    <div class="card-title">Overall Trial Reliability (Testers Combined)</div>
+    <div class="sg">
+      <div class="sc ${iccLbl.cls}">
+        <div class="sc-lbl">ICC (${iccModel})</div>
+        <div class="sc-val">${fmt2(iccAll.icc)}</div>
+        <div class="sc-ci">95% CI ${fmtCI(iccAll.ci_l,iccAll.ci_u)}</div>
+        <div class="sc-int">${iccLbl.txt} — ${iccAll.icc>=thrICC?'meets':'does not meet'} the ${thrICC} threshold. ICC is sensitive to between-participant variance; a heterogeneous sample inflates it.</div>
+      </div>
+      <div class="sc ${cvLbl.cls}">
+        <div class="sc-lbl">CV% (log method)</div>
+        <div class="sc-val">${fmt1(cvAll.cv)}%</div>
+        <div class="sc-ci">95% CI ${fmtCI(cvAll.ci_l,cvAll.ci_u,1)}%</div>
+        <div class="sc-int">${cvLbl.txt} — ${cvAll.cv<=thrCV?'within':'exceeds'} the ${thrCV}% threshold. Use CV% to estimate the smallest worthwhile change relative to noise.</div>
+      </div>
+      <div class="sc">
+        <div class="sc-lbl">Mean ± SD (Trial 1)</div>
+        <div class="sc-val">${fmt1(mean(matAll.map(r=>r[0])))} kg</div>
+        <div class="sc-ci">SD ${fmt1(sd(matAll.map(r=>r[0])))}</div>
+      </div>
+    </div>
+    ${iccAll.warning?`<div class="co co-warn">${iccAll.warning}</div>`:''}
+    <div id="s1-ch-trials" class="ch-wrap">
+      <div class="ch-title">Trial 1 vs Trial 2 — scatter with identity line</div>
+    </div>
+    <div id="s1-ch-ba-trials" class="ch-wrap" style="margin-top:.7rem">
+      <div class="ch-title">Bland-Altman — Trial 1 minus Trial 2</div>
+    </div>
+    <div id="s1-ch-change" class="ch-wrap" style="margin-top:.7rem">
+      <div class="ch-title">Individual change plot across trials</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Inter-rater Agreement (Tester A vs Tester B)</div>
+    ${matchedA.length<3?`<div class="co co-note">Fewer than 3 matched pairs found. Ensure both testers have measured the same participants (matching Participant ID and Hand).</div>`:`
+    <div class="sg">
+      <div class="sc">
+        <div class="sc-lbl">Bias (A – B)</div>
+        <div class="sc-val">${fmt1(ba.bias)} kg</div>
+        <div class="sc-ci">95% CI ${fmtCI(ba.ci_bias[0],ba.ci_bias[1],1)}</div>
+        <div class="sc-int">${Math.abs(ba.bias)<1?'Bias is small.':Math.abs(ba.bias)<3?'Moderate systematic bias.':'Substantial systematic bias — consider recalibrating technique.'}</div>
+      </div>
+      <div class="sc">
+        <div class="sc-lbl">Limits of agreement</div>
+        <div class="sc-val">${fmt1(ba.loa_l)} to ${fmt1(ba.loa_u)}</div>
+        <div class="sc-ci">n = ${ba.n} matched pairs</div>
+        <div class="sc-int">Two raters may differ by up to ${fmt1(ba.loa_u-ba.loa_l)} kg in individual measurements.</div>
+      </div>
+    </div>
+    <div id="s1-ch-ba-ir" class="ch-wrap">
+      <div class="ch-title">Bland-Altman — Tester A minus Tester B (Trial 1)</div>
+    </div>`}
+  </div>`;
+
+  // Draw scatter T1 vs T2
+  drawS1Scatter(matAll);
+  drawS1BATrials(matAll);
+  drawS1Change(matAll);
+  if(matchedA.length>=3) drawS1BAInterRater(matchedA,matchedB,ba);
+}
+
+function drawS1Scatter(mat){
+  const c=document.getElementById('s1-ch-trials');
+  if(!c||mat.length<2) return;
+  const t1=mat.map(r=>r[0]),t2=mat.map(r=>r[1]);
+  const all=[...t1,...t2]; const mn=Math.min(...all)*.95, mx=Math.max(...all)*1.05;
+  const ch=makeChart(c,{vw:460,vh:340,xDomain:[mn,mx],yDomain:[mn,mx],
+    xLabel:'Trial 1 (kg)',yLabel:'Trial 2 (kg)',ariaLabel:'Scatter Trial 1 vs Trial 2'});
+  ch.addLine([[mn,mn],[mx,mx]],'#94a3b8',1.5,'4,3'); // identity
+  ch.addPoints(zip(t1,t2),'#0072B2',4);
+  const lr=linearRegress(t1,t2);
+  ch.addLine([[mn,lr.slope*mn+lr.intercept],[mx,lr.slope*mx+lr.intercept]],'#E69F00',1.5,'3,2');
+  chartActions(c,ch.svg,'grip-scatter-t1-t2');
+}
+
+function drawS1BATrials(mat){
+  const c=document.getElementById('s1-ch-ba-trials');
+  if(!c||mat.length<4) return;
+  const t1=mat.map(r=>r[0]),t2=mat.map(r=>r[1]);
+  const ba=blandAltman(t1,t2);
+  drawBAChart(c,ba,'Mean of trials 1 and 2 (kg)','grip-ba-trials');
+}
+
+function drawS1Change(mat){
+  const c=document.getElementById('s1-ch-change');
+  if(!c||mat.length<2) return;
+  const k=mat[0].length;
+  if(k<2){ c.innerHTML+='<div style="padding:1rem;color:var(--muted);font-size:.83rem">Need at least 2 trials for change plot.</div>'; return; }
+  const xDom=[.5,k+.5];
+  const allVals=mat.flat(); const yDom=[Math.min(...allVals)*.9,Math.max(...allVals)*1.1];
+  const ch=makeChart(c,{vw:500,vh:320,xDomain:xDom,yDomain:yDom,
+    xLabel:'Trial',yLabel:'Force (kg)',xTicks:Array.from({length:k},(_,j)=>j+1),xFmt:v=>'T'+v,
+    ariaLabel:'Individual change plot across trials'});
+  const COLS=['#0072B2','#E69F00','#009E73','#D55E00','#56B4E9','#CC79A7'];
+  mat.forEach((row,i)=>{
+    const pts=row.map((v,j)=>[j+1,v]);
+    ch.addLine(pts,COLS[i%COLS.length],.9);
+    ch.addPoints(pts,COLS[i%COLS.length],3);
+  });
+  // Mean trend line
+  const meanByTrial=Array.from({length:k},(_,j)=>mean(mat.map(r=>r[j])));
+  ch.addLine(meanByTrial.map((v,j)=>[j+1,v]),'#1e293b',2.5);
+  chartActions(c,ch.svg,'grip-change-plot');
+}
+
+function drawS1BAInterRater(a,b,ba){
+  const c=document.getElementById('s1-ch-ba-ir');
+  if(!c) return;
+  drawBAChart(c,ba,'Mean of A and B (kg)','grip-ba-inter-rater');
+}
+
+/* ===================================================================
+   SECTION: STATION 2 — COUNTERMOVEMENT JUMP
+=================================================================== */
+const S2_FIXED=[
+  {key:'id',   label:'Participant',       type:'text'},
+  {key:'trial',label:'Trial',             type:'number'},
+  {key:'app',  label:'App height (cm)',   type:'number'},
+  {key:'fp',   label:'FP height (cm)',    type:'number'},
+  {key:'pf',   label:'Peak force (N)',    type:'number'},
+  {key:'pp',   label:'Peak power (W)',    type:'number'},
+  {key:'mp',   label:'Mean power (W)',    type:'number'},
+  {key:'rsi',  label:'RSI-mod',           type:'number'},
+  {key:'tto',  label:'Time to take-off (s)',type:'number'},
+  {key:'cd',   label:'CM depth (cm)',     type:'number'},
+  {key:'brfd', label:'Braking RFD (N/s)', type:'number'},
+];
+
+let _s2Grid=null;
+
+function demoS2(){
+  const ids='P01,P02,P03,P04,P05,P06,P07,P08,P09,P10,P11,P12,P13,P14,P15,P16'.split(',');
+  const rows=[];
+  ids.forEach((id,i)=>{
+    const base_fp=30+i*1.5; // FP height base
+    for(let t=1;t<=3;t++){
+      const n=()=>(Math.random()-.5)*1.5;
+      const fp=+(base_fp+n()).toFixed(1);
+      // App overestimates proportionally (~8% + 1.5 cm fixed offset)
+      const app=+(fp*1.08+1.5+n()).toFixed(1);
+      rows.push({
+        id,trial:t,app,fp,
+        pf:+(2200+i*30+(Math.random()-.5)*60).toFixed(0),
+        pp:+(3800+i*50+(Math.random()-.5)*100).toFixed(0),
+        mp:+(2100+i*25+(Math.random()-.5)*80).toFixed(0),
+        rsi:+(0.6+i*.02+n()*.05).toFixed(3),
+        tto:+(0.82+n()*.02).toFixed(3),
+        cd:+(22+i*.3+n()).toFixed(1),
+        // Braking RFD is typically far noisier between trials than jump height or peak force
+        brfd:+((5200+i*180)*(1+(Math.random()-.5)*.35)).toFixed(0),
+      });
+    }
+  });
+  return rows;
+}
+
+function initS2(){
+  const p=document.getElementById('pane-s2');
+  p.innerHTML=`
+  <div class="stn-hdr">
+    <div class="stn-badge">2</div>
+    <div>
+      <div class="stn-title">Countermovement Jump</div>
+      <div class="stn-desc">Agreement between phone app and force plate for jump height; reliability of force-time variables across trials.</div>
+    </div>
+  </div>
+
+  <div class="co co-warn">Validity of force-time variables cannot be assessed with this design. There is no second device measuring the same construct — only one force plate. The analyses below address within-session reliability only.</div>
+
+  <div class="card">
+    <div class="card-title">Data Entry</div>
+    <div class="btn-grp" style="margin-bottom:.9rem">
+      <button class="btn btn-p" onclick="loadDemoS2()">Load demo data</button>
+      <button class="btn btn-s" onclick="dlTemplateS2()">Download template</button>
+      <label class="btn btn-s" style="cursor:pointer">Import CSV
+        <input type="file" accept=".csv,.tsv,.txt" style="display:none" onchange="importCSVS2(this)">
+      </label>
+      <button class="btn btn-s" onclick="exportCSVS2()">Export CSV</button>
+      <button class="btn btn-d btn-sm" onclick="clearS2()">Clear</button>
+    </div>
+    <div id="s2-grid"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Thresholds</div>
+    <div class="thr-row">
+      <label>Acceptable LoA limit (&#177;cm) <input type="number" id="s2-thr-loa" value="2" step=".5" min="0" onchange="analyseS2()"></label>
+      <label>ICC threshold <input type="number" id="s2-thr-icc" value="0.90" step="0.01" min="0" max="1" onchange="analyseS2()"></label>
+      <label>CV% threshold <input type="number" id="s2-thr-cv" value="10" step="1" min="0" onchange="analyseS2()"></label>
+      <label>ICC model
+        <select id="s2-icc-model" onchange="analyseS2()" style="margin-left:.4rem;padding:.28rem .5rem;border:1px solid var(--border-dark);border-radius:4px;font-size:.83rem">
+          <option value="3,1" selected>ICC(3,1) &#8212; two-way mixed (same raters/device each time)</option>
+          <option value="2,1">ICC(2,1) &#8212; two-way random (raters sampled from population)</option>
+          <option value="1,1">ICC(1,1) &#8212; one-way random (different raters per subject)</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <div id="s2-results"></div>
+
+  <div id="s2-reflections"></div>`;
+
+  _s2Grid=buildGrid(document.getElementById('s2-grid'),S2_FIXED,48,analyseS2);
+  buildReflections(
+    document.getElementById('s2-reflections'),
+    REFLECTIONS.s2,
+    STORE.s2.refl
+  );
+
+  if(STORE.s2.rows.length) _s2Grid.setRows(STORE.s2.rows);
+  analyseS2();
+}
+
+function loadDemoS2(){ const r=demoS2(); STORE.s2.rows=r; _s2Grid.setRows(r); analyseS2(); }
+function clearS2(){ _s2Grid.clearRows(); STORE.s2.rows=[]; analyseS2(); }
+function dlTemplateS2(){ downloadTemplate(S2_FIXED.map(c=>c.key),'cmj-template.csv'); }
+function exportCSVS2(){
+  const rows=_s2Grid.getRows().filter(r=>r.fp!=null);
+  downloadCSV(toCSV(rows,S2_FIXED.map(c=>c.key)),'cmj-data.csv');
+}
+function importCSVS2(inp){
+  const f=inp.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=e=>{
+    const rows=parseCSV(e.target.result);
+    const mapped=rows.slice(1).map(r=>{
+      const o={}; S2_FIXED.forEach((c,i)=>{o[c.key]=r[i]??'';});return o;
+    });
+    STORE.s2.rows=mapped; _s2Grid.setRows(mapped); analyseS2();
+  };
+  rd.readAsText(f);
+}
+
+function analyseS2(){
+  const thrLoA=+document.getElementById('s2-thr-loa')?.value||2;
+  const thrICC=+document.getElementById('s2-thr-icc')?.value||.9;
+  const thrCV =+document.getElementById('s2-thr-cv')?.value||10;
+  const iccModel=document.getElementById('s2-icc-model')?.value||'3,1';
+  const all=_s2Grid.getRows(); STORE.s2.rows=all; saveStore();
+  const res=document.getElementById('s2-results'); if(!res) return;
+
+  const valid=all.filter(r=>r.fp!=null&&r.app!=null&&!isNaN(r.fp)&&!isNaN(r.app));
+  if(valid.length<4){ res.innerHTML=`<div class="co co-note">Enter at least 4 rows with both App and FP height values.</div>`; return; }
+
+  // Agreement: app vs FP (use trial 1 only or all)
+  const appVals=valid.map(r=>+r.app), fpVals=valid.map(r=>+r.fp);
+  const ba=blandAltman(appVals,fpVals);
+
+  // Reliability: FP height across trials per participant
+  const byPart={};
+  all.filter(r=>r.id&&r.fp!=null&&!isNaN(r.fp)).forEach(r=>{
+    if(!byPart[r.id]) byPart[r.id]=[];
+    byPart[r.id].push(+r.fp);
+  });
+  const matFP=Object.values(byPart).filter(t=>t.length>=2);
+  const iccFP=icc(matFP,iccModel), cvFP=cvPercent(matFP);
+
+  // Reliability: App height
+  const byPartApp={};
+  all.filter(r=>r.id&&r.app!=null&&!isNaN(r.app)).forEach(r=>{
+    if(!byPartApp[r.id]) byPartApp[r.id]=[];
+    byPartApp[r.id].push(+r.app);
+  });
+  const matApp=Object.values(byPartApp).filter(t=>t.length>=2);
+  const iccApp=icc(matApp,iccModel), cvApp=cvPercent(matApp);
+
+  // Force-time variable reliability
+  const ftVars=S2_FIXED.filter(c=>!['id','trial','app','fp'].includes(c.key));
+  const ftResults=ftVars.map(col=>{
+    const byP={};
+    all.filter(r=>r.id&&r[col.key]!=null&&!isNaN(+r[col.key])&&+r[col.key]>0).forEach(r=>{
+      if(!byP[r.id]) byP[r.id]=[];
+      byP[r.id].push(+r[col.key]);
+    });
+    const mat=Object.values(byP).filter(t=>t.length>=2);
+    if(mat.length<3) return {key:col.key,label:col.label,icc:NaN,cv:NaN,n:mat.length};
+    const ir=icc(mat,iccModel), cv=cvPercent(mat);
+    return {key:col.key,label:col.label,icc:ir.icc,icc_l:ir.ci_l,icc_u:ir.ci_u,
+      cv:cv.cv,cv_l:cv.ci_l,cv_u:cv.ci_u,n:mat.length};
+  }).filter(r=>!isNaN(r.cv)).sort((a,b)=>a.cv-b.cv);
+
+  const loaOk=Math.abs(ba.loa_u)<=thrLoA&&Math.abs(ba.loa_l)<=thrLoA;
+
+  res.innerHTML=`
+  <div class="card">
+    <div class="card-title">Agreement — Phone App vs Force Plate (Jump Height)</div>
+    <div class="sg">
+      <div class="sc ${loaOk?'good':'bad'}">
+        <div class="sc-lbl">Bias (app – FP)</div>
+        <div class="sc-val">${fmt1(ba.bias)} cm</div>
+        <div class="sc-ci">95% CI ${fmtCI(ba.ci_bias[0],ba.ci_bias[1],1)}</div>
+        <div class="sc-int">${Math.abs(ba.bias)<1?'Negligible bias.':'The app overestimates by approximately '+fmt1(Math.abs(ba.bias))+' cm on average.'}</div>
+      </div>
+      <div class="sc ${loaOk?'good':'warn'}">
+        <div class="sc-lbl">Limits of agreement</div>
+        <div class="sc-val">${fmt1(ba.loa_l)} to ${fmt1(ba.loa_u)}</div>
+        <div class="sc-ci">Acceptable ±${thrLoA} cm threshold ${loaOk?'met':'not met'}</div>
+        <div class="sc-int">Disagreements of up to ${fmt1(Math.max(Math.abs(ba.loa_u),Math.abs(ba.loa_l)))} cm are plausible for any individual measurement.</div>
+      </div>
+      <div class="sc">
+        <div class="sc-lbl">Proportional bias</div>
+        <div class="sc-val">${Math.abs(ba.propBias?.r||0)>.3?'Present':'Absent'}</div>
+        <div class="sc-ci">r = ${fmt2(ba.propBias?.r||0)}</div>
+        <div class="sc-int">A relationship between the mean and the difference suggests bias changes with jump height.</div>
+      </div>
+    </div>
+    <div id="s2-ch-ba" class="ch-wrap"><div class="ch-title">Bland-Altman — App minus Force Plate (cm)</div></div>
+    <div id="s2-ch-scatter" class="ch-wrap" style="margin-top:.7rem"><div class="ch-title">Scatter — App vs Force Plate with identity line</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Force Plate Jump Height Reliability</div>
+    <div class="sg">
+      <div class="sc ${ratingLabel(iccFP.icc).cls}">
+        <div class="sc-lbl">ICC (${iccModel})</div>
+        <div class="sc-val">${fmt2(iccFP.icc)}</div>
+        <div class="sc-ci">95% CI ${fmtCI(iccFP.ci_l,iccFP.ci_u)}</div>
+      </div>
+      <div class="sc ${cvLabel(cvFP.cv).cls}">
+        <div class="sc-lbl">CV%</div>
+        <div class="sc-val">${fmt1(cvFP.cv)}%</div>
+        <div class="sc-ci">95% CI ${fmtCI(cvFP.ci_l,cvFP.ci_u,1)}%</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Force-Time Variable Reliability (Force Plate Only)</div>
+    <div class="co co-warn">These variables have only one measurement device. Reliability can be estimated, but validity — whether they reflect the true construct — cannot be assessed from this dataset alone.</div>
+    ${ftResults.length<2?`<div class="co co-note">Enter force-time data with at least 3 participants and 2 trials each.</div>`:`
+    <div class="tbl-wrap">
+    <table class="rtbl">
+      <thead><tr>
+        <th>Variable</th><th>n</th><th>ICC (${iccModel})</th><th>95% CI</th><th>CV%</th><th>95% CI</th><th>Rating</th>
+      </tr></thead>
+      <tbody>
+      ${ftResults.map(r=>`<tr>
+        <td>${r.label}</td>
+        <td class="mono">${r.n}</td>
+        <td class="mono">${fmt2(r.icc)}</td>
+        <td class="mono">${fmtCI(r.icc_l,r.icc_u)}</td>
+        <td class="mono">${fmt1(r.cv)}%</td>
+        <td class="mono">${fmtCI(r.cv_l,r.cv_u,1)}%</td>
+        <td><span style="color:var(--${cvLabel(r.cv).cls})">${cvLabel(r.cv).txt}</span></td>
+      </tr>`).join('')}
+      </tbody>
+    </table></div>
+    <div id="s2-ch-cv" class="ch-wrap" style="margin-top:.7rem">
+      <div class="ch-title">CV% by variable — ranked most to least reliable</div>
+    </div>`}
+  </div>`;
+
+  drawBAChart(document.getElementById('s2-ch-ba'),ba,'Mean height (cm)','cmj-ba');
+  drawS2Scatter(appVals,fpVals,ba,thrLoA);
+  if(ftResults.length>=2) drawS2CVRank(ftResults,thrCV);
+}
+
+function drawS2Scatter(app,fp,ba,thrLoA){
+  const c=document.getElementById('s2-ch-scatter'); if(!c) return;
+  const all=[...app,...fp]; const mn=Math.min(...all)*.95,mx=Math.max(...all)*1.05;
+  const ch=makeChart(c,{vw:460,vh:320,xDomain:[mn,mx],yDomain:[mn,mx],
+    xLabel:'Force plate (cm)',yLabel:'Phone app (cm)'});
+  ch.addLine([[mn,mn],[mx,mx]],'#94a3b8',1.5,'4,3');
+  ch.addLine([[mn,mn+ba.bias],[mx,mx+ba.bias]],'#0072B2',1.5,'3,2');
+  ch.addLine([[mn,mn+ba.loa_u],[mx,mx+ba.loa_u]],'#D55E00',1,'4,3');
+  ch.addLine([[mn,mn+ba.loa_l],[mx,mx+ba.loa_l]],'#D55E00',1,'4,3');
+  ch.addPoints(zip(fp,app),'#009E73',4);
+  chartActions(c,ch.svg,'cmj-scatter');
+}
+
+function drawS2CVRank(ftResults,thr){
+  const c=document.getElementById('s2-ch-cv'); if(!c||ftResults.length<1) return;
+  // Values sit in their own right-hand column so bars and CI whiskers can never cover them
+  const VW=560,VH=ftResults.length*34+90;
+  const M={top:34,right:118,bottom:46,left:140};
+  const W=VW-M.left-M.right, H=VH-M.top-M.bottom;
+  const maxCV=Math.max(...ftResults.map(r=>isNaN(r.cv_u)?r.cv:r.cv_u),thr)*1.08;
+  const ticks=niceTicks(0,maxCV,6);
+  const sx=scaleLin([0,ticks[ticks.length-1]>=maxCV?ticks[ticks.length-1]:maxCV],[0,W]);
+  const rowH=H/ftResults.length;
+  const svg=svgEl('svg',{viewBox:`0 0 ${VW} ${VH}`,role:'img','aria-label':'CV% by force-time variable'});
+  svg.style.fontFamily='inherit';
+  svg.appendChild(svgEl('rect',{width:VW,height:VH,fill:'white'}));
+  const g=svgEl('g',{transform:`translate(${M.left},${M.top})`});
+  svg.appendChild(g);
+
+  ticks.forEach(v=>{
+    g.appendChild(svgEl('line',{x1:sx(v),x2:sx(v),y1:0,y2:H,stroke:'#eef2f6'}));
+    g.appendChild(svgEl('line',{x1:sx(v),x2:sx(v),y1:H,y2:H+4,stroke:'#94a3b8'}));
+    const t=svgEl('text',{x:sx(v),y:H+16,textAnchor:'middle',fontSize:10,fill:'#64748b'});
+    t.textContent=tickFmt(ticks.step)(v)+'%'; g.appendChild(t);
+  });
+  g.appendChild(svgEl('line',{x1:0,x2:W,y1:H,y2:H,stroke:'#cbd5e1'}));
+  g.appendChild(svgEl('line',{x1:0,x2:0,y1:0,y2:H,stroke:'#cbd5e1'}));
+
+  const hdr=svgEl('text',{x:W+M.right-6,y:-10,textAnchor:'end',fontSize:9.5,fontWeight:600,fill:'#475569'});
+  hdr.textContent='CV% [95% CI]'; g.appendChild(hdr);
+
+  ftResults.forEach((r,i)=>{
+    const y=i*rowH+rowH/2;
+    const cls=cvLabel(r.cv).cls;
+    const col=cls==='good'?'#009E73':cls==='warn'?'#E69F00':'#D55E00';
+    g.appendChild(svgEl('rect',{x:0,y:y-7,width:Math.max(0,sx(r.cv)),height:14,fill:col,opacity:.75,rx:2}));
+    if(!isNaN(r.cv_l)&&!isNaN(r.cv_u)){
+      [[sx(r.cv_l),sx(r.cv_u),y,y],[sx(r.cv_l),sx(r.cv_l),y-5,y+5],[sx(r.cv_u),sx(r.cv_u),y-5,y+5]].forEach(([x1,x2,y1,y2])=>
+        g.appendChild(svgEl('line',{x1,x2,y1,y2,stroke:'#1e293b',strokeWidth:1.5})));
+    }
+    const lbl=svgEl('text',{x:-8,y:y+3.5,textAnchor:'end',fontSize:10,fill:'#475569'});
+    lbl.textContent=r.label.replace(/ \(.*\)/,''); g.appendChild(lbl);
+    const val=svgEl('text',{x:W+M.right-6,y:y+3.5,textAnchor:'end',fontSize:10,fill:'#1e293b'});
+    val.textContent=`${fmt1(r.cv)}% [${fmt1(r.cv_l)}, ${fmt1(r.cv_u)}]`; g.appendChild(val);
+  });
+
+  g.appendChild(svgEl('line',{x1:sx(thr),x2:sx(thr),y1:-4,y2:H,stroke:'#D55E00',strokeWidth:1.5,strokeDasharray:'4,3'}));
+  const tt=svgEl('text',{x:sx(thr),y:-10,textAnchor:'middle',fontSize:9.5,fontWeight:600,fill:'#D55E00'});
+  tt.textContent='Threshold '+thr+'%'; g.appendChild(tt);
+
+  const xl=svgEl('text',{x:W/2,y:H+36,textAnchor:'middle',fontSize:11,fill:'#475569',fontWeight:600});
+  xl.textContent='CV% (bar) with 95% CI (whiskers)'; g.appendChild(xl);
+
+  [...c.childNodes].forEach(n=>{ if(!n.classList?.contains('ch-title')) c.removeChild(n); });
+  c.appendChild(svg);
+  chartActions(c,svg,'cmj-cv-rank');
+}
+
+/* ===================================================================
+   SECTION: STATION 3 — BLOOD LACTATE
+=================================================================== */
+const S3_COLS=[
+  {key:'id',   label:'Participant',     type:'text'},
+  {key:'stage',label:'Stage',           type:'number'},
+  {key:'work', label:'Workload (W)',     type:'number'},
+  {key:'hr',   label:'Heart rate',      type:'number'},
+  {key:'rpe',  label:'RPE (6-20)',      type:'number'},
+  {key:'hh',   label:'Handheld (mmol/L)',type:'number'},
+  {key:'lab',  label:'Lab (mmol/L)',    type:'number'},
+  {key:'hh2',  label:'Handheld dup.',   type:'number'},
+  {key:'lab2', label:'Lab dup.',        type:'number'},
+];
+
+let _s3Grid=null;
+
+// Small seeded PRNG so the demo is identical for every student and its teaching features always appear
+function mulberry32(seed){
+  return ()=>{ seed|=0; seed=seed+0x6D2B79F5|0;
+    let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296; };
+}
+
+function demoS3(){
+  const rnd=mulberry32(20261002), u=(a,b)=>a+(b-a)*rnd(), jit=w=>(rnd()-.5)*2*w;
+  // Separate stream for analyser error so the RPE and heart-rate data are unaffected by it
+  const rndE=mulberry32(4041), gauss=()=>Math.sqrt(-2*Math.log(1-rndE()))*Math.cos(2*Math.PI*rndE());
+  const ids='P01,P02,P03,P04,P05,P06,P07,P08'.split(',');
+  const rows=[];
+  ids.forEach((id,i)=>{
+    // Individual physiology: lactate stays flat then turns sharply upward at a personal intensity
+    const base=u(.7,1.2), amp=u(.12,.3), k=u(.5,.7), maxLac=u(6,10);
+    // Heart rate rises then flattens towards an individual maximum
+    const hr0=u(100,120), hrMax=u(182,198), tau=u(3.5,5.5);
+    // RPE is a whole-number judgement: individual starting point, rate of rise, occasional jumps, ceiling
+    const rpe0=u(7.5,9.5), rpeSlope=u(1.1,1.9);
+    let lastRPE=0;
+    for(let s=1;s<=7;s++){
+      const work=80+s*25+(i%3)*10;
+      const T=Math.min(base+amp*(Math.exp(k*(s-1))-1),maxLac);
+      // Analyser error scales with concentration. Lab: ~2% random error per sample.
+      // Handheld: ~4.5% random error per sample, plus a sample-specific difference from the lab
+      // (~3%, e.g. capillary sampling technique) that both handheld duplicates share,
+      // plus a small positive offset and under-reading above 4 mmol/L.
+      const lab =T*(1+.02*gauss()), lab2=T*(1+.02*gauss());
+      const sampleDiff=.03*gauss();
+      const hhTrue=T+(T>4?-(T-4)*0.12:0.05);
+      const hh =hhTrue*(1+sampleDiff+.045*gauss()), hh2=hhTrue*(1+sampleDiff+.045*gauss());
+      const r2=v=>+Math.max(.5,v).toFixed(2);
+      const hr=Math.round(hr0+(hrMax-hr0)*(1-Math.exp(-s/tau))+jit(4));
+      let rpe=Math.round(rpe0+rpeSlope*(s-1)+jit(1.1));
+      rpe=Math.min(20,Math.max(lastRPE,rpe)); lastRPE=rpe;
+      rows.push({id,stage:s,work,hr,rpe,hh:r2(hh),lab:r2(lab),hh2:r2(hh2),lab2:r2(lab2)});
+    }
+  });
+  return rows;
+}
+
+function initS3(){
+  const p=document.getElementById('pane-s3');
+  p.innerHTML=`
+  <div class="stn-hdr">
+    <div class="stn-badge">3</div>
+    <div>
+      <div class="stn-title">Blood Lactate</div>
+      <div class="stn-desc">Agreement between a handheld lactate analyser and a laboratory reference across exercise stages. Duplicate samples allow within-device reliability to be estimated.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Data Entry</div>
+    <div class="btn-grp" style="margin-bottom:.9rem">
+      <button class="btn btn-p" onclick="loadDemoS3()">Load demo data</button>
+      <button class="btn btn-s" onclick="dlTemplateS3()">Download template</button>
+      <label class="btn btn-s" style="cursor:pointer">Import CSV
+        <input type="file" accept=".csv,.tsv,.txt" style="display:none" onchange="importCSVS3(this)">
+      </label>
+      <button class="btn btn-s" onclick="exportCSVS3()">Export CSV</button>
+      <button class="btn btn-d btn-sm" onclick="clearS3()">Clear</button>
+    </div>
+    <div id="s3-grid"></div>
+  </div>
+
+  <div id="s3-results"></div>
+  <div id="s3-reflections"></div>`;
+
+  _s3Grid=buildGrid(document.getElementById('s3-grid'),S3_COLS,56,analyseS3);
+  buildReflections(
+    document.getElementById('s3-reflections'),
+    REFLECTIONS.s3,
+    STORE.s3.refl
+  );
+
+  if(STORE.s3.rows.length) _s3Grid.setRows(STORE.s3.rows);
+  analyseS3();
+}
+
+function loadDemoS3(){ const r=demoS3(); STORE.s3.rows=r; _s3Grid.setRows(r); analyseS3(); }
+function clearS3(){ _s3Grid.clearRows(); STORE.s3.rows=[]; analyseS3(); }
+function dlTemplateS3(){ downloadTemplate(S3_COLS.map(c=>c.key),'lactate-template.csv'); }
+function exportCSVS3(){
+  const rows=_s3Grid.getRows().filter(r=>r.hh!=null);
+  downloadCSV(toCSV(rows,S3_COLS.map(c=>c.key)),'lactate-data.csv');
+}
+function importCSVS3(inp){
+  const f=inp.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=e=>{
+    const rows=parseCSV(e.target.result);
+    const mapped=rows.slice(1).map(r=>{const o={}; S3_COLS.forEach((c,i)=>{o[c.key]=r[i]??'';}); return o;});
+    STORE.s3.rows=mapped; _s3Grid.setRows(mapped); analyseS3();
+  };
+  rd.readAsText(f);
+}
+
+function analyseS3(){
+  const all=_s3Grid.getRows(); STORE.s3.rows=all; saveStore();
+  const res=document.getElementById('s3-results'); if(!res) return;
+  const valid=all.filter(r=>r.hh!=null&&r.lab!=null&&!isNaN(+r.hh)&&!isNaN(+r.lab)&&+r.hh>0&&+r.lab>0);
+  if(valid.length<4){ res.innerHTML=`<div class="co co-note">Enter at least 4 rows with both Handheld and Lab values.</div>`; return; }
+
+  const hh=valid.map(r=>+r.hh), lab=valid.map(r=>+r.lab);
+  const baAll=blandAltman(hh,lab);
+
+  // Split by band
+  const low=valid.filter(r=>+r.lab<2);
+  const mid=valid.filter(r=>+r.lab>=2&&+r.lab<4);
+  const high=valid.filter(r=>+r.lab>=4);
+  const baLow=low.length>=4?blandAltman(low.map(r=>+r.hh),low.map(r=>+r.lab)):null;
+  const baMid=mid.length>=4?blandAltman(mid.map(r=>+r.hh),mid.map(r=>+r.lab)):null;
+  const baHigh=high.length>=4?blandAltman(high.map(r=>+r.hh),high.map(r=>+r.lab)):null;
+
+  // Duplicate reliability
+  const hhDups=valid.filter(r=>r.hh2!=null&&!isNaN(+r.hh2)&&+r.hh2>0);
+  const labDups=valid.filter(r=>r.lab2!=null&&!isNaN(+r.lab2)&&+r.lab2>0);
+  const matHH=hhDups.map(r=>[+r.hh,+r.hh2]);
+  const matLab=labDups.map(r=>[+r.lab,+r.lab2]);
+  const cvHH=matHH.length>=3?cvPercent(matHH):null;
+  const cvLab=matLab.length>=3?cvPercent(matLab):null;
+
+  // Pearson + Spearman
+  const pr=pearsonR(hh,lab), sr=spearmanR(hh,lab);
+
+  res.innerHTML=`
+  <div class="card">
+    <div class="card-title">Handheld vs Laboratory Analyser — Full Range</div>
+    <div class="sg">
+      <div class="sc">
+        <div class="sc-lbl">Bias (HH – Lab)</div>
+        <div class="sc-val">${fmt2(baAll.bias)} mmol/L</div>
+        <div class="sc-ci">95% CI ${fmtCI(baAll.ci_bias[0],baAll.ci_bias[1])}</div>
+      </div>
+      <div class="sc">
+        <div class="sc-lbl">Limits of agreement</div>
+        <div class="sc-val">${fmt2(baAll.loa_l)} to ${fmt2(baAll.loa_u)}</div>
+        <div class="sc-ci">n = ${baAll.n}</div>
+      </div>
+      <div class="sc">
+        <div class="sc-lbl">Pearson r</div>
+        <div class="sc-val">${fmt2(pr.r)}</div>
+        <div class="sc-ci">95% CI ${fmtCI(pr.ci_l,pr.ci_u)}</div>
+        <div class="sc-int">A high correlation does not imply good agreement — two measures can correlate strongly yet differ systematically.</div>
+      </div>
+      <div class="sc">
+        <div class="sc-lbl">Spearman rs</div>
+        <div class="sc-val">${fmt2(sr.rs)}</div>
+        <div class="sc-ci">95% CI ${fmtCI(sr.ci_l,sr.ci_u)}</div>
+      </div>
+    </div>
+    <div class="ch2">
+      <div id="s3-ch-scatter" class="ch-wrap"><div class="ch-title">Scatter with identity line</div></div>
+      <div id="s3-ch-ba-all" class="ch-wrap"><div class="ch-title">Bland-Altman — full range</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Bland-Altman by Concentration Band</div>
+    <div class="co co-note">Splitting by concentration tests whether agreement is homogeneous across the physiological range. Differences in bias between bands indicate concentration-dependent error.</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:.75rem">
+      <div>
+        <div style="font-weight:600;font-size:.83rem;margin-bottom:.4rem;color:var(--muted)">&lt;2 mmol/L (n=${low.length})</div>
+        ${baLow?`<div class="sc-ci">Bias ${fmt2(baLow.bias)}  LoA ${fmt2(baLow.loa_l)} to ${fmt2(baLow.loa_u)}</div>`:'<div class="sc-ci" style="color:var(--muted)">Insufficient data (&lt;4 pairs)</div>'}
+        <div id="s3-ch-ba-low" class="ch-wrap" style="margin-top:.4rem"><div class="ch-title">Band &lt;2 mmol/L</div></div>
+      </div>
+      <div>
+        <div style="font-weight:600;font-size:.83rem;margin-bottom:.4rem;color:var(--muted)">2 to 4 mmol/L (n=${mid.length})</div>
+        ${baMid?`<div class="sc-ci">Bias ${fmt2(baMid.bias)}  LoA ${fmt2(baMid.loa_l)} to ${fmt2(baMid.loa_u)}</div>`:'<div class="sc-ci" style="color:var(--muted)">Insufficient data (&lt;4 pairs)</div>'}
+        <div id="s3-ch-ba-mid" class="ch-wrap" style="margin-top:.4rem"><div class="ch-title">Band 2–4 mmol/L</div></div>
+      </div>
+      <div>
+        <div style="font-weight:600;font-size:.83rem;margin-bottom:.4rem;color:var(--muted)">&gt;4 mmol/L (n=${high.length})</div>
+        ${baHigh?`<div class="sc-ci">Bias ${fmt2(baHigh.bias)}  LoA ${fmt2(baHigh.loa_l)} to ${fmt2(baHigh.loa_u)}</div>`:'<div class="sc-ci" style="color:var(--muted)">Insufficient data (&lt;4 pairs)</div>'}
+        <div id="s3-ch-ba-high" class="ch-wrap" style="margin-top:.4rem"><div class="ch-title">Band &gt;4 mmol/L</div></div>
+      </div>
+    </div>
+  </div>
+
+  ${(cvHH||cvLab)?`
+  <div class="card">
+    <div class="card-title">Within-Device Reliability (Duplicate Samples)</div>
+    <div class="sg">
+      ${cvHH?`<div class="sc ${cvLabel(cvHH.cv).cls}">
+        <div class="sc-lbl">Handheld CV%</div>
+        <div class="sc-val">${fmt1(cvHH.cv)}%</div>
+        <div class="sc-ci">95% CI ${fmtCI(cvHH.ci_l,cvHH.ci_u,1)}%  n=${cvHH.n}</div>
+        <div class="sc-int">Reflects technical variability of the handheld device independent of the comparison with the lab.</div>
+      </div>`:''}
+      ${cvLab?`<div class="sc ${cvLabel(cvLab.cv).cls}">
+        <div class="sc-lbl">Lab analyser CV%</div>
+        <div class="sc-val">${fmt1(cvLab.cv)}%</div>
+        <div class="sc-ci">95% CI ${fmtCI(cvLab.ci_l,cvLab.ci_u,1)}%  n=${cvLab.n}</div>
+        <div class="sc-int">Within-device variability of the laboratory reference. If high, the Bland-Altman limits of agreement may reflect both devices' error.</div>
+      </div>`:''}
+    </div>
+  </div>`:''}`;
+
+  // Draw charts
+  drawS3Scatter(hh,lab);
+  drawBAChart(document.getElementById('s3-ch-ba-all'),baAll,'Mean lactate (mmol/L)','lac-ba-all');
+  if(baLow) drawBAChart(document.getElementById('s3-ch-ba-low'),baLow,'Mean (<2 mmol/L)','lac-ba-low');
+  if(baMid) drawBAChart(document.getElementById('s3-ch-ba-mid'),baMid,'Mean (2-4 mmol/L)','lac-ba-mid');
+  if(baHigh) drawBAChart(document.getElementById('s3-ch-ba-high'),baHigh,'Mean (>4 mmol/L)','lac-ba-high');
+}
+
+function drawS3Scatter(hh,lab){
+  const c=document.getElementById('s3-ch-scatter'); if(!c) return;
+  const all=[...hh,...lab]; const mn=0,mx=Math.max(...all)*1.1;
+  const ch=makeChart(c,{vw:400,vh:300,xDomain:[mn,mx],yDomain:[mn,mx],
+    xLabel:'Lab (mmol/L)',yLabel:'Handheld (mmol/L)'});
+  ch.addLine([[mn,mn],[mx,mx]],'#94a3b8',1.5,'4,3');
+  ch.addPoints(zip(lab,hh),'#E69F00',4);
+  chartActions(c,ch.svg,'lac-scatter');
+}
+
+/* ===================================================================
+   SECTION: STATION 4 — RPE RELATIONSHIPS
+=================================================================== */
+let _s4LacSource=null;   // 'lab' or 'hh'; null means choose automatically from what Station 3 contains
+let _s4Coloured=false;
+
+function renderS4(){
+  const p=document.getElementById('pane-s4');
+  const all=STORE.s3.rows||[];
+  const num=v=>v!=null&&v!==''&&!isNaN(+v);
+  const nLab=all.filter(r=>num(r.lab)&&+r.lab>0).length, nHH=all.filter(r=>num(r.hh)&&+r.hh>0).length;
+  const src=_s4LacSource||(nLab>=nHH?'lab':'hh');
+  const srcName=src==='lab'?'lab analyser':'handheld analyser';
+
+  // Each relationship uses every row that has its own pair of values
+  const lacRows=all.filter(r=>num(r.rpe)&&num(r[src])&&+r[src]>0).map(r=>({id:r.id||'(no ID)',rpe:+r.rpe,lac:+r[src]}));
+  const hrRows=all.filter(r=>num(r.rpe)&&num(r.hr)&&+r.hr>0).map(r=>({id:r.id||'(no ID)',rpe:+r.rpe,hr:+r.hr}));
+  const nRPE=all.filter(r=>num(r.rpe)).length;
+  const okLac=lacRows.length>=4, okHR=hrRows.length>=4;
+
+  p.innerHTML=`
+  <div class="stn-hdr">
+    <div class="stn-badge">4</div>
+    <div>
+      <div class="stn-title">RPE Relationships</div>
+      <div class="stn-desc">Correlation between perceived exertion, heart rate, and blood lactate from the incremental exercise test (Station 3 data).</div>
+    </div>
+  </div>
+
+  <div class="co co-info">This station reads the data entered in Station 3 (RPE, heart rate and lactate columns).
+    Found ${nRPE} row${nRPE===1?'':'s'} with RPE: ${lacRows.length} also have ${srcName} lactate and ${hrRows.length} also have heart rate.</div>
+
+  <div class="f-row" style="align-items:flex-end;margin-bottom:.9rem">
+    <div class="f-grp"><label for="s4-src">Lactate values from</label>
+      <select id="s4-src" onchange="_s4LacSource=this.value;renderS4()">
+        <option value="lab"${src==='lab'?' selected':''}>Lab analyser (${nLab} rows)</option>
+        <option value="hh"${src==='hh'?' selected':''}>Handheld analyser (${nHH} rows)</option>
+      </select></div>
+    ${okLac||okHR?`<button class="btn btn-s" onclick="_s4Coloured=!_s4Coloured;renderS4()">${_s4Coloured?'Remove participant colour':'Colour by participant'}</button>`:''}
+  </div>
+
+  ${!okLac&&!okHR?`<div class="co co-note">Return to Station 3 and enter (or load demo) data. Each row needs an RPE value plus a lactate or heart-rate value; at least 4 such rows are needed.</div>`:`
+  <div class="card">
+    <div class="card-title">Correlation: RPE vs Lactate and RPE vs Heart Rate</div>
+    <div id="s4-corr-cards" class="sg"></div>
+    <div class="co co-note" style="margin-top:.7rem">A high correlation tells you the two variables track together in rank order. It does not establish validity; a perfectly correlated measure can still be systematically wrong. Pearson and Spearman may differ when the relationship is non-linear or driven by outliers.</div>
+    <div class="ch2">
+      <div id="s4-ch-rpe-lac" class="ch-wrap"><div class="ch-title">RPE vs Lactate (${srcName})</div></div>
+      <div id="s4-ch-rpe-hr"  class="ch-wrap"><div class="ch-title">RPE vs Heart Rate</div></div>
+    </div>
+  </div>`}
+
+  <div id="s4-reflections"></div>`;
+
+  buildReflections(
+    document.getElementById('s4-reflections'),
+    REFLECTIONS.s4,
+    STORE.s4.refl
+  );
+
+  if(!okLac&&!okHR) return;
+
+  const pairCards=(ok,label,rows,yKey)=>{
+    if(!ok) return `<div class="sc"><div class="sc-lbl">RPE vs ${label}</div><div class="sc-int">Needs at least 4 rows with both RPE and ${label.toLowerCase()} (currently ${rows.length}).</div></div>`;
+    const x=rows.map(r=>r.rpe), y=rows.map(r=>r[yKey]);
+    const pr=pearsonR(x,y), sr=spearmanR(x,y);
+    return `<div class="sc">
+      <div class="sc-lbl">RPE vs ${label}: Pearson r</div>
+      <div class="sc-val">${fmt2(pr.r)}</div>
+      <div class="sc-ci">95% CI ${fmtCI(pr.ci_l,pr.ci_u)}  n=${pr.n}</div>
+    </div>
+    <div class="sc">
+      <div class="sc-lbl">RPE vs ${label}: Spearman rs</div>
+      <div class="sc-val">${fmt2(sr.rs)}</div>
+      <div class="sc-ci">95% CI ${fmtCI(sr.ci_l,sr.ci_u)}</div>
+      <div class="sc-int">${Math.abs(pr.r-sr.rs)>.1?'Gap between Pearson and Spearman suggests a non-linear or outlier-driven relationship.':''}</div>
+    </div>`;
+  };
+  document.getElementById('s4-corr-cards').innerHTML=pairCards(okLac,'Lactate',lacRows,'lac')+pairCards(okHR,'Heart rate',hrRows,'hr');
+
+  const panel=(ok,cId,rows,yKey,yLabel)=>{
+    if(!ok){
+      document.getElementById(cId).insertAdjacentHTML('beforeend','<div style="padding:1rem;color:var(--muted);font-size:.83rem">Not enough rows with this pair of values.</div>');
+      return;
+    }
+    drawS4Scatter(cId,rows.map(r=>r.rpe),rows.map(r=>r[yKey]),rows.map(r=>r.id),'RPE (6-20)',yLabel,_s4Coloured);
+  };
+  panel(okLac,'s4-ch-rpe-lac',lacRows,'lac','Lactate (mmol/L)');
+  panel(okHR,'s4-ch-rpe-hr',hrRows,'hr','Heart rate (bpm)');
+}
+function drawS4Scatter(cId,x,y,ids,xLabel,yLabel,coloured){
+  const c=document.getElementById(cId); if(!c) return;
+  const uniq=[...new Set(ids)];
+  const COLS=['#0072B2','#E69F00','#009E73','#D55E00','#56B4E9','#CC79A7','#000'];
+  const xMn=Math.min(...x)*.95, xMx=Math.max(...x)*1.05;
+  const yMn=Math.min(...y)*.9,  yMx=Math.max(...y)*1.1;
+  const ch=makeChart(c,{vw:400,vh:300,xDomain:[xMn,xMx],yDomain:[yMn,yMx],
+    xLabel,yLabel,ariaLabel:`${xLabel} vs ${yLabel}`});
+  if(coloured){
+    uniq.forEach((id,i)=>{
+      const pts=x.map((v,j)=>[v,y[j]]).filter((_,j)=>ids[j]===id);
+      ch.addPoints(pts,COLS[i%COLS.length],4);
+    });
+  } else {
+    ch.addPoints(zip(x,y),'#0072B2',4,'circle',.65);
+    const lr=linearRegress(x,y);
+    const xs=[xMn,xMx];
+    ch.addLine(xs.map(xi=>[xi,lr.slope*xi+lr.intercept]),'#E69F00',1.5,'3,2');
+  }
+  chartActions(c,ch.svg,cId);
+}
+
+
+/* ===================================================================
+   SECTION: STATION 5 — LACTATE THRESHOLD
+=================================================================== */
+const DEMO_CURVES=[
+  {id:'Demo A',work:[80,100,120,140,160,180,200],hr:[128,138,148,157,165,174,182],lac:[0.9,1.1,1.4,2.0,3.1,5.2,8.1]},
+  {id:'Demo B',work:[80,110,140,170,200,230,260],hr:[120,132,145,158,170,182,190],lac:[1.0,1.2,1.5,1.9,2.8,4.4,6.8]},
+  {id:'Demo C',work:[60,90,120,150,180,210,240],hr:[115,128,140,153,167,178,188],lac:[0.8,1.0,1.2,1.6,2.5,4.1,7.3]},
+  {id:'Demo D',work:[100,125,150,175,200,225,250,275],hr:[118,127,136,145,154,163,172,180],lac:[1.1,1.1,1.2,1.4,1.8,2.6,4.0,6.4]},
+  {id:'Demo E',work:[50,75,100,125,150,175,200],hr:[110,122,135,147,160,172,183],lac:[1.3,1.5,1.9,2.6,3.6,5.1,7.4]},
+  {id:'Demo F',work:[120,150,180,210,240,270,300,330],hr:[122,131,140,149,158,167,176,184],lac:[0.7,0.8,0.9,1.0,1.3,1.9,3.2,5.9]},
+];
+
+let _s5State={
+  curves:[], selectedCurve:0, fitType:'poly3',
+  markers:{LT1:null,LT2:null},
+  ratingMode:true,
+  algoToggle:{fixed2:true,fixed4:true,dmax:true,moddmax:true,bp05:false,bp10:false,logexp:true},
+  xAxis:'work',
+  ctx:null,          // latest draw geometry, read by the pointer handlers attached once in initS5
+  dragging:null, justDragged:false, rafPending:false,
+};
+const S5_ALGOS=[
+  {k:'fixed2', lbl:'2 mmol/L',        col:'#56B4E9', dash:'5,3'},
+  {k:'fixed4', lbl:'4 mmol/L',        col:'#E69F00', dash:'5,3'},
+  {k:'bp05',   lbl:'BL+0.5',          col:'#009E73', dash:'2,3'},
+  {k:'bp10',   lbl:'BL+1.0',          col:'#009E73', dash:'6,2,2,2'},
+  {k:'dmax',   lbl:'Dmax',            col:'#D55E00', dash:'5,3'},
+  {k:'moddmax',lbl:'Mod-Dmax',        col:'#CC79A7', dash:'5,3'},
+  {k:'logexp', lbl:'Log-Exp-ModDmax', col:'#000000', dash:'2,2'},
+];
+
+function initS5(){
+  const p=document.getElementById('pane-s5');
+  p.innerHTML=`
+  <div class="stn-hdr">
+    <div class="stn-badge">5</div>
+    <div>
+      <div class="stn-title">Lactate Threshold Identification</div>
+      <div class="stn-desc">Interactive curve with draggable markers; algorithmic methods; inter-rater agreement analysis.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Curve Selection and Controls</div>
+    <div class="f-row" style="align-items:flex-end">
+      <div class="f-grp">
+        <label>Participant curve</label>
+        <select id="s5-curve-sel" onchange="s5SelectCurve(this.value)"></select>
+      </div>
+      <div class="f-grp">
+        <label>X axis</label>
+        <select id="s5-xaxis" onchange="s5SetXAxis(this.value)">
+          <option value="work">Workload (W)</option>
+          <option value="hr">Heart rate</option>
+        </select>
+      </div>
+      <div class="f-grp">
+        <label>Curve fit</label>
+        <select id="s5-fit" onchange="s5SetFit(this.value)">
+          <option value="poly3">Cubic polynomial</option>
+          <option value="poly2">Quadratic polynomial</option>
+          <option value="linear">Linear interpolation</option>
+        </select>
+      </div>
+      <div class="f-grp">
+        <label>Rating mode</label>
+        <button id="s5-rating-tog" class="btn btn-s" onclick="s5ToggleRating()">${_s5State.ratingMode?'On (methods hidden until you save)':'Off'}</button>
+      </div>
+    </div>
+    <div class="tog-grp" id="s5-algo-togs" style="margin-bottom:.7rem"></div>
+    <div id="lt-wrap">
+      <svg id="lt-svg" viewBox="0 0 640 400" role="img" aria-label="Lactate curve" style="display:block;width:100%;height:auto;touch-action:none"></svg>
+    </div>
+    <div id="s5-readout" style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:.7rem;font-size:.83rem"></div>
+    <div id="s5-algo-table"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Enter Your Picks</div>
+    <div class="co co-note" style="margin-bottom:.8rem">
+      <strong>How to run the inter-rater exercise:</strong> enter your name, place LT1 and LT2 on the curve, then
+      <em>Save and go to next curve</em>. Rate every curve. When you have finished, press <em>Start next rater</em>
+      and hand over. The pooled analysis appears once two or more raters have rated at least three of the same curves.
+    </div>
+    <div class="f-row" style="align-items:flex-end">
+      <div class="f-grp">
+        <label for="s5-rater-name">Rater name</label>
+        <input type="text" id="s5-rater-name" value="Rater 1" style="width:140px" onchange="s5RaterChanged()">
+      </div>
+      <button class="btn btn-p" onclick="s5SavePicks()">Save and go to next curve</button>
+      <button class="btn btn-s" onclick="s5ClearMarkers()">Reset markers</button>
+      <button class="btn btn-s" onclick="s5NextRater()">Start next rater</button>
+    </div>
+    <div id="s5-progress" style="margin-top:.7rem;font-size:.85rem"></div>
+    <div class="btn-grp" style="margin-top:.7rem">
+      <button class="btn btn-s btn-sm" onclick="s5ExportPicks()">Export picks CSV</button>
+      <label class="btn btn-s btn-sm" style="cursor:pointer">Import picks CSV
+        <input type="file" accept=".csv" style="display:none" onchange="s5ImportPicks(this)">
+      </label>
+      <button class="btn btn-d btn-sm" onclick="s5ClearAllPicks()">Clear all picks</button>
+    </div>
+    <div id="s5-picks-summary"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Pooled Rater Analysis</div>
+    <div id="s5-pooled-results"></div>
+  </div>
+
+  <div id="s5-reflections"></div>`;
+
+  buildReflections(
+    document.getElementById('s5-reflections'),
+    REFLECTIONS.s5,
+    STORE.s5.refl
+  );
+
+  s5BuildAlgoToggles();
+  s5PopulateCurveList();
+  s5AttachDrag();
+  s5SelectCurve(0);
+  s5UpdatePicksSummary();
+  s5AnalysePooled();
+}
+
+function s5BuildAlgoToggles(){
+  const row=document.getElementById('s5-algo-togs');
+  if(!row) return;
+  S5_ALGOS.forEach(o=>{
+    const b=document.createElement('button');
+    b.className='tog'+(_s5State.algoToggle[o.k]?' act':'');
+    b.innerHTML=`<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${o.col};margin-right:.35rem;vertical-align:-1px;border:1px solid #fff"></span>${o.lbl}`;
+    b.dataset.key=o.k;
+    b.onclick=()=>{
+      _s5State.algoToggle[o.k]=!_s5State.algoToggle[o.k];
+      b.classList.toggle('act',_s5State.algoToggle[o.k]);
+      s5Draw();
+    };
+    row.appendChild(b);
+  });
+}
+
+function s5PopulateCurveList(){
+  const sel=document.getElementById('s5-curve-sel'); if(!sel) return;
+  // Merge demo curves + Station 3 participants
+  _s5State.curves=[...DEMO_CURVES];
+  const s3Ids=[...new Set(STORE.s3.rows.filter(r=>r.id&&r.work&&r.lab).map(r=>r.id))];
+  s3Ids.forEach(id=>{
+    const pts=STORE.s3.rows.filter(r=>r.id===id&&r.work&&r.lab).sort((a,b)=>+a.work-+b.work);
+    if(pts.length>=4) _s5State.curves.push({
+      id,work:pts.map(r=>+r.work),hr:pts.map(r=>+r.hr||0),lac:pts.map(r=>+r.lab)
+    });
+  });
+  sel.innerHTML=_s5State.curves.map((c,i)=>`<option value="${i}">${c.id}</option>`).join('');
+}
+
+function s5HrValid(curve){
+  const h=curve.hr||[];
+  return h.length===curve.work.length&&h.every((v,i)=>v>0&&(i===0||v>h[i-1]));
+}
+function s5Interp(x,X,Y){
+  const n=X.length;
+  let i=0;
+  if(x<=X[0]) i=0; else if(x>=X[n-1]) i=n-2; else while(i<n-2&&x>X[i+1]) i++;
+  return Y[i]+(x-X[i])*(Y[i+1]-Y[i])/(X[i+1]-X[i]);
+}
+function s5CurrentCurve(){ return _s5State.curves[_s5State.selectedCurve]; }
+function s5CurrentRater(){ return document.getElementById('s5-rater-name')?.value.trim()||'Rater 1'; }
+function s5SavedPick(rater,curveId){ return STORE.s5.picks[rater]?.[curveId]||null; }
+
+function s5SelectCurve(idx){
+  _s5State.selectedCurve=+idx;
+  const sel=document.getElementById('s5-curve-sel'); if(sel) sel.value=String(idx);
+  const curve=s5CurrentCurve();
+  const saved=curve?s5SavedPick(s5CurrentRater(),curve.id):null;
+  _s5State.markers={LT1:saved?.LT1??null,LT2:saved?.LT2??null};
+  s5Draw();
+  s5UpdateProgress();
+}
+function s5SetFit(v){ _s5State.fitType=v; s5Draw(); }
+function s5SetXAxis(v){ _s5State.xAxis=v; s5Draw(); }
+function s5RaterChanged(){ s5SelectCurve(_s5State.selectedCurve); }
+function s5ClearMarkers(){ _s5State.markers={LT1:null,LT2:null}; s5Draw(); }
+
+function s5ToggleRating(){
+  _s5State.ratingMode=!_s5State.ratingMode;
+  const btn=document.getElementById('s5-rating-tog');
+  if(btn){ btn.textContent=_s5State.ratingMode?'On (methods hidden until you save)':'Off'; }
+  s5Draw();
+}
+
+function s5GetFit(curve,xs){
+  const lac=curve.lac;
+  if(!xs||xs.length<3) return null;
+  if(_s5State.fitType==='linear') return {predict:x=>s5Interp(x,xs,lac)};
+  return polyFit(xs,lac,_s5State.fitType==='poly3'?3:2);
+}
+
+function s5FirstCrossing(fit,target,xMin,xMax){
+  const N=400; let prev=fit.predict(xMin);
+  for(let i=1;i<=N;i++){
+    const x=xMin+(xMax-xMin)*i/N, v=fit.predict(x);
+    if((prev-target)*(v-target)<=0&&prev!==v){
+      const x0=x-(xMax-xMin)/N;
+      return x0+(target-prev)/(v-prev)*(x-x0);
+    }
+    prev=v;
+  }
+  return null;
+}
+
+/** Algorithmic threshold estimates in display-axis units. */
+function s5AlgoEstimates(curve,xs,fit){
+  const ys=curve.lac, xMn=xs[0], xMx=xs[xs.length-1], deg=_s5State.fitType==='poly2'?2:3;
+  const bl=Math.min(...ys.slice(0,2));
+  const at=v=>v<=Math.max(...ys)?s5FirstCrossing(fit,v,xMn,xMx):null;
+  const out={
+    fixed2:at(2), fixed4:at(4), bp05:at(bl+.5), bp10:at(bl+1),
+    dmax:dmax(xs,ys,deg)?.x??null,
+    moddmax:modDmax(xs,ys,bl,deg)?.x??null,
+    logexp:logExpModDmax(xs,ys)?.x??null,
+  };
+  return out;
+}
+
+function s5Draw(){
+  const svg=document.getElementById('lt-svg'); if(!svg) return;
+  const curve=s5CurrentCurve(); if(!curve) return;
+  const hrOk=s5HrValid(curve);
+  const axisSel=document.getElementById('s5-xaxis');
+  if(_s5State.xAxis==='hr'&&!hrOk){ _s5State.xAxis='work'; if(axisSel) axisSel.value='work'; }
+  if(axisSel) axisSel.querySelector('option[value="hr"]').disabled=!hrOk;
+  const useHR=_s5State.xAxis==='hr';
+  const xs=useHR?curve.hr:curve.work, ys=curve.lac;
+  const toDisp=w=>useHR?s5Interp(w,curve.work,curve.hr):w;
+  const fromDisp=d=>useHR?s5Interp(d,curve.hr,curve.work):d;
+  const fit=s5GetFit(curve,xs);
+
+  const VW=640,VH=400, M={top:62,right:24,bottom:52,left:58};
+  const W=VW-M.left-M.right, H=VH-M.top-M.bottom;
+  const xMn=xs[0], xMx=xs[xs.length-1];
+  const xPad=(xMx-xMn)*.03;
+  const yMx=Math.ceil(Math.max(...ys)*1.1);
+  const sx=scaleLin([xMn-xPad,xMx+xPad],[0,W]);
+  const sy=scaleLin([0,yMx],[H,0]);
+  _s5State.ctx={sx,sy,W,H,M,fit,toDisp,fromDisp,xMn,xMx};
+
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+  svg.appendChild(svgEl('rect',{width:VW,height:VH,fill:'#fff'}));
+  const clipId='lt-clip';
+  const defs=svgEl('defs'), cp=svgEl('clipPath',{id:clipId});
+  cp.appendChild(svgEl('rect',{x:0,y:0,width:W,height:H})); defs.appendChild(cp); svg.appendChild(defs);
+  const g=svgEl('g',{transform:`translate(${M.left},${M.top})`});
+  svg.appendChild(g);
+
+  // Grid, frame and ticks
+  const yStep=yMx<=8?1:2;
+  for(let v=0;v<=yMx;v+=yStep){
+    g.appendChild(svgEl('line',{x1:0,x2:W,y1:sy(v),y2:sy(v),stroke:'#eef2f6',strokeWidth:1}));
+    g.appendChild(svgEl('line',{x1:0,x2:-4,y1:sy(v),y2:sy(v),stroke:'#94a3b8'}));
+    const t=svgEl('text',{x:-8,y:sy(v)+3.5,textAnchor:'end',fontSize:10,fill:'#64748b'});
+    t.textContent=v; g.appendChild(t);
+  }
+  xs.forEach(v=>{
+    g.appendChild(svgEl('line',{x1:sx(v),x2:sx(v),y1:H,y2:H+4,stroke:'#94a3b8'}));
+    const t=svgEl('text',{x:sx(v),y:H+16,textAnchor:'middle',fontSize:10,fill:'#64748b'});
+    t.textContent=Math.round(v); g.appendChild(t);
+  });
+  g.appendChild(svgEl('rect',{x:0,y:0,width:W,height:H,fill:'none',stroke:'#cbd5e1',strokeWidth:1}));
+  const xl=svgEl('text',{x:W/2,y:H+40,textAnchor:'middle',fontSize:11,fill:'#475569',fontWeight:600});
+  xl.textContent=useHR?'Heart rate (bpm)':'Workload (W)'; g.appendChild(xl);
+  const yl=svgEl('text',{x:0,y:0,textAnchor:'middle',fontSize:11,fill:'#475569',fontWeight:600,
+    transform:`translate(${-M.left+15},${H/2}) rotate(-90)`});
+  yl.textContent='Lactate (mmol/L)'; g.appendChild(yl);
+
+  const plot=svgEl('g',{'clip-path':`url(#${clipId})`});
+  g.appendChild(plot);
+
+  // Algorithmic overlays; in rating mode they stay hidden until this rater has saved this curve
+  const saved=s5SavedPick(s5CurrentRater(),curve.id);
+  const showAlgo=!_s5State.ratingMode||!!saved;
+  const est=fit?s5AlgoEstimates(curve,xs,fit):{};
+  const labels=[];
+  if(showAlgo){
+    S5_ALGOS.filter(a=>_s5State.algoToggle[a.k]&&est[a.k]!=null).forEach(a=>{
+      const x=sx(est[a.k]);
+      plot.appendChild(svgEl('line',{x1:x,x2:x,y1:0,y2:H,stroke:a.col,strokeWidth:1.5,strokeDasharray:a.dash}));
+      labels.push({x,text:a.lbl,col:a.col});
+    });
+  }
+  // Stack labels into rows above the plot so neighbouring methods never overlap
+  const rowEnds=[];
+  labels.sort((p,q)=>p.x-q.x).forEach(l=>{
+    const w=l.text.length*5.4+8;
+    const left=Math.max(0,Math.min(W-w,l.x-w/2));
+    let row=rowEnds.findIndex(end=>left>end+4);
+    if(row<0){ row=rowEnds.length; rowEnds.push(0); }
+    rowEnds[row]=left+w;
+    const y=-8-row*13;
+    g.appendChild(svgEl('line',{x1:l.x,x2:l.x,y1:y+3,y2:0,stroke:l.col,strokeWidth:1,opacity:.5}));
+    const t=svgEl('text',{x:left+w/2,y,textAnchor:'middle',fontSize:9.5,fontWeight:600,fill:l.col});
+    t.textContent=l.text; g.appendChild(t);
+  });
+
+  // Fitted curve and stage data
+  if(fit){
+    const pts=linspace(xMn,xMx,200).map(x=>`${sx(x)},${sy(fit.predict(x))}`);
+    plot.appendChild(svgEl('path',{d:'M'+pts.join('L'),stroke:'#334155',strokeWidth:2,fill:'none'}));
+  }
+  zip(xs,ys).forEach(([x,y])=>{
+    plot.appendChild(svgEl('circle',{cx:sx(x),cy:sy(y),r:4.5,fill:'#334155',stroke:'#fff',strokeWidth:1.5}));
+  });
+
+  // Rater markers (stored in watts, drawn on the current axis)
+  [['LT1','#0072B2'],['LT2','#CC3311']].forEach(([name,col])=>{
+    const w=_s5State.markers[name]; if(w==null) return;
+    const dx=toDisp(w), cx=sx(dx), cy=fit?sy(fit.predict(dx)):H/2;
+    plot.appendChild(svgEl('line',{x1:cx,x2:cx,y1:cy,y2:H,stroke:col,strokeWidth:1.5,opacity:.6}));
+    const grp=svgEl('g',{cursor:'ew-resize','aria-label':`${name} marker`});
+    grp.dataset.marker=name;
+    grp.appendChild(svgEl('circle',{cx,cy,r:12,fill:col,stroke:'#fff',strokeWidth:2}));
+    const t=svgEl('text',{x:cx,y:cy+3.5,textAnchor:'middle',fontSize:9,fontWeight:700,fill:'#fff',style:'pointer-events:none'});
+    t.textContent=name; grp.appendChild(t);
+    g.appendChild(grp);
+  });
+
+  s5UpdateReadout(curve);
+  s5RenderAlgoTable(curve,est,showAlgo);
+}
+
+function s5RenderAlgoTable(curve,est,showAlgo){
+  const el=document.getElementById('s5-algo-table'); if(!el) return;
+  if(!showAlgo){
+    el.innerHTML=`<div class="co co-note" style="margin-top:.7rem">Rating mode: method estimates are hidden until you save your picks for ${curve.id}.</div>`;
+    return;
+  }
+  const {fromDisp}=_s5State.ctx, hrOk=s5HrValid(curve);
+  const rows=S5_ALGOS.map(a=>{
+    const d=est[a.k];
+    if(d==null) return `<tr><td>${a.lbl}</td><td class="mono" colspan="3">Not reached on this curve</td></tr>`;
+    const w=fromDisp(d), lac=s5Interp(w,curve.work,curve.lac);
+    return `<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${a.col};margin-right:.4rem"></span>${a.lbl}</td>
+      <td class="mono">${Math.round(w)}</td><td class="mono">${hrOk?Math.round(s5Interp(w,curve.work,curve.hr)):'—'}</td>
+      <td class="mono">${fmt2(lac)}</td></tr>`;
+  });
+  el.innerHTML=`<details style="margin-top:.8rem"><summary style="cursor:pointer;font-size:.85rem;font-weight:600">Method estimates for ${curve.id}</summary>
+    <div class="tbl-wrap" style="margin-top:.5rem"><table class="rtbl">
+    <thead><tr><th>Method</th><th>Workload (W)</th><th>HR (bpm)</th><th>Lactate (mmol/L, observed)</th></tr></thead>
+    <tbody>${rows.join('')}</tbody></table></div>
+    <div style="font-size:.78rem;color:var(--muted);margin-top:.4rem">Log-Exp-ModDmax: exponential curve fit, with the Dmax line drawn from the log-log lactate threshold (Beaver et al. 1985) to the final stage (Jamnick et al. 2018). Fixed and baseline-plus methods use the selected curve fit.</div>
+    </details>`;
+}
+
+function s5AttachDrag(){
+  const svg=document.getElementById('lt-svg'); if(!svg) return;
+  const toPlot=e=>{
+    const c=_s5State.ctx; if(!c) return null;
+    const p=svg.createSVGPoint(); p.x=e.clientX; p.y=e.clientY;
+    const q=p.matrixTransform(svg.getScreenCTM().inverse());
+    return {x:q.x-c.M.left,y:q.y-c.M.top};
+  };
+  const toWatts=px=>{
+    const c=_s5State.ctx;
+    const d=Math.max(c.xMn,Math.min(c.xMx,c.sx.invert(px)));
+    return c.fromDisp(d);
+  };
+  const redraw=()=>{
+    if(_s5State.rafPending) return;
+    _s5State.rafPending=true;
+    requestAnimationFrame(()=>{ _s5State.rafPending=false; s5Draw(); });
+  };
+  svg.addEventListener('pointerdown',e=>{
+    const c=_s5State.ctx; if(!c||!c.fit) return;
+    const pt=toPlot(e); if(!pt) return;
+    const hit=e.target.closest('[data-marker]');
+    let name=hit?.dataset.marker;
+    if(!name){
+      if(pt.x<0||pt.x>c.W||pt.y<-10||pt.y>c.H+10) return;
+      const w=toWatts(pt.x), mk=_s5State.markers;
+      if(mk.LT1==null) name='LT1';
+      else if(mk.LT2==null) name='LT2';
+      else name=Math.abs(w-mk.LT1)<=Math.abs(w-mk.LT2)?'LT1':'LT2';
+      mk[name]=w;
+    }
+    _s5State.dragging=name;
+    try{ svg.setPointerCapture(e.pointerId); }catch(_){}
+    e.preventDefault();
+    redraw();
+  });
+  svg.addEventListener('pointermove',e=>{
+    if(!_s5State.dragging) return;
+    const pt=toPlot(e); if(!pt) return;
+    _s5State.markers[_s5State.dragging]=toWatts(pt.x);
+    redraw();
+  });
+  const end=()=>{ if(_s5State.dragging){ _s5State.dragging=null; redraw(); } };
+  svg.addEventListener('pointerup',end);
+  svg.addEventListener('pointercancel',end);
+}
+
+function s5UpdateReadout(curve){
+  const rd=document.getElementById('s5-readout'); if(!rd) return;
+  const hrOk=s5HrValid(curve), peakHR=hrOk?Math.max(...curve.hr):0;
+  const parts=[['LT1','#0072B2'],['LT2','#CC3311']].map(([name,col])=>{
+    const w=_s5State.markers[name];
+    if(w==null) return `<div class="lt-readout" style="border-left:3px solid ${col}"><strong style="color:${col}">${name}</strong><br>Click the chart to place</div>`;
+    const lac=s5Interp(w,curve.work,curve.lac);
+    const hr=hrOk?Math.round(s5Interp(w,curve.work,curve.hr)):null;
+    return `<div class="lt-readout" style="border-left:3px solid ${col}">
+      <strong style="color:${col}">${name}</strong><br>
+      Work: ${Math.round(w)} W<br>
+      Lactate: ${fmt2(lac)} mmol/L<br>
+      ${hr!=null?`HR: ${hr} bpm (${Math.round(hr/peakHR*100)}% peak HR)`:'HR: not recorded'}
+    </div>`;
+  });
+  const order=_s5State.markers.LT1!=null&&_s5State.markers.LT2!=null&&_s5State.markers.LT1>_s5State.markers.LT2
+    ?`<div class="co co-warn" style="margin:0">LT1 is to the right of LT2. They will be swapped when you save.</div>`:'';
+  rd.innerHTML=`${parts.join('')}
+    <div style="font-size:.78rem;color:var(--muted);align-self:center;max-width:300px">
+      Click the chart to place LT1, then LT2. Drag a marker to adjust, or click near one to move it.
+    </div>${order}`;
+}
+
+function s5SavePicks(){
+  const curve=s5CurrentCurve(); if(!curve) return;
+  const name=s5CurrentRater();
+  let {LT1,LT2}=_s5State.markers;
+  if(LT1==null||LT2==null){ s5UpdateProgress('Place both LT1 and LT2 before saving.'); return; }
+  if(LT1>LT2) [LT1,LT2]=[LT2,LT1];
+  if(!STORE.s5.picks[name]) STORE.s5.picks[name]={};
+  STORE.s5.picks[name][curve.id]={rater:name,curveId:curve.id,LT1:Math.round(LT1*10)/10,LT2:Math.round(LT2*10)/10};
+  saveStore();
+  s5UpdatePicksSummary();
+  s5AnalysePooled();
+  // Move on to the next curve this rater has not yet rated
+  const n=_s5State.curves.length;
+  for(let k=1;k<=n;k++){
+    const i=(_s5State.selectedCurve+k)%n;
+    if(!s5SavedPick(name,_s5State.curves[i].id)){
+      s5SelectCurve(i);
+      s5UpdateProgress(`Saved ${curve.id}. Now on ${_s5State.curves[i].id}.`);
+      return;
+    }
+  }
+  s5SelectCurve(_s5State.selectedCurve);
+  s5UpdateProgress(`All ${n} curves rated by ${name}. Press "Start next rater" to hand over.`);
+}
+
+function s5NextRater(){
+  const existing=Object.keys(STORE.s5.picks);
+  let k=existing.length+1;
+  while(existing.includes('Rater '+k)) k++;
+  const inp=document.getElementById('s5-rater-name');
+  inp.value='Rater '+k;
+  s5SelectCurve(0);
+  s5UpdateProgress(`Now rating: ${inp.value}. Type your own name in the box if you like.`);
+  inp.focus(); inp.select();
+}
+
+function s5ClearAllPicks(){
+  if(!confirm('Delete every saved pick from every rater?')) return;
+  STORE.s5.picks={}; saveStore();
+  document.getElementById('s5-rater-name').value='Rater 1';
+  s5SelectCurve(0); s5UpdatePicksSummary(); s5AnalysePooled();
+}
+
+function s5UpdateProgress(msg=''){
+  const el=document.getElementById('s5-progress'); if(!el) return;
+  const rater=s5CurrentRater();
+  const done=_s5State.curves.filter(c=>s5SavedPick(rater,c.id)).length;
+  const chips=_s5State.curves.map((c,i)=>{
+    const isDone=!!s5SavedPick(rater,c.id), cur=i===_s5State.selectedCurve;
+    return `<button class="tog${isDone?' act':''}" style="${cur?'outline:2px solid var(--primary);outline-offset:1px':''}"
+      onclick="s5SelectCurve(${i})" title="${isDone?'Rated, click to review or change':'Not yet rated'}">${isDone?'&#10003; ':''}${escapeHTML(c.id)}</button>`;
+  }).join('');
+  el.innerHTML=`<div style="margin-bottom:.4rem"><strong>${escapeHTML(rater)}</strong>: ${done} of ${_s5State.curves.length} curves rated
+    ${msg?`<span style="color:var(--primary);margin-left:.5rem">${escapeHTML(msg)}</span>`:''}</div>
+    <div class="tog-grp">${chips}</div>`;
+}
+
+function escapeHTML(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function s5UpdatePicksSummary(){
+  const el=document.getElementById('s5-picks-summary'); if(!el) return;
+  const raters=Object.keys(STORE.s5.picks);
+  if(!raters.length){ el.innerHTML=''; return; }
+  const rows=raters.flatMap(r=>Object.values(STORE.s5.picks[r]).map(p=>
+    `<tr><td>${escapeHTML(p.rater)}</td><td>${escapeHTML(p.curveId)}</td>
+     <td class="mono">${p.LT1!=null?Math.round(p.LT1):'—'}</td>
+     <td class="mono">${p.LT2!=null?Math.round(p.LT2):'—'}</td></tr>`
+  ));
+  el.innerHTML=`<details style="margin-top:.8rem"><summary style="cursor:pointer;font-size:.85rem;font-weight:600">All saved picks (${rows.length})</summary>
+  <div class="tbl-wrap" style="margin-top:.5rem">
+  <table class="rtbl"><thead><tr><th>Rater</th><th>Curve</th><th>LT1 (W)</th><th>LT2 (W)</th></tr></thead>
+  <tbody>${rows.join('')}</tbody></table></div></details>`;
+}
+
+function s5ExportPicks(){
+  const rows=[];
+  Object.values(STORE.s5.picks).forEach(rater=>{
+    Object.values(rater).forEach(p=>{
+      rows.push(`${p.rater},${p.curveId},${p.LT1??''},${p.LT2??''}`);
+    });
+  });
+  downloadCSV('rater,curve,LT1_W,LT2_W\n'+rows.join('\n'),'lt-rater-picks.csv');
+}
+
+function s5ImportPicks(inp){
+  const f=inp.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=e=>{
+    const rows=parseCSV(e.target.result).slice(1);
+    rows.forEach(r=>{
+      const [rater,curveId,lt1,lt2]=r;
+      if(!rater||!curveId) return;
+      if(!STORE.s5.picks[rater]) STORE.s5.picks[rater]={};
+      STORE.s5.picks[rater][curveId]={rater,curveId,LT1:lt1?+lt1:null,LT2:lt2?+lt2:null};
+    });
+    saveStore(); s5UpdatePicksSummary(); s5AnalysePooled(); s5SelectCurve(_s5State.selectedCurve);
+  };
+  rd.readAsText(f);
+  inp.value='';
+}
+
+/** Pooled inter-rater analysis across every curve that at least two raters have saved. */
+function s5AnalysePooled(){
+  const el=document.getElementById('s5-pooled-results'); if(!el) return;
+  el.innerHTML='';
+  const picks=STORE.s5.picks;
+  const raters=Object.keys(picks).filter(r=>Object.keys(picks[r]).length);
+  if(raters.length<2){
+    el.innerHTML=`<div class="co co-note">Saved picks from ${raters.length} rater${raters.length===1?'':'s'} so far. Save picks from at least 2 raters to see the pooled analysis.</div>`;
+    return;
+  }
+  const known=_s5State.curves.map(c=>c.id);
+  const allIds=[...new Set([...known,...raters.flatMap(r=>Object.keys(picks[r]))])];
+  const shared=allIds.filter(cid=>raters.filter(r=>picks[r][cid]).length>=2);
+  const complete=shared.filter(cid=>raters.every(r=>picks[r][cid]?.LT1!=null&&picks[r][cid]?.LT2!=null));
+
+  const cards=['LT1','LT2'].map(th=>{
+    if(complete.length<3) return '';
+    const mat=complete.map(cid=>raters.map(r=>picks[r][cid][th]));
+    const ir=icc(mat,'2,1'), cv=cvPercent(mat);
+    const meanSD=mean(complete.map(cid=>sd(raters.map(r=>picks[r][cid][th]))));
+    return `<div class="sc ${ratingLabel(ir.icc).cls}">
+      <div class="sc-lbl">${th}: ICC(2,1)</div>
+      <div class="sc-val">${fmt2(ir.icc)}</div>
+      <div class="sc-ci">95% CI ${fmtCI(ir.ci_l,ir.ci_u)}</div>
+      <div class="sc-int">CV% ${fmt1(cv.cv)} ${fmtCI(cv.ci_l,cv.ci_u,1)}%. Mean between-rater SD ${Math.round(meanSD)} W.</div>
+    </div>`;
+  }).join('');
+
+  const stageRows=shared.map(cid=>{
+    const c=_s5State.curves.find(x=>x.id===cid);
+    const inc=c?mean(c.work.slice(1).map((w,i)=>w-c.work[i])):NaN;
+    const cell=th=>{
+      const v=raters.map(r=>picks[r][cid]?.[th]).filter(x=>x!=null);
+      if(v.length<2) return '<td class="mono">—</td><td class="mono">—</td>';
+      const s=sd(v), st=s/inc;
+      const cls=isNaN(st)?'':st<.5?'good':st<1?'warn':'bad';
+      return `<td class="mono">${Math.round(s)}</td><td class="mono" style="color:var(--${cls||'muted'})">${isNaN(st)?'—':fmt2(st)}</td>`;
+    };
+    return `<tr><td>${escapeHTML(cid)}</td><td class="mono">${isNaN(inc)?'—':Math.round(inc)}</td>${cell('LT1')}${cell('LT2')}</tr>`;
+  }).join('');
+
+  const baA=_s5State.baA&&raters.includes(_s5State.baA)?_s5State.baA:raters[0];
+  const baB=_s5State.baB&&raters.includes(_s5State.baB)&&_s5State.baB!==baA?_s5State.baB:raters.find(r=>r!==baA);
+  const baT=_s5State.baT||'LT2';
+  const opt=(sel)=>raters.map(r=>`<option${r===sel?' selected':''}>${escapeHTML(r)}</option>`).join('');
+
+  el.innerHTML=`
+    <div style="font-size:.85rem;margin-bottom:.7rem">${raters.length} raters; ${shared.length} curves rated by two or more; ${complete.length} rated by every rater.</div>
+    ${complete.length<3?`<div class="co co-note">ICC and CV% need at least 3 curves rated by every rater (currently ${complete.length}).</div>`:`<div class="sg">${cards}</div>`}
+    <div class="tbl-wrap" style="margin:.8rem 0"><table class="rtbl">
+      <thead><tr><th>Curve</th><th>Stage increment (W)</th><th>LT1 SD (W)</th><th>LT1 SD (stages)</th><th>LT2 SD (W)</th><th>LT2 SD (stages)</th></tr></thead>
+      <tbody>${stageRows}</tbody></table></div>
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:.8rem">Between-rater SD expressed in stage increments: below 0.5 is unlikely to change a training prescription; above 1 is practically meaningful.</div>
+    <div id="s5-dots"></div>
+    <div class="f-row" style="align-items:flex-end;margin-top:.6rem">
+      <div class="f-grp"><label>Bland-Altman: rater A</label><select onchange="_s5State.baA=this.value;s5AnalysePooled()">${opt(baA)}</select></div>
+      <div class="f-grp"><label>minus rater B</label><select onchange="_s5State.baB=this.value;s5AnalysePooled()">${opt(baB)}</select></div>
+      <div class="f-grp"><label>Threshold</label><select onchange="_s5State.baT=this.value;s5AnalysePooled()">
+        <option${baT==='LT1'?' selected':''}>LT1</option><option${baT==='LT2'?' selected':''}>LT2</option></select></div>
+    </div>
+    <div id="s5-ba-raters" class="ch-wrap"><div class="ch-title">Bland-Altman: ${escapeHTML(baA)} minus ${escapeHTML(baB)} (${baT}, W)</div></div>`;
+
+  const dots=document.getElementById('s5-dots');
+  ['LT1','LT2'].forEach(th=>drawS5DotPlot(th,shared,raters,dots));
+  const common=allIds.filter(cid=>picks[baA]?.[cid]?.[baT]!=null&&picks[baB]?.[cid]?.[baT]!=null);
+  const ba=blandAltman(common.map(c=>picks[baA][c][baT]),common.map(c=>picks[baB][c][baT]));
+  drawBAChart(document.getElementById('s5-ba-raters'),ba,`Mean ${baT} (W)`,'s5-ba-raters');
+}
+
+function drawS5DotPlot(thresh,curveIds,raters,container){
+  const COLS=['#0072B2','#E69F00','#009E73','#D55E00','#56B4E9','#CC79A7'];
+  const allVals=raters.flatMap(r=>curveIds.map(c=>STORE.s5.picks[r]?.[c]?.[thresh])).filter(v=>v!=null);
+  if(allVals.length<2) return;
+  const mn=Math.min(...allVals)*.95, mx=Math.max(...allVals)*1.05;
+  const VW=500,VH=30+curveIds.length*36+50;
+  const M={top:15,right:20,bottom:40,left:70};
+  const W=VW-M.left-M.right,H=VH-M.top-M.bottom;
+  const sx=scaleLin([mn,mx],[0,W]);
+  const rowH=H/curveIds.length;
+  const svg=svgEl('svg',{viewBox:`0 0 ${VW} ${VH}`});
+  svg.style.fontFamily='inherit';
+  svg.appendChild(svgEl('rect',{width:VW,height:VH,fill:'white'}));
+  const g=svgEl('g',{transform:`translate(${M.left},${M.top})`});
+
+  curveIds.forEach((cid,ri)=>{
+    const y=ri*rowH+rowH/2;
+    const vals=raters.map(r=>STORE.s5.picks[r]?.[cid]?.[thresh]).filter(v=>v!=null);
+    if(vals.length<2) return;
+    const m=mean(vals),s=sd(vals);
+    // Mean bar
+    g.appendChild(svgEl('line',{x1:sx(m-s),x2:sx(m+s),y1:y,y2:y,stroke:'#94a3b8',strokeWidth:2}));
+    g.appendChild(svgEl('line',{x1:sx(m),x2:sx(m),y1:y-8,y2:y+8,stroke:'#1e293b',strokeWidth:2}));
+    raters.forEach((r,ri2)=>{
+      const v=STORE.s5.picks[r]?.[cid]?.[thresh];
+      if(v==null) return;
+      g.appendChild(svgEl('circle',{cx:sx(v),cy:y,r:5,fill:COLS[ri2%COLS.length],opacity:.85,stroke:'#fff',strokeWidth:1}));
+    });
+    const lbl=svgEl('text',{x:-6,y:y+4,textAnchor:'end',fontSize:10,fill:'#475569'});
+    lbl.textContent=cid; g.appendChild(lbl);
+  });
+
+  g.appendChild(svgEl('line',{x1:0,x2:W,y1:H,y2:H,stroke:'#cbd5e1'}));
+  linspace(mn,mx,6).forEach(v=>{
+    g.appendChild(svgEl('line',{x1:sx(v),x2:sx(v),y1:H,y2:H+4,stroke:'#94a3b8'}));
+    const t=svgEl('text',{x:sx(v),y:H+14,textAnchor:'middle',fontSize:9,fill:'#64748b'});
+    t.textContent=Math.round(v); g.appendChild(t);
+  });
+  const xl=svgEl('text',{x:W/2,y:H+28,textAnchor:'middle',fontSize:10,fill:'#475569',fontWeight:600});
+  xl.textContent='Workload (W)'; g.appendChild(xl);
+  svg.appendChild(g);
+
+  const wrap=document.createElement('div');
+  wrap.className='ch-wrap';
+  const ttl=document.createElement('div');
+  ttl.className='ch-title'; ttl.textContent=`${thresh} picks by curve (dots = raters, line = mean ± SD)`;
+  wrap.appendChild(ttl); wrap.appendChild(svg);
+  const legend=document.createElement('div');
+  legend.style.cssText='display:flex;flex-wrap:wrap;gap:.8rem;padding:.4rem .9rem .7rem;font-size:.78rem;color:var(--muted)';
+  legend.innerHTML=raters.map((r,i)=>`<span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${COLS[i%COLS.length]};margin-right:.3rem"></span>${escapeHTML(r)}</span>`).join('');
+  wrap.appendChild(legend);
+  container.appendChild(wrap);
+  chartActions(wrap,svg,`lt-dot-${thresh}`);
+}
+
+/** Generic Bland-Altman chart */
+function drawBAChart(container,ba,xLabel,name){
+  if(!container) return;
+  if(!ba||ba.n<4){
+    const note=document.createElement('div');
+    note.style.cssText='padding:1rem;color:var(--muted);font-size:.83rem';
+    note.textContent='Insufficient data for Bland-Altman plot (need ≥4 pairs).';
+    container.appendChild(note);
+    return;
+  }
+  const {means,diffs,bias,loa_u,loa_l,ci_bias,ci_loa_u,ci_loa_l}=ba;
+  const pad=.08;
+  const xAll=means, yAll=diffs;
+  const xMn=Math.min(...xAll),xMx=Math.max(...xAll);
+  const xRange=xMx-xMn||1;
+  const xDom=[xMn-xRange*pad, xMx+xRange*pad];
+  const yAll2=[...diffs,loa_u,loa_l];
+  const yRange=Math.max(...yAll2)-Math.min(...yAll2)||1;
+  const yDom=[Math.min(...yAll2)-yRange*.2, Math.max(...yAll2)+yRange*.2];
+
+  const ch=makeChart(container,{vw:500,vh:340,xDomain:xDom,yDomain:yDom,
+    xLabel:xLabel||'Mean',yLabel:'Difference',ariaLabel:'Bland-Altman plot'});
+
+  // CI shading
+  ch.addArea(
+    [[xDom[0],ci_loa_u[1]],[xDom[1],ci_loa_u[1]]],
+    [[xDom[0],ci_loa_u[0]],[xDom[1],ci_loa_u[0]]],
+    '#D55E00',.15);
+  ch.addArea(
+    [[xDom[0],ci_loa_l[1]],[xDom[1],ci_loa_l[1]]],
+    [[xDom[0],ci_loa_l[0]],[xDom[1],ci_loa_l[0]]],
+    '#D55E00',.15);
+  ch.addArea(
+    [[xDom[0],ci_bias[1]],[xDom[1],ci_bias[1]]],
+    [[xDom[0],ci_bias[0]],[xDom[1],ci_bias[0]]],
+    '#0072B2',.15);
+
+  ch.addHLine(0,'#94a3b8',1,'4,3');
+  ch.addHLine(loa_u,'#D55E00',1.5,'5,3','ULoA');
+  ch.addHLine(loa_l,'#D55E00',1.5,'5,3','LLoA');
+  ch.addHLine(bias,'#0072B2',2,'','Bias');
+
+  // Proportional bias line
+  if(ba.propBias&&Math.abs(ba.propBias.r)>.2){
+    const {slope,intercept}=ba.propBias;
+    ch.addLine([[xDom[0],slope*xDom[0]+intercept],[xDom[1],slope*xDom[1]+intercept]],'#CC79A7',1,'3,2');
+  }
+
+  ch.addPoints(zip(means,diffs),'#0072B2',4);
+
+  // Stats annotation
+  const g2=svgEl('g');
+  const ann=svgEl('text',{x:ch.M.left+6,y:16,fontSize:9,fill:'#475569'});
+  ann.textContent=`Bias ${fmt2(bias)} [${fmt1(ba.ci_bias[0])}, ${fmt1(ba.ci_bias[1])}]  LoA ${fmt1(loa_l)} to ${fmt1(loa_u)}`;
+  ch.svg.appendChild(ann);
+
+  chartActions(container,ch.svg,name||'ba-chart');
+}
+
+/* ===================================================================
+   SECTION: PRINT REPORT
+=================================================================== */
+function printReport(){
+  // Collect all SVGs currently in the DOM
+  const svgs={};
+  document.querySelectorAll('.ch-wrap svg').forEach((svg,i)=>{
+    const title=svg.closest('.ch-wrap')?.querySelector('.ch-title')?.textContent||('Chart '+i);
+    svgs[title]=new XMLSerializer().serializeToString(svg);
+  });
+
+  // Collect reflections
+  const refls={};
+  document.querySelectorAll('.refl-card').forEach(card=>{
+    const q=card.querySelector('.refl-q')?.textContent||'';
+    const a=card.querySelector('textarea')?.value||'';
+    refls[q]=a;
+  });
+
+  const stationTitles=['Grip Strength','Countermovement Jump','Blood Lactate','RPE Relationships','Lactate Threshold'];
+  const stationKeys=['s1','s2','s3','s4','s5'];
+
+  let html=`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+  <title>VRA Lab Report</title>
+  <style>
+    body{font-family:system-ui,sans-serif;max-width:900px;margin:2cm auto;color:#1e293b;font-size:13px;line-height:1.5}
+    h1{font-size:1.4rem;border-bottom:2px solid #1d4ed8;padding-bottom:.4rem;color:#1e40af}
+    h2{font-size:1.1rem;margin-top:1.5rem;border-bottom:1px solid #e2e8f0;padding-bottom:.3rem}
+    h3{font-size:.95rem;color:#475569;margin:.8rem 0 .3rem}
+    .chart{width:100%;max-width:550px;margin:.5rem 0}
+    .chart svg{width:100%;height:auto}
+    .refl{background:#fefce8;border:1px solid #fde047;border-radius:6px;padding:.7rem;margin:.5rem 0}
+    .refl-q{font-weight:600;color:#713f12;margin-bottom:.3rem}
+    .refl-a{white-space:pre-wrap;font-size:.88rem}
+    .refl-a.blank{color:#94a3b8;font-style:italic}
+    table{border-collapse:collapse;width:100%;margin:.5rem 0;font-size:.85rem}
+    th{background:#f0f4f8;border:1px solid #e2e8f0;padding:.35rem .55rem;text-align:left}
+    td{border:1px solid #e2e8f0;padding:.35rem .55rem}
+    .pg-break{page-break-before:always}
+    @media print{.pg-break{page-break-before:always}}
+  </style></head><body>
+  <h1>Validity, Reliability and Agreement — Lab Report</h1>
+  <p style="color:#64748b;font-size:.85rem">Generated ${new Date().toLocaleString('en-GB')}</p>`;
+
+  // Charts section
+  if(Object.keys(svgs).length>0){
+    html+=`<h2>Charts and Figures</h2>`;
+    Object.entries(svgs).forEach(([title,svgStr])=>{
+      html+=`<h3>${title}</h3><div class="chart">${svgStr}</div>`;
+    });
+  }
+
+  // Reflective answers
+  if(Object.keys(refls).length>0){
+    html+=`<div class="pg-break"><h2>Reflective Questions and Responses</h2>`;
+    Object.entries(refls).forEach(([q,a])=>{
+      html+=`<div class="refl">
+        <div class="refl-q">${q}</div>
+        <div class="refl-a ${a.trim()?'':'blank'}">${a.trim()||'No response entered.'}</div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  html+=`</body></html>`;
+
+  const win=window.open('','_blank');
+  if(!win){ alert('Pop-up blocked. Allow pop-ups for this page to print the report.'); return; }
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(()=>win.print(),400);
+}
+
+/* ===================================================================
+   SECTION: BOOT
+=================================================================== */
+function boot(){
+  loadStore();
+  initOverview();
+  initS1();
+  initS2();
+  initS3();
+  initS5();
+
+  // S4 renders lazily on tab switch (uses Station 3 data)
+  // Restore last tab from hash
+  const hash=location.hash.slice(1);
+  if(['overview','s1','s2','s3','s4','s5'].includes(hash)) switchTab(hash);
+}
+
+document.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>
