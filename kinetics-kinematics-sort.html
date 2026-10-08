@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kinetics or kinematics?</title>
+<style>
+  :root{--navy:#003d50;--teal:#00857e;--blue:#0071bc;--plum:#8b3556;--ink:#1d1d1b;--muted:#55616a;--line:#d9e2e7;--bg:#f7fbfd;--good:#1f7a45;--goodbg:#e6f4ec;--bad:#b3372f;--badbg:#fbeaea}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5}
+  main{max-width:1100px;margin:0 auto;padding:16px}
+  h1{margin:0 0 4px;font-size:24px;color:var(--navy)}
+  .lead{margin:0 0 14px;font-size:16px}
+  .defs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  .def{background:#fff;border:1px solid var(--line);border-left:6px solid var(--plum);border-radius:10px;padding:12px 14px}
+  .def.m{border-left-color:var(--blue)}
+  .def h2{margin:0 0 4px;font-size:17px;color:var(--navy)}
+  .def p{margin:0;font-size:15px}
+  .how{background:#fff;border:1px solid var(--line);border-left:6px solid var(--teal);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:15px}
+  .pool,.drop{display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start}
+  .pool{background:#fff;border:2px dashed var(--line);border-radius:10px;padding:12px;min-height:60px}
+  .pool.empty::after{content:"All sorted. Press Check my answers.";color:var(--muted);font-size:14px}
+  .bins{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+  .bin{background:#fff;border:1px solid var(--line);border-top:6px solid var(--plum);border-radius:10px;padding:12px;min-height:220px}
+  .bin.m{border-top-color:var(--blue)}
+  .bin h2{margin:0 0 8px;font-size:18px;color:var(--navy)}
+  .drop{min-height:160px;border-radius:6px}
+  .over{background:#eef6fb}
+  .card{background:#fff;border:2px solid var(--line);border-radius:8px;padding:8px 12px;font-size:15px;cursor:grab;user-select:none}
+  .card.sel{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,113,188,.25)}
+  .card.ok{border-color:var(--good);background:var(--goodbg)}
+  .card.no{border-color:var(--bad);background:var(--badbg)}
+  .card small{display:none;color:var(--muted);font-size:13px;font-weight:normal;margin-top:3px;max-width:290px}
+  .answers .card{font-weight:bold}
+  .answers .card small{display:block}
+  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0}
+  button{border:0;border-radius:10px;padding:11px 18px;font-size:15px;font-weight:bold;cursor:pointer;color:#fff;background:var(--teal)}
+  button.b{background:var(--plum)} button.c{background:#fff;color:var(--navy);border:2px solid var(--line)}
+  #msg{font-weight:bold;color:var(--navy)}
+  @media (max-width:700px){.defs,.bins{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Kinetics or kinematics?</h1>
+  <p class="lead">Sort the cards as a group. Talk about each one before you place it.</p>
+
+  <div class="defs">
+    <div class="def"><h2>Kinetics</h2><p>The forces that <strong>cause</strong> movement. If you need force or mass to work it out, it is kinetics.</p></div>
+    <div class="def m"><h2>Kinematics</h2><p>A <strong>description</strong> of movement. Position, distance, time, speed and angles, with no mention of force.</p></div>
+  </div>
+
+  <div class="how"><strong>How to play.</strong> Drag each card into a column (or tap a card, then tap a column). When they are all placed, check your answers. Then show the answers to see why, and how you would measure each one in the lab.</div>
+
+  <div class="pool" id="pool"></div>
+  <div class="bins">
+    <div class="bin" data-bin="K"><h2>Kinetics</h2><div class="drop"></div></div>
+    <div class="bin m" data-bin="M"><h2>Kinematics</h2><div class="drop"></div></div>
+  </div>
+  <div class="bar">
+    <button id="check">Check my answers</button>
+    <button id="show" class="b">Show answers and how to measure</button>
+    <button id="reset" class="c">Start again</button>
+    <span id="msg"></span>
+  </div>
+</main>
+<script>
+// c: K = kinetics, M = kinematics
+const CARDS=[
+ {n:"Ground reaction force",c:"K",w:"It is a force.",m:"Force platform"},
+ {n:"Body weight",c:"K",w:"Weight is a force (mass x gravity).",m:"Force platform, standing still"},
+ {n:"Net force",c:"K",w:"Force minus body weight.",m:"Force platform"},
+ {n:"Impulse",c:"K",w:"Force x time.",m:"Force platform (area under the curve)"},
+ {n:"Rate of force development",c:"K",w:"How quickly force rises.",m:"Force platform (slope of the curve)"},
+ {n:"Peak force",c:"K",w:"The biggest force.",m:"Force platform"},
+ {n:"Momentum",c:"K",w:"Mass x velocity. It needs mass.",m:"Velocity from either, plus body mass"},
+ {n:"Power",c:"K",w:"Force x velocity. It needs force.",m:"Force platform"},
+ {n:"Work",c:"K",w:"Force x distance.",m:"Force platform"},
+ {n:"Joint moment (torque)",c:"K",w:"The turning effect of a force.",m:"Force platform and video together"},
+ {n:"Displacement",c:"M",w:"How far something has moved.",m:"Video, or worked out from force"},
+ {n:"Velocity",c:"M",w:"How fast and in which direction.",m:"Video, or worked out from force"},
+ {n:"Acceleration",c:"M",w:"Caused by force, but it only describes movement.",m:"Force platform (net force / mass) or video"},
+ {n:"Jump height",c:"M",w:"A distance.",m:"Force platform or video"},
+ {n:"Contact time",c:"M",w:"A time. No force in it.",m:"Force platform or video"},
+ {n:"Flight time",c:"M",w:"A time.",m:"Force platform or video"},
+ {n:"Reactive strength index",c:"M",w:"Jump height / contact time. No force in it.",m:"Force platform or video"},
+ {n:"Knee angle",c:"M",w:"A position of one segment against another.",m:"2D video"},
+ {n:"Angular velocity",c:"M",w:"How fast an angle changes.",m:"2D video"},
+ {n:"Trunk lean",c:"M",w:"An angle.",m:"2D video"},
+ {n:"Foot strike angle",c:"M",w:"An angle.",m:"2D video"},
+ {n:"Pelvic drop",c:"M",w:"An angle.",m:"2D video from behind"},
+ {n:"Stride length",c:"M",w:"A distance.",m:"2D video, or treadmill speed x stride time"},
+ {n:"Cadence",c:"M",w:"Steps per minute.",m:"2D video (count the steps)"}
+];
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const pool=$("#pool"),msg=$("#msg");let sel=null;
+const find=n=>CARDS.find(c=>c.n===n);
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function zone(el){return el.classList.contains("bin")?el.querySelector(".drop"):pool}
+function place(card,z){z.appendChild(card);card.classList.remove("ok","no","sel");sel=null;pool.classList.toggle("empty",!pool.children.length);msg.textContent=""}
+function build(){
+  pool.innerHTML="";$$(".drop").forEach(d=>d.innerHTML="");document.body.classList.remove("answers");msg.textContent="";pool.classList.remove("empty");
+  shuffle(CARDS).forEach(c=>{
+    const el=document.createElement("div");el.className="card";el.draggable=true;el.dataset.n=c.n;
+    el.innerHTML=c.n+"<small>"+c.w+"<br>Measure with: "+c.m+"</small>";
+    el.onclick=e=>{e.stopPropagation();if(sel&&sel!==el&&el.parentElement!==sel.parentElement){place(sel,el.parentElement);return}const was=el===sel;$$(".card.sel").forEach(x=>x.classList.remove("sel"));sel=was?null:el;if(!was)el.classList.add("sel")};
+    el.ondragstart=e=>{sel=el;e.dataTransfer.setData("text/plain",c.n)};
+    pool.appendChild(el);
+  });
+}
+[pool,...$$(".bin")].forEach(z=>{
+  z.onclick=()=>{if(sel)place(sel,zone(z))};
+  z.ondragover=e=>{e.preventDefault();z.classList.add("over")};
+  z.ondragleave=()=>z.classList.remove("over");
+  z.ondrop=e=>{e.preventDefault();z.classList.remove("over");if(sel)place(sel,zone(z))};
+});
+$("#check").onclick=()=>{
+  const left=pool.children.length;
+  if(left){msg.textContent=left+" card"+(left>1?"s":"")+" still to place.";return}
+  let ok=0;
+  $$(".bin").forEach(b=>b.querySelectorAll(".card").forEach(el=>{const g=find(el.dataset.n).c===b.dataset.bin;el.classList.toggle("ok",g);el.classList.toggle("no",!g);if(g)ok++}));
+  msg.textContent=ok+" out of "+CARDS.length+(ok===CARDS.length?". Spot on.":". Move the red ones and check again.");
+};
+$("#show").onclick=()=>{
+  $$(".card").forEach(el=>{const c=find(el.dataset.n);$('.bin[data-bin="'+c.c+'"] .drop').appendChild(el);el.classList.remove("no","sel");el.classList.add("ok")});
+  pool.classList.add("empty");document.body.classList.add("answers");msg.textContent="";
+};
+$("#reset").onclick=build;
+build();
+</script>
+</body>
+</html>
