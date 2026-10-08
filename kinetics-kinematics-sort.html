@@ -91,7 +91,7 @@
 </section>
 <section id="pg-dj" class="page" hidden>
   <h1>Depth jump analyser</h1>
-  <p class="lead">Add one depth jump from the force platform and work through it one step at a time. The method follows McMahon et al. (2021), which is built for a single force platform.</p>
+  <p class="lead">Add one depth jump from the force platform and work through it one step at a time. It uses the same method as the Excel template, based on McMahon et al. (2021).</p>
 
   <div class="how"><strong>Before you start, check your trial.</strong> The platform must be empty for at least half a second at the start. The jumper must land back on the platform and stand completely still for the last second or more. If either is missing, the numbers will be wrong, so collect another trial.</div>
 
@@ -106,6 +106,7 @@
     <textarea id="djtext" rows="5" placeholder="...or paste your data here"></textarea>
     <div class="row">
       <label>Box height (m) <input type="number" id="djbox" value="0.30" step="0.01" min="0.05" max="1"></label>
+      <label>Force threshold (N) <input type="number" id="djthr" value="10" step="1" min="1" max="100"></label>
       <label>Time column <select id="djtcol"></select></label>
       <label>Force column <select id="djfcol"></select></label>
       <label id="djfswrap" hidden>Sampling frequency (Hz) <input type="number" id="djfs" value="1000" step="1" min="100"></label>
@@ -128,7 +129,7 @@
     </div>
     <div class="step">
       <h2><span class="num">3</span> Touchdown, take-off and landing</h2>
-      <p>The platform is never perfectly at zero when it is empty. We take the first 0.3 seconds (nobody on it), work out the average and standard deviation, and set a threshold of <strong>average + 5 standard deviations</strong>. Touchdown is the first sample above it. Take-off is the first sample back below it. Landing is the next sample above it.</p>
+      <p>The platform is never perfectly at zero when it is empty, so we use a small force threshold (10 N unless you changed it). Touchdown is the first sample above it. Take-off is the first sample back below it. Landing is the next sample above it.</p>
       <canvas id="c3" class="plot"></canvas>
       <p class="tell" id="t3"></p>
     </div>
@@ -155,7 +156,7 @@
       <table class="res" id="djres"></table>
       <div class="row"><button id="djcopy" class="c" type="button">Copy results for Excel</button><span id="djcopied" class="note"></span></div>
       <p class="tell"><strong>Now explain it.</strong> Go back to your deterministic model. Which of these numbers sit in which boxes? If you compare two box heights or two instructions, which box changed first, and what did that do to the ones above it?</p>
-      <p class="note">Method: McMahon, J.J., Lake, J.P., Stratford, C. and Comfort, P. (2021) A proposed method for evaluating drop jump performance with one force platform. <em>Biomechanics</em>, 1(2), 178-189. Reactive strength index is added here and is not part of that paper.</p>
+      <p class="note">Method: McMahon, J.J., Lake, J.P., Stratford, C. and Comfort, P. (2021) A proposed method for evaluating drop jump performance with one force platform. <em>Biomechanics</em>, 1(2), 178-189. Two things differ from the paper. Touchdown, take-off and landing use a fixed force threshold, and reactive strength index is added.</p>
     </div>
   </div>
 </section>
@@ -315,7 +316,8 @@ function analyse(){
   const BW=mean(F,n-sec,n),bwsd=sd(F,n-sec,n),mass=BW/G;
   if(BW<200)throw "The last second of the trial reads "+BW.toFixed(0)+" N, so nobody is standing on the platform at the end. The jumper must land back on the platform and stand still. Check you chose the right force column too.";
   // threshold from the empty platform (first 0.3 s)
-  const m0=mean(F,0,w03),s0=sd(F,0,w03),thr=m0+5*s0;
+  const m0=mean(F,0,w03),s0=sd(F,0,w03),thr=+el("djthr").value;
+  if(!(thr>=1&&thr<=100))throw "Enter a force threshold between 1 and 100 N (10 N is the usual choice).";
   if(Math.abs(m0)>0.1*BW)throw "The platform does not look empty at the start (it reads "+m0.toFixed(0)+" N). Start recording before the jumper steps off the box.";
   const hold=Math.round(0.02*fs);
   const up=from=>{for(let i=from;i<n-hold;i++)if(F[i]>thr&&F[i+hold]>thr)return i;return -1};
@@ -379,7 +381,7 @@ function drawAll(){
   const still=r.bwsd<0.02*r.BW; el("t2").className="tell"+(still?"":" warn");
   el("t2").innerHTML="Body weight = <strong>"+r.BW.toFixed(1)+" N</strong>. Body mass = "+r.BW.toFixed(1)+" / 9.81 = <strong>"+r.mass.toFixed(1)+" kg</strong>. "+(still?"The force varied by only "+r.bwsd.toFixed(1)+" N in that second, so they were standing still.":"Careful. The force varied by "+r.bwsd.toFixed(1)+" N in that second, so they were probably not standing still. Everything after this depends on body weight, so think about using another trial.");
   plot(el("c3"),{xlim:[-0.25,r.ct+r.ft+0.35],xlabel:"Time from touchdown (s)",vlines:ev,bands:[{x0:0,x1:r.ct,color:"rgba(0,113,188,.10)",label:"Contact"},{x0:r.ct,x1:r.ct+r.ft,color:"rgba(139,53,86,.08)",label:"Flight"}],panels:[{ylabel:"Force (N)",series:[{x:t,y:r.F}]}]});
-  el("t3").innerHTML="Empty platform: average "+r.m0.toFixed(1)+" N, standard deviation "+r.s0.toFixed(1)+" N, so the threshold is <strong>"+r.thr.toFixed(1)+" N</strong>. Contact time = <strong>"+f3(r.ct)+" s</strong>. Flight time = <strong>"+f3(r.ft)+" s</strong>.";
+  el("t3").innerHTML="Threshold: <strong>"+r.thr.toFixed(0)+" N</strong>. The empty platform read "+r.m0.toFixed(1)+" N on average at the start. Contact time = <strong>"+f3(r.ct)+" s</strong>. Flight time = <strong>"+f3(r.ft)+" s</strong>.";
   plot(el("c4"),{xlim:[-0.05,r.ct+r.ft+0.35],xlabel:"Time from touchdown (s)",vlines:ev,panels:[{ylabel:"Acceleration (m/s/s)",series:[{x:tr,y:r.a}],hlines:[{y:0},{y:-G,color:COL.plum,label:"-9.81"}]}]});
   const okg=Math.abs(r.aflight+G)<0.3; el("t4").className="tell"+(okg?"":" warn");
   el("t4").innerHTML="Example: at peak force, net force = "+r.peak.toFixed(0)+" - "+r.BW.toFixed(0)+" = "+(r.peak-r.BW).toFixed(0)+" N, so acceleration = "+(r.peak-r.BW).toFixed(0)+" / "+r.mass.toFixed(1)+" = <strong>"+((r.peak-r.BW)/r.mass).toFixed(1)+" m/s/s</strong>. Average acceleration in flight = <strong>"+f(r.aflight)+" m/s/s</strong>"+(okg?", which is what we expect.":". That is not close to -9.81, so check the platform was zeroed and the jumper stood still at the end.");
