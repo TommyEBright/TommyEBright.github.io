@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kinetics or kinematics?</title>
+<title>SESH52 | Kinetics, kinematics and the depth jump</title>
 <style>
   :root{--navy:#003d50;--teal:#00857e;--blue:#0071bc;--plum:#8b3556;--ink:#1d1d1b;--muted:#55616a;--line:#d9e2e7;--bg:#f7fbfd;--good:#1f7a45;--goodbg:#e6f4ec;--bad:#b3372f;--badbg:#fbeaea}
   *{box-sizing:border-box}
@@ -37,11 +37,36 @@
   button{border:0;border-radius:10px;padding:11px 18px;font-size:15px;font-weight:bold;cursor:pointer;color:#fff;background:var(--teal)}
   button.b{background:var(--plum)} button.c{background:#fff;color:var(--navy);border:2px solid var(--line)}
   #msg{font-weight:bold;color:var(--navy)}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .tabs button{background:#fff;color:var(--navy);border:2px solid var(--navy);border-radius:999px;padding:9px 18px}
+  .tabs button.on{background:var(--navy);color:#fff}
+  .step{background:#fff;border:1px solid var(--line);border-left:6px solid var(--blue);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+  .step h2{margin:0 0 6px;font-size:19px;color:var(--navy)}
+  .step p{margin:0 0 10px;font-size:15px}
+  .num{display:inline-block;background:var(--navy);color:#fff;border-radius:50%;width:28px;height:28px;line-height:28px;text-align:center;font-size:15px;margin-right:6px}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:10px 0}
+  .row label{font-size:14px;font-weight:bold;color:var(--navy)}
+  .row input[type=number],.row select{font-size:15px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;margin-left:4px;max-width:150px}
+  textarea{width:100%;font-family:Consolas,monospace;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:8px}
+  .filebtn{background:var(--blue);color:#fff !important;border-radius:10px;padding:11px 18px;cursor:pointer;font-size:15px !important}
+  .filebtn input{display:none}
+  .note{color:var(--muted);font-size:13px}
+  .err{color:var(--bad);font-weight:bold;font-size:14px}
+  .plot{width:100%;height:270px;display:block;border:1px solid var(--line);border-radius:8px;background:#fff}
+  .plot.tall{height:560px}
+  .tell{background:#f2faf9;border-left:5px solid var(--teal);border-radius:8px;padding:9px 12px;margin-top:10px !important}
+  .tell.warn{background:var(--badbg);border-left-color:var(--bad)}
+  table.res{border-collapse:collapse;width:100%;max-width:640px}
+  table.res td,table.res th{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;font-size:15px}
+  table.res th{background:var(--navy);color:#fff}
+  table.res td:last-child{font-weight:bold;white-space:nowrap}
   @media (max-width:700px){.defs,.bins{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <main>
+  <div class="tabs"><button class="on" data-p="pg-sort" type="button">Kinetics or kinematics?</button><button data-p="pg-dj" type="button">Depth jump analyser</button></div>
+<section id="pg-sort" class="page">
   <h1>Kinetics or kinematics?</h1>
   <p class="lead">Sort the cards as a group. Talk about each one before you place it.</p>
 
@@ -63,6 +88,77 @@
     <button id="reset" class="c">Start again</button>
     <span id="msg"></span>
   </div>
+</section>
+<section id="pg-dj" class="page" hidden>
+  <h1>Depth jump analyser</h1>
+  <p class="lead">Add one depth jump from the force platform and work through it one step at a time. The method follows McMahon et al. (2021), which is built for a single force platform.</p>
+
+  <div class="how"><strong>Before you start, check your trial.</strong> The platform must be empty for at least half a second at the start. The jumper must land back on the platform and stand completely still for the last second or more. If either is missing, the numbers will be wrong, so collect another trial.</div>
+
+  <div class="step" id="s0">
+    <h2>Add your data</h2>
+    <p>Open the text file you saved from BioWare, or copy the time and vertical force (Fz) columns from Excel and paste them in the box.</p>
+    <div class="row">
+      <label class="filebtn">Choose file<input type="file" id="djfile" accept=".txt,.csv,.tsv,.dat"></label>
+      <button id="djexample" class="c" type="button">Use an example jump</button>
+      <span id="djfname" class="note"></span>
+    </div>
+    <textarea id="djtext" rows="5" placeholder="...or paste your data here"></textarea>
+    <div class="row">
+      <label>Box height (m) <input type="number" id="djbox" value="0.30" step="0.01" min="0.05" max="1"></label>
+      <label>Time column <select id="djtcol"></select></label>
+      <label>Force column <select id="djfcol"></select></label>
+      <label id="djfswrap" hidden>Sampling frequency (Hz) <input type="number" id="djfs" value="1000" step="1" min="100"></label>
+    </div>
+    <div class="row"><button id="djgo" type="button">Analyse my jump</button><span id="djerr" class="err"></span></div>
+  </div>
+
+  <div id="djsteps" hidden>
+    <div class="step">
+      <h2><span class="num">1</span> Look at the raw force</h2>
+      <p>This is your vertical force against time. Before you go any further, find where the jumper touches down, takes off and lands again. Why is the force zero at the start, and again in the middle?</p>
+      <canvas id="c1" class="plot"></canvas>
+      <p class="tell" id="t1"></p>
+    </div>
+    <div class="step">
+      <h2><span class="num">2</span> Body weight</h2>
+      <p>With one platform, the jumper starts on the box, so we cannot weigh them at the start. We use the <strong>last second</strong> of the trial, when they are standing still on the platform. Body weight is the average force in that second. Body mass is body weight divided by 9.81.</p>
+      <canvas id="c2" class="plot"></canvas>
+      <p class="tell" id="t2"></p>
+    </div>
+    <div class="step">
+      <h2><span class="num">3</span> Touchdown, take-off and landing</h2>
+      <p>The platform is never perfectly at zero when it is empty. We take the first 0.3 seconds (nobody on it), work out the average and standard deviation, and set a threshold of <strong>average + 5 standard deviations</strong>. Touchdown is the first sample above it. Take-off is the first sample back below it. Landing is the next sample above it.</p>
+      <canvas id="c3" class="plot"></canvas>
+      <p class="tell" id="t3"></p>
+    </div>
+    <div class="step">
+      <h2><span class="num">4</span> Net force and acceleration</h2>
+      <p>Net force is force minus body weight. It is what speeds the jumper up or slows them down. Acceleration is net force divided by body mass (Newton's second law). In flight the acceleration should sit at about -9.81 m/s/s. If it does, your body weight is right.</p>
+      <canvas id="c4" class="plot"></canvas>
+      <p class="tell" id="t4"></p>
+    </div>
+    <div class="step">
+      <h2><span class="num">5</span> Velocity, and how far they really dropped</h2>
+      <p>Velocity is the running total of acceleration over time, starting at touchdown. The jumper is already moving when they hit the platform, so we need a starting velocity. First guess: use the box height. Then check it. The jumper is standing still at the end, so velocity there should be <strong>zero</strong>. Whatever it reads instead is the error in our first guess, so we take it away.</p>
+      <canvas id="c5" class="plot"></canvas>
+      <p class="tell" id="t5"></p>
+    </div>
+    <div class="step">
+      <h2><span class="num">6</span> Displacement, braking and propulsion</h2>
+      <p>Displacement is the running total of velocity over time. It is zero at touchdown, so it shows how far the centre of mass moves down and back up. The moment velocity crosses zero is the lowest point. <strong>Braking</strong> is touchdown to that point. <strong>Propulsion</strong> is that point to take-off.</p>
+      <canvas id="c6" class="plot tall"></canvas>
+      <p class="tell" id="t6"></p>
+    </div>
+    <div class="step">
+      <h2><span class="num">7</span> Your results</h2>
+      <table class="res" id="djres"></table>
+      <div class="row"><button id="djcopy" class="c" type="button">Copy results for Excel</button><span id="djcopied" class="note"></span></div>
+      <p class="tell"><strong>Now explain it.</strong> Go back to your deterministic model. Which of these numbers sit in which boxes? If you compare two box heights or two instructions, which box changed first, and what did that do to the ones above it?</p>
+      <p class="note">Method: McMahon, J.J., Lake, J.P., Stratford, C. and Comfort, P. (2021) A proposed method for evaluating drop jump performance with one force platform. <em>Biomechanics</em>, 1(2), 178-189. Reactive strength index is added here and is not part of that paper.</p>
+    </div>
+  </div>
+</section>
 </main>
 <script>
 // c: K = kinetics, M = kinematics
@@ -127,6 +223,183 @@ $("#show").onclick=()=>{
 };
 $("#reset").onclick=build;
 build();
+</script>
+<script>
+// ================= Depth jump analyser (McMahon et al., 2021, one force platform method) =================
+(function(){
+const G=9.81, COL={navy:"#003d50",teal:"#00857e",blue:"#0071bc",plum:"#8b3556",grey:"#55616a"};
+const el=id=>document.getElementById(id);
+let table=null, R=null;
+
+// ---------- tabs ----------
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll(".page").forEach(p=>p.hidden=p.id!==b.dataset.p);
+  if(b.dataset.p==="pg-dj"&&R)drawAll();
+});
+
+// ---------- reading the data ----------
+function parse(txt){
+  const lines=txt.split(/\r?\n/);
+  let first=lines.find(l=>/^\s*-?\d/.test(l))||"";
+  const delim=first.includes("\t")?"\t":first.includes(";")?";":first.includes(",")?",":null;
+  const split=l=>(delim?l.split(delim):l.trim().split(/\s+/)).map(s=>s.trim()).filter((s,i,a)=>!(s===""&&i===a.length-1));
+  const num=s=>Number(delim===","?s:s.replace(",","."));
+  let best={start:-1,len:0,n:0},cur={start:-1,len:0,n:0};
+  lines.forEach((l,i)=>{
+    const t=l.trim()===""?[]:split(l); const ok=t.length>0&&t.every(s=>s!==""&&isFinite(num(s)));
+    if(ok&&t.length===cur.n){cur.len++}else if(ok){cur={start:i,len:1,n:t.length}}else{cur={start:-1,len:0,n:0}}
+    if(cur.len>best.len)best={...cur};
+  });
+  if(best.len<100)return null;
+  const cols=Array.from({length:best.n},()=>new Float64Array(best.len));
+  for(let i=0;i<best.len;i++){const t=split(lines[best.start+i]);for(let c=0;c<best.n;c++)cols[c][i]=num(t[c])}
+  let names=cols.map((_,c)=>"Column "+(c+1));
+  for(let k=1;k<=4&&best.start-k>=0;k++){const h=split(lines[best.start-k]);if(h.length===best.n&&h.some(s=>/[a-z]/i.test(s))&&/time|fz|force/i.test(lines[best.start-k])){names=h;break}}
+  return {cols,names,n:best.len};
+}
+function guess(t){
+  const time=t.names.findIndex(s=>/time/i.test(s));
+  let tc=time; if(tc<0){const c=t.cols[0];const d=c[1]-c[0];if(d>0&&d<0.02&&Math.abs((c[t.n-1]-c[0])/(t.n-1)-d)<d*0.01)tc=0}
+  let fc=t.names.findIndex(s=>/^fz$/i.test(s)); if(fc<0)fc=t.names.findIndex(s=>/fz|force/i.test(s));
+  if(fc<0){let m=-1;t.cols.forEach((c,i)=>{if(i===tc)return;let mx=0;for(const v of c)mx=Math.max(mx,Math.abs(v));if(mx>m){m=mx;fc=i}})}
+  return {tc,fc};
+}
+function load(txt,name){
+  el("djerr").textContent="";
+  table=parse(txt);
+  if(!table){el("djerr").textContent="I could not find columns of numbers in that. Check it is the text file from BioWare, or paste the time and Fz columns.";return}
+  const g=guess(table);
+  el("djtcol").innerHTML='<option value="-1">No time column</option>'+table.names.map((n,i)=>'<option value="'+i+'">'+n+'</option>').join("");
+  el("djfcol").innerHTML=table.names.map((n,i)=>'<option value="'+i+'">'+n+'</option>').join("");
+  el("djtcol").value=g.tc; el("djfcol").value=g.fc; el("djfswrap").hidden=g.tc>=0;
+  el("djfname").textContent=(name?name+": ":"")+table.n+" rows found.";
+}
+el("djtcol").onchange=()=>{el("djfswrap").hidden=+el("djtcol").value>=0};
+el("djfile").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{el("djtext").value="";load(r.result,f.name)};r.readAsText(f)};
+el("djtext").oninput=()=>{if(el("djtext").value.trim().length>200)load(el("djtext").value,"Pasted data")};
+el("djexample").onclick=()=>{el("djbox").value="0.40";el("djtext").value="";load(example(),"Example jump (0.40 m box)")};
+
+// ---------- example jump (simulated, 75 kg, 0.40 m box) ----------
+function example(){
+  const fs=1000,dt=1/fs,m=75,BW=m*G,T=0.25,vtd=-Math.sqrt(2*G*0.30),vto=2.5;
+  let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+  const noise=()=>(rnd()+rnd()+rnd()+rnd()-2)*2.6;
+  const F=[];for(let i=0;i<600;i++)F.push(0);
+  const sh=[];for(let i=0;i<=250;i++){const t=i*dt,s=Math.sin(Math.PI*t/T);sh.push(Math.pow(s,1.3)+0.22*Math.exp(-Math.pow((t-0.028)/0.008,2))*Math.pow(Math.max(s,0),0.3))}
+  sh[0]=0;sh[250]=0;let area=0;for(let i=1;i<sh.length;i++)area+=(sh[i]+sh[i-1])/2*dt;
+  const S=(m*(vto-vtd)+BW*T)/area;sh.forEach(v=>F.push(S*v));
+  const nf=Math.round(2*vto/G*fs);for(let i=0;i<nf;i++)F.push(0);
+  const base=[],gam=[];for(let i=0;i<2400;i++){const t=i*dt;base.push(BW*(1-Math.exp(-t/0.005)));gam.push(t*Math.exp(-t/0.06))}
+  let v=vtd,ib=0,ig=0;for(let i=601;i<F.length;i++)v+=((F[i]-BW)+(F[i-1]-BW))/2/m*dt;
+  for(let i=1;i<base.length;i++){ib+=((base[i]-BW)+(base[i-1]-BW))/2*dt;ig+=(gam[i]+gam[i-1])/2*dt}
+  const C=(-m*v-ib)/ig;for(let i=0;i<base.length;i++)F.push(base[i]+C*gam[i]);
+  let out="abs time (s)\tFz\n";for(let i=0;i<F.length;i++)out+=(i*dt).toFixed(3)+"\t"+(F[i]+noise()).toFixed(2)+"\n";
+  return out;
+}
+
+// ---------- the analysis ----------
+const mean=(a,i0,i1)=>{let s=0;for(let i=i0;i<i1;i++)s+=a[i];return s/(i1-i0)};
+const sd=(a,i0,i1)=>{const m=mean(a,i0,i1);let s=0;for(let i=i0;i<i1;i++)s+=(a[i]-m)*(a[i]-m);return Math.sqrt(s/(i1-i0-1))};
+function analyse(){
+  if(!table)throw "Add your data first.";
+  const tc=+el("djtcol").value,fc=+el("djfcol").value,box=+el("djbox").value;
+  if(!(box>0.04&&box<1.5))throw "Enter the box height in metres (e.g. 0.30).";
+  let fs; if(tc>=0){const c=table.cols[tc];fs=Math.round((table.n-1)/(c[table.n-1]-c[0]))}else fs=+el("djfs").value;
+  if(!(fs>=100))throw "I could not work out the sampling frequency. Check the time column.";
+  const dt=1/fs,n=table.n; let F=Float64Array.from(table.cols[fc]),flipped=false;
+  const sec=Math.round(fs),w03=Math.round(0.3*fs);
+  if(n<3*sec)throw "This trial is too short. It needs the empty platform, the jump, and at least one second of standing still.";
+  if(mean(F,n-sec,n)<0){F=F.map(v=>-v);flipped=true}
+  // body weight from the final second
+  const BW=mean(F,n-sec,n),bwsd=sd(F,n-sec,n),mass=BW/G;
+  if(BW<200)throw "The last second of the trial reads "+BW.toFixed(0)+" N, so nobody is standing on the platform at the end. The jumper must land back on the platform and stand still. Check you chose the right force column too.";
+  // threshold from the empty platform (first 0.3 s)
+  const m0=mean(F,0,w03),s0=sd(F,0,w03),thr=m0+5*s0;
+  if(Math.abs(m0)>0.1*BW)throw "The platform does not look empty at the start (it reads "+m0.toFixed(0)+" N). Start recording before the jumper steps off the box.";
+  const hold=Math.round(0.02*fs);
+  const up=from=>{for(let i=from;i<n-hold;i++)if(F[i]>thr&&F[i+hold]>thr)return i;return -1};
+  const td=up(w03); if(td<0)throw "I could not find touchdown.";
+  let to=-1;for(let i=td+hold;i<n;i++)if(F[i]<thr){to=i;break}
+  if(to<0)throw "I could not find take-off. Did the jumper leave the platform?";
+  const ld=up(to+hold); if(ld<0)throw "I could not find the landing. The jumper needs to land back on the platform.";
+  if(n-ld<1.5*sec)throw "There is not enough standing still after the landing. Record for longer and ask the jumper to stand still for two seconds.";
+  // integrate from touchdown to the end of the trial (trapezoid rule)
+  const L=n-td,a=new Float64Array(L),v1=new Float64Array(L),v=new Float64Array(L),s=new Float64Array(L);
+  for(let i=0;i<L;i++)a[i]=(F[td+i]-BW)/mass;
+  const v0=-Math.sqrt(2*G*box); v1[0]=v0;
+  for(let i=1;i<L;i++)v1[i]=v1[i-1]+(a[i]+a[i-1])/2*dt;
+  const verr=mean(v1,L-sec,L), vtd=v0-verr;
+  for(let i=0;i<L;i++)v[i]=v1[i]-verr;
+  for(let i=1;i<L;i++)s[i]=s[i-1]+(v[i]+v[i-1])/2*dt;
+  const kto=to-td,kld=ld-td; let kz=-1;for(let i=1;i<kto;i++)if(v[i]>=0){kz=i;break}
+  if(kz<0)throw "Velocity never came back to zero during contact, so something is wrong with this trial. Check the jumper stood still at the end.";
+  const vto=v[kto],jh=vto*vto/(2*G),ct=kto*dt;
+  let peak=0;for(let i=td;i<to;i++)peak=Math.max(peak,F[i]);
+  const t=new Float64Array(n);for(let i=0;i<n;i++)t[i]=(i-td)*dt;
+  return {fs,dt,n,F,t,BW,bwsd,mass,m0,s0,thr,td,to,ld,L,a,v1,v,s,v0,verr,vtd,box,dh:vtd*vtd/(2*G),kto,kld,kz,vto,jh,ct,ft:(ld-to)*dt,
+    tb:kz*dt,tp:(kto-kz)*dt,sb:s[kz],sp:s[kto]-s[kz],fb:mean(F,td,td+kz+1),fp:mean(F,td+kz,to+1),peak,rsi:jh/ct,flipped,aflight:mean(a,kto+Math.round(0.05*fs),kld-Math.round(0.05*fs))};
+}
+
+// ---------- drawing ----------
+function plot(cv,o){
+  const dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight; if(!W)return;
+  cv.width=W*dpr;cv.height=H*dpr;const c=cv.getContext("2d");c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
+  const P=o.panels,ml=64,mr=14,mt=22,mb=40,gap=16,ph=(H-mt-mb-gap*(P.length-1))/P.length,[x0,x1]=o.xlim,X=x=>ml+(x-x0)/(x1-x0)*(W-ml-mr);
+  c.font="12px Arial";
+  P.forEach((p,pi)=>{
+    const top=mt+pi*(ph+gap);let lo=Infinity,hi=-Infinity;
+    p.series.forEach(s=>{for(let i=0;i<s.x.length;i++){if(s.x[i]<x0||s.x[i]>x1)continue;if(s.y[i]<lo)lo=s.y[i];if(s.y[i]>hi)hi=s.y[i]}});
+    (p.hlines||[]).forEach(h=>{lo=Math.min(lo,h.y);hi=Math.max(hi,h.y)});
+    const pad=(hi-lo)*0.08||1;lo-=pad;hi+=pad;const Y=y=>top+ph-(y-lo)/(hi-lo)*ph;
+    (o.bands||[]).forEach(b=>{c.fillStyle=b.color;c.fillRect(X(b.x0),top,X(b.x1)-X(b.x0),ph);if(pi===0&&b.label){c.fillStyle=COL.grey;c.textAlign="center";c.fillText(b.label,(X(b.x0)+X(b.x1))/2,top-7)}});
+    const step=nice((hi-lo)/4);c.strokeStyle="#e6ebef";c.fillStyle=COL.grey;c.textAlign="right";c.lineWidth=1;
+    for(let y=Math.ceil(lo/step)*step;y<=hi;y+=step){c.beginPath();c.moveTo(ml,Y(y));c.lineTo(W-mr,Y(y));c.stroke();c.fillText(fmt(y,step),ml-6,Y(y)+4)}
+    (p.hlines||[]).forEach(h=>{c.strokeStyle=h.color||COL.grey;c.setLineDash([6,4]);c.beginPath();c.moveTo(ml,Y(h.y));c.lineTo(W-mr,Y(h.y));c.stroke();c.setLineDash([]);if(h.label){c.fillStyle=h.color||COL.grey;c.textAlign="right";c.fillText(h.label,W-mr-4,Y(h.y)-5)}});
+    (o.vlines||[]).forEach(l=>{if(l.x<x0||l.x>x1)return;c.strokeStyle=COL.grey;c.setLineDash([3,3]);c.beginPath();c.moveTo(X(l.x),top);c.lineTo(X(l.x),top+ph);c.stroke();c.setLineDash([]);if(pi===0&&l.label){c.save();c.translate(X(l.x)-4,top+4);c.rotate(-Math.PI/2);c.fillStyle=COL.grey;c.textAlign="right";c.fillText(l.label,0,0);c.restore()}});
+    c.save();c.beginPath();c.rect(ml,top,W-ml-mr,ph);c.clip();
+    p.series.forEach(s=>{c.strokeStyle=s.color||COL.navy;c.lineWidth=s.w||1.8;c.setLineDash(s.dash||[]);c.beginPath();let st=false;const k=Math.max(1,Math.floor(s.x.length/3000));
+      for(let i=0;i<s.x.length;i+=k){if(s.x[i]<x0||s.x[i]>x1)continue;const px=X(s.x[i]),py=Y(s.y[i]);st?c.lineTo(px,py):c.moveTo(px,py);st=true}c.stroke();c.setLineDash([])});
+    c.restore();
+    c.strokeStyle=COL.grey;c.lineWidth=1;c.beginPath();c.moveTo(ml,top);c.lineTo(ml,top+ph);c.lineTo(W-mr,top+ph);c.stroke();
+    c.save();c.translate(14,top+ph/2);c.rotate(-Math.PI/2);c.fillStyle=COL.navy;c.textAlign="center";c.fillText(p.ylabel,0,0);c.restore();
+    if(p.legend){let lx=ml+10;c.textAlign="left";p.legend.forEach(g=>{c.strokeStyle=g.color;c.lineWidth=2;c.setLineDash(g.dash||[]);c.beginPath();c.moveTo(lx,top+10);c.lineTo(lx+22,top+10);c.stroke();c.setLineDash([]);c.fillStyle=COL.grey;c.fillText(g.label,lx+27,top+14);lx+=40+c.measureText(g.label).width})}
+    if(pi===P.length-1){const xs=nice((x1-x0)/8);c.fillStyle=COL.grey;c.textAlign="center";for(let x=Math.ceil(x0/xs)*xs;x<=x1+1e-9;x+=xs)c.fillText(fmt(x,xs),X(x),top+ph+16);c.fillStyle=COL.navy;c.fillText(o.xlabel,(ml+W-mr)/2,H-6)}
+  });
+}
+function nice(r){const e=Math.pow(10,Math.floor(Math.log10(r))),f=r/e;return (f<1.5?1:f<3?2:f<7?5:10)*e}
+function fmt(v,step){const d=Math.max(0,-Math.floor(Math.log10(step)+1e-9));return (Math.abs(v)<1e-9?0:v).toFixed(d)}
+
+function drawAll(){
+  const r=R,t=r.t,tr=t.subarray(r.td),tend=t[r.n-1],xl=[t[0],tend],ev=[{x:0,label:"Touchdown"},{x:r.ct,label:"Take-off"},{x:r.ct+r.ft,label:"Landing"}];
+  const f=x=>x.toFixed(2),f3=x=>x.toFixed(3);
+  plot(el("c1"),{xlim:xl,xlabel:"Time from touchdown (s)",panels:[{ylabel:"Force (N)",series:[{x:t,y:r.F}]}]});
+  el("t1").innerHTML="Sampling frequency: <strong>"+r.fs+" Hz</strong> (one sample every "+r.dt.toFixed(4)+" s). Peak force: <strong>"+r.peak.toFixed(0)+" N</strong>."+(r.flipped?" Your force was negative, so I have turned it the right way up.":"");
+  plot(el("c2"),{xlim:xl,xlabel:"Time from touchdown (s)",bands:[{x0:tend-1,x1:tend,color:"rgba(0,133,126,.15)",label:"Last second"}],panels:[{ylabel:"Force (N)",series:[{x:t,y:r.F}],hlines:[{y:r.BW,color:COL.teal,label:"Body weight"}]}]});
+  const still=r.bwsd<0.02*r.BW; el("t2").className="tell"+(still?"":" warn");
+  el("t2").innerHTML="Body weight = <strong>"+r.BW.toFixed(1)+" N</strong>. Body mass = "+r.BW.toFixed(1)+" / 9.81 = <strong>"+r.mass.toFixed(1)+" kg</strong>. "+(still?"The force varied by only "+r.bwsd.toFixed(1)+" N in that second, so they were standing still.":"Careful. The force varied by "+r.bwsd.toFixed(1)+" N in that second, so they were probably not standing still. Everything after this depends on body weight, so think about using another trial.");
+  plot(el("c3"),{xlim:[-0.25,r.ct+r.ft+0.35],xlabel:"Time from touchdown (s)",vlines:ev,bands:[{x0:0,x1:r.ct,color:"rgba(0,113,188,.10)",label:"Contact"},{x0:r.ct,x1:r.ct+r.ft,color:"rgba(139,53,86,.08)",label:"Flight"}],panels:[{ylabel:"Force (N)",series:[{x:t,y:r.F}]}]});
+  el("t3").innerHTML="Empty platform: average "+r.m0.toFixed(1)+" N, standard deviation "+r.s0.toFixed(1)+" N, so the threshold is <strong>"+r.thr.toFixed(1)+" N</strong>. Contact time = <strong>"+f3(r.ct)+" s</strong>. Flight time = <strong>"+f3(r.ft)+" s</strong>.";
+  plot(el("c4"),{xlim:[-0.05,r.ct+r.ft+0.35],xlabel:"Time from touchdown (s)",vlines:ev,panels:[{ylabel:"Acceleration (m/s/s)",series:[{x:tr,y:r.a}],hlines:[{y:0},{y:-G,color:COL.plum,label:"-9.81"}]}]});
+  const okg=Math.abs(r.aflight+G)<0.3; el("t4").className="tell"+(okg?"":" warn");
+  el("t4").innerHTML="Example: at peak force, net force = "+r.peak.toFixed(0)+" - "+r.BW.toFixed(0)+" = "+(r.peak-r.BW).toFixed(0)+" N, so acceleration = "+(r.peak-r.BW).toFixed(0)+" / "+r.mass.toFixed(1)+" = <strong>"+((r.peak-r.BW)/r.mass).toFixed(1)+" m/s/s</strong>. Average acceleration in flight = <strong>"+f(r.aflight)+" m/s/s</strong>"+(okg?", which is what we expect.":". That is not close to -9.81, so check the platform was zeroed and the jumper stood still at the end.");
+  plot(el("c5"),{xlim:[0,tr[r.L-1]],xlabel:"Time from touchdown (s)",bands:[{x0:tend-1,x1:tend,color:"rgba(0,133,126,.15)",label:"Standing still"}],panels:[{ylabel:"Velocity (m/s)",series:[{x:tr,y:r.v1,color:COL.plum,dash:[6,4]},{x:tr,y:r.v,color:COL.navy}],hlines:[{y:0}],legend:[{label:"First guess (from box height)",color:COL.plum,dash:[6,4]},{label:"Corrected",color:COL.navy}]}]});
+  el("t5").innerHTML="First guess from a "+f(r.box)+" m box: square root of (2 x 9.81 x "+f(r.box)+") = <strong>"+f(r.v0)+" m/s</strong> (negative because they are moving down). With that guess, velocity in the last second averaged <strong>"+f(r.verr)+" m/s</strong> when it should be zero. Corrected touchdown velocity = "+f(r.v0)+" - ("+f(r.verr)+") = <strong>"+f(r.vtd)+" m/s</strong>. Real drop height = "+f(Math.abs(r.vtd))+" x "+f(Math.abs(r.vtd))+" / 19.62 = <strong>"+f(r.dh)+" m</strong>, not "+f(r.box)+" m. Why might the two be different?";
+  const sl=r.kto+Math.round(0.06*r.fs),x6=tr.subarray(0,sl);
+  plot(el("c6"),{xlim:[-0.02,x6[sl-1]],xlabel:"Time from touchdown (s)",vlines:[{x:r.tb,label:"Zero velocity"},{x:r.ct,label:"Take-off"}],bands:[{x0:0,x1:r.tb,color:"rgba(139,53,86,.10)",label:"Braking"},{x0:r.tb,x1:r.ct,color:"rgba(0,133,126,.12)",label:"Propulsion"}],
+    panels:[{ylabel:"Force (N)",series:[{x:x6,y:r.F.subarray(r.td,r.td+sl)}],hlines:[{y:r.BW,label:"Body weight"}]},{ylabel:"Velocity (m/s)",series:[{x:x6,y:r.v.subarray(0,sl)}],hlines:[{y:0}]},{ylabel:"Displacement (m)",series:[{x:x6,y:r.s.subarray(0,sl)}],hlines:[{y:0}]}]});
+  el("t6").innerHTML="Braking lasted <strong>"+f3(r.tb)+" s</strong> and the centre of mass dropped <strong>"+f(Math.abs(r.sb))+" m</strong>. Propulsion lasted <strong>"+f3(r.tp)+" s</strong> and it rose <strong>"+f(r.sp)+" m</strong>. Look at the force graph. Is force above body weight in both phases? What does that tell you?";
+  const rows=[["Drop height (m)",f(r.dh)],["Touchdown velocity (m/s)",f(r.vtd)],["Contact time (s)",f3(r.ct)],["Braking time (s)",f3(r.tb)],["Propulsion time (s)",f3(r.tp)],["Braking displacement (m)",f(r.sb)],["Propulsion displacement (m)",f(r.sp)],["Mean braking force (N)",r.fb.toFixed(0)],["Mean propulsion force (N)",r.fp.toFixed(0)],["Peak force (N)",r.peak.toFixed(0)],["Peak force (x body weight)",f(r.peak/r.BW)],["Take-off velocity (m/s)",f(r.vto)],["Jump height (m)",f3(r.jh)],["Flight time (s)",f3(r.ft)],["Reactive strength index (jump height / contact time)",f(r.rsi)],["Body mass (kg)",r.mass.toFixed(1)]];
+  el("djres").innerHTML="<tr><th>Variable</th><th>Your jump</th></tr>"+rows.map(x=>"<tr><td>"+x[0]+"</td><td>"+x[1]+"</td></tr>").join("");
+  el("djcopy").onclick=()=>{const txt=rows.map(x=>x.join("\t")).join("\n");(navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>el("djcopied").textContent="Copied. Paste into Excel.",()=>el("djcopied").textContent="Could not copy automatically. Select the table and copy it.")};
+}
+el("djgo").onclick=()=>{
+  el("djerr").textContent="";
+  try{if(!table&&el("djtext").value.trim())load(el("djtext").value,"Pasted data");R=analyse();window.__DJ=R;el("djsteps").hidden=false;drawAll()}
+  catch(e){el("djsteps").hidden=true;R=null;el("djerr").textContent=typeof e==="string"?e:"Something went wrong reading that trial. Check the columns and try again."; if(typeof e!=="string")console.error(e)}
+};
+let rt=null,lastW=0;window.addEventListener("resize",()=>{if(!R||window.innerWidth===lastW)return;lastW=window.innerWidth;clearTimeout(rt);rt=setTimeout(drawAll,200)});
+})();
 </script>
 </body>
 </html>
