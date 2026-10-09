@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Endurance Adaptations Lab</title>
+<style>
+:root{--navy:#003d50;--navy-d:#002c3a;--blue:#0071bc;--blue-d:#00568f;--teal:#00857e;--teal-d:#006a65;--maroon:#8b3556;--maroon-d:#682840;--gold:#a68e30;--border:#d9e2e7;--bg:#f7fbfd;--ink:#1d1d1b;--muted:#4a5a62;--soft:#f8fcfe;--tealsoft:#f2faf9;--maroonsoft:#fff8fb;--bluesoft:#eef6fc;--good:#1f7a3a;--goodsoft:#eaf6ee;--ok:#8a6d00;--oksoft:#fdf7e3;--bad:#a12b2b;--badsoft:#fcefef}
+*{box-sizing:border-box}
+html{color-scheme:light}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding:16px}
+button,input,select{font:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.hero{background:var(--navy);color:#fff;border-radius:14px 14px 0 0;padding:22px 24px;border-bottom:6px solid var(--teal);display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
+.pill{display:inline-block;background:#fff;color:var(--navy);padding:4px 12px;border-left:5px solid var(--blue);border-radius:10px;font-weight:700;font-size:.85em}
+.hero h1{margin:10px 0 4px;font-size:1.9em;line-height:1.2}
+.hero p{margin:0}
+.progress{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);border-radius:12px;padding:10px 14px;min-width:200px}
+.progress-bar{height:8px;background:rgba(255,255,255,.25);border-radius:6px;overflow:hidden;margin-top:6px}
+.progress-bar span{display:block;height:100%;background:#7fd3cc;width:0;transition:width .3s}
+.tabs{background:#fff;border:1px solid var(--border);border-top:0;border-radius:0 0 14px 14px;padding:10px;display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.tab{flex:1 1 150px;border:0;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer;background:#eef4f7;color:var(--navy);border-bottom:4px solid #cfdbe2;text-align:center}
+.tab[aria-selected="true"]{background:var(--navy);color:#fff;border-bottom-color:var(--navy-d)}
+.tab .tick{display:inline-block;margin-left:6px;color:var(--teal);font-weight:700}
+.tab[aria-selected="true"] .tick{color:#7fd3cc}
+.panel{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px}
+.panel[hidden]{display:none}
+.panel-head{padding:18px 22px;color:#fff}
+.panel-head .pill{border-left-color:var(--navy)}
+.panel-head h2{margin:8px 0 0;font-size:1.45em;line-height:1.25}
+.panel-body{padding:20px 22px}
+.panel-body > p:first-child{margin-top:0}
+h3{color:var(--navy);margin:1.2rem 0 .5rem;font-size:1.15em}
+.btn{background:var(--navy);color:#fff;border:0;border-bottom:4px solid var(--navy-d);border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer}
+.btn.teal{background:var(--teal);border-bottom-color:var(--teal-d)}
+.btn.maroon{background:var(--maroon);border-bottom-color:var(--maroon-d)}
+.btn.blue{background:var(--blue);border-bottom-color:var(--blue-d)}
+.btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy);border-bottom-width:4px}
+.btn-row{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+.aside{border-left:6px solid var(--teal);background:var(--tealsoft);border-radius:10px;padding:12px 14px;margin:14px 0}
+.aside.maroon{border-left-color:var(--maroon);background:var(--maroonsoft)}
+.aside.blue{border-left-color:var(--blue);background:var(--bluesoft)}
+.aside p{margin:0}
+.fb{border-radius:10px;padding:10px 12px;margin:10px 0 0}
+.fb.good{background:var(--goodsoft);color:var(--good);border:1px solid #b9e0c5}
+.fb.ok{background:var(--oksoft);color:var(--ok);border:1px solid #ecdca0}
+.fb.bad{background:var(--badsoft);color:var(--bad);border:1px solid #efc4c4}
+.score{font-weight:700;color:var(--navy)}
+.muted{color:var(--muted);font-size:.92em}
+/* sorter */
+.sort-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.sort-card{border:1px solid var(--border);border-left:6px solid #b8c7cf;border-radius:10px;padding:12px;background:#fff;display:flex;flex-direction:column}
+.sort-card.good{border-left-color:var(--good);background:#fbfefc}
+.sort-card.bad{border-left-color:var(--bad);background:#fffbfb}
+.sort-card p{margin:0 0 10px}
+.sort-btns{display:flex;gap:8px;margin-top:auto}
+.sort-btns button{flex:1;border-radius:8px;padding:8px;font-weight:700;cursor:pointer;border:2px solid var(--blue);background:#fff;color:var(--blue)}
+.sort-btns button[data-v="chronic"]{border-color:var(--teal);color:var(--teal)}
+.sort-btns button.chosen[data-v="acute"]{background:var(--blue);color:#fff}
+.sort-btns button.chosen[data-v="chronic"]{background:var(--teal);color:#fff}
+.sort-btns button:disabled{cursor:default;opacity:.85}
+.sort-why{font-size:.9em;margin-top:8px!important;margin-bottom:0!important}
+/* fick */
+.fick{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px}
+@media (max-width:820px){.fick{grid-template-columns:1fr}}
+.slider{margin:0 0 16px}
+.slider label{display:flex;justify-content:space-between;gap:10px;font-weight:700;color:var(--navy)}
+.slider label output{color:var(--ink);font-weight:700}
+.slider input{width:100%;accent-color:var(--teal)}
+.slider small{display:block;color:var(--muted)}
+.readout{background:var(--navy);color:#fff;border-radius:12px;padding:16px;text-align:center}
+.readout .big{font-size:2.4em;font-weight:700;line-height:1.1}
+.readout .sub{opacity:.9}
+.equation{font-family:"Courier New",monospace;background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;font-weight:700;color:var(--navy);margin:0 0 14px}
+.contrib{margin-top:14px}
+.cbar{display:flex;height:22px;border-radius:6px;overflow:hidden;background:#eef4f7;margin:6px 0}
+.cbar span{display:block;height:100%}
+.key{display:flex;flex-wrap:wrap;gap:12px;font-size:.88em}
+.key i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+/* pathway */
+.path-list{list-style:none;padding:0;margin:0;counter-reset:step}
+.path-list li{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-left:6px solid var(--navy);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:#fff}
+.path-list li.good{border-left-color:var(--good);background:var(--goodsoft)}
+.path-list li.bad{border-left-color:var(--bad);background:var(--badsoft)}
+.path-list .num{flex:0 0 30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
+.path-list .txt{flex:1}
+.path-list .mv{display:flex;flex-direction:column;gap:4px}
+.path-list .mv button{border:1px solid var(--border);background:var(--soft);border-radius:6px;cursor:pointer;padding:2px 10px;color:var(--navy);font-weight:700}
+.path-list .mv button:disabled{opacity:.35;cursor:default}
+/* vt lab */
+.vt-top{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+.vt-top label{font-weight:700;color:var(--navy);display:block;margin-bottom:4px}
+.vt-top select{padding:8px 10px;border-radius:8px;border:2px solid var(--navy);background:#fff;max-width:100%}
+.subtabs{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 8px}
+.subtab{border:2px solid var(--teal);background:#fff;color:var(--teal);border-radius:20px;padding:6px 14px;font-weight:700;cursor:pointer}
+.subtab[aria-selected="true"]{background:var(--teal);color:#fff}
+.modes{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0 10px}
+.mode{border-radius:8px;padding:6px 14px;font-weight:700;cursor:pointer;background:#fff}
+.mode.vt1{border:2px solid var(--blue);color:var(--blue)}
+.mode.vt2{border:2px solid var(--maroon);color:var(--maroon)}
+.mode.vt1[aria-pressed="true"]{background:var(--blue);color:#fff}
+.mode.vt2[aria-pressed="true"]{background:var(--maroon);color:#fff}
+.chart-box{border:1px solid var(--border);border-radius:12px;padding:8px;background:#fff}
+.chart-box svg{width:100%;height:auto;aspect-ratio:640/360;display:block;cursor:crosshair;touch-action:manipulation}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.88em;padding:4px 8px 2px}
+.legend i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-right:6px;vertical-align:3px}
+.fine{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
+.fine label{font-weight:700;display:flex;justify-content:space-between}
+.fine .l1{color:var(--blue)}
+.fine .l2{color:var(--maroon)}
+.fine input{width:100%}
+.fine .r1{accent-color:var(--blue)}
+.fine .r2{accent-color:var(--maroon)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;margin-top:10px}
+table{border-collapse:collapse;width:100%;min-width:560px;background:#fff;font-size:.95em}
+th,td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top}
+thead th{background:var(--navy);color:#fff;border-color:var(--navy)}
+tbody tr:nth-child(even) td,tbody tr:nth-child(even) th{background:var(--soft)}
+tbody th{color:var(--navy)}
+/* zones */
+.zin{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.zin label{font-weight:700;color:var(--navy);display:block}
+.zin input{width:100%;padding:8px 10px;border-radius:8px;border:2px solid var(--border);margin-top:4px}
+.zbar{display:flex;height:42px;border-radius:10px;overflow:hidden;margin:14px 0 4px;font-weight:700;color:#fff;font-size:.9em}
+.zbar span{display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden}
+.zscale{display:flex;justify-content:space-between;font-size:.85em;color:var(--muted)}
+.week{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:10px}
+.week label{font-weight:700;display:flex;justify-content:space-between}
+.week input{width:100%}
+/* quiz */
+.q{border:1px solid var(--border);border-left:6px solid var(--maroon);border-radius:10px;padding:14px;margin-bottom:12px}
+.q fieldset{border:0;margin:0;padding:0}
+.q legend{font-weight:700;color:var(--navy);margin-bottom:8px;padding:0}
+.q label{display:block;padding:7px 10px;border-radius:8px;cursor:pointer;margin:2px 0}
+.q label:hover{background:var(--soft)}
+.q label.right{background:var(--goodsoft);color:var(--good);font-weight:700}
+.q label.wrong{background:var(--badsoft);color:var(--bad)}
+.q .why{display:none;margin:8px 0 0;font-size:.93em}
+.q.marked .why{display:block}
+footer{text-align:center;color:var(--muted);font-size:.88em;padding:6px 0 18px}
+@media (max-width:600px){.wrap{padding:16px}.hero{padding:18px}.panel-body{padding:16px}.hero h1{font-size:1.5em}.tab{flex-basis:45%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <div>
+    <span class="pill">SESH54</span>
+    <h1>Endurance Adaptations Lab</h1>
+    <p>Six activities on acute and chronic adaptations, VO₂max, ventilatory thresholds and training zones.</p>
+  </div>
+  <div class="progress" aria-live="polite">
+    <strong>Progress: <span id="prog-n">0</span> / 6 activities</strong>
+    <div class="progress-bar"><span id="prog-bar"></span></div>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Lab activities">
+  <button class="tab" role="tab" id="tab-sort" aria-controls="panel-sort" aria-selected="true" data-act="sort">1. Acute or chronic?<span class="tick" aria-hidden="true"></span></button>
+  <button class="tab" role="tab" id="tab-fick" aria-controls="panel-fick" aria-selected="false" tabindex="-1" data-act="fick">2. VO₂max explorer<span class="tick" aria-hidden="true"></span></button>
+  <button class="tab" role="tab" id="tab-path" aria-controls="panel-path" aria-selected="false" tabindex="-1" data-act="path">3. Molecular pathway<span class="tick" aria-hidden="true"></span></button>
+  <button class="tab" role="tab" id="tab-vt" aria-controls="panel-vt" aria-selected="false" tabindex="-1" data-act="vt">4. Threshold lab<span class="tick" aria-hidden="true"></span></button>
+  <button class="tab" role="tab" id="tab-zones" aria-controls="panel-zones" aria-selected="false" tabindex="-1" data-act="zones">5. Training zones<span class="tick" aria-hidden="true"></span></button>
+  <button class="tab" role="tab" id="tab-quiz" aria-controls="panel-quiz" aria-selected="false" tabindex="-1" data-act="quiz">6. Check your understanding<span class="tick" aria-hidden="true"></span></button>
+</nav>
+
+<!-- 1 SORT -->
+<section class="panel" id="panel-sort" role="tabpanel" aria-labelledby="tab-sort">
+  <div class="panel-head" style="background:var(--blue)"><span class="pill">Activity 1</span><h2>Acute response or chronic adaptation?</h2></div>
+  <div class="panel-body">
+    <p><strong>Acute responses</strong> are immediate, temporary changes during and shortly after a single bout of exercise. <strong>Chronic adaptations</strong> develop over weeks to months of repeated training. Sort each statement below.</p>
+    <p class="score" id="sort-score" aria-live="polite">Score: 0 / 0</p>
+    <div class="sort-grid" id="sort-grid"></div>
+    <div class="btn-row"><button class="btn ghost" id="sort-reset" type="button">Reset activity</button></div>
+    <div class="aside"><p><strong>Key idea:</strong> repeated acute stress drives chronic adaptation. Each session sends a signal, and the signals add up over weeks of training. This is the overload principle: you manipulate frequency, intensity, time and type (FITT).</p></div>
+  </div>
+</section>
+
+<!-- 2 FICK -->
+<section class="panel" id="panel-fick" role="tabpanel" aria-labelledby="tab-fick" hidden>
+  <div class="panel-head" style="background:var(--teal)"><span class="pill">Activity 2</span><h2>VO₂max explorer: the Fick principle</h2></div>
+  <div class="panel-body">
+    <p class="equation">VO₂max = HRmax × SVmax × (a-v̄)O₂ difference</p>
+    <div class="fick">
+      <div>
+        <div class="slider"><label for="f-hr">Maximal heart rate <output id="o-hr"></output></label><input type="range" id="f-hr" min="150" max="215" step="1"><small>b·min⁻¹. Determined mostly by age, and changes little with training.</small></div>
+        <div class="slider"><label for="f-sv">Maximal stroke volume <output id="o-sv"></output></label><input type="range" id="f-sv" min="60" max="210" step="1"><small>mL per beat. A <em>central</em> adaptation: LV hypertrophy and plasma volume expansion.</small></div>
+        <div class="slider"><label for="f-avd">(a-v̄)O₂ difference <output id="o-avd"></output></label><input type="range" id="f-avd" min="10" max="19" step="0.1"><small>mL O₂ per 100 mL blood. A <em>peripheral</em> adaptation: capillary density, mitochondria, enzymes.</small></div>
+        <div class="slider"><label for="f-mass">Body mass <output id="o-mass"></output></label><input type="range" id="f-mass" min="45" max="110" step="1"><small>kg. Used for relative VO₂max.</small></div>
+        <div class="btn-row">
+          <button class="btn ghost" type="button" data-preset="untrained">Untrained</button>
+          <button class="btn ghost" type="button" data-preset="trained">After 12 weeks</button>
+          <button class="btn ghost" type="button" data-preset="elite">Elite runner</button>
+        </div>
+      </div>
+      <div>
+        <div class="readout" aria-live="polite"><div class="big"><span id="o-vo2">0</span> L·min⁻¹</div><div class="sub"><span id="o-rel">0</span> mL·kg⁻¹·min⁻¹ &nbsp;|&nbsp; Q̇max <span id="o-q">0</span> L·min⁻¹</div></div>
+        <div class="contrib">
+          <p style="margin:0"><strong>Change from untrained baseline: <span id="o-change">0%</span></strong></p>
+          <div class="cbar" id="cbar" aria-hidden="true"></div>
+          <div class="key"><span><i style="background:var(--maroon)"></i>Heart rate</span><span><i style="background:var(--blue)"></i>Stroke volume (central)</span><span><i style="background:var(--teal)"></i>(a-v̄)O₂ diff (peripheral)</span></div>
+          <p class="muted" id="o-contrib" style="margin:8px 0 0"></p>
+        </div>
+        <div class="aside maroon" style="margin-top:16px"><p><strong>Challenge:</strong> after 12 weeks of training, Participant A's VO₂max rose from 3.2 to about <strong>3.8 L·min⁻¹</strong>, but their HRmax stayed at <strong>195 b·min⁻¹</strong>. Use the stroke volume and (a-v̄)O₂ sliders to reproduce this result.</p></div>
+        <div id="fick-fb" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 PATHWAY -->
+<section class="panel" id="panel-path" role="tabpanel" aria-labelledby="tab-path" hidden>
+  <div class="panel-head" style="background:var(--navy)"><span class="pill">Activity 3</span><h2>From a single session to mitochondrial biogenesis</h2></div>
+  <div class="panel-body">
+    <p>Put the steps in order, from the first exercise bout to the performance outcome. Use the ▲ ▼ buttons to move each step, then check your sequence.</p>
+    <ol class="path-list" id="path-list"></ol>
+    <div class="btn-row"><button class="btn teal" id="path-check" type="button">Check my order</button><button class="btn ghost" id="path-reset" type="button">Shuffle again</button></div>
+    <div id="path-fb" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- 4 VT LAB -->
+<section class="panel" id="panel-vt" role="tabpanel" aria-labelledby="tab-vt" hidden>
+  <div class="panel-head" style="background:var(--teal)"><span class="pill">Activity 4</span><h2>Threshold lab: find VT1 and VT2 from CPET data</h2></div>
+  <div class="panel-body">
+    <p>Each participant completed a ramp test to exhaustion on a cycle ergometer. Click the chart to place your <strong style="color:var(--blue)">VT1</strong> and <strong style="color:var(--maroon)">VT2</strong> markers, or use the sliders underneath. Switch between the three methods to confirm your choice, then check your answer.</p>
+    <div class="vt-top">
+      <div><label for="vt-profile">Participant</label><select id="vt-profile"></select></div>
+      <p class="muted" id="vt-note" style="margin:0 0 6px"></p>
+    </div>
+    <div class="subtabs" role="tablist" aria-label="Threshold method">
+      <button class="subtab" role="tab" aria-selected="true" data-chart="vslope" type="button">V-slope</button>
+      <button class="subtab" role="tab" aria-selected="false" data-chart="veq" type="button">Ventilatory equivalents</button>
+      <button class="subtab" role="tab" aria-selected="false" data-chart="pet" type="button">PETO₂ &amp; PETCO₂</button>
+    </div>
+    <div class="aside blue" style="margin-top:6px"><p id="vt-hint"></p></div>
+    <div class="modes"><span><strong>Click the chart to place:</strong></span>
+      <button class="mode vt1" type="button" id="mode-vt1" aria-pressed="true">VT1</button>
+      <button class="mode vt2" type="button" id="mode-vt2" aria-pressed="false">VT2</button>
+      <button class="btn ghost" type="button" id="vt-clear" style="padding:5px 12px">Clear markers</button>
+    </div>
+    <div class="chart-box">
+      <svg id="vt-svg" viewBox="0 0 640 360" role="img" aria-label="CPET chart. Click to place a threshold marker."></svg>
+      <div class="legend" id="vt-legend"></div>
+    </div>
+    <div class="fine">
+      <div><label class="l1" for="r-vt1">VT1 marker <span id="o-vt1">not placed</span></label><input class="r1" type="range" id="r-vt1" step="0.01"></div>
+      <div><label class="l2" for="r-vt2">VT2 marker <span id="o-vt2">not placed</span></label><input class="r2" type="range" id="r-vt2" step="0.01"></div>
+    </div>
+    <div class="btn-row"><button class="btn teal" type="button" id="vt-check">Check my thresholds</button></div>
+    <div id="vt-result" aria-live="polite"></div>
+    <h3>Adaptation summary</h3>
+    <p class="muted" style="margin-top:0">Fills in as you solve each participant. Compare Participant A before and after training.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th scope="col">Participant</th><th scope="col">VO₂max (mL·kg⁻¹·min⁻¹)</th><th scope="col">VT1 (% VO₂max)</th><th scope="col">VT2 (% VO₂max)</th><th scope="col">HR at VT1</th><th scope="col">Power at VT2</th></tr></thead>
+      <tbody id="vt-summary"></tbody>
+    </table></div>
+    <div id="vt-insight"></div>
+    <p class="muted">Data are simulated for teaching. Real breath-by-breath data are noisier, so practise on the workshop CPET files as well.</p>
+  </div>
+</section>
+
+<!-- 5 ZONES -->
+<section class="panel" id="panel-zones" role="tabpanel" aria-labelledby="tab-zones" hidden>
+  <div class="panel-head" style="background:var(--blue)"><span class="pill">Activity 5</span><h2>Prescribe training zones from thresholds</h2></div>
+  <div class="panel-body">
+    <p>Enter heart rates at VT1, VT2 and maximum. These can come from the threshold lab or from your own workshop CPET analysis. The tool builds a three-zone model anchored to the ventilatory thresholds.</p>
+    <div class="zin">
+      <label for="z-hr1">HR at VT1 (b·min⁻¹)<input type="number" id="z-hr1" min="80" max="220" value="150"></label>
+      <label for="z-hr2">HR at VT2 (b·min⁻¹)<input type="number" id="z-hr2" min="80" max="225" value="172"></label>
+      <label for="z-hrmax">HRmax (b·min⁻¹)<input type="number" id="z-hrmax" min="100" max="230" value="190"></label>
+    </div>
+    <div class="btn-row"><button class="btn blue" type="button" id="z-build">Build zones</button></div>
+    <div id="z-out" aria-live="polite"></div>
+    <h3>Plan a training week</h3>
+    <p style="margin-top:0">Distribute weekly training time across the zones and see which intensity distribution you have created.</p>
+    <div class="week">
+      <div><label for="w1" style="color:var(--teal)">Zone 1 <output id="ow1"></output></label><input type="range" id="w1" min="0" max="600" step="10" value="240" style="accent-color:var(--teal)"></div>
+      <div><label for="w2" style="color:var(--gold)">Zone 2 <output id="ow2"></output></label><input type="range" id="w2" min="0" max="600" step="10" value="90" style="accent-color:var(--gold)"></div>
+      <div><label for="w3" style="color:var(--maroon)">Zone 3 <output id="ow3"></output></label><input type="range" id="w3" min="0" max="600" step="10" value="30" style="accent-color:var(--maroon)"></div>
+    </div>
+    <div class="zbar" id="wbar" aria-hidden="true"></div>
+    <div id="w-fb" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- 6 QUIZ -->
+<section class="panel" id="panel-quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden>
+  <div class="panel-head" style="background:var(--maroon)"><span class="pill">Activity 6</span><h2>Check your understanding</h2></div>
+  <div class="panel-body">
+    <p>Ten questions covering the whole session. Answer them all, then submit to see your score and the explanations.</p>
+    <form id="quiz"></form>
+    <div class="btn-row"><button class="btn maroon" type="button" id="quiz-submit">Submit answers</button><button class="btn ghost" type="button" id="quiz-reset">Try again</button></div>
+    <div id="quiz-fb" aria-live="polite"></div>
+  </div>
+</section>
+
+<footer>SESH54 Performance Physiology | Plymouth Marjon University</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem('sesh54lab:' + k)); } catch(e){ return null; } },
+  set(k, v){ try { localStorage.setItem('sesh54lab:' + k, JSON.stringify(v)); } catch(e){} }
+};
+
+/* ---------- progress + tabs ---------- */
+const ACTS = ['sort','fick','path','vt','zones','quiz'];
+const done = store.get('done') || {};
+function renderProgress(){
+  const n = ACTS.filter(a => done[a]).length;
+  $('#prog-n').textContent = n;
+  $('#prog-bar').style.width = (n / ACTS.length * 100) + '%';
+  ACTS.forEach(a => { $('#tab-' + a + ' .tick').textContent = done[a] ? '✓' : ''; });
+}
+function markDone(a){ if(!done[a]){ done[a] = true; store.set('done', done); } renderProgress(); }
+const tabs = $$('.tab');
+function selectTab(act, focus){
+  tabs.forEach(t => {
+    const on = t.dataset.act === act;
+    t.setAttribute('aria-selected', on);
+    t.tabIndex = on ? 0 : -1;
+    $('#panel-' + t.dataset.act).hidden = !on;
+    if(on && focus) t.focus();
+  });
+  if(act === 'vt') drawVT();
+  store.set('tab', act);
+}
+tabs.forEach((t, i) => {
+  t.addEventListener('click', () => selectTab(t.dataset.act));
+  t.addEventListener('keydown', e => {
+    if(e.key === 'ArrowRight' || e.key === 'ArrowLeft'){
+      const j = (i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+      selectTab(tabs[j].dataset.act, true); e.preventDefault();
+    }
+  });
+});
+
+/* ---------- 1 sorter ---------- */
+const SORT = [
+  {t:'Heart rate rises within seconds of starting a run', a:'acute', why:'An immediate response: parasympathetic withdrawal, then increased sympathetic drive.'},
+  {t:'Resting heart rate falls from 72 to 58 b·min⁻¹ over six months', a:'chronic', why:'A larger stroke volume and greater resting parasympathetic tone develop with regular training.'},
+  {t:'Blood flow is redirected from the gut to the working muscles', a:'acute', why:'Sympathetic vasoconstriction in inactive tissue and local vasodilation in active muscle happen within each bout.'},
+  {t:'The left ventricular chamber enlarges (eccentric hypertrophy)', a:'chronic', why:'Repeated volume loading remodels the heart over months, raising maximal stroke volume.'},
+  {t:'AMPK and PGC-1α signalling switches on after a session', a:'acute', why:'The signal itself is acute. Repeated activation across many sessions produces the chronic adaptation (mitochondrial biogenesis).'},
+  {t:'Capillary-to-fibre ratio increases in the trained muscle', a:'chronic', why:'Angiogenesis (VEGF-driven) develops over weeks and improves O₂ delivery and metabolite removal.'},
+  {t:'Core temperature climbs during a 10 km race', a:'acute', why:'Metabolic heat production during a single bout raises core temperature.'},
+  {t:'Mitochondrial density in vastus lateralis increases', a:'chronic', why:'Mitochondrial biogenesis builds up over weeks of repeated stimulation and raises oxidative capacity.'},
+  {t:'Muscle glycogen is depleted during a long run', a:'acute', why:'Substrate use within a session. Over time, training improves glycogen sparing.'},
+  {t:'Lactate threshold occurs at a higher % of VO₂max', a:'chronic', why:'Greater oxidative capacity, more MCT1 transporters and improved lactate clearance shift the threshold to the right.'},
+  {t:'Plasma volume expands', a:'chronic', why:'One of the fastest chronic adaptations (within days to weeks). It increases end-diastolic volume and stroke volume.'},
+  {t:'Ventilation increases as work rate rises', a:'acute', why:'Neural and chemoreceptor drive matches ventilation to metabolic demand within the bout.'}
+];
+let sortAns = store.get('sort') || {};
+function renderSort(){
+  const g = $('#sort-grid'); g.innerHTML = '';
+  let right = 0, answered = 0;
+  SORT.forEach((it, i) => {
+    const c = document.createElement('div');
+    const ans = sortAns[i];
+    c.className = 'sort-card' + (ans ? (ans === it.a ? ' good' : ' bad') : '');
+    c.innerHTML = '<p>' + it.t + '</p><div class="sort-btns"><button type="button" data-v="acute">Acute</button><button type="button" data-v="chronic">Chronic</button></div>';
+    if(ans){
+      answered++; if(ans === it.a) right++;
+      const w = document.createElement('p'); w.className = 'sort-why';
+      w.innerHTML = (ans === it.a ? '<strong style="color:var(--good)">Correct.</strong> ' : '<strong style="color:var(--bad)">Not quite: this is ' + it.a + '.</strong> ') + it.why;
+      c.appendChild(w);
+    }
+    $$('button', c).forEach(b => {
+      if(ans){ b.disabled = true; if(b.dataset.v === ans) b.classList.add('chosen'); }
+      b.addEventListener('click', () => { sortAns[i] = b.dataset.v; store.set('sort', sortAns); renderSort(); });
+    });
+    g.appendChild(c);
+  });
+  $('#sort-score').textContent = 'Score: ' + right + ' / ' + answered + (answered === SORT.length ? ' (all statements sorted)' : ' (' + (SORT.length - answered) + ' left)');
+  if(answered === SORT.length) markDone('sort');
+}
+$('#sort-reset').addEventListener('click', () => { sortAns = {}; store.set('sort', sortAns); renderSort(); });
+
+/* ---------- 2 Fick ---------- */
+const PRESETS = { untrained:{hr:195, sv:110, avd:15.0, mass:75}, trained:{hr:195, sv:126, avd:15.6, mass:75}, elite:{hr:186, sv:182, avd:16.6, mass:62} };
+const BASE = PRESETS.untrained;
+const fIn = { hr:$('#f-hr'), sv:$('#f-sv'), avd:$('#f-avd'), mass:$('#f-mass') };
+function setFick(p){ fIn.hr.value = p.hr; fIn.sv.value = p.sv; fIn.avd.value = p.avd; fIn.mass.value = p.mass; updateFick(); }
+function updateFick(){
+  const hr = +fIn.hr.value, sv = +fIn.sv.value, avd = +fIn.avd.value, mass = +fIn.mass.value;
+  $('#o-hr').textContent = hr + ' b·min⁻¹';
+  $('#o-sv').textContent = sv + ' mL';
+  $('#o-avd').textContent = avd.toFixed(1) + ' mL/100 mL';
+  $('#o-mass').textContent = mass + ' kg';
+  const q = hr * sv / 1000;
+  const vo2 = q * avd / 100;
+  $('#o-vo2').textContent = vo2.toFixed(2);
+  $('#o-rel').textContent = (vo2 * 1000 / mass).toFixed(1);
+  $('#o-q').textContent = q.toFixed(1);
+  const base = BASE.hr * BASE.sv * BASE.avd / 100000;
+  const ch = (vo2 / base - 1) * 100;
+  $('#o-change').textContent = (ch >= 0 ? '+' : '') + ch.toFixed(1) + '%';
+  const parts = [Math.log(hr / BASE.hr), Math.log(sv / BASE.sv), Math.log(avd / BASE.avd)];
+  const tot = parts.reduce((a, b) => a + Math.abs(b), 0);
+  const cols = ['var(--maroon)', 'var(--blue)', 'var(--teal)'];
+  const bar = $('#cbar'); bar.innerHTML = '';
+  if(tot > 0.005){
+    parts.forEach((p, i) => { const s = document.createElement('span'); s.style.width = (Math.abs(p) / tot * 100) + '%'; s.style.background = cols[i]; s.style.opacity = p < 0 ? .45 : 1; bar.appendChild(s); });
+    const pct = parts.map(p => Math.round(Math.abs(p) / tot * 100));
+    let txt = 'Share of the change: heart rate ' + pct[0] + '%, stroke volume ' + pct[1] + '%, (a-v̄)O₂ difference ' + pct[2] + '%. Faded segments are decreases.';
+    if(Math.abs(hr - BASE.hr) > 6) txt += ' Note: HRmax changes little with endurance training. If anything, it falls slightly, so large HR changes are unrealistic.';
+    $('#o-contrib').textContent = txt;
+  } else {
+    $('#o-contrib').textContent = 'Move a slider to see how each component contributes to the change in VO₂max.';
+  }
+  const fb = $('#fick-fb');
+  if(Math.abs(hr - 195) <= 2 && vo2 >= 3.7 && vo2 <= 3.9 && mass === 75){
+    fb.innerHTML = '<p class="fb good"><strong>Challenge complete.</strong> VO₂max rose with no change in HRmax, so the gain must come from stroke volume (central: LV hypertrophy, plasma volume expansion) and/or (a-v̄)O₂ difference (peripheral: capillarisation, mitochondrial density, oxidative enzymes). Typical training studies report both.</p>';
+    markDone('fick');
+  } else if(Math.abs(hr - 195) <= 2 && mass === 75){
+    fb.innerHTML = '<p class="fb ok">Keep going: VO₂max is ' + vo2.toFixed(2) + ' L·min⁻¹. The target is 3.7–3.9 L·min⁻¹ with HRmax at 195.</p>';
+  } else {
+    fb.innerHTML = '<p class="fb ok">For the challenge, set HRmax to 195 b·min⁻¹ and body mass to 75 kg. Clicking “Untrained” resets both.</p>';
+  }
+}
+Object.values(fIn).forEach(i => i.addEventListener('input', updateFick));
+$$('[data-preset]').forEach(b => b.addEventListener('click', () => setFick(PRESETS[b.dataset.preset])));
+
+/* ---------- 3 pathway ---------- */
+const STEPS = [
+  'A single endurance session: sustained muscle contraction for ~45 minutes',
+  'Cellular stress signals rise: ↑ AMP:ATP ratio, ↑ cytosolic Ca²⁺, ↑ reactive oxygen species',
+  'Energy- and stress-sensing kinases activate: AMPK, CaMK and p38 MAPK',
+  'PGC-1α expression and activity increase (the “master regulator”)',
+  'Transcription of mitochondrial and angiogenic genes increases (e.g., NRF-1, TFAM, VEGF)',
+  'Repeated sessions over weeks: ↑ mitochondrial content and ↑ capillary density',
+  'Performance outcome: lactate threshold shifts right, ↑ fat oxidation, glycogen sparing'
+];
+let order;
+function shuffle(){
+  do { order = STEPS.map((_, i) => i).sort(() => Math.random() - .5); } while(order.every((v, i) => v === i));
+  $('#path-fb').innerHTML = '';
+  renderPath(false);
+}
+function renderPath(marked){
+  const ol = $('#path-list'); ol.innerHTML = '';
+  order.forEach((s, pos) => {
+    const li = document.createElement('li');
+    if(marked) li.className = s === pos ? 'good' : 'bad';
+    li.innerHTML = '<span class="num">' + (pos + 1) + '</span><span class="txt">' + STEPS[s] + '</span><span class="mv"><button type="button" aria-label="Move up">▲</button><button type="button" aria-label="Move down">▼</button></span>';
+    const [up, dn] = $$('button', li);
+    up.disabled = pos === 0; dn.disabled = pos === order.length - 1;
+    up.addEventListener('click', () => { [order[pos - 1], order[pos]] = [order[pos], order[pos - 1]]; renderPath(false); $$('#path-list li')[pos - 1].querySelector('button').focus(); });
+    dn.addEventListener('click', () => { [order[pos + 1], order[pos]] = [order[pos], order[pos + 1]]; renderPath(false); $$('#path-list li')[pos + 1].querySelectorAll('button')[1].focus(); });
+    ol.appendChild(li);
+  });
+}
+$('#path-check').addEventListener('click', () => {
+  renderPath(true);
+  const right = order.filter((s, i) => s === i).length;
+  if(right === STEPS.length){
+    $('#path-fb').innerHTML = '<p class="fb good"><strong>Perfect sequence.</strong> Each session produces a transient molecular “pulse”. The chronic adaptation comes from the accumulation of these pulses over weeks, which is why consistency matters more than any single session.</p>';
+    markDone('path');
+  } else {
+    $('#path-fb').innerHTML = '<p class="fb bad">' + right + ' of ' + STEPS.length + ' steps are in the right place (green). Hint: signals come before kinases, kinases before PGC-1α, and gene transcription before structural change.</p>';
+  }
+});
+$('#path-reset').addEventListener('click', shuffle);
+
+/* ---------- 4 VT lab ---------- */
+const PROFILES = [
+  {id:'pre', name:'Participant A: before training', note:'Recreationally active, with no structured endurance training.', vo2max:3.0, mass:75, f1:0.50, f2:0.76, hrmax:196, hr0:98, seed:11},
+  {id:'post', name:'Participant A: after 12 weeks', note:'The same participant after 12 weeks of structured endurance training.', vo2max:3.55, mass:74, f1:0.60, f2:0.84, hrmax:195, hr0:88, seed:23},
+  {id:'elite', name:'Participant C: trained runner', note:'A competitive club-level 10 km runner.', vo2max:4.6, mass:64, f1:0.68, f2:0.88, hrmax:188, hr0:80, seed:37}
+];
+function mulberry32(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function genTest(p){
+  const rng = mulberry32(p.seed);
+  const gauss = () => { let u = 0, v = 0; while(!u) u = rng(); while(!v) v = rng(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+  const vo2s = 0.85, rampMin = 10, total = 11, dt = 1 / 6, W0 = 50;
+  const Wmax = (p.vo2max - 0.35) / 0.0102;
+  const vt1 = p.f1 * p.vo2max, vt2 = p.f2 * p.vo2max;
+  const clean = t => Math.min(p.vo2max, vo2s + (p.vo2max - vo2s) * Math.max(0, t) / rampMin);
+  const tOf = v => (v - vo2s) / (p.vo2max - vo2s) * rampMin;
+  const hrAt = v => Math.round(p.hr0 + (p.hrmax - p.hr0) * (v - vo2s) / (p.vo2max - vo2s));
+  const wAt = v => Math.round(W0 + (Wmax - W0) * (v - vo2s) / (p.vo2max - vo2s));
+  const pts = [];
+  for(let i = 0; i <= Math.round(total / dt); i++){
+    const t = i * dt, v = clean(t), frac = v / p.vo2max, over = Math.max(0, t - rampMin);
+    const n = gauss();
+    const VO2 = v * (1 + 0.02 * n);
+    const vc = 0.88 * v - 0.04 + Math.max(0, v - vt1) * 0.42 + Math.max(0, v - vt2) * 0.3 + over * 0.15;
+    const VCO2 = vc * (1 + 0.02 * n + 0.01 * gauss());
+    const eq = 27 + 6 * Math.exp(-4 * frac) + Math.max(0, frac - p.f2) * (7 / (1 - p.f2)) + over * 2 + 0.45 * gauss();
+    const VE = eq * VCO2;
+    const veo2 = VE / VO2;
+    pts.push({ t, VO2, VCO2, VE, veo2, veco2: VE / VCO2, peto2: 150 - 1500 / veo2 + 0.6 * gauss(), petco2: 1150 / eq + 0.4 * gauss() });
+  }
+  return { p, pts, vo2s, rampMin, total, vt1, vt2, clean, tOf, hrAt, wAt };
+}
+const TESTS = {}; PROFILES.forEach(p => { TESTS[p.id] = genTest(p); });
+const picks = {}; PROFILES.forEach(p => { picks[p.id] = { vt1:null, vt2:null, checked:false }; });
+const solved = store.get('vtSolved') || {};
+let curProf = 'pre', curChart = 'vslope', mode = 'vt1';
+
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent){ const e = document.createElementNS(NS, tag); for(const k in attrs) e.setAttribute(k, attrs[k]); if(parent) parent.appendChild(e); return e; }
+function niceStep(range, n){ const raw = range / n, pw = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / pw; return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * pw; }
+function ticks(min, max, n){ const s = niceStep(max - min, n), out = []; for(let v = Math.ceil(min / s - 1e-9) * s; v <= max + 1e-9; v += s) out.push(+v.toFixed(6)); return out; }
+function fmt(v){ return Math.abs(v) >= 10 ? v.toFixed(0) : (+v.toFixed(2)).toString(); }
+function range(arrs, pad, step){ let lo = Infinity, hi = -Infinity; arrs.forEach(a => a.forEach(v => { if(v < lo) lo = v; if(v > hi) hi = v; })); lo -= pad; hi += pad; return { min: Math.floor(lo / step) * step, max: Math.ceil(hi / step) * step }; }
+function smooth(a, k){ return a.map((_, i) => { let s = 0, c = 0; for(let j = i - k; j <= i + k; j++){ if(j >= 0 && j < a.length){ s += a[j]; c++; } } return s / c; }); }
+const svg = $('#vt-svg');
+function drawChart(c){
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+  const W = 640, H = 360, m = { l:60, t:14, r:c.right ? 60 : 18, b:46 };
+  const pw = W - m.l - m.r, ph = H - m.t - m.b;
+  const sx = x => m.l + (x - c.x.min) / (c.x.max - c.x.min) * pw;
+  const syL = y => m.t + ph - (y - c.left.min) / (c.left.max - c.left.min) * ph;
+  const syR = c.right ? (y => m.t + ph - (y - c.right.min) / (c.right.max - c.right.min) * ph) : syL;
+  el('rect', { x:m.l, y:m.t, width:pw, height:ph, fill:'#fbfdfe', stroke:'#d9e2e7' }, svg);
+  ticks(c.x.min, c.x.max, 8).forEach(v => { const X = sx(v); el('line', { x1:X, x2:X, y1:m.t, y2:m.t + ph, stroke:'#e6eef2' }, svg); el('text', { x:X, y:m.t + ph + 17, 'text-anchor':'middle', 'font-size':12, fill:'#4a5a62' }, svg).textContent = fmt(v); });
+  ticks(c.left.min, c.left.max, 6).forEach(v => { const Y = syL(v); el('line', { x1:m.l, x2:m.l + pw, y1:Y, y2:Y, stroke:'#e6eef2' }, svg); el('text', { x:m.l - 7, y:Y + 4, 'text-anchor':'end', 'font-size':12, fill:c.left.color || '#4a5a62' }, svg).textContent = fmt(v); });
+  if(c.right) ticks(c.right.min, c.right.max, 6).forEach(v => { el('text', { x:m.l + pw + 7, y:syR(v) + 4, 'font-size':12, fill:c.right.color }, svg).textContent = fmt(v); });
+  el('text', { x:m.l + pw / 2, y:H - 8, 'text-anchor':'middle', 'font-size':13, 'font-weight':700, fill:'#003d50' }, svg).textContent = c.x.label;
+  const cy = m.t + ph / 2;
+  el('text', { x:15, y:cy, 'text-anchor':'middle', 'font-size':13, 'font-weight':700, fill:c.left.color || '#003d50', transform:'rotate(-90 15 ' + cy + ')' }, svg).textContent = c.left.label;
+  if(c.right) el('text', { x:W - 12, y:cy, 'text-anchor':'middle', 'font-size':13, 'font-weight':700, fill:c.right.color, transform:'rotate(90 ' + (W - 12) + ' ' + cy + ')' }, svg).textContent = c.right.label;
+  const defs = el('defs', {}, svg), cp = el('clipPath', { id:'plotclip' }, defs);
+  el('rect', { x:m.l, y:m.t, width:pw, height:ph }, cp);
+  const g = el('g', { 'clip-path':'url(#plotclip)' }, svg);
+  (c.refs || []).forEach(r => el('line', { x1:sx(r.x1), y1:syL(r.y1), x2:sx(r.x2), y2:syL(r.y2), stroke:r.color, 'stroke-dasharray':'6 5', 'stroke-width':1.5 }, g));
+  c.series.forEach(s => {
+    const sy = s.axis === 'right' ? syR : syL;
+    s.xs.forEach((x, i) => el('circle', { cx:sx(x).toFixed(1), cy:sy(s.ys[i]).toFixed(1), r:2.6, fill:s.color, 'fill-opacity':s.line ? .35 : .6 }, g));
+    if(s.line){ const ys = smooth(s.ys, 2); el('path', { d:s.xs.map((x, i) => (i ? 'L' : 'M') + sx(x).toFixed(1) + ' ' + sy(ys[i]).toFixed(1)).join(' '), fill:'none', stroke:s.color, 'stroke-width':2.2 }, g); }
+  });
+  (c.vlines || []).forEach(v => {
+    const X = sx(v.x);
+    el('line', { x1:X, x2:X, y1:m.t, y2:m.t + ph, stroke:v.color, 'stroke-width':v.w || 2.5, 'stroke-dasharray':v.dash || 'none' }, g);
+    const right = X > m.l + pw - 90;
+    el('text', { x:right ? X - 5 : X + 5, y:m.t + 15 + (v.row || 0) * 16, 'text-anchor':right ? 'end' : 'start', 'font-size':12, 'font-weight':700, fill:v.color }, g).textContent = v.label;
+  });
+  const guide = el('line', { x1:0, x2:0, y1:m.t, y2:m.t + ph, stroke:'#003d50', 'stroke-opacity':0, 'stroke-width':1 }, svg);
+  svg._map = { m, pw, toX: px => c.x.min + (px - m.l) / pw * (c.x.max - c.x.min), guide };
+  $('#vt-legend').innerHTML = c.legend.map(l => '<span><i style="background:' + l[1] + '"></i>' + l[0] + '</span>').join('');
+}
+const HINTS = {
+  vslope:'<strong>V-slope:</strong> VCO₂ is plotted against VO₂. Below VT1 the points rise with a slope just under 1. At <strong>VT1</strong> the scatter bends upwards, because bicarbonate buffering of lactate adds “extra” CO₂. The dashed grey line shows a slope of 1 for reference. VT2 is hard to see here, so use the other two methods.',
+  veq:'<strong>Ventilatory equivalents:</strong> at <strong>VT1</strong>, VE/VO₂ starts to rise while VE/VCO₂ stays flat (isocapnic buffering). At <strong>VT2</strong> (the respiratory compensation point), VE/VO₂ and VE/VCO₂ rise together.',
+  pet:'<strong>End-tidal pressures:</strong> at <strong>VT1</strong>, PETO₂ reaches its lowest point and starts to rise while PETCO₂ holds steady. At <strong>VT2</strong>, PETCO₂ starts to fall as ventilation outstrips CO₂ production, while PETO₂ keeps rising.'
+};
+function drawVT(){
+  const T = TESTS[curProf], P = T.p, pk = picks[curProf];
+  const xv = v => curChart === 'vslope' ? v : T.tOf(v);
+  const vl = [];
+  if(pk.vt1 != null) vl.push({ x:xv(pk.vt1), color:'#0071bc', label:'Your VT1', row:0 });
+  if(pk.vt2 != null) vl.push({ x:xv(pk.vt2), color:'#8b3556', label:'Your VT2', row:1 });
+  if(pk.checked){
+    vl.push({ x:xv(T.vt1), color:'#1f7a3a', label:'True VT1', dash:'6 4', w:2, row:2 });
+    vl.push({ x:xv(T.vt2), color:'#1f7a3a', label:'True VT2', dash:'6 4', w:2, row:3 });
+  }
+  const pts = T.pts, ts = pts.map(d => d.t);
+  if(curChart === 'vslope'){
+    const xr = range([pts.map(d => d.VO2)], 0.05, 0.5), yr = range([pts.map(d => d.VCO2)], 0.05, 0.5);
+    const lo = Math.max(xr.min, yr.min), hi = Math.min(xr.max, yr.max);
+    drawChart({ x:{ ...xr, label:'VO₂ (L·min⁻¹)' }, left:{ ...yr, label:'VCO₂ (L·min⁻¹)' },
+      series:[{ xs:pts.map(d => d.VO2), ys:pts.map(d => d.VCO2), color:'#003d50' }],
+      refs:[{ x1:lo, y1:lo, x2:hi, y2:hi, color:'#9aa9b1' }], vlines:vl,
+      legend:[['VCO₂ vs VO₂ (10 s averages)', '#003d50'], ['Slope = 1 reference', '#9aa9b1']] });
+  } else if(curChart === 'veq'){
+    const a = pts.map(d => d.veo2), b = pts.map(d => d.veco2);
+    drawChart({ x:{ min:0, max:T.total, label:'Time (min)' }, left:{ ...range([a, b], 1, 5), label:'Ventilatory equivalent' },
+      series:[{ xs:ts, ys:a, color:'#0071bc', line:true }, { xs:ts, ys:b, color:'#8b3556', line:true }], vlines:vl,
+      legend:[['VE/VO₂', '#0071bc'], ['VE/VCO₂', '#8b3556']] });
+  } else {
+    const a = pts.map(d => d.peto2), b = pts.map(d => d.petco2);
+    drawChart({ x:{ min:0, max:T.total, label:'Time (min)' }, left:{ ...range([a], 2, 5), label:'PETO₂ (mmHg)', color:'#0071bc' }, right:{ ...range([b], 2, 5), label:'PETCO₂ (mmHg)', color:'#8b3556' },
+      series:[{ xs:ts, ys:a, color:'#0071bc', line:true }, { xs:ts, ys:b, color:'#8b3556', line:true, axis:'right' }], vlines:vl,
+      legend:[['PETO₂ (left axis)', '#0071bc'], ['PETCO₂ (right axis)', '#8b3556']] });
+  }
+  $('#vt-hint').innerHTML = HINTS[curChart];
+  const r1 = $('#r-vt1'), r2 = $('#r-vt2');
+  [r1, r2].forEach(r => { r.min = T.vo2s.toFixed(2); r.max = P.vo2max.toFixed(2); });
+  r1.value = pk.vt1 != null ? pk.vt1 : T.vo2s; r2.value = pk.vt2 != null ? pk.vt2 : P.vo2max;
+  const lbl = v => v == null ? 'not placed' : v.toFixed(2) + ' L·min⁻¹ (' + Math.round(v / P.vo2max * 100) + '% VO₂max)';
+  $('#o-vt1').textContent = lbl(pk.vt1); $('#o-vt2').textContent = lbl(pk.vt2);
+}
+function setPick(which, v){
+  const T = TESTS[curProf], pk = picks[curProf];
+  pk[which] = Math.min(T.p.vo2max, Math.max(T.vo2s, v));
+  if(pk.checked){ pk.checked = false; $('#vt-result').innerHTML = ''; }
+  if(which === 'vt1' && pk.vt2 == null) setMode('vt2');
+  drawVT();
+}
+function setMode(m){ mode = m; $('#mode-vt1').setAttribute('aria-pressed', m === 'vt1'); $('#mode-vt2').setAttribute('aria-pressed', m === 'vt2'); }
+function pxFromEvent(e){ const r = svg.getBoundingClientRect(); return (e.clientX - r.left) * (640 / r.width); }
+svg.addEventListener('click', e => {
+  const map = svg._map, px = pxFromEvent(e);
+  if(px < map.m.l || px > map.m.l + map.pw) return;
+  const x = map.toX(px), T = TESTS[curProf];
+  setPick(mode, curChart === 'vslope' ? x : T.clean(x));
+});
+svg.addEventListener('mousemove', e => {
+  const map = svg._map; if(!map) return; const px = pxFromEvent(e);
+  const inside = px >= map.m.l && px <= map.m.l + map.pw;
+  map.guide.setAttribute('x1', px); map.guide.setAttribute('x2', px); map.guide.setAttribute('stroke-opacity', inside ? .35 : 0);
+});
+svg.addEventListener('mouseleave', () => { if(svg._map) svg._map.guide.setAttribute('stroke-opacity', 0); });
+$('#r-vt1').addEventListener('input', e => setPick('vt1', +e.target.value));
+$('#r-vt2').addEventListener('input', e => setPick('vt2', +e.target.value));
+$('#mode-vt1').addEventListener('click', () => setMode('vt1'));
+$('#mode-vt2').addEventListener('click', () => setMode('vt2'));
+$('#vt-clear').addEventListener('click', () => { picks[curProf] = { vt1:null, vt2:null, checked:false }; $('#vt-result').innerHTML = ''; setMode('vt1'); drawVT(); });
+$$('.subtab').forEach(b => b.addEventListener('click', () => { curChart = b.dataset.chart; $$('.subtab').forEach(x => x.setAttribute('aria-selected', x === b)); drawVT(); }));
+const sel = $('#vt-profile');
+PROFILES.forEach(p => { const o = document.createElement('option'); o.value = p.id; o.textContent = p.name; sel.appendChild(o); });
+sel.addEventListener('change', () => { curProf = sel.value; $('#vt-note').textContent = TESTS[curProf].p.note; $('#vt-result').innerHTML = picks[curProf].checked ? resultHTML() : ''; setMode(picks[curProf].vt1 == null ? 'vt1' : 'vt2'); drawVT(); });
+function judge(pick, truth, vmax){
+  const d = (pick - truth) / vmax, a = Math.abs(d);
+  if(a <= 0.05) return ['good', 'Spot on'];
+  if(a <= 0.10) return ['ok', d < 0 ? 'Close, slightly early' : 'Close, slightly late'];
+  return ['bad', d < 0 ? 'Too early: look for a later breakpoint' : 'Too late: look for an earlier breakpoint'];
+}
+function resultHTML(){
+  const T = TESTS[curProf], P = T.p, pk = picks[curProf];
+  const j1 = judge(pk.vt1, T.vt1, P.vo2max), j2 = judge(pk.vt2, T.vt2, P.vo2max);
+  const row = (n, v, j, pick) => '<tr><th scope="row">' + n + '</th><td><span class="fb ' + j[0] + '" style="display:inline-block;margin:0;padding:2px 8px">' + j[1] + '</span><br><span class="muted">You: ' + pick.toFixed(2) + ' L·min⁻¹</span></td><td>' + v.toFixed(2) + ' L·min⁻¹</td><td>' + Math.round(v / P.vo2max * 100) + '%</td><td>' + T.hrAt(v) + ' b·min⁻¹</td><td>' + T.wAt(v) + ' W</td></tr>';
+  return '<div class="tbl-wrap"><table><thead><tr><th scope="col">Threshold</th><th scope="col">Your marker</th><th scope="col">True VO₂</th><th scope="col">% VO₂max</th><th scope="col">Heart rate</th><th scope="col">Power</th></tr></thead><tbody>' +
+    row('VT1', T.vt1, j1, pk.vt1) + row('VT2', T.vt2, j2, pk.vt2) +
+    '</tbody></table></div><p class="muted">VO₂max ' + P.vo2max.toFixed(2) + ' L·min⁻¹ (' + (P.vo2max * 1000 / P.mass).toFixed(1) + ' mL·kg⁻¹·min⁻¹), HRmax ' + P.hrmax + ' b·min⁻¹. The true thresholds are shown as green dashed lines on every chart.</p>' +
+    '<div class="btn-row"><button class="btn blue" type="button" id="to-zones">Use these heart rates in Training zones →</button></div>';
+}
+$('#vt-check').addEventListener('click', () => {
+  const pk = picks[curProf], out = $('#vt-result');
+  if(pk.vt1 == null || pk.vt2 == null){ out.innerHTML = '<p class="fb bad">Place both VT1 and VT2 before checking.</p>'; return; }
+  if(pk.vt2 <= pk.vt1){ out.innerHTML = '<p class="fb bad">VT2 must occur at a higher intensity than VT1. Move your markers.</p>'; return; }
+  pk.checked = true;
+  const T = TESTS[curProf], P = T.p;
+  solved[curProf] = { rel:(P.vo2max * 1000 / P.mass).toFixed(1), f1:Math.round(P.f1 * 100), f2:Math.round(P.f2 * 100), hr1:T.hrAt(T.vt1), w2:T.wAt(T.vt2) };
+  store.set('vtSolved', solved);
+  out.innerHTML = resultHTML();
+  drawVT(); renderSummary(); markDone('vt');
+});
+document.addEventListener('click', e => {
+  if(e.target && e.target.id === 'to-zones'){
+    const T = TESTS[curProf];
+    $('#z-hr1').value = T.hrAt(T.vt1); $('#z-hr2').value = T.hrAt(T.vt2); $('#z-hrmax').value = T.p.hrmax;
+    selectTab('zones'); buildZones(); window.scrollTo({ top:0, behavior:'smooth' });
+  }
+});
+function renderSummary(){
+  $('#vt-summary').innerHTML = PROFILES.map(p => { const s = solved[p.id]; return '<tr><th scope="row">' + p.name + '</th>' + (s ? '<td>' + s.rel + '</td><td>' + s.f1 + '%</td><td>' + s.f2 + '%</td><td>' + s.hr1 + ' b·min⁻¹</td><td>' + s.w2 + ' W</td>' : '<td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>') + '</tr>'; }).join('');
+  if(solved.pre && solved.post){
+    const a = TESTS.pre.p, b = TESTS.post.p;
+    const dv = ((b.vo2max / a.vo2max - 1) * 100).toFixed(0), dw = ((TESTS.post.wAt(TESTS.post.vt2) / TESTS.pre.wAt(TESTS.pre.vt2) - 1) * 100).toFixed(0);
+    $('#vt-insight').innerHTML = '<div class="aside"><p><strong>What changed with training?</strong> VO₂max rose by about ' + dv + '%, but power at VT2 rose by about ' + dw + '%. VT1 moved from ' + Math.round(a.f1 * 100) + '% to ' + Math.round(b.f1 * 100) + '% of VO₂max. The thresholds improved more than the ceiling did. That shift reflects peripheral adaptations: ↑ mitochondrial content and oxidative enzymes, ↑ capillarisation, ↑ lactate clearance (MCT1) and greater fat oxidation. Look back at the comparison table in your topic notes.</p></div>';
+  } else {
+    $('#vt-insight').innerHTML = '';
+  }
+}
+
+/* ---------- 5 zones ---------- */
+function buildZones(){
+  const h1 = +$('#z-hr1').value, h2 = +$('#z-hr2').value, hm = +$('#z-hrmax').value, out = $('#z-out');
+  if(!(h1 > 0 && h2 > h1 && hm > h2)){ out.innerHTML = '<p class="fb bad">Check your values: HR at VT1 must be below HR at VT2, which must be below HRmax.</p>'; return; }
+  const floor = Math.round(Math.min(h1 - 20, hm * 0.55));
+  const span = hm - floor, w = v => (v / span * 100) + '%';
+  out.innerHTML =
+    '<div class="zbar"><span style="width:' + w(h1 - floor) + ';background:var(--teal)">Zone 1</span><span style="width:' + w(h2 - h1) + ';background:var(--gold)">Zone 2</span><span style="width:' + w(hm - h2) + ';background:var(--maroon)">Zone 3</span></div>' +
+    '<div class="zscale"><span>' + floor + '</span><span>VT1 ' + h1 + '</span><span>VT2 ' + h2 + '</span><span>' + hm + ' b·min⁻¹</span></div>' +
+    '<div class="tbl-wrap"><table><thead><tr><th scope="col">Zone</th><th scope="col">Heart rate</th><th scope="col">Physiology</th><th scope="col">How it feels</th><th scope="col">Example sessions</th></tr></thead><tbody>' +
+    '<tr><th scope="row" style="color:var(--teal)">Zone 1: low</th><td>&lt; ' + h1 + ' b·min⁻¹<br><span class="muted">(below VT1)</span></td><td>Predominantly aerobic, with lactate near resting levels. A high-volume stimulus for mitochondrial and capillary adaptation, with low autonomic stress.</td><td>Conversational. RPE ~9–12 (6–20 scale).</td><td>Long steady runs or rides, recovery sessions, base building.</td></tr>' +
+    '<tr><th scope="row" style="color:var(--gold)">Zone 2: moderate</th><td>' + h1 + '–' + h2 + ' b·min⁻¹<br><span class="muted">(VT1 to VT2)</span></td><td>Lactate is elevated but stable (isocapnic buffering). Sustainable for a long time, but more fatiguing.</td><td>“Comfortably hard”: speech in short phrases. RPE ~13–15.</td><td>Tempo runs, threshold intervals (e.g., 3 × 10 min).</td></tr>' +
+    '<tr><th scope="row" style="color:var(--maroon)">Zone 3: high</th><td>&gt; ' + h2 + ' b·min⁻¹<br><span class="muted">(above VT2)</span></td><td>Above the respiratory compensation point. There is no metabolic steady state, and VO₂ drifts towards VO₂max.</td><td>Hard to very hard: only a few words possible. RPE ≥ 16.</td><td>VO₂max intervals (e.g., 5 × 4 min), race-pace efforts.</td></tr>' +
+    '</tbody></table></div><p class="muted">Heart-rate zones lag behind rapid changes in intensity and drift upwards in the heat or with fatigue. Power or pace at each threshold gives more precise prescription for short intervals.</p>';
+  markDone('zones');
+}
+$('#z-build').addEventListener('click', buildZones);
+function updateWeek(){
+  const v = [+$('#w1').value, +$('#w2').value, +$('#w3').value], tot = v[0] + v[1] + v[2];
+  ['ow1', 'ow2', 'ow3'].forEach((id, i) => { $('#' + id).textContent = v[i] + ' min' + (tot ? ' (' + Math.round(v[i] / tot * 100) + '%)' : ''); });
+  const cols = ['var(--teal)', 'var(--gold)', 'var(--maroon)'];
+  $('#wbar').innerHTML = tot ? v.map((x, i) => x ? '<span style="width:' + (x / tot * 100) + '%;background:' + cols[i] + '">' + Math.round(x / tot * 100) + '%</span>' : '').join('') : '';
+  const p = v.map(x => tot ? x / tot : 0);
+  let cls = 'ok', msg;
+  if(!tot) msg = 'Add some training time.';
+  else if(p[0] >= 0.75 && p[2] > p[1]){ cls = 'good'; msg = '<strong>Polarised distribution.</strong> Most time is spent below VT1, with more high- than moderate-intensity work. Many elite endurance athletes accumulate roughly 75–80% of their training below VT1.'; }
+  else if(p[0] >= 0.7 && p[1] >= p[2]){ cls = 'good'; msg = '<strong>Pyramidal distribution.</strong> Training volume decreases as intensity increases. This is common in well-trained athletes, especially during base phases.'; }
+  else if(p[1] >= p[0] || p[0] < 0.6){ cls = 'bad'; msg = '<strong>Threshold-heavy distribution.</strong> A lot of time is spent at moderate to high intensity. This can work short-term, but it raises fatigue and autonomic stress and leaves little room for the volume that drives peripheral adaptations.'; }
+  else msg = '<strong>Mixed distribution.</strong> Try shifting more time below VT1 to see how the classification changes.';
+  $('#w-fb').innerHTML = '<p class="fb ' + cls + '">Total ' + Math.floor(tot / 60) + ' h ' + (tot % 60) + ' min per week. ' + msg + '</p>';
+}
+['w1', 'w2', 'w3'].forEach(id => $('#' + id).addEventListener('input', updateWeek));
+
+/* ---------- 6 quiz ---------- */
+const QUIZ = [
+  { q:'Which of these is a chronic adaptation to endurance training?', o:['Increased ventilation during exercise', 'Increased capillary density', 'Redistribution of blood flow to working muscle', 'Elevated core temperature'], a:1, why:'Capillarisation develops over weeks of training. The others are acute responses to a single bout.' },
+  { q:'In the V-slope method, VT1 is identified as the point where…', o:['VE/VCO₂ starts to rise', 'the slope of VCO₂ plotted against VO₂ increases', 'PETCO₂ starts to fall', 'heart rate plateaus'], a:1, why:'Bicarbonate buffering of lactate produces extra CO₂, so the VCO₂–VO₂ slope steepens above 1.' },
+  { q:'VT2 (the respiratory compensation point) is identified by…', o:['a rise in VE/VO₂ alone', 'the lowest point of PETO₂', 'a simultaneous rise in VE/VO₂ and VE/VCO₂', 'an RER of 0.90'], a:2, why:'At VT2, ventilation rises out of proportion to both O₂ and CO₂, so both equivalents rise and PETCO₂ falls.' },
+  { q:'Between VT1 and VT2, PETCO₂ typically…', o:['rises sharply', 'stays on a plateau (isocapnic buffering)', 'falls sharply', 'cannot be measured'], a:1, why:'Ventilation tracks the extra CO₂ from buffering, so PETCO₂ stays stable until respiratory compensation begins at VT2.' },
+  { q:'VO₂max increases after training while HRmax is unchanged. According to the Fick equation, the increase must come from…', o:['↑ stroke volume and/or ↑ (a-v̄)O₂ difference', '↑ resting heart rate', '↓ plasma volume', '↑ HRmax'], a:0, why:'VO₂max = HRmax × SVmax × (a-v̄)O₂ diff. If HRmax is fixed, only the central (SV) and peripheral (O₂ extraction) terms can change.' },
+  { q:'Which protein is often described as the “master regulator” of mitochondrial biogenesis?', o:['mTORC1', 'Myostatin', 'PGC-1α', 'IL-6'], a:2, why:'PGC-1α is activated downstream of AMPK, CaMK and p38 MAPK, and coactivates NRF-1 and TFAM.' },
+  { q:'After training, lactate threshold occurs at a higher % VO₂max mainly because of…', o:['↓ HRmax', '↑ mitochondrial oxidative capacity and lactate clearance', '↑ dominance of glycolytic enzymes', 'reduced capillary density'], a:1, why:'More mitochondria, more oxidative enzymes and more MCT1 transporters mean less lactate accumulates at a given intensity.' },
+  { q:'An athlete has VT1 at 150 b·min⁻¹ and VT2 at 172 b·min⁻¹. An easy Zone 1 run should be performed…', o:['below 150 b·min⁻¹', 'between 150 and 172 b·min⁻¹', 'above 172 b·min⁻¹', 'at HRmax'], a:0, why:'Zone 1 lies below VT1. Zone 2 lies between VT1 and VT2, and Zone 3 lies above VT2.' },
+  { q:'Plasma volume expansion improves VO₂max mainly by…', o:['increasing HRmax', 'increasing end-diastolic volume and stroke volume', 'increasing mitochondrial enzyme activity', 'reducing ventilation'], a:1, why:'A larger blood volume improves venous return and ventricular filling (Frank–Starling), which raises stroke volume.' },
+  { q:'The FITT principle refers to…', o:['Frequency, Intensity, Time, Type', 'Fitness, Intensity, Training, Tempo', 'Force, Impulse, Torque, Tension', 'Frequency, Interval, Threshold, Testing'], a:0, why:'Overload is applied by manipulating the frequency, intensity, time (duration) and type of exercise.' }
+];
+function renderQuiz(){
+  $('#quiz').innerHTML = QUIZ.map((q, i) => '<div class="q" id="q' + i + '"><fieldset><legend>' + (i + 1) + '. ' + q.q + '</legend>' + q.o.map((o, j) => '<label><input type="radio" name="q' + i + '" value="' + j + '"> ' + o + '</label>').join('') + '</fieldset><p class="why"><strong>Explanation:</strong> ' + q.why + '</p></div>').join('');
+  $('#quiz-fb').innerHTML = '';
+}
+$('#quiz-submit').addEventListener('click', () => {
+  let score = 0, unanswered = 0;
+  QUIZ.forEach((q, i) => {
+    const box = $('#q' + i), chosen = $('input[name="q' + i + '"]:checked', box);
+    $$('label', box).forEach((l, j) => { l.classList.remove('right', 'wrong'); if(j === q.a) l.classList.add('right'); });
+    if(!chosen){ unanswered++; } else if(+chosen.value === q.a){ score++; } else { chosen.parentNode.classList.add('wrong'); }
+    box.classList.add('marked');
+  });
+  const cls = score >= 8 ? 'good' : score >= 5 ? 'ok' : 'bad';
+  $('#quiz-fb').innerHTML = '<p class="fb ' + cls + '"><strong>You scored ' + score + ' / ' + QUIZ.length + '.</strong> ' + (unanswered ? unanswered + ' unanswered. ' : '') + (score >= 8 ? 'Excellent: you are ready to apply this to the needs analysis and practical assessment.' : 'Review the explanations above, then revisit the activities and topic notes for the areas you missed.') + '</p>';
+  markDone('quiz');
+});
+$('#quiz-reset').addEventListener('click', renderQuiz);
+
+/* ---------- init ---------- */
+renderProgress(); renderSort(); setFick(PRESETS.untrained); shuffle(); renderSummary(); updateWeek(); renderQuiz();
+$('#vt-note').textContent = TESTS[curProf].p.note;
+const lastTab = store.get('tab'); if(lastTab && ACTS.includes(lastTab)) selectTab(lastTab); else drawVT();
+window.addEventListener('resize', () => { if(!$('#panel-vt').hidden) drawVT(); });
+})();
+</script>
+</body>
+</html>
