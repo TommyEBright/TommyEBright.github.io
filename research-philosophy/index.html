@@ -1,0 +1,1204 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Research Philosophy Explorer</title>
+<meta name="description" content="An interactive tool for Level 5 sport and exercise science students exploring ontology, epistemology, paradigms and research design.">
+<style>
+:root{
+  /* Change this one value to re-theme the tool */
+  --accent:#0b6e69;
+  --accent-ink:#ffffff;
+  --accent-soft:#e2f1ef;
+  --bg:#f5f6f7;
+  --surface:#ffffff;
+  --surface-2:#eceff2;
+  --text:#1b1f24;
+  --muted:#4f5862;
+  --border:#cdd3d9;
+  --focus:#1747c9;
+  --ok:#1b6a32; --ok-bg:#e5f3e9;
+  --bad:#a1262b; --bad-bg:#fbe8e9;
+  --warn:#8a5d00; --warn-bg:#fff5d9;
+  --mark:#ffe27a; --mark-ink:#1b1f24;
+  /* Paradigm colours, always shown with a text label */
+  --p-positivism:#1f5fbf;
+  --p-postpositivism:#0d7385;
+  --p-criticalrealism:#7044b0;
+  --p-interpretivism:#b04f16;
+  --p-pragmatism:#2b7a30;
+  --p-postmodernism:#ad2868;
+  --tension:#8a5d00;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --accent:#5fd0c7; --accent-ink:#062523; --accent-soft:#15302e;
+    --bg:#111316; --surface:#1a1d21; --surface-2:#252a30; --text:#e8ebee; --muted:#a9b1ba; --border:#3a414a;
+    --focus:#ffd166;
+    --ok:#82d89c; --ok-bg:#14301d; --bad:#ff9ea2; --bad-bg:#3a1a1c; --warn:#f0c55a; --warn-bg:#33290e;
+    --mark:#5a4700; --mark-ink:#fff6d6;
+    --p-positivism:#78a8ff; --p-postpositivism:#4fc4d6; --p-criticalrealism:#b896ff;
+    --p-interpretivism:#ff9d62; --p-pragmatism:#80d084; --p-postmodernism:#ff7fbb; --tension:#f0c55a;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;overflow-wrap:break-word}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.skip{position:absolute;left:-9999px;top:8px;z-index:30;background:var(--surface);color:var(--text);padding:10px 14px;border-radius:8px}
+.skip:focus{left:16px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+header.top{max-width:840px;margin:0 auto;padding:16px 16px 8px}
+header.top h1{font-size:1.3rem;margin:0;line-height:1.25}
+header.top p{margin:4px 0 0;color:var(--muted);font-size:.95rem}
+.tabbar{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--border)}
+.tabs{display:flex;gap:4px;overflow-x:auto;max-width:840px;margin:0 auto;padding:6px 12px;scrollbar-width:thin}
+.tab{flex:0 0 auto;min-height:44px;padding:8px 14px;border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--text);font:inherit;font-size:.92rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tab .tick{margin-left:4px}
+main{max-width:840px;margin:0 auto;padding:16px}
+section[role="tabpanel"]>h2{font-size:1.3rem;margin:4px 0 8px}
+h3{font-size:1.08rem;margin:0 0 8px}
+.lead{color:var(--muted);margin:0 0 16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin:0 0 16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;padding:10px 18px;border-radius:10px;border:2px solid var(--accent);background:var(--accent);color:var(--accent-ink);font:inherit;font-weight:600;cursor:pointer;text-align:center}
+.btn.secondary{background:transparent;color:var(--accent)}
+.btn.danger{background:transparent;color:var(--bad);border-color:var(--bad)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px}
+.row.split{justify-content:space-between}
+.prog{margin:0 0 14px}
+.prog .bar{height:8px;background:var(--surface-2);border-radius:99px;overflow:hidden;border:1px solid var(--border)}
+.prog .bar span{display:block;height:100%;background:var(--accent);transition:width .25s}
+.prog p{margin:4px 0 0;font-size:.88rem;color:var(--muted)}
+.pbadge{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--pc);border-radius:999px;padding:1px 10px;font-weight:600;font-size:.88rem;line-height:1.6;background:var(--surface)}
+.pbadge .dot,.dot{width:10px;height:10px;border-radius:50%;background:var(--pc);flex:0 0 auto;display:inline-block}
+.p-positivism{--pc:var(--p-positivism)} .p-postpositivism{--pc:var(--p-postpositivism)} .p-criticalrealism{--pc:var(--p-criticalrealism)}
+.p-interpretivism{--pc:var(--p-interpretivism)} .p-pragmatism{--pc:var(--p-pragmatism)} .p-postmodernism{--pc:var(--p-postmodernism)} .p-tension{--pc:var(--tension)}
+a.gl{color:inherit;text-decoration:underline dotted;text-decoration-thickness:2px;text-underline-offset:3px;font-weight:600}
+a.gl:hover{color:var(--accent)}
+/* Intro */
+.layers{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.layers li{background:var(--surface-2);border-radius:10px;padding:10px 12px;border-left:5px solid var(--accent)}
+.layers li strong{display:block}
+.layers li:nth-child(2){margin-left:12px}.layers li:nth-child(3){margin-left:24px}.layers li:nth-child(4){margin-left:36px}
+details.gloss{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin:0 0 8px}
+details.gloss summary{min-height:48px;padding:12px 14px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;border-radius:10px}
+details.gloss summary::-webkit-details-marker{display:none}
+details.gloss summary::after{content:"+";font-size:1.3rem;line-height:1;color:var(--muted)}
+details.gloss[open] summary::after{content:"\2212"}
+details.gloss .gbody{padding:0 14px 14px}
+details.gloss .gbody p{margin:0 0 8px}
+.example{background:var(--surface-2);border-radius:8px;padding:8px 10px;margin:0}
+.example b{display:block;font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+/* Likert */
+fieldset{border:0;padding:0;margin:0;min-width:0}
+legend{padding:0;font-size:1.12rem;font-weight:600;margin:0 0 12px}
+.qnum{display:block;font-size:.85rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.opt{display:flex;align-items:flex-start;gap:12px;min-height:48px;padding:12px 14px;border:2px solid var(--border);border-radius:10px;margin:0 0 8px;cursor:pointer;background:var(--surface)}
+.opt input{width:22px;height:22px;margin:1px 0 0;flex:0 0 auto;accent-color:var(--accent)}
+.opt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.opt:has(input:focus-visible){outline:3px solid var(--focus);outline-offset:2px}
+.opt input:checked + .ol{font-weight:700}
+.opt .ol small{display:block;color:var(--muted);font-weight:400;margin-top:2px}
+.opt .ol .ex{display:block;font-size:.92rem;margin-top:4px;font-weight:400}
+.likert-grid{display:grid;gap:0}
+@media (min-width:700px){.likert-grid{grid-template-columns:repeat(5,1fr);gap:8px}.likert-grid .opt{flex-direction:column;align-items:center;text-align:center;font-size:.92rem}}
+/* Results map */
+.map-wrap{max-width:420px;margin:0 auto 12px}
+.map-wrap svg{width:100%;height:auto;display:block}
+.scores{display:grid;gap:6px;margin:0 0 12px;padding:0;list-style:none}
+.note{border-left:5px solid var(--warn);background:var(--warn-bg);border-radius:8px;padding:10px 12px;margin:12px 0}
+/* Detective */
+.extract{font-size:1.02rem;background:var(--surface-2);border-radius:10px;padding:12px 14px;margin:0 0 14px;border-left:5px solid var(--border)}
+mark{background:var(--mark);color:var(--mark-ink);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:2px;border-radius:3px;padding:0 2px}
+.choices{display:grid;gap:8px;grid-template-columns:1fr}
+@media (min-width:560px){.choices{grid-template-columns:1fr 1fr}}
+.choice{display:flex;align-items:center;gap:10px;min-height:48px;padding:10px 14px;border:2px solid var(--border);border-left:8px solid var(--pc);border-radius:10px;background:var(--surface);color:var(--text);font:inherit;font-weight:600;text-align:left;cursor:pointer}
+.choice:disabled{cursor:default}
+.choice .state{margin-left:auto;font-size:.82rem;font-weight:700}
+.choice.is-correct{background:var(--ok-bg);border-color:var(--ok);border-left-color:var(--pc)}
+.choice.is-wrong{background:var(--bad-bg);border-color:var(--bad);border-left-color:var(--pc)}
+.fb{border-radius:10px;padding:12px 14px;margin:14px 0 0;border-left:6px solid var(--border);background:var(--surface-2)}
+.fb.ok{border-left-color:var(--ok);background:var(--ok-bg)}
+.fb.bad{border-left-color:var(--bad);background:var(--bad-bg)}
+.fb .verdict{font-weight:700;font-size:1.05rem;margin:0 0 6px}
+.fb.ok .verdict{color:var(--ok)} .fb.bad .verdict{color:var(--bad)}
+.fb p{margin:0 0 8px} .fb p:last-child{margin-bottom:0}
+.cues{margin:4px 0 10px;padding-left:20px}
+/* Mismatch */
+.els{display:grid;gap:8px}
+.el{display:block;width:100%;text-align:left;padding:10px 14px;min-height:48px;border:2px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);font:inherit;cursor:pointer}
+.el .k{display:flex;justify-content:space-between;gap:8px;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.el .v{display:block;margin-top:2px}
+.el:disabled{cursor:default}
+.el.consistent{background:var(--surface-2);opacity:.85}
+.el.consistent .k .tag{color:var(--ok)}
+.el.mismatch{border-color:var(--bad);background:var(--bad-bg)}
+.el.mismatch .k .tag{color:var(--bad)}
+/* Onion */
+.onion-layout{display:grid;gap:16px}
+@media (max-width:759px){#onion-main{order:-1}}
+@media (min-width:760px){.onion-layout{grid-template-columns:260px 1fr;align-items:start}.onion-side{position:sticky;top:72px}}
+.onion-svg{max-width:220px;margin:0 auto}
+.onion-svg svg{width:100%;height:auto;display:block}
+.steps{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:4px}
+.steps button{width:100%;display:flex;gap:8px;align-items:center;text-align:left;min-height:44px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font:inherit;font-size:.9rem;cursor:pointer}
+.steps button[aria-current="step"]{border:2px solid var(--accent);background:var(--accent-soft);font-weight:700}
+.steps .st{margin-left:auto;font-size:.78rem;color:var(--muted);white-space:nowrap}
+.steps .num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--surface-2);font-size:.8rem;font-weight:700;flex:0 0 auto}
+label.fl{display:block;font-weight:600;margin:14px 0 4px}
+input[type=text],textarea{width:100%;font:inherit;color:var(--text);background:var(--surface);border:2px solid var(--border);border-radius:8px;padding:10px 12px;min-height:44px}
+textarea{min-height:88px;resize:vertical}
+.tip{background:var(--accent-soft);border-radius:8px;padding:10px 12px;margin:12px 0 0;font-size:.95rem}
+.prompts{margin:14px 0 0}
+.prompts ul{margin:6px 0 0;padding-left:20px}
+.summary-text{min-height:300px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.86rem;line-height:1.5}
+.status{min-height:1.5em;font-weight:600;color:var(--ok);margin:8px 0 0}
+.confirm{margin-top:10px;padding:12px;border:2px solid var(--bad);border-radius:10px;background:var(--bad-bg)}
+.confirm p{margin:0 0 8px;font-weight:600}
+footer{max-width:840px;margin:0 auto;padding:8px 16px 32px;color:var(--muted);font-size:.85rem}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <h1>Research Philosophy Explorer</h1>
+  <p>Ontology, epistemology, paradigms and design in sport and exercise science</p>
+</header>
+<nav class="tabbar" aria-label="Sections">
+  <div class="tabs" role="tablist" id="tablist"></div>
+</nav>
+<main id="main">
+  <section role="tabpanel" id="panel-intro" aria-labelledby="tab-intro" tabindex="-1"></section>
+  <section role="tabpanel" id="panel-stance" aria-labelledby="tab-stance" tabindex="-1" hidden></section>
+  <section role="tabpanel" id="panel-detective" aria-labelledby="tab-detective" tabindex="-1" hidden></section>
+  <section role="tabpanel" id="panel-mismatch" aria-labelledby="tab-mismatch" tabindex="-1" hidden></section>
+  <section role="tabpanel" id="panel-onion" aria-labelledby="tab-onion" tabindex="-1" hidden></section>
+</main>
+<footer>Everything runs in your browser. Nothing you enter is sent anywhere.</footer>
+
+<script>
+/* =====================================================================
+   TEACHING CONTENT
+   Edit the text in this object to change what students see.
+   Link to a glossary term anywhere with [[termId|visible text]],
+   for example [[ontology|ontological]]. Term ids are the keys in
+   CONTENT.glossary below.
+   ===================================================================== */
+const CONTENT = {
+
+  /* ---------- Paradigm labels (used for colour-coded badges) ---------- */
+  paradigms: {
+    positivism:      { label: "Positivism" },
+    postpositivism:  { label: "Post-positivism" },
+    criticalrealism: { label: "Critical realism" },
+    interpretivism:  { label: "Interpretivism" },
+    pragmatism:      { label: "Pragmatism" },
+    postmodernism:   { label: "Postmodernism" }
+  },
+
+  /* ---------- Section 1. Introduction and glossary ---------- */
+  intro: {
+    welcome: "Every study rests on assumptions about what is real and how we can know it. This tool helps you recognise those assumptions in published research and make them explicit in your own dissertation.",
+    howTo: [
+      "Work through the tabs in order during the lecture, or jump to any section.",
+      "Underlined terms link back to the glossary in this section.",
+      "Your progress is saved on this device where your browser allows it."
+    ],
+    layers: [
+      { term: "ontology",     q: "What exists?",             text: "Your view of the nature of reality." },
+      { term: "epistemology", q: "How can we know it?",      text: "What counts as valid knowledge and evidence." },
+      { term: "methodology",  q: "How should we study it?",  text: "The overall strategy that follows from the layers above." },
+      { term: "methods",      q: "What tools will we use?",  text: "The specific techniques for collecting and analysing data." }
+    ],
+    layersNote: "Each layer should follow from the one above. [[axiology|Axiology]], the role of values, runs alongside all four. A coherent set of answers is often described as a [[paradigm|paradigm]]."
+  },
+
+  glossary: {
+    ontology: {
+      term: "Ontology",
+      def: "The study of what exists and the nature of reality. Your ontological position is your view of whether reality exists independently of us (realism) or is constructed through human experience (relativism).",
+      example: "Is team cohesion a real property of a squad waiting to be measured, or something players build and understand in different ways?"
+    },
+    epistemology: {
+      term: "Epistemology",
+      def: "The study of knowledge. It asks how we can know about reality and what counts as acceptable evidence.",
+      example: "Can we know how anxious a gymnast feels from heart rate data alone, or do we need to ask them and interpret what they say?"
+    },
+    axiology: {
+      term: "Axiology",
+      def: "The role of values and ethics in research. It asks whether research can be value free and how the researcher's values shape the questions asked and the interpretation of findings.",
+      example: "A researcher who is also a club physiotherapist may bring values about player welfare that influence what they choose to study and how they read the results."
+    },
+    methodology: {
+      term: "Methodology",
+      def: "The overall strategy or logic linking your philosophical position to the methods you use. It explains why you are collecting data in a particular way.",
+      example: "A randomised controlled trial, an ethnography and a case study are all methodologies."
+    },
+    methods: {
+      term: "Methods",
+      def: "The specific tools and techniques used to collect and analyse data.",
+      example: "Force plate testing, GPS tracking, questionnaires, semi-structured interviews and thematic analysis are all methods."
+    },
+    paradigm: {
+      term: "Paradigm",
+      def: "A shared set of beliefs about ontology, epistemology and methodology that guides how a research community works. Paradigms help explain why researchers studying the same topic can design very different studies.",
+      example: "Two researchers studying burnout in coaches might run a large survey or a series of life history interviews, depending on their paradigm."
+    },
+    positivism: {
+      term: "Positivism",
+      def: "Assumes a single, objective reality that can be measured. Knowledge comes from observation, measurement and hypothesis testing, with the researcher kept separate from what is studied. It aims for generalisable, causal explanations.",
+      example: "Testing whether beetroot juice improves 5 km time trial performance using a randomised controlled trial."
+    },
+    postpositivism: {
+      term: "Post-positivism",
+      def: "Shares the realist view of positivism but accepts that all measurement is imperfect and that knowledge is probabilistic and open to revision. It emphasises error, uncertainty and falsification.",
+      example: "Reporting the effect of a strength programme with confidence intervals and acknowledging the measurement error of the 1RM test."
+    },
+    criticalrealism: {
+      term: "Critical realism",
+      def: "Holds that reality exists independently of us but that our knowledge of it is always partial and shaped by context. It looks for underlying mechanisms that produce observable events, often combining types of data and using retroductive reasoning.",
+      example: "Investigating which hidden organisational mechanisms lead some academies to have higher injury rates than others."
+    },
+    interpretivism: {
+      term: "Interpretivism (including constructivism)",
+      def: "Views reality as socially constructed and multiple. Knowledge comes from understanding the meanings people give to their experiences, and the researcher is part of that process. Constructivism is a closely related position that stresses how knowledge is actively co-constructed between researcher and participant.",
+      example: "Interviewing retired footballers to understand how they make sense of life after professional sport."
+    },
+    pragmatism: {
+      term: "Pragmatism",
+      def: "Focuses on the research question and on what works in practice. Rather than committing to one view of reality, pragmatists choose the methods most useful for solving a problem, often mixing quantitative and qualitative data.",
+      example: "Combining attendance data with interviews to help a leisure centre improve uptake of an exercise referral scheme."
+    },
+    postmodernism: {
+      term: "Postmodernism",
+      def: "Questions the idea of a single truth or grand explanation. It focuses on language, power and whose voices are heard or silenced, often by deconstructing dominant narratives.",
+      example: "Analysing media coverage of female athletes to show how language reinforces particular ideas about gender and sport."
+    },
+    reasoning: {
+      term: "Deduction, induction and abduction",
+      def: "Three approaches to developing theory. Deduction starts with a theory, derives a hypothesis and tests it with data. Induction starts with data and builds theory from the patterns found. Abduction moves back and forth between data and theory to find the best explanation for a surprising observation. Retroduction, used in critical realism, is a related form of reasoning that asks what mechanisms must exist for an observation to occur.",
+      example: "Deduction tests whether self-determination theory predicts gym adherence. Induction builds a new model of adherence from interviews. Abduction starts from a puzzling drop in adherence and works out which explanation fits best."
+    }
+  },
+
+  /* ---------- Section 2. Where do you stand ---------- */
+  stance: {
+    intro: "Rate each statement. There are no right answers. Your responses place you on a map of [[ontology|ontology]] and [[epistemology|epistemology]].",
+    scale: ["Strongly disagree", "Disagree", "Neither agree nor disagree", "Agree", "Strongly agree"],
+    /* axis: "ontology" or "epistemology". dir: "R" (agreement scores towards realist or objectivist) or "reversed" */
+    statements: [
+      { text: "Fatigue exists in an athlete whether or not anyone measures it", axis: "ontology", dir: "R" },
+      { text: "What counts as “talent” depends on who is doing the judging", axis: "ontology", dir: "reversed" },
+      { text: "There is one correct explanation for why a team lost, even if we never find it", axis: "ontology", dir: "R" },
+      { text: "Ideas like “mental toughness” are created by people rather than discovered", axis: "ontology", dir: "reversed" },
+      { text: "Physiological adaptations to training follow principles that apply to everyone", axis: "ontology", dir: "R" },
+      { text: "Two players can experience the same training session as genuinely different sessions", axis: "ontology", dir: "reversed" },
+      { text: "The best research removes the researcher's influence entirely", axis: "epistemology", dir: "R" },
+      { text: "To understand an athlete, you need to see the world from their perspective", axis: "epistemology", dir: "reversed" },
+      { text: "If you can't measure something, you can't study it properly", axis: "epistemology", dir: "R" },
+      { text: "A coach's intuition is a valid form of knowledge", axis: "epistemology", dir: "reversed" },
+      { text: "Good research should produce the same results whoever carries it out", axis: "epistemology", dir: "R" },
+      { text: "Research findings are always shaped by the researcher's values", axis: "epistemology", dir: "reversed" }
+    ],
+    centreZone: 0.25, /* both scores within plus or minus this value counts as the central pragmatism zone */
+    disclaimer: "This is a conversation starter, not a diagnosis. Many researchers adopt the position that best suits a particular question rather than holding one fixed identity, so your answers might shift from project to project.",
+    positions: {
+      positivist: {
+        name: "Positivism and post-positivism", paradigms: ["positivism", "postpositivism"],
+        explain: "Your answers lean towards a realist ontology and an objectivist epistemology. You tend to see reality as existing independently of us and believe it can be studied through careful, detached measurement. If you also accept that measurement is always imperfect, you are closer to [[postpositivism|post-positivism]].",
+        designs: "Experimental and quasi-experimental designs, randomised controlled trials, cross-sectional surveys and longitudinal cohort studies, usually analysed statistically.",
+        example: "A randomised crossover trial testing whether a carbohydrate mouth rinse improves cycling time trial performance.",
+        challenge: "If two athletes describe the same session in completely different ways, is one of them simply wrong, or might there be something your measurements cannot capture?"
+      },
+      criticalrealist: {
+        name: "Critical realism", paradigms: ["criticalrealism"],
+        explain: "Your answers lean towards a realist ontology but a more interpretive epistemology. You seem to accept that a real world exists while recognising that our knowledge of it is partial, fallible and shaped by context. This is close to [[criticalrealism|critical realism]].",
+        designs: "Mixed methods, case studies and theory-driven evaluations that look for underlying mechanisms, often using retroductive reasoning.",
+        example: "Combining injury surveillance data with interviews with medical staff to explain why a return-to-play protocol works in one club but not another.",
+        challenge: "If mechanisms cannot be observed directly, how would you convince a sceptical positivist that they exist at all?"
+      },
+      interpretivist: {
+        name: "Interpretivism and constructivism", paradigms: ["interpretivism"],
+        explain: "Your answers lean towards a relativist ontology and a subjectivist epistemology. You tend to see reality as multiple and constructed, and believe understanding comes from exploring the meanings people give to their experiences. This is close to [[interpretivism|interpretivism]].",
+        designs: "Qualitative designs such as phenomenology, ethnography, narrative inquiry and grounded theory, using interviews, observation and reflexive analysis.",
+        example: "Life story interviews with Paralympic athletes exploring how they construct their athletic identity.",
+        challenge: "If a governing body needs to know whether a new warm-up reduces hamstring injuries across a whole league, how would your position help answer that question?"
+      },
+      pragmatism: {
+        name: "Pragmatism", paradigms: ["pragmatism"],
+        explain: "Your scores sit near the centre of both axes. This may suggest a pragmatic outlook, where the research question matters more than a fixed philosophical commitment, or it may mean your views are still forming. Both are reasonable. See [[pragmatism|pragmatism]].",
+        designs: "Mixed methods designs such as sequential explanatory or convergent designs, action research and applied evaluations.",
+        example: "A survey of club volunteers followed by focus groups to help a county sports partnership redesign its volunteer programme.",
+        challenge: "If you choose methods because they work, how do you decide what counts as working, and for whom?"
+      },
+      tension: {
+        name: "Tension zone", paradigms: [],
+        explain: "Your answers combine a relativist ontology with an objectivist epistemology. You see reality as constructed and multiple, yet believe knowledge should come from detached, objective observation. This combination is philosophically uncomfortable, because if reality differs from person to person it is unclear what a detached observer would be measuring. That is not a mistake on your part. It is a useful prompt for reflection.",
+        designs: "No design sits comfortably here. Revisit the statements where you agreed or disagreed strongly, and explore [[criticalrealism|critical realism]] or [[pragmatism|pragmatism]], which offer ways to combine measurement with an acknowledgement that meaning matters.",
+        example: "You might believe mental toughness is a social construct yet want to measure it objectively with a questionnaire. What would those scores actually represent?",
+        challenge: "Which do you hold more firmly, your view of reality or your view of knowledge, and what would change if you let go of the other?"
+      }
+    }
+  },
+
+  /* ---------- Section 3. Paradigm detective ---------- */
+  detective: {
+    intro: "Read each fictional methods extract and decide which [[paradigm|paradigm]] it reflects.",
+    options: ["positivism", "postpositivism", "criticalrealism", "interpretivism", "pragmatism", "postmodernism"],
+    /* cues must match words in the extract exactly (case is ignored) so they can be highlighted */
+    extracts: [
+      {
+        text: "Thirty-two academy soccer players completed a randomised crossover trial comparing two recovery protocols. Countermovement jump height was measured on force plates at baseline, 24 and 48 hours. It was hypothesised that cold water immersion would produce greater recovery of jump height. Data were analysed using linear mixed models.",
+        answer: "positivism",
+        cues: ["randomised", "crossover trial", "measured", "hypothesised", "analysed"],
+        why: "The study tests a hypothesis about cause and effect using a controlled, randomised design and objective measurement. The researcher stays detached and the aim is to establish whether one protocol produces a better outcome.",
+        tempting: "postpositivism",
+        temptingWhy: "Post-positivism also uses experiments, but it would usually make uncertainty and measurement error explicit and treat findings as provisional. Nothing here signals that caution."
+      },
+      {
+        text: "Semi-structured interviews were conducted with eight players released from professional academies to explore how they made sense of deselection. Data were analysed using reflexive thematic analysis. The first author's experience as a former academy player was acknowledged as shaping the interpretation of participants' accounts.",
+        answer: "interpretivism",
+        cues: ["explore", "made sense of", "reflexive", "interpretation", "accounts"],
+        why: "The study explores how participants make sense of an experience, uses reflexive thematic analysis and openly acknowledges that the researcher's own background shapes the interpretation. Knowledge is treated as co-constructed.",
+        tempting: "postmodernism",
+        temptingWhy: "Postmodernism would focus on power, language and deconstructing dominant narratives. Here the focus is on understanding personal meaning rather than critiquing discourse."
+      },
+      {
+        text: "Drawing on retroductive reasoning, this study combined GPS training load data with interviews with coaching staff. The aim was to identify the underlying mechanisms through which organisational pressures shaped training load prescription, recognising that these mechanisms may operate even when they are not directly observable.",
+        answer: "criticalrealism",
+        cues: ["retroductive", "combined", "underlying mechanisms", "not directly observable"],
+        why: "Retroductive reasoning and the search for underlying, unobservable mechanisms are hallmarks of critical realism. Combining GPS data with interviews reflects the belief that a real world exists but is only partly accessible through any single method.",
+        tempting: "pragmatism",
+        temptingWhy: "Pragmatism also mixes methods, but it chooses them for their practical usefulness. Here the methods are chosen to uncover causal mechanisms, which is a philosophical commitment rather than a practical one."
+      },
+      {
+        text: "A sequential explanatory mixed-methods design was selected because it offered the most practical way to address the club's question. An online survey of 150 grassroots coaches was followed by focus groups to explain the patterns identified. Methods were chosen for their usefulness in informing coach education policy.",
+        answer: "pragmatism",
+        cues: ["mixed-methods", "most practical way", "usefulness", "informing coach education policy"],
+        why: "Methods are justified by how practical and useful they are for answering the club's question and informing policy, rather than by a commitment to a particular view of reality.",
+        tempting: "criticalrealism",
+        temptingWhy: "Critical realism also uses mixed methods, but it would aim to identify underlying mechanisms. This study is driven by a practical problem, not by a search for hidden causes."
+      },
+      {
+        text: "Session rating of perceived exertion is recognised as an imperfect measure of internal load, so measurement error was modelled explicitly. Results are reported with 95% credible intervals, and findings are treated as provisional estimates that may be revised as further evidence becomes available.",
+        answer: "postpositivism",
+        cues: ["imperfect measure", "measurement error", "provisional", "may be revised"],
+        why: "The study treats internal load as real but recognises that measurement is imperfect, models error explicitly and treats findings as provisional. This cautious, probabilistic stance is post-positivist.",
+        tempting: "positivism",
+        temptingWhy: "Positivism shares the realist ontology but tends to present findings with more certainty. The emphasis on error and revisable estimates moves this towards post-positivism."
+      },
+      {
+        text: "Over a nine-month season, the lead author was embedded within a women's rugby union squad as a participant observer. Field notes and informal conversations were used to understand how players constructed shared meanings around injury and playing through pain.",
+        answer: "interpretivism",
+        cues: ["embedded", "participant observer", "understand", "constructed shared meanings"],
+        why: "Prolonged immersion as a participant observer, and the aim of understanding how players construct shared meanings, reflect an interpretivist view that reality is socially constructed and best understood from the inside. This is an ethnographic study.",
+        tempting: "criticalrealism",
+        temptingWhy: "A critical realist might also use ethnography, but would look for underlying mechanisms that cause behaviour. Here the focus is on meanings, not mechanisms."
+      },
+      {
+        text: "This study deconstructs dominant narratives of mental toughness within elite coaching discourse. Rather than seeking a single truth, it examines whose voices are privileged and whose are marginalised, and how power operates through the language coaches use.",
+        answer: "postmodernism",
+        cues: ["deconstructs", "dominant narratives", "Rather than seeking a single truth", "power", "language"],
+        why: "The study rejects the idea of a single truth and deconstructs dominant narratives, focusing on power and language. These are central concerns of postmodern research.",
+        tempting: "interpretivism",
+        temptingWhy: "Interpretivism also values multiple perspectives, but it aims to understand meaning. Postmodernism goes further by questioning how certain meanings come to dominate and whose interests they serve."
+      },
+      {
+        text: "A validated questionnaire was administered to 412 recreational runners. Structural equation modelling was used to test hypothesised relationships between training volume, sleep quality and injury occurrence. The large sample was intended to allow findings to be generalised to the wider population of recreational runners.",
+        answer: "positivism",
+        cues: ["validated", "test hypothesised relationships", "generalised"],
+        why: "A validated measure, a large sample, the testing of hypothesised relationships and the aim of generalising to a wider population all reflect positivist assumptions about an objective, measurable reality.",
+        tempting: "postpositivism",
+        temptingWhy: "Structural equation modelling could appear in post-positivist work, but the extract says nothing about uncertainty, error or provisional findings. The confident aim of generalisation points to positivism."
+      }
+    ]
+  },
+
+  /* ---------- Section 4. Spot the mismatch ---------- */
+  mismatch: {
+    intro: "Each design has six elements. One does not fit with the others. Tap the element you think is the mismatch.",
+    labels: {
+      question: "Research question", ontology: "Ontology", epistemology: "Epistemology",
+      methodology: "Methodology", methods: "Methods", claims: "Claims made"
+    },
+    scenarios: [
+      {
+        elements: {
+          question: "How do elite dancers experience returning from long-term injury?",
+          ontology: "Reality is multiple and shaped by individual experience",
+          epistemology: "Knowledge is co-constructed between researcher and participant",
+          methodology: "Interpretative phenomenological analysis",
+          methods: "A closed-question survey of 500 dancers analysed with inferential statistics",
+          claims: "Rich insight into the meaning of injury for a small group of dancers"
+        },
+        mismatch: "methods",
+        why: "A closed-question survey of 500 dancers analysed statistically cannot capture the rich, individual meanings that interpretative phenomenological analysis seeks. It also clashes with the relativist ontology and co-constructed epistemology.",
+        alternative: "In-depth semi-structured interviews with a small, carefully chosen group of dancers, analysed using interpretative phenomenological analysis.",
+        consistent: {
+          question: "The question asks how dancers experience something, which suits an interpretive, experience-focused design.",
+          ontology: "Seeing reality as multiple and shaped by experience fits a question about personal experience.",
+          epistemology: "Co-constructed knowledge matches this methodology, where the researcher interprets the participant's own interpretation.",
+          methodology: "Interpretative phenomenological analysis is designed to explore lived experience in depth, which suits the question.",
+          claims: "Rich insight from a small group is exactly what this kind of study can legitimately claim."
+        }
+      },
+      {
+        elements: {
+          question: "Does caffeine ingestion improve repeated sprint performance?",
+          ontology: "Performance exists independently and can be measured",
+          epistemology: "Objective measurement under controlled conditions",
+          methodology: "Randomised, placebo-controlled, double-blind crossover trial",
+          methods: "A single unstructured interview with one sprinter about how they felt",
+          claims: "Estimate of the effect of caffeine on sprint times"
+        },
+        mismatch: "methods",
+        why: "One unstructured interview about how a single sprinter felt cannot produce an objective estimate of caffeine's effect on sprint times, and it abandons the controlled trial set out in the methodology.",
+        alternative: "Measure repeated sprint times with timing gates in a sample of athletes who complete caffeine and placebo conditions in a random order, then estimate the difference statistically.",
+        consistent: {
+          question: "Asking whether caffeine improves performance is a causal question suited to a controlled experiment.",
+          ontology: "Treating performance as something that exists and can be measured fits the question.",
+          epistemology: "Objective measurement under controlled conditions is appropriate for testing an effect.",
+          methodology: "A randomised, placebo-controlled, double-blind crossover trial is a strong design for this question.",
+          claims: "Estimating the effect of caffeine is what this kind of trial is designed to do."
+        }
+      },
+      {
+        elements: {
+          question: "How do grassroots coaches understand their safeguarding role?",
+          ontology: "Understanding is constructed through experience and context",
+          epistemology: "Knowledge is interpretive and situated",
+          methodology: "Qualitative interpretive inquiry",
+          methods: "In-depth interviews with six coaches from one county",
+          claims: "The findings prove that all UK coaches misunderstand safeguarding"
+        },
+        mismatch: "claims",
+        why: "Six interviews from one county cannot prove anything about all UK coaches. Interpretive research does not aim for statistical generalisation, and the word prove sits uneasily with an interpretive epistemology.",
+        alternative: "Offer rich, contextual insight into how these coaches understand safeguarding, and discuss transferability so readers can judge how far the findings resonate with other settings.",
+        consistent: {
+          question: "Asking how coaches understand their role invites an interpretive, qualitative design.",
+          ontology: "Seeing understanding as constructed through experience fits a question about meaning.",
+          epistemology: "An interpretive, situated view of knowledge matches the question and the methods.",
+          methodology: "Qualitative interpretive inquiry is a suitable framework for exploring understanding.",
+          methods: "In-depth interviews with a small number of coaches are a sensible way to explore understanding."
+        }
+      },
+      {
+        elements: {
+          question: "What mechanisms explain differences in injury rates between training groups?",
+          ontology: "A real world exists with causal mechanisms that are not always observable",
+          epistemology: "Nothing exists beyond participants' accounts, so there are no mechanisms to find",
+          methodology: "Critical realist case study",
+          methods: "Injury surveillance data combined with staff interviews",
+          claims: "Tentative explanation of mechanisms operating in this context"
+        },
+        mismatch: "epistemology",
+        why: "This statement is really a relativist claim about reality, and it directly contradicts the critical realist view that real mechanisms exist. It would make the study's aim of explaining mechanisms impossible.",
+        alternative: "Knowledge of mechanisms is possible but always partial, fallible and shaped by context, so several sources of evidence are combined to infer the most plausible explanation.",
+        consistent: {
+          question: "Asking which mechanisms explain differences is a typical critical realist question.",
+          ontology: "A real world with mechanisms that are not always observable is the core critical realist ontology.",
+          methodology: "A critical realist case study suits an in-depth search for mechanisms in context.",
+          methods: "Combining surveillance data with interviews reflects the critical realist use of several data sources.",
+          claims: "A tentative, context-specific explanation of mechanisms is an appropriately cautious claim."
+        }
+      },
+      {
+        elements: {
+          question: "Does a six-week plyometric programme increase jump height in adolescent netball players?",
+          ontology: "Physical capacities exist independently and can be measured",
+          epistemology: "Objective, replicable measurement",
+          methodology: "Controlled intervention study",
+          methods: "Researcher's personal impressions of how high players appear to jump",
+          claims: "Estimate of the change in jump height attributable to the programme"
+        },
+        mismatch: "methods",
+        why: "Personal impressions of how high players appear to jump are subjective and cannot be replicated, so they cannot support an objective estimate of change.",
+        alternative: "Measure countermovement jump height with a force plate or validated jump mat before and after the programme, ideally alongside a control group.",
+        consistent: {
+          question: "Asking whether a programme increases jump height is a causal, measurable question.",
+          ontology: "Viewing physical capacities as real and measurable fits the question.",
+          epistemology: "Objective, replicable measurement is what an intervention study needs.",
+          methodology: "A controlled intervention study is an appropriate way to test the programme.",
+          claims: "Estimating the change attributable to the programme is what a controlled study can offer."
+        }
+      },
+      {
+        elements: {
+          question: "How can a community club improve retention of teenage girls?",
+          ontology: "Focus on what works in practice rather than fixed philosophical commitments",
+          epistemology: "Knowledge is judged by its practical usefulness",
+          methodology: "Choosing mixed methods because it is always the superior approach",
+          methods: "Membership records analysis followed by focus groups with players",
+          claims: "Practical recommendations for the club"
+        },
+        mismatch: "methodology",
+        why: "Pragmatism chooses methods because they are useful for the specific question, not because one approach is always superior. Claiming mixed methods is always best is a fixed commitment that contradicts the pragmatic stance.",
+        alternative: "Choose mixed methods because membership records show when and how many girls leave, and focus groups explain why, so together they best inform practical change at the club.",
+        consistent: {
+          question: "A practical question about improving retention suits a problem-focused, pragmatic approach.",
+          ontology: "Focusing on what works in practice is the hallmark of pragmatism.",
+          epistemology: "Judging knowledge by its practical usefulness fits a pragmatic study.",
+          methods: "Analysing records then running focus groups is a sensible, useful combination for this question.",
+          claims: "Practical recommendations are exactly what a pragmatic study aims to produce."
+        }
+      }
+    ]
+  },
+
+  /* ---------- Section 5. My research onion ---------- */
+  onion: {
+    intro: "Apply the layers of Saunders, Lewis and Thornhill's research onion to your own dissertation idea. Work from the outside in. You can return to any step at any time.",
+    reminder: "This summary is a starting point. Discuss it with your supervisor, who can help you refine your choices and justifications.",
+    steps: [
+      {
+        key: "topic", title: "Topic and research question", short: "Topic",
+        text: "Write a working title and a research question. Both can change later.",
+        tip: "A focused question names the population, the phenomenon and the context. Compare “Does sport help mental health?” with “How do first-year student rugby players describe the role of their club in managing academic stress?”"
+      },
+      {
+        key: "philosophy", title: "Research philosophy", short: "Philosophy", type: "single", ring: true,
+        text: "Which [[paradigm|philosophy]] best fits your question and your beliefs about reality and knowledge?",
+        options: [
+          { id: "positivism", label: "Positivism", desc: "A single, measurable reality studied objectively to find generalisable, causal explanations.", ex: "Testing whether compression garments reduce delayed onset muscle soreness." },
+          { id: "criticalrealism", label: "Critical realism", desc: "A real world exists, but knowledge of it is partial. Aims to uncover the mechanisms behind what we observe.", ex: "Explaining why a falls prevention programme works in some care homes but not others." },
+          { id: "interpretivism", label: "Interpretivism", desc: "Reality is constructed and multiple. Aims to understand the meanings people give to experience.", ex: "Exploring how injured runners make sense of time away from running." },
+          { id: "postmodernism", label: "Postmodernism", desc: "Questions single truths and examines language, power and whose voices are heard.", ex: "Deconstructing how coaching manuals talk about athletes' bodies." },
+          { id: "pragmatism", label: "Pragmatism", desc: "The research question comes first. Methods are chosen for their practical usefulness.", ex: "Evaluating a club's new junior pathway to recommend changes for next season." }
+        ]
+      },
+      {
+        key: "approach", title: "Approach to theory development", short: "Approach", type: "single", ring: true,
+        text: "How will theory and data relate in your study? See [[reasoning|deduction, induction and abduction]].",
+        options: [
+          { id: "deduction", label: "Deduction", desc: "Start with existing theory, form a hypothesis and test it.", ex: "Testing whether the theory of planned behaviour predicts gym attendance." },
+          { id: "induction", label: "Induction", desc: "Collect data first and build theory from the patterns you find.", ex: "Interviewing female referees and developing a model of how they cope with abuse." },
+          { id: "abduction", label: "Abduction", desc: "Start from a surprising observation and move between data and theory to find the best explanation.", ex: "Noticing injuries rise mid-season and testing competing explanations against training and interview data." }
+        ]
+      },
+      {
+        key: "choice", title: "Methodological choice", short: "Choice", type: "single", ring: true,
+        text: "Will you use quantitative data, qualitative data or both?",
+        options: [
+          { id: "monoquant", label: "Mono-method quantitative", desc: "A single quantitative method, analysed statistically.", ex: "Measuring grip strength before and after a 12-week resistance programme." },
+          { id: "monoqual", label: "Mono-method qualitative", desc: "A single qualitative method, analysed for meaning.", ex: "Interviews with older adults about why they joined a walking football group." },
+          { id: "multi", label: "Multi-method", desc: "More than one method, all within the same tradition (all quantitative or all qualitative).", ex: "Interviews and observation of coaching sessions, both analysed qualitatively." },
+          { id: "mixed", label: "Mixed methods", desc: "Quantitative and qualitative methods in one study, with a clear plan for how they inform each other.", ex: "A wellbeing questionnaire for academy players followed by interviews with a subsample." }
+        ]
+      },
+      {
+        key: "strategy", title: "Strategy", short: "Strategy", type: "multi", ring: true,
+        text: "Which research strategy or strategies will you use? You can choose more than one.",
+        options: [
+          { id: "experiment", label: "Experiment", desc: "Manipulate a variable under controlled conditions to test its effect.", ex: "Comparing two warm-ups on 20 m sprint time." },
+          { id: "survey", label: "Survey", desc: "Collect standardised data from a large sample, often by questionnaire.", ex: "Surveying 300 club cyclists about training habits and injury." },
+          { id: "archival", label: "Archival or documentary research", desc: "Analyse existing records, documents or media.", ex: "Analysing ten years of match injury records from a professional club." },
+          { id: "casestudy", label: "Case study", desc: "Study one or a few cases in depth within their real-life context.", ex: "An in-depth study of how one county cricket club manages player workload." },
+          { id: "ethnography", label: "Ethnography", desc: "Immerse yourself in a group or culture over time to understand it from the inside.", ex: "Spending a season with a parkrun volunteer team." },
+          { id: "actionresearch", label: "Action research", desc: "Work with practitioners in cycles of planning, acting and reflecting to bring about change.", ex: "Working with PE teachers to redesign lessons to increase girls' participation." },
+          { id: "groundedtheory", label: "Grounded theory", desc: "Build a new theory systematically from the data.", ex: "Developing a theory of how youth coaches decide when to rest players." },
+          { id: "narrative", label: "Narrative inquiry", desc: "Explore the stories people tell about their lives and experiences.", ex: "Collecting the career stories of former Olympic rowers." }
+        ]
+      },
+      {
+        key: "horizon", title: "Time horizon", short: "Time horizon", type: "single", ring: true,
+        text: "Will you collect data at one point in time or over a longer period?",
+        options: [
+          { id: "cross", label: "Cross-sectional", desc: "Data collected at a single point in time, giving a snapshot.", ex: "Surveying university students' physical activity in one week of term." },
+          { id: "long", label: "Longitudinal", desc: "Data collected from the same participants or setting over an extended period, to track change.", ex: "Following youth swimmers' training loads and injuries across two seasons." }
+        ]
+      },
+      {
+        key: "techniques", title: "Techniques and procedures", short: "Techniques", type: "text", ring: true,
+        text: "Describe how you will collect and analyse your data, including participants, measures and analysis.",
+        tip: "Be specific. For example, “Semi-structured interviews (about 45 minutes) with eight coaches, analysed using reflexive thematic analysis” or “Countermovement jump on force plates at three time points, analysed with a repeated measures ANOVA”."
+      }
+    ],
+    justifyPrompt: "Justify your choice in one or two sentences",
+    /* Coherence checks. Each rule shows its text when all conditions in "if" match.
+       Keys: philosophy, approach, choice, horizon (a value or a list of values),
+       strategy (matches if any listed strategy is chosen), techniques (a pattern searched for in the free text). */
+    checks: [
+      { if: { philosophy: "positivism", approach: "induction" }, text: "Positivist research usually tests hypotheses deductively. Have you considered how building theory from data fits with a positivist position?" },
+      { if: { philosophy: "positivism", choice: "monoqual" }, text: "Have you considered how a purely qualitative design fits with a positivist search for objective, measurable facts?" },
+      { if: { philosophy: "positivism", strategy: ["ethnography", "narrative", "groundedtheory"] }, text: "Ethnography, narrative inquiry and grounded theory usually assume reality is constructed. Have you considered how they fit with a positivist position?" },
+      { if: { philosophy: "positivism", techniques: "interview|focus group" }, text: "Have you considered how interviews fit with a positivist position? If you use them, how will you treat what participants say?" },
+      { if: { philosophy: "interpretivism", strategy: ["experiment"] }, text: "Have you considered how an experiment fits with an interpretivist position? Experiments usually seek objective causal effects rather than meanings." },
+      { if: { philosophy: "interpretivism", choice: "monoquant" }, text: "Have you considered how a purely quantitative design will capture the meanings an interpretivist position values?" },
+      { if: { philosophy: "interpretivism", approach: "deduction" }, text: "Interpretivist research often builds understanding inductively. If you are testing a theory, how will you stay open to participants' own meanings?" },
+      { if: { philosophy: "postmodernism", strategy: ["survey", "experiment"] }, text: "Have you considered how a large hypothesis-testing survey or experiment fits with a postmodern position that questions single truths?" },
+      { if: { philosophy: "postmodernism", approach: "deduction" }, text: "Have you considered how testing a hypothesis fits with a postmodern scepticism of grand theories?" },
+      { if: { philosophy: "postmodernism", choice: "monoquant" }, text: "Have you considered how a purely quantitative design lets you examine language and power?" },
+      { if: { philosophy: "criticalrealism", choice: "monoquant" }, text: "Critical realists often combine data sources to uncover mechanisms. Have you considered whether one quantitative method can reveal what lies beneath the patterns?" },
+      { if: { choice: "monoquant", strategy: ["ethnography", "narrative", "groundedtheory"] }, text: "Ethnography, narrative inquiry and grounded theory usually produce qualitative data. Have you considered how they fit with a mono-method quantitative choice?" },
+      { if: { choice: "monoqual", strategy: ["experiment", "survey"] }, text: "Experiments and large surveys usually produce quantitative data. Have you considered how they fit with a mono-method qualitative choice?" },
+      { if: { approach: "induction", strategy: ["experiment"] }, text: "Experiments usually test hypotheses deductively. Have you considered how an experiment fits with an inductive approach?" },
+      { if: { horizon: "cross", strategy: ["ethnography", "actionresearch"] }, text: "Ethnography and action research usually involve prolonged time in the field. Have you considered whether a cross-sectional time horizon fits?" },
+      { if: { choice: "monoquant", techniques: "interview|focus group" }, text: "Your techniques mention interviews or focus groups. Have you considered how these fit with a mono-method quantitative choice?" }
+    ]
+  }
+};
+
+/* =====================================================================
+   APPLICATION LOGIC (no need to edit below to change content)
+   ===================================================================== */
+(function () {
+  "use strict";
+  const C = CONTENT;
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+
+  /* ---- Safe storage. Append ?nostorage to the URL to simulate blocked storage. ---- */
+  const PREFIX = "rpx1-";
+  const NOSTORE = /[?&]nostorage\b/.test(location.search);
+  const store = {
+    get(k) { try { if (NOSTORE) throw new Error("blocked"); const v = window.localStorage.getItem(PREFIX + k); return v ? JSON.parse(v) : null; } catch (e) { return null; } },
+    set(k, v) { try { if (NOSTORE) throw new Error("blocked"); window.localStorage.setItem(PREFIX + k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } },
+    del(k) { try { if (NOSTORE) throw new Error("blocked"); window.localStorage.removeItem(PREFIX + k); } catch (e) { /* storage unavailable */ } }
+  };
+
+  const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const rich = s => esc(s).replace(/\[\[([a-z]+)\|([^\]]+)\]\]/g, (m, id, label) => C.glossary[id] ? `<a href="#g-${id}" class="gl" data-term="${id}">${label}</a>` : label);
+  const pLabel = id => (C.paradigms[id] || {}).label || id;
+  const pbadge = id => `<span class="pbadge p-${id}"><span class="dot" aria-hidden="true"></span>${esc(pLabel(id))}</span>`;
+  const progress = (n, total, noun) => `<div class="prog"><div class="bar" aria-hidden="true"><span style="width:${Math.round(n / total * 100)}%"></span></div><p>${noun} ${n} of ${total}</p></div>`;
+  const focusEl = el => { if (el) { if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "-1"); el.focus({ preventScroll: false }); } };
+
+  /* ---- State ---- */
+  const blankStance = () => ({ i: 0, answers: C.stance.statements.map(() => null), done: false });
+  const blankDet = () => ({ i: 0, answers: C.detective.extracts.map(() => null), done: false });
+  const blankMis = () => ({ i: 0, tried: C.mismatch.scenarios.map(() => []), done: false });
+  const blankOnion = () => ({ step: 0, title: "", question: "", philosophy: null, approach: null, choice: null, strategy: [], horizon: null, techniques: "", just: {} });
+  const state = {
+    intro: store.get("intro") || { opened: [] },
+    stance: store.get("stance") || blankStance(),
+    detective: store.get("detective") || blankDet(),
+    mismatch: store.get("mismatch") || blankMis(),
+    onion: Object.assign(blankOnion(), store.get("onion") || {})
+  };
+  const save = k => store.set(k, state[k]);
+
+  /* ---- Tabs ---- */
+  const TABS = [
+    { id: "intro", label: "Introduction" },
+    { id: "stance", label: "Where do you stand" },
+    { id: "detective", label: "Paradigm detective" },
+    { id: "mismatch", label: "Spot the mismatch" },
+    { id: "onion", label: "My research onion" }
+  ];
+  const done = {
+    intro: () => state.intro.opened.length >= Object.keys(C.glossary).length,
+    stance: () => state.stance.done,
+    detective: () => state.detective.done,
+    mismatch: () => state.mismatch.done,
+    onion: () => state.onion.step >= C.onion.steps.length
+  };
+  function renderTabs() {
+    const cur = currentTab;
+    $("#tablist").innerHTML = TABS.map(t => `<button type="button" role="tab" class="tab" id="tab-${t.id}" aria-controls="panel-${t.id}" aria-selected="${t.id === cur}" tabindex="${t.id === cur ? 0 : -1}">${t.label}${done[t.id]() ? '<span class="tick" aria-hidden="true">✓</span><span class="sr"> (completed)</span>' : ""}</button>`).join("");
+  }
+  let currentTab = store.get("tab") || "intro";
+  if (!TABS.some(t => t.id === currentTab)) currentTab = "intro";
+  function showTab(id, focusTab) {
+    currentTab = id;
+    store.set("tab", id);
+    renderTabs();
+    TABS.forEach(t => { $("#panel-" + t.id).hidden = t.id !== id; });
+    const btn = $("#tab-" + id);
+    btn.scrollIntoView({ block: "nearest", inline: "nearest" });
+    if (focusTab) btn.focus();
+  }
+  $("#tablist").addEventListener("click", e => { const b = e.target.closest(".tab"); if (b) showTab(b.id.slice(4), true); });
+  $("#tablist").addEventListener("keydown", e => {
+    const i = TABS.findIndex(t => t.id === currentTab);
+    let n = null;
+    if (e.key === "ArrowRight") n = (i + 1) % TABS.length;
+    else if (e.key === "ArrowLeft") n = (i - 1 + TABS.length) % TABS.length;
+    else if (e.key === "Home") n = 0;
+    else if (e.key === "End") n = TABS.length - 1;
+    if (n !== null) { e.preventDefault(); showTab(TABS[n].id, true); }
+  });
+
+  /* ---- Glossary links anywhere ---- */
+  document.addEventListener("click", e => {
+    const a = e.target.closest("a.gl");
+    if (!a) return;
+    e.preventDefault();
+    openGlossary(a.dataset.term);
+  });
+  function openGlossary(id) {
+    showTab("intro");
+    const d = document.getElementById("g-" + id);
+    if (!d) return;
+    d.open = true;
+    const s = d.querySelector("summary");
+    s.scrollIntoView({ block: "start" });
+    s.focus({ preventScroll: true });
+  }
+
+  /* =================== Section 1 =================== */
+  function renderIntro() {
+    const p = $("#panel-intro");
+    const g = C.glossary, ids = Object.keys(g), opened = state.intro.opened.filter(id => g[id]);
+    p.innerHTML = `
+      <h2>Introduction and glossary</h2>
+      <div class="card">
+        <p style="margin-top:0">${rich(C.intro.welcome)}</p>
+        <h3>How to use this tool</h3>
+        <ul style="margin:0;padding-left:20px">${C.intro.howTo.map(t => `<li>${rich(t)}</li>`).join("")}</ul>
+      </div>
+      <div class="card">
+        <h3>How the layers connect</h3>
+        <ol class="layers">${C.intro.layers.map(l => `<li><strong><a href="#g-${l.term}" class="gl" data-term="${l.term}">${esc(g[l.term].term)}</a>. ${esc(l.q)}</strong>${esc(l.text)}</li>`).join("")}</ol>
+        <p style="margin-bottom:0">${rich(C.intro.layersNote)}</p>
+      </div>
+      <h3 id="gloss-h">Glossary</h3>
+      ${progress(opened.length, ids.length, "Terms explored")}
+      <div id="gloss">${ids.map(id => `
+        <details class="gloss" id="g-${id}">
+          <summary>${esc(g[id].term)}</summary>
+          <div class="gbody">
+            <p>${rich(g[id].def)}</p>
+            <p class="example"><b>Sport example</b>${rich(g[id].example)}</p>
+          </div>
+        </details>`).join("")}</div>
+      <div class="row"><button type="button" class="btn" id="intro-next">Start Where do you stand</button></div>`;
+    $$("details.gloss", p).forEach(d => d.addEventListener("toggle", () => {
+      const id = d.id.slice(2);
+      if (d.open && !state.intro.opened.includes(id)) {
+        state.intro.opened.push(id); save("intro");
+        const n = state.intro.opened.length, t = ids.length;
+        const pr = $(".prog", p);
+        pr.outerHTML = progress(n, t, "Terms explored");
+        renderTabs();
+      }
+    }));
+    $("#intro-next").addEventListener("click", () => { showTab("stance"); focusEl($("#panel-stance h2")); });
+  }
+
+  /* =================== Section 2 =================== */
+  function stanceScores() {
+    const o = [], e = [];
+    C.stance.statements.forEach((q, i) => {
+      const a = state.stance.answers[i];
+      if (a == null) return;
+      let v = (a - 3) / 2;
+      if (q.dir === "reversed") v = -v;
+      (q.axis === "ontology" ? o : e).push(v);
+    });
+    const avg = arr => arr.length ? arr.reduce((x, y) => x + y, 0) / arr.length : 0;
+    return { x: avg(o), y: avg(e) };
+  }
+  function stancePosition(x, y) {
+    const c = C.stance.centreZone;
+    if (Math.abs(x) < c && Math.abs(y) < c) return "pragmatism";
+    if (x >= 0 && y >= 0) return "positivist";
+    if (x >= 0) return "criticalrealist";
+    if (y < 0) return "interpretivist";
+    return "tension";
+  }
+  function stanceMap(x, y) {
+    const cx = 180, cy = 160, h = 130;
+    const X = v => cx + v * h, Y = v => cy - v * h;
+    const z = C.stance.centreZone * h;
+    const quad = (x0, y0, cls, l1, l2, tx, ty, anchor) => `
+      <rect x="${x0}" y="${y0}" width="${h}" height="${h}" class="${cls}" fill="var(--pc)" fill-opacity=".12"/>
+      <text x="${tx}" y="${ty}" text-anchor="${anchor}" font-size="11" font-weight="700" fill="var(--text)">${l1}</text>
+      ${l2 ? `<text x="${tx}" y="${ty + 14}" text-anchor="${anchor}" font-size="11" font-weight="700" fill="var(--text)">${l2}</text>` : ""}`;
+    return `<svg viewBox="0 0 360 340" role="img" aria-labelledby="map-t map-d" focusable="false">
+      <title id="map-t">Your position on the ontology and epistemology map</title>
+      <desc id="map-d">Horizontal axis runs from relativist on the left to realist on the right. Vertical axis runs from subjectivist at the bottom to objectivist at the top. Your point is at ontology ${x.toFixed(2)} and epistemology ${y.toFixed(2)}.</desc>
+      ${quad(cx, cy - h, "p-positivism", "Positivism and", "post-positivism", cx + h - 6, cy - h + 16, "end")}
+      ${quad(cx, cy, "p-criticalrealism", "Critical realism", "", cx + h - 6, cy + h - 8, "end")}
+      ${quad(cx - h, cy, "p-interpretivism", "Interpretivism and", "constructivism", cx - h + 6, cy + h - 22, "start")}
+      ${quad(cx - h, cy - h, "p-tension", "Tension zone", "", cx - h + 6, cy - h + 16, "start")}
+      <rect x="${cx - z}" y="${cy - z}" width="${2 * z}" height="${2 * z}" class="p-pragmatism" fill="var(--surface)" stroke="var(--pc)" stroke-width="2" stroke-dasharray="5 3"/>
+      <text x="${cx}" y="${cy - z - 4}" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--text)">Pragmatism</text>
+      <line x1="${cx - h}" y1="${cy}" x2="${cx + h}" y2="${cy}" stroke="var(--muted)" stroke-width="1.2"/>
+      <line x1="${cx}" y1="${cy - h}" x2="${cx}" y2="${cy + h}" stroke="var(--muted)" stroke-width="1.2"/>
+      <rect x="${cx - h}" y="${cy - h}" width="${2 * h}" height="${2 * h}" fill="none" stroke="var(--border)"/>
+      <text x="${cx - h}" y="${cy + h + 18}" font-size="11" fill="var(--muted)">◀ Relativist</text>
+      <text x="${cx + h}" y="${cy + h + 18}" font-size="11" text-anchor="end" fill="var(--muted)">Realist ▶</text>
+      <text x="${cx}" y="${cy + h + 34}" font-size="11.5" font-weight="700" text-anchor="middle" fill="var(--text)">Ontology</text>
+      <text transform="translate(18 ${cy}) rotate(-90)" font-size="11.5" font-weight="700" text-anchor="middle" fill="var(--text)">Epistemology</text>
+      <text transform="translate(36 ${cy - h}) rotate(-90)" font-size="11" text-anchor="end" fill="var(--muted)">Objectivist ▶</text>
+      <text transform="translate(36 ${cy + h}) rotate(-90)" font-size="11" text-anchor="start" fill="var(--muted)">◀ Subjectivist</text>
+      <circle cx="${X(x)}" cy="${Y(y)}" r="9" fill="var(--accent)" stroke="var(--surface)" stroke-width="3"/>
+      <circle cx="${X(x)}" cy="${Y(y)}" r="13" fill="none" stroke="var(--text)" stroke-width="1.5"/>
+      <text x="${Math.min(Math.max(X(x), cx - h + 14), cx + h - 14)}" y="${Y(y) + (y > 0.4 ? 30 : -19)}" text-anchor="middle" font-size="12" font-weight="800" fill="var(--text)" paint-order="stroke" stroke="var(--surface)" stroke-width="3">You</text>
+    </svg>`;
+  }
+  const describe = (v, neg, pos) => Math.abs(v) < 0.1 ? "near the middle" : `towards ${v > 0 ? pos : neg}`;
+
+  function renderStance(focus) {
+    const p = $("#panel-stance"), s = state.stance, S = C.stance.statements, n = S.length;
+    let body;
+    if (s.done) {
+      const { x, y } = stanceScores();
+      const key = stancePosition(x, y), pos = C.stance.positions[key];
+      body = `
+        ${progress(n, n, "Statement")}
+        <div class="card">
+          <h3 id="stance-res-h" tabindex="-1">Your results</h3>
+          <div class="map-wrap">${stanceMap(x, y)}</div>
+          <ul class="scores">
+            <li><strong>Ontology score</strong> ${x.toFixed(2)} (${describe(x, "relativist", "realist")})</li>
+            <li><strong>Epistemology score</strong> ${y.toFixed(2)} (${describe(y, "subjectivist", "objectivist")})</li>
+          </ul>
+          <p><strong>Nearest position</strong> ${pos.paradigms.length ? pos.paradigms.map(pbadge).join(" ") : `<span class="pbadge p-tension"><span class="dot" aria-hidden="true"></span>${esc(pos.name)}</span>`}</p>
+          <p>${rich(pos.explain)}</p>
+          <h3>Designs this position tends to suit</h3>
+          <p>${rich(pos.designs)}</p>
+          <p class="example"><b>Sport example</b>${rich(pos.example)}</p>
+          <h3 style="margin-top:14px">Challenge question</h3>
+          <p>${rich(pos.challenge)}</p>
+          <p class="note">${rich(C.stance.disclaimer)}</p>
+          <div class="row"><button type="button" class="btn secondary" id="st-retake">Retake the activity</button><button type="button" class="btn" id="st-on">Go to Paradigm detective</button></div>
+        </div>`;
+    } else {
+      const q = S[s.i], a = s.answers[s.i];
+      body = `
+        ${progress(s.i + 1, n, "Statement")}
+        <div class="card">
+          <fieldset>
+            <legend id="stance-q" tabindex="-1"><span class="qnum">Statement ${s.i + 1}</span>${esc(q.text)}</legend>
+            <div class="likert-grid">
+            ${C.stance.scale.map((lab, k) => `<label class="opt"><input type="radio" name="lik" value="${k + 1}" ${a === k + 1 ? "checked" : ""}><span class="ol">${esc(lab)}</span></label>`).join("")}
+            </div>
+          </fieldset>
+          <div class="row split">
+            <button type="button" class="btn secondary" id="st-back" ${s.i === 0 ? "disabled" : ""}>Back</button>
+            <button type="button" class="btn" id="st-next" ${a ? "" : "disabled"}>${s.i === n - 1 ? "See my results" : "Next"}</button>
+          </div>
+        </div>`;
+    }
+    p.innerHTML = `<h2 tabindex="-1">Where do you stand</h2><p class="lead">${rich(C.stance.intro)}</p>${body}`;
+    if (s.done) {
+      $("#st-retake").addEventListener("click", () => { state.stance = blankStance(); save("stance"); renderTabs(); renderStance(true); });
+      $("#st-on").addEventListener("click", () => { showTab("detective"); focusEl($("#panel-detective h2")); });
+      if (focus) focusEl($("#stance-res-h"));
+    } else {
+      $$("input[name=lik]", p).forEach(r => r.addEventListener("change", () => { s.answers[s.i] = +r.value; save("stance"); $("#st-next").disabled = false; }));
+      $("#st-back").addEventListener("click", () => { if (s.i > 0) { s.i--; save("stance"); renderStance(true); } });
+      $("#st-next").addEventListener("click", () => {
+        if (s.answers[s.i] == null) return;
+        if (s.i < n - 1) s.i++; else s.done = true;
+        save("stance"); renderTabs(); renderStance(true);
+      });
+      if (focus) focusEl($("#stance-q"));
+    }
+  }
+
+  /* =================== Section 3 =================== */
+  function highlight(text, cues) {
+    const lower = text.toLowerCase(), ranges = [];
+    cues.forEach(c => { const i = lower.indexOf(c.toLowerCase()); if (i >= 0) ranges.push([i, i + c.length]); });
+    ranges.sort((a, b) => a[0] - b[0]);
+    let out = "", pos = 0;
+    ranges.forEach(([a, b]) => { if (a < pos) return; out += esc(text.slice(pos, a)) + "<mark>" + esc(text.slice(a, b)) + "</mark>"; pos = b; });
+    return out + esc(text.slice(pos));
+  }
+  function renderDetective(focus) {
+    const p = $("#panel-detective"), d = state.detective, X = C.detective.extracts, n = X.length;
+    let body;
+    if (d.done) {
+      const score = X.filter((x, i) => d.answers[i] === x.answer).length;
+      body = `${progress(n, n, "Extract")}
+        <div class="card">
+          <h3 id="det-end" tabindex="-1">You identified ${score} of ${n} paradigms correctly</h3>
+          <ol style="padding-left:20px">${X.map((x, i) => `<li style="margin-bottom:6px">${d.answers[i] === x.answer ? "Correct" : "Incorrect"}. The answer was ${pbadge(x.answer)}${d.answers[i] !== x.answer ? `, you chose ${pbadge(d.answers[i])}` : ""}</li>`).join("")}</ol>
+          <div class="row"><button type="button" class="btn secondary" id="det-retry">Try again</button><button type="button" class="btn" id="det-on">Go to Spot the mismatch</button></div>
+        </div>`;
+    } else {
+      const x = X[d.i], a = d.answers[d.i], answered = a != null, right = a === x.answer;
+      const choices = C.detective.options.map(id => {
+        let cls = "", st = "";
+        if (answered && id === x.answer) { cls = "is-correct"; st = "Correct answer"; }
+        else if (answered && id === a) { cls = "is-wrong"; st = "Your answer"; }
+        return `<button type="button" class="choice p-${id} ${cls}" data-id="${id}" ${answered ? "disabled" : ""}><span class="dot" aria-hidden="true"></span>${esc(pLabel(id))}${st ? `<span class="state">${st}</span>` : ""}</button>`;
+      }).join("");
+      const fb = answered ? `
+        <div class="fb ${right ? "ok" : "bad"}" id="det-fb" tabindex="-1" role="status">
+          <p class="verdict">${right ? "Correct." : `Not quite. This extract reflects ${esc(pLabel(x.answer))}.`}</p>
+          <p><strong>Cue words and phrases</strong> (highlighted in the extract)</p>
+          <ul class="cues">${x.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
+          <p>${rich(x.why)}</p>
+          <p><strong>Why not ${esc(pLabel(x.tempting))}?</strong> ${rich(x.temptingWhy)}</p>
+        </div>
+        <div class="row"><button type="button" class="btn" id="det-next">${d.i === n - 1 ? "See my score" : "Next extract"}</button></div>` : "";
+      body = `${progress(d.i + 1, n, "Extract")}
+        <div class="card">
+          <h3 id="det-h" tabindex="-1">Extract ${d.i + 1}</h3>
+          <blockquote class="extract" style="margin:0 0 14px">${answered ? highlight(x.text, x.cues) : esc(x.text)}</blockquote>
+          <p id="det-q" style="font-weight:600;margin:0 0 8px">Which paradigm does this extract reflect?</p>
+          <div class="choices" role="group" aria-labelledby="det-q">${choices}</div>
+          ${fb}
+        </div>`;
+    }
+    p.innerHTML = `<h2 tabindex="-1">Paradigm detective</h2><p class="lead">${rich(C.detective.intro)}</p>${body}`;
+    if (d.done) {
+      $("#det-retry").addEventListener("click", () => { state.detective = blankDet(); save("detective"); renderTabs(); renderDetective(true); });
+      $("#det-on").addEventListener("click", () => { showTab("mismatch"); focusEl($("#panel-mismatch h2")); });
+      if (focus) focusEl($("#det-end"));
+      return;
+    }
+    $$(".choice", p).forEach(b => b.addEventListener("click", () => { d.answers[d.i] = b.dataset.id; save("detective"); renderDetective(); focusEl($("#det-fb")); }));
+    const nx = $("#det-next");
+    if (nx) nx.addEventListener("click", () => { if (d.i < n - 1) d.i++; else d.done = true; save("detective"); renderTabs(); renderDetective(true); });
+    if (focus) focusEl($("#det-h"));
+  }
+
+  /* =================== Section 4 =================== */
+  const MKEYS = ["question", "ontology", "epistemology", "methodology", "methods", "claims"];
+  function renderMismatch(focus) {
+    const p = $("#panel-mismatch"), m = state.mismatch, SC = C.mismatch.scenarios, n = SC.length, L = C.mismatch.labels;
+    let body;
+    if (m.done) {
+      const first = SC.filter((s, i) => m.tried[i][0] === s.mismatch).length;
+      const second = SC.filter((s, i) => m.tried[i][0] !== s.mismatch && m.tried[i][1] === s.mismatch).length;
+      body = `${progress(n, n, "Scenario")}
+        <div class="card">
+          <h3 id="mis-end" tabindex="-1">You found ${first} of ${n} mismatches on the first attempt</h3>
+          <p>You found ${second} more on your second attempt, and ${n - first - second} ${n - first - second === 1 ? "was" : "were"} revealed.</p>
+          <ol style="padding-left:20px">${SC.map((s, i) => { const t = m.tried[i]; const r = t[0] === s.mismatch ? "First attempt" : t[1] === s.mismatch ? "Second attempt" : "Revealed"; return `<li>Mismatch in ${esc(L[s.mismatch])}. ${r}</li>`; }).join("")}</ol>
+          <div class="row"><button type="button" class="btn secondary" id="mis-retry">Try again</button><button type="button" class="btn" id="mis-on">Go to My research onion</button></div>
+        </div>`;
+    } else {
+      const s = SC[m.i], tried = m.tried[m.i], solved = tried.includes(s.mismatch), revealed = !solved && tried.length >= 2, finished = solved || revealed;
+      const last = tried[tried.length - 1];
+      const els = MKEYS.map(k => {
+        let cls = "", tag = "";
+        if (tried.includes(k) && k !== s.mismatch) { cls = "consistent"; tag = "Consistent"; }
+        if (k === s.mismatch && (solved || revealed)) { cls = "mismatch"; tag = solved ? "Mismatch found" : "Mismatch (revealed)"; }
+        return `<button type="button" class="el ${cls}" data-k="${k}" ${finished || tried.includes(k) ? "disabled" : ""}><span class="k"><span>${esc(L[k])}</span><span class="tag">${tag}</span></span><span class="v">${esc(s.elements[k])}</span></button>`;
+      }).join("");
+      let fb = "";
+      if (last) {
+        if (last === s.mismatch) {
+          fb = `<div class="fb ok" id="mis-fb" tabindex="-1" role="status"><p class="verdict">Correct. The ${esc(L[s.mismatch].toLowerCase())} is the mismatch.</p><p>${rich(s.why)}</p><p><strong>A coherent alternative</strong> ${rich(s.alternative)}</p></div>`;
+        } else {
+          fb = `<div class="fb bad" id="mis-fb" tabindex="-1" role="status"><p class="verdict">Not this one. The ${esc(L[last].toLowerCase())} is consistent.</p><p>${rich(s.consistent[last] || "")}</p>${revealed
+            ? `<p><strong>The mismatch was the ${esc(L[s.mismatch].toLowerCase())}.</strong> ${rich(s.why)}</p><p><strong>A coherent alternative</strong> ${rich(s.alternative)}</p>`
+            : `<p><strong>Try again.</strong> Choose another element.</p>`}</div>`;
+        }
+      }
+      body = `${progress(m.i + 1, n, "Scenario")}
+        <div class="card">
+          <h3 id="mis-h" tabindex="-1">Scenario ${m.i + 1}</h3>
+          <p id="mis-q" style="margin-top:0">Which element does not fit?</p>
+          <div class="els" role="group" aria-labelledby="mis-q">${els}</div>
+          ${fb}
+          ${finished ? `<div class="row"><button type="button" class="btn" id="mis-next">${m.i === n - 1 ? "See my score" : "Next scenario"}</button></div>` : ""}
+        </div>`;
+    }
+    p.innerHTML = `<h2 tabindex="-1">Spot the mismatch</h2><p class="lead">${rich(C.mismatch.intro)}</p>${body}`;
+    if (m.done) {
+      $("#mis-retry").addEventListener("click", () => { state.mismatch = blankMis(); save("mismatch"); renderTabs(); renderMismatch(true); });
+      $("#mis-on").addEventListener("click", () => { showTab("onion"); focusEl($("#panel-onion h2")); });
+      if (focus) focusEl($("#mis-end"));
+      return;
+    }
+    $$(".el", p).forEach(b => b.addEventListener("click", () => { m.tried[m.i].push(b.dataset.k); save("mismatch"); renderMismatch(); focusEl($("#mis-fb")); }));
+    const nx = $("#mis-next");
+    if (nx) nx.addEventListener("click", () => { if (m.i < n - 1) m.i++; else m.done = true; save("mismatch"); renderTabs(); renderMismatch(true); });
+    if (focus) focusEl($("#mis-h"));
+  }
+
+  /* =================== Section 5 =================== */
+  const OS = C.onion.steps, NSTEPS = OS.length;
+  function stepDone(i) {
+    const o = state.onion, k = OS[i].key;
+    if (k === "topic") return !!(o.title.trim() || o.question.trim());
+    if (k === "strategy") return o.strategy.length > 0;
+    if (k === "techniques") return !!o.techniques.trim();
+    return !!o[k];
+  }
+  function optLabel(stepKey, id) { const s = OS.find(x => x.key === stepKey); const op = s && s.options && s.options.find(x => x.id === id); return op ? op.label : ""; }
+  function choiceText(i) {
+    const o = state.onion, s = OS[i];
+    if (s.key === "topic") return o.title || o.question;
+    if (s.key === "strategy") return o.strategy.map(id => optLabel("strategy", id)).join(", ");
+    if (s.key === "techniques") return o.techniques;
+    return optLabel(s.key, o[s.key]);
+  }
+  function onionPrompts() {
+    const o = state.onion;
+    return C.onion.checks.filter(r => Object.keys(r.if).every(k => {
+      const v = r.if[k];
+      if (k === "techniques") return new RegExp(v, "i").test(o.techniques || "");
+      const vals = Array.isArray(v) ? v : [v], cur = o[k];
+      if (Array.isArray(cur)) return cur.some(x => vals.includes(x));
+      return vals.includes(cur);
+    })).map(r => r.text);
+  }
+  function onionSVG() {
+    const o = state.onion, cx = 160, cy = 160, ringSteps = OS.map((s, i) => i).filter(i => OS[i].ring);
+    let out = "";
+    ringSteps.forEach((si, k) => {
+      const r = 150 - k * 22, cur = o.step === si, dn = stepDone(si);
+      const fill = cur ? "var(--accent)" : dn ? "var(--accent-soft)" : "var(--surface-2)";
+      out += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${cur ? "var(--text)" : "var(--border)"}" stroke-width="${cur ? 3 : 1.5}"/>`;
+    });
+    ringSteps.forEach((si, k) => {
+      const r = 150 - k * 22, cur = o.step === si, dn = stepDone(si), last = k === ringSteps.length - 1;
+      const ty = last ? cy + 5 : cy - r + 15;
+      out += `<text x="${cx}" y="${ty}" text-anchor="middle" font-size="12" font-weight="700" fill="${cur ? "var(--accent-ink)" : "var(--text)"}">${si + 1}${dn && !cur ? " ✓" : ""}</text>`;
+    });
+    const desc = OS.map((s, i) => `Step ${i + 1} ${s.short}, ${o.step === i ? "current" : stepDone(i) ? "done" : "to do"}`).join(". ");
+    return `<svg viewBox="0 0 320 320" role="img" aria-label="Research onion progress. ${esc(desc)}"><title>Research onion progress</title>${out}</svg>`;
+  }
+  function renderOnionSide() {
+    const o = state.onion;
+    $("#onion-svg").innerHTML = onionSVG();
+    const items = OS.map((s, i) => {
+      const st = o.step === i ? "Current" : stepDone(i) ? "Done" : "To do";
+      return `<li><button type="button" data-step="${i}" ${o.step === i ? 'aria-current="step"' : ""}><span class="num" aria-hidden="true">${i + 1}</span><span><span class="sr">Step ${i + 1}, </span>${esc(s.short)}</span><span class="st">${st}</span></button></li>`;
+    });
+    items.push(`<li><button type="button" data-step="${NSTEPS}" ${o.step === NSTEPS ? 'aria-current="step"' : ""}><span class="num" aria-hidden="true">✓</span><span>Summary</span><span class="st">${o.step === NSTEPS ? "Current" : ""}</span></button></li>`);
+    $("#onion-steps").innerHTML = items.join("");
+    $$("#onion-steps button").forEach(b => b.addEventListener("click", () => goStep(+b.dataset.step)));
+  }
+  function goStep(i) { state.onion.step = i; save("onion"); renderTabs(); renderOnionMain(true); renderOnionSide(); }
+  function promptsHTML() {
+    const ps = onionPrompts();
+    return ps.length ? `<div class="note prompts"><strong>Things to consider</strong><ul>${ps.map(t => `<li>${esc(t)}</li>`).join("")}</ul><p style="margin:6px 0 0;font-size:.9rem">These are prompts, not errors. Some combinations can be justified.</p></div>` : "";
+  }
+  function refreshPrompts() { const el = $("#onion-prompts"); if (el) el.innerHTML = promptsHTML(); renderOnionSide(); }
+
+  function summaryText() {
+    const o = state.onion, lines = ["MY RESEARCH ONION", ""];
+    lines.push("Working title: " + (o.title.trim() || "(not yet written)"));
+    lines.push("Research question: " + (o.question.trim() || "(not yet written)"));
+    OS.forEach((s, i) => {
+      if (s.key === "topic") return;
+      lines.push("");
+      lines.push(`${i + 1}. ${s.title}`);
+      lines.push("   Choice: " + (choiceText(i) || "(not yet chosen)").replace(/\n/g, "\n   "));
+      const j = (o.just[s.key] || "").trim();
+      lines.push("   Justification: " + (j || "(not yet written)").replace(/\n/g, "\n   "));
+    });
+    const ps = onionPrompts();
+    if (ps.length) { lines.push("", "Points to consider"); ps.forEach(t => lines.push("- " + t)); }
+    lines.push("", C.onion.reminder);
+    return lines.join("\n");
+  }
+
+  function renderOnionMain(focus) {
+    const o = state.onion, main = $("#onion-main");
+    if (o.step >= NSTEPS) {
+      main.innerHTML = `<div class="card">
+        <h3 id="on-h" tabindex="-1">Summary</h3>
+        <p>Here are your choices and justifications. Use the step list to go back and edit anything.</p>
+        <label class="fl" for="onion-summary-text">Your research onion summary</label>
+        <textarea id="onion-summary-text" class="summary-text" readonly>${esc(summaryText())}</textarea>
+        <div class="row"><button type="button" class="btn" id="on-copy">Copy to clipboard</button><button type="button" class="btn secondary" id="on-dl">Download as text file</button></div>
+        <p class="status" id="on-status" role="status" aria-live="polite"></p>
+        <p class="note">${rich(C.onion.reminder)}</p>
+        <div class="row split"><button type="button" class="btn secondary" id="on-back">Back</button><button type="button" class="btn danger" id="on-reset">Start again</button></div>
+        <div id="on-confirm"></div>
+      </div>`;
+      $("#on-copy").addEventListener("click", copySummary);
+      $("#on-dl").addEventListener("click", downloadSummary);
+      $("#on-back").addEventListener("click", () => goStep(NSTEPS - 1));
+      $("#on-reset").addEventListener("click", showResetConfirm);
+      if (focus) focusEl($("#on-h"));
+      return;
+    }
+    const s = OS[o.step];
+    let inner = "";
+    if (s.key === "topic") {
+      inner = `<label class="fl" for="on-title">Working title</label><input type="text" id="on-title" value="${esc(o.title)}" autocomplete="off">
+        <label class="fl" for="on-question">Research question</label><textarea id="on-question">${esc(o.question)}</textarea>
+        <p class="tip"><strong>Tip.</strong> ${rich(s.tip)}</p>`;
+    } else if (s.type === "text") {
+      inner = `<label class="fl" for="on-tech">Data collection and analysis</label><textarea id="on-tech">${esc(o.techniques)}</textarea>
+        <p class="tip"><strong>Tip.</strong> ${rich(s.tip)}</p>`;
+    } else {
+      const multi = s.type === "multi";
+      inner = `<fieldset><legend class="sr">${esc(s.title)} options</legend>${s.options.map(op => {
+        const checked = multi ? o.strategy.includes(op.id) : o[s.key] === op.id;
+        const badge = s.key === "philosophy" ? `<span class="dot p-${op.id}" aria-hidden="true" style="margin-right:6px"></span>` : "";
+        return `<label class="opt"><input type="${multi ? "checkbox" : "radio"}" name="on-${s.key}" value="${op.id}" ${checked ? "checked" : ""}><span class="ol">${badge}${esc(op.label)}<small>${esc(op.desc)}</small><span class="ex"><em>Example.</em> ${esc(op.ex)}</span></span></label>`;
+      }).join("")}</fieldset>`;
+    }
+    const justify = s.key !== "topic" ? `<label class="fl" for="on-just">${esc(C.onion.justifyPrompt)}</label><textarea id="on-just">${esc(o.just[s.key] || "")}</textarea>` : "";
+    main.innerHTML = `<div class="card">
+      ${progress(o.step + 1, NSTEPS, "Step")}
+      <h3 id="on-h" tabindex="-1">Step ${o.step + 1}. ${esc(s.title)}</h3>
+      <p>${rich(s.text)}</p>
+      ${inner}
+      ${justify}
+      <div id="onion-prompts" aria-live="polite">${promptsHTML()}</div>
+      <div class="row split">
+        <button type="button" class="btn secondary" id="on-prev" ${o.step === 0 ? "disabled" : ""}>Back</button>
+        <button type="button" class="btn" id="on-next">${o.step === NSTEPS - 1 ? "See summary" : "Next"}</button>
+      </div>
+    </div>`;
+    const bind = (id, fn) => { const el = $("#" + id); if (el) el.addEventListener("input", () => { fn(el.value); save("onion"); refreshPrompts(); }); };
+    bind("on-title", v => o.title = v);
+    bind("on-question", v => o.question = v);
+    bind("on-tech", v => o.techniques = v);
+    bind("on-just", v => o.just[s.key] = v);
+    $$(`input[name="on-${s.key}"]`, main).forEach(inp => inp.addEventListener("change", () => {
+      if (s.type === "multi") o.strategy = $$(`input[name="on-${s.key}"]:checked`, main).map(x => x.value);
+      else o[s.key] = inp.value;
+      save("onion"); refreshPrompts();
+    }));
+    $("#on-prev").addEventListener("click", () => { if (o.step > 0) goStep(o.step - 1); });
+    $("#on-next").addEventListener("click", () => goStep(o.step + 1));
+    if (focus) focusEl($("#on-h"));
+  }
+  function setStatus(t) { const el = $("#on-status"); if (el) { el.textContent = ""; setTimeout(() => { el.textContent = t; }, 30); } }
+  async function copySummary() {
+    const ta = $("#onion-summary-text"), txt = ta.value;
+    let ok = false;
+    try { if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(txt); ok = true; } } catch (e) { ok = false; }
+    if (!ok) {
+      ta.focus(); ta.select();
+      try { ta.setSelectionRange(0, txt.length); } catch (e) { /* ignore */ }
+      try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    }
+    setStatus(ok ? "Copied to clipboard." : "Copying was blocked, so the text has been selected. Press Ctrl+C or Cmd+C, or long-press to copy it.");
+  }
+  function downloadSummary() {
+    try {
+      const blob = new Blob([summaryText()], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob), a = document.createElement("a");
+      a.href = url; a.download = "my-research-onion.txt";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      setStatus("Download started. If nothing happened, use Copy to clipboard instead.");
+    } catch (e) {
+      setStatus("Downloading is not available here. Use Copy to clipboard instead.");
+    }
+  }
+  function showResetConfirm() {
+    const box = $("#on-confirm");
+    box.innerHTML = `<div class="confirm" role="group" aria-labelledby="conf-t"><p id="conf-t">Clear all your onion choices and start again?</p><div class="row" style="margin-top:0"><button type="button" class="btn danger" id="conf-yes">Yes, clear everything</button><button type="button" class="btn secondary" id="conf-no">Cancel</button></div></div>`;
+    $("#conf-yes").addEventListener("click", () => { state.onion = blankOnion(); store.del("onion"); renderTabs(); renderOnion(true); });
+    $("#conf-no").addEventListener("click", () => { box.innerHTML = ""; focusEl($("#on-reset")); });
+    focusEl($("#conf-no"));
+  }
+  function renderOnion(focus) {
+    $("#panel-onion").innerHTML = `<h2 tabindex="-1">My research onion</h2><p class="lead">${rich(C.onion.intro)}</p>
+      <div class="onion-layout">
+        <div class="onion-side card"><div class="onion-svg" id="onion-svg"></div><nav aria-label="Onion steps"><ol class="steps" id="onion-steps"></ol></nav></div>
+        <div id="onion-main"></div>
+      </div>`;
+    renderOnionSide();
+    renderOnionMain(focus);
+  }
+
+  /* ---- Boot ---- */
+  renderIntro(); renderStance(); renderDetective(); renderMismatch(); renderOnion();
+  showTab(currentTab);
+})();
+</script>
+</body>
+</html>
