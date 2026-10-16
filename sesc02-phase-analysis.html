@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qualitative Phase Analysis</title>
+<style>
+  :root{
+    --navy:#003d50; --navy-dark:#002c3a; --teal:#00857e; --blue:#0071bc; --blue-dark:#00568f;
+    --plum:#8b3556; --plum-dark:#682840; --bg:#f7fbfd; --soft:#f8fcfe; --tealsoft:#f2faf9;
+    --line:#d9e2e7; --edge:#abd6d9; --ink:#1d1d1b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#ffffff;color:var(--ink);font-family:Arial,Helvetica,sans-serif;line-height:1.58}
+  main{max-width:1220px;margin:0 auto;padding:1.4rem;background:var(--bg);border:2px solid var(--edge);border-radius:1rem}
+  header{background:var(--navy);color:#fff;padding:2.2rem 2rem;border-radius:.9rem .9rem 0 0;border-bottom:.4rem solid var(--teal)}
+  .badge{display:inline-block;background:#fff;color:var(--navy);padding:.35rem .85rem;margin:0 0 .8rem;font-size:.88em;border-left:.35rem solid var(--blue);border-radius:.65rem;font-weight:bold}
+  h1{margin:0 0 .4rem;font-size:2.1em;line-height:1.18}
+  header p{margin:0;font-size:1.05em}
+  .bar{background:#fff;padding:1.1rem;margin-bottom:1.5rem;border:1px solid var(--line);border-top:0;border-radius:0 0 .9rem .9rem}
+  .row{display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end}
+  label{font-weight:bold;color:var(--navy);font-size:.92em;display:block;margin-bottom:.25rem}
+  input[type=text],input[type=number],textarea,select{width:100%;font:inherit;font-size:.95em;padding:.5rem .6rem;border:1px solid #b9c7cf;border-radius:.5rem;background:#fff;color:var(--ink)}
+  textarea{min-height:5.6rem;resize:vertical}
+  input:focus,textarea:focus,select:focus{outline:3px solid var(--edge);border-color:var(--teal)}
+  .field{flex:1 1 220px}
+  .choice{display:flex;gap:.5rem;flex-wrap:wrap}
+  .btn{font:inherit;font-weight:bold;cursor:pointer;border:0;color:#fff;padding:.65rem 1rem;border-radius:.75rem;min-height:2.75rem}
+  .btn.navy{background:var(--navy);border-bottom:.22rem solid var(--navy-dark)}
+  .btn.plum{background:var(--plum);border-bottom:.22rem solid var(--plum-dark)}
+  .btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+  .mv{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+  .mv[aria-pressed=true]{background:var(--navy);color:#fff}
+  .tabs{display:flex;gap:.6rem;flex-wrap:wrap;margin:0 0 1rem}
+  .tab{flex:1 1 200px;background:#fff;color:var(--navy);border:2px solid var(--line);border-bottom:.25rem solid var(--line)}
+  .tab[aria-selected=true]{background:var(--teal);color:#fff;border-color:var(--teal);border-bottom-color:#00655f}
+  section.panel{background:#fff;border:1px solid var(--line);border-radius:1rem;overflow:hidden;margin-bottom:1.5rem}
+  .panel-head{color:#fff;padding:1.2rem 1.6rem}
+  .panel-head h2{margin:0;font-size:1.45em}
+  .panel-head .badge{font-size:.82em;margin-bottom:.45rem}
+  .panel-body{padding:1.5rem}
+  .intro{margin-top:0}
+  .tip{background:var(--tealsoft);border-left:.4rem solid var(--teal);padding:.9rem 1rem;border-radius:.75rem;margin:0 0 1.2rem}
+  .warn{background:#fbf4f7;border-left:.4rem solid var(--plum);padding:.9rem 1rem;border-radius:.75rem;margin:0 0 1.2rem}
+  .tip p,.warn p{margin:0}
+  .phase{border:1px solid var(--line);border-left:.45rem solid var(--blue);border-radius:.75rem;padding:1rem 1.1rem;margin-bottom:1rem}
+  .phase.stance{border-left-color:var(--teal)}
+  .phase.swing{border-left-color:var(--blue)}
+  .phase-top{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;align-items:baseline;margin-bottom:.6rem}
+  .phase-top h3{margin:0;color:var(--navy);font-size:1.15em}
+  .group{font-size:.8em;font-weight:bold;color:#fff;background:var(--teal);padding:.15rem .55rem;border-radius:.5rem}
+  .swing .group{background:var(--blue)}
+  .events{color:var(--navy)}
+  .job{margin:.1rem 0 .8rem}
+  .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem}
+  .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}
+  table{width:100%;border-collapse:collapse;margin:.4rem 0 1rem;font-size:.95em}
+  th,td{border:1px solid var(--line);padding:.45rem .5rem;text-align:left;vertical-align:middle}
+  th{background:var(--soft);color:var(--navy)}
+  td input{min-width:5.5rem}
+  .out{font-weight:bold;color:var(--navy);white-space:nowrap}
+  .tablewrap{overflow-x:auto}
+  .results{display:flex;flex-wrap:wrap;gap:.75rem;margin:.5rem 0 1rem}
+  .stat{flex:1 1 170px;background:var(--soft);border:1px solid var(--line);border-top:.3rem solid var(--teal);border-radius:.75rem;padding:.75rem .9rem}
+  .stat span{display:block;font-size:.85em;color:#46535a}
+  .stat strong{font-size:1.45em;color:var(--navy)}
+  .err{color:var(--plum);font-weight:bold;font-size:.9em;margin:.25rem 0 0}
+  .count{font-size:.88em;margin:.3rem 0 0;color:#46535a}
+  .count.over{color:var(--plum);font-weight:bold}
+  .actions{display:flex;gap:.75rem;flex-wrap:wrap;justify-content:flex-end;margin-top:.5rem}
+  .hidden{display:none !important}
+  .print-only{display:none}
+  footer{text-align:center;padding:1rem;color:#46535a;font-size:.88em}
+  @media (max-width:760px){
+    main{padding:.75rem;border-radius:.6rem}
+    header{padding:1.5rem 1.1rem}
+    h1{font-size:1.6em}
+    .panel-body{padding:1rem}
+    .grid3,.grid2{grid-template-columns:1fr}
+  }
+  @media print{
+    body{background:#fff}
+    main{border:0;padding:0;max-width:none;background:#fff}
+    header{padding:1rem 1.2rem}
+    .tabs,.actions,.no-print,.tip,.warn{display:none !important}
+    .panel-tab{display:block !important}
+    section.panel{break-inside:auto;border:1px solid #999}
+    .phase{break-inside:avoid}
+    textarea{border:1px solid #999;min-height:0;height:auto;overflow:visible}
+    .print-only{display:block}
+    input,textarea,select{border-color:#999}
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="badge">SESC02</p>
+    <h1>Qualitative Phase Analysis</h1>
+    <p>Split a movement into phases, time them and turn what you see into a coaching cue.</p>
+  </header>
+
+  <div class="bar">
+    <div class="row">
+      <div class="field">
+        <label for="names">Your names</label>
+        <input type="text" id="names" data-save placeholder="e.g. Sam Jones and Alex Patel">
+      </div>
+      <div class="field">
+        <label for="athlete">Who you analysed and which clip</label>
+        <input type="text" id="athlete" data-save placeholder="e.g. Alex, 20 m sprint, trial 2">
+      </div>
+      <div class="field no-print" style="flex:0 1 auto">
+        <span style="font-weight:bold;color:var(--navy);font-size:.92em;display:block;margin-bottom:.25rem">Movement</span>
+        <div class="choice" role="group" aria-label="Choose a movement">
+          <button type="button" class="btn mv" data-mv="sprint" aria-pressed="true">Sprint</button>
+          <button type="button" class="btn mv" data-mv="squat" aria-pressed="false">Squat</button>
+        </div>
+      </div>
+      <p class="print-only" id="printMv"></p>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="Tool sections">
+    <button type="button" class="btn tab" role="tab" id="tab-1" aria-controls="p-1" aria-selected="true">1. Phase table</button>
+    <button type="button" class="btn tab" role="tab" id="tab-2" aria-controls="p-2" aria-selected="false">2. Timings</button>
+    <button type="button" class="btn tab" role="tab" id="tab-3" aria-controls="p-3" aria-selected="false">3. Coaching cue</button>
+  </div>
+
+  <!-- PANEL 1 -->
+  <section class="panel panel-tab" id="p-1" role="tabpanel" aria-labelledby="tab-1">
+    <div class="panel-head" style="background:var(--teal)">
+      <p class="badge" style="color:var(--teal);border-left-color:var(--navy)">Step 1</p>
+      <h2>Phase table</h2>
+    </div>
+    <div class="panel-body">
+      <p class="intro">Each phase has its own job and starts and ends at a clear moment you can spot on video (a <strong>key event</strong>). Watch your clip, find each key event, then fill in what you see in that phase.</p>
+      <div class="tip"><p><strong>Remember:</strong> phases help you look closely, but the movement still works as one whole. Think about how each phase sets up the next one.</p></div>
+      <div id="phases"></div>
+    </div>
+  </section>
+
+  <!-- PANEL 2 -->
+  <section class="panel panel-tab hidden" id="p-2" role="tabpanel" aria-labelledby="tab-2">
+    <div class="panel-head" style="background:var(--blue)">
+      <p class="badge" style="color:var(--blue);border-left-color:var(--navy)">Step 2</p>
+      <h2>Timings</h2>
+    </div>
+    <div class="panel-body">
+      <p class="intro">Scroll through your video and note the time (in seconds) at each key event, e.g. <strong>1.230</strong>. The tool does the maths.</p>
+      <div class="warn">
+        <p><strong>Using slow-mo playback on a phone?</strong> The clip plays slower than real life, so the times on screen are stretched. Enter how many times slower it plays (often 8 for 240 fps, 4 for 120 fps). If you are using Quintic or Kinovea, leave this as 1.</p>
+      </div>
+      <div class="row" style="margin-bottom:1rem">
+        <div class="field" style="flex:0 1 260px">
+          <label for="slow">Video slowed down by (×)</label>
+          <input type="number" id="slow" data-save min="1" step="1" value="1">
+        </div>
+      </div>
+
+      <div id="t-sprint">
+        <p style="margin-top:0"><strong>For each step:</strong> touchdown and toe-off of one foot, then touchdown of the <em>other</em> foot.</p>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Step</th><th>Touchdown (s)</th><th>Toe-off (s)</th><th>Other foot touchdown (s)</th><th>Contact time</th><th>Flight time</th></tr></thead>
+            <tbody id="sprintRows"></tbody>
+          </table>
+        </div>
+        <div class="row" style="margin-bottom:.5rem">
+          <div class="field" style="flex:0 1 260px">
+            <label for="steplen">Step length in metres (optional)</label>
+            <input type="number" id="steplen" data-save min="0" step="0.01" placeholder="e.g. 1.85">
+          </div>
+        </div>
+        <p class="count" style="margin-top:0">Step length is the distance from one foot's contact to the other foot's contact. Measure it from marks or cones on the track.</p>
+        <div class="results" id="sprintResults"></div>
+        <div id="sprintErr"></div>
+      </div>
+
+      <div id="t-squat" class="hidden">
+        <p style="margin-top:0"><strong>For each rep:</strong> the first downward movement, the lowest point, and when they are standing tall again.</p>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Rep</th><th>Start moving down (s)</th><th>Lowest point (s)</th><th>Standing tall (s)</th><th>Descent time</th><th>Ascent time</th></tr></thead>
+            <tbody id="squatRows"></tbody>
+          </table>
+        </div>
+        <div class="row" style="margin-bottom:.5rem">
+          <div class="field" style="flex:0 1 260px">
+            <label for="kneeang">Knee angle at the lowest point in degrees (optional)</label>
+            <input type="number" id="kneeang" data-save min="0" max="180" step="1" placeholder="e.g. 95">
+          </div>
+        </div>
+        <div class="results" id="squatResults"></div>
+        <div id="squatErr"></div>
+      </div>
+
+      <label for="timeNotes">What do the numbers tell you?</label>
+      <textarea id="timeNotes" data-save placeholder="e.g. Are the steps or reps consistent? Does anything change from one to the next?"></textarea>
+    </div>
+  </section>
+
+  <!-- PANEL 3 -->
+  <section class="panel panel-tab hidden" id="p-3" role="tabpanel" aria-labelledby="tab-3">
+    <div class="panel-head" style="background:var(--plum)">
+      <p class="badge" style="color:var(--plum);border-left-color:var(--navy)">Step 3</p>
+      <h2>Coaching cue</h2>
+    </div>
+    <div class="panel-body">
+      <p class="intro">Pick one thing you would change and turn it into a cue the athlete could use straight away.</p>
+      <div class="tip"><p><strong>A good cue</strong> is short (six words or fewer), says what to do rather than what not to do, and makes it clear which body part does it and how they will know it worked (Bartlett, 2007).</p></div>
+      <div class="grid2">
+        <div>
+          <label for="cuePhase">Which phase?</label>
+          <select id="cuePhase" data-save></select>
+        </div>
+        <div>
+          <label for="fault">What did you see?</label>
+          <input type="text" id="fault" data-save placeholder="Describe the fault in one sentence">
+        </div>
+      </div>
+      <div style="margin-top:.75rem">
+        <label for="why">Why does it matter for performance?</label>
+        <textarea id="why" data-save placeholder="Link it back to the job of that phase"></textarea>
+      </div>
+      <div style="margin-top:.75rem">
+        <label for="cue">Your cue</label>
+        <input type="text" id="cue" data-save placeholder="Six words or fewer">
+        <p class="count" id="cueCount">0 words</p>
+      </div>
+      <div style="margin-top:.75rem">
+        <label for="check">How would you check whether the cue worked?</label>
+        <textarea id="check" data-save placeholder="e.g. Film again and compare the same key event or timing"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <div class="actions no-print">
+    <button type="button" class="btn ghost" id="clearBtn">Clear everything</button>
+    <button type="button" class="btn plum" id="printBtn">Save as PDF</button>
+  </div>
+  <p class="count no-print" style="text-align:right">"Save as PDF" opens your print window. Choose <strong>Save as PDF</strong> as the printer. All three steps are included.</p>
+
+  <footer>SESC02 | Plymouth Marjon University</footer>
+</main>
+
+<script>
+(function(){
+  var KEY = 'sesc02-phase-analysis-v1';
+  var PHASES = {
+    sprint: [
+      {id:'brake', group:'Stance', cls:'stance', name:'Braking', events:'Touchdown → midstance (hip roughly over the foot)', job:'Absorb the landing and keep the loss of forward speed small.'},
+      {id:'prop', group:'Stance', cls:'stance', name:'Propulsion', events:'Midstance → toe-off', job:'Push the body forwards off the ground.'},
+      {id:'early', group:'Swing', cls:'swing', name:'Early swing', events:'Toe-off → maximum knee flexion', job:'Fold the leg up so it is quicker to swing through.'},
+      {id:'mid', group:'Swing', cls:'swing', name:'Mid swing', events:'Maximum knee flexion → maximum hip flexion', job:'Drive the thigh forwards and up.'},
+      {id:'late', group:'Swing', cls:'swing', name:'Late swing', events:'Maximum hip flexion → touchdown', job:'Bring the foot down and back, ready for the next contact.'}
+    ],
+    squat: [
+      {id:'desc', group:'Down', cls:'stance', name:'Descent', events:'First downward movement → lowest point', job:'Lower the body under control (muscles lengthening, eccentric).'},
+      {id:'trans', group:'Bottom', cls:'swing', name:'Transition', events:'The lowest point', job:'Stop moving down and change direction.'},
+      {id:'asc', group:'Up', cls:'stance', name:'Ascent', events:'Lowest point → standing tall', job:'Drive the body back up (muscles shortening, concentric).'}
+    ]
+  };
+  var state = {};
+  function load(){ try{ state = JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ state = {}; } }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+  load();
+  var mv = state.__mv === 'squat' ? 'squat' : 'sprint';
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  function renderPhases(){
+    var html = '';
+    PHASES[mv].forEach(function(p){
+      var k = mv + '-' + p.id;
+      html += '<div class="phase ' + p.cls + '">' +
+        '<div class="phase-top"><h3>' + esc(p.name) + '</h3><span class="group">' + esc(p.group) + '</span><span class="events"><strong>Key events:</strong> ' + esc(p.events) + '</span></div>' +
+        '<p class="job"><strong>Job of this phase:</strong> ' + esc(p.job) + '</p>' +
+        '<div class="grid3">' +
+          '<div><label for="' + k + '-joints">Joint actions (hip, knee, ankle)</label><textarea id="' + k + '-joints" data-save placeholder="Say whether each joint is flexing or extending, and in which plane"></textarea></div>' +
+          '<div><label for="' + k + '-muscles">Main muscles and how they work</label><textarea id="' + k + '-muscles" data-save placeholder="Which muscles, and are they lengthening (eccentric), shortening (concentric) or holding (isometric)?"></textarea></div>' +
+          '<div><label for="' + k + '-look">What a coach would look for</label><textarea id="' + k + '-look" data-save placeholder="One or two key things you can see on video"></textarea></div>' +
+        '</div></div>';
+    });
+    document.getElementById('phases').innerHTML = html;
+    var sel = document.getElementById('cuePhase');
+    sel.innerHTML = '<option value="">Choose a phase</option>' + PHASES[mv].map(function(p){ return '<option>' + esc(p.name) + '</option>'; }).join('');
+    bindFields(document.getElementById('phases'));
+    var cueKey = mv + '-cuePhase';
+    sel.value = state[cueKey] || '';
+  }
+
+  function rowsHTML(prefix, label){
+    var h = '';
+    for (var i = 1; i <= 3; i++){
+      h += '<tr><td>' + label + ' ' + i + '</td>' +
+        '<td><input type="text" inputmode="decimal" id="' + prefix + i + 'a" data-save aria-label="' + label + ' ' + i + ' first time"></td>' +
+        '<td><input type="text" inputmode="decimal" id="' + prefix + i + 'b" data-save aria-label="' + label + ' ' + i + ' second time"></td>' +
+        '<td><input type="text" inputmode="decimal" id="' + prefix + i + 'c" data-save aria-label="' + label + ' ' + i + ' third time"></td>' +
+        '<td class="out" id="' + prefix + i + 'o1">–</td><td class="out" id="' + prefix + i + 'o2">–</td></tr>';
+    }
+    return h;
+  }
+  document.getElementById('sprintRows').innerHTML = rowsHTML('sp', 'Step');
+  document.getElementById('squatRows').innerHTML = rowsHTML('sq', 'Rep');
+
+  // accepts 1.230, 1,230 or m:ss.sss
+  function parseTime(v){
+    v = String(v || '').trim().replace(',', '.');
+    if (!v) return null;
+    if (v.indexOf(':') > -1){
+      var parts = v.split(':');
+      if (parts.length !== 2) return NaN;
+      var m = parseFloat(parts[0]), s = parseFloat(parts[1]);
+      if (isNaN(m) || isNaN(s)) return NaN;
+      return m * 60 + s;
+    }
+    var n = Number(v);
+    return isNaN(n) ? NaN : n;
+  }
+  function f3(x){ return x.toFixed(3) + ' s'; }
+  function mean(a){ return a.reduce(function(s,x){return s+x;},0) / a.length; }
+  function stat(label, value){ return '<div class="stat"><span>' + label + '</span><strong>' + value + '</strong></div>'; }
+
+  function calc(){
+    var slow = parseFloat(document.getElementById('slow').value);
+    if (!(slow >= 1)) slow = 1;
+    var isSprint = mv === 'sprint';
+    var p = isSprint ? 'sp' : 'sq';
+    var o1s = [], o2s = [], errs = [];
+    for (var i = 1; i <= 3; i++){
+      var a = parseTime(document.getElementById(p+i+'a').value);
+      var b = parseTime(document.getElementById(p+i+'b').value);
+      var c = parseTime(document.getElementById(p+i+'c').value);
+      var o1 = document.getElementById(p+i+'o1'), o2 = document.getElementById(p+i+'o2');
+      o1.textContent = '–'; o2.textContent = '–';
+      if ([a,b,c].some(function(x){ return Number.isNaN(x); })){ errs.push((isSprint?'Step ':'Rep ') + i + ': one of the times is not a number. Use seconds, e.g. 1.230.'); continue; }
+      if (a !== null && b !== null){
+        if (b <= a){ errs.push((isSprint?'Step ':'Rep ') + i + ': the second time must be later than the first.'); }
+        else { var d1 = (b - a) / slow; o1s.push(d1); o1.textContent = f3(d1); }
+      }
+      if (b !== null && c !== null){
+        if (c <= b){ errs.push((isSprint?'Step ':'Rep ') + i + ': the third time must be later than the second.'); }
+        else { var d2 = (c - b) / slow; o2s.push(d2); o2.textContent = f3(d2); }
+      }
+    }
+    var out = '';
+    if (isSprint){
+      if (o1s.length) out += stat('Average contact time', f3(mean(o1s)));
+      if (o2s.length) out += stat('Average flight time', f3(mean(o2s)));
+      var steps = [];
+      for (var j = 1; j <= 3; j++){
+        var A = parseTime(document.getElementById('sp'+j+'a').value), C = parseTime(document.getElementById('sp'+j+'c').value);
+        if (A !== null && C !== null && !Number.isNaN(A) && !Number.isNaN(C) && C > A) steps.push((C - A) / slow);
+      }
+      if (steps.length){
+        var st = mean(steps), freq = 1 / st;
+        out += stat('Average step time', f3(st));
+        out += stat('Steps per second', freq.toFixed(2) + ' Hz');
+        var sl = parseFloat(document.getElementById('steplen').value);
+        if (sl > 0) out += stat('Speed (step length × steps per second)', (sl * freq).toFixed(2) + ' m/s');
+      }
+      document.getElementById('sprintResults').innerHTML = out;
+      document.getElementById('sprintErr').innerHTML = errs.map(function(e){ return '<p class="err">' + esc(e) + '</p>'; }).join('');
+    } else {
+      if (o1s.length) out += stat('Average descent time', f3(mean(o1s)));
+      if (o2s.length) out += stat('Average ascent time', f3(mean(o2s)));
+      if (o1s.length && o2s.length && o1s.length === o2s.length) out += stat('Average total time', f3(mean(o1s) + mean(o2s)));
+      var ka = parseFloat(document.getElementById('kneeang').value);
+      if (ka > 0) out += stat('Knee angle at lowest point', Math.round(ka) + '°');
+      document.getElementById('squatResults').innerHTML = out;
+      document.getElementById('squatErr').innerHTML = errs.map(function(e){ return '<p class="err">' + esc(e) + '</p>'; }).join('');
+    }
+  }
+
+  function cueCount(){
+    var v = document.getElementById('cue').value.trim();
+    var n = v ? v.split(/\s+/).length : 0;
+    var el = document.getElementById('cueCount');
+    el.textContent = n + (n === 1 ? ' word' : ' words') + (n > 6 ? ' – try to cut it to six or fewer' : '');
+    el.className = 'count' + (n > 6 ? ' over' : '');
+  }
+
+  function keyFor(el){
+    // cue phase is stored per movement because the options differ
+    return el.id === 'cuePhase' ? mv + '-cuePhase' : el.id;
+  }
+  function bindFields(scope){
+    scope.querySelectorAll('[data-save]').forEach(function(el){
+      var k = keyFor(el);
+      if (state[k] !== undefined && el.id !== 'cuePhase') el.value = state[k];
+      if (el.__bound) return;
+      el.__bound = true;
+      el.addEventListener('input', function(){
+        state[keyFor(el)] = el.value; save();
+        calc(); cueCount();
+      });
+      el.addEventListener('change', function(){ state[keyFor(el)] = el.value; save(); });
+    });
+  }
+
+  function setMovement(m){
+    mv = m; state.__mv = m; save();
+    document.querySelectorAll('.mv').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-mv') === m)); });
+    document.getElementById('t-sprint').classList.toggle('hidden', m !== 'sprint');
+    document.getElementById('t-squat').classList.toggle('hidden', m !== 'squat');
+    document.getElementById('printMv').innerHTML = '<strong>Movement:</strong> ' + (m === 'sprint' ? 'Sprint' : 'Squat');
+    renderPhases(); calc();
+  }
+  document.querySelectorAll('.mv').forEach(function(b){
+    b.addEventListener('click', function(){ setMovement(b.getAttribute('data-mv')); });
+  });
+
+  var tabs = document.querySelectorAll('.tab');
+  function showTab(n){
+    tabs.forEach(function(t, i){
+      var on = (i + 1) === n;
+      t.setAttribute('aria-selected', String(on));
+      document.getElementById('p-' + (i + 1)).classList.toggle('hidden', !on);
+    });
+    try{ localStorage.setItem(KEY + '-tab', String(n)); }catch(e){}
+  }
+  tabs.forEach(function(t, i){ t.addEventListener('click', function(){ showTab(i + 1); }); });
+
+  document.getElementById('printBtn').addEventListener('click', function(){
+    document.querySelectorAll('.panel-tab').forEach(function(p){ p.classList.remove('hidden'); });
+    window.print();
+    var n = 1; tabs.forEach(function(t, i){ if (t.getAttribute('aria-selected') === 'true') n = i + 1; });
+    showTab(n);
+  });
+  document.getElementById('clearBtn').addEventListener('click', function(){
+    if (!window.confirm('Clear everything you have typed on this page?')) return;
+    state = {}; save();
+    document.querySelectorAll('[data-save]').forEach(function(el){ el.value = el.id === 'slow' ? '1' : ''; });
+    setMovement('sprint'); cueCount();
+  });
+
+  bindFields(document);
+  setMovement(mv);
+  cueCount();
+  var startTab = 1;
+  try{ startTab = parseInt(localStorage.getItem(KEY + '-tab'), 10) || 1; }catch(e){}
+  showTab(startTab >= 1 && startTab <= 3 ? startTab : 1);
+})();
+</script>
+</body>
+</html>
