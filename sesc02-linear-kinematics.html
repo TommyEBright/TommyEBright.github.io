@@ -55,6 +55,13 @@
   .no{color:var(--plum);font-weight:bold;font-size:.88em}
   .hide{display:none !important}
   .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+  .ex3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+  .exc .chart{margin-bottom:.4rem}
+  .exc{margin-bottom:0}
+  details.worked{border:1px solid var(--line);border-left:.45rem solid var(--navy);border-radius:.75rem;margin:0 0 1.2rem;background:#fff}
+  details.worked summary{cursor:pointer;padding:.9rem 1.1rem;color:var(--navy);font-weight:bold;background:var(--soft);border-radius:.75rem}
+  details.worked .wbody{padding:1rem 1.1rem}
+  .stage{display:inline-block;color:#fff;font-weight:bold;font-size:.85em;padding:.15rem .6rem;border-radius:.5rem;margin-bottom:.35rem}
   .chart{width:100%;height:auto;display:block;background:#fff;border:1px solid var(--line);border-radius:.6rem}
   .legend{display:flex;gap:1.2rem;flex-wrap:wrap;font-size:.9em;margin:.3rem 0 .6rem}
   .key{display:inline-block;width:1.6rem;height:0;border-top:3px solid;vertical-align:middle;margin-right:.35rem}
@@ -73,7 +80,7 @@
     header{padding:1.5rem 1.1rem}
     h1{font-size:1.6em}
     .panel-body{padding:1rem}
-    .grid2{grid-template-columns:1fr}
+    .grid2,.ex3{grid-template-columns:1fr}
     .crit{grid-template-columns:1fr}
   }
   @media print{
@@ -122,18 +129,64 @@
       <h2>Read the graph</h2>
     </div>
     <div class="panel-body">
-      <p class="intro">This graph shows an athlete's <strong>position</strong> (displacement) along the track during a 30 m sprint. You can read a lot from it without any maths.</p>
+      <p class="intro">A <strong>position&ndash;time</strong> graph shows where an athlete is (their displacement) at each moment. You can read velocity and acceleration from its shape without any maths.</p>
       <div class="tip">
         <p><strong>Two rules (Bartlett, 2007):</strong></p>
         <p>The <strong>steepness</strong> (slope) of a position&ndash;time graph tells you the <strong>velocity</strong>. Steeper means faster.</p>
-        <p>The <strong>bend</strong> (curvature) tells you the <strong>acceleration</strong>. If the line is curving upwards, the athlete is speeding up. If it is straight, velocity is constant and acceleration is zero.</p>
+        <p>The <strong>bend</strong> (curvature) tells you the <strong>acceleration</strong>. Curving upwards means speeding up, curving downwards means slowing down, and a straight line means velocity is constant and acceleration is zero.</p>
       </div>
+
+      <h3 style="color:var(--navy);margin:1.2rem 0 .3rem">Three examples first</h3>
+      <p style="margin-top:0">Each column shows one position&ndash;time graph (top) with the velocity&ndash;time (middle) and acceleration&ndash;time (bottom) graphs that go with it. Read down each column.</p>
+      <div class="ex3">
+        <div class="card n exc">
+          <h3>a. Straight lines</h3>
+          <p class="count" style="margin:0 0 .4rem">Two athletes running at a steady speed.</p>
+          <svg class="chart" id="exAp" viewBox="0 0 640 320" role="img" aria-label="Two straight position-time lines"></svg>
+          <svg class="chart" id="exAv" viewBox="0 0 640 320" role="img" aria-label="Constant velocities"></svg>
+          <svg class="chart" id="exAa" viewBox="0 0 640 320" role="img" aria-label="Zero acceleration"></svg>
+          <p style="margin:.5rem 0 0"><strong>Steeper line = faster.</strong> The navy athlete covers 8 m every second, the blue athlete 4 m. Both lines are straight, so velocity stays the same and acceleration is <strong>zero</strong>.</p>
+        </div>
+        <div class="card t exc">
+          <h3>b. Curving upwards</h3>
+          <p class="count" style="margin:0 0 .4rem">An athlete speeding up.</p>
+          <svg class="chart" id="exBp" viewBox="0 0 640 320" role="img" aria-label="Position-time curving upwards with slope lines"></svg>
+          <svg class="chart" id="exBv" viewBox="0 0 640 320" role="img" aria-label="Velocity increasing"></svg>
+          <svg class="chart" id="exBa" viewBox="0 0 640 320" role="img" aria-label="Positive acceleration"></svg>
+          <p style="margin:.5rem 0 0">The <strong>slope gets steeper</strong> (the short lines show the slope at 1 s and 2.5 s), so <strong>velocity is increasing</strong>. The line bends upwards, so acceleration is <strong>positive</strong>.</p>
+        </div>
+        <div class="card p exc">
+          <h3>c. Curving downwards</h3>
+          <p class="count" style="margin:0 0 .4rem">An athlete slowing down.</p>
+          <svg class="chart" id="exCp" viewBox="0 0 640 320" role="img" aria-label="Position-time curving downwards with slope lines"></svg>
+          <svg class="chart" id="exCv" viewBox="0 0 640 320" role="img" aria-label="Velocity decreasing"></svg>
+          <svg class="chart" id="exCa" viewBox="0 0 640 320" role="img" aria-label="Negative acceleration"></svg>
+          <p style="margin:.5rem 0 0">The <strong>slope gets flatter</strong>, so <strong>velocity is decreasing</strong>. The line bends downwards, so acceleration is <strong>negative</strong> (the athlete is slowing down).</p>
+        </div>
+      </div>
+
+      <h3 style="color:var(--navy);margin:1.4rem 0 .3rem">Now the sprint</h3>
+      <p style="margin-top:0">This is an athlete's position during a 30 m sprint. It looks like example b at the start and example a at the end.</p>
       <svg class="chart" id="chartPos" viewBox="0 0 640 320" role="img" aria-label="Position against time for a 30 metre sprint"></svg>
+      <button type="button" class="btn ghost no-print" id="showSlopes" style="margin-top:.6rem">Show the slopes</button>
+      <p class="count" id="slopeNote">The short lines show the slope (velocity) at 0.5 s, 1.5 s and 3.5 s.</p>
+
       <div class="card t" style="margin-top:1rem">
+        <h3>Guided questions</h3>
+        <p style="margin:0 0 .6rem">Look at each part of the sprint graph and choose an answer for each column.</p>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Part of the run</th><th>The slope is&hellip;</th><th>So velocity is&hellip;</th><th>The line is bending&hellip; so acceleration is&hellip;</th><th></th></tr></thead>
+            <tbody id="guideRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card n">
         <h3>On your notepad</h3>
         <ol style="margin:0;padding-left:1.3rem">
-          <li>Sketch what the <strong>velocity&ndash;time</strong> graph looks like underneath it.</li>
-          <li>Sketch what the <strong>acceleration&ndash;time</strong> graph looks like underneath that.</li>
+          <li>Draw time along the bottom (0 to 4.5 s) and sketch the <strong>velocity&ndash;time</strong> graph. Tip: velocity starts at 0, so where does it go next, and does it keep rising?</li>
+          <li>Underneath, sketch the <strong>acceleration&ndash;time</strong> graph. Tip: when is the line bending the most?</li>
           <li>Mark roughly where the athlete stops accelerating and is close to top speed.</li>
         </ol>
       </div>
@@ -269,6 +322,52 @@
     </div>
     <div class="panel-body">
       <p class="intro">Numbers on their own are not an analysis. Use your tables and graphs to tell the story, and link it back to the phases from last week.</p>
+
+      <details class="worked">
+        <summary>Worked example: a finished linear kinematic analysis of Athlete C (open this first)</summary>
+        <div class="wbody">
+          <p style="margin-top:0">This shows what a complete analysis looks like, set out the same way as your Practical Assessment. Athlete C is a different athlete, so use it for the <strong>structure</strong>, not the answers for A and B.</p>
+          <p style="margin:0 0 1rem"><strong>Task:</strong> 30 m sprint from a standing start. Timing gates every 5 m, and side-on video for step data.</p>
+
+          <span class="stage" style="background:var(--navy)">1. Observe</span>
+          <p style="margin:0 0 1rem">Each step was split into stance (braking, propulsion) and swing (early, mid, late). In the first 10 m, C stands up tall after only two or three steps, and in the <strong>braking phase</strong> the foot lands well in front of the hip. From 10 m onwards, the foot lands closer to under the hip and the knee drives forwards strongly in <strong>mid swing</strong>.</p>
+
+          <span class="stage" style="background:var(--teal)">2. Measure</span>
+          <div class="grid2">
+            <div class="tablewrap">
+              <table>
+                <thead><tr><th>Split</th><th>Time at end (s)</th><th>Velocity (m/s)</th></tr></thead>
+                <tbody id="cSplits"></tbody>
+              </table>
+            </div>
+            <div><span class="lab">Velocity&ndash;time</span><svg class="chart" id="chartC" viewBox="0 0 640 320" role="img" aria-label="Athlete C velocity against time"></svg></div>
+          </div>
+          <div class="tablewrap">
+            <table>
+              <thead><tr><th>Section</th><th>Step length (m)</th><th>Step frequency (Hz)</th><th>Contact time (s)</th><th>Flight time (s)</th><th>Speed from steps (m/s)</th></tr></thead>
+              <tbody id="cSteps"></tbody>
+            </table>
+          </div>
+
+          <span class="stage" style="background:var(--blue)">3. Interpret</span>
+          <ul style="margin:0 0 1rem;padding-left:1.3rem">
+            <li><strong>The start is the weak point.</strong> C takes 1.20 s to cover the first 5 m (an average of only 4.17 m/s), which is slow for an athlete who goes on to reach over 8 m/s.</li>
+            <li><strong>Early steps are short with long ground contacts.</strong> Over 0&ndash;10 m, step length is only 1.20 m and contact time is 0.170 s. Landing with the foot in front of the hip means more braking, so more of each contact is spent slowing down rather than pushing forwards. Standing up early also points the push upwards rather than forwards.</li>
+            <li><strong>Top speed is a strength.</strong> From 10 m onwards, step length grows to 1.96 m, contact time falls to 0.115 s and flight time rises to 0.130 s. C is still accelerating at 25&ndash;30 m and reaches 8.06 m/s, so C finishes well despite the slow start.</li>
+          </ul>
+
+          <span class="stage" style="background:var(--plum)">4. Apply</span>
+          <p style="margin:0 0 .4rem"><strong>Focus:</strong> the first 10 m, especially braking and propulsion in the stance phase.</p>
+          <p style="margin:0 0 .4rem"><strong>Cue:</strong> &ldquo;Push the track away behind you&rdquo; (six words), so each early step pushes back rather than reaching forwards.</p>
+          <p style="margin:0"><strong>How to check it worked:</strong> re-measure the 0&ndash;5 m time and the 0&ndash;10 m contact time and step length. If the cue works, the 0&ndash;5 m time should fall, contact time should drop and step length should increase.</p>
+        </div>
+      </details>
+
+      <div class="card n">
+        <h3>Your data: Athletes A and B</h3>
+        <p style="margin:0 0 .6rem">These are the key numbers from <strong>Steps 2 and 3</strong> for the two athletes you have been analysing. Use them to answer the questions below.</p>
+        <div class="tablewrap"><table id="abSummary"></table></div>
+      </div>
       <div class="grid2">
         <div><label for="q1">Who is faster over 30 m, and by how much?</label><textarea id="q1" data-save></textarea></div>
         <div><label for="q2">Who is faster over the first 5 m? Why might that be?</label><textarea id="q2" data-save></textarea></div>
@@ -367,42 +466,111 @@
   function niceStep(range){ var raw = range/5, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw/p; return (m<1.5?1:m<3?2:m<7?5:10)*p; }
   function chart(svgId, series, o){
     var svg = document.getElementById(svgId); if(!svg) return;
-    var W=640,H=320,L=62,R=18,T=18,Bm=50, w=W-L-R, h=H-T-Bm;
+    var fs=o.fs||13, sw=o.sw||3;
+    var W=640,H=320,L=Math.round(2.2*fs+34),R=18,T=18,Bm=Math.round(2*fs+24), w=W-L-R, h=H-T-Bm;
     var xmax=o.xmax, ymin=o.ymin||0, ymax=o.ymax;
     function X(x){ return L + x/xmax*w; } function Y(y){ return T + h - (y-ymin)/(ymax-ymin)*h; }
     var s = '';
     var ys = niceStep(ymax-ymin), xs = niceStep(xmax);
     for (var y=Math.ceil(ymin/ys)*ys; y<=ymax+1e-9; y+=ys){
       s += '<line x1="'+L+'" x2="'+(L+w)+'" y1="'+Y(y)+'" y2="'+Y(y)+'" stroke="#e6edf1"/>';
-      s += '<text x="'+(L-8)+'" y="'+(Y(y)+4)+'" text-anchor="end" font-size="13" fill="#46535a">'+(+y.toFixed(2))+'</text>';
+      s += '<text x="'+(L-8)+'" y="'+(Y(y)+4)+'" text-anchor="end" font-size="'+fs+'" fill="#46535a">'+(+y.toFixed(2))+'</text>';
     }
     for (var x=0; x<=xmax+1e-9; x+=xs){
-      s += '<text x="'+X(x)+'" y="'+(T+h+20)+'" text-anchor="middle" font-size="13" fill="#46535a">'+(+x.toFixed(2))+'</text>';
+      s += '<text x="'+X(x)+'" y="'+(T+h+fs+7)+'" text-anchor="middle" font-size="'+fs+'" fill="#46535a">'+(+x.toFixed(2))+'</text>';
     }
     if (ymin<0) s += '<line x1="'+L+'" x2="'+(L+w)+'" y1="'+Y(0)+'" y2="'+Y(0)+'" stroke="#9aa9b1"/>';
     s += '<line x1="'+L+'" x2="'+L+'" y1="'+T+'" y2="'+(T+h)+'" stroke="#1d1d1b"/>';
     s += '<line x1="'+L+'" x2="'+(L+w)+'" y1="'+(T+h)+'" y2="'+(T+h)+'" stroke="#1d1d1b"/>';
-    s += '<text x="'+(L+w/2)+'" y="'+(H-8)+'" text-anchor="middle" font-size="14" fill="#003d50" font-weight="bold">'+(o.xlab||'Time (s)')+'</text>';
-    s += '<text transform="translate(16,'+(T+h/2)+') rotate(-90)" text-anchor="middle" font-size="14" fill="#003d50" font-weight="bold">'+o.ylab+'</text>';
+    s += '<text x="'+(L+w/2)+'" y="'+(H-8)+'" text-anchor="middle" font-size="'+(fs+1)+'" fill="#003d50" font-weight="bold">'+(o.xlab||'Time (s)')+'</text>';
+    s += '<text transform="translate('+(fs+4)+','+(T+h/2)+') rotate(-90)" text-anchor="middle" font-size="'+(fs+1)+'" fill="#003d50" font-weight="bold">'+o.ylab+'</text>';
     series.forEach(function(se){
       var pts = se.x.map(function(xx,i){ return X(xx)+','+Y(se.y[i]); }).join(' ');
-      s += '<polyline points="'+pts+'" fill="none" stroke="'+se.col+'" stroke-width="3" stroke-linejoin="round" stroke-dasharray="'+(se.dash||'')+'"/>';
-      if (se.dots) se.x.forEach(function(xx,i){ s += '<circle cx="'+X(xx)+'" cy="'+Y(se.y[i])+'" r="4.5" fill="'+se.col+'"/>'; });
+      s += '<polyline points="'+pts+'" fill="none" stroke="'+se.col+'" stroke-width="'+(se.sw||sw)+'" stroke-linejoin="round" stroke-dasharray="'+(se.dash||'')+'"/>';
+      if (se.dots) se.x.forEach(function(xx,i){ s += '<circle cx="'+X(xx)+'" cy="'+Y(se.y[i])+'" r="'+(sw+1.5)+'" fill="'+se.col+'"/>'; });
+    });
+    (o.labels||[]).forEach(function(lb){
+      s += '<text x="'+X(lb.x)+'" y="'+Y(lb.y)+'" text-anchor="'+(lb.anchor||'start')+'" font-size="'+(fs+2)+'" font-weight="bold" fill="'+(lb.col||'#003d50')+'" paint-order="stroke" stroke="#fff" stroke-width="4">'+lb.text+'</text>';
     });
     svg.innerHTML = s;
   }
 
-  // Step 1 smooth illustrative curve
+  // Step 1 worked examples
+  function tangent(t0, x0, m, half, col){
+    var a = t0-half, ya = x0-m*half;
+    if (ya < 0){ a = t0 - x0/m; ya = 0; }
+    return {x:[a, t0+half], y:[ya, x0+m*half], col:col||'#8b3556', dash:'10 7', sw:3};
+  }
+  function touch(t0, x0){ return {x:[t0], y:[x0], col:'#8b3556', dots:1}; }
   (function(){
-    var vmax=8.3, tau=0.95, ts=[], p=[], v=[], a=[];
-    for (var t=0; t<=4.5001; t+=0.05){
-      ts.push(t); p.push(vmax*(t - tau*(1-Math.exp(-t/tau))));
-      v.push(vmax*(1-Math.exp(-t/tau))); a.push(vmax/tau*Math.exp(-t/tau));
-    }
-    chart('chartPos', [{x:ts,y:p,col:'#003d50'}], {xmax:4.5, ymax:32, ylab:'Position (m)'});
-    chart('chartVel1', [{x:ts,y:v,col:'#003d50'}], {xmax:4.5, ymax:9, ylab:'Velocity (m/s)'});
-    chart('chartAcc1', [{x:ts,y:a,col:'#003d50'}], {xmax:4.5, ymax:9, ylab:'Acceleration (m/s²)'});
+    var t3 = [], i;
+    for (i=0;i<=60;i++) t3.push(i*0.05);
+    var NV='#003d50', BL='#0071bc', PL='#8b3556';
+    // a: constant velocity
+    chart('exAp', [{x:[0,3],y:[0,24],col:NV},{x:[0,3],y:[0,12],col:BL}], {xmax:3, fs:26, sw:5, ymax:25, ylab:'Position (m)', labels:[{x:2.2,y:20.5,text:'8 m/s',anchor:'end'},{x:2.6,y:7.5,text:'4 m/s',col:BL}]});
+    chart('exAv', [{x:[0,3],y:[8,8],col:NV},{x:[0,3],y:[4,4],col:BL}], {xmax:3, fs:26, sw:5, ymax:10, ylab:'Velocity (m/s)'});
+    chart('exAa', [{x:[0,3],y:[0,0],col:NV}], {xmax:3, fs:26, sw:5, ymin:-4, ymax:4, ylab:'Accel. (m/s²)', labels:[{x:1.5,y:1,text:'zero',anchor:'middle'}]});
+    // b: speeding up, x = 1.5t^2
+    chart('exBp', [{x:t3,y:t3.map(function(t){return 1.5*t*t;}),col:NV}, tangent(1,1.5,3,0.6), touch(1,1.5), tangent(2.5,9.375,7.5,0.45), touch(2.5,9.375)],
+      {xmax:3, fs:26, sw:5, ymax:14, ylab:'Position (m)', labels:[{x:1.1,y:3.6,text:'3 m/s',col:PL,anchor:'end'},{x:2.35,y:11.8,text:'7.5 m/s',col:PL,anchor:'end'}]});
+    chart('exBv', [{x:[0,3],y:[0,9],col:NV}], {xmax:3, fs:26, sw:5, ymax:10, ylab:'Velocity (m/s)'});
+    chart('exBa', [{x:[0,3],y:[3,3],col:NV}], {xmax:3, fs:26, sw:5, ymin:-4, ymax:4, ylab:'Accel. (m/s²)', labels:[{x:1.5,y:3.6,text:'positive',anchor:'middle'}]});
+    // c: slowing down, v = 9 - 3t
+    chart('exCp', [{x:t3,y:t3.map(function(t){return 9*t-1.5*t*t;}),col:NV}, tangent(0.5,4.125,7.5,0.45), touch(0.5,4.125), tangent(2.5,13.125,1.5,0.6), touch(2.5,13.125)],
+      {xmax:3, fs:26, sw:5, ymax:14, ylab:'Position (m)', labels:[{x:0.75,y:6.8,text:'7.5 m/s',col:PL},{x:2.5,y:11.2,text:'1.5 m/s',col:PL,anchor:'middle'}]});
+    chart('exCv', [{x:[0,3],y:[9,0],col:NV}], {xmax:3, fs:26, sw:5, ymax:10, ylab:'Velocity (m/s)'});
+    chart('exCa', [{x:[0,3],y:[-3,-3],col:NV}], {xmax:3, fs:26, sw:5, ymin:-4, ymax:4, ylab:'Accel. (m/s²)', labels:[{x:1.5,y:-2.2,text:'negative',anchor:'middle'}]});
   })();
+
+  // Step 1 sprint curve
+  var SPR = {vmax:8.3, tau:0.95};
+  function sx(t){ return SPR.vmax*(t - SPR.tau*(1-Math.exp(-t/SPR.tau))); }
+  function sv(t){ return SPR.vmax*(1-Math.exp(-t/SPR.tau)); }
+  function sa(t){ return SPR.vmax/SPR.tau*Math.exp(-t/SPR.tau); }
+  var sts=[]; for (var q=0;q<=90;q++) sts.push(q*0.05);
+  function drawSprint(withSlopes){
+    var se = [{x:sts,y:sts.map(sx),col:'#003d50'}], lb = [];
+    if (withSlopes){
+      [0.5,1.5,3.5].forEach(function(t0){
+        se.push(tangent(t0, sx(t0), sv(t0), 0.55)); se.push(touch(t0, sx(t0)));
+        lb.push({x:t0+0.05, y:sx(t0)+ (t0<1?3.2:2.6), text:'≈ '+sv(t0).toFixed(1)+' m/s', col:'#8b3556', anchor:'end'});
+      });
+    }
+    chart('chartPos', se, {xmax:4.5, ymax:32, ylab:'Position (m)', labels:lb});
+  }
+  drawSprint(!!state.__slopes);
+  document.getElementById('showSlopes').addEventListener('click', function(){ state.__slopes = 1; save(); drawSprint(true); });
+  chart('chartVel1', [{x:sts,y:sts.map(sv),col:'#003d50'}], {xmax:4.5, ymax:9, ylab:'Velocity (m/s)'});
+  chart('chartAcc1', [{x:sts,y:sts.map(sa),col:'#003d50'}], {xmax:4.5, ymax:9, ylab:'Acceleration (m/s²)'});
+
+  // guided questions
+  var GQ = [
+    {part:'Early (0–1 s)', ans:['steeper quickly','rising fast','bending a lot – high']},
+    {part:'Middle (1–2.5 s)', ans:['steeper slowly','rising slowly','bending less – dropping']},
+    {part:'Late (2.5–4.5 s)', ans:['about the same','about steady','almost straight – close to zero']}
+  ];
+  var OPTS = [
+    ['getting steeper quickly','getting steeper slowly','staying about the same'],
+    ['rising fast','rising slowly','about steady'],
+    ['bending a lot – high','bending less – dropping','almost straight – close to zero']
+  ];
+  var KEYS = [['steeper quickly','steeper slowly','about the same'],['rising fast','rising slowly','about steady'],OPTS[2]];
+  document.getElementById('guideRows').innerHTML = GQ.map(function(g,r){
+    return '<tr><td class="num"><strong>'+g.part+'</strong></td>' + [0,1,2].map(function(c){
+      return '<td><select id="gq'+r+c+'" data-save aria-label="'+g.part+' column '+(c+1)+'"><option value="">Choose</option>' +
+        OPTS[c].map(function(o,k){ return '<option value="'+KEYS[c][k]+'">'+o+'</option>'; }).join('') + '</select></td>';
+    }).join('') + '<td id="gq'+r+'ok"></td></tr>';
+  }).join('');
+  function checkGuide(){
+    GQ.forEach(function(g,r){
+      var vals = [0,1,2].map(function(c){ return document.getElementById('gq'+r+c).value; });
+      var el = document.getElementById('gq'+r+'ok');
+      if (vals.some(function(v){ return !v; })){ el.innerHTML=''; return; }
+      var right = vals.filter(function(v,c){ return v===g.ans[c]; }).length;
+      el.innerHTML = right===3 ? '<span class="ok">&#10003; All correct</span>' : '<span class="no">'+right+' of 3 &ndash; look again</span>';
+    });
+  }
+  document.querySelectorAll('#guideRows select').forEach(function(s){ s.addEventListener('change', checkGuide); });
   document.getElementById('revealGraphs').addEventListener('click', function(){
     document.getElementById('graphAnswers').classList.remove('hide'); state.__g = 1; save();
   });
@@ -498,6 +666,37 @@
     chart('chFT', ser('ft', function(s){return s.ft;}), Object.assign({ymax:0.2, ylab:'Flight time (s)'}, o));
   }
   document.getElementById('revealSteps').addEventListener('click', function(){ if (this.disabled) return; state.__steps = 1; save(); showSteps(); });
+
+  // Step 4: worked example (Athlete C) and A/B summary
+  (function(){
+    var C = {t:[0,1.20,2.00,2.70,3.35,3.98,4.60]};
+    var dC = derive(C);
+    var h = '';
+    for (var i=0;i<dC.v.length;i++) h += '<tr><td class="num">'+D[i]+'&ndash;'+D[i+1]+' m</td><td>'+f(C.t[i+1],2)+'</td><td>'+f(dC.v[i],2)+'</td></tr>';
+    document.getElementById('cSplits').innerHTML = h;
+    chart('chartC', [{x:[0].concat(dC.mid), y:[0].concat(dC.v), col:'#003d50', dots:1}], {xmax:5, ymax:9, ylab:'Velocity (m/s)'});
+    var CS = [{sl:1.20, ct:0.170, ft:0.070},{sl:1.74, ct:0.130, ft:0.105},{sl:1.96, ct:0.115, ft:0.130}];
+    document.getElementById('cSteps').innerHTML = CS.map(function(s,i){
+      var sf = 1/(s.ct+s.ft);
+      return '<tr><td class="num">'+SECT[i]+'</td><td>'+f(s.sl,2)+'</td><td>'+f(sf,2)+'</td><td>'+f(s.ct,3)+'</td><td>'+f(s.ft,3)+'</td><td>'+f(s.sl*sf,2)+'</td></tr>';
+    }).join('');
+
+    function topV(d){ var m = Math.max.apply(null, d.v), idx = [];
+      d.v.forEach(function(v,i){ if (Math.abs(v-m) < 0.005) idx.push(D[i]+'–'+D[i+1]+' m'); });
+      return f(m,2)+' m/s ('+idx.join(' and ')+')'; }
+    var last = function(k){ return STEPS[k][2]; };
+    var rows = [
+      ['30 m time', f(A.t[6],2)+' s', f(B.t[6],2)+' s', 'Step 2'],
+      ['0&ndash;5 m time', f(A.t[1],2)+' s', f(B.t[1],2)+' s', 'Step 2'],
+      ['Top velocity (where)', topV(dA), topV(dB), 'Step 2'],
+      ['Step length, 20&ndash;30 m', f(last('A').sl,2)+' m', f(last('B').sl,2)+' m', 'Step 3'],
+      ['Step frequency, 20&ndash;30 m', f(1/(last('A').ct+last('A').ft),2)+' Hz', f(1/(last('B').ct+last('B').ft),2)+' Hz', 'Step 3'],
+      ['Contact time, 20&ndash;30 m', f(last('A').ct,3)+' s', f(last('B').ct,3)+' s', 'Step 3'],
+      ['Flight time, 20&ndash;30 m', f(last('A').ft,3)+' s', f(last('B').ft,3)+' s', 'Step 3']
+    ];
+    document.getElementById('abSummary').innerHTML = '<thead><tr><th>Variable</th><th>Athlete A</th><th>Athlete B</th><th>From</th></tr></thead><tbody>' +
+      rows.map(function(r){ return '<tr><td><strong>'+r[0]+'</strong></td><td>'+r[1]+'</td><td>'+r[2]+'</td><td>'+r[3]+'</td></tr>'; }).join('') + '</tbody>';
+  })();
 
   // Step 5 criteria
   var CR = [
