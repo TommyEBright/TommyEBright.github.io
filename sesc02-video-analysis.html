@@ -1,0 +1,1026 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kinematic Video Analyser</title>
+<style>
+  :root{
+    --navy:#003d50; --navy-dark:#002c3a; --teal:#00857e; --teal-dark:#00655f; --blue:#0071bc;
+    --plum:#8b3556; --plum-dark:#682840; --bg:#f7fbfd; --soft:#f8fcfe; --tealsoft:#f2faf9;
+    --line:#d9e2e7; --edge:#abd6d9; --ink:#1d1d1b; --muted:#46535a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#fff;color:var(--ink);font-family:Arial,Helvetica,sans-serif;line-height:1.5}
+  main{max-width:1500px;margin:0 auto;padding:1.2rem;background:var(--bg);border:2px solid var(--edge);border-radius:1rem}
+  header{background:var(--navy);color:#fff;padding:1.6rem 1.8rem;border-radius:.9rem .9rem 0 0;border-bottom:.4rem solid var(--teal)}
+  .badge{display:inline-block;background:#fff;color:var(--navy);padding:.3rem .8rem;margin:0 0 .6rem;font-size:.85em;border-left:.35rem solid var(--blue);border-radius:.65rem;font-weight:bold}
+  h1{margin:0 0 .3rem;font-size:1.9em;line-height:1.15}
+  header p{margin:0}
+  .bar{background:#fff;padding:.9rem 1.1rem;margin-bottom:1.2rem;border:1px solid var(--line);border-top:0;border-radius:0 0 .9rem .9rem}
+  details.help{background:#fff;border:1px solid var(--line);border-radius:.75rem;margin:0 0 1rem}
+  details.help summary{cursor:pointer;padding:.75rem 1rem;color:var(--navy);font-weight:bold;background:var(--soft);border-radius:.75rem}
+  details.help .hb{padding:.4rem 1.1rem 1rem}
+  .layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(330px,1fr);gap:1.1rem;align-items:start}
+  .card{background:#fff;border:1px solid var(--line);border-radius:1rem;overflow:hidden}
+  .card-head{background:var(--navy);color:#fff;padding:.7rem 1rem;display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap}
+  .card-head h2{margin:0;font-size:1.1em}
+  .card-body{padding:.9rem 1rem}
+  .stagewrap{position:relative;background:#1d1d1b;overflow:auto;max-height:72vh;border-radius:.4rem}
+  .stage{position:relative;width:100%;margin:0 auto}
+  .stage video{display:block;width:100%;height:auto}
+  .stage canvas{position:absolute;left:0;top:0;width:100%;height:100%;cursor:crosshair;touch-action:none}
+  .empty{color:#d9e2e7;text-align:center;padding:5rem 1rem}
+  .loupe{position:absolute;right:10px;top:10px;width:170px;height:170px;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 2px var(--navy);pointer-events:none;display:none;background:#000}
+  .ctrls{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin-top:.7rem}
+  .btn{font:inherit;font-weight:bold;cursor:pointer;border:0;color:#fff;padding:.5rem .8rem;border-radius:.6rem;min-height:2.3rem;font-size:.92em}
+  .btn.navy{background:var(--navy);border-bottom:.2rem solid var(--navy-dark)}
+  .btn.teal{background:var(--teal);border-bottom:.2rem solid var(--teal-dark)}
+  .btn.plum{background:var(--plum);border-bottom:.2rem solid var(--plum-dark)}
+  .btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+  .btn.small{padding:.3rem .6rem;min-height:1.9rem;font-size:.85em}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.on{outline:3px solid var(--edge)}
+  input[type=range]{flex:1 1 220px;accent-color:var(--teal)}
+  .readout{font-variant-numeric:tabular-nums;color:var(--navy);font-weight:bold;font-size:.95em}
+  label,.lab{font-weight:bold;color:var(--navy);font-size:.9em;display:block;margin:.5rem 0 .2rem}
+  input[type=text],input[type=number],select{width:100%;font:inherit;font-size:.93em;padding:.42rem .5rem;border:1px solid #b9c7cf;border-radius:.45rem;background:#fff;color:var(--ink)}
+  input:focus,select:focus{outline:3px solid var(--edge);border-color:var(--teal)}
+  .row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end}
+  .row>div{flex:1 1 120px}
+  .tabs{display:flex;flex-wrap:wrap;gap:.35rem;padding:.6rem .6rem 0;background:#fff;border-bottom:1px solid var(--line)}
+  .tab{font:inherit;font-weight:bold;cursor:pointer;background:var(--soft);color:var(--navy);border:1px solid var(--line);border-bottom:0;border-radius:.6rem .6rem 0 0;padding:.45rem .7rem;font-size:.88em}
+  .tab[aria-selected=true]{background:var(--teal);color:#fff;border-color:var(--teal)}
+  .pane{padding:.9rem 1rem}
+  .hide{display:none !important}
+  .tip{background:var(--tealsoft);border-left:.35rem solid var(--teal);padding:.6rem .8rem;border-radius:.6rem;margin:.5rem 0;font-size:.9em}
+  .warn{background:#fbf4f7;border-left:.35rem solid var(--plum);padding:.6rem .8rem;border-radius:.6rem;margin:.5rem 0;font-size:.9em}
+  .tip p,.warn p{margin:0 0 .3rem}.tip p:last-child,.warn p:last-child{margin:0}
+  .muted{color:var(--muted);font-size:.88em}
+  .chips{display:flex;flex-wrap:wrap;gap:.35rem;margin:.3rem 0}
+  .chip{display:inline-flex;align-items:center;gap:.35rem;border:2px solid var(--line);border-radius:999px;padding:.2rem .6rem;font-size:.86em;cursor:pointer;background:#fff;font-weight:bold;color:var(--navy)}
+  .chip .dot{width:.8rem;height:.8rem;border-radius:50%;display:inline-block;border:2px solid #fff;box-shadow:0 0 0 1px #999}
+  .chip.active{border-color:var(--navy);background:var(--navy);color:#fff}
+  .chip.done{opacity:.6}
+  table{width:100%;border-collapse:collapse;font-size:.86em;margin:.4rem 0}
+  th,td{border:1px solid var(--line);padding:.3rem .4rem;text-align:left;vertical-align:middle}
+  th{background:var(--soft);color:var(--navy)}
+  .tablewrap{overflow:auto;max-height:340px}
+  .num{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .chart{width:100%;height:auto;display:block;background:#fff;border:1px solid var(--line);border-radius:.5rem;cursor:pointer}
+  .legend{display:flex;gap:1rem;flex-wrap:wrap;font-size:.85em;margin:.3rem 0}
+  .key{display:inline-block;width:1.4rem;height:0;border-top:3px solid;vertical-align:middle;margin-right:.3rem}
+  .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.5rem;margin:.5rem 0}
+  .stat{background:var(--soft);border:1px solid var(--line);border-top:.25rem solid var(--teal);border-radius:.6rem;padding:.5rem .6rem}
+  .stat span{display:block;font-size:.78em;color:var(--muted)}
+  .stat strong{font-size:1.15em;color:var(--navy)}
+  .full{margin-top:1.1rem}
+  .gridc{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem}
+  .status{font-size:.88em;color:var(--navy);background:var(--soft);border:1px solid var(--line);border-radius:.5rem;padding:.45rem .6rem;margin:.6rem 0 0}
+  kbd{background:#fff;border:1px solid #b9c7cf;border-bottom-width:2px;border-radius:.3rem;padding:0 .3rem;font-size:.85em}
+  footer{text-align:center;padding:.8rem;color:var(--muted);font-size:.85em}
+  @media (max-width:1000px){ .layout{grid-template-columns:1fr} .gridc{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="badge">SESC02</p>
+    <h1>Kinematic Video Analyser</h1>
+    <p>Linear and angular kinematics from your own phone video, in the browser. Your video never leaves your device.</p>
+  </header>
+  <div class="bar">
+    <details class="help">
+      <summary>Before you film: how to get video you can analyse</summary>
+      <div class="hb">
+        <ul style="margin:.3rem 0;padding-left:1.2rem">
+          <li><strong>Side-on and square:</strong> the camera must point straight at the plane the athlete moves in (perpendicular to the direction of travel). This tool is 2D, so anything that moves towards or away from the camera will be measured wrongly.</li>
+          <li><strong>Far back and zoomed in a little</strong> (e.g. 5&ndash;10 m away for a sprint). Standing close with a wide angle causes perspective error, especially near the edges of the picture.</li>
+          <li><strong>Keep the phone still</strong> on a tripod or chair. Do not pan to follow the athlete, or the scale changes.</li>
+          <li><strong>Put something of known length in the same plane as the athlete</strong> (e.g. a 1 m stick, or two cones 5 m apart on the running line). You calibrate with this.</li>
+          <li><strong>Use slow-mo</strong> (120 or 240 fps) for sprinting and jumping. Good light helps keep the picture sharp.</li>
+          <li><strong>Mark the joints</strong> with tape or stickers if you can (shoulder, hip, knee, ankle, toe), and wear fitted clothing.</li>
+          <li><strong>iPhone:</strong> Settings &rarr; Camera &rarr; Formats &rarr; &ldquo;Most Compatible&rdquo;. Transfer by cable, AirDrop or OneDrive, not WhatsApp or email (they compress the video and can drop frames).</li>
+        </ul>
+      </div>
+    </details>
+    <div class="row">
+      <div style="flex:2 1 260px">
+        <label for="file">1. Open your video</label>
+        <input type="file" id="file" accept="video/*">
+        <button class="btn ghost small" id="demoBtn" type="button" style="margin-top:.4rem">Or try the demo clip (CMJ, 120 fps)</button>
+      </div>
+      <div style="flex:3 1 340px">
+        <p class="muted" style="margin:.2rem 0 0">Then work through the tabs on the right in order: <strong>Setup &rarr; Calibrate &rarr; Digitise &rarr; Events &rarr; Results</strong>. Your work is saved in this browser as you go, and you can also save a project file.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- VIDEO -->
+    <section class="card">
+      <div class="card-head">
+        <h2>Video</h2>
+        <div class="row" style="gap:.4rem;align-items:center">
+          <span class="muted" style="color:#fff">Zoom</span>
+          <select id="zoom" style="width:auto;padding:.2rem .4rem">
+            <option value="1">100%</option><option value="1.5">150%</option><option value="2">200%</option><option value="3">300%</option>
+          </select>
+          <label style="color:#fff;margin:0;display:flex;align-items:center;gap:.3rem;font-size:.85em"><input type="checkbox" id="loupeOn" checked> Magnifier</label>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="stagewrap" id="stagewrap">
+          <div class="stage" id="stage">
+            <video id="vid" playsinline muted preload="auto"></video>
+            <canvas id="ov"></canvas>
+          </div>
+          <div class="empty" id="empty">Open a video to start.<br><span style="font-size:.9em">(Tip: try the demo clip first to learn the tool.)</span></div>
+          <canvas class="loupe" id="loupe" width="170" height="170"></canvas>
+        </div>
+        <div class="ctrls">
+          <button class="btn navy small" id="bBack10" title="Back 10 frames (Shift + Left)">&laquo; 10</button>
+          <button class="btn navy small" id="bBack1" title="Back 1 frame (Left arrow)">&lsaquo; 1</button>
+          <button class="btn teal small" id="bPlay" title="Play / pause (Space)">Play</button>
+          <button class="btn navy small" id="bFwd1" title="Forward 1 frame (Right arrow)">1 &rsaquo;</button>
+          <button class="btn navy small" id="bFwd10" title="Forward 10 frames (Shift + Right)">10 &raquo;</button>
+          <select id="rate" style="width:auto" title="Playback speed"><option value="0.1">0.1&times;</option><option value="0.25" selected>0.25&times;</option><option value="0.5">0.5&times;</option><option value="1">1&times;</option></select>
+          <input type="range" id="slider" min="0" max="0" value="0" aria-label="Frame">
+        </div>
+        <p class="readout" id="readout" style="margin:.5rem 0 0">Frame &ndash; | Time &ndash;</p>
+        <p class="muted" style="margin:.3rem 0 0">Keys: <kbd>&larr;</kbd>/<kbd>&rarr;</kbd> one frame, <kbd>Shift</kbd>+arrow ten frames, <kbd>Space</kbd> play/pause, <kbd>Z</kbd> undo last point.</p>
+        <p class="status" id="status">Open a video to begin.</p>
+      </div>
+    </section>
+
+    <!-- PANEL -->
+    <section class="card">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" data-t="setup" aria-selected="true">1. Setup</button>
+        <button class="tab" role="tab" data-t="calib" aria-selected="false">2. Calibrate</button>
+        <button class="tab" role="tab" data-t="digi" aria-selected="false">3. Digitise</button>
+        <button class="tab" role="tab" data-t="events" aria-selected="false">4. Events</button>
+        <button class="tab" role="tab" data-t="measure" aria-selected="false">Measure</button>
+        <button class="tab" role="tab" data-t="files" aria-selected="false">Save</button>
+      </div>
+
+      <!-- SETUP -->
+      <div class="pane" data-p="setup">
+        <label for="activity">What are you analysing?</label>
+        <select id="activity">
+          <option value="sprint">Sprint (running)</option>
+          <option value="jump">Vertical jump (e.g. CMJ, squat jump)</option>
+          <option value="other">Something else</option>
+        </select>
+        <label for="dir">Which way does the athlete face / move on screen?</label>
+        <select id="dir"><option value="right">Left to right</option><option value="left">Right to left</option></select>
+        <p class="muted" style="margin:.2rem 0 0">This makes &ldquo;forwards&rdquo; positive, whichever way they run.</p>
+        <div class="row">
+          <div>
+            <label for="fps">Video frame rate (fps)</label>
+            <input type="number" id="fps" min="1" step="1" value="30">
+          </div>
+          <div style="flex:0 0 auto"><button class="btn ghost small" id="detect" type="button">Detect</button></div>
+        </div>
+        <div class="chips" id="fpsChips"></div>
+        <label for="slow">Slowed down by (&times;)</label>
+        <input type="number" id="slow" min="1" step="1" value="1">
+        <div class="warn">
+          <p><strong>Is your video slowed down?</strong> A slow-mo clip saved straight from the camera usually keeps its real frame rate (e.g. 240 fps), so leave this at 1. If it was exported or screen-recorded as a slowed-down clip (it plays slowly everywhere and the file says 30 fps), enter how much slower it plays (often 8 for 240 fps, 4 for 120 fps).</p>
+        </div>
+        <p class="readout" id="effRate">Real capture rate: 30 fps (one frame = 33.3 ms)</p>
+      </div>
+
+      <!-- CALIBRATE -->
+      <div class="pane hide" data-p="calib">
+        <p style="margin-top:0">Turn pixels into metres. Click both ends of something of known length that is <strong>in the same plane as the athlete</strong>.</p>
+        <div class="row">
+          <div><label for="calLen">Real length (m)</label><input type="number" id="calLen" step="0.01" min="0.01" value="1.00"></div>
+          <div style="flex:0 0 auto"><button class="btn teal small" id="calStart" type="button">Click the two ends</button></div>
+        </div>
+        <p class="readout" id="calInfo">Not calibrated yet.</p>
+        <label>Origin (0, 0)</label>
+        <p class="muted" style="margin:0 0 .3rem">By default the origin is the first end you clicked. You can move it (e.g. to the floor below the start line).</p>
+        <button class="btn ghost small" id="origStart" type="button">Click to set origin</button>
+        <div class="tip">
+          <p><strong>Why this matters:</strong> every distance and velocity is only as good as the calibration. A 2% error in scale is a 2% error in speed. Calibrate on the line the athlete actually moves along, not in front of or behind it.</p>
+        </div>
+        <label><input type="checkbox" id="vertCheck"> Check: my calibration object is vertical (or horizontal) on screen</label>
+        <p class="muted" id="tiltInfo" style="margin:.2rem 0 0"></p>
+      </div>
+
+      <!-- DIGITISE -->
+      <div class="pane hide" data-p="digi">
+        <label for="model">Points to track</label>
+        <select id="model">
+          <option value="hip">Hip only (linear: velocity and acceleration)</option>
+          <option value="body" selected>Shoulder, hip, knee, ankle, toe (linear + angles)</option>
+          <option value="leg">Hip, knee, ankle, toe (legs only)</option>
+        </select>
+        <div class="row">
+          <div><label for="every">Digitise every</label>
+            <select id="every"><option value="1">1 frame</option><option value="2">2 frames</option><option value="3">3 frames</option><option value="4" selected>4 frames</option><option value="6">6 frames</option><option value="8">8 frames</option></select></div>
+          <div><label for="advance">After the last point</label>
+            <select id="advance"><option value="1" selected>Jump forward automatically</option><option value="0">Stay on this frame</option></select></div>
+        </div>
+        <p class="readout" id="sampleInfo"></p>
+        <span class="lab">Next point to click</span>
+        <div class="chips" id="markerChips"></div>
+        <p class="muted" style="margin:.2rem 0 .4rem">Click on the video to place the highlighted point. Drag a point to adjust it. Click a chip to choose a point yourself.</p>
+        <div class="row" style="gap:.4rem">
+          <button class="btn ghost small" id="undo" type="button">Undo last point (Z)</button>
+          <button class="btn ghost small" id="clearFrame" type="button">Clear this frame</button>
+          <button class="btn ghost small" id="clearAll" type="button">Clear all points</button>
+        </div>
+        <p class="readout" id="digiCount" style="margin-top:.6rem"></p>
+        <div class="tip">
+          <p><strong>Accuracy tips.</strong> Use the magnifier and zoom. Click the centre of the joint, not the edge of the clothing. Be consistent: small clicking errors become large errors in velocity and acceleration, which is why the Results tab filters the data.</p>
+          <p>Digitise from a few frames <em>before</em> to a few frames <em>after</em> the part you care about, so the filter and the velocity calculations have data either side.</p>
+        </div>
+      </div>
+
+      <!-- EVENTS -->
+      <div class="pane hide" data-p="events">
+        <p style="margin-top:0">Go to the frame where something happens, then click the event. Key events give you times (e.g. contact time) and are shown as lines on every graph.</p>
+        <div class="chips" id="eventBtns"></div>
+        <div class="tablewrap" style="max-height:220px"><table id="eventTab"></table></div>
+        <div id="eventSummary"></div>
+      </div>
+
+      <!-- MEASURE -->
+      <div class="pane hide" data-p="measure">
+        <p style="margin-top:0">Quick measurements on the frame you are looking at (no digitising needed). Useful for a single angle at touchdown, or a step length.</p>
+        <div class="row" style="gap:.4rem">
+          <button class="btn teal small" id="mDist" type="button">Distance (2 clicks)</button>
+          <button class="btn teal small" id="mAngle" type="button">Joint angle (3 clicks)</button>
+          <button class="btn teal small" id="mSeg" type="button">Segment vs vertical (2 clicks)</button>
+        </div>
+        <p class="muted" id="mHelp" style="margin:.4rem 0"></p>
+        <div class="tablewrap" style="max-height:260px"><table id="mTab"></table></div>
+        <div class="tip"><p><strong>Joint angle:</strong> click the three points in order, with the joint in the middle (e.g. hip, knee, ankle). 180&deg; means straight.</p><p><strong>Segment vs vertical:</strong> click the lower end then the upper end (e.g. ankle then knee for the shin). Positive means the top end is forwards.</p></div>
+      </div>
+
+      <!-- SAVE -->
+      <div class="pane hide" data-p="files">
+        <p style="margin-top:0">Save your work as a project file (the video is not included), then open it again later with the same video.</p>
+        <div class="row" style="gap:.4rem">
+          <button class="btn navy small" id="saveProj" type="button">Save project file</button>
+          <label class="btn ghost small" style="margin:0;display:inline-flex;align-items:center">Open project file<input type="file" id="loadProj" accept=".json,application/json" class="hide"></label>
+        </div>
+        <div class="row" style="gap:.4rem;margin-top:.6rem">
+          <button class="btn teal small" id="csvBtn" type="button">Download data (CSV)</button>
+          <button class="btn teal small" id="snapBtn" type="button">Save this frame as an image</button>
+        </div>
+        <div class="warn"><p><strong>Start again:</strong> this clears everything for this video.</p><button class="btn plum small" id="resetAll" type="button">Clear all work</button></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- RESULTS -->
+  <section class="card full" id="results">
+    <div class="card-head">
+      <h2>5. Results</h2>
+      <div class="row" style="gap:.5rem;align-items:center">
+        <label style="color:#fff;margin:0;display:flex;align-items:center;gap:.3rem;font-size:.88em"><input type="checkbox" id="filtOn" checked> Filter</label>
+        <span class="muted" style="color:#fff">Cut-off (Hz)</span>
+        <input type="number" id="cutoff" value="8" min="1" step="0.5" style="width:5rem">
+        <button class="btn teal small" id="calc" type="button">Update results</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div id="resMsg" class="muted">Digitise some frames, then click <strong>Update results</strong>.</div>
+      <div id="resBody" class="hide">
+        <div class="stats" id="keyStats"></div>
+        <div class="row" style="align-items:center;gap:.6rem">
+          <div style="flex:0 1 220px"><label for="linMarker">Linear: point to analyse</label><select id="linMarker"></select></div>
+          <div style="flex:0 1 220px"><label for="linDir">Direction</label><select id="linDir"><option value="auto">Best for this activity</option><option value="h">Horizontal only</option><option value="v">Vertical only</option><option value="both">Both</option></select></div>
+          <div style="flex:1 1 300px"><p class="muted" style="margin:.4rem 0 0">Click any graph to jump the video to that moment. Vertical lines are your events.</p></div>
+        </div>
+        <div class="gridc">
+          <div><span class="lab">Position (m)</span><svg class="chart" id="cPos" viewBox="0 0 640 300"></svg></div>
+          <div><span class="lab">Velocity (m/s)</span><svg class="chart" id="cVel" viewBox="0 0 640 300"></svg></div>
+          <div><span class="lab">Acceleration (m/s&sup2;)</span><svg class="chart" id="cAcc" viewBox="0 0 640 300"></svg></div>
+          <div id="angWrap"><span class="lab">Joint and segment angles (&deg;)</span><svg class="chart" id="cAng" viewBox="0 0 640 300"></svg></div>
+          <div id="angVelWrap"><span class="lab">Angular velocity (&deg;/s)</span><svg class="chart" id="cAngVel" viewBox="0 0 640 300"></svg></div>
+          <div><span class="lab">What the lines mean</span><div id="legendBox" class="muted"></div></div>
+        </div>
+        <div class="row" style="gap:.4rem;margin:.6rem 0"><button class="btn ghost small" id="pngCharts" type="button">Download graphs (PNG)</button></div>
+        <details class="help"><summary>Data table</summary><div class="hb"><div class="tablewrap"><table id="dataTab"></table></div></div></details>
+        <details class="help"><summary>How the numbers are calculated</summary><div class="hb">
+          <ol style="margin:.3rem 0;padding-left:1.2rem">
+            <li><strong>Calibration:</strong> pixels are converted to metres using your known length. y is up, x is forwards.</li>
+            <li><strong>Filtering:</strong> coordinates are smoothed with a 4th-order zero-lag Butterworth low-pass filter (a 2nd-order filter run forwards and backwards, cut-off adjusted for the two passes; Winter, 2009). Clicking errors are small in position but get much bigger when you work out velocity and acceleration, so this step matters. Untick &ldquo;Filter&rdquo; to see the raw data. Filtering also rounds off very sudden changes (e.g. at take-off or foot contact), so peak values can come out slightly lower. Compare filtered and raw, and say which you used.</li>
+            <li><strong>Velocity and acceleration:</strong> first and second central differences, e.g. v<sub>i</sub> = (x<sub>i+1</sub> &minus; x<sub>i&minus;1</sub>) &divide; (t<sub>i+1</sub> &minus; t<sub>i&minus;1</sub>). The first and last points have no neighbour on one side, so they are left blank.</li>
+            <li><strong>Joint angles</strong> are the angle between two segments (e.g. knee = between thigh and shank), so 180&deg; is straight. <strong>Segment angles</strong> are measured from vertical: trunk lean and shin angle are positive when the top end is forwards.</li>
+            <li><strong>Angular velocity</strong> is the rate of change of angle (&deg;/s). For the knee, positive means extending (straightening), negative means flexing (bending).</li>
+            <li><strong>Jump height</strong> from flight time uses h = g &times; t&sup2; &divide; 8. It assumes the body is in the same position at take-off and landing (e.g. no tucking the legs up).</li>
+            <li><strong>Hip &ne; centre of mass.</strong> The hip is a handy stand-in for the centre of mass, but arm and trunk movements shift the real centre of mass.</li>
+          </ol>
+        </div></details>
+      </div>
+    </div>
+  </section>
+  <footer>SESC02 | Plymouth Marjon University | Works offline once loaded. Nothing is uploaded.</footer>
+</main>
+
+<script>
+(function(){
+'use strict';
+// ---------------- constants ----------------
+var G = 9.81;
+var MARKERS = {
+  Shoulder:{col:'#0071bc'}, Hip:{col:'#8b3556'}, Knee:{col:'#00857e'}, Ankle:{col:'#e07b00'}, Toe:{col:'#6a4c93'}
+};
+var MODELS = { hip:['Hip'], body:['Shoulder','Hip','Knee','Ankle','Toe'], leg:['Hip','Knee','Ankle','Toe'] };
+var EVENTS = {
+  sprint:['Touchdown','Toe-off'],
+  jump:['Start of movement','Lowest point','Take-off','Landing'],
+  other:['Event A','Event B','Event C']
+};
+var ANGLES = [
+  {key:'Knee angle', pts:['Hip','Knee','Ankle'], type:'joint', col:'#00857e'},
+  {key:'Hip angle', pts:['Shoulder','Hip','Knee'], type:'joint', col:'#8b3556'},
+  {key:'Ankle angle', pts:['Knee','Ankle','Toe'], type:'joint', col:'#e07b00'},
+  {key:'Trunk lean', pts:['Hip','Shoulder'], type:'seg', col:'#0071bc'},
+  {key:'Shin angle', pts:['Ankle','Knee'], type:'seg', col:'#6a4c93'}
+];
+
+// ---------------- state ----------------
+var S = freshState();
+function freshState(){
+  return {name:'', duration:0, vw:0, vh:0, fps:30, slow:1, activity:'sprint', dir:'right', model:'body', every:4, advance:1,
+          calib:null, origin:null, frames:{}, events:[], measures:[], cutoff:8, filt:true, linMarker:'Hip'};
+}
+var cur = 0, nFrames = 0, activeMarker = null, mode = 'digi', pending = [], lastAdded = [], drag = null, results = null;
+
+var $ = function(id){ return document.getElementById(id); };
+var vid = $('vid'), ov = $('ov'), ctx = ov.getContext('2d'), loupe = $('loupe'), lctx = loupe.getContext('2d');
+
+function fpsReal(){ return S.fps * S.slow; }
+function tReal(f){ return f / fpsReal(); }
+function status(msg){ $('status').innerHTML = msg; }
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function fx(x, n){ return (x === null || x === undefined || isNaN(x)) ? '' : x.toFixed(n); }
+
+// ---------------- persistence ----------------
+function key(){ return 'sesc02-va:' + S.name + ':' + Math.round(S.duration*1000); }
+function persist(){ if (!S.name) return; try{ localStorage.setItem(key(), JSON.stringify(S)); }catch(e){} }
+function restore(){
+  try{ var j = JSON.parse(localStorage.getItem(key())); if (j && j.frames){ var keep = {name:S.name, duration:S.duration, vw:S.vw, vh:S.vh}; S = Object.assign(freshState(), j, keep); return true; } }catch(e){}
+  return false;
+}
+
+// ---------------- video loading ----------------
+$('file').addEventListener('change', function(){
+  var f = this.files && this.files[0]; if (!f) return;
+  loadVideoURL(URL.createObjectURL(f), f.name);
+});
+function loadVideoURL(url, name, opts){
+  opts = opts || {};
+  vid.src = url;
+  vid.onloadedmetadata = function(){
+    var old = S;
+    S = freshState();
+    S.name = name; S.duration = vid.duration; S.vw = vid.videoWidth; S.vh = vid.videoHeight;
+    var restored = restore();
+    if (!restored && opts.fps){ S.fps = opts.fps; }
+    if (!restored && opts.activity){ S.activity = opts.activity; }
+    ov.width = S.vw; ov.height = S.vh;
+    $('empty').classList.add('hide');
+    syncInputs(); recount();
+    seek(0);
+    status(opts.msg ? opts.msg : restored ? 'Welcome back. Your saved work for <strong>'+esc(name)+'</strong> has been restored.' : 'Video loaded ('+S.vw+' &times; '+S.vh+' px). Check the frame rate in <strong>Setup</strong>, then calibrate.');
+    if (!restored && !opts.fps) guessFps();
+  };
+  vid.onerror = function(){ status('<span style="color:#8b3556"><strong>This video will not play in this browser.</strong> iPhone HEVC videos often fail on Windows. Set your iPhone camera to &ldquo;Most Compatible&rdquo; and re-film, or try Safari / Chrome on a Mac.</span>'); };
+}
+window.__VA_load = loadVideoURL;
+$('demoBtn').addEventListener('click', function(){
+  var url = 'sesc02-demo-cmj-120fps.mp4';
+  var test = document.createElement('video');
+  if (!test.canPlayType('video/mp4; codecs="avc1.640028"')) url = 'sesc02-demo-cmj-120fps.webm';
+  loadVideoURL(url, 'demo-cmj', {fps:120, activity:'jump', msg:'Demo clip loaded: a 120 fps countermovement jump. The black pole is <strong>1.00 m</strong>, so calibrate on its two ends. Answers to check yourself against: flight time 0.53 s, jump height about 34&ndash;35 cm, lowest hip position 30 cm below standing.'});
+  vid.addEventListener('error', function once(){ vid.removeEventListener('error', once); status('The demo clip could not be found. It needs to sit in the same folder as this page.'); });
+});
+
+function recount(){
+  nFrames = Math.max(1, Math.floor(S.duration * S.fps + 1e-6));
+  $('slider').max = nFrames - 1;
+  $('effRate').textContent = 'Real capture rate: ' + (+fpsReal().toFixed(2)) + ' fps (one frame = ' + (1000/fpsReal()).toFixed(1) + ' ms)';
+  var fs = fpsReal() / S.every;
+  $('sampleInfo').textContent = 'Sampling: every ' + S.every + ' frame' + (S.every>1?'s':'') + ' = ' + (+fs.toFixed(1)) + ' samples per second (' + (1000/fs).toFixed(1) + ' ms apart)';
+}
+
+// frame-rate detection using requestVideoFrameCallback
+function guessFps(){
+  if (!('requestVideoFrameCallback' in HTMLVideoElement.prototype)) return;
+  detectFps(true);
+}
+function detectFps(silent){
+  if (!vid.src || !('requestVideoFrameCallback' in HTMLVideoElement.prototype)){ if(!silent) status('Frame rate detection is not supported in this browser. Check the video details on your phone and type it in.'); return; }
+  var times = [], startT = vid.currentTime, wasMuted = vid.muted;
+  vid.muted = true; vid.playbackRate = 0.25;
+  function cb(now, md){
+    times.push(md.mediaTime);
+    if (times.length < 40 && !vid.paused) vid.requestVideoFrameCallback(cb);
+    else finish();
+  }
+  function finish(){
+    vid.pause(); vid.muted = wasMuted;
+    var d = [];
+    for (var i=1;i<times.length;i++){ var x = times[i]-times[i-1]; if (x > 1e-4) d.push(x); }
+    if (d.length < 5){ if(!silent) status('Could not detect the frame rate. Please type it in.'); seek(cur); return; }
+    d.sort(function(a,b){return a-b;});
+    var est = 1 / d[Math.floor(d.length*0.25)];
+    var common = [24,25,30,50,60,100,120,240,480], best = common[0];
+    common.forEach(function(c){ if (Math.abs(c-est) < Math.abs(best-est)) best = c; });
+    var use = Math.abs(best-est)/best < 0.06 ? best : Math.round(est);
+    S.fps = use; syncInputs(); recount(); persist(); seek(Math.min(cur, nFrames-1));
+    status('Detected frame rate: about <strong>' + use + ' fps</strong>. If you know it is different, type the correct value in Setup.');
+  }
+  vid.requestVideoFrameCallback(cb);
+  vid.play().catch(function(){ if(!silent) status('Press Play once, then try Detect again.'); });
+  setTimeout(function(){ if (!vid.paused) finish(); }, 4000);
+}
+$('detect').addEventListener('click', function(){ detectFps(false); });
+
+// ---------------- seeking & drawing ----------------
+function seek(f){
+  if (!S.duration) return;
+  f = Math.max(0, Math.min(nFrames - 1, Math.round(f)));
+  cur = f;
+  var t = (f + 0.5) / S.fps;
+  if (Math.abs(vid.currentTime - t) < 1e-6) { draw(); } else { vid.currentTime = Math.min(t, Math.max(0, S.duration - 0.0005)); }
+  $('slider').value = f;
+  $('readout').innerHTML = 'Frame ' + f + ' / ' + (nFrames-1) + ' &nbsp;|&nbsp; Time ' + tReal(f).toFixed(3) + ' s' + (S.slow>1?' (real time)':'');
+}
+vid.addEventListener('seeked', draw);
+vid.addEventListener('timeupdate', function(){ if (!vid.paused){ cur = Math.floor(vid.currentTime * S.fps); $('slider').value = cur; $('readout').innerHTML = 'Frame ' + cur + ' &nbsp;|&nbsp; Time ' + tReal(cur).toFixed(3) + ' s'; draw(); } });
+window.__VA_seek = seek;
+
+function rad(){ return Math.max(4, Math.round(Math.min(S.vw, S.vh) / 110)); }
+function draw(){
+  if (!S.vw) return;
+  ctx.clearRect(0,0,ov.width,ov.height);
+  var r = rad(), lw = Math.max(2, r/2.5), fsz = Math.max(12, r*2.6);
+  ctx.lineCap = 'round';
+  // calibration
+  if (S.calib){
+    var a = S.calib.p1, b = S.calib.p2;
+    ctx.strokeStyle = '#ffd400'; ctx.lineWidth = lw; ctx.setLineDash([r*1.5, r]);
+    ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke(); ctx.setLineDash([]);
+    label(S.calib.len + ' m', (a[0]+b[0])/2 + r*2, (a[1]+b[1])/2, '#ffd400', fsz);
+  }
+  if (S.origin){ cross(S.origin[0], S.origin[1], r*2, '#ffd400', lw); }
+  var mk = MODELS[S.model];
+  // trail
+  var trailM = activeMarker || 'Hip';
+  ctx.fillStyle = (MARKERS[trailM]||MARKERS.Hip).col;
+  Object.keys(S.frames).forEach(function(k){ var p = S.frames[k][trailM]; if (p && +k !== cur){ ctx.globalAlpha = .35; ctx.beginPath(); ctx.arc(p[0],p[1],r*0.45,0,7); ctx.fill(); } });
+  ctx.globalAlpha = 1;
+  var fr = S.frames[cur] || {};
+  // segments
+  ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = lw;
+  [['Shoulder','Hip'],['Hip','Knee'],['Knee','Ankle'],['Ankle','Toe']].forEach(function(s){
+    if (fr[s[0]] && fr[s[1]]){ ctx.beginPath(); ctx.moveTo(fr[s[0]][0], fr[s[0]][1]); ctx.lineTo(fr[s[1]][0], fr[s[1]][1]); ctx.stroke(); }
+  });
+  mk.forEach(function(m){
+    var p = fr[m]; if (!p) return;
+    ctx.fillStyle = MARKERS[m].col; ctx.strokeStyle = '#fff'; ctx.lineWidth = lw*0.8;
+    ctx.beginPath(); ctx.arc(p[0],p[1],r,0,7); ctx.fill(); ctx.stroke();
+    if (m === activeMarker){ ctx.strokeStyle = '#ffd400'; ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(p[0],p[1],r*1.8,0,7); ctx.stroke(); }
+  });
+  // live angles on overlay
+  if (fr.Hip && fr.Knee && fr.Ankle) label(Math.round(jointAngle(fr.Hip, fr.Knee, fr.Ankle)) + '°', fr.Knee[0] + r*2.2*(S.dir==='right'?1:-1), fr.Knee[1], '#fff', fsz, S.dir==='right'?'left':'right');
+  if (fr.Shoulder && fr.Hip && fr.Knee) label(Math.round(jointAngle(fr.Shoulder, fr.Hip, fr.Knee)) + '°', fr.Hip[0] - r*2.2*(S.dir==='right'?1:-1), fr.Hip[1], '#fff', fsz, S.dir==='right'?'right':'left');
+  // measures on this frame
+  S.measures.forEach(function(m){ if (m.frame === cur) drawMeasure(m.pts, m.type, m.text, r, lw, fsz); });
+  if (pending.length) drawMeasure(pending, mode, '', r, lw, fsz);
+  // event flag
+  var evs = S.events.filter(function(e){ return e.frame === cur; }).map(function(e){ return e.name; });
+  if (evs.length) label(evs.join(' + '), r*2, fsz*1.6, '#ffd400', fsz*1.1, 'left');
+}
+function drawMeasure(pts, type, text, r, lw, fsz){
+  ctx.strokeStyle = '#ffd400'; ctx.fillStyle = '#ffd400'; ctx.lineWidth = lw;
+  ctx.beginPath(); pts.forEach(function(p,i){ if(i) ctx.lineTo(p[0],p[1]); else ctx.moveTo(p[0],p[1]); }); ctx.stroke();
+  pts.forEach(function(p){ ctx.beginPath(); ctx.arc(p[0],p[1],r*0.7,0,7); ctx.fill(); });
+  if (type === 'seg' && pts.length === 2){ ctx.setLineDash([r,r]); ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); ctx.lineTo(pts[0][0], pts[0][1] - Math.hypot(pts[1][0]-pts[0][0], pts[1][1]-pts[0][1])); ctx.stroke(); ctx.setLineDash([]); }
+  if (text){ var q = pts[type==='angle'?1:pts.length-1]; label(text, q[0] + r*2, q[1] - r*2, '#ffd400', fsz); }
+}
+function label(t, x, y, col, size, align){
+  ctx.font = 'bold ' + Math.round(size) + 'px Arial'; ctx.textAlign = align || 'left'; ctx.textBaseline = 'middle';
+  ctx.lineWidth = Math.max(3, size/4); ctx.strokeStyle = 'rgba(0,0,0,.75)'; ctx.strokeText(t, x, y);
+  ctx.fillStyle = col; ctx.fillText(t, x, y);
+}
+function cross(x,y,s,col,lw){ ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.beginPath(); ctx.moveTo(x-s,y); ctx.lineTo(x+s,y); ctx.moveTo(x,y-s); ctx.lineTo(x,y+s); ctx.stroke(); }
+
+// ---------------- geometry ----------------
+function jointAngle(a, b, c){ // included angle at b, in degrees (image coords ok)
+  var v1x = a[0]-b[0], v1y = a[1]-b[1], v2x = c[0]-b[0], v2y = c[1]-b[1];
+  var d = Math.hypot(v1x,v1y) * Math.hypot(v2x,v2y); if (!d) return NaN;
+  return Math.acos(Math.max(-1, Math.min(1, (v1x*v2x + v1y*v2y) / d))) * 180 / Math.PI;
+}
+function segFromVertical(lower, upper){ // world coords (x forward, y up); + when upper end is forward
+  return Math.atan2(upper[0]-lower[0], upper[1]-lower[1]) * 180 / Math.PI;
+}
+function scale(){ if (!S.calib) return null; var a = S.calib.p1, b = S.calib.p2; return S.calib.len / Math.hypot(b[0]-a[0], b[1]-a[1]); }
+function toWorld(p){ // pixels -> metres, x forward, y up
+  var k = scale() || 1, o = S.origin || (S.calib ? S.calib.p1 : [0, S.vh]);
+  var x = (p[0]-o[0]) * k, y = (o[1]-p[1]) * k;
+  return [S.dir === 'right' ? x : -x, y];
+}
+
+// ---------------- pointer handling ----------------
+function evPt(e){
+  var r = ov.getBoundingClientRect();
+  return [ (e.clientX - r.left) / r.width * ov.width, (e.clientY - r.top) / r.height * ov.height ];
+}
+ov.addEventListener('pointerdown', function(e){
+  if (!S.vw) return;
+  e.preventDefault();
+  var p = evPt(e), r = rad();
+  if (mode === 'digi'){
+    var fr = S.frames[cur] || {};
+    var hit = null;
+    MODELS[S.model].forEach(function(m){ if (fr[m] && Math.hypot(fr[m][0]-p[0], fr[m][1]-p[1]) < r*2) hit = m; });
+    if (hit){ drag = hit; activeMarker = hit; ov.setPointerCapture(e.pointerId); renderChips(); draw(); return; }
+    placePoint(p);
+  } else if (mode === 'calib' || mode === 'origin'){
+    pending.push(p);
+    if (mode === 'origin'){ S.origin = p; pending = []; mode = 'digi'; persist(); status('Origin set.'); $('origStart').classList.remove('on'); }
+    else if (pending.length === 2){
+      var len = parseFloat($('calLen').value);
+      if (!(len > 0)){ status('Enter the real length first.'); pending = []; draw(); return; }
+      S.calib = {p1:pending[0], p2:pending[1], len:len}; if (!S.origin) S.origin = null;
+      pending = []; mode = 'digi'; $('calStart').classList.remove('on'); persist(); showCalib(); status('Calibrated. Now go to <strong>Digitise</strong>.');
+    }
+    draw();
+  } else if (mode === 'dist' || mode === 'angle' || mode === 'seg'){
+    pending.push(p);
+    var need = mode === 'angle' ? 3 : 2;
+    if (pending.length === need){ finishMeasure(); }
+    draw();
+  }
+});
+ov.addEventListener('pointermove', function(e){
+  var p = evPt(e);
+  if (drag){ S.frames[cur][drag] = p; draw(); }
+  drawLoupe(p);
+});
+ov.addEventListener('pointerup', function(){ if (drag){ drag = null; persist(); } });
+ov.addEventListener('pointerleave', function(){ loupe.style.display = 'none'; });
+
+function drawLoupe(p){
+  if (!$('loupeOn').checked || !S.vw){ loupe.style.display = 'none'; return; }
+  loupe.style.display = 'block';
+  var z = 4, w = loupe.width, src = w / z;
+  // scale source size to video pixels relative to displayed size
+  var disp = ov.getBoundingClientRect().width / ov.width; var s = src / disp;
+  lctx.save(); lctx.clearRect(0,0,w,w); lctx.beginPath(); lctx.arc(w/2,w/2,w/2,0,7); lctx.clip();
+  try{ lctx.drawImage(vid, p[0]-s/2, p[1]-s/2, s, s, 0, 0, w, w); lctx.drawImage(ov, p[0]-s/2, p[1]-s/2, s, s, 0, 0, w, w); }catch(err){}
+  lctx.strokeStyle = '#ffd400'; lctx.lineWidth = 1.5; lctx.beginPath(); lctx.moveTo(w/2-12,w/2); lctx.lineTo(w/2+12,w/2); lctx.moveTo(w/2,w/2-12); lctx.lineTo(w/2,w/2+12); lctx.stroke();
+  lctx.restore();
+}
+
+function nextMarker(){
+  var fr = S.frames[cur] || {}, mk = MODELS[S.model];
+  for (var i=0;i<mk.length;i++) if (!fr[mk[i]]) return mk[i];
+  return null;
+}
+function placePoint(p, m){
+  m = m || activeMarker || nextMarker();
+  if (!m){ status('All points are done on this frame. Move to another frame, or drag a point to adjust it.'); return; }
+  if (!S.frames[cur]) S.frames[cur] = {};
+  S.frames[cur][m] = [p[0], p[1]];
+  lastAdded.push([cur, m]);
+  activeMarker = nextMarker();
+  persist(); renderChips(); updateDigiCount(); draw();
+  if (!activeMarker && S.advance){
+    var nf = cur + S.every;
+    if (nf < nFrames){ seek(nf); activeMarker = nextMarker(); renderChips(); }
+    else status('End of video reached.');
+  }
+}
+window.__VA_place = function(frame, marker, x, y){ if (!S.frames[frame]) S.frames[frame] = {}; S.frames[frame][marker] = [x, y]; persist(); };
+window.__VA_state = function(){ return S; };
+window.__VA_results = function(){ return results; };
+
+// ---------------- chips ----------------
+function renderChips(){
+  var fr = S.frames[cur] || {};
+  if (activeMarker && MODELS[S.model].indexOf(activeMarker) < 0) activeMarker = null;
+  if (!activeMarker) activeMarker = nextMarker();
+  $('markerChips').innerHTML = MODELS[S.model].map(function(m){
+    var cls = 'chip' + (m === activeMarker ? ' active' : '') + (fr[m] ? ' done' : '');
+    return '<button type="button" class="' + cls + '" data-m="' + m + '"><span class="dot" style="background:' + MARKERS[m].col + '"></span>' + m + (fr[m] ? ' &#10003;' : '') + '</button>';
+  }).join('');
+  $('markerChips').querySelectorAll('.chip').forEach(function(b){ b.addEventListener('click', function(){ activeMarker = b.getAttribute('data-m'); mode = 'digi'; renderChips(); draw(); }); });
+}
+function updateDigiCount(){
+  var n = Object.keys(S.frames).filter(function(k){ return Object.keys(S.frames[k]).length; }).length;
+  $('digiCount').textContent = n + ' frame' + (n===1?'':'s') + ' digitised.';
+}
+$('undo').addEventListener('click', undo);
+function undo(){
+  var l = lastAdded.pop(); if (!l) return;
+  if (S.frames[l[0]]){ delete S.frames[l[0]][l[1]]; if (!Object.keys(S.frames[l[0]]).length) delete S.frames[l[0]]; }
+  if (l[0] !== cur) seek(l[0]);
+  activeMarker = l[1]; persist(); renderChips(); updateDigiCount(); draw();
+}
+$('clearFrame').addEventListener('click', function(){ delete S.frames[cur]; activeMarker = null; persist(); renderChips(); updateDigiCount(); draw(); });
+$('clearAll').addEventListener('click', function(){ if (!confirm('Remove all digitised points?')) return; S.frames = {}; lastAdded = []; activeMarker = null; persist(); renderChips(); updateDigiCount(); draw(); });
+
+// ---------------- setup inputs ----------------
+function syncInputs(){
+  $('fps').value = S.fps; $('slow').value = S.slow; $('activity').value = S.activity; $('dir').value = S.dir;
+  $('model').value = S.model; $('every').value = String(S.every); $('advance').value = String(S.advance);
+  $('cutoff').value = S.cutoff; $('filtOn').checked = S.filt;
+  if (S.calib) $('calLen').value = S.calib.len;
+  showCalib(); renderChips(); renderEventBtns(); renderEvents(); renderMeasures(); updateDigiCount();
+}
+$('fpsChips').innerHTML = [30,60,120,240].map(function(v){ return '<button type="button" class="chip" data-f="'+v+'">'+v+'</button>'; }).join('');
+$('fpsChips').querySelectorAll('.chip').forEach(function(b){ b.addEventListener('click', function(){ $('fps').value = b.getAttribute('data-f'); $('fps').dispatchEvent(new Event('change')); }); });
+[['fps','fps',parseFloat],['slow','slow',parseFloat],['every','every',parseInt],['advance','advance',parseInt],['cutoff','cutoff',parseFloat]].forEach(function(a){
+  $(a[0]).addEventListener('change', function(){ var v = a[2](this.value); if (v > 0 || (a[0]==='advance' && v===0)){ S[a[1]] = v; recount(); persist(); if (a[0]==='fps'||a[0]==='slow') seek(Math.min(cur, nFrames-1)); } });
+});
+$('activity').addEventListener('change', function(){ S.activity = this.value; persist(); renderEventBtns(); renderEvents(); });
+$('dir').addEventListener('change', function(){ S.dir = this.value; persist(); draw(); });
+$('model').addEventListener('change', function(){ S.model = this.value; activeMarker = null; persist(); renderChips(); draw(); });
+$('filtOn').addEventListener('change', function(){ S.filt = this.checked; persist(); if (results) compute(); });
+
+// ---------------- calibration ----------------
+$('calStart').addEventListener('click', function(){ if (!S.vw) return; mode = 'calib'; pending = []; this.classList.add('on'); status('Click one end of your known length, then the other end. Use the magnifier.'); });
+$('origStart').addEventListener('click', function(){ if (!S.vw) return; mode = 'origin'; pending = []; this.classList.add('on'); status('Click where you want (0, 0) to be.'); });
+function showCalib(){
+  if (!S.calib){ $('calInfo').textContent = 'Not calibrated yet. Results will be in pixels.'; $('tiltInfo').textContent = ''; return; }
+  var a = S.calib.p1, b = S.calib.p2, px = Math.hypot(b[0]-a[0], b[1]-a[1]);
+  $('calInfo').textContent = 'Calibrated: ' + S.calib.len + ' m = ' + px.toFixed(1) + ' px (1 px = ' + (S.calib.len/px*1000).toFixed(2) + ' mm)';
+  var ang = Math.abs(Math.atan2(b[1]-a[1], b[0]-a[0]) * 180 / Math.PI) % 90; var off = Math.min(ang, 90-ang);
+  $('tiltInfo').textContent = 'Your calibration line is ' + off.toFixed(1) + '° off vertical/horizontal' + (off > 3 ? '. If the object really is upright, your camera may be tilted, which will distort the results.' : ', which is fine.');
+}
+
+// ---------------- events ----------------
+function renderEventBtns(){
+  $('eventBtns').innerHTML = EVENTS[S.activity].map(function(n){ return '<button type="button" class="btn teal small" data-e="'+esc(n)+'">'+esc(n)+'</button>'; }).join('');
+  $('eventBtns').querySelectorAll('button').forEach(function(b){ b.addEventListener('click', function(){
+    S.events.push({name:b.getAttribute('data-e'), frame:cur}); S.events.sort(function(x,y){ return x.frame-y.frame; });
+    persist(); renderEvents(); draw(); status(b.getAttribute('data-e') + ' marked at frame ' + cur + '.'); }); });
+}
+function renderEvents(){
+  if (!S.events.length){ $('eventTab').innerHTML = '<tr><td class="muted">No events yet.</td></tr>'; $('eventSummary').innerHTML=''; return; }
+  $('eventTab').innerHTML = '<tr><th>Event</th><th>Frame</th><th>Time (s)</th><th></th></tr>' + S.events.map(function(e,i){
+    return '<tr><td><a href="#" data-go="'+e.frame+'">'+esc(e.name)+'</a></td><td class="num">'+e.frame+'</td><td class="num">'+tReal(e.frame).toFixed(3)+'</td><td><button type="button" class="btn ghost small" data-del="'+i+'">Delete</button></td></tr>';
+  }).join('');
+  $('eventTab').querySelectorAll('[data-go]').forEach(function(a){ a.addEventListener('click', function(ev){ ev.preventDefault(); seek(+a.getAttribute('data-go')); }); });
+  $('eventTab').querySelectorAll('[data-del]').forEach(function(b){ b.addEventListener('click', function(){ S.events.splice(+b.getAttribute('data-del'),1); persist(); renderEvents(); draw(); }); });
+  $('eventSummary').innerHTML = eventStatsHTML();
+}
+function eventStats(){
+  var out = [], ev = S.events, i, j;
+  var dt = function(a,b){ return (b-a) / fpsReal(); };
+  if (S.activity === 'sprint'){
+    var c = [], fl = [], st = [], sl = [];
+    for (i=0;i<ev.length;i++){
+      if (ev[i].name === 'Touchdown'){
+        for (j=i+1;j<ev.length;j++){ if (ev[j].name==='Toe-off'){ c.push(dt(ev[i].frame, ev[j].frame)); break; } if (ev[j].name==='Touchdown') break; }
+        for (j=i+1;j<ev.length;j++){ if (ev[j].name==='Touchdown'){ st.push(dt(ev[i].frame, ev[j].frame));
+          var a = S.frames[ev[i].frame], b = S.frames[ev[j].frame];
+          if (a && b && a.Toe && b.Toe && S.calib) sl.push(Math.abs(toWorld(b.Toe)[0] - toWorld(a.Toe)[0]));
+          break; } }
+      }
+      if (ev[i].name === 'Toe-off'){
+        for (j=i+1;j<ev.length;j++){ if (ev[j].name==='Touchdown'){ fl.push(dt(ev[i].frame, ev[j].frame)); break; } if (ev[j].name==='Toe-off') break; }
+      }
+    }
+    var mean = function(a){ return a.reduce(function(s,x){return s+x;},0)/a.length; };
+    if (c.length) out.push(['Contact time', fx(mean(c),3)+' s', c.length+' contact'+(c.length>1?'s':'')]);
+    if (fl.length) out.push(['Flight time', fx(mean(fl),3)+' s', fl.length+' flight'+(fl.length>1?'s':'')]);
+    if (st.length){ out.push(['Step time', fx(mean(st),3)+' s', st.length+' step'+(st.length>1?'s':'')]); out.push(['Step frequency', fx(1/mean(st),2)+' Hz', '1 ÷ step time']); }
+    if (sl.length){ out.push(['Step length', fx(mean(sl),2)+' m', 'Toe at touchdowns']); if (st.length) out.push(['Speed (step length × frequency)', fx(mean(sl)/mean(st),2)+' m/s', '']); }
+    else if (st.length) out.push(['Step length', '–', 'Digitise the Toe on touchdown frames (or use Measure)']);
+  } else if (S.activity === 'jump'){
+    var f = function(n){ for (var k=0;k<ev.length;k++) if (ev[k].name===n) return ev[k].frame; return null; };
+    var s0 = f('Start of movement'), lo = f('Lowest point'), to = f('Take-off'), ld = f('Landing');
+    if (to !== null && ld !== null && ld > to){ var T = dt(to, ld); out.push(['Flight time', fx(T,3)+' s', '']); out.push(['Jump height (flight time)', fx(G*T*T/8*100,1)+' cm', 'h = g t² ÷ 8']); out.push(['Take-off velocity (from flight)', fx(G*T/2,2)+' m/s', 'v = g t ÷ 2']); }
+    if (s0 !== null && lo !== null && lo > s0) out.push(['Downward phase', fx(dt(s0,lo),3)+' s', 'start → lowest point']);
+    if (lo !== null && to !== null && to > lo) out.push(['Upward (propulsion) phase', fx(dt(lo,to),3)+' s', 'lowest point → take-off']);
+    if (s0 !== null && to !== null && to > s0) out.push(['Time to take-off', fx(dt(s0,to),3)+' s', '']);
+  } else {
+    for (i=1;i<ev.length;i++) out.push([ev[i-1].name+' → '+ev[i].name, fx(dt(ev[i-1].frame, ev[i].frame),3)+' s', '']);
+  }
+  return out;
+}
+function eventStatsHTML(){
+  var s = eventStats(); if (!s.length) return '';
+  return '<div class="stats">' + s.map(function(r){ return '<div class="stat"><span>'+esc(r[0])+'</span><strong>'+esc(r[1])+'</strong>'+(r[2]?'<span>'+esc(r[2])+'</span>':'')+'</div>'; }).join('') + '</div>';
+}
+
+// ---------------- measure ----------------
+var mHelpTxt = {dist:'Click the two ends.', angle:'Click three points: end, joint, end (e.g. hip, knee, ankle).', seg:'Click the lower end, then the upper end (e.g. ankle, then knee).'};
+[['mDist','dist'],['mAngle','angle'],['mSeg','seg']].forEach(function(a){ $(a[0]).addEventListener('click', function(){ if (!S.vw) return; mode = a[1]; pending = []; $('mHelp').textContent = mHelpTxt[a[1]]; status(mHelpTxt[a[1]]); }); });
+function finishMeasure(){
+  var p = pending.slice(), m = {frame:cur, type:mode, pts:p}, txt;
+  if (mode === 'dist'){ var a = toWorld(p[0]), b = toWorld(p[1]); var d = Math.hypot(b[0]-a[0], b[1]-a[1]); txt = S.calib ? d.toFixed(3) + ' m' : Math.hypot(p[1][0]-p[0][0], p[1][1]-p[0][1]).toFixed(0) + ' px'; m.value = d; }
+  else if (mode === 'angle'){ var an = jointAngle(p[0], p[1], p[2]); txt = an.toFixed(1) + '°'; m.value = an; }
+  else { var sa = segFromVertical(toWorld(p[0]), toWorld(p[1])); txt = sa.toFixed(1) + '°'; m.value = sa; }
+  m.text = txt; S.measures.push(m); pending = []; mode = 'digi'; persist(); renderMeasures();
+  status('Measured: <strong>' + txt + '</strong> at frame ' + cur + '.');
+}
+function renderMeasures(){
+  if (!S.measures.length){ $('mTab').innerHTML = '<tr><td class="muted">No measurements yet.</td></tr>'; return; }
+  var names = {dist:'Distance', angle:'Joint angle', seg:'Segment vs vertical'};
+  $('mTab').innerHTML = '<tr><th>Type</th><th>Frame</th><th>Time (s)</th><th>Value</th><th></th></tr>' + S.measures.map(function(m,i){
+    return '<tr><td><a href="#" data-go="'+m.frame+'">'+names[m.type]+'</a></td><td class="num">'+m.frame+'</td><td class="num">'+tReal(m.frame).toFixed(3)+'</td><td class="num"><strong>'+esc(m.text)+'</strong></td><td><button type="button" class="btn ghost small" data-del="'+i+'">Delete</button></td></tr>';
+  }).join('');
+  $('mTab').querySelectorAll('[data-go]').forEach(function(a){ a.addEventListener('click', function(ev){ ev.preventDefault(); seek(+a.getAttribute('data-go')); }); });
+  $('mTab').querySelectorAll('[data-del]').forEach(function(b){ b.addEventListener('click', function(){ S.measures.splice(+b.getAttribute('data-del'),1); persist(); renderMeasures(); draw(); }); });
+}
+
+// ---------------- signal processing ----------------
+// 2nd-order Butterworth low-pass, run forwards and backwards (zero lag, 4th order overall).
+// Cut-off corrected for two passes (Winter, 2009): C = 0.802.
+function butter(x, fc, fs){
+  var n = x.length; if (n < 7) return x.slice();
+  var wc = Math.tan(Math.PI * fc / fs) / 0.802;
+  var K1 = Math.SQRT2 * wc, K2 = wc * wc;
+  var a0 = K2 / (1 + K1 + K2), a1 = 2 * a0, a2 = a0, K3 = 2 * a0 / K2;
+  var b1 = -2 * a0 + K3, b2 = 1 - 2 * a0 - K3;
+  var pad = Math.min(n - 1, 20), y = [], i;
+  // reflect-pad both ends (odd reflection keeps the slope at the ends)
+  var ext = [];
+  for (i = pad; i >= 1; i--) ext.push(2 * x[0] - x[i]);
+  for (i = 0; i < n; i++) ext.push(x[i]);
+  for (i = n - 2; i >= n - 1 - pad; i--) ext.push(2 * x[n-1] - x[i]);
+  function pass(v){
+    var o = v.slice();
+    for (var k = 2; k < v.length; k++) o[k] = a0*v[k] + a1*v[k-1] + a2*v[k-2] + b1*o[k-1] + b2*o[k-2];
+    return o;
+  }
+  var f1 = pass(ext); f1.reverse(); var f2 = pass(f1); f2.reverse();
+  return f2.slice(pad, pad + n);
+}
+function centralDiff(t, x){
+  var v = new Array(x.length).fill(null);
+  for (var i = 1; i < x.length - 1; i++) if (x[i+1] !== null && x[i-1] !== null) v[i] = (x[i+1] - x[i-1]) / (t[i+1] - t[i-1]);
+  return v;
+}
+function secondDiff(t, x){
+  var a = new Array(x.length).fill(null);
+  for (var i = 1; i < x.length - 1; i++){
+    if (x[i+1] === null || x[i-1] === null) continue;
+    var h1 = t[i] - t[i-1], h2 = t[i+1] - t[i];
+    a[i] = 2 * (h1 * x[i+1] - (h1 + h2) * x[i] + h2 * x[i-1]) / (h1 * h2 * (h1 + h2));
+  }
+  return a;
+}
+// Build a regular series for one marker: frames where it exists, gaps of up to 3 steps filled linearly.
+function series(marker){
+  var fr = Object.keys(S.frames).map(Number).filter(function(f){ return S.frames[f][marker]; }).sort(function(a,b){return a-b;});
+  if (fr.length < 3) return null;
+  var diffs = []; for (var i=1;i<fr.length;i++) diffs.push(fr[i]-fr[i-1]);
+  var cnt = {}; diffs.forEach(function(d){ cnt[d] = (cnt[d]||0)+1; });
+  var step = +Object.keys(cnt).sort(function(a,b){ return cnt[b]-cnt[a] || a-b; })[0];
+  var F = [], X = [], Y = [], gapWarn = false;
+  for (var f = fr[0]; f <= fr[fr.length-1]; f += step){
+    var p = S.frames[f] && S.frames[f][marker];
+    if (p){ var w = toWorld(p); F.push(f); X.push(w[0]); Y.push(w[1]); continue; }
+    var lo = null, hi = null;
+    for (var j=fr.length-1;j>=0;j--) if (fr[j] < f){ lo = fr[j]; break; }
+    for (j=0;j<fr.length;j++) if (fr[j] > f){ hi = fr[j]; break; }
+    if (lo === null || hi === null){ continue; }
+    if (hi - lo > 4*step) gapWarn = true;
+    var r = (f - lo) / (hi - lo), A = toWorld(S.frames[lo][marker]), B = toWorld(S.frames[hi][marker]);
+    F.push(f); X.push(A[0] + r*(B[0]-A[0])); Y.push(A[1] + r*(B[1]-A[1]));
+  }
+  return {F:F, T:F.map(tReal), X:X, Y:Y, step:step, gap:gapWarn};
+}
+
+// ---------------- results ----------------
+$('calc').addEventListener('click', compute);
+function compute(){
+  S.cutoff = parseFloat($('cutoff').value) || 8; S.filt = $('filtOn').checked; persist();
+  var mk = MODELS[S.model], sers = {}, any = false, msgs = [];
+  mk.forEach(function(m){ var s = series(m); if (s){ sers[m] = s; any = true; } });
+  if (!any){ $('resMsg').innerHTML = 'You need at least 3 digitised frames for a point before results can be calculated.'; $('resBody').classList.add('hide'); return; }
+  if (!S.calib) msgs.push('Not calibrated, so positions are in pixels, not metres.');
+  var fs0 = null;
+  Object.keys(sers).forEach(function(m){
+    var s = sers[m], fs = fpsReal() / s.step; fs0 = fs;
+    var fc = S.cutoff, use = S.filt && s.X.length >= 7;
+    if (use && fc >= fs / 2 * 0.9){ fc = fs / 2 * 0.8; msgs.push('Cut-off lowered to ' + fc.toFixed(1) + ' Hz because you sampled at ' + fs.toFixed(1) + ' Hz (it must be well below half the sampling rate).'); }
+    s.fc = use ? fc : null;
+    s.x = use ? butter(s.X, fc, fs) : s.X.slice();
+    s.y = use ? butter(s.Y, fc, fs) : s.Y.slice();
+    s.vx = centralDiff(s.T, s.x); s.vy = centralDiff(s.T, s.y);
+    s.ax = secondDiff(s.T, s.x); s.ay = secondDiff(s.T, s.y);
+    s.speed = s.vx.map(function(v,i){ return v === null ? null : Math.hypot(v, s.vy[i]); });
+    if (s.gap) msgs.push(m + ': there are gaps in your digitising, which have been filled in with straight lines. Check them.');
+  });
+  // angles on common frames (use filtered coordinates)
+  var ang = [];
+  ANGLES.forEach(function(a){
+    if (!a.pts.every(function(p){ return sers[p]; })) return;
+    var base = sers[a.pts[0]], F = base.F.filter(function(f){ return a.pts.every(function(p){ return sers[p].F.indexOf(f) >= 0; }); });
+    if (F.length < 3) return;
+    var T = F.map(tReal), V = F.map(function(f){
+      var P = a.pts.map(function(p){ var s = sers[p], i = s.F.indexOf(f); return [s.x[i], s.y[i]]; });
+      return a.type === 'joint' ? jointAngle(P[0], P[1], P[2]) : segFromVertical(P[0], P[1]);
+    });
+    ang.push({key:a.key, type:a.type, col:a.col, F:F, T:T, V:V, W:centralDiff(T, V)});
+  });
+  results = {sers:sers, ang:ang, fs:fs0};
+  $('resMsg').innerHTML = msgs.length ? '<div class="warn">' + msgs.map(function(m){ return '<p>'+esc(m)+'</p>'; }).join('') + '</div>' : '';
+  $('resBody').classList.remove('hide');
+  var lm = $('linMarker');
+  lm.innerHTML = Object.keys(sers).map(function(m){ return '<option'+(m===S.linMarker?' selected':'')+'>'+m+'</option>'; }).join('');
+  if (!sers[S.linMarker]) S.linMarker = Object.keys(sers)[0];
+  lm.value = S.linMarker;
+  drawResults();
+}
+$('linMarker').addEventListener('change', function(){ S.linMarker = this.value; persist(); drawResults(); });
+$('linDir').addEventListener('change', function(){ drawResults(); });
+function dirMode(){ var d = $('linDir').value; if (d !== 'auto') return d; return S.activity === 'sprint' ? 'h' : S.activity === 'jump' ? 'v' : 'both'; }
+
+function drawResults(){
+  if (!results) return;
+  var s = results.sers[S.linMarker], u = S.calib ? 'm' : 'px';
+  var evLines = S.events.map(function(e){ return {t:tReal(e.frame), name:e.name}; });
+  var dm = dirMode(), pick = function(h, v){ var o = []; if (dm !== 'v') o.push(h); if (dm !== 'h') o.push(v); return o; };
+  chart('cPos', pick({x:s.T, y:s.x, col:'#003d50'}, {x:s.T, y:s.y, col:'#00857e', dash:'7 5'}), evLines, 'Position ('+u+')');
+  chart('cVel', pick({x:s.T, y:s.vx, col:'#003d50'}, {x:s.T, y:s.vy, col:'#00857e', dash:'7 5'}), evLines, 'Velocity ('+u+'/s)', true);
+  chart('cAcc', pick({x:s.T, y:s.ax, col:'#003d50'}, {x:s.T, y:s.ay, col:'#00857e', dash:'7 5'}), evLines, 'Acceleration ('+u+'/s²)', true);
+  var hasAng = results.ang.length > 0;
+  $('angWrap').classList.toggle('hide', !hasAng); $('angVelWrap').classList.toggle('hide', !hasAng);
+  if (hasAng){
+    chart('cAng', results.ang.map(function(a){ return {x:a.T, y:a.V, col:a.col, name:a.key}; }), evLines, 'Angle (°)', true);
+    chart('cAngVel', results.ang.filter(function(a){ return a.type === 'joint'; }).map(function(a){ return {x:a.T, y:a.W, col:a.col, name:a.key}; }), evLines, 'Angular velocity (°/s)', true);
+  }
+  var lg = '<div class="legend">' + (dm !== 'v' ? '<span><span class="key" style="border-color:#003d50"></span>Horizontal (forwards +)</span>' : '') + (dm !== 'h' ? '<span><span class="key" style="border-color:#00857e;border-top-style:dashed"></span>Vertical (up +)</span>' : '') + '</div>';
+  if (hasAng) lg += '<div class="legend">' + results.ang.map(function(a){ return '<span><span class="key" style="border-color:'+a.col+'"></span>'+a.key+'</span>'; }).join('') + '</div>';
+  lg += '<p style="margin:.4rem 0">Linear graphs show the <strong>' + esc(S.linMarker) + '</strong>' + (s.fc ? ', filtered at ' + s.fc.toFixed(1) + ' Hz' : ', unfiltered') + ', sampled at ' + (results.fs ? results.fs.toFixed(1) : '?') + ' Hz.</p>';
+  lg += '<p style="margin:.4rem 0">Joint angles: 180&deg; = straight. Trunk lean and shin angle: from vertical, + = top end forwards. Angular velocity: + = extending, &minus; = flexing.</p>';
+  $('legendBox').innerHTML = lg;
+  keyStats(s);
+  dataTable();
+}
+function nearestIdx(arr, f){ var b = -1, d = 1e9; arr.forEach(function(x,i){ if (Math.abs(x-f) < d){ d = Math.abs(x-f); b = i; } }); return d <= 4*Math.max(1,S.every) ? b : -1; }
+function keyStats(s){
+  var u = S.calib ? 'm' : 'px', out = [];
+  var vmax = null, iv = -1;
+  s.vx.forEach(function(v,i){ if (v !== null && (vmax === null || v > vmax)){ vmax = v; iv = i; } });
+  if (vmax !== null && S.activity !== 'jump') out.push(['Peak forward velocity (' + S.linMarker + ')', vmax.toFixed(2) + ' ' + u + '/s', 'at ' + s.T[iv].toFixed(3) + ' s']);
+  var vymax = null, ivy = -1; s.vy.forEach(function(v,i){ if (v !== null && (vymax === null || v > vymax)){ vymax = v; ivy = i; } });
+  if (S.activity === 'jump' && vymax !== null) out.push(['Peak upward velocity (' + S.linMarker + ')', vymax.toFixed(2) + ' ' + u + '/s', 'at ' + s.T[ivy].toFixed(3) + ' s']);
+  if (S.activity === 'jump' && s.y.length > 3){
+    var base = s.y.slice(0, Math.min(5, s.y.length)).reduce(function(a,b){return a+b;},0) / Math.min(5, s.y.length);
+    var ymax = Math.max.apply(null, s.y), ymin = Math.min.apply(null, s.y);
+    out.push(['Lowest point (' + S.linMarker + ')', ((base - ymin)*(u==='m'?100:1)).toFixed(1) + (u==='m'?' cm':' px') + ' down', 'from the start position']);
+    out.push(['Highest point (' + S.linMarker + ')', ((ymax - base)*(u==='m'?100:1)).toFixed(1) + (u==='m'?' cm':' px') + ' up', 'from the start position']);
+  }
+  if (S.activity === 'sprint' && s.x.length > 2){
+    var dx = s.x[s.x.length-1] - s.x[0], dT = s.T[s.T.length-1] - s.T[0];
+    out.push(['Average forward velocity', (dx/dT).toFixed(2) + ' ' + u + '/s', 'over ' + dT.toFixed(2) + ' s digitised']);
+  }
+  results.ang.forEach(function(a){
+    if (a.key === 'Knee angle'){ var mn = Math.min.apply(null, a.V); out.push(['Smallest knee angle', mn.toFixed(0) + '°', 'most bent']);
+      var wm = null; a.W.forEach(function(w){ if (w !== null && (wm === null || w > wm)) wm = w; }); if (wm !== null) out.push(['Peak knee extension velocity', wm.toFixed(0) + '°/s', '']); }
+  });
+  // values at events
+  S.events.forEach(function(e){
+    var parts = [];
+    results.ang.forEach(function(a){ var i = nearestIdx(a.F, e.frame); if (i >= 0 && (a.key==='Knee angle' || a.key==='Shin angle' || a.key==='Trunk lean' || a.key==='Hip angle')) parts.push(a.key.replace(' angle','') + ' ' + a.V[i].toFixed(0) + '°'); });
+    var i = nearestIdx(s.F, e.frame);
+    if (i >= 0 && s.vx[i] !== null) parts.push((S.activity==='jump' ? 'v↑ ' + s.vy[i].toFixed(2) : 'v ' + s.vx[i].toFixed(2)) + ' ' + u + '/s');
+    if (parts.length) out.push(['At ' + e.name + ' (' + tReal(e.frame).toFixed(3) + ' s)', parts.slice(0,2).join(', '), parts.slice(2).join(', ')]);
+  });
+  eventStats().forEach(function(r){ out.push(r); });
+  $('keyStats').innerHTML = out.map(function(r){ return '<div class="stat"><span>'+esc(r[0])+'</span><strong>'+esc(r[1])+'</strong>'+(r[2]?'<span>'+esc(r[2])+'</span>':'')+'</div>'; }).join('');
+}
+function dataTable(){
+  var s = results.sers[S.linMarker], u = S.calib ? 'm' : 'px';
+  var head = '<tr><th>Frame</th><th>Time (s)</th><th>x ('+u+')</th><th>y ('+u+')</th><th>v<sub>x</sub></th><th>v<sub>y</sub></th><th>a<sub>x</sub></th><th>a<sub>y</sub></th>' + results.ang.map(function(a){ return '<th>'+a.key+' (&deg;)</th><th>'+a.key.replace(' angle','')+' &omega; (&deg;/s)</th>'; }).join('') + '</tr>';
+  var rows = s.F.map(function(f,i){
+    var r = '<tr><td class="num">'+f+'</td><td class="num">'+s.T[i].toFixed(3)+'</td><td class="num">'+fx(s.x[i],3)+'</td><td class="num">'+fx(s.y[i],3)+'</td><td class="num">'+fx(s.vx[i],2)+'</td><td class="num">'+fx(s.vy[i],2)+'</td><td class="num">'+fx(s.ax[i],1)+'</td><td class="num">'+fx(s.ay[i],1)+'</td>';
+    results.ang.forEach(function(a){ var j = a.F.indexOf(f); r += '<td class="num">'+(j>=0?fx(a.V[j],1):'')+'</td><td class="num">'+(j>=0?fx(a.W[j],0):'')+'</td>'; });
+    return r + '</tr>';
+  }).join('');
+  $('dataTab').innerHTML = head + rows;
+}
+
+// ---------------- charts ----------------
+function niceStep(range){ if (!(range > 0)) return 1; var raw = range/5, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw/p; return (m<1.5?1:m<3?2:m<7?5:10)*p; }
+function chart(id, series, evs, ylab, zeroLine){
+  var svg = $(id), W = 640, H = 300, L = 64, R = 14, T = 14, B = 46, w = W-L-R, h = H-T-B;
+  var xs = [], ys = [];
+  series.forEach(function(se){ se.x.forEach(function(x,i){ if (se.y[i] !== null && !isNaN(se.y[i])){ xs.push(x); ys.push(se.y[i]); } }); });
+  if (!xs.length){ svg.innerHTML = '<text x="320" y="150" text-anchor="middle" font-size="14" fill="#46535a">Not enough data</text>'; return; }
+  var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+  if (zeroLine){ y0 = Math.min(y0, 0); y1 = Math.max(y1, 0); }
+  if (y1 - y0 < 1e-9){ y0 -= 1; y1 += 1; }
+  var pad = (y1 - y0) * 0.06; y0 -= pad; y1 += pad;
+  if (x1 - x0 < 1e-9) x1 = x0 + 1;
+  var X = function(x){ return L + (x - x0) / (x1 - x0) * w; }, Y = function(y){ return T + h - (y - y0) / (y1 - y0) * h; };
+  var s = '<rect x="0" y="0" width="640" height="300" fill="#fff"/>';
+  var ys_ = niceStep(y1 - y0), xs_ = niceStep(x1 - x0);
+  for (var y = Math.ceil(y0/ys_)*ys_; y <= y1 + 1e-9; y += ys_){
+    s += '<line x1="'+L+'" x2="'+(L+w)+'" y1="'+Y(y)+'" y2="'+Y(y)+'" stroke="#e6edf1"/>';
+    s += '<text x="'+(L-6)+'" y="'+(Y(y)+4)+'" text-anchor="end" font-size="12" fill="#46535a" font-family="Arial">'+(+y.toFixed(3))+'</text>';
+  }
+  for (var x = Math.ceil(x0/xs_)*xs_; x <= x1 + 1e-9; x += xs_)
+    s += '<text x="'+X(x)+'" y="'+(T+h+17)+'" text-anchor="middle" font-size="12" fill="#46535a" font-family="Arial">'+(+x.toFixed(3))+'</text>';
+  if (y0 < 0 && y1 > 0) s += '<line x1="'+L+'" x2="'+(L+w)+'" y1="'+Y(0)+'" y2="'+Y(0)+'" stroke="#9aa9b1"/>';
+  var lastX = -1e9, row = 0;
+  (evs||[]).forEach(function(e){ if (e.t >= x0 && e.t <= x1){ var ex = X(e.t); row = (ex - lastX < 95) ? (row + 1) % 3 : 0; lastX = ex; s += '<line x1="'+ex+'" x2="'+ex+'" y1="'+T+'" y2="'+(T+h)+'" stroke="#ffb000" stroke-width="2" stroke-dasharray="4 3"/><text x="'+(ex+3)+'" y="'+(T+11+row*13)+'" font-size="11" fill="#8a5a00" font-family="Arial" paint-order="stroke" stroke="#fff" stroke-width="3">'+esc(e.name)+'</text>'; } });
+  s += '<line x1="'+L+'" x2="'+L+'" y1="'+T+'" y2="'+(T+h)+'" stroke="#1d1d1b"/><line x1="'+L+'" x2="'+(L+w)+'" y1="'+(T+h)+'" y2="'+(T+h)+'" stroke="#1d1d1b"/>';
+  s += '<text x="'+(L+w/2)+'" y="'+(H-6)+'" text-anchor="middle" font-size="13" font-weight="bold" fill="#003d50" font-family="Arial">Time (s)</text>';
+  s += '<text transform="translate(15,'+(T+h/2)+') rotate(-90)" text-anchor="middle" font-size="13" font-weight="bold" fill="#003d50" font-family="Arial">'+esc(ylab)+'</text>';
+  series.forEach(function(se){
+    var d = '', pen = false;
+    se.x.forEach(function(xx,i){ var yy = se.y[i]; if (yy === null || isNaN(yy)){ pen = false; return; } d += (pen ? 'L' : 'M') + X(xx).toFixed(1) + ',' + Y(yy).toFixed(1); pen = true; });
+    s += '<path d="'+d+'" fill="none" stroke="'+se.col+'" stroke-width="2.5" stroke-linejoin="round"'+(se.dash?' stroke-dasharray="'+se.dash+'"':'')+'/>';
+  });
+  // current-frame marker
+  var tc = tReal(cur); if (tc >= x0 && tc <= x1) s += '<line class="nowline" x1="'+X(tc)+'" x2="'+X(tc)+'" y1="'+T+'" y2="'+(T+h)+'" stroke="#8b3556" stroke-width="1.5"/>';
+  svg.innerHTML = s;
+  svg.onclick = function(ev){
+    var r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) / r.width * W;
+    var t = x0 + (px - L) / w * (x1 - x0); seek(Math.round(t * fpsReal()));
+    setTimeout(function(){ if (results) drawResults(); }, 30);
+  };
+}
+
+// ---------------- controls ----------------
+$('slider').addEventListener('input', function(){ vid.pause(); seek(+this.value); });
+$('bBack1').addEventListener('click', function(){ vid.pause(); seek(cur-1); });
+$('bFwd1').addEventListener('click', function(){ vid.pause(); seek(cur+1); });
+$('bBack10').addEventListener('click', function(){ vid.pause(); seek(cur-10); });
+$('bFwd10').addEventListener('click', function(){ vid.pause(); seek(cur+10); });
+$('bPlay').addEventListener('click', togglePlay);
+$('rate').addEventListener('change', function(){ vid.playbackRate = +this.value; });
+function togglePlay(){ if (!vid.src) return; if (vid.paused){ vid.playbackRate = +$('rate').value; vid.play(); $('bPlay').textContent = 'Pause'; } else { vid.pause(); $('bPlay').textContent = 'Play'; seek(Math.floor(vid.currentTime * S.fps)); } }
+vid.addEventListener('pause', function(){ $('bPlay').textContent = 'Play'; });
+document.addEventListener('keydown', function(e){
+  if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  if (e.key === 'ArrowRight'){ e.preventDefault(); vid.pause(); seek(cur + (e.shiftKey?10:1)); }
+  else if (e.key === 'ArrowLeft'){ e.preventDefault(); vid.pause(); seek(cur - (e.shiftKey?10:1)); }
+  else if (e.key === ' '){ e.preventDefault(); togglePlay(); }
+  else if (e.key === 'z' || e.key === 'Z'){ undo(); }
+});
+$('zoom').addEventListener('change', function(){ $('stage').style.width = (+this.value * 100) + '%'; });
+
+// tabs
+document.querySelectorAll('.tab').forEach(function(t){ t.addEventListener('click', function(){
+  document.querySelectorAll('.tab').forEach(function(x){ x.setAttribute('aria-selected', String(x === t)); });
+  document.querySelectorAll('.pane').forEach(function(p){ p.classList.toggle('hide', p.getAttribute('data-p') !== t.getAttribute('data-t')); });
+  if (t.getAttribute('data-t') === 'digi'){ mode = 'digi'; pending = []; }
+}); });
+
+// ---------------- save / export ----------------
+function download(name, blob){ var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+function base(){ return (S.name || 'analysis').replace(/\.[^.]+$/, ''); }
+$('saveProj').addEventListener('click', function(){ download(base() + '_project.json', new Blob([JSON.stringify(S, null, 1)], {type:'application/json'})); });
+$('loadProj').addEventListener('change', function(){
+  var f = this.files[0]; if (!f) return; var rd = new FileReader();
+  rd.onload = function(){ try{ var j = JSON.parse(rd.result); var keep = {name:S.name, duration:S.duration, vw:S.vw, vh:S.vh}; S = Object.assign(freshState(), j, keep); syncInputs(); recount(); persist(); seek(cur); status('Project loaded.' + (j.name && j.name !== keep.name ? ' Note: it was made with <strong>'+esc(j.name)+'</strong>.' : '')); }catch(e){ status('That file could not be read.'); } };
+  rd.readAsText(f);
+});
+$('csvBtn').addEventListener('click', function(){
+  if (!results) compute(); if (!results) return;
+  var mk = Object.keys(results.sers), allF = {};
+  mk.forEach(function(m){ results.sers[m].F.forEach(function(f){ allF[f] = 1; }); });
+  var F = Object.keys(allF).map(Number).sort(function(a,b){return a-b;});
+  var u = S.calib ? 'm' : 'px';
+  var head = ['frame','time_s'];
+  mk.forEach(function(m){ head.push(m+'_x_'+u, m+'_y_'+u, m+'_vx_'+u+'/s', m+'_vy_'+u+'/s', m+'_ax_'+u+'/s2', m+'_ay_'+u+'/s2'); });
+  results.ang.forEach(function(a){ head.push(a.key.replace(/ /g,'_')+'_deg', a.key.replace(/ /g,'_')+'_vel_deg/s'); });
+  var lines = ['# SESC02 Kinematic Video Analyser | video: ' + S.name + ' | real fps: ' + fpsReal() + ' | filter: ' + (S.filt ? S.cutoff + ' Hz Butterworth (zero lag)' : 'none') + ' | calibration: ' + (S.calib ? S.calib.len + ' m' : 'none'), head.join(',')];
+  F.forEach(function(f){
+    var r = [f, tReal(f).toFixed(4)];
+    mk.forEach(function(m){ var s = results.sers[m], i = s.F.indexOf(f); ['x','y','vx','vy','ax','ay'].forEach(function(k){ r.push(i >= 0 && s[k][i] !== null ? s[k][i].toFixed(5) : ''); }); });
+    results.ang.forEach(function(a){ var i = a.F.indexOf(f); r.push(i>=0 ? a.V[i].toFixed(2) : '', i>=0 && a.W[i] !== null ? a.W[i].toFixed(1) : ''); });
+    lines.push(r.join(','));
+  });
+  lines.push(''); lines.push('event,frame,time_s'); S.events.forEach(function(e){ lines.push(e.name + ',' + e.frame + ',' + tReal(e.frame).toFixed(4)); });
+  download(base() + '_kinematics.csv', new Blob([lines.join('\n')], {type:'text/csv'}));
+});
+$('snapBtn').addEventListener('click', function(){
+  if (!S.vw) return; var c = document.createElement('canvas'); c.width = S.vw; c.height = S.vh;
+  var g = c.getContext('2d'); g.drawImage(vid, 0, 0, S.vw, S.vh); g.drawImage(ov, 0, 0);
+  c.toBlob(function(b){ download(base() + '_frame' + cur + '.png', b); });
+});
+$('pngCharts').addEventListener('click', function(){
+  ['cPos','cVel','cAcc','cAng','cAngVel'].forEach(function(id, k){
+    var svg = $(id); if (!svg.innerHTML || svg.closest('.hide')) return;
+    var xml = new XMLSerializer().serializeToString(svg).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="600" ');
+    var img = new Image(); img.onload = function(){ var c = document.createElement('canvas'); c.width = 1280; c.height = 600; c.getContext('2d').drawImage(img,0,0,1280,600); c.toBlob(function(b){ download(base() + '_' + id.slice(1) + '.png', b); }); };
+    setTimeout(function(){ img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml); }, k*250);
+  });
+});
+$('resetAll').addEventListener('click', function(){ if (!confirm('Clear all work for this video?')) return; var keep = {name:S.name, duration:S.duration, vw:S.vw, vh:S.vh, fps:S.fps, slow:S.slow}; S = Object.assign(freshState(), keep); results = null; try{ localStorage.removeItem(key()); }catch(e){} syncInputs(); recount(); draw(); $('resBody').classList.add('hide'); });
+
+window.__VA_compute = compute;
+syncInputs(); recount();
+})();
+</script>
+</body>
+</html>
