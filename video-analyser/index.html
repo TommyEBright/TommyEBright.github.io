@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kinematic Video Analyser</title>
-<meta name="description" content="Free 2D video analysis for sport and exercise biomechanics. Runs in the browser; your video never leaves your device.">
+<title>Kinematic Analysis</title>
+<meta name="description" content="Linear and angular kinematics from your own video files. Runs in the browser; your videos never leave your device.">
 <meta name="theme-color" content="#0f172a">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
@@ -14,11 +14,11 @@
 <body>
 <header class="top">
   <div>
-    <h1><img src="icons/icon-192.png" alt="">Kinematic Video Analyser <span class="muted" id="ver" style="color:#94a3b8;font-weight:400"></span></h1>
-    <p>Linear and angular kinematics from your own video. Everything runs in your browser and nothing is uploaded.</p>
+    <h1><img src="icons/icon-192.png" alt="">Kinematic Analysis <span class="muted" id="ver" style="color:#94a3b8;font-weight:400"></span></h1>
+    <p>Linear and angular kinematics from your own video files. Everything runs in your browser and nothing is uploaded.</p>
   </div>
   <div class="actions">
-    <span class="btn light filebtn">Open a video<input type="file" id="file" accept="video/*" aria-label="Open a video"></span>
+    <label class="btn light filebtn">Add videos<input type="file" id="file" accept="video/*" multiple aria-label="Add videos"></label>
     <button class="btn light" id="demoCmj" type="button">Demo: jump</button>
     <button class="btn light" id="demoSprint" type="button">Demo: sprint</button>
     <button class="btn accent hide" id="installBtn" type="button">Install as an app</button>
@@ -30,15 +30,29 @@
     <summary>Before you film: how to get video you can analyse</summary>
     <div class="hb">
       <ul>
-        <li><strong>Side-on and square.</strong> Point the camera straight at the plane the athlete moves in, at right angles to the direction of travel. This is a 2D tool, so movement towards or away from the camera is measured wrongly.</li>
+        <li><strong>Side-on and square.</strong> Point the camera straight at the plane the athlete moves in. This is a 2D tool, so movement towards or away from the camera is measured wrongly.</li>
         <li><strong>Far back, zoomed in a little</strong> (e.g. 5 to 10 m away for a sprint). Close up with a wide angle gives perspective error, especially near the edges of the picture.</li>
-        <li><strong>Keep the camera still</strong> on a tripod. Do not pan to follow the athlete, or the scale changes.</li>
+        <li><strong>Keep the camera still</strong> on a tripod. Do not pan to follow the athlete, or the scale changes. Leave it in the same place for every trial and you only need to calibrate once.</li>
         <li><strong>Film something of known length in the same plane as the athlete</strong> (e.g. a 1 m stick, or two cones 5 m apart on the running line). You calibrate with it.</li>
         <li><strong>Use slow motion</strong> (120 or 240 fps) for sprinting and jumping, and plenty of light so each frame is sharp.</li>
-        <li><strong>Mark the joints</strong> with tape or stickers if you can, and wear fitted clothing. The AI pose option works without markers but is less precise.</li>
+        <li><strong>Mark the joints</strong> with tape or stickers in a colour that stands out, and wear fitted clothing. Automatic tracking follows these markers.</li>
         <li><strong>iPhone:</strong> Settings &rarr; Camera &rarr; Formats &rarr; &ldquo;Most Compatible&rdquo;. Move videos by cable, AirDrop or cloud storage rather than WhatsApp or email, which squash the video and can drop frames.</li>
       </ul>
-      <p class="muted">Work through the tabs in order: <strong>Setup &rarr; Calibrate &rarr; Points &rarr; Digitise &rarr; Events</strong>, then press <strong>Update results</strong>. Your work is saved in this browser as you go, and you can save a project file in <strong>Export</strong>.</p>
+    </div>
+  </details>
+
+  <!-- SESSION -->
+  <details class="help session" open>
+    <summary>Session: your videos <span id="sesCount" class="muted"></span></summary>
+    <div class="hb">
+      <p class="muted">Add one video or several (e.g. the same athlete&rsquo;s trials, or one trial from each athlete). Work through them one at a time: markers, angles and settings carry over to the next trial. Then compare them all at the bottom of the page.</p>
+      <div class="tablewrap" style="max-height:260px"><table id="sesTab"></table></div>
+      <div class="row tight">
+        <label class="btn small filebtn" for="file">Add videos</label>
+        <button class="btn small accent" id="sesNext" type="button" disabled>Next trial &rsaquo;</button>
+        <label class="btn small ghost filebtn">Choose videos again<input type="file" id="sesRelink" accept="video/*" multiple aria-label="Choose videos again"></label>
+        <button class="btn small ghost" id="sesNew" type="button">New session</button>
+      </div>
     </div>
   </details>
 
@@ -52,17 +66,21 @@
           <select id="zoom" style="width:auto"><option value="1">100%</option><option value="1.5">150%</option><option value="2">200%</option><option value="3">300%</option></select>
           <label class="inline" style="margin:0"><input type="checkbox" id="loupeOn" checked> Magnifier</label>
           <label class="inline" for="trail" style="margin:0">Trail</label>
-          <select id="trail" style="width:auto" title="How much of the selected point's path to show"><option value="0">Off</option><option value="10">Short</option><option value="9999" selected>All</option></select>
+          <select id="trail" style="width:auto" title="How much of the selected marker's path to show"><option value="0">Off</option><option value="10">Short</option><option value="9999" selected>All</option></select>
         </div>
       </div>
       <div class="card-body">
+        <div class="pausebar hide" id="trkBanner" role="alert">
+          <span id="trkBannerText"></span>
+          <span class="row tight"><button class="btn small" id="trkHidden" type="button">Marker hidden on this frame</button><button class="btn small ghost" id="trkCancel" type="button">Stop tracking</button></span>
+        </div>
         <div class="stagewrap" id="stagewrap">
           <div class="stage hide" id="stage">
             <video id="vid" playsinline muted preload="auto"></video>
             <canvas id="view"></canvas>
             <canvas id="ov"></canvas>
           </div>
-          <div class="empty" id="empty">Open a video to start.<br><span class="muted" style="color:#94a3b8">New to this? Try one of the demo clips first.</span></div>
+          <div class="empty" id="empty">Press <strong>Add videos</strong> to start.<br><span class="muted" style="color:#94a3b8">New to this? Try one of the demo clips first.</span></div>
           <canvas class="loupe" id="loupe" width="170" height="170"></canvas>
         </div>
         <div class="ctrls">
@@ -76,10 +94,10 @@
         </div>
         <p class="readout" id="readout">Frame &ndash; | Time &ndash;</p>
         <p class="muted" style="margin:.2rem 0 0"><span id="coords"></span> &nbsp; Keys: <kbd>&larr;</kbd> <kbd>&rarr;</kbd> one frame, <kbd>Shift</kbd> + arrow ten frames, <kbd>Space</kbd> play, <kbd>Z</kbd> undo, <kbd>Esc</kbd> cancel.</p>
-        <p class="status" id="status" role="status">Open a video to begin.</p>
+        <p class="status" id="status" role="status">Add a video to begin.</p>
         <details class="help live" open>
           <summary>Live data for this frame</summary>
-          <div class="hb" id="live"><p class="muted">No points on this frame.</p></div>
+          <div class="hb" id="live"><p class="muted">No markers on this frame.</p></div>
         </details>
       </div>
     </section>
@@ -89,7 +107,7 @@
       <div class="tabs" role="tablist">
         <button class="tab" role="tab" type="button" data-t="setup" aria-selected="true">1. Setup</button>
         <button class="tab" role="tab" type="button" data-t="calib" aria-selected="false">2. Calibrate</button>
-        <button class="tab" role="tab" type="button" data-t="points" aria-selected="false">3. Points</button>
+        <button class="tab" role="tab" type="button" data-t="points" aria-selected="false">3. Markers</button>
         <button class="tab" role="tab" type="button" data-t="digi" aria-selected="false">4. Digitise</button>
         <button class="tab" role="tab" type="button" data-t="events" aria-selected="false">5. Events</button>
         <button class="tab" role="tab" type="button" data-t="measure" aria-selected="false">Measure</button>
@@ -98,15 +116,20 @@
 
       <!-- SETUP -->
       <div class="pane" data-p="setup">
+        <p class="lead">Tell the tool about the video: what the movement is, which way the athlete faces, and the frame rate.</p>
         <label for="activity">What are you analysing?</label>
         <select id="activity">
           <option value="sprint">Running or sprinting</option>
           <option value="jump">Vertical jump (e.g. CMJ, squat jump, drop jump)</option>
-          <option value="other">Something else</option>
+          <option value="other">Something else (e.g. squat, throw, kick, change of direction)</option>
         </select>
-        <label for="dir">Which way does the athlete move on screen?</label>
-        <select id="dir"><option value="right">Left to right</option><option value="left">Right to left</option></select>
-        <p class="muted" style="margin:.2rem 0 0">This makes &ldquo;forwards&rdquo; positive whichever way they go.</p>
+        <label for="dir">Which way is the athlete facing?</label>
+        <select id="dir">
+          <option value="right">Towards the right of the screen</option>
+          <option value="left">Towards the left of the screen</option>
+          <option value="none">No fixed direction (e.g. back and forth)</option>
+        </select>
+        <p class="muted" style="margin:.2rem 0 0">This sets which way is &ldquo;forwards&rdquo; (+ horizontal) and the sign of segment angles. It works for jumps and squats too: choose the way the athlete faces. For movements that change direction, choose <strong>No fixed direction</strong> and + horizontal is simply to the right of the screen. Up is always +.</p>
         <div class="row">
           <div><label for="fps">Frame rate of the video file (fps)</label><input type="number" id="fps" min="1" step="1" value="30"></div>
           <div class="auto"><button class="btn ghost small" id="detect" type="button">Detect</button></div>
@@ -118,135 +141,117 @@
           <p><strong>Is the clip slowed down?</strong> A slow-motion clip straight from the camera usually keeps its real frame rate (e.g. 240 fps), so leave this at 1. If it was shared or exported as a slowed-down clip (it plays slowly everywhere and the file says 30 fps), enter how many times slower it plays (often 8 for 240 fps or 4 for 120 fps). Get this wrong and every time and speed is wrong by the same factor.</p>
         </div>
         <p class="readout" id="effRate">Real capture rate: 30 fps (one frame = 33.33 ms)</p>
-        <h3>Picture</h3>
-        <div class="row">
-          <div><label for="rot">Rotate</label><select id="rot"><option value="0">No rotation</option><option value="90">90&deg; clockwise</option><option value="180">180&deg;</option><option value="270">90&deg; anticlockwise</option></select></div>
-          <div class="auto"><label class="inline"><input type="checkbox" id="flip"> Mirror (flip left&ndash;right)</label></div>
-        </div>
-        <p class="muted">Use this if the phone was on its side. Any points you have already placed move with the picture.</p>
+        <details class="more">
+          <summary>More options: rotate or mirror the picture</summary>
+          <div class="row">
+            <div><label for="rot">Rotate</label><select id="rot"><option value="0">No rotation</option><option value="90">90&deg; clockwise</option><option value="180">180&deg;</option><option value="270">90&deg; anticlockwise</option></select></div>
+            <div class="auto"><label class="inline"><input type="checkbox" id="flip"> Mirror (flip left&ndash;right)</label></div>
+          </div>
+          <p class="muted">Use this if the phone was on its side. Any markers you have already placed move with the picture.</p>
+        </details>
       </div>
 
       <!-- CALIBRATE -->
       <div class="pane hide" data-p="calib">
-        <p style="margin-top:0">Turn pixels into metres. Click both ends of something of known length that is <strong>in the same plane as the athlete</strong>.</p>
+        <p class="lead">Turn pixels into metres. Click both ends of something of known length that is <strong>in the same plane as the athlete</strong>. Skip this if you only need times and angles.</p>
         <div class="row">
           <div><label for="calLen">Real length (m)</label><input type="number" id="calLen" step="0.01" min="0.01" value="1.00"></div>
           <div class="auto"><button class="btn small" id="calStart" type="button">Click the two ends</button></div>
           <div class="auto"><button class="btn ghost small" id="calClear" type="button">Remove</button></div>
         </div>
         <p class="readout" id="calInfo">Not calibrated yet.</p>
-        <label class="inline"><input type="checkbox" id="vertCheck"> My calibration object is truly upright (or level): correct for camera tilt</label>
-        <p class="muted" id="tiltInfo" style="margin:.2rem 0 0"></p>
-        <h3>Origin (0, 0)</h3>
-        <p class="muted" style="margin:0 0 .3rem">By default the origin is the first end you clicked. You can move it (e.g. to the floor at the start line).</p>
-        <button class="btn ghost small" id="origStart" type="button">Click to set the origin</button>
-        <h3>Check the scale</h3>
-        <div class="row">
-          <div><label for="grid">Show a grid every</label><select id="grid"><option value="0">Off</option><option value="0.1">0.1 m</option><option value="0.25">0.25 m</option><option value="0.5">0.5 m</option><option value="1">1 m</option><option value="2">2 m</option><option value="5">5 m</option></select></div>
-        </div>
-        <p class="muted">The grid is drawn from your calibration. If it does not line up with real things in the picture (e.g. lane markings or floor tiles), recalibrate.</p>
         <div class="tip"><p><strong>Why this matters:</strong> every distance and speed is only as good as the calibration. A 2% error in scale gives a 2% error in speed. Calibrate on the line the athlete moves along, not in front of or behind it.</p></div>
+        <details class="more">
+          <summary>More options: origin, camera tilt and grid</summary>
+          <label class="inline"><input type="checkbox" id="vertCheck"> My calibration object is truly upright (or level): correct for camera tilt</label>
+          <p class="muted" id="tiltInfo" style="margin:.2rem 0 0"></p>
+          <h3>Origin (0, 0)</h3>
+          <p class="muted" style="margin:0 0 .3rem">By default the origin is the first end you clicked. You can move it (e.g. to the floor at the start line).</p>
+          <button class="btn ghost small" id="origStart" type="button">Click to set the origin</button>
+          <h3>Check the scale</h3>
+          <div class="row"><div><label for="grid">Show a grid every</label><select id="grid"><option value="0">Off</option><option value="0.1">0.1 m</option><option value="0.25">0.25 m</option><option value="0.5">0.5 m</option><option value="1">1 m</option><option value="2">2 m</option><option value="5">5 m</option></select></div></div>
+          <p class="muted">The grid is drawn from your calibration. If it does not line up with real things in the picture (e.g. lane markings or floor tiles), recalibrate.</p>
+        </details>
       </div>
 
-      <!-- POINTS -->
+      <!-- MARKERS -->
       <div class="pane hide" data-p="points">
-        <label for="template">Points to digitise</label>
-        <select id="template"></select>
-        <h3>Your points</h3>
-        <p class="muted" style="margin:0">Rename, reorder, remove or add points. The order here is the clicking order. The AI pose option recognises Head, Shoulder, Elbow, Wrist, Hip, Knee, Ankle, Heel and Toe.</p>
+        <p class="lead">Name the markers you will digitise, in the order you will click them (e.g. Shoulder, Hip, Knee, Ankle, Toe). Then build any angles you want from them.</p>
+        <h3>Markers</h3>
         <ul class="plain" id="ptList"></ul>
-        <div class="row tight"><input type="text" id="ptNew" placeholder="New point (e.g. Heel)" style="flex:1 1 10rem"><button class="btn ghost small" id="ptAdd" type="button">Add point</button></div>
-        <h3>Segments (lines drawn between points)</h3>
+        <div class="row tight"><input type="text" id="ptNew" placeholder="Marker name (e.g. Knee)" style="flex:1 1 10rem"><button class="btn small" id="ptAdd" type="button">Add marker</button></div>
+        <h3>Segments <span class="muted">(optional)</span></h3>
+        <p class="muted" style="margin:0">Lines drawn between two markers on the video (e.g. Hip to Knee for the thigh). They are also used to check the tracking.</p>
         <ul class="plain" id="linkList"></ul>
         <div class="row tight"><select id="linkA" style="flex:1 1 7rem" aria-label="From"></select><select id="linkB" style="flex:1 1 7rem" aria-label="To"></select><button class="btn ghost small" id="linkAdd" type="button">Add segment</button></div>
         <h3>Angles</h3>
-        <p class="muted" style="margin:0">Angles are worked out from your points on every frame. Tick &ldquo;On video&rdquo; to see the value live on the picture.</p>
         <div class="tablewrap"><table id="angList"></table></div>
         <div class="row">
-          <div><label for="angType">Type</label><select id="angType"><option value="joint">Joint angle (3 points)</option><option value="vertical">Segment from vertical (2 points)</option><option value="horizontal">Segment from horizontal (2 points)</option></select></div>
+          <div><label for="angType">Type</label><select id="angType"><option value="joint">Joint angle (3 markers)</option><option value="vertical">Segment from vertical (2 markers)</option><option value="horizontal">Segment from horizontal (2 markers)</option></select></div>
           <div><label for="angName">Name (optional)</label><input type="text" id="angName" placeholder="e.g. Knee angle"></div>
         </div>
         <div class="row">
-          <div><label for="angA" id="angLabA">End point</label><select id="angA"></select></div>
+          <div><label for="angA" id="angLabA">End marker</label><select id="angA"></select></div>
           <div><label for="angB" id="angLabB">Joint (middle)</label><select id="angB"></select></div>
           <div id="angCWrap"><label for="angC">Other end</label><select id="angC"></select></div>
         </div>
         <p class="muted" id="angTypeHelp"></p>
-        <div class="row tight"><button class="btn small" id="angAdd" type="button">Add angle</button><button class="btn ghost small" id="angReset" type="button">Reset to the standard angles</button></div>
+        <button class="btn small" id="angAdd" type="button">Add angle</button>
+        <h3>Save and reuse</h3>
+        <p class="muted" style="margin:0">Save these markers and angles as a file, then load it for the next analysis instead of setting them up again. Within a session they carry over to the next trial by themselves.</p>
+        <div class="row tight"><input type="text" id="setName" placeholder="Set name (e.g. Sprint side view)" style="flex:1 1 10rem"><button class="btn ghost small" id="setSave" type="button">Save marker set</button><label class="btn ghost small filebtn">Load marker set<input type="file" id="setLoad" accept=".json,application/json"></label></div>
       </div>
 
       <!-- DIGITISE -->
       <div class="pane hide" data-p="digi">
+        <p class="lead">Click each marker on the video, or click them once and let the tool track them.</p>
+        <span class="lab">Next marker to click</span>
+        <div class="chips" id="markerChips"></div>
+        <p class="muted" style="margin:.2rem 0 .4rem">Click the video to place the highlighted marker. Drag a marker to move it. Click a chip to choose a marker yourself.</p>
         <div class="row">
           <div><label for="every">Digitise every</label>
             <select id="every"><option value="1">1 frame</option><option value="2">2 frames</option><option value="3">3 frames</option><option value="4" selected>4 frames</option><option value="6">6 frames</option><option value="8">8 frames</option></select></div>
-          <div><label for="advance">After the last point</label>
+          <div><label for="advance">After the last marker</label>
             <select id="advance"><option value="1" selected>Jump forward</option><option value="0">Stay on this frame</option></select></div>
         </div>
         <p class="readout" id="sampleInfo"></p>
-        <label class="inline"><input type="checkbox" id="snap"> Snap clicks to the centre of a marker</label>
-        <span class="lab">Next point to click</span>
-        <div class="chips" id="markerChips"></div>
-        <p class="muted" style="margin:.2rem 0 .4rem">Click the video to place the highlighted point. Drag a point to move it. Click a chip to choose a point yourself.</p>
         <div class="row tight">
           <button class="btn ghost small" id="undo" type="button">Undo (Z)</button>
           <button class="btn ghost small" id="clearFrame" type="button">Clear this frame</button>
-          <button class="btn ghost small" id="clearAll" type="button">Clear all points</button>
+          <button class="btn ghost small" id="clearAll" type="button">Clear all markers</button>
         </div>
         <p class="readout" id="digiCount"></p>
-        <div class="tip">
-          <p><strong>Accuracy.</strong> Use the magnifier and zoom. Click the centre of the joint, not the edge of the clothing. Small clicking errors turn into big errors in velocity and acceleration, which is why the results are filtered.</p>
-          <p>Digitise from a few frames <em>before</em> to a few frames <em>after</em> the part you care about, so the filter and the velocity sums have data either side.</p>
+
+        <h3>Automatic tracking</h3>
+        <ol class="muted" style="padding-left:1.2rem;margin:.2rem 0">
+          <li>On a clear frame, click every marker once.</li>
+          <li>Press <strong>Track forwards</strong> (or backwards). The tool follows each marker frame by frame.</li>
+          <li>If it loses one (e.g. the arm passes the hip), it pauses and asks you to click it. As soon as you do, it carries on by itself. If the marker cannot be seen, press <strong>Marker hidden on this frame</strong>.</li>
+        </ol>
+        <div class="row">
+          <div><label for="trkTo">Up to frame</label><input type="number" id="trkTo" min="0" step="1"></div>
         </div>
-
-        <details class="help" open>
-          <summary>Automatic digitising</summary>
-          <div class="hb">
-            <p class="muted">Let the tool do the clicking. Whichever method you use, <strong>check the result</strong> in the list under &ldquo;Check the tracking&rdquo;.</p>
-            <h3>A. Track my markers (most accurate)</h3>
-            <ol class="muted" style="padding-left:1.2rem;margin:.2rem 0">
-              <li>Go to a clear frame and click every point once.</li>
-              <li>Press <strong>Track forwards</strong> (or backwards). The tool follows each marker frame by frame.</li>
-              <li>If it loses a marker (e.g. the arm passes the hip), it stops. Click that marker, then press <strong>Continue tracking</strong>.</li>
-            </ol>
-            <div class="row">
-              <div><label for="trkTo">Up to frame</label><input type="number" id="trkTo" min="0" step="1"></div>
-              <div><label for="trkSize">Marker size</label><select id="trkSize"><option value="auto" selected>Auto</option><option value="0.6">Small</option><option value="1">Medium</option><option value="1.5">Large</option></select></div>
-              <div><label for="trkThr">Strictness</label><select id="trkThr"><option value="0.75">Strict</option><option value="0.6" selected>Normal</option><option value="0.45">Relaxed</option></select></div>
-            </div>
-            <div class="row tight" style="margin-top:.5rem">
-              <button class="btn accent small" id="trkFwd" type="button">Track forwards &rsaquo;</button>
-              <button class="btn accent small" id="trkBack" type="button">&lsaquo; Track backwards</button>
-              <button class="btn small hide" id="trkCont" type="button">Continue tracking</button>
-              <button class="btn danger small" id="autoStop" type="button" disabled>Stop</button>
-            </div>
-            <p class="muted" id="trkNote"></p>
-            <h3>B. AI pose estimation (no markers needed)</h3>
-            <div class="warn">
-              <p>Uses Google&rsquo;s MediaPipe pose model. It needs the internet the first time to download the model (about 10 MB). Your video is still processed on your device.</p>
-              <p>It <strong>estimates</strong> joint centres from the shape of the body, so it is often a few centimetres out (the hip is the least reliable) and it can mix up the left and right legs. Small or distant athletes are fine: the tool zooms in on the athlete and follows them.</p>
-            </div>
-            <div class="row">
-              <div><label for="poseSide">Side nearer the camera</label><select id="poseSide"><option value="auto">Work it out</option><option value="left">Athlete&rsquo;s left</option><option value="right">Athlete&rsquo;s right</option></select></div>
-              <div><label for="poseModel">Model</label><select id="poseModel"><option value="full" selected>Full (recommended)</option><option value="heavy">Heavy (most accurate, slow)</option><option value="lite">Lite (fastest)</option></select></div>
-            </div>
-            <div class="row">
-              <div><label for="poseEvery">Analyse every</label><select id="poseEvery"><option value="1" selected>1 frame</option><option value="2">2 frames</option><option value="4">4 frames</option></select></div>
-              <div><label for="poseTarget">Save the AI points as</label><select id="poseTarget"><option value="main">My data (used for results)</option><option value="alt">Comparison only (to check my markers)</option></select></div>
-            </div>
-            <div class="row tight" style="margin-top:.5rem">
-              <button class="btn accent small" id="poseRun" type="button">Run AI pose from this frame</button>
-              <button class="btn ghost small" id="altClear" type="button">Clear comparison points</button>
-            </div>
-            <div class="progress"><div id="autoProg"></div></div>
-            <p class="readout" id="autoInfo"></p>
+        <div class="row tight" style="margin-top:.5rem">
+          <button class="btn accent small" id="trkFwd" type="button">Track forwards &rsaquo;</button>
+          <button class="btn accent small" id="trkBack" type="button">&lsaquo; Track backwards</button>
+          <button class="btn danger small" id="autoStop" type="button" disabled>Stop</button>
+        </div>
+        <div class="progress"><div id="autoProg"></div></div>
+        <p class="readout" id="autoInfo"></p>
+        <p class="muted" id="trkNote"></p>
+        <details class="more">
+          <summary>More options: tracking and clicking</summary>
+          <div class="row">
+            <div><label for="trkSize">Marker size</label><select id="trkSize"><option value="auto" selected>Auto</option><option value="0.6">Small</option><option value="1">Medium</option><option value="1.5">Large</option></select></div>
+            <div><label for="trkThr">Strictness</label><select id="trkThr"><option value="0.75">Strict</option><option value="0.6" selected>Normal</option><option value="0.45">Relaxed</option></select></div>
           </div>
+          <p class="muted">Strict stops more often but is less likely to jump to the wrong spot. Relaxed keeps going through blur.</p>
+          <label class="inline"><input type="checkbox" id="snap"> Snap clicks to the centre of a marker</label>
         </details>
-
-        <details class="help" open>
+        <details class="help" open style="margin-top:.8rem">
           <summary>Check the tracking <span id="flagCount" class="muted"></span></summary>
           <div class="hb">
-            <p class="muted">Frames the tool is unsure about. Click a frame to go there, then drag any point that is wrong. Fixed points drop off the list.</p>
+            <p class="muted">Frames the tool is unsure about. Click a frame to go there, then drag any marker that is wrong. Fixed markers drop off the list.</p>
             <div class="tablewrap" style="max-height:220px"><table id="flagTab"></table></div>
           </div>
         </details>
@@ -254,13 +259,20 @@
 
       <!-- EVENTS -->
       <div class="pane hide" data-p="events">
-        <p style="margin-top:0">Go to the frame where something happens, then click the event. Events give you times (e.g. contact time) and show as lines on every graph.</p>
+        <p class="lead">Go to the frame where something happens, then click the event. Events give you times (e.g. contact time), show as lines on every graph, and mark the start and end of phases for time normalisation.</p>
         <div class="chips" id="eventBtns"></div>
         <div class="row tight"><input type="text" id="evNewType" placeholder="Add your own event (e.g. Arm swing starts)" style="flex:1 1 12rem"><button class="btn ghost small" id="evAddType" type="button">Add event button</button></div>
-        <div class="row tight" style="margin:.5rem 0"><button class="btn ghost small" id="suggestEv" type="button">Suggest events from the foot path</button></div>
-        <p class="muted" id="suggestNote" style="margin:0 0 .4rem"></p>
-        <div class="tablewrap" style="max-height:240px"><table id="eventTab"></table></div>
+        <div class="tablewrap" style="max-height:240px;margin-top:.5rem"><table id="eventTab"></table></div>
         <div id="eventSummary"></div>
+        <details class="more">
+          <summary>Suggest events from a marker&rsquo;s path</summary>
+          <div class="row">
+            <div><label for="evFoot">Foot marker (for contacts and step length)</label><select id="evFoot"></select></div>
+            <div><label for="evHip">Hip or centre marker (for jump checks)</label><select id="evHip"></select></div>
+          </div>
+          <button class="btn ghost small" id="suggestEv" type="button">Suggest events</button>
+          <p class="muted" id="suggestNote" style="margin:.4rem 0"></p>
+        </details>
         <h3>Stopwatch</h3>
         <p class="muted" style="margin:0">Time between any two events (e.g. touchdown to toe-off = contact time).</p>
         <div class="row">
@@ -281,7 +293,7 @@
 
       <!-- MEASURE -->
       <div class="pane hide" data-p="measure">
-        <p style="margin-top:0">Quick measurements on the frame you are looking at. No digitising needed (e.g. one angle at touchdown, or a step length).</p>
+        <p class="lead">Quick measurements on the frame you are looking at, with no digitising (e.g. one angle at touchdown, or a step length).</p>
         <div class="row tight">
           <button class="btn small" id="m_dist" type="button">Distance</button>
           <button class="btn small" id="m_angle" type="button">Joint angle</button>
@@ -293,59 +305,60 @@
         <div class="tablewrap" style="max-height:280px"><table id="mTab"></table></div>
         <div class="tip">
           <p><strong>Joint angle:</strong> click three points with the joint in the middle (e.g. hip, knee, ankle). 180&deg; is straight.</p>
-          <p><strong>Segment vs vertical:</strong> lower end then upper end (e.g. ankle then knee for the shin). Positive means the top end is forwards.</p>
-          <p><strong>Segment vs horizontal:</strong> back end then front end (e.g. heel then toe). Positive means the front end is higher.</p>
+          <p><strong>Segment vs vertical:</strong> lower end then upper end (e.g. ankle then knee for the shin).</p>
+          <p><strong>Segment vs horizontal:</strong> first end then second end (e.g. heel then toe).</p>
           <p><strong>Angle between two lines:</strong> two clicks for each line. The lines do not need to touch (e.g. trunk and thigh).</p>
         </div>
       </div>
 
       <!-- EXPORT -->
       <div class="pane hide" data-p="files">
-        <h3>Download data (CSV, opens in Excel)</h3>
+        <p class="lead">Downloads for <strong>this trial</strong>. For every trial together, use <strong>Compare trials</strong> at the bottom of the page.</p>
+        <h3>Data (CSV, opens in Excel)</h3>
         <div class="row tight">
           <button class="btn small" id="csvAnalysis" type="button">Analysis</button>
           <button class="btn small" id="csvSummary" type="button">Summary</button>
+          <button class="btn small" id="nCsv" type="button">Time-normalised</button>
         </div>
-        <p class="muted"><strong>Analysis</strong> is the filtered data behind your graphs: position, velocity, speed and acceleration of every point, and every angle with its angular velocity, frame by frame. <strong>Summary</strong> is the settings, key numbers, events, stopwatch times and measurements.</p>
-        <h3>Point coordinates</h3>
-        <p class="muted" style="margin:0">Raw pixel positions, positions in metres and filtered positions, with how each point was placed (clicked, tracked or AI) and how confident the tool was.</p>
+        <p class="muted"><strong>Analysis</strong> is the filtered data behind the graphs: position, velocity, speed and acceleration of every marker, and every angle with its angular velocity, frame by frame. <strong>Summary</strong> is the settings, key numbers, events, stopwatch times and measurements. <strong>Time-normalised</strong> is every variable at 0&ndash;100% of the phase set up in Results.</p>
+        <h3>Marker coordinates</h3>
+        <p class="muted" style="margin:0">Raw pixel positions, positions in metres and filtered positions, with whether each was clicked or tracked.</p>
         <div id="expPts" class="chips"></div>
         <div class="row">
-          <div><label for="expLayout">Layout</label><select id="expLayout"><option value="wide">One row per frame</option><option value="long">One row per point per frame (best for R, SPSS or pivot tables)</option></select></div>
+          <div><label for="expLayout">Layout</label><select id="expLayout"><option value="wide">One row per frame</option><option value="long">One row per marker per frame (best for R, SPSS or pivot tables)</option></select></div>
         </div>
-        <label class="inline"><input type="checkbox" id="expAlt"> Include AI comparison points</label>
         <div class="row tight"><button class="btn small" id="csvCoords" type="button">Download coordinates</button></div>
-
         <h3>Images</h3>
         <div class="row tight">
           <button class="btn ghost small" id="snapBtn" type="button">This frame (PNG)</button>
           <button class="btn ghost small" id="pngCharts" type="button">All graphs (PNG)</button>
         </div>
-        <h3>Photo sequence</h3>
-        <div class="row">
-          <div><label for="psFrom">Pictures from</label><select id="psFrom"><option value="events">My events</option><option value="range">Evenly spaced frames</option><option value="manual">Frames I list</option></select></div>
-          <div><label for="psCols">Pictures across</label><input type="number" id="psCols" min="1" max="12" value="4"></div>
-        </div>
-        <div class="row hide" id="psRange">
-          <div><label for="psA">From frame</label><input type="number" id="psA" min="0" value="0"></div>
-          <div><label for="psB">To frame</label><input type="number" id="psB" min="0"></div>
-          <div><label for="psN">Number of pictures</label><input type="number" id="psN" min="2" max="48" value="8"></div>
-        </div>
-        <div class="hide" id="psManual"><label for="psList">Frame numbers</label><input type="text" id="psList" placeholder="e.g. 12, 40, 66, 90"></div>
-        <label class="inline"><input type="checkbox" id="psOverlay" checked> Show points and lines</label>
-        <label class="inline"><input type="checkbox" id="psCrop" checked> Crop to the athlete</label>
-        <label class="inline"><input type="checkbox" id="psLabel" checked> Label with times</label>
-        <p class="muted" id="psInfo"></p>
-        <button class="btn small" id="psGo" type="button">Make photo sequence</button>
-        <div class="preview" id="psPreview"></div>
-
+        <details class="more">
+          <summary>Photo sequence</summary>
+          <div class="row">
+            <div><label for="psFrom">Pictures from</label><select id="psFrom"><option value="events">My events</option><option value="range">Evenly spaced frames</option><option value="manual">Frames I list</option></select></div>
+            <div><label for="psCols">Pictures across</label><input type="number" id="psCols" min="1" max="12" value="4"></div>
+          </div>
+          <div class="row hide" id="psRange">
+            <div><label for="psA">From frame</label><input type="number" id="psA" min="0" value="0"></div>
+            <div><label for="psB">To frame</label><input type="number" id="psB" min="0"></div>
+            <div><label for="psN">Number of pictures</label><input type="number" id="psN" min="2" max="48" value="8"></div>
+          </div>
+          <div class="hide" id="psManual"><label for="psList">Frame numbers</label><input type="text" id="psList" placeholder="e.g. 12, 40, 66, 90"></div>
+          <label class="inline"><input type="checkbox" id="psOverlay" checked> Show markers and lines</label>
+          <label class="inline"><input type="checkbox" id="psCrop" checked> Crop to the athlete</label>
+          <label class="inline"><input type="checkbox" id="psLabel" checked> Label with times</label>
+          <p class="muted" id="psInfo"></p>
+          <button class="btn small" id="psGo" type="button">Make photo sequence</button>
+          <div class="preview" id="psPreview"></div>
+        </details>
         <h3>Project file</h3>
-        <p class="muted" style="margin:0">Saves all your points, events and settings (not the video). Open the same video, then the project file, to carry on.</p>
+        <p class="muted" style="margin:0">Saves the whole session: every trial&rsquo;s markers, events, labels and settings (not the videos). Open it later, choose the same videos, and carry on. Work is also kept in this browser as you go.</p>
         <div class="row tight" style="margin-top:.3rem">
           <button class="btn small" id="saveProj" type="button">Save project file</button>
-          <span class="btn ghost small filebtn">Open project file<input type="file" id="loadProj" accept=".json,application/json"></span>
+          <label class="btn ghost small filebtn">Open project file<input type="file" id="loadProj" accept=".json,application/json"></label>
         </div>
-        <div class="warn" style="margin-top:.8rem"><p><strong>Start again:</strong> this clears everything for this video.</p><button class="btn danger small" id="resetAll" type="button">Clear all work</button></div>
+        <div class="warn" style="margin-top:.8rem"><p><strong>Start this trial again:</strong> clears its markers, events and measurements (keeps the marker set and settings).</p><button class="btn danger small" id="resetAll" type="button">Clear this trial</button></div>
       </div>
     </section>
   </div>
@@ -353,7 +366,7 @@
   <!-- RESULTS -->
   <section class="card full" id="results">
     <div class="card-head">
-      <h2>Results</h2>
+      <h2>Results <span class="muted">(this trial)</span></h2>
       <div class="row tight">
         <label class="inline" style="margin:0"><input type="checkbox" id="filtOn" checked> Filter</label>
         <label class="inline" for="cutoff" style="margin:0">Cut-off (Hz)</label>
@@ -368,7 +381,7 @@
         <div class="stats" id="keyStats"></div>
         <div id="keyTables"></div>
         <div class="row" style="align-items:flex-end">
-          <div style="flex:2 1 260px"><span class="lab">Points on the graphs</span><div class="chips" id="gPoints"></div></div>
+          <div style="flex:2 1 260px"><span class="lab">Markers on the graphs</span><div class="chips" id="gPoints"></div></div>
           <div><label for="gComp">Direction</label><select id="gComp"><option value="auto">Best for this activity</option><option value="x">Horizontal</option><option value="y">Vertical</option><option value="both">Both</option><option value="speed">Resultant (speed)</option></select></div>
           <div><label for="gUnits">Speed units</label><select id="gUnits"><option value="ms">m/s</option><option value="kmh">km/h</option></select></div>
           <div><label for="gX">Time axis</label><select id="gX"><option value="time">From the start of the video</option><option value="event">From an event</option></select></div>
@@ -385,11 +398,26 @@
           <div><span class="lab">What the lines mean</span><div id="legendBox" class="muted"></div></div>
         </div>
 
-        <details class="help full">
+        <details class="help full" open>
+          <summary>Time normalisation</summary>
+          <div class="hb">
+            <p class="muted">Stretches or squashes each phase to 0&ndash;100% so phases of different lengths (e.g. contacts, or trials from different athletes) can be averaged and compared.</p>
+            <div class="row">
+              <div><label for="nStart">Phase starts at</label><select id="nStart"></select></div>
+              <div><label for="nEnd">Phase ends at</label><select id="nEnd"></select></div>
+              <div><label for="nPts">Points (0&ndash;100%)</label><input type="number" id="nPts" min="11" max="1001" step="10" value="101"></div>
+              <div style="flex:2 1 240px"><label for="nVar">Show</label><select id="nVar"></select></div>
+            </div>
+            <p id="nInfo"></p>
+            <div id="nWrap" class="hide"><svg class="chart wide" id="cNorm" viewBox="0 0 640 300"></svg>
+              <div class="row tight" style="margin-top:.5rem"><button class="btn small ghost" id="nCsv2" type="button">Download time-normalised data (CSV)</button></div></div>
+          </div>
+        </details>
+        <details class="help">
           <summary>Filter check: what did the filter do?</summary>
           <div class="hb">
             <div class="row">
-              <div><label for="fcPoint">Point</label><select id="fcPoint"></select></div>
+              <div><label for="fcPoint">Marker</label><select id="fcPoint"></select></div>
               <div><label for="fcComp">Direction</label><select id="fcComp"><option value="x">Horizontal</option><option value="y" selected>Vertical</option></select></div>
             </div>
             <p id="fcInfo"></p>
@@ -402,34 +430,72 @@
           </div>
         </details>
         <details class="help"><summary>Quality checks</summary><div class="hb" id="qualBox"></div></details>
-        <details class="help hide" id="cmpWrap" open><summary>Markers vs AI (validity check)</summary><div class="hb" id="cmpBox"></div></details>
-        <details class="help"><summary>Data table</summary><div class="hb"><p class="muted">For the first point chosen above. Grey rows are gaps the tool filled in.</p><div class="tablewrap"><table id="dataTab"></table></div></div></details>
+        <details class="help"><summary>Data table</summary><div class="hb"><p class="muted">For the first marker chosen above. Grey rows are gaps the tool filled in.</p><div class="tablewrap"><table id="dataTab"></table></div></div></details>
       </div>
+    </div>
+  </section>
 
-      <details class="help method full">
+  <!-- COMPARE -->
+  <section class="card full hide" id="compare">
+    <div class="card-head">
+      <h2>Compare trials <span class="muted">(whole session)</span></h2>
+      <div class="row tight">
+        <label class="inline" for="cmpGroup" style="margin:0">Group by</label>
+        <select id="cmpGroup" style="width:auto"><option value="athlete">Athlete</option><option value="condition">Condition</option><option value="both">Athlete and condition</option><option value="none">No groups</option></select>
+        <button class="btn small" id="cmpCalc" type="button">Update comparison</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <p id="cmpMsg" class="muted"></p>
+      <div id="cmpBody" class="hide">
+        <span class="lab">Measures in the table</span>
+        <div class="chips" id="cmpMetrics"></div>
+        <div class="tablewrap" style="max-height:420px" id="cmpTab"></div>
+        <h3>Time-normalised curves</h3>
+        <p id="cmpNormInfo" class="muted"></p>
+        <div id="cmpNormWrap" class="hide">
+          <div class="row"><div style="flex:2 1 260px"><label for="cmpVar">Show</label><select id="cmpVar"></select></div></div>
+          <svg class="chart wide" id="cCmpNorm" viewBox="0 0 640 300"></svg>
+          <div id="cmpNormLegend"></div>
+        </div>
+        <h3>Download the whole session</h3>
+        <div class="row">
+          <div><label for="cmpLayout">Summary layout</label><select id="cmpLayout"><option value="wide">One row per trial (Excel)</option><option value="long">One row per measure (R, SPSS, pivot tables)</option></select></div>
+          <div><label for="cmpNormWhich">Time-normalised data</label><select id="cmpNormWhich"><option value="all">Every variable</option><option value="one">Only the one shown above</option></select></div>
+        </div>
+        <div class="row tight"><button class="btn small" id="cmpCsv" type="button">Session summary (CSV)</button><button class="btn small" id="cmpNormCsv" type="button">Session time-normalised (CSV)</button></div>
+        <p class="muted">Both files have athlete, condition and trial columns, so you can filter or group them in Excel, R or SPSS.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card full">
+    <div class="card-body">
+      <details class="help method">
         <summary>How everything is calculated</summary>
         <div class="hb">
           <ol>
             <li><strong>Time.</strong> Each frame lasts 1 &divide; (frame rate &times; slow-down) seconds, so <span class="formula">t = frame &divide; real fps</span>. At 240 fps one frame is 4.17 ms, which is the smallest time step you can measure.</li>
-            <li><strong>Calibration.</strong> The scale is your known length divided by its length in pixels (metres per pixel). Picture y points down, so it is flipped to make up positive, and x is flipped if the athlete moves right to left so that forwards is always positive. With tilt correction on, coordinates are rotated so that your calibration object is exactly upright or level.</li>
-            <li><strong>Gaps.</strong> If a point is missing on a frame between two good ones, it is filled with a smooth curve (natural cubic spline) through the points either side. Filled values are marked in the data table and exports.</li>
+            <li><strong>Calibration.</strong> The scale is your known length divided by its length in pixels (metres per pixel). Picture y points down, so it is flipped to make up positive. x is flipped if the athlete faces left, so that forwards is always positive (with &ldquo;no fixed direction&rdquo;, + x is to the right of the screen). With tilt correction on, coordinates are rotated so that your calibration object is exactly upright or level.</li>
+            <li><strong>Gaps.</strong> If a marker is missing on a frame between two good ones (e.g. hidden behind an arm), it is filled with a smooth curve (natural cubic spline) through the positions either side. Filled values are marked in the data table and exports. Long gaps are flagged.</li>
             <li><strong>Filtering.</strong> Coordinates are smoothed with a Butterworth low-pass filter: a 2nd-order filter run forwards and then backwards, which removes the time lag and makes it 4th order overall. The cut-off is adjusted for the two passes (&divide; 0.802; Winter, 2009). The ends of the data are padded with a mirror image so the first and last frames are not distorted. Clicking error is small in position but grows a lot when you work out velocity and acceleration, which is why this step matters. Filtering also rounds off very sudden changes (e.g. foot contact), so peak values can come out a little lower. Use the filter check to see exactly what was removed.</li>
             <li><strong>Velocity and acceleration</strong> use central differences: <span class="formula">v<sub>i</sub> = (x<sub>i+1</sub> &minus; x<sub>i&minus;1</sub>) &divide; (t<sub>i+1</sub> &minus; t<sub>i&minus;1</sub>)</span> and <span class="formula">a<sub>i</sub> = (x<sub>i+1</sub> &minus; 2x<sub>i</sub> + x<sub>i&minus;1</sub>) &divide; &Delta;t&sup2;</span>. The first and last frames have no neighbour on one side, so they are left blank. Speed (resultant) is <span class="formula">&radic;(v<sub>x</sub>&sup2; + v<sub>y</sub>&sup2;)</span>. Average velocity is displacement &divide; time. km/h = m/s &times; 3.6.</li>
-            <li><strong>Joint angles</strong> are the angle between the two segments that meet at a joint, from the dot product of the two segment vectors, so 180&deg; is straight (e.g. a fully extended knee). Tick &ldquo;show as flexion&rdquo; to report 180&deg; minus this, so 0&deg; is straight. <strong>Segment angles</strong> are measured from vertical (+ = top end forwards; e.g. trunk lean, shin angle) or from horizontal (+ = front end higher; e.g. foot angle). Angles are worked out from the filtered coordinates.</li>
+            <li><strong>Joint angles</strong> are the angle between the two segments that meet at a joint, from the dot product of the two segment vectors, so 180&deg; is straight (e.g. a fully extended knee). Tick &ldquo;show as flexion&rdquo; to report 180&deg; minus this, so 0&deg; is straight. <strong>Segment angles</strong> are measured from vertical (+ = top end forwards; e.g. trunk lean, shin angle) or from horizontal (+ = second marker higher; e.g. foot angle). Angles are worked out from the filtered coordinates.</li>
             <li><strong>Angular velocity</strong> is the rate of change of angle (&deg;/s) by central differences. For a joint angle, + means opening (extending) and &minus; means closing (flexing).</li>
-            <li><strong>Event values.</strong> Contact time = touchdown to toe-off of the same foot. Flight time = toe-off to the next touchdown. Step time = touchdown to the next touchdown (either foot), and step frequency = 1 &divide; step time. Step length is the forward distance between the Toe at one touchdown and the next. Jump height from flight time is <span class="formula">h = g t&sup2; &divide; 8</span> and take-off velocity is <span class="formula">v = g t &divide; 2</span>, which assume the body is in the same position at take-off and landing.</li>
-            <li><strong>Suggested events</strong> look for when the toe is near its lowest height and almost still (contact), using distances scaled to the length of the shank so this works without calibration. Always check each one frame by frame.</li>
-            <li><strong>Marker tracking</strong> takes a small square of picture around each marker and finds the best match in the next frame (zero-mean normalised cross-correlation on colour, with sub-pixel refinement). It predicts where the marker will be from its last movement, compares against both the first and the latest appearance of the marker, and stops if the match drops below the strictness level.</li>
-            <li><strong>AI pose</strong> uses MediaPipe Pose Landmarker (BlazePose, 33 body points). The tool cuts out a square around the athlete, enlarges it, finds the body, then follows the athlete from frame to frame. Arms and legs come from one side of the body, and the tool follows each foot from frame to frame because the AI often mixes up left and right in a side view. Head, shoulder and hip are the midpoint of the left and right points, which is steadier side-on. It estimates joint centres from body shape rather than measuring them, so expect errors of a few centimetres.</li>
-            <li><strong>Quality checks.</strong> In a side-on 2D view segment lengths (e.g. thigh) should stay about the same; a coefficient of variation over about 3 to 6% suggests out-of-plane movement or wrong points. In a jump the hip should accelerate at about &minus;9.81 m/s&sup2; in the air; if not, check the calibration and the frame rate. Markers vs AI gives the root mean square difference between the two methods on the same frames.</li>
-            <li><strong>Hip &ne; centre of mass.</strong> The hip is a handy stand-in for the centre of mass, but arm and trunk movements shift the real centre of mass.</li>
+            <li><strong>Event values.</strong> Contact time = touchdown to toe-off of the same foot. Flight time = toe-off to the next touchdown. Step time = touchdown to the next touchdown (either foot), and step frequency = 1 &divide; step time. Step length is the horizontal distance between the foot marker at one touchdown and the next. Jump height from flight time is <span class="formula">h = g t&sup2; &divide; 8</span> and take-off velocity is <span class="formula">v = g t &divide; 2</span>, which assume the body is in the same position at take-off and landing. Values &ldquo;at&rdquo; an event come from the digitised frame nearest to it; if an event happens more than once, the mean is given.</li>
+            <li><strong>Time normalisation.</strong> Each phase (from a start event to the next end event, e.g. touchdown to toe-off) is resampled to the same number of points (101 by default, so 0, 1, 2&hellip;100%). The filtered data inside the phase are joined with a natural cubic spline, which is then read at evenly spaced moments: <span class="formula">t<sub>k</sub> = t<sub>start</sub> + (k &divide; (n &minus; 1)) &times; (t<sub>end</sub> &minus; t<sub>start</sub>)</span>. Means and standard deviations are worked out point by point across phases. A phase is left out of a variable if the markers were not digitised across all of it. Normalising hides how long each phase took, so the phase durations are reported alongside.</li>
+            <li><strong>Suggested events</strong> look for when the foot marker is near its lowest height and almost still (contact). Distances are scaled to the size of the athlete (hip-to-foot distance) so this also works without calibration. Always check each one frame by frame.</li>
+            <li><strong>Marker tracking</strong> takes a small square of picture around each marker and finds the best match in the next frame (zero-mean normalised cross-correlation on colour, with sub-pixel refinement). It predicts where the marker will be from its last movement, compares against both the first and the latest appearance of the marker, and pauses for you to click it if the match drops below the strictness level.</li>
+            <li><strong>Quality checks.</strong> In a side-on 2D view segment lengths (e.g. thigh) should stay about the same; a coefficient of variation over about 3 to 6% suggests out-of-plane movement or wrong positions. In a jump the hip should accelerate at about &minus;9.81 m/s&sup2; in the air; if not, check the calibration and the frame rate.</li>
+            <li><strong>Comparing trials.</strong> Each trial is worked out on its own with its own calibration and events, using the same filter and normalisation settings. Group values are the mean &plusmn; SD of the trial values. Group curves are the mean &plusmn; SD of every normalised phase in that group.</li>
+            <li><strong>Hip &ne; centre of mass.</strong> A hip marker is a handy stand-in for the centre of mass, but arm and trunk movements shift the real centre of mass.</li>
           </ol>
-          <p class="muted"><strong>References.</strong> Bartlett, R. (2007) <em>Introduction to Sports Biomechanics</em>, 2nd edn. Routledge. Bazarevsky, V. et al. (2020) BlazePose: on-device real-time body pose tracking. arXiv:2006.10204. Hamill, J., Knutzen, K.M. and Derrick, T.R. (2015) <em>Biomechanical Basis of Human Movement</em>, 4th edn. Wolters Kluwer. Payton, C.J. and Bartlett, R.M. (eds) (2008) <em>Biomechanical Evaluation of Movement in Sport and Exercise</em>. Routledge. Winter, D.A. (2009) <em>Biomechanics and Motor Control of Human Movement</em>, 4th edn. Wiley.</p>
+          <p class="muted"><strong>References.</strong> Bartlett, R. (2007) <em>Introduction to Sports Biomechanics</em>, 2nd edn. Routledge. Hamill, J., Knutzen, K.M. and Derrick, T.R. (2015) <em>Biomechanical Basis of Human Movement</em>, 4th edn. Wolters Kluwer. Payton, C.J. and Bartlett, R.M. (eds) (2008) <em>Biomechanical Evaluation of Movement in Sport and Exercise</em>. Routledge. Winter, D.A. (2009) <em>Biomechanics and Motor Control of Human Movement</em>, 4th edn. Wiley.</p>
         </div>
       </details>
     </div>
   </section>
-  <footer>Kinematic Video Analyser. Works offline once loaded (AI pose needs the internet the first time). Nothing is uploaded. Built by Dr Tommy Bright.</footer>
+  <footer>Kinematic Analysis. Works offline once loaded. Nothing is uploaded. Built by Dr Tommy Bright.</footer>
 </main>
 <script type="module" src="js/app.js"></script>
 </body>

@@ -1,6 +1,6 @@
-// Automatic digitising: marker tracking (template matching) and AI pose estimation (MediaPipe).
+// Automatic digitising: marker tracking by template matching.
 import { A, $, esc, status, persist, points, fpsReal } from './state.js';
-import { seekAsync, grab, viewCanvas, seek } from './video.js';
+import { seekAsync, grab, seek } from './video.js';
 import { draw, rad, markerHalf, renderChips, updateDigiCount } from './overlay.js';
 
 // ---------- flags (points the student should check) ----------
@@ -21,7 +21,7 @@ export function renderFlags() {
   if (!F.length) { $('flagTab').innerHTML = '<tr><td class="muted">Nothing flagged yet.</td></tr>'; return; }
   const rows = [];
   F.forEach((f) => S.flags[f].forEach((x) => rows.push('<tr><td class="num"><a href="#" data-go="' + f + '">Frame ' + f + '</a></td><td>' + esc(x.m || '') + '</td><td>' + esc(x.msg) + '</td></tr>')));
-  $('flagTab').innerHTML = '<tr><th>Frame</th><th>Point</th><th>Why</th></tr>' + rows.slice(0, 200).join('') + (rows.length > 200 ? '<tr><td colspan="3" class="muted">&hellip;and ' + (rows.length - 200) + ' more</td></tr>' : '');
+  $('flagTab').innerHTML = '<tr><th>Frame</th><th>Marker</th><th>Why</th></tr>' + rows.slice(0, 200).join('') + (rows.length > 200 ? '<tr><td colspan="3" class="muted">&hellip;and ' + (rows.length - 200) + ' more</td></tr>' : '');
   $('flagTab').querySelectorAll('[data-go]').forEach((a) => a.addEventListener('click', (ev) => {
     ev.preventDefault(); const f = +a.getAttribute('data-go'); seek(f);
     const x = S.flags[f] && S.flags[f][0]; if (x && x.m) { A.activeMarker = x.m; renderChips(); }
@@ -91,8 +91,8 @@ function matchSearch(img, pred, h, R, Ts) {
 }
 
 function setBusy(on, label) {
-  A.busy = on; ['trkFwd', 'trkBack', 'trkCont', 'poseRun', 'calc'].forEach((id) => { if ($(id)) $(id).disabled = on; });
-  $('autoStop').disabled = !on; if (!on) $('autoProg').style.width = '0';
+  A.busy = on; ['trkFwd', 'trkBack', 'calc'].forEach((id) => { if ($(id)) $(id).disabled = on; });
+  $('autoStop').disabled = !on && !A.trackResume; if (!on) $('autoProg').style.width = '0';
   if (label !== undefined) $('autoInfo').textContent = label;
 }
 function progress(i, n) { $('autoProg').style.width = Math.min(100, Math.round(100 * i / Math.max(1, n))) + '%'; }
@@ -104,14 +104,64 @@ function endFrame(dir) {
   return end;
 }
 
-export async function runTrack(dir) {
+// ---------- pausing when a marker is lost ----------
+function showPause() {
+  const P = A.trackResume, b = $('trkBanner');
+  if (!P) { b.classList.add('hide'); $('stage').classList.remove('paused'); return; }
+  const left = P.lost.filter((m) => !(A.S.frames[A.cur] && A.S.frames[A.cur][m]));
+  b.classList.remove('hide'); $('stage').classList.add('paused');
+  $('trkBannerText').innerHTML = '<strong>Tracking paused at frame ' + A.cur + '.</strong> Click the <strong>' + esc(left.join(', then the ')) + '</strong> where ' + (left.length > 1 ? 'they are' : 'it is') + ' now. Tracking carries on by itself as soon as you have.';
+  A.activeMarker = left[0] || null; renderChips(); draw();
+  status($('trkBannerText').innerHTML);
+}
+export function stopTrackPause() { A.trackResume = null; A.pauseAdvance = false; if ($('trkBanner')) showPause(); setBusy(false); }
+// Called by the overlay after every click. Returns true if the click was part of a paused track.
+export function onTrackClick() {
+  const P = A.trackResume; if (!P) return false;
+  if (A.cur !== P.frame) { stopTrackPause(); return false; } // the student moved away: drop the pause
+  const fr = A.S.frames[A.cur] || {}, left = P.lost.filter((m) => !fr[m]);
+  if (left.length) { showPause(); return true; }
+  const dir = P.dir; A.trackResume = null; showPause();
+  setTimeout(() => runTrack(dir, { here: true }), 50);
+  return true;
+}
+// "Marker hidden": leave a gap for the lost marker(s) and carry on tracking the others.
+async function markerHidden() {
+  const P = A.trackResume; if (!P) return;
+  const fr = A.S.frames[A.cur] || {}, hid = P.lost.filter((m) => !fr[m]);
+  hid.forEach((m) => addFlag(A.cur, m, 'Hidden from here: click it where it reappears, then track again', 'track'));
+  const dir = P.dir; A.trackResume = null; showPause(); renderFlags();
+  if (!Object.keys(fr).length) { status('No markers left to track on this frame.'); setBusy(false); return; }
+  await runTrack(dir, { here: true, note: hid });
+}
+
+// ---------- tracking ----------
+// Tracks every marker that is on the start frame. The start frame is the current frame if it has
+// markers; otherwise the nearest frame behind it with the most markers (the usual case after the
+// tool has jumped forward to the next frame to click).
+export async function runTrack(dir, opts) {
+  opts = opts || {};
   const S = A.S; if (A.busy || !S.vw) return;
-  const mk = points(), fr0 = S.frames[A.cur], miss = mk.filter((m) => !(fr0 && fr0[m]));
-  if (miss.length) { status('First click every point on this frame (still to do: <strong>' + esc(miss.join(', ')) + '</strong>). Then press Track.'); return; }
-  $('trkNote').textContent = fpsReal() < 90 && S.activity === 'sprint' ? 'Tip: at ' + fpsReal() + ' fps a sprinting foot moves a long way between frames, so tracking may stop often. Slow motion (120 or 240 fps) works much better.' : '';
+  if (!points().length) { $('trkNote').innerHTML = '<span class="bad">Add your markers in the Markers tab first.</span>'; return; }
+  const count = (f) => (S.frames[f] ? points().filter((m) => S.frames[f][m]).length : 0);
+  if (!opts.here) {
+    const all = points().length;
+    if (count(A.cur) < all) {
+      const cand = Object.keys(S.frames).map(Number).filter((f) => count(f) > 0 && (dir > 0 ? f <= A.cur : f >= A.cur));
+      const best = cand.length ? Math.max(...cand.map(count)) : 0;
+      const pickFrom = cand.filter((f) => count(f) === best);
+      const pick = pickFrom.length ? (dir > 0 ? Math.max(...pickFrom) : Math.min(...pickFrom)) : null;
+      if (pick === null || (count(A.cur) > 0 && count(A.cur) >= best)) {
+        if (!count(A.cur)) { const msg = 'Click each marker once on a clear frame first, then press Track.'; $('trkNote').innerHTML = '<span class="bad">' + esc(msg) + '</span>'; status(esc(msg)); return; }
+      } else { await seekAsync(pick); }
+    }
+  }
+  const fr0 = S.frames[A.cur], mk = points().filter((m) => fr0 && fr0[m]);
+  const missing = points().filter((m) => !mk.includes(m));
+  $('trkNote').innerHTML = missing.length ? 'Tracking ' + esc(mk.join(', ')) + '. Not on this frame, so not tracked: ' + esc(missing.join(', ')) + '.' : '';
   const end = endFrame(dir);
-  A.trackDir = dir; A.pauseAdvance = false; $('trkCont').classList.add('hide');
-  A.stopReq = false; setBusy(true, 'Tracking…');
+  A.trackDir = dir; A.pauseAdvance = false;
+  A.stopReq = false; setBusy(true, 'Tracking\u2026');
   const h = markerHalf(), thr = parseFloat($('trkThr').value);
   await seekAsync(A.cur); let img = grab(); const st = {}, bad = [];
   mk.forEach((m) => { const p = fr0[m], t = prepT(patchAt(img, p[0], p[1], h)); if (!t) bad.push(m); st[m] = { p: p.slice(), prev: p.slice(), T0: t, Tp: t }; });
@@ -144,151 +194,24 @@ export async function runTrack(dir) {
     if (lostHere.length) { lost = { f: nf, m: lostHere }; break; }
   }
   const secs = (performance.now() - t0) / 1000;
-  qualityFlags(); persist(); setBusy(false, ''); renderFlags(); updateDigiCount(); renderChips();
+  qualityFlags(); persist(); setBusy(false, ''); renderFlags(); updateDigiCount();
   if (lost) {
-    A.pauseAdvance = true; A.activeMarker = lost.m[0];
-    lost.m.forEach((m) => { delete S.frames[lost.f][m]; addFlag(lost.f, m, 'Tracking lost here: click it, then Continue', 'track'); });
-    renderFlags(); renderChips(); draw();
-    $('trkCont').classList.remove('hide');
-    status('Lost the <strong>' + esc(lost.m.join(', ')) + '</strong> at frame ' + lost.f + '. Click where ' + (lost.m.length > 1 ? 'they are' : 'it is') + ' now, then press <strong>Continue tracking</strong>.');
+    lost.m.forEach((m) => { delete S.frames[lost.f][m]; addFlag(lost.f, m, 'Tracking lost here and clicked by hand', 'track'); });
+    A.trackResume = { dir, lost: lost.m, frame: lost.f }; A.pauseAdvance = true;
+    setBusy(false); showPause();
   } else {
-    status((A.stopReq ? 'Stopped after ' : 'Tracked ') + done + ' frames in ' + secs.toFixed(0) + ' s. Check anything listed under &ldquo;Check the tracking&rdquo;, then open Results.');
+    renderChips();
+    const hid = opts.note && opts.note.length ? ' ' + esc(opts.note.join(', ')) + (opts.note.length > 1 ? ' were' : ' was') + ' left out from the hidden frame on. Go to where ' + (opts.note.length > 1 ? 'they reappear' : 'it reappears') + ', click ' + (opts.note.length > 1 ? 'them' : 'it') + ', and track again.' : '';
+    status((A.stopReq ? 'Stopped after ' : 'Tracked ') + done + ' frames in ' + secs.toFixed(0) + ' s.' + hid + ' Check anything listed under &ldquo;Check the tracking&rdquo;, then press <strong>Update results</strong>.');
   }
-}
-
-// ---------- AI pose (MediaPipe Pose Landmarker, image mode with a crop that follows the athlete) ----------
-const MP_VER = '0.10.14';
-const MP_BASE = () => window.KVA_MP_BASE || window.VA_MP_BASE || ('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@' + MP_VER);
-const MP_MODELS = () => window.KVA_MP_MODELS || window.VA_MP_MODELS || {
-  lite: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
-  full: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task',
-  heavy: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task'
-};
-// MediaPipe landmark numbers for each named point (BlazePose 33-point model).
-export const LMK = {
-  left: { Head: 7, Shoulder: 11, Elbow: 13, Wrist: 15, Hip: 23, Knee: 25, Ankle: 27, Heel: 29, Toe: 31 },
-  right: { Head: 8, Shoulder: 12, Elbow: 14, Wrist: 16, Hip: 24, Knee: 26, Ankle: 28, Heel: 30, Toe: 32 }
-};
-const NOSE = 0, CROP = 512;
-let visionMod = null;
-async function makeLandmarker(kind) {
-  if (!visionMod) visionMod = await import(/* @vite-ignore */ MP_BASE() + '/vision_bundle.mjs');
-  const fs = await visionMod.FilesetResolver.forVisionTasks(MP_BASE() + '/wasm');
-  const opts = (dl) => ({ baseOptions: { modelAssetPath: MP_MODELS()[kind], delegate: dl }, runningMode: 'IMAGE', numPoses: 1, minPoseDetectionConfidence: 0.4, minPosePresenceConfidence: 0.4, minTrackingConfidence: 0.4 });
-  try { return await visionMod.PoseLandmarker.createFromOptions(fs, opts('GPU')); } catch (e) { return visionMod.PoseLandmarker.createFromOptions(fs, opts('CPU')); }
-}
-const cropCv = document.createElement('canvas'); cropCv.width = CROP; cropCv.height = CROP;
-const cropCtx = cropCv.getContext('2d', { willReadFrequently: true });
-// Run the model on a square [sx, sy, side] of the view (parts outside the picture are black). Returns landmarks in view pixels.
-function detectSquare(lm, sx, sy, side) {
-  const src = viewCanvas(), W = src.width, H = src.height, k = CROP / side;
-  cropCtx.fillStyle = '#000'; cropCtx.fillRect(0, 0, CROP, CROP);
-  const ix0 = Math.max(0, sx), iy0 = Math.max(0, sy), ix1 = Math.min(W, sx + side), iy1 = Math.min(H, sy + side);
-  if (ix1 <= ix0 || iy1 <= iy0) return null;
-  cropCtx.drawImage(src, ix0, iy0, ix1 - ix0, iy1 - iy0, (ix0 - sx) * k, (iy0 - sy) * k, (ix1 - ix0) * k, (iy1 - iy0) * k);
-  let res; try { res = lm.detect(cropCv); } catch (e) { return null; }
-  if (!res || !res.landmarks || !res.landmarks.length) return null;
-  return res.landmarks[0].map((p) => ({ x: sx + p.x * side, y: sy + p.y * side, v: p.visibility === undefined ? 1 : p.visibility }));
-}
-function bbox(L) {
-  // body box from the reliable landmarks (ignore points pushed outside the picture)
-  const use = L.filter((p, i) => i >= 11 && p.v > 0.3); const src = use.length >= 6 ? use : L;
-  const xs = src.map((p) => p.x), ys = src.map((p) => p.y);
-  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys, L[NOSE].y), y1 = Math.max(...ys);
-  return { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, size: Math.max(x1 - x0, y1 - y0) };
-}
-// How sure the model is that this is a whole, real body: mean visibility of shoulders, hips, knees and ankles.
-const BODY = [11, 12, 23, 24, 25, 26, 27, 28];
-const bodyScore = (L) => BODY.reduce((a, i) => a + L[i].v, 0) / BODY.length;
-function findPerson(lm, last) {
-  const W = A.S.vw, H = A.S.vh, m = Math.min(W, H);
-  const refine = (L, side) => { // a small person is cut out again more tightly for a sharper fit
-    const b = bbox(L); if (b.size >= side * 0.33) return { L, b, sc: bodyScore(L) };
-    const s2 = Math.max(192, b.size * 1.7), L2 = detectSquare(lm, b.cx - s2 / 2, b.cy - s2 / 2, s2);
-    return L2 && bodyScore(L2) >= bodyScore(L) ? { L: L2, b: bbox(L2), sc: bodyScore(L2) } : { L, b, sc: bodyScore(L) };
-  };
-  if (last) { // follow the athlete from the last frame
-    const side = Math.max(192, last.size * 1.7), L = detectSquare(lm, last.cx - side / 2, last.cy - side / 2, side);
-    if (L && bodyScore(L) >= 0.5) { const r = refine(L, side); if (Math.hypot(r.b.cx - last.cx, r.b.cy - last.cy) < last.size) return r; }
-  }
-  // otherwise search the whole picture at three zoom levels and keep the most convincing body
-  const tries = [[(W - Math.max(W, H)) / 2, (H - Math.max(W, H)) / 2, Math.max(W, H)]];
-  const scan = (side) => { const nx = Math.max(1, Math.ceil((W - side) / (side / 2)) + 1), ny = Math.max(1, Math.ceil((H - side) / (side / 2)) + 1); for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) tries.push([nx === 1 ? (W - side) / 2 : i * (W - side) / (nx - 1), ny === 1 ? (H - side) / 2 : j * (H - side) / (ny - 1), side]); };
-  scan(m); scan(m / 2);
-  let best = null;
-  for (const t of tries) {
-    const L = detectSquare(lm, t[0], t[1], t[2]); if (!L || bodyScore(L) < 0.5) continue;
-    const r = refine(L, t[2]); if (!best || r.sc > best.sc) best = r;
-    if (best.sc > 0.9) break;
-  }
-  return best;
-}
-
-export async function runPose() {
-  const S = A.S; if (A.busy || !S.vw) return;
-  const target = $('poseTarget').value, step = parseInt($('poseEvery').value, 10) || 1;
-  let end = Math.max(A.cur, Math.min(A.nFrames - 1, parseInt($('trkTo').value, 10) || A.nFrames - 1));
-  if (end <= A.cur) end = A.nFrames - 1;
-  const mk = points().filter((m) => LMK.left[m] !== undefined), skip = points().filter((m) => LMK.left[m] === undefined);
-  if (!mk.length) { status('None of this template&rsquo;s points are ones the AI knows (it knows: ' + Object.keys(LMK.left).join(', ') + '). Use marker tracking or rename the points.'); return; }
-  A.stopReq = false; setBusy(true, 'Loading the AI model (the first time can take up to a minute)…');
-  status('Loading the AI pose model…');
-  let lm;
-  try { lm = await makeLandmarker($('poseModel').value); } catch (e) {
-    setBusy(false, ''); status('<span class="bad"><strong>The AI model could not be loaded.</strong> Check your internet connection (the model is downloaded the first time, then kept). On a university network, try again off the VPN. Marker tracking works offline.</span>'); return;
-  }
-  $('autoInfo').textContent = 'Running AI pose…';
-  const layer = target === 'alt' ? S.alt : S.frames;
-  let side = $('poseSide').value, prev = null, prev2 = null, last = null, done = 0, none = 0, swaps = 0;
-  const total = Math.ceil((end - A.cur + 1) / step), t0 = performance.now();
-  for (let f = A.cur; f <= end && !A.stopReq; f += step) {
-    await seekAsync(f);
-    const hit = findPerson(lm, last);
-    done++; progress(done, total);
-    if (!hit) { none++; last = null; prev = null; prev2 = null; if (target === 'main') addFlag(f, '', 'AI: no person found', 'pose'); continue; }
-    last = hit.b; const L = hit.L;
-    if (side === 'auto') {
-      const sl = [25, 27, 31, 23].reduce((a, i) => a + L[i].v, 0), sr = [26, 28, 32, 24].reduce((a, i) => a + L[i].v, 0);
-      side = sl >= sr ? 'left' : 'right';
-      $('autoInfo').textContent = 'Using the athlete’s ' + side + ' side (the one nearer the camera).';
-    }
-    const other = side === 'left' ? 'right' : 'left';
-    const pt = (sd, m) => { const a = L[LMK[sd][m]]; return [a.x, a.y, a.v]; };
-    // In side views the AI often swaps the athlete's left and right. Decide which set of points is the
-    // near side by following the legs: each foot should be close to where its own movement predicts.
-    const LEGS = ['Knee', 'Ankle', 'Heel', 'Toe'], legs = (sd) => LEGS.map((m) => pt(sd, m));
-    let use = side;
-    if (prev) {
-      const pred = prev.legs.map((q, i) => (prev2 ? [2 * q[0] - prev2.legs[i][0], 2 * q[1] - prev2.legs[i][1]] : q));
-      const cost = (arr) => arr.reduce((a, q, i) => a + Math.hypot(q[0] - pred[i][0], q[1] - pred[i][1]), 0);
-      const keep = cost(legs(side)), swp = cost(legs(other));
-      if (swp < keep) { use = other; swaps++; }
-      if (target === 'main' && Math.min(keep, swp) / Math.max(keep, swp) > 0.75 && Math.max(keep, swp) > 8 * rad()) addFlag(f, 'Ankle', 'AI unsure which leg is which: check', 'pose');
-    }
-    // Head, shoulder and hip: the middle of the left and right points. In a side view the two sides almost
-    // overlap, and the AI swaps them often, so the midpoint is steadier (and is the pelvis/trunk centre line).
-    const MID = { Head: 1, Shoulder: 1, Hip: 1 };
-    const P = {}; mk.forEach((m) => { if (MID[m]) { const a = pt('left', m), b = pt('right', m); P[m] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, Math.min(a[2], b[2])]; } else P[m] = pt(use, m); });
-    prev2 = prev; prev = { legs: legs(use) };
-    if (!layer[f]) layer[f] = {};
-    mk.forEach((m) => {
-      layer[f][m] = [P[m][0], P[m][1]];
-      if (target === 'main') { clearFlag(f, m); if (!S.conf[f]) S.conf[f] = {}; S.conf[f][m] = { s: +P[m][2].toFixed(3), src: 'pose' }; if (P[m][2] < 0.5) addFlag(f, m, 'AI is unsure (visibility ' + P[m][2].toFixed(2) + ')', 'pose'); }
-    });
-    draw();
-  }
-  try { lm.close(); } catch (e) { /* ignore */ }
-  if (target === 'main') qualityFlags();
-  persist(); setBusy(false, ''); renderFlags(); updateDigiCount(); renderChips(); draw();
-  status('AI pose ' + (A.stopReq ? 'stopped' : 'finished') + ': ' + done + ' frames in ' + ((performance.now() - t0) / 1000).toFixed(0) + ' s' + (none ? ', no person found in ' + none : '') + (swaps ? ', left and right swapped back on ' + swaps + ' frame' + (swaps > 1 ? 's' : '') : '') + '.' + (skip.length ? ' The AI does not know <strong>' + esc(skip.join(', ')) + '</strong>, so click those yourself.' : '') + (target === 'alt' ? ' Saved for comparison: see &ldquo;Markers vs AI&rdquo; in Results.' : ' Check the flagged frames, then open Results.'));
 }
 
 export function initTracking() {
   $('trkFwd').addEventListener('click', () => runTrack(1));
   $('trkBack').addEventListener('click', () => runTrack(-1));
-  $('trkCont').addEventListener('click', () => runTrack(A.trackDir));
-  $('autoStop').addEventListener('click', () => { A.stopReq = true; });
-  $('poseRun').addEventListener('click', runPose);
-  $('altClear').addEventListener('click', () => { if (!confirm('Remove the comparison (AI) points?')) return; A.S.alt = {}; persist(); draw(); if (A.results) A.fn.compute(); });
-  window.__KVA_track = runTrack; window.__KVA_pose = runPose; window.__KVA_busy = () => A.busy;
+  $('trkHidden').addEventListener('click', markerHidden);
+  $('trkCancel').addEventListener('click', () => { stopTrackPause(); status('Tracking stopped.'); });
+  $('autoStop').addEventListener('click', () => { A.stopReq = true; if (A.trackResume) { stopTrackPause(); status('Tracking stopped.'); } });
+  A.fn.onTrackClick = onTrackClick; A.fn.stopTrackPause = stopTrackPause;
+  window.__KVA_track = runTrack; window.__KVA_busy = () => A.busy; window.__KVA_hidden = markerHidden;
 }

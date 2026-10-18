@@ -1,14 +1,16 @@
-// Start-up: wires the page together. Setup, calibration, point templates, the angle builder, demos and the app install.
-import { A, $, esc, clone, status, persist, points, colourOf, angleDefs, eventTypes, TEMPLATES, VERSION } from './state.js';
+// Start-up: wires the page together. Setup, calibration, the marker and angle builders, demos and the app install.
+import { A, $, esc, clone, status, persist, points, colourOf, angleDefs, eventTypes, VERSION, APP, download, fwd } from './state.js';
 import { tiltAngle } from './maths.js';
-import { initVideo, loadVideoURL, seek, recount, render, viewDims, play, pause, isPlaying, detectFps } from './video.js';
+import { initVideo, seek, recount, render, viewDims, play, pause, isPlaying, detectFps } from './video.js';
 import { initOverlay, draw, renderChips, updateDigiCount, renderMeasures, undo } from './overlay.js';
 import { initTracking, clearFlag, renderFlags } from './tracking.js';
 import { initEvents, renderEventBtns, renderEvents } from './events.js';
-import { initResults, compute, drawResults, live } from './results.js';
+import { initResults, compute, drawResults, live, renderNorm } from './results.js';
 import { initExport, renderExportPoints, renderPhotoOpts } from './export.js';
+import { initSession, addFiles, renderSession } from './session.js';
+import { initCompare, renderCompare } from './compare.js';
 
-Object.assign(A.fn, { draw, syncInputs, showCalib, compute, drawResults, clearFlag, renderFlags, live, renderPhotoOpts });
+Object.assign(A.fn, { draw, syncInputs, showCalib, compute, drawResults, clearFlag, renderFlags, live, renderPhotoOpts, renderNorm });
 
 // ---------- setup ----------
 function syncInputs() {
@@ -20,9 +22,9 @@ function syncInputs() {
   if (S.calib) $('calLen').value = S.calib.len;
   $('vertCheck').checked = !!S.tilt; $('grid').value = String(S.grid || 0);
   if (A.nFrames) $('trkTo').value = Math.max(0, A.nFrames - 1);
-  $('template').value = TEMPLATES[S.templateKey] ? S.templateKey : 'custom';
   showCalib(); renderChips(); renderEventBtns(); renderEvents(); renderMeasures(); updateDigiCount(); renderFlags();
   renderTemplateEditor(); renderAngles(); renderExportPoints(); renderPhotoOpts(); live();
+  if (A.results) compute(); else { $('resBody').classList.add('hide'); $('resMsg').innerHTML = 'Digitise some frames, then press <strong>Update results</strong>.'; }
 }
 function initSetup() {
   $('fpsChips').innerHTML = [25, 30, 50, 60, 120, 240].map((v) => '<button type="button" class="chip" data-f="' + v + '">' + v + '</button>').join('');
@@ -56,14 +58,14 @@ function reorient(rot, flip) {
   const S = A.S; if (!S.srcW) { S.rot = rot; S.flip = flip; return; }
   const [W0, H0] = [S.vw, S.vh], [W1, H1] = viewDims(rot, S.srcW, S.srcH);
   const map = (p) => fromSrc(toSrc(p, S.rot, S.flip, W0, H0), rot, flip, W1, H1);
-  [S.frames, S.alt].forEach((L) => Object.values(L).forEach((fr) => Object.keys(fr).forEach((m) => { fr[m] = map(fr[m]); })));
+  [S.frames].forEach((L) => Object.values(L).forEach((fr) => Object.keys(fr).forEach((m) => { fr[m] = map(fr[m]); })));
   if (S.calib) { S.calib.p1 = map(S.calib.p1); S.calib.p2 = map(S.calib.p2); }
   if (S.origin) S.origin = map(S.origin);
   S.measures.forEach((m) => { m.pts = m.pts.map(map); });
   S.rot = rot; S.flip = flip; S.vw = W1; S.vh = H1;
   $('ov').width = W1; $('ov').height = H1;
   persist(); render(); draw(); showCalib(); if (A.results) compute();
-  status('Picture ' + (rot ? 'rotated ' + rot + '°' : 'not rotated') + (flip ? ' and mirrored' : '') + '. Any points you had moved with it.' + (flip ? ' Remember to check <strong>Which way does the athlete move?</strong>' : ''));
+  status('Picture ' + (rot ? 'rotated ' + rot + '°' : 'not rotated') + (flip ? ' and mirrored' : '') + '. Any points you had moved with it.' + (flip ? ' Remember to check <strong>Which way is the athlete facing?</strong>' : ''));
 }
 
 // ---------- calibration ----------
@@ -86,7 +88,8 @@ function initCalib() {
 // ---------- points (templates) ----------
 function renameEverywhere(oldN, newN) {
   const S = A.S;
-  [S.frames, S.alt, S.conf].forEach((L) => Object.values(L).forEach((fr) => { if (fr && fr[oldN] !== undefined) { fr[newN] = fr[oldN]; delete fr[oldN]; } }));
+  [S.frames, S.conf].forEach((L) => Object.values(L).forEach((fr) => { if (fr && fr[oldN] !== undefined) { fr[newN] = fr[oldN]; delete fr[oldN]; } }));
+  if (S.footMarker === oldN) S.footMarker = newN; if (S.hipMarker === oldN) S.hipMarker = newN;
   Object.values(S.flags).forEach((arr) => arr.forEach((x) => { if (x.m === oldN) x.m = newN; }));
   S.template.links.forEach((l) => { if (l[0] === oldN) l[0] = newN; if (l[1] === oldN) l[1] = newN; });
   (S.angles || []).forEach((d) => ['a', 'b', 'c'].forEach((k) => { if (d[k] === oldN) d[k] = newN; }));
@@ -94,47 +97,63 @@ function renameEverywhere(oldN, newN) {
 }
 function removeEverywhere(n) {
   const S = A.S;
-  [S.frames, S.alt, S.conf].forEach((L) => Object.keys(L).forEach((f) => { if (L[f]) { delete L[f][n]; if (!Object.keys(L[f]).length) delete L[f]; } }));
+  [S.frames, S.conf].forEach((L) => Object.keys(L).forEach((f) => { if (L[f]) { delete L[f][n]; if (!Object.keys(L[f]).length) delete L[f]; } }));
   S.template.links = S.template.links.filter((l) => l[0] !== n && l[1] !== n);
   if (S.angles) S.angles = S.angles.filter((d) => ![d.a, d.b, d.c].includes(n));
 }
-function afterTemplateChange() { A.S.templateKey = TEMPLATES[A.S.templateKey] && JSON.stringify(TEMPLATES[A.S.templateKey]) === JSON.stringify(A.S.template) ? A.S.templateKey : 'custom'; A.activeMarker = null; A.results = null; persist(); syncInputs(); draw(); }
+function afterTemplateChange() { A.activeMarker = null; A.results = null; persist(); syncInputs(); draw(); }
 function renderTemplateEditor() {
   const S = A.S, pts = points();
-  $('ptList').innerHTML = pts.map((m, i) => '<li><span class="dot" style="background:' + colourOf(m) + '"></span><input type="text" class="mini" value="' + esc(m) + '" data-ren="' + i + '" aria-label="Point name"><button type="button" class="btn ghost small" data-up="' + i + '" title="Move up"' + (i ? '' : ' disabled') + '>&uarr;</button><button type="button" class="btn ghost small" data-rm="' + i + '">Remove</button></li>').join('');
+  if (!pts.length) $('ptList').innerHTML = '<li class="muted">No markers yet. Type a name below (e.g. Hip) and press Add, in the order you will click them.</li>';
+  else $('ptList').innerHTML = pts.map((m, i) => '<li><span class="dot" style="background:' + colourOf(m) + '"></span><input type="text" class="mini" value="' + esc(m) + '" data-ren="' + i + '" aria-label="Marker name"><button type="button" class="btn ghost small" data-up="' + i + '" title="Move up"' + (i ? '' : ' disabled') + '>&uarr;</button><button type="button" class="btn ghost small" data-rm="' + i + '">Remove</button></li>').join('');
   $('ptList').querySelectorAll('[data-ren]').forEach((inp) => inp.addEventListener('change', () => {
     const i = +inp.getAttribute('data-ren'), oldN = pts[i], newN = inp.value.trim();
     if (!newN || newN === oldN) { inp.value = oldN; return; }
-    if (pts.includes(newN)) { status('There is already a point called ' + esc(newN) + '.'); inp.value = oldN; return; }
+    if (pts.includes(newN)) { status('There is already a marker called ' + esc(newN) + '.'); inp.value = oldN; return; }
     renameEverywhere(oldN, newN); pts[i] = newN; afterTemplateChange();
   }));
   $('ptList').querySelectorAll('[data-up]').forEach((b) => b.addEventListener('click', () => { const i = +b.getAttribute('data-up'); [pts[i - 1], pts[i]] = [pts[i], pts[i - 1]]; afterTemplateChange(); }));
   $('ptList').querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => {
     const i = +b.getAttribute('data-rm'), n = pts[i];
-    if (pts.length < 2) { status('Keep at least one point.'); return; }
     const has = Object.values(S.frames).some((fr) => fr[n]);
     if (has && !confirm('Remove ' + n + ' and all its digitised positions?')) return;
     removeEverywhere(n); pts.splice(i, 1); afterTemplateChange();
   }));
-  $('linkList').innerHTML = S.template.links.length ? S.template.links.map((l, i) => '<li>' + esc(l[0]) + ' &ndash; ' + esc(l[1]) + ' <button type="button" class="btn ghost small" data-lrm="' + i + '">Remove</button></li>').join('') : '<li class="muted">No segments.</li>';
+  $('linkList').innerHTML = S.template.links.length ? S.template.links.map((l, i) => '<li>' + esc(l[0]) + ' &ndash; ' + esc(l[1]) + ' <button type="button" class="btn ghost small" data-lrm="' + i + '">Remove</button></li>').join('') : '<li class="muted">No segments (optional: lines drawn between two markers, also used for the quality checks).</li>';
   $('linkList').querySelectorAll('[data-lrm]').forEach((b) => b.addEventListener('click', () => { S.template.links.splice(+b.getAttribute('data-lrm'), 1); afterTemplateChange(); }));
   const opts = pts.map((m) => '<option>' + esc(m) + '</option>').join('');
   $('linkA').innerHTML = opts; $('linkB').innerHTML = opts; if (pts.length > 1) $('linkB').selectedIndex = 1;
 }
+// ---------- marker sets (save and reuse) ----------
+function saveSet() {
+  const S = A.S; if (!points().length) { status('Add some markers first.'); return; }
+  const j = { kind: 'kinematic-analysis-marker-set', markers: S.template.points, segments: S.template.links, angles: S.angles, foot: S.footMarker, hip: S.hipMarker };
+  const nm = ($('setName').value.trim() || 'marker_set').replace(/[^\w\-]+/g, '_');
+  download(nm + '.json', new Blob([JSON.stringify(j, null, 1)], { type: 'application/json' }));
+  status('Marker set saved. Load it at the start of any analysis to skip setting the markers up again.');
+}
+function loadSet(file) {
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const j = JSON.parse(rd.result); if (!Array.isArray(j.markers)) throw new Error('bad');
+      const S = A.S, had = Object.keys(S.frames).length;
+      if (had && !confirm('Replace this video\u2019s markers with the saved set? Markers that are not in the set will be removed with their positions.')) return;
+      points().filter((m) => !j.markers.includes(m)).forEach(removeEverywhere);
+      S.template = { points: j.markers.slice(), links: (j.segments || []).filter((l) => j.markers.includes(l[0]) && j.markers.includes(l[1])) };
+      S.angles = (j.angles || []).filter((d) => [d.a, d.b, d.c].filter(Boolean).every((m) => j.markers.includes(m)));
+      if (j.foot) S.footMarker = j.foot; if (j.hip) S.hipMarker = j.hip;
+      afterTemplateChange(); status('Marker set loaded: ' + esc(j.markers.join(', ')) + '.');
+    } catch (e) { status('That file is not a marker set.'); }
+  };
+  rd.readAsText(file);
+}
 function initTemplates() {
-  $('template').innerHTML = Object.keys(TEMPLATES).map((k) => '<option value="' + k + '">' + esc(TEMPLATES[k].name) + '</option>').join('') + '<option value="custom">My own points (edit below)</option>';
-  $('template').addEventListener('change', function () {
-    const k = this.value; if (k === 'custom') return;
-    const S = A.S, had = Object.keys(S.frames).length;
-    if (had && !confirm('Switch to this set of points? Points that are not in the new set will be removed.')) { this.value = TEMPLATES[S.templateKey] ? S.templateKey : 'custom'; return; }
-    const keep = TEMPLATES[k].points; points().filter((m) => !keep.includes(m)).forEach(removeEverywhere);
-    S.template = clone(TEMPLATES[k]); S.templateKey = k; S.angles = null; A.activeMarker = null; A.results = null;
-    if (!S.graph.points.some((p) => keep.includes(p))) S.graph.points = [keep.includes('Hip') ? 'Hip' : keep[0]];
-    persist(); syncInputs(); draw();
-  });
+  $('setSave').addEventListener('click', saveSet);
+  $('setLoad').addEventListener('change', function () { const f = this.files[0]; if (f) loadSet(f); this.value = ''; });
   $('ptAdd').addEventListener('click', () => {
     const n = $('ptNew').value.trim(); if (!n) return;
-    if (points().includes(n)) { status('There is already a point called ' + esc(n) + '.'); return; }
+    if (points().includes(n)) { status('There is already a marker called ' + esc(n) + '.'); return; }
     points().push(n); $('ptNew').value = ''; afterTemplateChange();
   });
   $('ptNew').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('ptAdd').click(); } });
@@ -149,13 +168,13 @@ function initTemplates() {
 const TYPE_TXT = { joint: 'Joint angle at the middle point', vertical: 'Segment from vertical', horizontal: 'Segment from horizontal' };
 function describe(d) {
   if (d.type === 'joint') return esc(d.a) + ' &ndash; <strong>' + esc(d.b) + '</strong> &ndash; ' + esc(d.c) + (d.flex ? ' (flexion: 0&deg; = straight)' : ' (180&deg; = straight)');
-  if (d.type === 'vertical') return esc(d.a) + ' &rarr; ' + esc(d.b) + ' from vertical (+ = ' + esc(d.b) + ' forwards)';
+  if (d.type === 'vertical') return esc(d.a) + ' &rarr; ' + esc(d.b) + ' from vertical (+ = ' + esc(d.b) + ' ' + fwd() + ')';
   return esc(d.a) + ' &rarr; ' + esc(d.b) + ' from horizontal (+ = ' + esc(d.b) + ' higher)';
 }
 function renderAngles() {
   const defs = angleDefs(), pts = points();
-  $('angList').innerHTML = defs.length ? '<tr><th>Use</th><th>Name</th><th>Points</th><th>On video</th><th></th></tr>' + defs.map((d, i) =>
-    '<tr><td><input type="checkbox" data-on="' + i + '"' + (d.on ? ' checked' : '') + ' aria-label="Use this angle"></td><td><input type="text" class="mini" data-an="' + i + '" value="' + esc(d.name) + '" aria-label="Angle name"></td><td>' + describe(d) + (d.type === 'joint' ? '<br><label class="inline small"><input type="checkbox" data-fx="' + i + '"' + (d.flex ? ' checked' : '') + '> show as flexion</label>' : '') + '</td><td><input type="checkbox" data-vid="' + i + '"' + (d.video ? ' checked' : '') + ' aria-label="Show on video"></td><td><button type="button" class="btn ghost small" data-adel="' + i + '">Delete</button></td></tr>').join('') : '<tr><td class="muted">No angles yet. Add one below.</td></tr>';
+  $('angList').innerHTML = defs.length ? '<tr><th>Use</th><th>Name</th><th>Markers</th><th>On video</th><th></th></tr>' + defs.map((d, i) =>
+    '<tr><td><input type="checkbox" data-on="' + i + '"' + (d.on ? ' checked' : '') + ' aria-label="Use this angle"></td><td><input type="text" class="mini" data-an="' + i + '" value="' + esc(d.name) + '" aria-label="Angle name"></td><td>' + describe(d) + (d.type === 'joint' ? '<br><label class="inline small"><input type="checkbox" data-fx="' + i + '"' + (d.flex ? ' checked' : '') + '> show as flexion</label>' : '') + '</td><td><input type="checkbox" data-vid="' + i + '"' + (d.video ? ' checked' : '') + ' aria-label="Show on video"></td><td><button type="button" class="btn ghost small" data-adel="' + i + '">Delete</button></td></tr>').join('') : '<tr><td class="muted">' + (pts.length >= 2 ? 'No angles yet. Build one below.' : 'Add at least two markers first, then build angles here.') + '</td></tr>';
   const after = () => { persist(); renderAngles(); draw(); live(); if (A.results) compute(); };
   $('angList').querySelectorAll('[data-on]').forEach((c) => c.addEventListener('change', () => { defs[+c.getAttribute('data-on')].on = c.checked; after(); }));
   $('angList').querySelectorAll('[data-vid]').forEach((c) => c.addEventListener('change', () => { defs[+c.getAttribute('data-vid')].video = c.checked; after(); }));
@@ -177,12 +196,11 @@ function initAngles() {
   $('angType').addEventListener('change', angTypeUI);
   $('angAdd').addEventListener('click', () => {
     const t = $('angType').value, a = $('angA').value, b = $('angB').value, c = $('angC').value;
-    if (!a || !b || a === b || (t === 'joint' && (!c || c === a || c === b))) { status('Pick different points for each end.'); return; }
+    if (!a || !b || a === b || (t === 'joint' && (!c || c === a || c === b))) { status('Pick a different marker for each end.'); return; }
     const name = $('angName').value.trim() || (t === 'joint' ? b + ' angle' : a + '–' + b + (t === 'vertical' ? ' from vertical' : ' from horizontal'));
     const d = { name, type: t, a, b, on: true, flex: false, video: false }; if (t === 'joint') d.c = c;
     angleDefs().push(d); $('angName').value = ''; persist(); renderAngles(); draw(); if (A.results) compute();
   });
-  $('angReset').addEventListener('click', () => { A.S.angles = null; angleDefs(); persist(); renderAngles(); draw(); if (A.results) compute(); });
 }
 
 // ---------- video controls, tabs, keys ----------
@@ -213,23 +231,23 @@ function initControls() {
 const DEMOS = {
   cmj: {
     file: 'demo/demo-cmj-120fps', name: 'demo-cmj-120fps',
-    state: { fps: 120, slow: 1, activity: 'jump', dir: 'right', every: 1 },
-    msg: 'Demo loaded: a computer-made countermovement jump filmed at <strong>120 fps</strong>, with a 1 m pole on the left for calibration and markers on the joints. Try: calibrate on the pole, click the five markers on frame 0, then <strong>Track forwards</strong>.'
+    preset: { state: { fps: 120, fpsSet: true, slow: 1, activity: 'jump', dir: 'right', every: 1 }, labels: { athlete: 'Demo', condition: 'CMJ', trial: '1' },
+      msg: 'Demo loaded: a computer-made countermovement jump filmed at <strong>120 fps</strong>, with a 1 m pole on the left for calibration and five markers on the body (shoulder, hip, knee, ankle, toe). Add those markers in the <strong>Markers</strong> tab, calibrate on the pole, click the markers on one frame, then <strong>Track forwards</strong>.' }
   },
   sprint: {
     file: 'demo/demo-sprint-240fps-slowed8x', name: 'demo-sprint-240fps-slowed8x',
-    state: { fps: 30, slow: 8, activity: 'sprint', dir: 'left', every: 1, templateKey: 'side5' },
-    msg: 'Demo loaded: a real sprint, filmed in slow motion at <strong>240 fps</strong> but saved as a <strong>30 fps</strong> file that plays 8&times; slower. That is why <strong>Slowed down by</strong> is set to 8 in Setup: without it every time would be 8&times; too long. There are no markers and nothing of known length in the picture, so stick to times (contact, flight, step), angles and pixel-based checks. Try the AI pose in Digitise.'
+    preset: { state: { fps: 30, fpsSet: true, slow: 8, activity: 'sprint', dir: 'left', every: 1 }, labels: { athlete: 'Demo', condition: 'Sprint', trial: '1' },
+      msg: 'Demo loaded: a real sprint, filmed in slow motion at <strong>240 fps</strong> but saved as a <strong>30 fps</strong> file that plays 8&times; slower. That is why <strong>Slowed down by</strong> is set to 8 in Setup: without it every time would be 8&times; too long. There are no markers on the runner and nothing of known length in the picture, so use it for timing events (contact, flight, step) and for clicking joints by hand.' }
   }
 };
 async function loadDemo(k) {
   const d = DEMOS[k], v = $('vid');
   const ext = v.canPlayType('video/mp4; codecs="avc1.640028"') ? '.mp4' : '.webm';
-  status('Loading the demo clip…');
+  status('Loading the demo clip\u2026');
   try {
     const r = await fetch(d.file + ext); if (!r.ok) throw new Error(r.status);
     const b = await r.blob();
-    loadVideoURL(URL.createObjectURL(b), d.name + ext, { state: Object.assign({}, d.state), msg: d.msg });
+    addFiles([new File([b], d.name + ext, { type: b.type || (ext === '.mp4' ? 'video/mp4' : 'video/webm') })], d.preset);
   } catch (e) { status('The demo clip could not be loaded. It needs to sit in the <code>demo</code> folder next to this page.'); }
 }
 
@@ -243,12 +261,12 @@ function initPWA() {
 }
 
 function start() {
-  initVideo(); initOverlay(); initTracking(); initEvents(); initResults(); initExport();
-  initSetup(); initCalib(); initTemplates(); initAngles(); initControls(); initPWA();
+  initVideo(); initOverlay(); initTracking(); initEvents(); initResults(); initExport(); initCompare();
+  initSetup(); initCalib(); initTemplates(); initAngles(); initControls(); initPWA(); initSession();
   $('demoCmj').addEventListener('click', () => loadDemo('cmj'));
   $('demoSprint').addEventListener('click', () => loadDemo('sprint'));
-  $('ver').textContent = 'v' + VERSION;
-  syncInputs(); recount();
+  $('ver').textContent = 'v' + VERSION; document.title = APP;
+  syncInputs(); if (A.S.duration) recount(); renderSession(); renderCompare();
   window.__KVA = A; window.__KVA_compute = compute; window.__KVA_demo = loadDemo; window.__KVA_seek = seek;
   window.__KVA_place = (f, m, x, y) => { if (!A.S.frames[f]) A.S.frames[f] = {}; A.S.frames[f][m] = [x, y]; persist(); draw(); };
 }

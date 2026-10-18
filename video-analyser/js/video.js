@@ -1,5 +1,5 @@
 // Video loading, frame rendering (with rotate/flip), seeking and frame-rate detection.
-import { A, $, status, esc, persist, restore, freshState, fpsReal, tReal } from './state.js';
+import { A, $, status, esc, persist, freshState, fpsReal, tReal } from './state.js';
 
 const vid = () => $('vid');
 let vctx = null, playing = false;
@@ -48,25 +48,26 @@ export function recount() {
   $('sampleInfo').textContent = 'Clicking every ' + S.every + ' frame' + (S.every > 1 ? 's' : '') + ' = ' + (+fs.toFixed(1)) + ' samples per second';
 }
 
+// Load a video into the trial state opts.state (a new blank state if none is given).
 export function loadVideoURL(url, name, opts) {
   opts = opts || {};
   const v = vid();
+  if (A.fn.stopTrackPause) A.fn.stopTrackPause();
   v.src = url;
   v.onloadedmetadata = () => {
-    A.S = freshState();
-    A.S.name = name; A.S.duration = v.duration; A.S.srcW = v.videoWidth; A.S.srcH = v.videoHeight;
-    const restored = restore();
-    if (!restored) Object.assign(A.S, opts.state || {});
-    [A.S.vw, A.S.vh] = viewDims(A.S.rot, A.S.srcW, A.S.srcH);
-    $('ov').width = A.S.vw; $('ov').height = A.S.vh;
+    const S = opts.state || freshState();
+    A.S = S;
+    S.name = name; S.duration = v.duration; S.srcW = v.videoWidth; S.srcH = v.videoHeight;
+    [S.vw, S.vh] = viewDims(S.rot, S.srcW, S.srcH);
+    $('ov').width = S.vw; $('ov').height = S.vh;
     $('empty').classList.add('hide'); $('stage').classList.remove('hide');
-    A.cur = 0; A.results = null; A.lastAdded = [];
+    A.cur = 0; A.results = null; A.lastAdded = []; A.activeMarker = null;
     A.fn.syncInputs(); recount();
-    seek(0);
-    status(opts.msg && !restored ? opts.msg : restored ? 'Welcome back. Your saved work for <strong>' + esc(name) + '</strong> has been restored.' : 'Video loaded (' + A.S.srcW + ' &times; ' + A.S.srcH + ' px). Check the frame rate in <strong>Setup</strong>, then calibrate.');
-    if (!restored && !(opts.state && opts.state.fps)) detectFps(true);
+    seek(0); persist();
+    status(opts.msg || 'Video loaded (' + S.srcW + ' &times; ' + S.srcH + ' px).');
+    if (!S.fpsSet) detectFps(true);
+    if (A.fn.afterLoad) A.fn.afterLoad();
   };
-  v.onerror = () => status('<span class="bad"><strong>This video will not play in this browser.</strong> iPhone HEVC videos often fail on Windows. On the iPhone, set Settings &rarr; Camera &rarr; Formats &rarr; &ldquo;Most Compatible&rdquo; and film again, or try Safari or Chrome on a Mac.</span>');
 }
 
 export function seek(f) {
@@ -137,7 +138,7 @@ export function detectFps(silent) {
     const common = [24, 25, 30, 50, 60, 100, 120, 240, 480]; let best = common[0];
     common.forEach((c) => { if (Math.abs(c - est) < Math.abs(best - est)) best = c; });
     const use = Math.abs(best - est) / best < 0.06 ? best : Math.round(est);
-    A.S.fps = use; A.fn.syncInputs(); recount(); persist(); seek(Math.min(startF, A.nFrames - 1));
+    A.S.fps = use; A.S.fpsSet = true; A.fn.syncInputs(); recount(); persist(); seek(Math.min(startF, A.nFrames - 1));
     status('The video file says <strong>' + use + ' fps</strong>. If the clip plays in slow motion everywhere, it may have been saved slowed down: see <strong>Slowed down by</strong> in Setup.');
   };
   const cb = (now, md) => { times.push(md.mediaTime); if (times.length < 40 && !v.paused) v.requestVideoFrameCallback(cb); else finish(); };
@@ -150,6 +151,6 @@ export function initVideo() {
   const v = vid();
   v.addEventListener('seeked', () => { render(); A.fn.draw(); });
   v.addEventListener('pause', () => { if (playing) { playing = false; $('bPlay').textContent = 'Play'; } });
-  $('file').addEventListener('change', function () { const f = this.files && this.files[0]; if (f) loadVideoURL(URL.createObjectURL(f), f.name); });
   window.__KVA_load = loadVideoURL;
+  v.addEventListener('error', () => { if (!v.getAttribute('src')) return; status('<span class="bad"><strong>This video will not play in this browser.</strong> iPhone HEVC videos often fail on Windows. On the iPhone, set Settings &rarr; Camera &rarr; Formats &rarr; &ldquo;Most Compatible&rdquo; and film again, or try Chrome or Safari on a Mac.</span>'); });
 }

@@ -29,7 +29,7 @@ export function draw(target, frame) {
   }
   if (S.origin && !target) cross(g, S.origin[0], S.origin[1], r * 2, '#facc15', lw);
   const pts = points(), fr = S.frames[f] || {};
-  // trail of the selected point
+  // trail of the selected marker
   if (!target) {
     const tm = A.activeMarker || (pts.includes('Hip') ? 'Hip' : pts[0]);
     g.fillStyle = colourOf(tm); g.globalAlpha = 0.35;
@@ -46,10 +46,7 @@ export function draw(target, frame) {
     g.beginPath(); g.arc(p[0], p[1], r, 0, 7); g.fill(); g.stroke();
     if (m === A.activeMarker && !target) { g.strokeStyle = '#facc15'; g.lineWidth = lw; g.beginPath(); g.arc(p[0], p[1], r * 1.8, 0, 7); g.stroke(); }
   });
-  // comparison (AI) layer as hollow squares
-  const alt = S.alt[f];
-  if (alt && !target) pts.forEach((m) => { const p = alt[m]; if (!p) return; g.strokeStyle = colourOf(m); g.lineWidth = lw; g.strokeRect(p[0] - r, p[1] - r, r * 2, r * 2); });
-  // flagged points
+  // flagged markers
   const fl = S.flags[f];
   if (fl && !target) fl.forEach((x) => { const p = x.m && fr[x.m]; if (p) { g.strokeStyle = '#ef4444'; g.lineWidth = lw; g.setLineDash([r * 0.6, r * 0.5]); g.beginPath(); g.arc(p[0], p[1], r * 2.4, 0, 7); g.stroke(); g.setLineDash([]); } });
   // live angles chosen to show on the video
@@ -137,7 +134,8 @@ function evPt(e) { const r = ov().getBoundingClientRect(); return [(e.clientX - 
 export function nextMarker() { const fr = A.S.frames[A.cur] || {}; return points().find((m) => !fr[m]) || null; }
 export function placePoint(p, m) {
   const S = A.S; m = m || A.activeMarker || nextMarker();
-  if (!m) { status('All points are placed on this frame. Move to another frame, or drag a point to adjust it.'); return; }
+  if (!points().length) { status('Add your markers in the <strong>Markers</strong> tab first.'); return; }
+  if (!m) { status('All markers are placed on this frame. Move to another frame, or drag a marker to adjust it.'); return; }
   if (S.snap) p = snapPoint(p);
   if (!S.frames[A.cur]) S.frames[A.cur] = {};
   S.frames[A.cur][m] = [p[0], p[1]];
@@ -145,7 +143,7 @@ export function placePoint(p, m) {
   A.lastAdded.push([A.cur, m]);
   A.activeMarker = nextMarker();
   persist(); renderChips(); updateDigiCount(); draw();
-  if (!A.activeMarker && A.pauseAdvance) { status('All points placed. Press <strong>Continue tracking</strong> to carry on.'); return; }
+  if (A.fn.onTrackClick && A.fn.onTrackClick()) return;
   if (!A.activeMarker && S.advance) {
     const nf = A.cur + S.every;
     if (nf < A.nFrames) { seek(nf); A.activeMarker = nextMarker(); renderChips(); } else status('End of the video.');
@@ -160,7 +158,7 @@ export function renderChips() {
 }
 export function updateDigiCount() {
   const n = Object.keys(A.S.frames).filter((k) => Object.keys(A.S.frames[k]).length).length;
-  $('digiCount').textContent = n + ' frame' + (n === 1 ? '' : 's') + ' with points.';
+  $('digiCount').textContent = n + ' frame' + (n === 1 ? '' : 's') + ' with markers.';
 }
 export function undo() {
   const l = A.lastAdded.pop(); if (!l) return; const S = A.S;
@@ -245,5 +243,5 @@ export function initOverlay() {
   Object.keys(MEASURE).forEach((k) => { const b = $('m_' + k); if (b) b.addEventListener('click', () => startMeasure(k)); });
   $('undo').addEventListener('click', undo);
   $('clearFrame').addEventListener('click', () => { delete A.S.frames[A.cur]; A.activeMarker = null; persist(); renderChips(); updateDigiCount(); draw(); });
-  $('clearAll').addEventListener('click', () => { if (!confirm('Remove all points?')) return; A.S.frames = {}; A.S.conf = {}; A.S.flags = {}; A.lastAdded = []; A.activeMarker = null; persist(); renderChips(); updateDigiCount(); A.fn.renderFlags(); draw(); });
+  $('clearAll').addEventListener('click', () => { if (!confirm('Remove all markers from every frame of this video?')) return; A.S.frames = {}; A.S.conf = {}; A.S.flags = {}; A.lastAdded = []; A.activeMarker = null; persist(); renderChips(); updateDigiCount(); A.fn.renderFlags(); draw(); });
 }

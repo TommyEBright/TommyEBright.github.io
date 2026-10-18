@@ -1,5 +1,5 @@
 // Key events, the stopwatch (intervals between events), looping and event-based summary values.
-import { A, $, esc, fx, status, persist, eventTypes, tReal, fpsReal, G } from './state.js';
+import { A, $, esc, fx, status, persist, eventTypes, tReal, fpsReal, G, points, footMarker, hipMarker } from './state.js';
 import { toWorld, butter, centralDiff, series, mean } from './maths.js';
 import { seek, play, pause } from './video.js';
 import { draw } from './overlay.js';
@@ -22,8 +22,13 @@ export function renderEventBtns() {
   $('eventBtns').querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => { types.splice(+b.getAttribute('data-rm'), 1); persist(); renderEventBtns(); }));
 }
 
+export function renderMarkerPickers() {
+  const opts = '<option value="">(choose)</option>' + points().map((m) => '<option>' + esc(m) + '</option>').join('');
+  $('evFoot').innerHTML = opts; $('evHip').innerHTML = opts;
+  $('evFoot').value = footMarker(); $('evHip').value = hipMarker();
+}
 export function renderEvents() {
-  const S = A.S; ensureIds();
+  const S = A.S; ensureIds(); renderMarkerPickers();
   if (!S.events.length) { $('eventTab').innerHTML = '<tr><td class="muted">No events yet.</td></tr>'; }
   else {
     $('eventTab').innerHTML = '<tr><th>Event</th><th>Frame</th><th>Time (s)</th><th>Since previous (s)</th><th></th></tr>' + S.events.map((e, i) =>
@@ -38,7 +43,8 @@ export function renderEvents() {
   ['ivA', 'ivB', 'loopA', 'loopB'].forEach((id, k) => { const el = $(id), old = el.value; el.innerHTML = opts; if (old && byId(old)) el.value = old; else if (S.events.length) el.selectedIndex = (k % 2) ? Math.min(1, S.events.length - 1) : 0; });
   renderIntervals();
   $('eventSummary').innerHTML = statsHTML(eventStats());
-  if (A.results && A.fn.drawResults) A.fn.drawResults();
+  if (A.results && A.fn.drawResults) { A.fn.drawResults(); A.fn.renderNorm(); }
+  if (A.fn.renderSession) A.fn.renderSession();
 }
 
 function renderIntervals() {
@@ -65,7 +71,7 @@ export function eventStats() {
   const S = A.S, ev = S.events, out = [], dt = (a, b) => (b - a) / fpsReal();
   const is = (e, n) => e.name.toLowerCase().startsWith(n);
   if (S.activity === 'sprint') {
-    const c = [], fl = [], st = [], sl = [];
+    const c = [], fl = [], st = [], sl = [], foot = footMarker();
     for (let i = 0; i < ev.length; i++) {
       if (is(ev[i], 'touchdown')) {
         for (let j = i + 1; j < ev.length; j++) { if (is(ev[j], 'toe-off')) { c.push(dt(ev[i].frame, ev[j].frame)); break; } if (is(ev[j], 'touchdown')) break; }
@@ -73,51 +79,53 @@ export function eventStats() {
           if (is(ev[j], 'touchdown')) {
             st.push(dt(ev[i].frame, ev[j].frame));
             const a = S.frames[ev[i].frame], b = S.frames[ev[j].frame];
-            if (a && b && a.Toe && b.Toe) sl.push(Math.abs(toWorld(b.Toe)[0] - toWorld(a.Toe)[0]));
+            if (foot && a && b && a[foot] && b[foot]) sl.push(Math.abs(toWorld(b[foot])[0] - toWorld(a[foot])[0]));
             break;
           }
         }
       }
       if (is(ev[i], 'toe-off')) for (let j = i + 1; j < ev.length; j++) { if (is(ev[j], 'touchdown')) { fl.push(dt(ev[i].frame, ev[j].frame)); break; } if (is(ev[j], 'toe-off')) break; }
     }
-    const n = (k, a, w) => a.length + ' ' + w + (a.length > 1 ? 's' : '');
-    if (c.length) out.push(['Contact time', fx(mean(c), 3) + ' s', n('', c, 'contact') + (c.length > 1 ? ', range ' + fx(Math.min(...c), 3) + '–' + fx(Math.max(...c), 3) : '')]);
-    if (fl.length) out.push(['Flight time', fx(mean(fl), 3) + ' s', n('', fl, 'flight')]);
-    if (st.length) { out.push(['Step time', fx(mean(st), 3) + ' s', n('', st, 'step')]); out.push(['Step frequency', fx(1 / mean(st), 2) + ' Hz', '1 ÷ step time']); }
-    if (st.length && mean(st) > 0.4 && c.length && mean(c) < 0.25) out.push(['Check your events', 'One foot only?', 'Step time looks like a whole stride. Mark both feet’s touchdowns and toe-offs to get flight and step values.']);
+    const n = (a, w) => a.length + ' ' + w + (a.length > 1 ? 's' : '');
+    if (c.length) out.push(['Contact time', fx(mean(c), 3) + ' s', n(c, 'contact') + (c.length > 1 ? ', range ' + fx(Math.min(...c), 3) + '\u2013' + fx(Math.max(...c), 3) : ''), mean(c), 's']);
+    if (fl.length) out.push(['Flight time', fx(mean(fl), 3) + ' s', n(fl, 'flight'), mean(fl), 's']);
+    if (st.length) { out.push(['Step time', fx(mean(st), 3) + ' s', n(st, 'step'), mean(st), 's']); out.push(['Step frequency', fx(1 / mean(st), 2) + ' Hz', '1 \u00f7 step time', 1 / mean(st), 'Hz']); }
+    if (st.length && mean(st) > 0.4 && c.length && mean(c) < 0.25) out.push(['Check your events', 'One foot only?', 'Step time looks like a whole stride. Mark both feet\u2019s touchdowns and toe-offs to get flight and step values.']);
     const u = S.calib ? 'm' : 'px';
-    if (sl.length) { out.push(['Step length', fx(mean(sl), S.calib ? 2 : 0) + ' ' + u, 'Toe position at touchdowns']); if (st.length) out.push(['Speed (step length × frequency)', fx(mean(sl) / mean(st), S.calib ? 2 : 0) + ' ' + u + '/s', '']); }
-    else if (st.length) out.push(['Step length', '–', 'Digitise the Toe on touchdown frames (or use Measure)']);
+    if (sl.length) { out.push(['Step length', fx(mean(sl), S.calib ? 2 : 0) + ' ' + u, foot + ' position at touchdowns', mean(sl), u]); if (st.length) out.push(['Speed (step length \u00d7 frequency)', fx(mean(sl) / mean(st), S.calib ? 2 : 0) + ' ' + u + '/s', '', mean(sl) / mean(st), u + '/s']); }
+    else if (st.length) out.push(['Step length', '\u2013', foot ? 'Digitise the ' + foot + ' on touchdown frames (or use Measure)' : 'Choose a foot marker above, or use Measure']);
   } else if (S.activity === 'jump') {
     const f = (n) => { const e = ev.find((x) => is(x, n)); return e ? e.frame : null; };
     const s0 = f('start'), lo = f('lowest'), to = f('take-off'), ld = f('landing');
-    if (to !== null && ld !== null && ld > to) { const T = dt(to, ld); out.push(['Flight time', fx(T, 3) + ' s', '']); out.push(['Jump height (flight time)', fx(G * T * T / 8 * 100, 1) + ' cm', 'h = g t² ÷ 8']); out.push(['Take-off velocity (from flight)', fx(G * T / 2, 2) + ' m/s', 'v = g t ÷ 2']); }
-    if (s0 !== null && lo !== null && lo > s0) out.push(['Downward phase', fx(dt(s0, lo), 3) + ' s', 'start → lowest point']);
-    if (lo !== null && to !== null && to > lo) out.push(['Upward phase', fx(dt(lo, to), 3) + ' s', 'lowest point → take-off']);
-    if (s0 !== null && to !== null && to > s0) out.push(['Time to take-off', fx(dt(s0, to), 3) + ' s', '']);
+    if (to !== null && ld !== null && ld > to) { const T = dt(to, ld); out.push(['Flight time', fx(T, 3) + ' s', '', T, 's']); out.push(['Jump height (flight time)', fx(G * T * T / 8 * 100, 1) + ' cm', 'h = g t\u00b2 \u00f7 8', G * T * T / 8 * 100, 'cm']); out.push(['Take-off velocity (from flight)', fx(G * T / 2, 2) + ' m/s', 'v = g t \u00f7 2', G * T / 2, 'm/s']); }
+    if (s0 !== null && lo !== null && lo > s0) out.push(['Downward phase', fx(dt(s0, lo), 3) + ' s', 'start \u2192 lowest point', dt(s0, lo), 's']);
+    if (lo !== null && to !== null && to > lo) out.push(['Upward phase', fx(dt(lo, to), 3) + ' s', 'lowest point \u2192 take-off', dt(lo, to), 's']);
+    if (s0 !== null && to !== null && to > s0) out.push(['Time to take-off', fx(dt(s0, to), 3) + ' s', '', dt(s0, to), 's']);
   }
   return out;
 }
 
-// ---------- suggest events from the toe (or ankle) path ----------
-// Distances are scaled by the shank length so this also works without calibration.
+// ---------- suggest events from the foot marker's path ----------
 export function suggestEvents() {
   const S = A.S, note = $('suggestNote');
-  const mkr = S.template.points.includes('Toe') ? 'Toe' : S.template.points.includes('Ankle') ? 'Ankle' : null;
+  const mkr = footMarker(), hip = hipMarker();
   const s = mkr && series(mkr);
-  if (!s || s.X.length < 8) { note.textContent = 'Digitise or track the Toe (or Ankle) first, on at least 8 frames, then try again.'; return; }
-  let unit = null;
-  const L = []; Object.keys(S.frames).forEach((f) => { const a = S.frames[f].Knee, b = S.frames[f].Ankle; if (a && b) { const A1 = toWorld(a), B1 = toWorld(b); L.push(Math.hypot(A1[0] - B1[0], A1[1] - B1[1])); } });
-  if (L.length >= 3) { L.sort((a, b) => a - b); unit = L[Math.floor(L.length / 2)] / 0.43; } // world units per metre of body, from a ~0.43 m shank
-  else if (S.calib) unit = 1;
-  if (!unit) { note.textContent = 'Calibrate, or include the Knee and Ankle, so the tool knows the size of the athlete.'; return; }
+  if (!mkr) { note.textContent = 'Choose the foot marker above first.'; return; }
+  if (!s || s.X.length < 8) { note.textContent = 'Digitise or track the ' + mkr + ' first, on at least 8 frames, then try again.'; return; }
+  // the size of the athlete, so this works without calibration: hip-to-foot distance is roughly 0.9 m
+  let unit = S.calib ? 1 : null;
+  if (!unit && hip) {
+    const L = []; Object.keys(S.frames).forEach((f) => { const a = S.frames[f][hip], b = S.frames[f][mkr]; if (a && b) { const A1 = toWorld(a), B1 = toWorld(b); L.push(Math.hypot(A1[0] - B1[0], A1[1] - B1[1])); } });
+    if (L.length >= 3) { L.sort((a, b) => a - b); unit = L[Math.floor(L.length * 0.9)] / 0.9; }
+  }
+  if (!unit) { note.textContent = 'Calibrate, or choose a hip marker above, so the tool knows the size of the athlete.'; return; }
   const fs = s.fs, fc = Math.min(12, fs / 2 * 0.8), y = butter(s.Y, fc, fs), x = butter(s.X, fc, fs);
   const ground = y.slice().sort((a, b) => a - b)[Math.floor(y.length * 0.05)], added = [];
   const add = (n, f) => { if (!S.events.some((e) => e.name === n && Math.abs(e.frame - f) <= s.step)) { S.events.push({ id: uid(), name: n, frame: f }); added.push(n + ' (' + tReal(f).toFixed(3) + ' s)'); } };
   if (S.activity === 'jump') {
     const on = y.map((v) => v <= ground + 0.015 * unit);
     for (let i = 1; i < on.length; i++) if (on[i - 1] && !on[i]) { add('Take-off', s.F[i - 1]); for (let j = i + 1; j < on.length; j++) if (on[j]) { add('Landing', s.F[j]); break; } break; }
-    const hs = series('Hip');
+    const hs = hip && series(hip);
     if (hs) {
       const hy = butter(hs.Y, Math.min(8, hs.fs / 2 * 0.8), hs.fs), hv = centralDiff(hs.T, hy); let lo = 0;
       const toE = S.events.find((e) => e.name === 'Take-off'), toF = toE ? toE.frame : undefined;
@@ -128,7 +136,7 @@ export function suggestEvents() {
   } else if (S.activity === 'sprint') {
     // A foot is on the ground when it has (almost) stopped moving forwards and is near the lowest it gets
     // around that time. The ground can slope in the picture, so "lowest" is judged over the nearby 0.3 s.
-    const vx = centralDiff(s.T, x), hs = series('Hip');
+    const vx = centralDiff(s.T, x), hs = hip && series(hip);
     const med = (a) => { const b = a.filter((v) => v !== null && !Number.isNaN(v)).map(Math.abs).sort((p, q) => p - q); return b[Math.floor(b.length / 2)]; };
     const ref = hs ? med(centralDiff(hs.T, butter(hs.X, Math.min(6, hs.fs / 2 * 0.8), hs.fs))) : med(vx); // typical running speed
     const win = Math.max(2, Math.round(0.15 * s.fs)), minLen = Math.max(2, Math.round(0.04 * s.fs));
@@ -145,13 +153,15 @@ export function suggestEvents() {
     }
   } else { note.textContent = 'Suggestions work for sprints and jumps. Mark events for other movements by hand.'; return; }
   sortEvents(); persist(); renderEvents(); draw();
-  note.innerHTML = added.length ? 'Added: ' + esc(added.join(', ')) + '. <strong>Check each one frame by frame</strong> and nudge it if needed.' + (S.activity === 'sprint' ? ' These are for the digitised foot only. Add the other foot&rsquo;s touchdowns and toe-offs yourself.' : '') : 'No new events found. Mark them by hand.';
+  note.innerHTML = added.length ? 'Added: ' + esc(added.join(', ')) + '. <strong>Check each one frame by frame</strong> and nudge it if needed.' + (S.activity === 'sprint' ? ' These are for the ' + esc(mkr) + ' only. Add the other foot&rsquo;s touchdowns and toe-offs yourself.' : '') : 'No new events found. Mark them by hand.';
 }
 
 export function initEvents() {
   $('evAddType').addEventListener('click', () => { const n = $('evNewType').value.trim(); if (!n) return; const t = eventTypes(); if (!t.includes(n)) t.push(n); $('evNewType').value = ''; persist(); renderEventBtns(); });
   $('evNewType').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('evAddType').click(); } });
   $('suggestEv').addEventListener('click', suggestEvents);
+  $('evFoot').addEventListener('change', () => { A.S.footMarker = $('evFoot').value; persist(); renderEvents(); });
+  $('evHip').addEventListener('change', () => { A.S.hipMarker = $('evHip').value; persist(); renderEvents(); });
   $('ivAdd').addEventListener('click', () => { const a = $('ivA').value, b = $('ivB').value; if (!a || !b || a === b) { status('Pick two different events.'); return; } let ea = byId(a), eb = byId(b); if (ea.frame > eb.frame) [ea, eb] = [eb, ea]; A.S.intervals.push({ a: ea.id, b: eb.id, label: '' }); persist(); renderIntervals(); });
   $('ivAuto').addEventListener('click', () => { const ev = A.S.events; for (let i = 1; i < ev.length; i++) if (!A.S.intervals.some((iv) => iv.a === ev[i - 1].id && iv.b === ev[i].id)) A.S.intervals.push({ a: ev[i - 1].id, b: ev[i].id, label: ev[i - 1].name + ' to ' + ev[i].name }); persist(); renderIntervals(); });
   $('loopGo').addEventListener('click', () => { let a = byId($('loopA').value), b = byId($('loopB').value); if (!a || !b || a === b) { status('Pick two different events to loop between.'); return; } if (a.frame > b.frame) [a, b] = [b, a]; play(+$('loopRate').value, a.frame, b.frame); status('Looping ' + esc(a.name) + ' to ' + esc(b.name) + '. Press <strong>Pause</strong> to stop.'); });

@@ -1,7 +1,7 @@
 // Saving and exporting: project files, three kinds of CSV, images, graphs and the photo sequence.
-import { A, $, esc, status, persist, freshState, forget, points, tReal, fpsReal, download, baseName, VERSION } from './state.js';
+import { A, $, esc, status, persist, freshState, points, tReal, fpsReal, download, baseName, VERSION, APP, currentTrial } from './state.js';
 import { toWorld, units, scale } from './maths.js';
-import { seekAsync, seek, viewCanvas, recount } from './video.js';
+import { seekAsync, seek, viewCanvas } from './video.js';
 import { draw } from './overlay.js';
 import { svgToPng } from './charts.js';
 import { summaryRows, xOffset } from './results.js';
@@ -14,12 +14,13 @@ function csvBlob(lines) { return new Blob(['﻿' + lines.join('\r\n')], { type: 
 function meta() {
   const S = A.S, k = scale();
   return [
-    ['Kinematic Video Analyser', 'v' + VERSION],
+    [APP, 'v' + VERSION],
     ['Video', S.name],
+    ...(currentTrial() ? [['Athlete', currentTrial().labels.athlete || ''], ['Condition', currentTrial().labels.condition || ''], ['Trial', currentTrial().labels.trial || '']] : []),
     ['Frame rate of file (fps)', S.fps], ['Slowed down by', S.slow], ['Real capture rate (fps)', fpsReal()],
     ['Calibration', S.calib ? S.calib.len + ' m = ' + Math.hypot(S.calib.p2[0] - S.calib.p1[0], S.calib.p2[1] - S.calib.p1[1]).toFixed(1) + ' px (' + (k * 1000).toFixed(3) + ' mm per px)' : 'none (pixels)'],
     ['Tilt correction', S.tilt && S.calib ? 'yes' : 'no'],
-    ['Direction of travel on screen', S.dir === 'right' ? 'left to right' : 'right to left'], ['Axes', 'x forwards +, y up +'],
+    ['Athlete facing', S.dir === 'right' ? 'right of screen' : S.dir === 'left' ? 'left of screen' : 'no fixed direction'], ['Axes', S.dir === 'none' ? 'x + to the right of the screen, y up +' : 'x forwards +, y up +'],
     ['Filter', S.filt ? 'Butterworth low-pass, 2nd order run forwards and backwards (zero lag), cut-off ' + S.cutoff + ' Hz' : 'none'],
     ['Derivatives', 'central differences'],
     ['Exported', new Date().toISOString()]
@@ -45,48 +46,45 @@ function analysisCSV() {
   });
   lines.push('', 'event,frame,time_s'); A.S.events.forEach((e) => lines.push(q(e.name) + ',' + e.frame + ',' + n(tReal(e.frame), 4)));
   download(baseName() + '_analysis.csv', csvBlob(lines));
-  status('Downloaded <strong>' + esc(baseName()) + '_analysis.csv</strong> (filtered data for ' + mk.length + ' point' + (mk.length > 1 ? 's' : '') + ' and ' + R.ang.length + ' angle' + (R.ang.length === 1 ? '' : 's') + ').');
+  status('Downloaded <strong>' + esc(baseName()) + '_analysis.csv</strong> (filtered data for ' + mk.length + ' marker' + (mk.length > 1 ? 's' : '') + ' and ' + R.ang.length + ' angle' + (R.ang.length === 1 ? '' : 's') + ').');
 }
 
-// 2. Coordinates of chosen points: raw pixels, raw metres and filtered, with where each point came from.
+// 2. Coordinates of chosen markers: raw pixels, raw metres and filtered, with where each one came from.
 function coordsCSV() {
   const S = A.S, chosen = [...document.querySelectorAll('#expPts input:checked')].map((c) => c.value);
-  if (!chosen.length) { status('Tick at least one point to export.'); return; }
-  const long = $('expLayout').value === 'long', inclAlt = $('expAlt').checked && Object.keys(S.alt).length, u = units();
+  if (!chosen.length) { status('Tick at least one marker to export.'); return; }
+  const long = $('expLayout').value === 'long', u = units();
   if (!A.results) A.fn.compute();
   const R = A.results, fil = {};
   chosen.forEach((m) => { const s = R && R.sers[m]; if (s) fil[m] = new Map(s.F.map((f, i) => [f, [s.x[i], s.y[i], s.filled[i]]])); });
-  const src = (f, m) => { const c = S.conf[f] && S.conf[f][m]; return c ? (c.src === 'pose' ? 'AI pose' : 'marker tracking') : 'clicked'; };
+  const src = (f, m) => (S.conf[f] && S.conf[f][m] ? 'tracked' : 'clicked');
   const confv = (f, m) => { const c = S.conf[f] && S.conf[f][m]; return c ? c.s : ''; };
-  const F = [...new Set([...Object.keys(S.frames), ...(inclAlt ? Object.keys(S.alt) : [])].map(Number))].filter((f) => chosen.some((m) => (S.frames[f] && S.frames[f][m]) || (inclAlt && S.alt[f] && S.alt[f][m]))).sort((a, b) => a - b);
-  // filled-gap frames have filtered values but no raw point; include them too
+  const F = Object.keys(S.frames).map(Number).filter((f) => chosen.some((m) => S.frames[f] && S.frames[f][m])).sort((a, b) => a - b);
+  // filled-gap frames have filtered values but no raw position; include them too
   chosen.forEach((m) => { if (fil[m]) fil[m].forEach((v, f) => { if (!F.includes(f)) F.push(f); }); }); F.sort((a, b) => a - b);
   const lines = meta().map((r) => '# ' + r.map(q).join(','));
   lines.push('# Pixel coordinates are in the picture as shown (after any rotate/flip), from the top-left corner, y down. Metre/world coordinates are x forwards, y up, from the origin.');
   if (long) {
-    lines.push(['frame', 'time_s', 'point', 'x_px', 'y_px', 'x_' + u, 'y_' + u, 'x_filtered_' + u, 'y_filtered_' + u, 'source', 'confidence', 'flag'].join(','));
+    lines.push(['frame', 'time_s', 'marker', 'x_px', 'y_px', 'x_' + u, 'y_' + u, 'x_filtered_' + u, 'y_filtered_' + u, 'source', 'confidence', 'flag'].join(','));
     F.forEach((f) => chosen.forEach((m) => {
       const p = S.frames[f] && S.frames[f][m], fv = fil[m] && fil[m].get(f);
       if (p || fv) { const w = p ? toWorld(p) : null; const fl = (S.flags[f] || []).filter((x) => x.m === m).map((x) => x.msg).join('; '); lines.push([f, n(tReal(f), 4), q(m), p ? n(p[0], 2) : '', p ? n(p[1], 2) : '', w ? n(w[0], 5) : '', w ? n(w[1], 5) : '', fv ? n(fv[0], 5) : '', fv ? n(fv[1], 5) : '', p ? src(f, m) : 'gap filled', p ? confv(f, m) : '', q(fl)].join(',')); }
-      const a = inclAlt && S.alt[f] && S.alt[f][m];
-      if (a) { const w = toWorld(a); lines.push([f, n(tReal(f), 4), q(m), n(a[0], 2), n(a[1], 2), n(w[0], 5), n(w[1], 5), '', '', 'AI comparison', '', ''].join(',')); }
     }));
   } else {
     const head = ['frame', 'time_s'];
-    chosen.forEach((m) => { const c = col(m); head.push(c + '_x_px', c + '_y_px', c + '_x_' + u, c + '_y_' + u, c + '_x_filtered_' + u, c + '_y_filtered_' + u, c + '_source', c + '_confidence'); if (inclAlt) head.push(c + '_AI_x_px', c + '_AI_y_px'); });
+    chosen.forEach((m) => { const c = col(m); head.push(c + '_x_px', c + '_y_px', c + '_x_' + u, c + '_y_' + u, c + '_x_filtered_' + u, c + '_y_filtered_' + u, c + '_source', c + '_confidence'); });
     lines.push(head.join(','));
     F.forEach((f) => {
       const r = [f, n(tReal(f), 4)];
       chosen.forEach((m) => {
         const p = S.frames[f] && S.frames[f][m], w = p ? toWorld(p) : null, fv = fil[m] && fil[m].get(f);
         r.push(p ? n(p[0], 2) : '', p ? n(p[1], 2) : '', w ? n(w[0], 5) : '', w ? n(w[1], 5) : '', fv ? n(fv[0], 5) : '', fv ? n(fv[1], 5) : '', p ? src(f, m) : (fv ? 'gap filled' : ''), p ? confv(f, m) : '');
-        if (inclAlt) { const a = S.alt[f] && S.alt[f][m]; r.push(a ? n(a[0], 2) : '', a ? n(a[1], 2) : ''); }
       });
       lines.push(r.join(','));
     });
   }
   download(baseName() + '_coordinates.csv', csvBlob(lines));
-  status('Downloaded <strong>' + esc(baseName()) + '_coordinates.csv</strong> (' + chosen.length + ' point' + (chosen.length > 1 ? 's' : '') + ', ' + F.length + ' frames, ' + (long ? 'one row per point per frame' : 'one row per frame') + ').');
+  status('Downloaded <strong>' + esc(baseName()) + '_coordinates.csv</strong> (' + chosen.length + ' marker' + (chosen.length > 1 ? 's' : '') + ', ' + F.length + ' frames, ' + (long ? 'one row per marker per frame' : 'one row per frame') + ').');
 }
 
 // 3. Summary: settings, key numbers, events, intervals and measurements.
@@ -95,7 +93,7 @@ function summaryCSV() {
   const S = A.S, lines = [];
   lines.push('section,item,value,note');
   meta().forEach((r) => lines.push(['settings', q(r[0]), q(r[1]), ''].join(',')));
-  lines.push(['settings', 'Activity', S.activity, ''].join(','), ['settings', 'Points', q(points().join(' ')), ''].join(','));
+  lines.push(['settings', 'Activity', S.activity, ''].join(','), ['settings', 'Markers', q(points().join(' ')), ''].join(','));
   summaryRows().forEach((r) => lines.push(['result', q(r[0]), q(r[1]), q(r[2] || '')].join(',')));
   S.events.forEach((e) => lines.push(['event', q(e.name), n(tReal(e.frame), 4), 'frame ' + e.frame].join(',')));
   intervalRows().forEach((iv) => lines.push(['interval', q(iv.label), n(iv.t, 4), q(iv.a.name + ' (frame ' + iv.a.frame + ') to ' + iv.b.name + ' (frame ' + iv.b.frame + ')')].join(',')));
@@ -175,24 +173,28 @@ async function photoSequence() {
   } finally { A.busy = false; seek(back); }
 }
 
-// ---------- project files ----------
+// ---------- project files (the whole session; videos are not included) ----------
 function saveProject() {
-  const j = Object.assign({ app: 'Kinematic Video Analyser', appVersion: VERSION }, A.S);
-  download(baseName() + '_project.json', new Blob([JSON.stringify(j)], { type: 'application/json' }));
+  const j = { app: APP, appVersion: VERSION, saved: new Date().toISOString(), session: A.session };
+  download('session_' + new Date().toISOString().slice(0, 10) + '_project.json', new Blob([JSON.stringify(j)], { type: 'application/json' }));
+  status('Project saved. To carry on later, open the project file, then choose the same videos again.');
 }
 function loadProject(file) {
   const rd = new FileReader();
   rd.onload = () => {
     try {
-      const j = JSON.parse(rd.result), keep = { name: A.S.name, duration: A.S.duration, srcW: A.S.srcW, srcH: A.S.srcH };
-      if (!keep.name) { status('Open the video first, then the project file.'); return; }
-      A.S = Object.assign(freshState(), j, keep);
-      delete A.S.app; delete A.S.appVersion;
-      A.S.vw = (A.S.rot === 90 || A.S.rot === 270) ? keep.srcH : keep.srcW; A.S.vh = (A.S.rot === 90 || A.S.rot === 270) ? keep.srcW : keep.srcH;
-      $('ov').width = A.S.vw; $('ov').height = A.S.vh;
-      A.results = null; A.fn.syncInputs(); recount(); persist(); seek(A.cur);
-      status('Project loaded.' + (j.name && j.name !== keep.name ? ' Note: it was made with <strong>' + esc(j.name) + '</strong>.' : ''));
-    } catch (e) { status('That file could not be read.'); }
+      const j = JSON.parse(rd.result);
+      let ses = j.session;
+      if (!ses && j.frames) ses = { trials: [{ id: 'old1', name: j.name || 'video', labels: { athlete: '', condition: '', trial: '1' }, state: j }], cur: 0 }; // single-video project from version 1
+      if (!ses || !Array.isArray(ses.trials)) throw new Error('not a project');
+      if (A.session.trials.length && !confirm('Replace the current session with the one in this file?')) return;
+      ses.trials.forEach((t) => { t.state = Object.assign(freshState(), t.state); if (!Array.isArray(t.state.angles)) t.state.angles = []; });
+      A.session = ses; A.files = {}; A.results = null;
+      $('vid').removeAttribute('src'); $('stage').classList.add('hide'); $('empty').classList.remove('hide');
+      persist(); A.fn.openTrial(Math.max(0, Math.min(ses.cur, ses.trials.length - 1)));
+      if (A.fn.renderCompare) A.fn.renderCompare();
+      status('Project loaded (' + ses.trials.length + ' trial' + (ses.trials.length > 1 ? 's' : '') + '). Choose the videos again to carry on digitising; results and Compare work straight away.');
+    } catch (e) { status('That file could not be read as a project.'); }
   };
   rd.readAsText(file);
 }
@@ -209,10 +211,9 @@ export function initExport() {
   $('saveProj').addEventListener('click', saveProject);
   $('loadProj').addEventListener('change', function () { const f = this.files[0]; if (f) loadProject(f); this.value = ''; });
   $('resetAll').addEventListener('click', () => {
-    if (!confirm('Clear all work for this video?')) return;
-    const keep = { name: A.S.name, duration: A.S.duration, srcW: A.S.srcW, srcH: A.S.srcH, vw: A.S.vw, vh: A.S.vh, rot: A.S.rot, flip: A.S.flip, fps: A.S.fps, slow: A.S.slow };
-    forget(); A.S = Object.assign(freshState(), keep); A.results = null;
-    A.fn.syncInputs(); recount(); draw(); $('resBody').classList.add('hide');
+    if (!confirm('Clear all markers, events and measurements for this video? (Markers, angles and settings are kept.)')) return;
+    const S = A.S; S.frames = {}; S.conf = {}; S.flags = {}; S.events = []; S.intervals = []; S.measures = []; A.results = null;
+    persist(); A.fn.syncInputs(); draw(); $('resBody').classList.add('hide');
   });
   ['psFrom', 'psA', 'psB', 'psN', 'psList'].forEach((id) => $(id).addEventListener('input', renderPhotoOpts));
   $('psGo').addEventListener('click', photoSequence);

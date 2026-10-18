@@ -1,9 +1,10 @@
-// Results: filtering, derivatives, angles, graphs, the filter check, quality checks and the live data panel.
-import { A, $, esc, fx, status, persist, points, colourOf, angleDefs, tReal, fpsReal, PALETTE, G } from './state.js';
-import { toWorld, units, butter, residualCurve, centralDiff, secondDiff, series, angleValue, anglePoints, jointAngle, mean, sd } from './maths.js';
+// Results: filtering, derivatives, angles, graphs, time normalisation, the filter check, quality checks and live data.
+import { A, $, esc, fx, status, persist, points, colourOf, angleDefs, tReal, fpsReal, PALETTE, G, fwd, hipMarker, download, baseName } from './state.js';
+import { toWorld, units, butter, residualCurve, centralDiff, secondDiff, series, angleValue, anglePoints, mean, sd } from './maths.js';
 import { chart, legend } from './charts.js';
 import { seek } from './video.js';
 import { eventStats, statsHTML } from './events.js';
+import { normalise, variableList, eventNames } from './normalise.js';
 
 const angCol = (i) => PALETTE[(i + 3) % PALETTE.length];
 
@@ -33,24 +34,30 @@ function angleSeries(defs, sers) {
   return out;
 }
 
-export function compute() {
-  const S = A.S;
-  S.cutoff = parseFloat($('cutoff').value) || 8; S.filt = $('filtOn').checked; persist();
-  const sers = {}, msgs = [];
+// Works out everything for the trial in A.S. No drawing, so it can run for any trial in the session.
+export function computeData() {
+  const S = A.S, sers = {}, msgs = [];
   points().forEach((m) => { const s = series(m); if (s) sers[m] = s; });
-  if (!Object.keys(sers).length) { $('resMsg').innerHTML = 'You need at least 3 frames with the same point before results can be worked out.'; $('resBody').classList.add('hide'); A.results = null; return; }
+  if (!Object.keys(sers).length) return null;
   if (!S.calib) msgs.push('Not calibrated, so positions are in pixels, not metres. Times, angles and angular velocities are still fine.');
   let fs0 = null;
   Object.keys(sers).forEach((m) => { const s = filtSeries(sers[m], msgs, m); fs0 = s.fs; if (s.longGap) msgs.push(m + ': there is a long gap in the data, filled with a smooth curve. Check it, or digitise those frames.'); });
-  const defs = angleDefs().filter((d) => d.on);
-  const ang = angleSeries(defs, sers);
-  // comparison layer (raw, for the validity check)
-  A.results = { sers, ang, fs: fs0, msgs: [...new Set(msgs)] };
-  $('resMsg').innerHTML = A.results.msgs.length ? '<div class="warn">' + A.results.msgs.map((m) => '<p>' + esc(m) + '</p>').join('') + '</div>' : '';
+  const ang = angleSeries(angleDefs().filter((d) => d.on), sers);
+  return { sers, ang, fs: fs0, msgs: [...new Set(msgs)] };
+}
+export function compute() {
+  const S = A.S;
+  S.cutoff = parseFloat($('cutoff').value) || 8; S.filt = $('filtOn').checked; persist();
+  const R = computeData();
+  if (!R) { $('resMsg').innerHTML = points().length ? 'You need at least 3 frames with the same marker before results can be worked out.' : 'Add your markers in the <strong>Markers</strong> tab, then digitise some frames.'; $('resBody').classList.add('hide'); A.results = null; return; }
+  A.results = R;
+  $('resMsg').innerHTML = R.msgs.length ? '<div class="warn">' + R.msgs.map((m) => '<p>' + esc(m) + '</p>').join('') + '</div>' : '';
   $('resBody').classList.remove('hide');
-  if (!S.graph.points.some((p) => sers[p])) S.graph.points = [sers.Hip ? 'Hip' : Object.keys(sers)[0]];
-  renderGraphControls(); drawResults(); renderQuality(); renderCompare(); renderFilterCheck(); dataTable();
+  S.graph.points = S.graph.points.filter((p) => R.sers[p]);
+  if (!S.graph.points.length) { const h = hipMarker(); S.graph.points = [R.sers[h] ? h : Object.keys(R.sers)[0]]; }
+  renderGraphControls(); drawResults(); renderQuality(); renderNorm(); renderFilterCheck(); dataTable();
   if (A.fn.renderPhotoOpts) A.fn.renderPhotoOpts();
+  if (A.fn.renderSession) A.fn.renderSession();
 }
 
 // ---------- graph controls ----------
@@ -85,7 +92,7 @@ export function drawResults() {
   const pos = [], vel = [], acc = [], leg = [];
   g.points.filter((m) => R.sers[m]).forEach((m) => {
     const s = R.sers[m], T = s.T.map((t) => t - off), col = colourOf(m), many = g.points.length > 1;
-    if (cm !== 'y') { pos.push({ x: T, y: s.x, col }); leg.push({ name: m + (cm === 'speed' ? ' horizontal' : ' horizontal (forwards +)'), col }); }
+    if (cm !== 'y') { pos.push({ x: T, y: s.x, col }); leg.push({ name: m + ' horizontal (+ ' + fwd() + ')', col }); }
     if (cm !== 'x') { pos.push({ x: T, y: s.y, col, dash: '7 5' }); leg.push({ name: m + ' vertical (up +)', col, dash: true }); }
     if (cm === 'speed') { vel.push({ x: T, y: sc(s.speed, vk), col, width: 3 }); acc.push({ x: T, y: s.accMag, col, width: 3 }); }
     else {
@@ -107,50 +114,56 @@ export function drawResults() {
   if (hasAng) lg += legend(R.ang.map((a) => ({ name: a.key, col: a.col })));
   const fcs = g.points.map((m) => R.sers[m] && R.sers[m].fc).filter(Boolean);
   lg += '<p>' + (fcs.length ? 'Filtered at ' + [...new Set(fcs)].join(', ') + ' Hz' : 'Not filtered') + ', sampled at ' + (R.fs ? R.fs.toFixed(1) : '?') + ' Hz. Circles mark the largest and smallest value of each line.</p>';
-  lg += '<p>Joint angles: 180&deg; = straight. Segment angles: from vertical (+ = top end forwards) or from horizontal (+ = front end higher). Angular velocity of a joint: + = opening (extending), &minus; = closing (flexing).</p>';
+  lg += '<p>Joint angles: 180&deg; = straight. Segment angles: from vertical (+ = top end ' + fwd() + ') or from horizontal (+ = second marker higher). Angular velocity of a joint: + = opening (extending), &minus; = closing (flexing).</p>';
   $('legendBox').innerHTML = lg;
   keyStats();
 }
 
 // ---------- key numbers ----------
 function nearestIdx(arr, f) { let b = -1, d = 1e9; arr.forEach((x, i) => { if (Math.abs(x - f) < d) { d = Math.abs(x - f); b = i; } }); return d <= 2 * Math.max(1, A.S.every) ? b : -1; }
-export function summaryRows() {
-  const R = A.results, S = A.S, out = []; if (!R) return eventStats();
-  const m = S.graph.points.find((p) => R.sers[p]) || Object.keys(R.sers)[0], s = R.sers[m], u = units();
+// Key numbers for a trial: [name, text, note, number, unit, kind]. kind: card | angle | event.
+export function summaryRows(R) {
+  if (R === undefined) R = A.results; // compare passes null for a trial with no marker data
+  const S = A.S, out = [];
+  const ev = eventStats().map((r) => r.concat(r.length > 3 ? ['card'] : [null, null, 'card']));
+  if (!R) return ev;
+  const m = S.graph.points.find((p) => R.sers[p]) || (R.sers[hipMarker()] ? hipMarker() : Object.keys(R.sers)[0]), s = R.sers[m], u = units();
   const kmh = S.graph.units === 'kmh' && S.calib, vk = kmh ? 3.6 : 1, vu = kmh ? 'km/h' : u + '/s';
   const peak = (a) => { let v = null, i = -1; a.forEach((x, k) => { if (x !== null && (v === null || x > v)) { v = x; i = k; } }); return [v, i]; };
   if (S.activity !== 'jump') {
-    const [v, i] = peak(s.vx); if (v !== null) out.push(['Peak forward velocity (' + m + ')', (v * vk).toFixed(2) + ' ' + vu, 'at ' + s.T[i].toFixed(3) + ' s']);
-    if (s.x.length > 2) { const dx = s.x[s.x.length - 1] - s.x[0], dT = s.T[s.T.length - 1] - s.T[0]; out.push(['Average forward velocity (' + m + ')', (dx / dT * vk).toFixed(2) + ' ' + vu, 'displacement ÷ time over ' + dT.toFixed(2) + ' s']); }
+    const [v, i] = peak(s.vx); if (v !== null) out.push(['Peak horizontal velocity (' + m + ')', (v * vk).toFixed(2) + ' ' + vu, 'at ' + s.T[i].toFixed(3) + ' s', v * vk, vu, 'card']);
+    if (s.x.length > 2) { const dx = s.x[s.x.length - 1] - s.x[0], dT = s.T[s.T.length - 1] - s.T[0]; out.push(['Average horizontal velocity (' + m + ')', (dx / dT * vk).toFixed(2) + ' ' + vu, 'displacement \u00f7 time over ' + dT.toFixed(2) + ' s', dx / dT * vk, vu, 'card']); }
   }
   if (S.activity === 'jump') {
-    const [v, i] = peak(s.vy); if (v !== null) out.push(['Peak upward velocity (' + m + ')', (v * vk).toFixed(2) + ' ' + vu, 'at ' + s.T[i].toFixed(3) + ' s']);
+    const [v, i] = peak(s.vy); if (v !== null) out.push(['Peak upward velocity (' + m + ')', (v * vk).toFixed(2) + ' ' + vu, 'at ' + s.T[i].toFixed(3) + ' s', v * vk, vu, 'card']);
     if (s.y.length > 3) {
-      const n = Math.min(5, s.y.length), base = mean(s.y.slice(0, n)), k = u === 'm' ? 100 : 1, uu = u === 'm' ? ' cm' : ' px';
-      out.push(['Lowest point (' + m + ')', ((base - Math.min(...s.y)) * k).toFixed(1) + uu + ' down', 'from the start position']);
-      out.push(['Highest point (' + m + ')', ((Math.max(...s.y) - base) * k).toFixed(1) + uu + ' up', 'from the start position']);
+      const n = Math.min(5, s.y.length), base = mean(s.y.slice(0, n)), k = u === 'm' ? 100 : 1, uu = u === 'm' ? 'cm' : 'px';
+      const lo = (base - Math.min(...s.y)) * k, hi = (Math.max(...s.y) - base) * k;
+      out.push(['Lowest point (' + m + ')', lo.toFixed(1) + ' ' + uu + ' down', 'from the start position', lo, uu, 'card']);
+      out.push(['Highest point (' + m + ')', hi.toFixed(1) + ' ' + uu + ' up', 'from the start position', hi, uu, 'card']);
     }
   }
   R.ang.forEach((a) => {
     const mn = Math.min(...a.V), mx = Math.max(...a.V), iw = peak(a.W.map((w) => (w === null ? null : Math.abs(w))))[1];
-    out.push([a.key + ' range', mn.toFixed(0) + '° to ' + mx.toFixed(0) + '°', 'range of motion ' + (mx - mn).toFixed(0) + '°']);
-    if (iw >= 0) out.push(['Peak ' + a.key.toLowerCase() + ' velocity', a.W[iw].toFixed(0) + '°/s', 'at ' + a.T[iw].toFixed(3) + ' s']);
+    out.push(['Smallest ' + a.key, mn.toFixed(1) + '\u00b0', '', mn, '\u00b0', 'angle']);
+    out.push(['Largest ' + a.key, mx.toFixed(1) + '\u00b0', '', mx, '\u00b0', 'angle']);
+    out.push([a.key + ' range of motion', (mx - mn).toFixed(1) + '\u00b0', '', mx - mn, '\u00b0', 'angle']);
+    if (iw >= 0) out.push(['Peak ' + a.key + ' angular velocity', a.W[iw].toFixed(0) + '\u00b0/s', 'at ' + a.T[iw].toFixed(3) + ' s', a.W[iw], '\u00b0/s', 'angle']);
   });
-  S.events.forEach((e) => {
-    const parts = [];
-    R.ang.forEach((a) => { const i = nearestIdx(a.F, e.frame); if (i >= 0) parts.push(a.key + ' ' + a.V[i].toFixed(0) + '°'); });
-    const i = nearestIdx(s.F, e.frame);
-    if (i >= 0 && s.vx[i] !== null) parts.unshift(m + (S.activity === 'jump' ? ' v↑ ' + (s.vy[i] * vk).toFixed(2) : ' v ' + (s.vx[i] * vk).toFixed(2)) + ' ' + vu);
-    if (parts.length) out.push(['At ' + e.name + ' (' + tReal(e.frame).toFixed(3) + ' s)', parts[0], parts.slice(1).join(', ')]);
+  // values at events (averaged over repeats, e.g. several touchdowns)
+  [...new Set(S.events.map((e) => e.name))].forEach((name) => {
+    const fr = S.events.filter((e) => e.name === name).map((e) => e.frame), rep = fr.length > 1 ? ' (mean of ' + fr.length + ')' : '';
+    const vals = (F, V) => fr.map((f) => { const i = nearestIdx(F, f); return i >= 0 ? V[i] : null; }).filter((v) => v !== null);
+    const vx = vals(s.F, s.vx), vy = vals(s.F, s.vy);
+    if (vx.length) out.push([m + ' horizontal velocity at ' + name, (mean(vx) * vk).toFixed(2) + ' ' + vu, rep, mean(vx) * vk, vu, 'event']);
+    if (vy.length) out.push([m + ' vertical velocity at ' + name, (mean(vy) * vk).toFixed(2) + ' ' + vu, rep, mean(vy) * vk, vu, 'event']);
+    R.ang.forEach((a) => { const v = vals(a.F, a.V); if (v.length) out.push([a.key + ' at ' + name, mean(v).toFixed(1) + '\u00b0', rep, mean(v), '\u00b0', 'event']); });
   });
-  eventStats().forEach((r) => out.push(r));
-  return out;
+  return out.concat(ev);
 }
 function keyStats() {
   const R = A.results, S = A.S, rows = summaryRows();
-  // cards: linear values and event timings; angles and event values go in tables below
-  const cards = rows.filter((r) => !/ range$/.test(r[0]) && !/^Peak .* velocity$/.test(r[0]) && !/^At /.test(r[0]));
-  $('keyStats').innerHTML = statsHTML(cards).replace(/^<div class="stats">|<\/div>$/g, '');
+  $('keyStats').innerHTML = statsHTML(rows.filter((r) => r[5] === 'card')).replace(/^<div class="stats">|<\/div>$/g, '');
   let h = '';
   if (R.ang.length) {
     h += '<span class="lab">Angles</span><div class="tablewrap"><table><tr><th>Angle</th><th>Smallest</th><th>Largest</th><th>Range</th><th>Peak angular velocity</th></tr>' + R.ang.map((a) => {
@@ -198,7 +211,7 @@ export function suggestCutoff() {
   compute();
 }
 
-// ---------- quality checks and the markers-vs-AI comparison ----------
+// ---------- quality checks ----------
 export function renderQuality() {
   const R = A.results, S = A.S, out = [], sers = R.sers;
   S.template.links.forEach(([p, q]) => {
@@ -213,48 +226,19 @@ export function renderQuality() {
   let h = '';
   if (out.length) h += '<p>Segment lengths should stay the same in a side-on view. Variation (CV) under about 3% is good.</p><table><tr><th>Check</th><th>Average</th><th>Variation (CV)</th><th>Verdict</th></tr>' + out.join('') + '</table>';
   const to = S.events.find((e) => e.name === 'Take-off'), ld = S.events.find((e) => e.name === 'Landing');
-  if (S.activity === 'jump' && to && ld && sers.Hip && S.calib) {
-    const s = sers.Hip, acc = [];
+  const hm = hipMarker();
+  if (S.activity === 'jump' && to && ld && sers[hm] && S.calib) {
+    const s = sers[hm], acc = [];
     s.F.forEach((f, i) => { if (f > to.frame + 2 * s.step && f < ld.frame - 2 * s.step && s.ay[i] !== null) acc.push(s.ay[i]); });
     if (acc.length >= 3) {
       const ma = mean(acc), err = (ma + G) / G * 100;
-      h += '<p><strong>Gravity check:</strong> in the air the hip accelerated at <strong>' + ma.toFixed(2) + ' m/s&sup2;</strong> (should be about &minus;9.81). ' + (Math.abs(err) < 8 ? 'That is within ' + Math.abs(err).toFixed(0) + '%, so your calibration and frame rate look right.' : 'That is ' + Math.abs(err).toFixed(0) + '% out: check the calibration, the frame rate (and slow-down setting) and the tracking in the flight phase. (The hip can also move a little relative to the centre of mass in the air.)') + '</p>';
+      h += '<p><strong>Gravity check:</strong> in the air the ' + esc(hm) + ' accelerated at <strong>' + ma.toFixed(2) + ' m/s&sup2;</strong> (should be about &minus;9.81). ' + (Math.abs(err) < 8 ? 'That is within ' + Math.abs(err).toFixed(0) + '%, so your calibration and frame rate look right.' : 'That is ' + Math.abs(err).toFixed(0) + '% out: check the calibration, the frame rate (and slow-down setting) and the tracking in the flight phase. (The hip can also move a little relative to the centre of mass in the air.)') + '</p>';
     }
   }
   const fl = Object.keys(S.flags).reduce((a, f) => a + S.flags[f].length, 0);
-  h += '<p>' + (fl ? '<strong>' + fl + '</strong> point' + (fl > 1 ? 's are' : ' is') + ' flagged in Digitise &rarr; &ldquo;Check the tracking&rdquo;.' : 'No points are flagged.') + ' Sampling rate: ' + (R.fs ? R.fs.toFixed(0) : '?') + ' Hz' + (S.filt ? '; filter cut-off ' + S.cutoff + ' Hz.' : '; no filter.') + '</p>';
+  h += '<p>' + (fl ? '<strong>' + fl + '</strong> marker position' + (fl > 1 ? 's are' : ' is') + ' flagged in Digitise &rarr; &ldquo;Check the tracking&rdquo;.' : 'Nothing is flagged.') + ' Sampling rate: ' + (R.fs ? R.fs.toFixed(0) : '?') + ' Hz' + (S.filt ? '; filter cut-off ' + S.cutoff + ' Hz.' : '; no filter.') + '</p>';
   $('qualBox').innerHTML = h;
 }
-export function renderCompare() {
-  const S = A.S, altF = Object.keys(S.alt).map(Number).sort((a, b) => a - b);
-  if (!altF.length) { $('cmpWrap').classList.add('hide'); return; }
-  const mult = S.calib ? 100 : 1, u = S.calib ? 'cm' : 'px', rows = [];
-  points().forEach((m) => {
-    const d = [], dx = [], dy = [];
-    altF.forEach((f) => { const a = S.frames[f] && S.frames[f][m], b = S.alt[f][m]; if (a && b) { const P = toWorld(a), Q = toWorld(b); d.push(Math.hypot(P[0] - Q[0], P[1] - Q[1])); dx.push(Q[0] - P[0]); dy.push(Q[1] - P[1]); } });
-    if (d.length < 3) return;
-    const rms = Math.sqrt(mean(d.map((q) => q * q))), sg = (v) => (v >= 0 ? '+' : '') + v.toFixed(1);
-    rows.push('<tr><td>' + esc(m) + '</td><td class="num">' + d.length + '</td><td class="num">' + (rms * mult).toFixed(1) + ' ' + u + '</td><td class="num">' + (Math.max(...d) * mult).toFixed(1) + ' ' + u + '</td><td class="num">' + sg(mean(dx) * mult) + ' / ' + sg(mean(dy) * mult) + '</td></tr>');
-  });
-  if (!rows.length) { $('cmpWrap').classList.add('hide'); return; }
-  $('cmpWrap').classList.remove('hide');
-  let h = '<p>How far the AI points are from your marker points on the same frames (raw, unfiltered).</p><table><tr><th>Point</th><th>Frames</th><th>RMS difference</th><th>Largest</th><th>Average offset (forwards / up)</th></tr>' + rows.join('') + '</table>';
-  const arow = [], chartDef = [];
-  angleDefs().filter((d) => d.on).forEach((d, k) => {
-    const ps = anglePoints(d), T = [], va = [], vb = [];
-    altF.forEach((f) => { const a = S.frames[f], b = S.alt[f]; if (a && b && ps.every((p) => a[p] && b[p])) { const P = {}, Q = {}; ps.forEach((p) => { P[p] = toWorld(a[p]); Q[p] = toWorld(b[p]); }); T.push(tReal(f)); va.push(angleValue(d, P)); vb.push(angleValue(d, Q)); } });
-    if (va.length < 3) return;
-    const dd = vb.map((v, i) => v - va[i]), rmsA = Math.sqrt(mean(dd.map((q) => q * q))), bias = mean(dd);
-    arow.push('<tr><td>' + esc(d.name) + '</td><td class="num">' + va.length + '</td><td class="num">' + rmsA.toFixed(1) + '&deg;</td><td class="num">' + (bias >= 0 ? '+' : '') + bias.toFixed(1) + '&deg;</td></tr>');
-    if (!chartDef.length) chartDef.push({ name: d.name, T, va, vb, col: angCol(k) });
-  });
-  if (arow.length) h += '<table><tr><th>Angle</th><th>Frames</th><th>RMS difference</th><th>Average offset (AI &minus; markers)</th></tr>' + arow.join('') + '</table>';
-  if (chartDef.length) h += '<span class="lab">' + esc(chartDef[0].name) + ': markers (solid) vs AI (dashed)</span><svg class="chart" id="cCmp" viewBox="0 0 640 300"></svg>';
-  h += '<p class="muted">Which would you trust, and why? Think about where each method puts the joint centre, and what happens when a limb is hidden.</p>';
-  $('cmpBox').innerHTML = h;
-  if (chartDef.length) { const c = chartDef[0]; chart($('cCmp'), [{ x: c.T, y: c.va, col: c.col }, { x: c.T, y: c.vb, col: '#c0264d', dash: '7 5' }], { ylab: c.name + ' (°)', evs: S.events.map((e) => ({ t: tReal(e.frame), name: e.name })) }); }
-}
-
 // ---------- data table ----------
 export function dataTable() {
   const R = A.results; if (!R) return;
@@ -278,12 +262,55 @@ export function live() {
     const w = toWorld(p); let v = '';
     if (R && R.sers[m]) { const s = R.sers[m], i = s.F.indexOf(A.cur); if (i >= 0 && s.speed[i] !== null) v = fx(s.vx[i], 2) + ' / ' + fx(s.vy[i], 2); }
     const c = S.conf[A.cur] && S.conf[A.cur][m];
-    rows.push('<tr><td><span class="dot" style="background:' + colourOf(m) + '"></span>' + esc(m) + '</td><td class="num">' + fx(w[0], S.calib ? 3 : 0) + '</td><td class="num">' + fx(w[1], S.calib ? 3 : 0) + '</td><td class="num">' + v + '</td><td class="muted">' + (c ? (c.src === 'pose' ? 'AI ' : 'track ') + c.s : 'click') + '</td></tr>');
+    rows.push('<tr><td><span class="dot" style="background:' + colourOf(m) + '"></span>' + esc(m) + '</td><td class="num">' + fx(w[0], S.calib ? 3 : 0) + '</td><td class="num">' + fx(w[1], S.calib ? 3 : 0) + '</td><td class="num">' + v + '</td><td class="muted">' + (c ? 'tracked (' + c.s + ')' : 'clicked') + '</td></tr>');
   });
   const angs = [];
   angleDefs().filter((d) => d.on).forEach((d) => { const ps = anglePoints(d); if (!ps.every((n) => fr[n])) return; const P = {}; ps.forEach((n) => { P[n] = toWorld(fr[n]); }); angs.push(esc(d.name) + ' <strong>' + angleValue(d, P).toFixed(1) + '&deg;</strong>'); });
-  if (!rows.length) { el.innerHTML = '<p class="muted">No points on this frame.</p>'; return; }
-  el.innerHTML = '<table><tr><th>Point</th><th>x (' + u + ')</th><th>y (' + u + ')</th><th>v<sub>x</sub> / v<sub>y</sub> (' + u + '/s, filtered)</th><th>Source</th></tr>' + rows.join('') + '</table>' + (angs.length ? '<p class="angs">' + angs.join(' &nbsp;&middot;&nbsp; ') + ' <span class="muted">(raw, this frame)</span></p>' : '');
+  if (!rows.length) { el.innerHTML = '<p class="muted">' + (points().length ? 'No markers on this frame.' : 'No markers yet. Add them in the Markers tab.') + '</p>'; return; }
+  el.innerHTML = '<table><tr><th>Marker</th><th>x (' + u + ')</th><th>y (' + u + ')</th><th>v<sub>x</sub> / v<sub>y</sub> (' + u + '/s, filtered)</th><th>Source</th></tr>' + rows.join('') + '</table>' + (angs.length ? '<p class="angs">' + angs.join(' &nbsp;&middot;&nbsp; ') + ' <span class="muted">(raw, this frame)</span></p>' : '');
+}
+
+
+// ---------- time normalisation ----------
+const col = (s) => String(s).trim().replace(/[^\w]+/g, '_').replace(/^_|_$/g, '');
+export function renderNorm() {
+  const R = A.results, S = A.S, N = S.norm, names = eventNames();
+  const opts = names.map((n) => '<option>' + esc(n) + '</option>').join('');
+  $('nStart').innerHTML = opts; $('nEnd').innerHTML = opts; $('nPts').value = N.n || 101;
+  if (!names.length) { $('nInfo').innerHTML = 'Mark events first (e.g. Touchdown and Toe-off, or Start of movement and Take-off). The phase between two events is stretched or squashed to 0&ndash;100%.'; $('nWrap').classList.add('hide'); A.norm = null; return; }
+  if (!names.includes(N.start)) N.start = names[0];
+  if (!names.includes(N.end)) N.end = names[Math.min(1, names.length - 1)];
+  $('nStart').value = N.start; $('nEnd').value = N.end;
+  const res = normalise(R, S, N.start, N.end, N.n); A.norm = res;
+  const vars = variableList(R).filter((v) => res.vars[v.key]);
+  $('nVar').innerHTML = vars.map((v) => '<option value="' + esc(v.key) + '">' + esc(v.label) + '</option>').join('');
+  if (!res.vars[N.v]) N.v = (vars.find((v) => v.key.startsWith('ang|')) || vars[0] || {}).key || '';
+  $('nVar').value = N.v;
+  if (!res.cycles.length || !vars.length) { $('nInfo').innerHTML = 'No phases found. Each <strong>' + esc(N.start) + '</strong> needs a later <strong>' + esc(N.end) + '</strong>, and the markers need digitising across the whole phase.'; $('nWrap').classList.add('hide'); return; }
+  $('nWrap').classList.remove('hide');
+  const V = res.vars[N.v], used = V.curves.filter(Boolean).length, d = res.cycles.map((c) => c.dur);
+  const lines = V.curves.map((c, i) => (c ? { x: res.pct, y: c, col: PALETTE[i % PALETTE.length], width: 1.5, opacity: 0.55, noMinMax: true } : null)).filter(Boolean);
+  if (used > 1) {
+    lines.push({ x: res.pct, y: V.mean.map((m, k) => m + V.sd[k]), col: '#1f2a33', dash: '5 4', width: 1.5, noMinMax: true });
+    lines.push({ x: res.pct, y: V.mean.map((m, k) => m - V.sd[k]), col: '#1f2a33', dash: '5 4', width: 1.5, noMinMax: true });
+  }
+  lines.push({ x: res.pct, y: V.mean, col: '#1f2a33', width: 3.5 });
+  chart($('cNorm'), lines, { xlab: '% of ' + N.start + ' to ' + N.end, ylab: V.label + ' (' + V.unit + ')', minmax: S.graph.minmax, xMin: 0, xMax: 100 });
+  $('nInfo').innerHTML = '<strong>' + res.cycles.length + '</strong> phase' + (res.cycles.length > 1 ? 's' : '') + ' found (' + esc(N.start) + ' &rarr; ' + esc(N.end) + '), lasting ' + (d.length > 1 ? mean(d).toFixed(3) + ' &plusmn; ' + sd(d).toFixed(3) + ' s' : d[0].toFixed(3) + ' s') + '. ' + (used < res.cycles.length ? (res.cycles.length - used) + ' could not be used for this variable because the data do not cover the whole phase. ' : '') + 'Thin lines are each phase, the thick line is the mean' + (used > 1 ? ' and the dashed lines are &plusmn; 1 SD.' : '.');
+}
+export function normCSV() {
+  const res = A.norm, S = A.S; if (!res || !res.cycles.length) { status('Set up the time normalisation in Results first.'); return; }
+  const keys = Object.keys(res.vars), head = ['percent'];
+  keys.forEach((k) => { const v = res.vars[k], c = col(v.label) + '_' + col(v.unit.replace('\u00b0', 'deg').replace('/', '_per_')); v.curves.forEach((cv, i) => head.push(c + '_phase' + (i + 1))); head.push(c + '_mean', c + '_sd'); });
+  const lines = ['# ' + [A.S.name, 'time-normalised from ' + S.norm.start + ' to ' + S.norm.end, res.pct.length + ' points', 'filtered at ' + (S.filt ? S.cutoff + ' Hz' : 'no filter')].join(' | '),
+    '# phases (start frame, end frame, duration s): ' + res.cycles.map((c, i) => (i + 1) + ': ' + c.a + '-' + c.b + ' (' + c.dur.toFixed(4) + ')').join('; '), head.join(',')];
+  res.pct.forEach((p, k) => {
+    const r = [p.toFixed(2)];
+    keys.forEach((key) => { const v = res.vars[key]; v.curves.forEach((cv) => r.push(cv ? fx(cv[k], 5) : '')); r.push(v.mean ? fx(v.mean[k], 5) : '', v.sd ? fx(v.sd[k], 5) : ''); });
+    lines.push(r.join(','));
+  });
+  download(baseName() + '_time_normalised.csv', new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+  status('Downloaded <strong>' + esc(baseName()) + '_time_normalised.csv</strong>.');
 }
 
 export function initResults() {
@@ -298,5 +325,11 @@ export function initResults() {
   $('gX').addEventListener('change', () => { g().xaxis = $('gX').value; persist(); renderGraphControls(); drawResults(); });
   $('gXev').addEventListener('change', () => { g().xevent = $('gXev').value; persist(); drawResults(); });
   $('fcPoint').addEventListener('change', renderFilterCheck);
+  const N = () => A.S.norm, rn = () => { persist(); renderNorm(); if (A.fn.renderCompare) A.fn.renderCompare(); };
+  $('nStart').addEventListener('change', () => { N().start = $('nStart').value; rn(); });
+  $('nEnd').addEventListener('change', () => { N().end = $('nEnd').value; rn(); });
+  $('nPts').addEventListener('change', () => { const v = parseInt($('nPts').value, 10); if (v >= 11 && v <= 1001) { N().n = v; rn(); } });
+  $('nVar').addEventListener('change', () => { N().v = $('nVar').value; rn(); });
+  $('nCsv').addEventListener('click', normCSV); $('nCsv2').addEventListener('click', normCSV);
   $('fcComp').addEventListener('change', renderFilterCheck);
 }
