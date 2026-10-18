@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linear Kinematics of a Sprint</title>
+<style>
+  :root{
+    --navy:#003d50; --navy-dark:#002c3a; --teal:#00857e; --blue:#0071bc;
+    --plum:#8b3556; --plum-dark:#682840; --bg:#f7fbfd; --soft:#f8fcfe; --tealsoft:#f2faf9;
+    --line:#d9e2e7; --edge:#abd6d9; --ink:#1d1d1b; --muted:#46535a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#fff;color:var(--ink);font-family:Arial,Helvetica,sans-serif;line-height:1.58}
+  main{max-width:1220px;margin:0 auto;padding:1.4rem;background:var(--bg);border:2px solid var(--edge);border-radius:1rem}
+  header{background:var(--navy);color:#fff;padding:2.2rem 2rem;border-radius:.9rem .9rem 0 0;border-bottom:.4rem solid var(--teal)}
+  .badge{display:inline-block;background:#fff;color:var(--navy);padding:.35rem .85rem;margin:0 0 .8rem;font-size:.88em;border-left:.35rem solid var(--blue);border-radius:.65rem;font-weight:bold}
+  h1{margin:0 0 .4rem;font-size:2.1em;line-height:1.18}
+  header p{margin:0;font-size:1.05em}
+  .bar{background:#fff;padding:1.1rem;margin-bottom:1.5rem;border:1px solid var(--line);border-top:0;border-radius:0 0 .9rem .9rem}
+  .row{display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end}
+  .field{flex:1 1 220px}
+  label,.lab{font-weight:bold;color:var(--navy);font-size:.92em;display:block;margin-bottom:.25rem}
+  input[type=text],textarea,select{width:100%;font:inherit;font-size:.95em;padding:.5rem .6rem;border:1px solid #b9c7cf;border-radius:.5rem;background:#fff;color:var(--ink)}
+  textarea{min-height:5rem;resize:vertical}
+  input:focus,textarea:focus,select:focus{outline:3px solid var(--edge);border-color:var(--teal)}
+  .btn{font:inherit;font-weight:bold;cursor:pointer;border:0;color:#fff;padding:.6rem 1rem;border-radius:.75rem;min-height:2.6rem}
+  .btn.navy{background:var(--navy);border-bottom:.22rem solid var(--navy-dark)}
+  .btn.teal{background:var(--teal);border-bottom:.22rem solid #00655f}
+  .btn.plum{background:var(--plum);border-bottom:.22rem solid var(--plum-dark)}
+  .btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+  .tabs{display:flex;gap:.6rem;flex-wrap:wrap;margin:0 0 1rem}
+  .tab{flex:1 1 170px;background:#fff;color:var(--navy);border:2px solid var(--line);border-bottom:.25rem solid var(--line)}
+  .tab[aria-selected=true]{background:var(--teal);color:#fff;border-color:var(--teal);border-bottom-color:#00655f}
+  section.panel{background:#fff;border:1px solid var(--line);border-radius:1rem;overflow:hidden;margin-bottom:1.5rem}
+  .panel-head{color:#fff;padding:1.2rem 1.6rem}
+  .panel-head h2{margin:0;font-size:1.45em}
+  .panel-head .badge{font-size:.82em;margin-bottom:.45rem}
+  .panel-body{padding:1.5rem}
+  .intro{margin-top:0}
+  .tip{background:var(--tealsoft);border-left:.4rem solid var(--teal);padding:.9rem 1rem;border-radius:.75rem;margin:0 0 1.2rem}
+  .warn{background:#fbf4f7;border-left:.4rem solid var(--plum);padding:.9rem 1rem;border-radius:.75rem;margin:0 0 1.2rem}
+  .tip p,.warn p{margin:0 0 .4rem}.tip p:last-child,.warn p:last-child{margin:0}
+  .card{border:1px solid var(--line);border-left:.45rem solid var(--blue);border-radius:.75rem;padding:1rem 1.1rem;margin-bottom:1.1rem}
+  .card h3{margin:0 0 .5rem;color:var(--navy);font-size:1.12em}
+  .card.t{border-left-color:var(--teal)} .card.p{border-left-color:var(--plum)} .card.n{border-left-color:var(--navy)}
+  .formula{display:inline-block;background:var(--soft);border:1px solid var(--line);border-radius:.5rem;padding:.3rem .7rem;font-weight:bold;color:var(--navy);margin:.15rem 0}
+  table{width:100%;border-collapse:collapse;margin:.4rem 0 .8rem;font-size:.93em}
+  th,td{border:1px solid var(--line);padding:.4rem .5rem;text-align:left;vertical-align:middle}
+  th{background:var(--soft);color:var(--navy)}
+  td input{min-width:5rem}
+  .tablewrap{overflow-x:auto}
+  .num{white-space:nowrap}
+  .ok{color:var(--teal);font-weight:bold;font-size:.88em}
+  .no{color:var(--plum);font-weight:bold;font-size:.88em}
+  .hide{display:none !important}
+  .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+  .chart{width:100%;height:auto;display:block;background:#fff;border:1px solid var(--line);border-radius:.6rem}
+  .legend{display:flex;gap:1.2rem;flex-wrap:wrap;font-size:.9em;margin:.3rem 0 .6rem}
+  .key{display:inline-block;width:1.6rem;height:0;border-top:3px solid;vertical-align:middle;margin-right:.35rem}
+  .count{font-size:.88em;margin:.3rem 0 0;color:var(--muted)}
+  .count.over{color:var(--plum);font-weight:bold}
+  .rate{display:flex;gap:.4rem;flex-wrap:wrap}
+  .rate label{font-weight:normal;color:var(--ink);display:inline-flex;align-items:center;gap:.3rem;border:1px solid var(--line);border-radius:.5rem;padding:.3rem .6rem;margin:0;cursor:pointer}
+  .crit{display:grid;grid-template-columns:1.2fr 2fr auto;gap:.6rem 1rem;align-items:center;border-bottom:1px solid var(--line);padding:.7rem 0}
+  .crit:last-of-type{border-bottom:0}
+  .crit strong{color:var(--navy)}
+  .actions{display:flex;gap:.75rem;flex-wrap:wrap;justify-content:flex-end;margin-top:.5rem}
+  .print-only{display:none}
+  footer{text-align:center;padding:1rem;color:var(--muted);font-size:.88em}
+  @media (max-width:760px){
+    main{padding:.75rem;border-radius:.6rem}
+    header{padding:1.5rem 1.1rem}
+    h1{font-size:1.6em}
+    .panel-body{padding:1rem}
+    .grid2{grid-template-columns:1fr}
+    .crit{grid-template-columns:1fr}
+  }
+  @media print{
+    main{border:0;padding:0;max-width:none;background:#fff}
+    .tabs,.actions,.no-print{display:none !important}
+    .panel-tab{display:block !important}
+    .phide{display:none !important}
+    section.panel,.card{break-inside:avoid}
+    .print-only{display:block}
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="badge">SESC02</p>
+    <h1>Linear Kinematics of a Sprint</h1>
+    <p>Position, velocity and acceleration over 30 m, worked through like your Practical Assessment.</p>
+  </header>
+
+  <div class="bar">
+    <div class="row">
+      <div class="field">
+        <label for="names">Your names (assessment pair)</label>
+        <input type="text" id="names" data-save placeholder="e.g. Sam Jones and Alex Patel">
+      </div>
+      <div class="field">
+        <span class="lab">The scenario</span>
+        <p style="margin:0">Two athletes, <strong>A</strong> and <strong>B</strong>, run 30 m from a standing start. Timing gates every 5 m give their split times. Who is faster, where, and why?</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="Tool sections">
+    <button type="button" class="btn tab" role="tab" id="tab-1" aria-controls="p-1" aria-selected="true">1. Read the graph</button>
+    <button type="button" class="btn tab" role="tab" id="tab-2" aria-controls="p-2" aria-selected="false">2. Calculate</button>
+    <button type="button" class="btn tab" role="tab" id="tab-3" aria-controls="p-3" aria-selected="false">3. Steps</button>
+    <button type="button" class="btn tab" role="tab" id="tab-4" aria-controls="p-4" aria-selected="false">4. Interpret &amp; apply</button>
+    <button type="button" class="btn tab" role="tab" id="tab-5" aria-controls="p-5" aria-selected="false">5. Mini presentation</button>
+  </div>
+
+  <!-- 1 READ THE GRAPH -->
+  <section class="panel panel-tab" id="p-1" role="tabpanel" aria-labelledby="tab-1">
+    <div class="panel-head" style="background:var(--navy)">
+      <p class="badge" style="border-left-color:var(--teal)">Step 1</p>
+      <h2>Read the graph</h2>
+    </div>
+    <div class="panel-body">
+      <p class="intro">This graph shows an athlete's <strong>position</strong> (displacement) along the track during a 30 m sprint. You can read a lot from it without any maths.</p>
+      <div class="tip">
+        <p><strong>Two rules (Bartlett, 2007):</strong></p>
+        <p>The <strong>steepness</strong> (slope) of a position&ndash;time graph tells you the <strong>velocity</strong>. Steeper means faster.</p>
+        <p>The <strong>bend</strong> (curvature) tells you the <strong>acceleration</strong>. If the line is curving upwards, the athlete is speeding up. If it is straight, velocity is constant and acceleration is zero.</p>
+      </div>
+      <svg class="chart" id="chartPos" viewBox="0 0 640 320" role="img" aria-label="Position against time for a 30 metre sprint"></svg>
+      <div class="card t" style="margin-top:1rem">
+        <h3>On your notepad</h3>
+        <ol style="margin:0;padding-left:1.3rem">
+          <li>Sketch what the <strong>velocity&ndash;time</strong> graph looks like underneath it.</li>
+          <li>Sketch what the <strong>acceleration&ndash;time</strong> graph looks like underneath that.</li>
+          <li>Mark roughly where the athlete stops accelerating and is close to top speed.</li>
+        </ol>
+      </div>
+      <button type="button" class="btn teal no-print" id="revealGraphs">Check your sketches</button>
+      <div id="graphAnswers" class="hide">
+        <div class="grid2" style="margin-top:1rem">
+          <div><span class="lab">Velocity&ndash;time</span><svg class="chart" id="chartVel1" viewBox="0 0 640 320" role="img" aria-label="Velocity against time"></svg></div>
+          <div><span class="lab">Acceleration&ndash;time</span><svg class="chart" id="chartAcc1" viewBox="0 0 640 320" role="img" aria-label="Acceleration against time"></svg></div>
+        </div>
+        <div class="tip" style="margin-top:1rem">
+          <p>Velocity rises quickly at first, then levels off as the athlete nears top speed. Acceleration is highest at the very start and drops towards zero. The position line gets steeper and steeper, then becomes almost straight.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 CALCULATE -->
+  <section class="panel panel-tab hide" id="p-2" role="tabpanel" aria-labelledby="tab-2">
+    <div class="panel-head" style="background:var(--teal)">
+      <p class="badge" style="color:var(--teal);border-left-color:var(--navy)">Step 2</p>
+      <h2>Calculate velocity and acceleration</h2>
+    </div>
+    <div class="panel-body">
+      <div class="card t">
+        <h3>The variables you need</h3>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Variable</th><th>What it means</th><th>What usually happens in a sprint</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Displacement (d)</strong></td><td>How far along the track the athlete is, in a straight line from the start (m).</td><td>Keeps increasing down the track.</td></tr>
+              <tr><td><strong>Velocity (v)</strong></td><td>How fast displacement changes. v = &Delta;d &divide; &Delta;t (m/s).</td><td>Rises sharply from 0 at the start, then levels off near top speed.</td></tr>
+              <tr><td><strong>Acceleration (a)</strong></td><td>How fast velocity changes. a = &Delta;v &divide; &Delta;t (m/s&sup2;).</td><td>Highest in the first few metres, then drops towards zero as velocity levels off.</td></tr>
+              <tr><td><strong>Step length</strong></td><td>Distance covered in one step, from one foot's contact to the other foot's contact (m).</td><td>Gets longer from the start (around 1 m) up to top speed.</td></tr>
+              <tr><td><strong>Step frequency</strong></td><td>Number of steps per second (Hz). Step frequency = 1 &divide; step time.</td><td>High early on, then steadies or drops slightly as steps get longer.</td></tr>
+              <tr><td><strong>Contact time</strong></td><td>How long the foot is on the ground in each step (s).</td><td>Gets shorter as the athlete speeds up.</td></tr>
+              <tr><td><strong>Flight time</strong></td><td>How long the body is in the air between steps (s).</td><td>Gets longer as speed and step length increase.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="margin:0 0 .4rem"><strong>Step or stride?</strong> A stride is two steps (from one foot landing to the same foot landing again). We use steps here because they are easier to measure from video.</p>
+        <p style="margin:0">These patterns are for a full sprint from blocks, where top speed is reached at around 30&ndash;60 m. Our athletes start standing and run 30 m, so they level off sooner.</p>
+      </div>
+      <div class="card n">
+        <h3>How it works</h3>
+        <p style="margin:0 0 .4rem"><strong>Position (displacement)</strong> is how far along the track the athlete is, here 0, 5, 10&hellip; 30 m.</p>
+        <p style="margin:0 0 .4rem"><strong>Velocity</strong> is how fast position changes. <span class="formula">v = &Delta;d &divide; &Delta;t</span> (change in position &divide; change in time), in m/s.</p>
+        <p style="margin:0 0 .4rem"><strong>Acceleration</strong> is how fast velocity changes. <span class="formula">a = &Delta;v &divide; &Delta;t</span> (change in velocity &divide; change in time), in m/s&sup2;.</p>
+        <p style="margin:0">Each velocity is an <strong>average</strong> over a 5 m split, so we plot it at the <strong>middle time</strong> of that split. Acceleration uses the time between those middle points.</p>
+      </div>
+
+      <h3 style="color:var(--navy);margin:1.2rem 0 .3rem">Part A: by hand first</h3>
+      <p style="margin-top:0">Use Athlete A's split times and your notepad to work out the first three velocities and the first acceleration. Type your answers in to check them (2 decimal places).</p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Split</th><th>Times (s)</th><th>&Delta;d (m)</th><th>&Delta;t (s)</th><th>Your velocity (m/s)</th><th></th><th>Middle time (s)</th></tr></thead>
+          <tbody id="handRows"></tbody>
+        </table>
+      </div>
+      <div class="row" style="align-items:center;margin-bottom:.5rem">
+        <div style="flex:1 1 420px">Acceleration between the first two middle times<br><span class="count">a = (v<sub>5&ndash;10</sub> &minus; v<sub>0&ndash;5</sub>) &divide; (middle time 2 &minus; middle time 1)</span></div>
+        <div style="flex:0 1 160px"><input type="text" inputmode="decimal" id="handAcc" data-save aria-label="Your first acceleration" placeholder="m/s&sup2;"></div>
+        <div style="flex:0 1 auto" id="handAccOk"></div>
+      </div>
+      <button type="button" class="btn teal no-print" id="revealAll">Fill in the rest and draw the graphs</button>
+      <p class="count no-print" id="revealNote">Have a go by hand first. This button unlocks once you have tried all four answers.</p>
+
+      <div id="fullResults" class="hide">
+        <h3 style="color:var(--navy);margin:1.4rem 0 .3rem">Part B: both athletes</h3>
+        <div class="grid2">
+          <div><span class="lab">Athlete A</span><div class="tablewrap"><table id="tabA"></table></div></div>
+          <div><span class="lab">Athlete B</span><div class="tablewrap"><table id="tabB"></table></div></div>
+        </div>
+        <div class="legend"><span><span class="key" style="border-color:var(--teal)"></span>Athlete A</span><span><span class="key" style="border-color:var(--plum);border-top-style:dashed"></span>Athlete B</span></div>
+        <div class="grid2">
+          <div><span class="lab">Position&ndash;time</span><svg class="chart" id="chartPos2" viewBox="0 0 640 320" role="img" aria-label="Position against time for both athletes"></svg></div>
+          <div><span class="lab">Velocity&ndash;time</span><svg class="chart" id="chartVel2" viewBox="0 0 640 320" role="img" aria-label="Velocity against time for both athletes"></svg></div>
+        </div>
+        <div style="margin-top:1rem"><span class="lab">Acceleration&ndash;time</span><svg class="chart" id="chartAcc2" viewBox="0 0 640 320" role="img" aria-label="Acceleration against time for both athletes"></svg></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 STEPS -->
+  <section class="panel panel-tab hide" id="p-3" role="tabpanel" aria-labelledby="tab-3">
+    <div class="panel-head" style="background:var(--blue)">
+      <p class="badge" style="color:var(--blue);border-left-color:var(--navy)">Step 3</p>
+      <h2>Steps</h2>
+    </div>
+    <div class="panel-body">
+      <p class="intro">Video gave the average step values for each athlete in three sections of the run. Speed depends on how far each step goes and how many steps are taken each second.</p>
+      <p><span class="formula">step time = contact time + flight time</span> &nbsp; <span class="formula">step frequency = 1 &divide; step time</span> &nbsp; <span class="formula">speed = step length &times; step frequency</span></p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Athlete</th><th>Section</th><th>Step length (m)</th><th>Contact time (s)</th><th>Flight time (s)</th></tr></thead>
+          <tbody id="stepData"></tbody>
+        </table>
+      </div>
+      <h3 style="color:var(--navy);margin:1.2rem 0 .3rem">Part A: by hand first</h3>
+      <p style="margin-top:0">Using Athlete A's <strong>0&ndash;10 m</strong> values, work out the following on your notepad, then type your answers in to check them.</p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Step time (s)</th><th>Step frequency (Hz)</th><th>Speed (m/s)</th></tr></thead>
+          <tbody><tr>
+            <td><input type="text" inputmode="decimal" id="hst" data-save aria-label="Your step time"><div id="hstok"></div></td>
+            <td><input type="text" inputmode="decimal" id="hsf" data-save aria-label="Your step frequency"><div id="hsfok"></div></td>
+            <td><input type="text" inputmode="decimal" id="hsp" data-save aria-label="Your speed"><div id="hspok"></div></td>
+          </tr></tbody>
+        </table>
+      </div>
+      <button type="button" class="btn teal no-print" id="revealSteps">Fill in the rest and draw the graphs</button>
+      <p class="count no-print" id="stepNote">Have a go by hand first. This button unlocks once you have tried all three answers.</p>
+      <div id="stepAnswers" class="hide" style="margin-top:1rem">
+        <h3 style="color:var(--navy);margin:0 0 .3rem">Part B: both athletes, all sections</h3>
+        <div class="tablewrap"><table id="stepTab"></table></div>
+        <div class="tip"><p><strong>Check:</strong> the speed worked out from the steps should match the average velocity for that section from the split times in Step 2. Two different ways of measuring give the same answer.</p></div>
+        <div class="legend"><span><span class="key" style="border-color:var(--teal)"></span>Athlete A</span><span><span class="key" style="border-color:var(--plum);border-top-style:dashed"></span>Athlete B</span></div>
+        <div class="grid2">
+          <div><span class="lab">Step length</span><svg class="chart" id="chSL" viewBox="0 0 640 320" role="img" aria-label="Step length against distance"></svg></div>
+          <div><span class="lab">Step frequency</span><svg class="chart" id="chSF" viewBox="0 0 640 320" role="img" aria-label="Step frequency against distance"></svg></div>
+          <div><span class="lab">Contact time</span><svg class="chart" id="chCT" viewBox="0 0 640 320" role="img" aria-label="Contact time against distance"></svg></div>
+          <div><span class="lab">Flight time</span><svg class="chart" id="chFT" viewBox="0 0 640 320" role="img" aria-label="Flight time against distance"></svg></div>
+        </div>
+        <p class="count">Each point is plotted at the middle of its section (5, 15 and 25 m).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 INTERPRET -->
+  <section class="panel panel-tab hide" id="p-4" role="tabpanel" aria-labelledby="tab-4">
+    <div class="panel-head" style="background:var(--plum)">
+      <p class="badge" style="color:var(--plum);border-left-color:var(--navy)">Step 4</p>
+      <h2>Interpret and apply</h2>
+    </div>
+    <div class="panel-body">
+      <p class="intro">Numbers on their own are not an analysis. Use your tables and graphs to tell the story, and link it back to the phases from last week.</p>
+      <div class="grid2">
+        <div><label for="q1">Who is faster over 30 m, and by how much?</label><textarea id="q1" data-save></textarea></div>
+        <div><label for="q2">Who is faster over the first 5 m? Why might that be?</label><textarea id="q2" data-save></textarea></div>
+        <div><label for="q3">Where does each athlete stop accelerating? How can you tell from the graphs?</label><textarea id="q3" data-save></textarea></div>
+        <div><label for="q4">Why does B level off earlier? Use step length, contact time and flight time, and link them to the stance phase (braking and propulsion).</label><textarea id="q4" data-save></textarea></div>
+      </div>
+      <div class="card p" style="margin-top:1rem">
+        <h3>Apply: coach Athlete B</h3>
+        <div class="grid2">
+          <div><label for="fault">What would you change?</label><textarea id="fault" data-save placeholder="Name the phase and what you would want to see"></textarea></div>
+          <div>
+            <label for="cue">Your coaching cue (six words or fewer)</label>
+            <input type="text" id="cue" data-save>
+            <p class="count" id="cueCount">0 words</p>
+            <label for="check" style="margin-top:.6rem">Which number would you re-measure to check it worked?</label>
+            <input type="text" id="check" data-save>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 MINI PRESENTATION -->
+  <section class="panel panel-tab hide" id="p-5" role="tabpanel" aria-labelledby="tab-5">
+    <div class="panel-head" style="background:var(--navy)">
+      <p class="badge" style="border-left-color:var(--plum)">Step 5</p>
+      <h2>Mini presentation</h2>
+    </div>
+    <div class="panel-body">
+      <div class="card t">
+        <h3>Presenting (3 minutes, to the others on your table)</h3>
+        <p style="margin:0 0 .4rem">Cover the four parts of the assessment brief, roughly 45 seconds each:</p>
+        <ol style="margin:0;padding-left:1.3rem">
+          <li><strong>Observe:</strong> the phases of the sprint (from last week).</li>
+          <li><strong>Measure:</strong> your key numbers for A and B.</li>
+          <li><strong>Interpret:</strong> what the numbers tell you about their technique.</li>
+          <li><strong>Apply:</strong> your coaching cue for B.</li>
+        </ol>
+      </div>
+      <h3 style="color:var(--navy);margin:1.2rem 0 .3rem">Feedback for the pair you watched</h3>
+      <div class="row" style="margin-bottom:.6rem">
+        <div class="field"><label for="watched">Pair you watched</label><input type="text" id="watched" data-save></div>
+      </div>
+      <div id="crits"></div>
+      <div class="grid2" style="margin-top:.8rem">
+        <div><label for="q-asked">Two questions you asked them</label><textarea id="q-asked" data-save placeholder="e.g. Why did you put the end of acceleration there?"></textarea></div>
+        <div><label for="fb">One thing they did well and one thing to fix</label><textarea id="fb" data-save></textarea></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="actions no-print">
+    <button type="button" class="btn ghost" id="clearBtn">Clear everything</button>
+    <button type="button" class="btn plum" id="printBtn">Save as PDF</button>
+  </div>
+  <p class="count no-print" style="text-align:right">"Save as PDF" opens your print window. Choose <strong>Save as PDF</strong> as the printer. All five steps are included.</p>
+  <footer>SESC02 | Plymouth Marjon University</footer>
+</main>
+
+<script>
+(function(){
+  var KEY = 'sesc02-linear-kinematics-v1';
+  var D = [0,5,10,15,20,25,30];
+  var A = {name:'A', t:[0,1.15,1.92,2.60,3.24,3.86,4.47], col:'#00857e', dash:''};
+  var B = {name:'B', t:[0,1.10,1.92,2.65,3.34,4.01,4.68], col:'#8b3556', dash:'7 5'};
+  var SECT = ['0–10 m','10–20 m','20–30 m'];
+  var STEPS = {
+    A:[{sl:1.25, ct:0.165, ft:0.075},{sl:1.80, ct:0.125, ft:0.112},{sl:2.03, ct:0.110, ft:0.140}],
+    B:[{sl:1.20, ct:0.150, ft:0.080},{sl:1.62, ct:0.140, ft:0.090},{sl:1.75, ct:0.135, ft:0.100}]
+  };
+
+  var state = {};
+  try{ state = JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ state = {}; }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+
+  function r2(x){ return Math.round(x*100)/100; }
+  function f(x, n){ return x.toFixed(n); }
+  function num(v){ v = String(v||'').trim().replace(',', '.'); if(!v) return null; var n = Number(v); return isNaN(n) ? NaN : n; }
+
+  function derive(ath){
+    var v=[], mid=[], a=[], amid=[];
+    for (var i=1;i<D.length;i++){
+      var dt = ath.t[i]-ath.t[i-1];
+      v.push(r2((D[i]-D[i-1])/dt));
+      mid.push((ath.t[i]+ath.t[i-1])/2);
+    }
+    for (var j=1;j<v.length;j++){
+      a.push((v[j]-v[j-1])/(mid[j]-mid[j-1]));
+      amid.push((mid[j]+mid[j-1])/2);
+    }
+    return {v:v, mid:mid, a:a, amid:amid};
+  }
+  var dA = derive(A), dB = derive(B);
+
+  // ---------- charts (plain SVG) ----------
+  function niceStep(range){ var raw = range/5, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw/p; return (m<1.5?1:m<3?2:m<7?5:10)*p; }
+  function chart(svgId, series, o){
+    var svg = document.getElementById(svgId); if(!svg) return;
+    var W=640,H=320,L=62,R=18,T=18,Bm=50, w=W-L-R, h=H-T-Bm;
+    var xmax=o.xmax, ymin=o.ymin||0, ymax=o.ymax;
+    function X(x){ return L + x/xmax*w; } function Y(y){ return T + h - (y-ymin)/(ymax-ymin)*h; }
+    var s = '';
+    var ys = niceStep(ymax-ymin), xs = niceStep(xmax);
+    for (var y=Math.ceil(ymin/ys)*ys; y<=ymax+1e-9; y+=ys){
+      s += '<line x1="'+L+'" x2="'+(L+w)+'" y1="'+Y(y)+'" y2="'+Y(y)+'" stroke="#e6edf1"/>';
+      s += '<text x="'+(L-8)+'" y="'+(Y(y)+4)+'" text-anchor="end" font-size="13" fill="#46535a">'+(+y.toFixed(2))+'</text>';
+    }
+    for (var x=0; x<=xmax+1e-9; x+=xs){
+      s += '<text x="'+X(x)+'" y="'+(T+h+20)+'" text-anchor="middle" font-size="13" fill="#46535a">'+(+x.toFixed(2))+'</text>';
+    }
+    if (ymin<0) s += '<line x1="'+L+'" x2="'+(L+w)+'" y1="'+Y(0)+'" y2="'+Y(0)+'" stroke="#9aa9b1"/>';
+    s += '<line x1="'+L+'" x2="'+L+'" y1="'+T+'" y2="'+(T+h)+'" stroke="#1d1d1b"/>';
+    s += '<line x1="'+L+'" x2="'+(L+w)+'" y1="'+(T+h)+'" y2="'+(T+h)+'" stroke="#1d1d1b"/>';
+    s += '<text x="'+(L+w/2)+'" y="'+(H-8)+'" text-anchor="middle" font-size="14" fill="#003d50" font-weight="bold">'+(o.xlab||'Time (s)')+'</text>';
+    s += '<text transform="translate(16,'+(T+h/2)+') rotate(-90)" text-anchor="middle" font-size="14" fill="#003d50" font-weight="bold">'+o.ylab+'</text>';
+    series.forEach(function(se){
+      var pts = se.x.map(function(xx,i){ return X(xx)+','+Y(se.y[i]); }).join(' ');
+      s += '<polyline points="'+pts+'" fill="none" stroke="'+se.col+'" stroke-width="3" stroke-linejoin="round" stroke-dasharray="'+(se.dash||'')+'"/>';
+      if (se.dots) se.x.forEach(function(xx,i){ s += '<circle cx="'+X(xx)+'" cy="'+Y(se.y[i])+'" r="4.5" fill="'+se.col+'"/>'; });
+    });
+    svg.innerHTML = s;
+  }
+
+  // Step 1 smooth illustrative curve
+  (function(){
+    var vmax=8.3, tau=0.95, ts=[], p=[], v=[], a=[];
+    for (var t=0; t<=4.5001; t+=0.05){
+      ts.push(t); p.push(vmax*(t - tau*(1-Math.exp(-t/tau))));
+      v.push(vmax*(1-Math.exp(-t/tau))); a.push(vmax/tau*Math.exp(-t/tau));
+    }
+    chart('chartPos', [{x:ts,y:p,col:'#003d50'}], {xmax:4.5, ymax:32, ylab:'Position (m)'});
+    chart('chartVel1', [{x:ts,y:v,col:'#003d50'}], {xmax:4.5, ymax:9, ylab:'Velocity (m/s)'});
+    chart('chartAcc1', [{x:ts,y:a,col:'#003d50'}], {xmax:4.5, ymax:9, ylab:'Acceleration (m/s²)'});
+  })();
+  document.getElementById('revealGraphs').addEventListener('click', function(){
+    document.getElementById('graphAnswers').classList.remove('hide'); state.__g = 1; save();
+  });
+
+  // Step 2 hand rows (Athlete A first three splits)
+  var hand = '';
+  for (var i=1;i<=3;i++){
+    hand += '<tr><td class="num">'+D[i-1]+'&ndash;'+D[i]+' m</td><td class="num">'+f(A.t[i-1],2)+' &rarr; '+f(A.t[i],2)+'</td><td>'+(D[i]-D[i-1])+'</td><td>'+f(A.t[i]-A.t[i-1],2)+'</td>' +
+      '<td><input type="text" inputmode="decimal" id="hv'+i+'" data-save aria-label="Your velocity for split '+i+'"></td><td id="hv'+i+'ok"></td>' +
+      '<td><input type="text" inputmode="decimal" id="hm'+i+'" data-save aria-label="Middle time for split '+i+'" placeholder="s"><div id="hm'+i+'ok"></div></td></tr>';
+  }
+  document.getElementById('handRows').innerHTML = hand;
+
+  function mark(el, val, target, tol){
+    if (val === null){ el.innerHTML=''; return false; }
+    if (Number.isNaN(val)){ el.innerHTML='<span class="no">Not a number</span>'; return false; }
+    var good = Math.abs(val-target) <= tol;
+    el.innerHTML = good ? '<span class="ok">&#10003; Correct</span>' : '<span class="no">Not quite, check your working</span>';
+    return true;
+  }
+  function checkHand(){
+    var tried = 0;
+    for (var i=1;i<=3;i++){
+      if (mark(document.getElementById('hv'+i+'ok'), num(document.getElementById('hv'+i).value), dA.v[i-1], 0.02)) tried++;
+      mark(document.getElementById('hm'+i+'ok'), num(document.getElementById('hm'+i).value), dA.mid[i-1], 0.006);
+    }
+    var aTarget = (dA.v[1]-dA.v[0])/(dA.mid[1]-dA.mid[0]);
+    if (mark(document.getElementById('handAccOk'), num(document.getElementById('handAcc').value), aTarget, 0.06)) tried++;
+    var btn = document.getElementById('revealAll');
+    btn.disabled = tried < 4 && !state.__all;
+    btn.style.opacity = btn.disabled ? .5 : 1;
+    btn.style.cursor = btn.disabled ? 'not-allowed' : 'pointer';
+  }
+
+  function fullTable(id, ath, d){
+    var h = '<thead><tr><th>Split</th><th>Time at end (s)</th><th>Velocity (m/s)</th><th>Middle time (s)</th><th>Acceleration (m/s&sup2;)</th></tr></thead><tbody>';
+    for (var i=0;i<d.v.length;i++){
+      h += '<tr><td class="num">'+D[i]+'&ndash;'+D[i+1]+' m</td><td>'+f(ath.t[i+1],2)+'</td><td>'+f(d.v[i],2)+'</td><td>'+f(d.mid[i],3)+'</td><td>'+(i===0?'&ndash;':f(d.a[i-1],2))+'</td></tr>';
+    }
+    document.getElementById(id).innerHTML = h + '</tbody>';
+  }
+  function showAll(){
+    document.getElementById('fullResults').classList.remove('hide');
+    document.getElementById('revealNote').classList.add('hide');
+    fullTable('tabA', A, dA); fullTable('tabB', B, dB);
+    chart('chartPos2', [{x:A.t,y:D,col:A.col,dots:1},{x:B.t,y:D,col:B.col,dash:B.dash,dots:1}], {xmax:5, ymax:32, ylab:'Position (m)'});
+    chart('chartVel2', [{x:[0].concat(dA.mid),y:[0].concat(dA.v),col:A.col,dots:1},{x:[0].concat(dB.mid),y:[0].concat(dB.v),col:B.col,dash:B.dash,dots:1}], {xmax:5, ymax:9, ylab:'Velocity (m/s)'});
+    chart('chartAcc2', [{x:dA.amid,y:dA.a,col:A.col,dots:1},{x:dB.amid,y:dB.a,col:B.col,dash:B.dash,dots:1}], {xmax:5, ymax:3, ylab:'Acceleration (m/s²)'});
+  }
+  document.getElementById('revealAll').addEventListener('click', function(){
+    if (this.disabled) return; state.__all = 1; save(); showAll();
+  });
+
+  // Step 3 steps
+  var sd = '';
+  ['A','B'].forEach(function(k){
+    STEPS[k].forEach(function(s,i){
+      sd += '<tr><td><strong>'+(i===0?k:'')+'</strong></td><td class="num">'+SECT[i]+'</td><td>'+f(s.sl,2)+'</td><td>'+f(s.ct,3)+'</td><td>'+f(s.ft,3)+'</td></tr>';
+    });
+  });
+  document.getElementById('stepData').innerHTML = sd;
+  function secVel(ath, i){ return 10/(ath.t[2*i+2]-ath.t[2*i]); }
+  function checkSteps(){
+    var s = STEPS.A[0], st = s.ct+s.ft, sf = 1/st, tried = 0;
+    if (mark(document.getElementById('hstok'), num(document.getElementById('hst').value), st, 0.002)) tried++;
+    if (mark(document.getElementById('hsfok'), num(document.getElementById('hsf').value), sf, 0.03)) tried++;
+    if (mark(document.getElementById('hspok'), num(document.getElementById('hsp').value), s.sl*sf, 0.06)) tried++;
+    var btn = document.getElementById('revealSteps');
+    btn.disabled = tried < 3 && !state.__steps;
+    btn.style.opacity = btn.disabled ? .5 : 1;
+    btn.style.cursor = btn.disabled ? 'not-allowed' : 'pointer';
+  }
+  function showSteps(){
+    var h = '<thead><tr><th>Athlete</th><th>Section</th><th>Step time (s)</th><th>Step frequency (Hz)</th><th>Speed from steps (m/s)</th><th>Velocity from splits (m/s)</th></tr></thead><tbody>';
+    ['A','B'].forEach(function(k){
+      var ath = k==='A'?A:B;
+      STEPS[k].forEach(function(s,i){
+        var st = s.ct+s.ft, sf = 1/st;
+        h += '<tr><td><strong>'+(i===0?k:'')+'</strong></td><td class="num">'+SECT[i]+'</td><td>'+f(st,3)+'</td><td>'+f(sf,2)+'</td><td>'+f(s.sl*sf,2)+'</td><td>'+f(secVel(ath,i),2)+'</td></tr>';
+      });
+    });
+    document.getElementById('stepTab').innerHTML = h + '</tbody>';
+    document.getElementById('stepAnswers').classList.remove('hide');
+    document.getElementById('stepNote').classList.add('hide');
+    var xs = [5,15,25];
+    function ser(key, fn){ return [
+      {x:xs, y:STEPS.A.map(fn), col:A.col, dots:1},
+      {x:xs, y:STEPS.B.map(fn), col:B.col, dash:B.dash, dots:1}]; }
+    var o = {xmax:30, xlab:'Distance (m)'};
+    chart('chSL', ser('sl', function(s){return s.sl;}), Object.assign({ymax:2.5, ylab:'Step length (m)'}, o));
+    chart('chSF', ser('sf', function(s){return 1/(s.ct+s.ft);}), Object.assign({ymin:3.5, ymax:4.5, ylab:'Step frequency (Hz)'}, o));
+    chart('chCT', ser('ct', function(s){return s.ct;}), Object.assign({ymax:0.2, ylab:'Contact time (s)'}, o));
+    chart('chFT', ser('ft', function(s){return s.ft;}), Object.assign({ymax:0.2, ylab:'Flight time (s)'}, o));
+  }
+  document.getElementById('revealSteps').addEventListener('click', function(){ if (this.disabled) return; state.__steps = 1; save(); showSteps(); });
+
+  // Step 5 criteria
+  var CR = [
+    ['Knowledge &amp; understanding (40%)','Uses position, velocity and acceleration correctly, with units.'],
+    ['Intellectual skills (30%)','Uses the numbers and graphs to explain the movement, not just list them.'],
+    ['Practical &amp; communication (20%)','Clear visuals and a coaching cue an athlete would understand.'],
+    ['Transferable skills (10%)','Answers questions confidently and explains their reasoning.']
+  ];
+  document.getElementById('crits').innerHTML = CR.map(function(c,i){
+    var nm = 'crit'+i;
+    return '<div class="crit"><strong>'+c[0]+'</strong><span>'+c[1]+'</span><div class="rate" role="radiogroup" aria-label="'+c[0].replace('&amp;','and')+'">' +
+      ['Not yet','Nearly','Yes'].map(function(o){ return '<label><input type="radio" name="'+nm+'" value="'+o+'" data-radio>'+o+'</label>'; }).join('') + '</div></div>';
+  }).join('');
+
+  // cue count
+  function cueCount(){
+    var v = document.getElementById('cue').value.trim(), n = v ? v.split(/\s+/).length : 0, el = document.getElementById('cueCount');
+    el.textContent = n + (n===1?' word':' words') + (n>6?' – try to cut it to six or fewer':'');
+    el.className = 'count' + (n>6?' over':'');
+  }
+
+  // save/restore
+  document.querySelectorAll('[data-save]').forEach(function(el){
+    if (state[el.id] !== undefined) el.value = state[el.id];
+    el.addEventListener('input', function(){ state[el.id] = el.value; save(); checkHand(); checkSteps(); cueCount(); });
+  });
+  document.querySelectorAll('[data-radio]').forEach(function(el){
+    if (state[el.name] === el.value) el.checked = true;
+    el.addEventListener('change', function(){ state[el.name] = el.value; save(); });
+  });
+
+  // tabs
+  var tabs = document.querySelectorAll('.tab');
+  function showTab(n){
+    tabs.forEach(function(t,i){ var on=(i+1)===n; t.setAttribute('aria-selected', String(on)); document.getElementById('p-'+(i+1)).classList.toggle('hide', !on); });
+    try{ localStorage.setItem(KEY+'-tab', String(n)); }catch(e){}
+  }
+  tabs.forEach(function(t,i){ t.addEventListener('click', function(){ showTab(i+1); }); });
+
+  document.getElementById('printBtn').addEventListener('click', function(){
+    var cur = 1; tabs.forEach(function(t,i){ if (t.getAttribute('aria-selected')==='true') cur=i+1; });
+    document.querySelectorAll('.panel-tab').forEach(function(p){ p.classList.remove('hide'); });
+    window.print(); showTab(cur);
+  });
+  document.getElementById('clearBtn').addEventListener('click', function(){
+    if (!window.confirm('Clear everything you have typed on this page?')) return;
+    try{ localStorage.removeItem(KEY); }catch(e){}
+    location.reload();
+  });
+
+  if (state.__g) document.getElementById('graphAnswers').classList.remove('hide');
+  if (state.__all) showAll();
+  if (state.__steps) showSteps();
+  checkHand(); checkSteps(); cueCount();
+  var st = 1; try{ st = parseInt(localStorage.getItem(KEY+'-tab'),10)||1; }catch(e){}
+  showTab(st>=1&&st<=5?st:1);
+})();
+</script>
+</body>
+</html>
