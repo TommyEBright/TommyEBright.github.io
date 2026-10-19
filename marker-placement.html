@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marker Placement Explorer</title>
+<style>
+:root{--navy:#003d50;--teal:#00857e;--blue:#0071bc;--berry:#8b3556;--amber:#e09a00;--ink:#1d1d1b;--grey:#5c6b73;--line:#d9e2e7;--tint:#f2faf9;--bg:#f7fbfd;--skin:#e3ecf1;--skinline:#9fb3bf}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+header{background:var(--navy);color:#fff;padding:1.2rem 1.25rem;border-bottom:.35rem solid var(--teal)}
+header h1{margin:0;font-size:1.6em}
+header p{margin:.3rem 0 0;opacity:.9}
+.wrap{max-width:1180px;margin:0 auto;padding:1rem}
+.tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
+.tabs button{flex:1 1 140px;border:0;border-radius:.7rem;padding:.75rem 1rem;font:inherit;font-weight:bold;cursor:pointer;background:#fff;color:var(--navy);border:2px solid var(--line)}
+.tabs button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.panel{display:none}.panel.on{display:block}
+.layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:1rem;align-items:start}
+@media(max-width:860px){.layout{grid-template-columns:1fr}}
+.box{background:#fff;border:1px solid var(--line);border-radius:.9rem;padding:1rem}
+.views{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem}
+@media(max-width:600px){.views{grid-template-columns:1fr}.view{max-width:330px;margin:0 auto .75rem;width:100%}}
+.view h3{margin:0 0 .3rem;font-size:.9em;color:var(--navy);text-align:center}
+.view svg{width:100%;height:auto;display:block;touch-action:manipulation}
+.legend{display:flex;flex-wrap:wrap;gap:.4rem 1rem;margin-top:.75rem;font-size:.88em}
+.legend span{display:inline-flex;align-items:center;gap:.35rem}
+.dot{width:.85rem;height:.85rem;border-radius:50%;display:inline-block;border:2px solid #fff;box-shadow:0 0 0 1px #9aa}
+.mk{cursor:pointer}
+.mk .vis{stroke:#fff;stroke-width:1.6}
+.mk.sel .vis{stroke:#000;stroke-width:2.4}
+.mk.sel .ring{display:block}
+.ring{display:none;fill:none;stroke:#000;stroke-width:1.2;stroke-dasharray:3 2}
+.mk:hover .vis{stroke:#000}
+.mk:focus{outline:none}.mk:focus-visible .ring{display:block}
+.mk.good .vis{fill:#2e9d4f!important}
+.mk.bad .vis{fill:#c62828!important}
+select{width:100%;padding:.55rem;border-radius:.6rem;border:1px solid var(--line);font:inherit;margin-top:.75rem}
+.card h2{margin:.2rem 0 .4rem;color:var(--navy);font-size:1.3em}
+.chip{display:inline-block;font-size:.78em;font-weight:bold;padding:.18rem .6rem;border-radius:1rem;color:#fff;margin-right:.3rem}
+.card h4{margin:1rem 0 .3rem;color:var(--navy)}
+.card ol{margin:0;padding-left:1.3rem}
+.card table{width:100%;border-collapse:collapse;font-size:.9em}
+.card td,.card th{text-align:left;padding:.35rem .4rem;border-bottom:1px solid var(--line);vertical-align:top}
+.card th{background:var(--tint);color:var(--navy)}
+.note{border-left:.35rem solid var(--berry);background:#f8eff3;padding:.6rem .8rem;border-radius:.5rem;margin-top:.8rem}
+.why{border-left:.35rem solid var(--teal);background:var(--tint);padding:.6rem .8rem;border-radius:.5rem;margin-top:.6rem}
+.empty{color:var(--grey)}
+.tip{position:fixed;pointer-events:none;background:var(--navy);color:#fff;font-size:.8em;padding:.25rem .5rem;border-radius:.4rem;display:none;z-index:9}
+.quizbar{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;justify-content:space-between;margin-bottom:.75rem}
+.quizq{font-size:1.15em}
+.quizq strong{color:var(--navy)}
+.btn{border:0;border-radius:.6rem;padding:.6rem 1rem;font:inherit;font-weight:bold;cursor:pointer;background:var(--teal);color:#fff}
+.btn.alt{background:var(--berry)}
+.fb{min-height:1.6em;margin-top:.5rem;font-weight:bold}
+.bars{margin-top:.5rem}
+.brow{margin:.5rem 0;font-size:.9em}.brow>div:first-child{font-weight:bold;color:var(--navy);margin-bottom:2px}
+.bwrap{display:flex;align-items:center;gap:.35rem;font-size:.8em}
+.btrack{display:flex;flex-direction:column;gap:2px}
+.bar{height:14px;border-radius:3px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:1rem}@media(max-width:420px){.cols{grid-template-columns:1fr}}
+h2.sec{color:var(--navy);margin:0 0 .5rem}
+small.ref{color:var(--grey);display:block;margin-top:.4rem}
+footer{color:var(--grey);font-size:.82em;text-align:center;padding:1rem}
+</style>
+</head>
+<body>
+<header>
+  <h1>Marker Placement Explorer</h1>
+  <p>Where each marker goes, how to find it, and why getting it right matters</p>
+</header>
+<div class="wrap">
+  <div class="tabs" role="tablist">
+    <button class="on" data-tab="explore" role="tab">Explore the markers</button>
+    <button data-tab="quiz" role="tab">Quiz: find the marker</button>
+    <button data-tab="why" role="tab">Why it matters</button>
+  </div>
+
+  <!-- EXPLORE -->
+  <section id="explore" class="panel on">
+    <div class="layout">
+      <div class="box">
+        <div class="views" id="viewsExplore"></div>
+        <div class="legend">
+          <span><i class="dot" style="background:var(--navy)"></i>Bony landmark: be precise</span>
+          <span><i class="dot" style="background:var(--berry)"></i>Static trial only: take off before moving</span>
+          <span><i class="dot" style="background:var(--amber)"></i>Tracking marker or cluster: right segment, firmly fixed</span>
+        </div>
+        <select id="jump" aria-label="Choose a marker"></select>
+      </div>
+      <div class="box card" id="card" aria-live="polite">
+        <p class="empty">Tap any marker on the body to see what it is, how to find it and which of our marker sets use it.</p>
+        <p class="empty">Front and back views show the participant as you would see them standing in front of or behind them. The foot is the right foot seen from above.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="quiz" class="panel">
+    <div class="box">
+      <div class="quizbar">
+        <div class="quizq" id="quizQ">Press start. You will be given 10 landmarks to find.</div>
+        <div><span id="quizScore"></span> <button class="btn" id="quizStart">Start</button></div>
+      </div>
+      <div class="views" id="viewsQuiz"></div>
+      <div class="fb" id="quizFb"></div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why" class="panel">
+    <div class="cols">
+      <div class="box">
+        <h2 class="sec">Markers build the skeleton</h2>
+        <p>In the static trial, QTM uses the bony landmark markers to build each segment: where the joint centres are and which way the axes point. Every trial after that uses those axes.</p>
+        <p>So if a knee marker is 1 cm too far forward, the knee&rsquo;s flexion axis is tilted for <strong>every</strong> trial. Part of the big flexion movement then shows up as fake ab/adduction or rotation.</p>
+        <div class="why"><strong>Big angles are robust, small angles are fragile.</strong> Knee flexion barely changes. Knee valgus and rotation can change completely.</div>
+      </div>
+      <div class="box">
+        <h2 class="sec">Same knee, same movement</h2>
+        <p>Researchers moved the knee landmarks by 9&ndash;18 mm and recalculated the angles three times. Nothing else changed.</p>
+        <div class="bars" id="bars"></div>
+        <small class="ref">Data from Van Sint Jan &amp; Della Croce (2005), <em>Clinical Biomechanics</em>, 20, 659&ndash;660 (Table 1). Peak values for each version of the knee axes.</small>
+        <p style="margin-bottom:0">The same paper found that clearer landmark definitions made people palpating the same femur agree more closely. That is why each marker in this tool has a written definition.</p>
+      </div>
+      <div class="box">
+        <h2 class="sec">Six golden rules</h2>
+        <ol>
+          <li>Feel for bone with your fingertips, not your eyes. Ask the participant to move the joint to help.</li>
+          <li>Put the marker on the bone, not on the soft tissue next to it.</li>
+          <li>One person palpates, one checks against the definition.</li>
+          <li>Check left and right look symmetrical (e.g. both knees at the same height).</li>
+          <li>Tight, minimal clothing. Markers on skin, not on loose fabric.</li>
+          <li>Check the static trial in QTM before you record anything else.</li>
+        </ol>
+      </div>
+      <div class="box">
+        <h2 class="sec">Think about it</h2>
+        <ol>
+          <li>Which marker would cause the biggest problem in a CMJ if it was 1 cm out? Why?</li>
+          <li>Why can a tracking marker or cluster sit &ldquo;anywhere sensible&rdquo; on a segment, but an epicondyle marker cannot?</li>
+          <li>The medial knee and ankle markers are taken off after the static trial. How does QTM still know where the knee and ankle are?</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="tip" id="tip"></div>
+<footer>Marker definitions from the Qualisys Sports, CAST and IOR (with Oxford foot) marker set documents, based on Van Sint Jan (2007) <em>Color Atlas of Skeletal Landmark Definitions</em>. Built by Dr Tommy Bright for SESH52.</footer>
+
+<script>
+const COL={landmark:'#003d50',static:'#8b3556',tracking:'#e09a00'};
+const CATNAME={landmark:'Bony landmark',static:'Static trial only',tracking:'Tracking marker'};
+const REGIONS=['Head','Trunk','Arm','Pelvis','Thigh and knee','Shank and ankle','Foot'];
+
+// pts: [view, x, y]  views: F front, B back, T foot (right foot from above)
+// sets: [set, label, note]
+const M=[
+{c:'SGL',n:'Glabella',r:'Head',cat:'landmark',pts:[['F',100,24]],
+ sets:[['Sports','HeadFront',''],['IOR','SGL',''],['CAST','SGL','']],
+ find:['Run a fingertip up the bridge of the nose.','Stop on the flat, smooth bone between the eyebrows.'],
+ err:'Placing it high on the forehead, where the skin moves with frowning.',
+ why:'Helps define which way the head is facing.'},
+{c:'HEAD',n:'Side of the head',r:'Head',cat:'landmark',pts:[['F',82,30],['F',118,30],['B',82,30],['B',118,30]],
+ sets:[['Sports','HeadL, HeadR',''],['IOR','L_HEAD, R_HEAD',''],['CAST','L_HEAD, R_HEAD','']],
+ find:['Find the centre of the ear.','Move straight up to just above the ear.','A tight headband helps the markers stay put.'],
+ err:'Left and right at different heights, which makes the head look tilted.',
+ why:'With the glabella, defines head orientation.'},
+{c:'CV7',n:'7th cervical vertebra',r:'Trunk',cat:'landmark',pts:[['B',100,60]],
+ sets:[['IOR','CV7',''],['CAST','CV7','']],
+ find:['Ask the participant to bend their head forward.','Find the most obvious bump at the base of the neck.','Check: ask them to tip the head back. C6 slides away under your finger, C7 stays.'],
+ err:'Choosing C6 or T1 by mistake.',
+ why:'Top of the thorax. Used to define the trunk and as a reference for the neck.'},
+{c:'TV2',n:'2nd thoracic vertebra',r:'Trunk',cat:'landmark',pts:[['B',100,76]],
+ sets:[['Sports','SpineThoracic2','2nd bump below the biggest bump at the top of the spine'],['IOR','TV2','']],
+ find:['Find C7 first (the biggest bump at the base of the neck).','Count down two spinous processes.'],
+ err:'Starting the count from the wrong vertebra.',
+ why:'Defines the upper part of the trunk.'},
+{c:'MAI',n:'Midpoint between the inferior angles of the scapulae',r:'Trunk',cat:'landmark',pts:[['B',100,128]],
+ sets:[['IOR','MAI','']],
+ find:['Arms relaxed by the sides.','Find the bottom tip of each shoulder blade.','Mark the point on the spine halfway between them.'],
+ err:'Arms raised or shoulders shrugged, which moves the shoulder blades.',
+ why:'Part of the multi-segment trunk model.'},
+{c:'SIA',n:'Scapula inferior angle',r:'Trunk',cat:'landmark',pts:[['B',86,128],['B',114,128]],
+ sets:[['CAST','L_SIA, R_SIA','']],
+ find:['Arms relaxed by the sides.','Follow the inner edge of the shoulder blade down to its lowest tip.'],
+ err:'Forgetting that the shoulder blade slides under the skin when the arm moves. The marker tracks skin, not bone.',
+ why:'Helps define the thorax and the shoulder blade.'},
+{c:'TV10',n:'10th thoracic vertebra',r:'Trunk',cat:'landmark',pts:[['B',100,144]],
+ sets:[['CAST','TV10','']],
+ find:['The bottom tips of the shoulder blades sit at roughly T7 (arms by the sides).','Count down three spinous processes from there.','Or count down from C7 for a more reliable answer.'],
+ err:'Counting from the shoulder blades when the arms are raised.',
+ why:'Lower reference point for the thorax.'},
+{c:'TV12',n:'12th thoracic vertebra (estimate)',r:'Trunk',cat:'landmark',pts:[['B',100,156]],
+ sets:[['Sports','SpineThoracic12','A few cm below the midpoint of the lower tips of the shoulder blades']],
+ find:['Find the bottom tips of the shoulder blades.','Go to the spine and move a few centimetres further down.'],
+ err:'This one is an estimate, so be consistent: same person, same method, every session.',
+ why:'Lower trunk reference in the Sports skeleton.'},
+{c:'LV1',n:'1st lumbar vertebra',r:'Trunk',cat:'landmark',pts:[['B',100,168]],
+ sets:[['IOR','LV1','']],
+ find:['Put your hands on top of the iliac crests. The line between them crosses the spine at about L4.','Count up three spinous processes to L1.'],
+ err:'Counting from a soft-tissue &ldquo;waist&rdquo; rather than the top of the pelvis.',
+ why:'Part of the multi-segment trunk model (lumbar curve).'},
+{c:'LV3',n:'3rd lumbar vertebra',r:'Trunk',cat:'landmark',pts:[['B',100,182]],
+ sets:[['IOR','LV3','']],
+ find:['Find L4 using the line across the tops of the iliac crests.','Go up one spinous process to L3.'],
+ err:'Miscounting. Mark L1, L3 and L5 with a pen first, then check the spacing looks even.',
+ why:'Part of the multi-segment trunk model (lumbar curve).'},
+{c:'LV5',n:'5th lumbar vertebra',r:'Trunk',cat:'landmark',pts:[['B',100,196]],
+ sets:[['IOR','LV5','']],
+ find:['Find L4 using the line across the tops of the iliac crests.','Go down one spinous process to L5.'],
+ err:'Placing it on the sacrum, which is lower and has no clear bump.',
+ why:'Bottom of the lumbar spine.'},
+{c:'SJN',n:'Sternum: jugular notch',r:'Trunk',cat:'landmark',pts:[['F',100,66]],
+ sets:[['IOR','SJN','']],
+ find:['Find the dip at the bottom of the front of the neck, between the inner ends of the collarbones.','Place the marker on the bony top edge of the sternum, not in the soft dip.'],
+ err:'Putting it in the soft hollow, where it sinks and moves with breathing and swallowing.',
+ why:'Top-front reference for the thorax.'},
+{c:'MSN',n:'Upper sternum (chest)',r:'Trunk',cat:'tracking',pts:[['F',100,82]],
+ sets:[['Sports','Chest','Movable: anywhere on the sternum']],
+ find:['Find the flat bone in the middle of the chest.','Place it on the upper part of the sternum.'],
+ err:'Placing it off the sternum on breast or chest muscle.',
+ why:'Helps QTM track the thorax.'},
+{c:'SXS',n:'Sternum: xiphisternal joint',r:'Trunk',cat:'landmark',pts:[['F',100,124]],
+ sets:[['IOR','SXS','']],
+ find:['Follow the sternum down the middle of the chest.','Stop where the flat sternum ends and the small, pointy xiphoid begins (where the ribs meet).'],
+ err:'Going too low onto the soft abdomen.',
+ why:'Bottom-front reference for the thorax.'},
+{c:'SAE',n:'Acromion (top of the shoulder)',r:'Arm',cat:'landmark',pts:[['F',63,72],['F',137,72]],
+ sets:[['Sports','LShoulderTop, RShoulderTop','Top of the shoulder, at the acromioclavicular joint'],['IOR','L_SAE, R_SAE','Acromial edge'],['CAST','L_SAE, R_SAE','Acromial edge']],
+ find:['Follow the collarbone outwards until it meets the flat bone on top of the shoulder.','Sports: place on top, over the joint. CAST and IOR: place on the outer edge of the acromion.'],
+ err:'Placing it down on the deltoid muscle, which moves with every arm movement.',
+ why:'Defines the top of the upper arm and the shoulder. Note the sets define this spot slightly differently.'},
+{c:'HUM',n:'Upper arm tracking marker',r:'Arm',cat:'tracking',pts:[['B',57,116],['B',144,126]],
+ sets:[['Sports','LArm, RArm','Movable: back of the upper arm'],['IOR','L_HUM, R_HUM',''],['CAST','L_HUM, R_HUM','']],
+ find:['Place it on the upper arm, where the cameras can see it.','Put the left and right ones at slightly different heights.'],
+ err:'Identical positions on both arms, which makes it harder for QTM to tell left from right.',
+ why:'Helps QTM track the upper arm. It does not define any axes.'},
+{c:'HLE',n:'Humerus: lateral epicondyle',r:'Arm',cat:'landmark',pts:[['F',41,156],['F',159,156]],
+ sets:[['Sports','LElbowOut, RElbowOut',''],['IOR','L_HLE, R_HLE',''],['CAST','L_HLE, R_HLE','']],
+ find:['Bend the elbow to about 90&deg;.','Feel the bony bump on the outside of the elbow, just above the joint.','Check: turn the palm up and down. If it rotates under your finger, you are on the radial head, so move up.'],
+ err:'Placing it on the radial head, just below.',
+ why:'Defines the elbow axis.'},
+{c:'HME',n:'Humerus: medial epicondyle',r:'Arm',cat:'landmark',pts:[['F',59,156],['F',141,156]],
+ sets:[['Sports','LElbowIn, RElbowIn','']],
+ find:['Feel the large bony bump on the inside of the elbow (the &ldquo;funny bone&rdquo; side).','Place on its most prominent point.'],
+ err:'Pressing on the ulnar nerve just behind it. It is uncomfortable, and the marker ends up too far back.',
+ why:'With the lateral epicondyle, defines the elbow axis.'},
+{c:'RSP',n:'Radius: styloid process',r:'Arm',cat:'landmark',pts:[['F',36,226],['F',164,226]],
+ sets:[['Sports','LWristIn, RWristIn','Thumb side of the wrist'],['IOR','L_RSP, R_RSP',''],['CAST','L_RSP, R_RSP','']],
+ find:['Follow the radius down the thumb side of the forearm.','Stop at the bony tip just before the wrist.'],
+ err:'Going too far onto the small wrist bones.',
+ why:'Defines the wrist and forearm axes.'},
+{c:'USP',n:'Ulna: styloid process',r:'Arm',cat:'landmark',pts:[['F',52,228],['F',148,228]],
+ sets:[['Sports','LWristOut, RWristOut','Little-finger side of the wrist'],['IOR','L_USP, R_USP',''],['CAST','L_USP, R_USP','']],
+ find:['Find the round bump on the little-finger side of the wrist.','The styloid is the small point just past it, towards the little finger.'],
+ err:'Placing it on the round head of the ulna instead of the styloid tip.',
+ why:'With the radial styloid, defines the wrist and forearm axes.'},
+{c:'HM2',n:'Head of the 2nd metacarpal',r:'Arm',cat:'landmark',pts:[['B',44,250],['B',156,250]],
+ sets:[['Sports','LHand2, RHand2','Back of the hand at the base of the index finger'],['IOR','L_HM2, R_HM2',''],['CAST','L_HM2, R_HM2','']],
+ find:['Make a fist: the index knuckle is the head of the 2nd metacarpal.','Relax the hand and place the marker on top of that knuckle.'],
+ err:'Placing it on the finger itself.',
+ why:'Defines the hand segment.'},
+{c:'IAS',n:'Anterior superior iliac spine (ASIS)',r:'Pelvis',cat:'landmark',pts:[['F',82,200],['F',118,200]],
+ sets:[['Sports','WaistLFront, WaistRFront',''],['IOR','L_IAS, R_IAS',''],['CAST','L_IAS, R_IAS','']],
+ find:['Hands on the hips, thumbs pointing forward.','Follow the top of the pelvis forwards until it curves down at the front.','Feel from below, pushing up onto the bony point.'],
+ err:'Placing it too low or too far out on soft tissue. With larger participants, ask them to find it themselves.',
+ why:'Defines the pelvis, and the distance between the two ASIS markers is used to estimate where the hip joint centres are. Errors here move the hip.'},
+{c:'IPS',n:'Posterior superior iliac spine (PSIS)',r:'Pelvis',cat:'landmark',pts:[['B',91,208],['B',109,208]],
+ sets:[['IOR','L_IPS, R_IPS',''],['CAST','L_IPS, R_IPS','']],
+ find:['Look for the two dimples on the lower back.','Feel for the bony point just under each dimple.'],
+ err:'Placing it on the dimple skin rather than the bone, or on waistband fabric.',
+ why:'With the ASIS markers, defines the pelvis and its tilt.'},
+{c:'SACR',n:'Sacrum (midpoint of the two PSIS)',r:'Pelvis',cat:'landmark',pts:[['B',100,214]],
+ sets:[['Sports','WaistBack','Midpoint between the two bony points on the back of the pelvis']],
+ find:['Find both PSIS (under the two dimples).','Place the marker halfway between them.'],
+ err:'Placing it lower down the sacrum, which tilts the pelvis forward in the model.',
+ why:'Defines the back of the pelvis in the Sports skeleton.'},
+{c:'ICT',n:'Side of the pelvis (iliac crest)',r:'Pelvis',cat:'tracking',pts:[['F',71,194],['F',129,194]],
+ sets:[['Sports','WaistL, WaistR','Movable: anywhere on the side of the pelvis']],
+ find:['Find the top of the pelvis on the side of the body.','Place the marker on the bony crest.'],
+ err:'Placing it on the waist above the pelvis, where it moves with the trunk.',
+ why:'Helps QTM track the pelvis.'},
+{c:'FTC',n:'Greater trochanter',r:'Thigh and knee',cat:'landmark',pts:[['F',69,242],['F',131,242]],
+ sets:[['IOR','L_FTC, R_FTC','Lateral side, about one third down from the top']],
+ find:['Place your palm on the outside of the hip.','Ask the participant to turn the foot in and out: the large bony lump rolls under your hand.','Place on the outer side of the trochanter.'],
+ err:'Placing it too high, on the gluteal muscles.',
+ why:'Helps define and track the thigh.'},
+{c:'THC',n:'Thigh cluster (4 markers)',r:'Thigh and knee',cat:'tracking',pts:[['F',68,288],['F',132,288]],cluster:true,
+ sets:[['CAST','L_TH1-4, R_TH1-4','Rigid cluster, static and dynamic']],
+ find:['Strap the cluster firmly to the outside of the thigh.','The lower half of the outer thigh usually wobbles less than the muscle bulk higher up.','Make sure all four markers are visible to the cameras.'],
+ err:'A loose strap, or placing it over the bulk of the quads, so it bounces on landing.',
+ why:'Tracks the thigh during movement. Its exact position does not matter, but it must not move on the leg.'},
+{c:'PAS',n:'Front of the thigh, above the kneecap',r:'Thigh and knee',cat:'tracking',pts:[['F',84,302],['F',116,302]],
+ sets:[['Sports','LThighFrontLow, RThighFrontLow','Movable: on the thigh']],
+ find:['Place it on the front of the thigh, just above the kneecap.'],
+ err:'Placing it on the kneecap itself. The kneecap slides as the knee bends.',
+ why:'Helps QTM track the thigh.'},
+{c:'FLE',n:'Femur: lateral epicondyle',r:'Thigh and knee',cat:'landmark',pts:[['F',67,330],['F',133,330]],
+ sets:[['Sports','LKneeOut, RKneeOut',''],['IOR','L_FLE, R_FLE',''],['CAST','L_FLE, R_FLE','Static trial only in CAST']],
+ find:['Bend the knee to about 90&deg; (participant seated).','Find the joint line: the gap between the femur and the tibia on the outside of the knee.','Move up onto the femur and find the most prominent bony point.'],
+ err:'Too far forward or back, or on the joint line. This tilts the knee flexion axis.',
+ why:'The most important marker in a CMJ. With the medial epicondyle, it sets the knee axis and knee joint centre, so an error here makes flexion &ldquo;leak&rdquo; into knee valgus and rotation. It was also the hardest landmark to palpate consistently in Van Sint Jan &amp; Della Croce (2005).'},
+{c:'FME',n:'Femur: medial epicondyle',r:'Thigh and knee',cat:'static',pts:[['F',97,330],['F',103,330]],
+ sets:[['Sports','LKneeIn, RKneeIn','STATIC'],['IOR','L_FME, R_FME','Static trial only'],['CAST','L_FME, R_FME','Static trial only']],
+ find:['Knee bent, find the joint line on the inside of the knee.','Move up onto the femur and find the most prominent bony point.','Check the medial and lateral markers look level, roughly parallel to the floor.'],
+ err:'Forgetting to remove it before the jumps. It hits the other knee and falls off.',
+ why:'With the lateral epicondyle, defines the knee axis in the static trial. QTM then remembers where it was.'},
+{c:'FAX',n:'Head of the fibula',r:'Shank and ankle',cat:'landmark',pts:[['F',71,346],['F',129,346]],
+ sets:[['IOR','L_FAX, R_FAX','Proximal tip of the head of the fibula']],
+ find:['From the lateral epicondyle, move down past the joint line and slightly back.','Feel for the round knob of the fibula.','Press gently: a nerve wraps around just below it.'],
+ err:'Pressing hard on the nerve, or placing it on the lateral epicondyle.',
+ why:'Helps define the shank.'},
+{c:'TTC',n:'Tibial tuberosity',r:'Shank and ankle',cat:'landmark',pts:[['F',83,344],['F',117,344]],
+ sets:[['IOR','L_TTC, R_TTC','Most anterior point of the tuberosity'],['Sports','LShinFrontHigh, RShinFrontHigh','Movable: front of the shin']],
+ find:['Follow the patellar tendon down from the kneecap.','Find the bony bump where it attaches to the top of the shin.'],
+ err:'Placing it on the soft patellar tendon above the bump.',
+ why:'Defines the front of the shank in IOR. In the Sports set it is a movable tracking marker.'},
+{c:'SKC',n:'Shank cluster (4 markers)',r:'Shank and ankle',cat:'tracking',pts:[['F',72,374],['F',128,374]],cluster:true,
+ sets:[['CAST','L_SK1-4, R_SK1-4','Rigid cluster, static and dynamic']],
+ find:['Strap the cluster firmly to the flat outer side of the shin.','Keep it away from the calf muscle.','Make sure all four markers are visible.'],
+ err:'Placing it over the calf, which wobbles a lot on landing.',
+ why:'Tracks the shank during movement. It must not move on the leg.'},
+{c:'FAL',n:'Lateral malleolus',r:'Shank and ankle',cat:'landmark',pts:[['F',72,416],['F',128,416]],
+ sets:[['Sports','LAnkleOut, RAnkleOut',''],['IOR','L_FAL, R_FAL',''],['CAST','L_FAL, R_FAL','Static trial only in CAST']],
+ find:['Find the bony bump on the outside of the ankle.','Place on its most outward-pointing part, not the bottom tip.'],
+ err:'Placing it on the lower tip, or on the tendons just behind it.',
+ why:'Defines the ankle axis and the bottom of the shank.'},
+{c:'TAM',n:'Medial malleolus',r:'Shank and ankle',cat:'static',pts:[['F',95,412],['F',105,412]],
+ sets:[['IOR','L_TAM, R_TAM','Static trial only'],['CAST','L_TAM, R_TAM','Static trial only']],
+ find:['Find the bony bump on the inside of the ankle.','Place on its most inward-pointing part.'],
+ err:'Leaving it on for movement trials. It gets knocked by the other foot.',
+ why:'With the lateral malleolus, defines the ankle axis in the static trial.'},
+{c:'FCC',n:'Calcaneus (back of the heel)',r:'Foot',cat:'landmark',pts:[['B',84,442],['B',116,442],['T',106,284]],
+ sets:[['Sports','LHeelBack, RHeelBack',''],['IOR','L_FCC, R_FCC','Achilles insertion on the calcaneus'],['CAST','L_FCC, R_FCC','Achilles insertion on the calcaneus'],['Oxford foot','L_FCC, R_FCC','Lower (distal) end of the back of the calcaneus']],
+ find:['Feel the Achilles tendon down to where it joins the heel bone.','Place the marker on the back of the heel at that level.'],
+ err:'Too high on the tendon, or too low so it hits the floor. A heel marker that is too high makes the foot look pointed down.',
+ why:'Defines the back of the foot and its long axis.'},
+{c:'FCC2',n:'Upper back of the calcaneus',r:'Foot',cat:'landmark',pts:[['T',106,270]],
+ sets:[['Oxford foot','L_FCC2, R_FCC2','Upper (proximal) end of the back of the calcaneus']],
+ find:['Find the back of the heel bone.','Place it on the upper part, above the lower heel marker.'],
+ err:'Putting both heel markers at the same height.',
+ why:'With the lower heel marker, defines the rearfoot in the Oxford foot model.'},
+{c:'LCAL',n:'Lateral calcaneus',r:'Foot',cat:'landmark',pts:[['T',150,236]],
+ sets:[['Oxford foot','L_LCAL, R_LCAL','Same height and distance as the medial calcaneus marker']],
+ find:['Find the outer side of the heel bone.','Match its height and position to the medial heel marker.'],
+ err:'Placing it at a different height to the medial one, which tilts the rearfoot.',
+ why:'Defines the rearfoot in the Oxford foot model.'},
+{c:'MCAL',n:'Medial calcaneus',r:'Foot',cat:'static',pts:[['T',60,236]],
+ sets:[['Oxford foot','L_MCAL, R_MCAL','Static trial only']],
+ find:['Find the inner side of the heel bone.','Match its height and position to the lateral heel marker.'],
+ err:'Forgetting to take it off after the static trial.',
+ why:'Defines the rearfoot in the static trial.'},
+{c:'FMT',n:'Tuberosity of the 5th metatarsal',r:'Foot',cat:'landmark',pts:[['T',155,170]],
+ sets:[['Oxford foot','L_FMT, R_FMT','']],
+ find:['Run a finger along the outside edge of the foot from the heel.','About halfway along you will feel a clear bony lump.'],
+ err:'Placing it too far forward along the shaft.',
+ why:'Defines the forefoot in the Oxford foot model.'},
+{c:'FM5',n:'Head of the 5th metatarsal',r:'Foot',cat:'landmark',pts:[['T',146,100]],
+ sets:[['Sports','LForefoot5, RForefoot5','Base of the fifth toe'],['IOR','L_FM5, R_FM5',''],['CAST','L_FM5, R_FM5',''],['Oxford foot','L_FM5, R_FM5','See the Oxford table']],
+ find:['Wiggle the little toe to find where it bends.','Place the marker on top of the foot, just behind that joint, on the outside.'],
+ err:'Placing it on the toe itself.',
+ why:'Defines the width and direction of the forefoot.'},
+{c:'FM2',n:'Head of the 2nd metatarsal',r:'Foot',cat:'landmark',pts:[['T',94,80]],
+ sets:[['Sports','LForefoot2, RForefoot2','Base of the second toe'],['IOR','L_FM2, R_FM2','Static trial only in the IOR lower body set'],['CAST','L_FM2, R_FM2',''],['Oxford foot','L_FM2, R_FM2','']],
+ find:['Wiggle the second toe to find where it bends.','Place the marker on top of the foot, just behind that joint.'],
+ err:'Placing it on the toe itself.',
+ why:'Front end of the foot&rsquo;s long axis (with the heel marker).'},
+{c:'FM1',n:'Head of the 1st metatarsal',r:'Foot',cat:'landmark',pts:[['T',60,98]],
+ sets:[['IOR','L_FM1, R_FM1',''],['CAST','L_FM1, R_FM1',''],['Oxford foot','L_FM1, R_FM1','Static trial only (see the Oxford table)']],
+ find:['Wiggle the big toe to find where it bends.','Place the marker on the top-inside of the foot, just behind that joint.'],
+ err:'Placing it on the big toe, or under the foot where it touches the floor.',
+ why:'Defines the width and direction of the forefoot.'},
+{c:'P1MT',n:'Base of the 1st metatarsal',r:'Foot',cat:'landmark',pts:[['T',60,164]],
+ sets:[['Oxford foot','L_P1MT, R_P1MT','']],
+ find:['Follow the 1st metatarsal back along the inside of the foot.','Stop where it widens at the joint with the midfoot.'],
+ err:'Stopping too early along the shaft.',
+ why:'Defines the forefoot in the Oxford foot model.'},
+{c:'PM6',n:'Proximal phalanx of the big toe',r:'Foot',cat:'landmark',pts:[['T',62,50]],
+ sets:[['Oxford foot','L_PM6, R_PM6','Medial side of the proximal phalanx']],
+ find:['Find the first bone of the big toe, just in front of where it bends.','Place on its inner side.'],
+ err:'Placing it on the toenail or the tip of the toe.',
+ why:'Defines the big toe (hallux) segment in the Oxford foot model.'}
+];
+const BY={};M.forEach(m=>BY[m.c]=m);
+
+const SKIN='fill="#e3ecf1" stroke="#9fb3bf" stroke-width="1.2"';
+function limb(x1,y1,x2,y2,w){return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#9fb3bf" stroke-width="${w+2.4}" stroke-linecap="round"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#e3ecf1" stroke-width="${w}" stroke-linecap="round"/>`}
+function bodySVG(back){
+  let s='';
+  [[1,0],[-1,200]].forEach(([k,o])=>{const X=x=>o+k*x;
+    s+=limb(X(80),232,X(78),330,30)+limb(X(78),330,X(80),418,22)+limb(X(64),76,X(50),158,18)+limb(X(50),158,X(44),228,15);
+    s+=`<ellipse cx="${X(43)}" cy="246" rx="8" ry="13" ${SKIN}/><ellipse cx="${X(80)}" cy="434" rx="11" ry="8" ${SKIN}/>`;
+  });
+  s+=`<path d="M66,68 Q100,58 134,68 L128,190 L72,190 Z" ${SKIN}/>`;
+  s+=`<path d="M72,186 L128,186 L136,236 Q100,250 64,236 Z" ${SKIN}/>`;
+  s+=`<rect x="92" y="48" width="16" height="20" ${SKIN}/><ellipse cx="100" cy="30" rx="18" ry="22" ${SKIN}/>`;
+  if(!back){
+    s+='<g stroke="#b9c8d1" fill="none" stroke-width="1.2"><path d="M70,70 L97,67 M130,70 L103,67"/><line x1="100" y1="68" x2="100" y2="124"/></g>';
+    s+='<ellipse cx="79" cy="321" rx="6" ry="7" fill="#d4e0e7" stroke="#b9c8d1"/><ellipse cx="121" cy="321" rx="6" ry="7" fill="#d4e0e7" stroke="#b9c8d1"/>';
+  }else{
+    s+='<g stroke="#b9c8d1" fill="none" stroke-width="1.2"><line x1="100" y1="56" x2="100" y2="214" stroke-dasharray="3 3"/><path d="M74,86 L95,86 L86,130 Z M126,86 L105,86 L114,130 Z"/></g>';
+  }
+  return s;
+}
+function footSVG(){
+  return `<g ${SKIN}><path d="M50,70 Q48,150 58,232 Q68,290 106,290 Q144,290 152,234 Q160,150 158,90 Q150,62 118,60 Q80,48 50,70 Z"/>
+  <ellipse cx="64" cy="40" rx="15" ry="22"/><ellipse cx="96" cy="38" rx="9" ry="13"/><ellipse cx="117" cy="44" rx="8" ry="11"/><ellipse cx="135" cy="54" rx="7" ry="10"/><ellipse cx="150" cy="68" rx="6" ry="9"/></g>
+  <text x="44" y="190" font-size="9" fill="#5c6b73" transform="rotate(-90 44 190)" text-anchor="middle">big toe side</text>
+  <text x="168" y="170" font-size="9" fill="#5c6b73" transform="rotate(90 168 170)" text-anchor="middle">little toe side</text>
+  <text x="106" y="304" font-size="9" fill="#5c6b73" text-anchor="middle">heel</text>`;
+}
+function markerSVG(v,quiz){
+  let s='';
+  M.forEach(m=>m.pts.forEach(([pv,x,y],i)=>{ if(pv!==v)return;
+    if(pv!=='T'&&y>230) x+= x<100?-4:4; // legs drawn 4 units further apart
+    const c=COL[m.cat];
+    const vis=m.cluster?`<rect class="vis" x="${x-7}" y="${y-9}" width="14" height="18" rx="3" fill="${c}"/><g fill="#fff"><circle cx="${x-3}" cy="${y-5}" r="1.6"/><circle cx="${x+3}" cy="${y-5}" r="1.6"/><circle cx="${x-3}" cy="${y+5}" r="1.6"/><circle cx="${x+3}" cy="${y+5}" r="1.6"/></g>`
+      :`<circle class="vis" cx="${x}" cy="${y}" r="5" fill="${c}"/>`;
+    s+=`<g class="mk" data-c="${m.c}" tabindex="0" role="button" aria-label="${quiz?'marker':m.n}"><circle cx="${x}" cy="${y}" r="11" fill="transparent"/><circle class="ring" cx="${x}" cy="${y}" r="10"/>${vis}</g>`;
+  }));
+  return s;
+}
+function buildViews(el,quiz){
+  const vs=[['F','Front','26 0 148 460',bodySVG(false)],['B','Back','26 0 148 460',bodySVG(true)],['T','Right foot from above','0 0 200 312',footSVG()]];
+  el.innerHTML=vs.map(([k,t,vb,b])=>`<div class="view"><h3>${t}</h3><svg viewBox="${vb}" role="img" aria-label="${t} view">${b}${markerSVG(k,quiz)}</svg></div>`).join('');
+}
+
+// ---------- explore
+const ve=document.getElementById('viewsExplore'), card=document.getElementById('card'), tip=document.getElementById('tip');
+buildViews(ve,false);
+const jump=document.getElementById('jump');
+jump.innerHTML='<option value="">Or choose a marker from the list…</option>'+REGIONS.map(r=>`<optgroup label="${r}">`+M.filter(m=>m.r===r).map(m=>`<option value="${m.c}">${m.n} (${m.c})</option>`).join('')+'</optgroup>').join('');
+function select(code,scroll){
+  const m=BY[code]; if(!m)return;
+  ve.querySelectorAll('.mk').forEach(g=>g.classList.toggle('sel',g.dataset.c===code));
+  jump.value=code;
+  const statics=m.sets.filter(s=>/static/i.test(s[2]));
+  card.innerHTML=`<span class="chip" style="background:${COL[m.cat]}">${CATNAME[m.cat]}</span><span class="chip" style="background:#5c6b73">${m.r}</span>
+  <h2>${m.n}</h2><p style="margin:0;color:#5c6b73">Reference code: <strong>${m.c}</strong></p>
+  <h4>How to find it</h4><ol>${m.find.map(f=>`<li>${f}</li>`).join('')}</ol>
+  <div class="note"><strong>Common mistake:</strong> ${m.err}</div>
+  <div class="why"><strong>Why it matters:</strong> ${m.why}</div>
+  <h4>In our marker sets</h4>
+  <table><tr><th>Set</th><th>Label in QTM</th><th>Notes</th></tr>${m.sets.map(s=>`<tr><td>${s[0]}</td><td><code>${s[1]}</code></td><td>${s[2]||'Static and movement trials'}</td></tr>`).join('')}</table>`;
+  if(scroll && window.matchMedia('(max-width:860px)').matches) card.scrollIntoView({behavior:'smooth',block:'start'});
+}
+ve.addEventListener('click',e=>{const g=e.target.closest('.mk'); if(g) select(g.dataset.c,true)});
+ve.addEventListener('keydown',e=>{const g=e.target.closest('.mk'); if(g&&(e.key==='Enter'||e.key===' ')){e.preventDefault();select(g.dataset.c,true)}});
+jump.addEventListener('change',()=>select(jump.value,true));
+ve.addEventListener('mousemove',e=>{const g=e.target.closest('.mk'); if(g){tip.style.display='block';tip.textContent=BY[g.dataset.c].n;tip.style.left=(e.clientX+12)+'px';tip.style.top=(e.clientY+12)+'px'}else tip.style.display='none'});
+ve.addEventListener('mouseleave',()=>tip.style.display='none');
+
+// ---------- tabs
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id===b.dataset.tab));
+  tip.style.display='none';
+}));
+
+// ---------- quiz
+const vq=document.getElementById('viewsQuiz'), qQ=document.getElementById('quizQ'), qFb=document.getElementById('quizFb'), qS=document.getElementById('quizScore'), qStart=document.getElementById('quizStart');
+buildViews(vq,true);
+let Q=[],qi=0,score=0,tries=0,locked=true;
+const VIEWNAME={F:'front',B:'back',T:'foot'};
+function ask(){
+  vq.querySelectorAll('.mk').forEach(g=>g.classList.remove('good','bad','sel'));
+  if(qi>=Q.length){qQ.innerHTML=`<strong>Finished!</strong> You scored ${score} out of ${Q.length}.`;qFb.textContent='';qS.textContent='';qStart.textContent='Play again';locked=true;return}
+  const m=Q[qi]; tries=0; locked=false;
+  const vlist=[...new Set(m.pts.map(p=>VIEWNAME[p[0]]))].join(' or ');
+  qQ.innerHTML=`${qi+1} of ${Q.length}: tap the <strong>${m.n}</strong> <span style="color:#5c6b73">(${vlist} view)</span>`;
+  qS.textContent=`Score: ${score}`; qFb.textContent='';
+}
+qStart.addEventListener('click',()=>{Q=[...M].sort(()=>Math.random()-.5).slice(0,10);qi=0;score=0;qStart.textContent='Restart';ask()});
+vq.addEventListener('click',e=>{
+  const g=e.target.closest('.mk'); if(!g||locked)return;
+  const m=Q[qi];
+  if(g.dataset.c===m.c){
+    vq.querySelectorAll(`.mk[data-c="${m.c}"]`).forEach(x=>x.classList.add('good'));
+    if(tries===0)score++;
+    qFb.style.color='#2e7d32'; qFb.innerHTML=`Correct. ${m.why}`; locked=true; qS.textContent=`Score: ${score}`;
+    setTimeout(()=>{qi++;ask()},2200);
+  }else{
+    tries++; g.classList.add('bad'); setTimeout(()=>g.classList.remove('bad'),900);
+    qFb.style.color='#c62828';
+    if(tries>=2){
+      vq.querySelectorAll(`.mk[data-c="${m.c}"]`).forEach(x=>x.classList.add('sel'));
+      qFb.innerHTML=`That was the ${BY[g.dataset.c].n}. The correct marker is circled. Tap it to move on.`;
+    }else qFb.innerHTML=`Not quite: that was the ${BY[g.dataset.c].n}. Try again.`;
+  }
+});
+
+// ---------- bars (Van Sint Jan & Della Croce 2005, Table 1)
+const D=[['Peak knee flexion',[75.1,73.6,69.8]],['Peak adduction',[4.1,9.1,25.6]],['Peak internal rotation',[14.9,2.3,22.4]]];
+const BC=['#003d50','#00857e','#8b3556'];
+document.getElementById('bars').innerHTML=D.map(([lab,v])=>`<div class="brow"><div>${lab}</div><div class="btrack">${v.map((x,i)=>`<div class="bwrap"><div class="bar" style="width:${x/80*85}%;background:${BC[i]}"></div>${x}&deg;</div>`).join('')}</div></div>`).join('')
+ +`<div class="legend" style="margin-top:.4rem"><span><i class="dot" style="background:${BC[0]}"></i>Version 1</span><span><i class="dot" style="background:${BC[1]}"></i>Version 2</span><span><i class="dot" style="background:${BC[2]}"></i>Version 3</span></div>`;
+</script>
+</body>
+</html>
