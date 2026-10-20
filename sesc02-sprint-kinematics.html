@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprint Kinematics Tool</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --navy:#003d50; --navy-dk:#002c3a; --teal:#00857e; --teal-dk:#006a64; --teal-soft:#f2faf9;
+    --blue:#0071bc; --blue-soft:#eef6fc; --plum:#8b3556; --plum-dk:#682840;
+    --ink:#1d1d1b; --muted:#56636b; --line:#d9e2e7; --bg:#f7fbfd; --tint:#f8fcfe; --amber-soft:#fff6e5;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55}
+  .page{max-width:1240px;margin:0 auto;padding:16px}
+  header{background:var(--navy);color:#fff;padding:1.6rem 1.75rem;border-radius:.9rem;border-bottom:.4rem solid var(--teal);margin-bottom:1.1rem}
+  .pill{display:inline-block;background:#fff;color:var(--navy);padding:.3rem .8rem;margin:0 0 .55rem;font-size:.85em;font-weight:bold;border-left:.35rem solid var(--blue);border-radius:.65rem}
+  header h1{margin:0 0 .3rem;font-size:1.85em;line-height:1.2}
+  header p{margin:0;opacity:.92}
+  .card{background:#fff;border:1px solid var(--line);border-radius:1rem;overflow:hidden;margin-bottom:1.1rem}
+  .cardhead{color:#fff;padding:.9rem 1.3rem}
+  .cardhead .pill{margin-bottom:.3rem}
+  .cardhead h2{margin:0;font-size:1.25em}
+  .c-teal .cardhead{background:var(--teal)} .c-teal .pill{color:var(--teal);border-left-color:var(--navy)}
+  .c-blue .cardhead{background:var(--blue)} .c-blue .pill{color:var(--blue);border-left-color:var(--navy)}
+  .c-plum .cardhead{background:var(--plum)} .c-plum .pill{color:var(--plum);border-left-color:var(--navy)}
+  .cardbody{padding:1.1rem 1.3rem}
+  .cardbody > :first-child{margin-top:0}
+  details.box{border:1px solid var(--line);border-radius:.75rem;background:#fff}
+  details.box summary{cursor:pointer;padding:.75rem 1rem;background:var(--tint);color:var(--navy);font-weight:bold;border-radius:.75rem}
+  details.box[open] summary{border-bottom:1px solid var(--line);border-radius:.75rem .75rem 0 0}
+  details.box .inner{padding:.9rem 1.1rem}
+  details.box ul{margin:0;padding-left:1.2rem} details.box li{margin-bottom:.3rem}
+  .q{margin:0 0 1rem}
+  .q > label,.q > .lab{display:block;font-weight:bold;color:var(--navy);margin-bottom:.4rem}
+  .q .hint{font-size:.88em;color:var(--muted);margin:.35rem 0 0}
+  input[type=text],input[type=number],select{padding:.5rem .65rem;border:1px solid var(--line);border-radius:.6rem;font:inherit;background:#fff;color:var(--ink)}
+  input[type=text]{width:100%}
+  input[type=number]{width:5.5rem}
+  input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outline-offset:1px}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:.7rem;overflow:hidden;flex-wrap:wrap}
+  .seg button{border:0;background:#fff;padding:.5rem .9rem;font:inherit;cursor:pointer;color:var(--navy)}
+  .seg button + button{border-left:1px solid var(--line)}
+  .seg button.on{background:var(--navy);color:#fff;font-weight:bold}
+  .inline{display:flex;flex-wrap:wrap;gap:.5rem .7rem;align-items:center}
+  .inline > span{color:var(--muted)}
+  button.main,button.sec,button.ghost{font:inherit;cursor:pointer;border-radius:.75rem}
+  button.main{background:var(--navy);color:#fff;border:0;border-bottom:.2rem solid var(--navy-dk);padding:.6rem 1.05rem;font-weight:bold}
+  button.main:hover{background:#00506a}
+  button.sec{background:#fff;color:var(--navy);border:1px solid var(--line);padding:.42rem .8rem}
+  button.sec:hover{border-color:var(--navy)}
+  button.ghost{background:#fff;color:var(--plum);border:2px solid var(--plum);padding:.5rem 1rem;font-weight:bold}
+  .muted{color:var(--muted);font-size:.9em}
+  .tick{color:var(--teal);font-weight:bold}
+  .warnc{color:#9a5b00;font-weight:bold}
+  /* layout */
+  .work{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:1.1rem;align-items:start}
+  .pcol{position:sticky;top:10px;z-index:5}
+  #player{background:#fff;border:1px solid var(--line);border-radius:1rem;padding:.9rem;box-shadow:0 4px 14px rgba(0,61,80,.08)}
+  #stage{position:relative;background:#0b1418;border-radius:.6rem;overflow:hidden;aspect-ratio:16/9;max-height:calc(100vh - 200px);width:100%}
+  #stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+  #overlay{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair}
+  #clickbanner{display:none;position:absolute;top:.6rem;left:50%;transform:translateX(-50%);background:var(--plum);color:#fff;padding:.45rem .9rem;border-radius:.6rem;font-weight:bold;font-size:.92em;z-index:3;text-align:center;max-width:94%;pointer-events:none}
+  #empty{position:absolute;inset:0;display:flex;flex-direction:column;gap:.8rem;align-items:center;justify-content:center;color:#cfe3e8;text-align:center;padding:1rem}
+  .controls{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin-top:.6rem}
+  .controls button{min-width:2.9rem}
+  #scrub{flex:1 1 200px;accent-color:var(--teal)}
+  .readout{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.3rem 1rem;margin-top:.45rem;font-size:.9em;color:var(--muted)}
+  .readout b{color:var(--navy)}
+  kbd{background:#eef2f4;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 .3rem;font-size:.85em}
+  #loupe{position:fixed;width:160px;height:160px;border-radius:50%;border:3px solid var(--teal);pointer-events:none;display:none;z-index:50;overflow:hidden;background:#000;box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  /* next-task box */
+  #next{border:2px solid var(--plum);border-radius:1rem;background:#fff;padding:1rem 1.1rem;margin-bottom:1rem}
+  #next .lbl{font-size:.78em;font-weight:bold;letter-spacing:.05em;text-transform:uppercase;color:var(--plum)}
+  #next h3{margin:.15rem 0 .35rem;color:var(--navy);font-size:1.25em}
+  #next p{margin:0}
+  #next .acts{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.75rem}
+  #next .acts:empty{display:none}
+  .bar{height:.5rem;background:#e7eef1;border-radius:1rem;overflow:hidden;margin:.75rem 0 .2rem}
+  .bar i{display:block;height:100%;background:var(--teal);width:0}
+  /* checklist */
+  ol.marks{list-style:none;margin:0;padding:0}
+  ol.marks li{display:flex;align-items:center;gap:.6rem;padding:.38rem .55rem;border-radius:.55rem;cursor:pointer;font-size:.93em}
+  ol.marks li:hover{background:var(--tint)}
+  ol.marks li.cur{background:#fbf1f5;outline:2px solid var(--plum)}
+  ol.marks li .st{width:1.4rem;height:1.4rem;flex:none;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.78em;color:#fff}
+  ol.marks li.done .st{background:var(--teal);border-color:var(--teal)}
+  ol.marks li .fr{margin-left:auto;color:var(--muted);font-size:.86em;white-space:nowrap}
+  ol.marks li.grp{cursor:default;font-weight:bold;color:var(--navy);padding-top:.75rem;background:none !important;outline:none}
+  /* sequence */
+  .sq{display:grid;grid-template-columns:132px 1fr;gap:.7rem;border:1px solid var(--line);border-radius:.75rem;padding:.6rem;margin-bottom:.6rem;background:#fff}
+  .sq.on{outline:2px solid var(--teal)}
+  .sq img{width:132px;height:auto;border-radius:.4rem;cursor:pointer;display:block;background:#000}
+  .sq .tt{font-weight:bold;color:var(--navy)}
+  .sq .chips{display:flex;flex-wrap:wrap;gap:.3rem;margin:.35rem 0}
+  .sq .chips button{font:inherit;font-size:.82em;padding:.2rem .5rem;border-radius:1rem;border:1px solid var(--teal);background:#fff;color:var(--teal);cursor:pointer}
+  .sq .chips button.has{background:var(--teal);color:#fff}
+  .sq .vals{font-size:.88em}
+  .sq .vals span{display:inline-block;margin-right:.7rem}
+  .sq .vals b{color:var(--navy)}
+  .sq .x{float:right;border:0;background:none;color:var(--plum);cursor:pointer;font:inherit;font-size:.85em}
+  /* results */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:.7rem;margin:.5rem 0 1rem}
+  .rc{border:1px solid var(--line);border-left:.35rem solid var(--teal);border-radius:.7rem;padding:.65rem .8rem;background:#fff}
+  .rc .k{font-size:.82em;color:var(--muted)}
+  .rc .v{font-size:1.4em;font-weight:bold;color:var(--navy);font-variant-numeric:tabular-nums}
+  .rc .u{font-size:.7em;color:var(--muted);font-weight:normal}
+  .rc.b{border-left-color:var(--blue)} .rc.p{border-left-color:var(--plum)}
+  h3.rh{color:var(--navy);margin:1.1rem 0 .3rem;font-size:1.1em}
+  .tw{overflow-x:auto}
+  table.t{border-collapse:collapse;width:100%;font-size:.93em;margin:.3rem 0 .5rem}
+  table.t th,table.t td{border:1px solid var(--line);padding:.42rem .55rem;text-align:left}
+  table.t th{background:var(--tint);color:var(--navy);font-size:.92em}
+  table.t td.n{text-align:right;font-variant-numeric:tabular-nums}
+  table.t tr.avg td{font-weight:bold;background:#fbfdfe}
+  .how{font-size:.88em;color:var(--muted);margin:.2rem 0 .8rem}
+  .formula{font-family:Georgia,'Times New Roman',serif;color:var(--navy);white-space:nowrap}
+  .flags p{margin:.35rem 0;padding:.5rem .75rem;border-radius:.6rem;background:var(--amber-soft);border-left:.3rem solid #d08a00;font-size:.93em}
+  .charts{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:.4rem 0 .8rem}
+  .chart{border:1px solid var(--line);border-radius:.75rem;padding:.6rem;background:#fff}
+  .chart h4{margin:.1rem 0 .3rem;color:var(--navy);font-size:.95em}
+  .chart svg{width:100%;height:auto;display:block}
+  .dl{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-top:1rem}
+  #toast{display:none;position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%);background:var(--plum);color:#fff;padding:.7rem 1.1rem;border-radius:.75rem;font-weight:bold;z-index:60;max-width:92vw;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+  @media (max-width:1000px){.work{grid-template-columns:1fr} .pcol{position:static}}
+  @media (max-width:700px){.charts{grid-template-columns:1fr} header h1{font-size:1.45em}}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <span class="pill">SESC02</span>
+  <h1>Sprint kinematics tool</h1>
+  <p>Practical session | Supports the Practical Assessment (40%)</p>
+</header>
+
+<div class="card">
+  <div class="cardbody" style="padding:.9rem 1.3rem">
+    <details class="box">
+      <summary>Before you film: read this first (2 minutes)</summary>
+      <div class="inner">
+        <ul>
+          <li><b>Film in slow motion</b> (240 fps if your phone has it). Normal video is too jumpy for contact times.</li>
+          <li><b>Film side-on</b> with the phone kept still (on a tripod or a bag), roughly at hip height and pointing straight across the lane.</li>
+          <li><b>Put flat markers on the line the runner runs along</b> (e.g. tape or discs at 0, 5 and 10 m), not cones at the side of the lane. Measure them with a tape. Cones at the side are closer to or further from the camera than the runner, which makes the timing wrong (parallax).</li>
+          <li><b>Lay a scale on the ground</b> in the running lane (e.g. two markers exactly 2 m apart) so the tool can measure step length.</li>
+          <li><b>Don't move or zoom the phone</b> during the run, and make sure you can see at least five foot contacts.</li>
+        </ul>
+      </div>
+    </details>
+  </div>
+</div>
+
+<div class="work">
+  <!-- LEFT: video -->
+  <div class="pcol">
+    <div id="player">
+      <div id="stage">
+        <video id="vid" playsinline muted preload="auto"></video>
+        <canvas id="overlay" aria-label="Video. Click to place a mark"></canvas>
+        <div id="clickbanner"></div>
+        <div id="empty"><div id="emptyMsg">Start by loading your video.<br><span style="font-size:.9em">It stays on your computer. Nothing is uploaded.</span></div><button class="main" id="loadbtn">Load video</button></div>
+      </div>
+      <input type="file" id="file" accept="video/*" hidden>
+      <div class="controls">
+        <button class="sec" id="bPlay">Play</button>
+        <button class="sec" data-step="-10" title="Shift + ←">−10</button>
+        <button class="sec" data-step="-1" title="←">−1</button>
+        <button class="sec" data-step="1" title="→">+1</button>
+        <button class="sec" data-step="10" title="Shift + →">+10</button>
+        <input type="range" id="scrub" min="0" max="0" value="0" step="1" aria-label="Scrub through the video">
+        <select id="rate" aria-label="Playback speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option></select>
+      </div>
+      <div class="readout">
+        <span>Frame <b id="rFrame">–</b> · Real time <b id="rTime">–</b></span>
+        <span><kbd>←</kbd> <kbd>→</kbd> one frame · <kbd>Shift</kbd> for ten <button class="sec" id="changeVid" style="padding:.1rem .5rem;font-size:.9em;margin-left:.4rem;display:none">Change video</button></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: steps -->
+  <div>
+    <div class="card c-teal">
+      <div class="cardhead"><span class="pill">Step 1</span><h2>Set up</h2></div>
+      <div class="cardbody">
+        <div class="q">
+          <label for="names">Name(s)</label>
+          <input type="text" id="names" placeholder="e.g. Sam Jones and Alex Patel">
+        </div>
+        <div class="q">
+          <div class="lab">Press Play at 1×. Does the runner move in slow motion?</div>
+          <div class="seg" id="slowSeg"><button data-v="yes">Yes, it's slow</button><button data-v="no">No, it's real speed</button></div>
+          <div id="capWrap" style="margin-top:.6rem">
+            <div class="inline"><span>Slow-mo setting on the phone:</span><div class="seg" id="capSeg"><button data-v="120">120 fps</button><button data-v="240">240 fps</button></div></div>
+          </div>
+          <p class="hint" id="timingLine"></p>
+        </div>
+        <div class="q">
+          <div class="lab">Your distance markers (on the running line)</div>
+          <div class="inline">
+            <span>First marker at</span><input type="number" id="c0" step="0.5" aria-label="First marker position in metres"><span>m, then one every</span><input type="number" id="cGap" step="0.5" min="0.5" aria-label="Distance between cones in metres"><span>m.</span>
+            <span>How many?</span><select id="cN" aria-label="Number of markers"><option>2</option><option>3</option><option>4</option><option>5</option></select>
+          </div>
+          <p class="hint" id="coneLine"></p>
+        </div>
+        <div class="q">
+          <div class="lab">Foot contacts</div>
+          <div class="inline"><span>How many contacts in a row do you want to mark?</span><select id="nC" aria-label="Number of foot contacts"><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select></div>
+          <p class="hint">More contacts give a better average. You need at least 2 for one step, and 5 or more is best.</p>
+        </div>
+        <div class="q" style="margin-bottom:0">
+          <div class="lab">Ground scale (for step length)</div>
+          <div class="inline">
+            <div class="seg" id="scaleSeg"><button data-v="yes">I have one</button><button data-v="no">No scale, or camera moved</button></div>
+            <span id="scaleLenWrap" class="inline"><span>It is</span><input type="number" id="scaleLen" step="0.1" min="0.2" aria-label="Scale length in metres"><span>m long</span></span>
+          </div>
+          <p class="hint" id="scaleLine"></p>
+        </div>
+        <details class="box" style="margin-top:1rem">
+          <summary>Advanced timing settings (only if your numbers look wrong)</summary>
+          <div class="inner">
+            <p class="muted" style="margin-top:0">The tool reads your file's frame rate automatically. Only change these if your tutor asks you to.</p>
+            <div class="inline"><span>File frame rate</span><input type="number" id="ffps" step="0.01" min="1"><span>fps. Slowed down by</span><input type="number" id="ffac" step="0.01" min="1" placeholder="auto"><span>×</span></div>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="card c-blue">
+      <div class="cardhead"><span class="pill">Step 2</span><h2>Mark the video</h2></div>
+      <div class="cardbody">
+        <div id="next"></div>
+        <details class="box" style="margin-bottom:.9rem">
+          <summary>How to mark accurately</summary>
+          <div class="inner">
+            <ul>
+              <li>Use <kbd>←</kbd> and <kbd>→</kbd> to move one frame at a time, then <b>click on the video</b> to place the mark. A magnifier helps you aim.</li>
+              <li><b>Distance markers:</b> use the <b>hip</b> every time, because it sits close to the centre of mass. Go to the frame where the hip is directly above the marker. Resting the mouse on the marker shows a yellow vertical guide line to help.</li>
+              <li><b>Touchdown</b> is the first frame the foot touches the ground. <b>Toe-off</b> is the first frame the foot is off the ground. Always click the tip of the shoe.</li>
+              <li>Made a mistake? Click any item in the list below to redo it.</li>
+            </ul>
+          </div>
+        </details>
+        <ol class="marks" id="marks"></ol>
+      </div>
+    </div>
+
+    <div class="card c-teal">
+      <div class="cardhead"><span class="pill">Step 3 (optional)</span><h2>Photo sequence and joint angles</h2></div>
+      <div class="cardbody">
+        <p style="margin-top:0">Build a row of still pictures showing key moments of the sprint (like the worked example in the phase analysis), and measure joint angles on them if you want to.</p>
+        <ol style="margin:0 0 .9rem;padding-left:1.3rem">
+          <li><b>Find a moment</b> in the video, e.g. a touchdown. Tip: click any touchdown or toe-off in the Step 2 list to jump straight to it.</li>
+          <li><b>Pick its name</b> below and press <b>Add this frame</b>. A small picture of it appears underneath.</li>
+          <li><b>Measure angles (optional):</b> press a button under the picture (e.g. <i>Knee flexion</i>), then click the body points the tool asks for on the video.</li>
+          <li><b>Repeat</b> for 3–6 moments. The sequence goes into your Word document, or you can download it as a picture.</li>
+        </ol>
+        <div class="inline" style="margin-bottom:.8rem">
+          <select id="seqLabel" aria-label="Name for this frame">
+            <option>Touchdown</option><option>Mid-stance</option><option>Toe-off</option><option>Mid-flight</option><option>Maximum knee flexion (swing)</option><option>Maximum hip flexion (swing)</option><option value="__other">Other…</option>
+          </select>
+          <button class="main" id="addFrame">Add this frame</button>
+        </div>
+        <div id="seqList"></div>
+        <details class="box" style="margin-top:.8rem">
+          <summary>How the angles are measured</summary>
+          <div class="inner">
+            <ul>
+              <li><b>Knee flexion</b> (hip, knee, ankle): 0° is a straight leg and bigger means more bent. It is 180° minus the angle between thigh and shank.</li>
+              <li><b>Hip angle</b> (shoulder, hip, knee): the thigh relative to the line of the trunk. Positive is flexion (thigh in front of the trunk line) and negative is extension (thigh behind it).</li>
+              <li><b>Ankle angle</b> (knee, ankle, tip of the shoe): the angle between shank and foot. Bigger means more plantarflexed (toes pointed), smaller means more dorsiflexed.</li>
+              <li><b>Trunk lean</b> (hip, shoulder): the trunk relative to the vertical. Positive is leaning forward.</li>
+              <li><b>Shank angle</b> (ankle, knee): the shin relative to the vertical. Positive means the knee is ahead of the ankle, negative means the foot is out in front of the knee.</li>
+              <li><b>Touchdown distance</b> (hip, tip of the shoe, needs the ground scale): how far in front of the hip the foot lands. A big positive value usually means more braking.</li>
+              <li>The tool works out which way the runner is going so that "forward" is right. If your hip or trunk angles come out with the wrong sign, set it here: <span class="inline" style="display:inline-flex;margin-top:.3rem"><span class="seg" id="dirSeg"><button data-v="right">Running left → right</button><button data-v="left">Running right → left</button></span> <span id="dirAuto" class="muted"></span></span></li>
+              <li>If you set a ground scale, the tool uses it as the horizontal, so a slightly tilted phone does not change the angles. These are <b>2D angles</b>, so they are only accurate if the camera is side-on to the movement.</li>
+            </ul>
+          </div>
+        </details>
+        <div class="inline" style="margin-top:.9rem"><button class="sec" id="dlSeq">Download photo sequence (image)</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card c-plum" id="resultsCard">
+  <div class="cardhead"><span class="pill">Step 4</span><h2>Results</h2></div>
+  <div class="cardbody">
+    <div id="results"><p class="muted">Your results will appear here as you mark the video.</p></div>
+    <div class="dl">
+      <button class="main" id="dlWord">Download Word document</button>
+      <button class="sec" id="dlCsv">Download data (CSV for Excel)</button>
+      <button class="ghost" id="clearAll">Start again</button>
+    </div>
+  </div>
+</div>
+
+</div>
+<div id="loupe"><canvas id="lc" width="160" height="160"></canvas></div>
+<div id="toast" role="alert"></div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const STORE = "sesc02-sprint-kin-v2";
+
+/* ---------------- state ---------------- */
+function blank(){
+  return {
+    names:"", slow:"yes", capture:240, fileFps:30, fpsDetected:false, factorOverride:null,
+    c0:0, cGap:5, cN:3,
+    useScale:true, scaleLen:2,
+    vidId:null, vidName:"",
+    nContacts:5, dir:"auto",
+    marks:{},         // key -> {frame, x, y}
+    seq:[]            // photo sequence: {frame, label, img, w, h, vw, angles:{type:[[x,y],...]}}
+  };
+}
+let S = blank(), target = null;
+function save(){ try{ localStorage.setItem(STORE, JSON.stringify(S)); }catch(e){} }
+function load(){ try{ const r = localStorage.getItem(STORE); if(r){ const s = JSON.parse(r); if(s && s.marks) S = Object.assign(blank(), s); } }catch(e){} }
+
+/* ---------------- timing ---------------- */
+function factor(){
+  if(S.factorOverride) return S.factorOverride;
+  if(S.slow !== "yes") return 1;
+  // a slow-mo clip saved at a normal frame rate (e.g. 240 captured, 30 fps file) plays capture/file times slower
+  return S.fileFps >= S.capture*0.9 ? 1 : S.capture / S.fileFps;
+}
+const realFps = () => S.fileFps * factor();
+const tReal = frames => frames / realFps();
+
+/* ---------------- the marking plan ---------------- */
+const conePos = i => +(S.c0 + i*S.cGap).toFixed(2);
+function plan(){
+  const P = [];
+  if(S.useScale){
+    P.push({grp:"Ground scale (for step length and angles)"});
+    P.push({key:"scaleA", short:"Scale: first end", title:"Click one end of your ground scale", help:`Click exactly on one end of the ${S.scaleLen} m scale on the ground. Any frame where you can see it will do.`});
+    P.push({key:"scaleB", short:"Scale: other end", title:"Click the other end of your ground scale", help:`Now click exactly on the other end of the ${S.scaleLen} m scale.`});
+  }
+  P.push({grp:"Distance markers (for velocity and acceleration)"});
+  for(let i=0;i<S.cN;i++) P.push({key:`cone${i}`, short:`Hip over marker ${i+1} (${conePos(i)} m)`,
+    title:`Hip directly over marker ${i+1} (${conePos(i)} m)`, help:`Go to the frame where the runner's <b>hip is directly above marker ${i+1}</b>, then click on the hip. <span class="muted">Tip: rest the mouse on the marker and the yellow line shows straight up from it. The hip should sit on that line.</span>`});
+  P.push({grp:`Foot contacts (${S.nContacts} in a row)`});
+  for(let k=1;k<=S.nContacts;k++){
+    P.push({key:`td${k}`, short:`Contact ${k}: touchdown`, title:`Contact ${k}: touchdown`, help:`Go to the <b>first frame the foot touches the ground</b>, then click the tip of the shoe.`});
+    P.push({key:`to${k}`, short:`Contact ${k}: toe-off`, title:`Contact ${k}: toe-off`, help:`Go to the <b>first frame the foot has left the ground</b>, then click the tip of the shoe.`});
+  }
+  return P;
+}
+const items = () => plan().filter(p => p.key);
+const firstUndone = () => items().find(p => !S.marks[p.key]) || null;
+
+/* ---------------- video ---------------- */
+const vid = $("vid"), ov = $("overlay"), stage = $("stage");
+const curFrame = () => Math.floor(vid.currentTime * S.fileFps + 1e-4);
+const lastFrame = () => Math.max(0, Math.floor((vid.duration||0) * S.fileFps) - 1);
+let loaded = false;
+function goFrame(n){ if(!loaded) return; n = Math.max(0, Math.min(lastFrame(), n)); vid.pause(); vid.currentTime = (n + 0.5) / S.fileFps; }
+
+$("loadbtn").onclick = () => $("file").click();
+$("changeVid").onclick = () => $("file").click();
+$("file").onchange = () => {
+  const f = $("file").files[0]; if(!f) return;
+  const id = `${f.name}|${f.size}|${f.lastModified}`;
+  if(S.vidId && S.vidId !== id && Object.keys(S.marks).length){
+    if(!confirm("This is a different video. Your marks belong to the old one, so they will be cleared. Carry on?")){ $("file").value = ""; return; }
+    S.marks = {};
+  }
+  const isNew = S.vidId !== id;
+  S.vidId = id; S.vidName = f.name; loaded = false;
+  vid.src = URL.createObjectURL(f);
+  vid.onerror = () => { $("empty").style.display = "flex"; $("emptyMsg").innerHTML = "Your browser can't play this video file.<br>Try Chrome, Edge or Safari. On iPhone, set Settings &gt; Camera &gt; Formats to <b>Most Compatible</b> and film again."; };
+  vid.onloadedmetadata = async () => {
+    $("empty").style.display = "none"; $("changeVid").style.display = "inline-block";
+    if(isNew || !S.fpsDetected){ const fps = await detectFps(); if(fps){ S.fileFps = fps; S.fpsDetected = true; } else S.fpsDetected = false; }
+    loaded = true; vid.playbackRate = parseFloat($("rate").value);
+    goFrame(0); save(); renderAll();
+  };
+};
+// measure the file's frame rate: play very slowly and time successive frames
+function detectFps(){
+  return new Promise(resolve => {
+    if(!("requestVideoFrameCallback" in HTMLVideoElement.prototype)){ resolve(null); return; }
+    const t = []; let done = false;
+    const finish = () => {
+      if(done) return; done = true; vid.pause();
+      const d = []; for(let i=1;i<t.length;i++){ const x = t[i]-t[i-1]; if(x > 0.0005) d.push(x); }
+      if(d.length < 4){ resolve(null); return; }
+      d.sort((a,b)=>a-b);
+      let fps = 1 / d[Math.floor(d.length*0.25)];
+      for(const c of [24,25,30,48,50,60,90,100,120,240,480,960]) if(Math.abs(fps-c)/c < 0.04){ fps = c; break; }
+      resolve(Math.round(fps*100)/100);
+    };
+    const cb = (now, meta) => { if(done) return; t.push(meta.mediaTime); if(t.length >= 14) finish(); else vid.requestVideoFrameCallback(cb); };
+    vid.currentTime = 0; vid.playbackRate = 0.1;
+    vid.requestVideoFrameCallback(cb);
+    vid.play().catch(() => finish());
+    setTimeout(finish, 6000);
+  });
+}
+$("bPlay").onclick = () => { if(!loaded) return; vid.paused ? vid.play() : vid.pause(); };
+vid.onplay = () => $("bPlay").textContent = "Pause";
+vid.onpause = () => $("bPlay").textContent = "Play";
+document.querySelectorAll("[data-step]").forEach(b => b.onclick = () => goFrame(curFrame() + parseInt(b.dataset.step)));
+$("rate").onchange = () => vid.playbackRate = parseFloat($("rate").value);
+$("scrub").oninput = () => goFrame(parseInt($("scrub").value));
+document.addEventListener("keydown", e => {
+  if(!loaded) return;
+  if(["input","textarea","select"].includes((e.target.tagName||"").toLowerCase())) return;
+  if(e.key === "ArrowRight"){ e.preventDefault(); goFrame(curFrame() + (e.shiftKey?10:1)); }
+  else if(e.key === "ArrowLeft"){ e.preventDefault(); goFrame(curFrame() - (e.shiftKey?10:1)); }
+  else if(e.key === " "){ e.preventDefault(); vid.paused ? vid.play() : vid.pause(); }
+});
+["timeupdate","seeked","loadeddata"].forEach(ev => vid.addEventListener(ev, readout));
+if("requestVideoFrameCallback" in HTMLVideoElement.prototype){ const tick = () => { if(!vid.paused) readout(); vid.requestVideoFrameCallback(tick); }; vid.requestVideoFrameCallback(tick); }
+function readout(){
+  if(!loaded) return;
+  const f = curFrame();
+  $("rFrame").textContent = f; $("rTime").textContent = tReal(f).toFixed(3) + " s";
+  $("scrub").max = lastFrame(); $("scrub").value = f;
+  document.querySelectorAll(".sq").forEach((d,i) => S.seq[i] && d.classList.toggle("on", S.seq[i].frame === f));
+  draw();
+}
+
+/* ---------------- overlay, clicking, magnifier ---------------- */
+function rect(){
+  const r = stage.getBoundingClientRect(), vw = vid.videoWidth||16, vh = vid.videoHeight||9;
+  const sc = Math.min(r.width/vw, r.height/vh), w = vw*sc, h = vh*sc;
+  return {left:r.left+(r.width-w)/2, top:r.top+(r.height-h)/2, sc, ox:(r.width-w)/2, oy:(r.height-h)/2, r};
+}
+const toVid = (cx,cy) => { const c = rect(); return [(cx-c.left)/c.sc, (cy-c.top)/c.sc]; };
+function dot(g,p,r){ g.beginPath(); g.arc(p[0],p[1],r,0,Math.PI*2); g.fill(); }
+function draw(){
+  const c = rect(), dpr = window.devicePixelRatio||1;
+  ov.width = c.r.width*dpr; ov.height = c.r.height*dpr;
+  const g = ov.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,c.r.width,c.r.height);
+  if(!loaded) return;
+  const P = m => [c.ox + m.x*c.sc, c.oy + m.y*c.sc], f = curFrame();
+  g.font = "bold 12px Arial"; g.lineWidth = 2;
+  const A = S.marks.scaleA, B = S.marks.scaleB;
+  if(S.useScale && A){
+    g.fillStyle = g.strokeStyle = "#ffd23f"; dot(g,P(A),4);
+    if(B){ dot(g,P(B),4); g.beginPath(); g.moveTo(...P(A)); g.lineTo(...P(B)); g.stroke(); const m = P({x:(A.x+B.x)/2, y:(A.y+B.y)/2}); g.fillText(`${S.scaleLen} m`, m[0]+5, m[1]-7); }
+  }
+  for(let k=1;k<=S.nContacts;k++){ const td = S.marks[`td${k}`]; if(!td) continue; const p = P(td); g.fillStyle = "#4fd1c5"; dot(g,p,4.5); g.fillStyle = "#fff"; g.fillText(String(k), p[0]-3, p[1]-8); }
+  if(guide){
+    // true vertical through the cursor (uses the ground scale as the horizontal if set, so a tilted phone is corrected)
+    const up = axesRef().up, q = P({x:guide[0], y:guide[1]}), L = 2000;
+    g.save(); g.strokeStyle = "rgba(255,210,63,.95)"; g.lineWidth = 1.5; g.setLineDash([6,4]);
+    g.beginPath(); g.moveTo(q[0] - up[0]*L, q[1] - up[1]*L); g.lineTo(q[0] + up[0]*L, q[1] + up[1]*L); g.stroke(); g.restore();
+  }
+  S.seq.forEach(it => { if(it.frame === f) drawAngles(g, it.angles, P, 1); });
+  if(angMode){ g.fillStyle = "#ffd23f"; angMode.pts.forEach(pt => dot(g, P({x:pt[0], y:pt[1]}), 4)); }
+  Object.values(S.marks).forEach(m => { if(m.frame === f){ g.strokeStyle = "#ff7aa8"; g.beginPath(); g.arc(...P(m), 9, 0, Math.PI*2); g.stroke(); } });
+}
+window.addEventListener("resize", draw);
+
+ov.addEventListener("click", e => {
+  if(!loaded){ $("file").click(); return; }
+  if(angMode){ angleClick(e); return; }
+  const it = target || firstUndone();
+  if(!it){ toast("All marks done. Click an item in the list if you want to redo one."); return; }
+  const [x,y] = toVid(e.clientX, e.clientY);
+  if(x<0 || y<0 || x>vid.videoWidth || y>vid.videoHeight) return;
+  const f = curFrame(), err = orderError(it.key, f);
+  if(err){ toast(err); return; }
+  vid.pause();
+  S.marks[it.key] = {frame:f, x, y};
+  target = null; save(); renderAll();
+});
+// within the cones, and within the foot contacts, every mark must be later in the clip than the one before
+function orderError(key, f){
+  if(key.startsWith("scale")) return null;
+  const isCone = key.startsWith("cone");
+  const ks = items().map(p=>p.key).filter(k => isCone ? k.startsWith("cone") : (k.startsWith("td") || k.startsWith("to")));
+  const i = ks.indexOf(key);
+  for(let j=i-1;j>=0;j--){ const m = S.marks[ks[j]]; if(m){ if(f <= m.frame) return `Frame ${f} isn't after your previous mark (frame ${m.frame}). Move forward through the clip.`; break; } }
+  for(let j=i+1;j<ks.length;j++){ const m = S.marks[ks[j]]; if(m){ if(f >= m.frame) return `Frame ${f} isn't before your next mark (frame ${m.frame}). Check the order.`; break; } }
+  return null;
+}
+const lc = $("lc"), loupe = $("loupe");
+let guide = null;
+ov.addEventListener("mousemove", e => {
+  const it = target || firstUndone();
+  guide = (loaded && !angMode && it && it.key.startsWith("cone")) ? toVid(e.clientX, e.clientY) : null;
+  if(guide || ov._hadGuide) draw(); ov._hadGuide = !!guide;
+  if(!loaded) return;
+  const p = toVid(e.clientX, e.clientY), src = 160/4/rect().sc, g = lc.getContext("2d");
+  g.fillStyle = "#000"; g.fillRect(0,0,160,160);
+  try{ g.drawImage(vid, p[0]-src/2, p[1]-src/2, src, src, 0, 0, 160, 160); }catch(err){}
+  g.strokeStyle = "#ffd23f"; g.lineWidth = 1.5; g.beginPath(); g.moveTo(80,58); g.lineTo(80,102); g.moveTo(58,80); g.lineTo(102,80); g.stroke();
+  loupe.style.display = "block";
+  loupe.style.left = Math.min(window.innerWidth-172, e.clientX + 22) + "px";
+  loupe.style.top = Math.max(8, e.clientY - 180) + "px";
+});
+ov.addEventListener("mouseleave", () => { loupe.style.display = "none"; guide = null; draw(); });
+window.addEventListener("scroll", () => loupe.style.display = "none", {passive:true});
+document.addEventListener("keydown", e => { if(e.key === "Escape" && angMode){ angMode = null; banner(); draw(); } });
+let tt; function toast(t){ const el = $("toast"); el.textContent = t; el.style.display = "block"; clearTimeout(tt); tt = setTimeout(() => el.style.display = "none", 5000); }
+
+/* ---------------- set-up UI ---------------- */
+function seg(id, val, fn){ document.querySelectorAll(`#${id} button`).forEach(b => { b.classList.toggle("on", b.dataset.v == val); b.onclick = () => { fn(b.dataset.v); save(); renderAll(); }; }); }
+function renderSetup(){
+  $("names").value = S.names;
+  seg("slowSeg", S.slow, v => S.slow = v);
+  seg("capSeg", S.capture, v => S.capture = +v);
+  $("capWrap").style.display = S.slow === "yes" ? "" : "none";
+  const ms = 1000/realFps();
+  $("timingLine").innerHTML = !loaded ? "" :
+    `${S.fpsDetected ? "" : "<b>Couldn't read the frame rate, so 30 fps is assumed.</b> "}Each frame is <b>${ms.toFixed(1)} ms</b> of real time. ` +
+    (ms > 10 ? '<span class="warnc">That is too coarse for good contact times. Film in slow motion if you can.</span>' : '<span class="tick">✓ Good.</span>');
+  $("nC").value = S.nContacts;
+  $("c0").value = S.c0; $("cGap").value = S.cGap; $("cN").value = S.cN;
+  $("coneLine").textContent = `So your markers are at ${Array.from({length:S.cN},(_,i)=>conePos(i)+" m").join(", ")}.`;
+  seg("scaleSeg", S.useScale ? "yes" : "no", v => S.useScale = v === "yes");
+  $("scaleLenWrap").style.display = S.useScale ? "" : "none";
+  $("scaleLen").value = S.scaleLen;
+  $("scaleLine").textContent = S.useScale ? "Step length will be measured from the video." : "Step length will be estimated from velocity ÷ step frequency instead.";
+  $("ffps").value = S.fileFps; $("ffac").value = S.factorOverride || "";
+}
+$("names").oninput = e => { S.names = e.target.value; save(); };
+$("c0").onchange = e => { S.c0 = parseFloat(e.target.value)||0; save(); renderAll(); };
+$("cGap").onchange = e => { const v = parseFloat(e.target.value); if(v>0){ S.cGap = v; save(); renderAll(); } };
+$("cN").onchange = e => { S.cN = +e.target.value; for(let i=S.cN;i<5;i++) delete S.marks[`cone${i}`]; save(); renderAll(); };
+$("nC").onchange = e => { S.nContacts = +e.target.value; for(let k=S.nContacts+1;k<=12;k++){ delete S.marks[`td${k}`]; delete S.marks[`to${k}`]; } save(); renderAll(); };
+$("scaleLen").onchange = e => { const v = parseFloat(e.target.value); if(v>0){ S.scaleLen = v; save(); renderAll(); } };
+$("ffps").onchange = e => { const v = parseFloat(e.target.value); if(v>0){ S.fileFps = v; S.fpsDetected = true; save(); renderAll(); } };
+$("ffac").onchange = e => { const v = parseFloat(e.target.value); S.factorOverride = v>0 ? v : null; save(); renderAll(); };
+
+/* ---------------- marking UI ---------------- */
+function renderMarks(){
+  const P = plan(), all = items(), done = all.filter(p => S.marks[p.key]).length, cur = target || firstUndone(), nx = $("next");
+  if(!loaded){
+    nx.innerHTML = `<div class="lbl">Do this next</div><h3>Load your video</h3><p>${done ? `Your marks are saved. Load <b>${xe(S.vidName)}</b> again to carry on.` : "Press <b>Load video</b> on the video panel, then answer the set-up questions in Step 1."}</p>`;
+  } else if(cur){
+    const contact = cur.key.startsWith("td") || cur.key.startsWith("to");
+    nx.innerHTML = `<div class="lbl">Do this next${target ? " (redo)" : ""}</div><h3>${cur.title}</h3><p>${cur.help}</p>
+      <div class="bar"><i style="width:${100*done/all.length}%"></i></div><div class="muted">${done} of ${all.length} marks done</div>
+      <div class="acts">${S.marks[cur.key] ? `<button class="sec" id="goCur">Go to the current mark</button><button class="sec" id="delCur">Remove this mark</button>` : ""}${target ? '<button class="sec" id="cancelT">Cancel</button>' : ""}${contact && !target ? `<button class="sec" id="noMore">I can't see any more contacts</button>` : ""}</div>`;
+    const g = $("goCur"); if(g) g.onclick = () => goFrame(S.marks[cur.key].frame);
+    const d = $("delCur"); if(d) d.onclick = () => { delete S.marks[cur.key]; target = null; save(); renderAll(); };
+    const c = $("cancelT"); if(c) c.onclick = () => { target = null; renderAll(); };
+    const n = $("noMore"); if(n) n.onclick = () => { $("resultsCard").scrollIntoView({behavior:"smooth"}); toast("No problem. Your results use the contacts you have marked. You need at least two touchdowns for one step."); };
+  } else {
+    nx.innerHTML = `<div class="lbl">All done</div><h3>Every mark is in <span class="tick">✓</span></h3><p>Scroll down to see and download your results. Click any item below if you want to redo it.</p><div class="bar"><i style="width:100%"></i></div>`;
+  }
+  const ol = $("marks"); ol.innerHTML = "";
+  P.forEach(p => {
+    const li = document.createElement("li");
+    if(p.grp){ li.className = "grp"; li.textContent = p.grp; ol.appendChild(li); return; }
+    const m = S.marks[p.key];
+    li.className = (m ? "done" : "") + (loaded && cur && cur.key === p.key ? " cur" : "");
+    li.innerHTML = `<span class="st">${m ? "✓" : ""}</span><span>${p.short}</span><span class="fr">${m ? `frame ${m.frame}` : ""}</span>`;
+    li.onclick = () => { if(!loaded) return; target = p; if(m) goFrame(m.frame); renderAll(); $("next").scrollIntoView({block:"nearest", behavior:"smooth"}); };
+    ol.appendChild(li);
+  });
+}
+
+/* ---------------- calculations ---------------- */
+function compute(){
+  const R = {sections:[], accels:[], overall:null, steps:[], sm:null, flags:[]};
+  // split times: the hip passing cones at known positions
+  const cones = []; for(let i=0;i<S.cN;i++){ const m = S.marks[`cone${i}`]; if(m) cones.push({i, pos:conePos(i), t:tReal(m.frame)}); }
+  const t0 = cones.length ? cones[0].t : 0;
+  for(let k=0;k<cones.length-1;k++){
+    const a = cones[k], b = cones[k+1], d = b.pos - a.pos, dt = b.t - a.t;
+    if(dt > 0) R.sections.push({p1:a.pos, p2:b.pos, d, t1:a.t-t0, t2:b.t-t0, dt, v:d/dt, tmid:(a.t+b.t)/2 - t0});
+  }
+  // acceleration: change in average velocity over the time between section mid-points
+  for(let k=0;k<R.sections.length-1;k++){
+    const s1 = R.sections[k], s2 = R.sections[k+1], dt = s2.tmid - s1.tmid;
+    if(s1.p2 === s2.p1 && dt > 0) R.accels.push({s1, s2, dv:s2.v-s1.v, dt, a:(s2.v-s1.v)/dt});
+  }
+  if(cones.length >= 2){ const a = cones[0], b = cones[cones.length-1]; if(b.t > a.t) R.overall = {p1:a.pos, p2:b.pos, d:b.pos-a.pos, dt:b.t-a.t, v:(b.pos-a.pos)/(b.t-a.t)}; }
+  // steps
+  const A = S.marks.scaleA, B = S.marks.scaleB;
+  const scaleOK = S.useScale && A && B && Math.hypot(B.x-A.x, B.y-A.y) > 5;
+  const ux = scaleOK ? B.x-A.x : 0, uy = scaleOK ? B.y-A.y : 0, L = Math.hypot(ux,uy), pxm = scaleOK ? L/S.scaleLen : null;
+  for(let k=1;k<=S.nContacts;k++){
+    const td = S.marks[`td${k}`], to = S.marks[`to${k}`], td2 = S.marks[`td${k+1}`];
+    if(!td) continue;
+    const s = {n:k, ct:null, ft:null, stepT:null, sf:null, sl:null, est:false};
+    if(to && to.frame > td.frame) s.ct = tReal(to.frame - td.frame);
+    if(td2 && td2.frame > td.frame){
+      s.stepT = tReal(td2.frame - td.frame); s.sf = 1/s.stepT;
+      if(to && td2.frame > to.frame) s.ft = tReal(td2.frame - to.frame);
+      if(scaleOK) s.sl = Math.abs(((td2.x-td.x)*ux + (td2.y-td.y)*uy) / L) / pxm;   // distance along the line of the scale, i.e. along the lane
+      else if(R.overall){ s.sl = R.overall.v * s.stepT; s.est = true; }              // v = SL × SF, so SL = v ÷ SF
+    }
+    if(s.ct !== null || s.stepT !== null) R.steps.push(s);
+  }
+  const mean = a => { const x = a.filter(v => v !== null && isFinite(v)); return x.length ? x.reduce((p,q)=>p+q,0)/x.length : null; };
+  if(R.steps.length){
+    const sm = {ct:mean(R.steps.map(s=>s.ct)), ft:mean(R.steps.map(s=>s.ft)), stepT:mean(R.steps.map(s=>s.stepT)), sl:mean(R.steps.map(s=>s.sl)), est:R.steps.some(s=>s.est)};
+    sm.sf = sm.stepT ? 1/sm.stepT : null;
+    sm.vStep = (sm.sl && sm.sf && !sm.est) ? sm.sl*sm.sf : null;
+    R.sm = sm;
+  }
+  // sense checks
+  const vs = R.sections.map(s => s.v), sm = R.sm;
+  if(vs.some(v => v > 11.5)) R.flags.push("A velocity above 11.5 m/s is faster than world-class sprinters. Check the slow-motion answer in Step 1 and your marker distances.");
+  if(vs.some(v => v > 0 && v < 1.5)) R.flags.push("A velocity under 1.5 m/s is walking pace. Check the slow-motion answer in Step 1.");
+  if(sm){
+    if(sm.ct !== null && (sm.ct < 0.06 || sm.ct > 0.4)) R.flags.push(`A contact time of ${sm.ct.toFixed(3)} s is outside the normal range for running (about 0.08–0.25 s). Check your touchdown and toe-off frames.`);
+    if(sm.sf !== null && (sm.sf > 6 || sm.sf < 2)) R.flags.push(`A step frequency of ${sm.sf.toFixed(2)} Hz is unusual (most people sprint at about 3.5–5 Hz). Have you skipped a contact?`);
+    if(sm.sl !== null && (sm.sl > 2.9 || sm.sl < 0.4)) R.flags.push(`A step length of ${sm.sl.toFixed(2)} m is unusual. Check your scale length and that you clicked the tip of the shoe each time.`);
+    if(sm.vStep && R.overall && Math.abs(sm.vStep - R.overall.v)/R.overall.v > 0.15) R.flags.push(`Step length × step frequency gives ${sm.vStep.toFixed(2)} m/s, but your markers give ${R.overall.v.toFixed(2)} m/s. These should be close if the steps happened between your markers. A big gap usually means a scale or marking error.`);
+  }
+  if(1000/realFps() > 10 && R.steps.length) R.flags.push(`Each frame is ${(1000/realFps()).toFixed(0)} ms, so each contact and flight time could be out by that much.`);
+  return R;
+}
+
+/* ---------------- results UI ---------------- */
+const fmt = (x,d=2) => (x===null || x===undefined || !isFinite(x)) ? "–" : x.toFixed(d);
+const card = (k,v,u,c="") => `<div class="rc ${c}"><div class="k">${k}</div><div class="v">${v} <span class="u">${u}</span></div></div>`;
+function renderResults(){
+  const R = compute(), el = $("results");
+  if(!R.sections.length && !R.steps.length && !S.seq.some(it => Object.keys(it.angles).length)){ el.innerHTML = '<p class="muted">Your results will appear here as you mark the video.</p>'; return; }
+  let h = "";
+  if(R.sections.length){
+    const am = R.accels.length ? R.accels.reduce((a,b)=>a+b.a,0)/R.accels.length : null;
+    h += `<h3 class="rh" style="margin-top:0">Velocity and acceleration</h3><div class="cards">`;
+    if(R.overall) h += card(`Average velocity ${R.overall.p1}–${R.overall.p2} m`, fmt(R.overall.v), "m/s");
+    if(R.sections.length > 1) h += card("Fastest section", fmt(Math.max(...R.sections.map(s=>s.v))), "m/s", "b");
+    if(am !== null) h += card(am < 0 ? "Deceleration" : "Acceleration", fmt(Math.abs(am)), "m/s²", "p");
+    h += `</div><div class="tw"><table class="t"><thead><tr><th>Section</th><th>Distance (m)</th><th>Time (s)</th><th>Velocity (m/s)</th></tr></thead><tbody>`;
+    R.sections.forEach(s => h += `<tr><td>${s.p1}–${s.p2} m</td><td class="n">${fmt(s.d)}</td><td class="n">${fmt(s.dt,3)}</td><td class="n"><b>${fmt(s.v)}</b></td></tr>`);
+    h += `</tbody></table></div><p class="how">Velocity = distance ÷ time <span class="formula">(v = Δd ÷ Δt)</span>. It is the <i>average</i> velocity across each section.</p>`;
+    if(R.accels.length){
+      h += `<div class="tw"><table class="t"><thead><tr><th>From section → to section</th><th>Change in velocity (m/s)</th><th>Time between section mid-points (s)</th><th>Acceleration (m/s²)</th></tr></thead><tbody>`;
+      R.accels.forEach(a => h += `<tr><td>${a.s1.p1}–${a.s1.p2} m → ${a.s2.p1}–${a.s2.p2} m</td><td class="n">${fmt(a.dv)}</td><td class="n">${fmt(a.dt,3)}</td><td class="n"><b>${fmt(a.a)}</b></td></tr>`);
+      h += `</tbody></table></div><p class="how">Acceleration = change in velocity ÷ time <span class="formula">(a = Δv ÷ Δt)</span>. Each average velocity belongs to the middle of its section, so Δt is the time between the section mid-points. A negative value means the runner is slowing down.</p>`;
+    } else h += `<p class="how">Use three or more markers to get acceleration.</p>`;
+    h += `<div class="charts"><div class="chart"><h4>Displacement–time</h4>${chartDisp(R)}</div><div class="chart"><h4>Velocity–time</h4>${chartVel(R)}</div></div>`;
+  }
+  if(R.steps.length){
+    const sm = R.sm;
+    h += `<h3 class="rh">Steps</h3><div class="cards">${card("Contact time", fmt(sm.ct,3), "s")}${card("Flight time", fmt(sm.ft,3), "s")}${card("Step frequency", fmt(sm.sf), "Hz", "b")}${card("Step length" + (sm.est ? " (estimated)" : ""), fmt(sm.sl), "m", "b")}</div>`;
+    h += `<div class="tw"><table class="t"><thead><tr><th>Contact</th><th>Contact time (s)</th><th>Flight time (s)</th><th>Step time (s)</th><th>Step frequency (Hz)</th><th>Step length (m)</th></tr></thead><tbody>`;
+    R.steps.forEach(s => h += `<tr><td>${s.n}</td><td class="n">${fmt(s.ct,3)}</td><td class="n">${fmt(s.ft,3)}</td><td class="n">${fmt(s.stepT,3)}</td><td class="n">${fmt(s.sf)}</td><td class="n">${fmt(s.sl)}</td></tr>`);
+    h += `<tr class="avg"><td>Average</td><td class="n">${fmt(sm.ct,3)}</td><td class="n">${fmt(sm.ft,3)}</td><td class="n">${fmt(sm.stepT,3)}</td><td class="n">${fmt(sm.sf)}</td><td class="n">${fmt(sm.sl)}</td></tr></tbody></table></div>`;
+    h += `<p class="how"><b>Contact time</b> = toe-off − touchdown. <b>Flight time</b> = next touchdown − toe-off. <b>Step time</b> = one touchdown to the next, and <b>step frequency</b> = 1 ÷ step time. <b>Step length</b> = distance from one touchdown to the next${sm.est ? `, <b>estimated</b> here as velocity ÷ step frequency because there was no scale. This assumes velocity stayed the same over these steps.` : ", measured along the line of your ground scale."}</p>`;
+    if(sm.vStep && R.overall) h += `<p class="how"><b>Check:</b> step length × step frequency = <b>${fmt(sm.vStep)} m/s</b>, and your markers gave <b>${fmt(R.overall.v)} m/s</b>. These should be close, because velocity = step length × step frequency.</p>`;
+  }
+  const angRows = S.seq.filter(it => Object.keys(it.angles).length);
+  if(angRows.length){
+    const types = Object.keys(ANG).filter(t => angRows.some(it => it.angles[t]));
+    h += `<h3 class="rh">Joint and segment angles</h3><div class="tw"><table class="t"><thead><tr><th>Frame</th>${types.map(t=>`<th>${ANG[t].name}</th>`).join("")}</tr></thead><tbody>`;
+    angRows.forEach(it => h += `<tr><td>${S.seq.indexOf(it)+1}. ${xe(it.label)}</td>${types.map(t => `<td class="n">${it.angles[t] ? fmtAng(t, angleValue(t, it.angles[t])) : "–"}</td>`).join("")}</tr>`);
+    h += `</tbody></table></div><p class="how">2D angles measured on the video. Knee flexion: 0° = straight. Hip: + flexion, − extension. Trunk lean and shank angle are relative to the vertical, + = forward. Touchdown distance: + = foot lands ahead of the hip.</p>`;
+  }
+  h += R.flags.length ? `<h3 class="rh">Sense check</h3><div class="flags">${R.flags.map(f=>`<p>${f}</p>`).join("")}</div>` : `<p><span class="tick">✓</span> No obvious problems with these numbers.</p>`;
+  el.innerHTML = h;
+}
+function axes(xmax, ymin, ymax, xl, yl){
+  const W=420,H=250,L=48,B=36,T=12,Rr=12, pw=W-L-Rr, ph=H-T-B;
+  const X = x => L + (x/xmax)*pw, Y = y => T + ph - ((y-ymin)/(ymax-ymin))*ph;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${yl} against ${xl}">`;
+  const nice = (lo,hi,n) => { const r=(hi-lo)/n, p=Math.pow(10,Math.floor(Math.log10(r))), m=[1,2,2.5,5,10].find(k=>k*p>=r)*p; const o=[]; for(let v=Math.ceil(lo/m)*m; v<=hi+1e-9; v+=m) o.push(+v.toFixed(6)); return o; };
+  nice(ymin,ymax,4).forEach(v => s += `<line x1="${L}" x2="${W-Rr}" y1="${Y(v)}" y2="${Y(v)}" stroke="#e6ecef"/><text x="${L-6}" y="${Y(v)+4}" font-size="11" text-anchor="end" fill="#56636b">${v}</text>`);
+  nice(0,xmax,4).forEach(v => s += `<text x="${X(v)}" y="${H-B+16}" font-size="11" text-anchor="middle" fill="#56636b">${v}</text>`);
+  s += `<line x1="${L}" x2="${L}" y1="${T}" y2="${T+ph}" stroke="#9aa7ae"/><line x1="${L}" x2="${W-Rr}" y1="${T+ph}" y2="${T+ph}" stroke="#9aa7ae"/>`;
+  s += `<text x="${L+pw/2}" y="${H-4}" font-size="11.5" text-anchor="middle" fill="#003d50">${xl}</text><text transform="translate(13 ${T+ph/2}) rotate(-90)" font-size="11.5" text-anchor="middle" fill="#003d50">${yl}</text>`;
+  return {s, X, Y};
+}
+function chartDisp(R){
+  const pts = [[R.sections[0].t1, R.sections[0].p1], ...R.sections.map(s=>[s.t2, s.p2])];
+  const xmax = Math.max(...pts.map(p=>p[0]))*1.05 || 1, ys = pts.map(p=>p[1]);
+  const a = axes(xmax, Math.min(0,...ys), Math.max(...ys)*1.05 || 1, "Time (s)", "Displacement (m)");
+  return a.s + `<polyline fill="none" stroke="#0071bc" stroke-width="2.5" points="${pts.map(p=>`${a.X(p[0])},${a.Y(p[1])}`).join(" ")}"/>` + pts.map(p=>`<circle cx="${a.X(p[0])}" cy="${a.Y(p[1])}" r="4.5" fill="#0071bc"/>`).join("") + `</svg>`;
+}
+function chartVel(R){
+  const xmax = Math.max(...R.sections.map(s=>s.t2))*1.05 || 1, a = axes(xmax, 0, Math.max(...R.sections.map(s=>s.v))*1.15 || 1, "Time (s)", "Velocity (m/s)");
+  let s = a.s + R.sections.map(q=>`<line x1="${a.X(q.t1)}" x2="${a.X(q.t2)}" y1="${a.Y(q.v)}" y2="${a.Y(q.v)}" stroke="#abd6d9" stroke-width="6" stroke-linecap="round"/>`).join("");
+  s += `<polyline fill="none" stroke="#00857e" stroke-width="2.5" points="${R.sections.map(q=>`${a.X(q.tmid)},${a.Y(q.v)}`).join(" ")}"/>` + R.sections.map(q=>`<circle cx="${a.X(q.tmid)}" cy="${a.Y(q.v)}" r="4.5" fill="#00857e"/>`).join("");
+  return s + `</svg><p class="muted" style="margin:.3rem 0 0;font-size:.8em">Bars show each section. Dots sit at the section mid-points, and the slope between dots is the acceleration.</p>`;
+}
+
+/* ---------------- export ---------------- */
+const xe = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+function download(blob, name){ const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
+$("dlCsv").onclick = () => {
+  const R = compute(), f = (x,d) => x === null ? "" : x.toFixed(d);
+  const L = [["SESC02 sprint kinematics"],["Name(s)", S.names],["Real time per frame (ms)", (1000/realFps()).toFixed(2)],[],["Section","Distance (m)","Time (s)","Velocity (m/s)","Mid-point time (s)"]];
+  R.sections.forEach(s => L.push([`${s.p1}-${s.p2} m`, s.d.toFixed(2), s.dt.toFixed(3), s.v.toFixed(3), s.tmid.toFixed(3)]));
+  L.push([],["From section","To section","Change in velocity (m/s)","Time between mid-points (s)","Acceleration (m/s2)"]);
+  R.accels.forEach(a => L.push([`${a.s1.p1}-${a.s1.p2} m`, `${a.s2.p1}-${a.s2.p2} m`, a.dv.toFixed(3), a.dt.toFixed(3), a.a.toFixed(3)]));
+  L.push([],["Contact","Contact time (s)","Flight time (s)","Step time (s)","Step frequency (Hz)","Step length (m)","Step length method"]);
+  R.steps.forEach(s => L.push([s.n, f(s.ct,3), f(s.ft,3), f(s.stepT,3), f(s.sf,3), f(s.sl,3), s.sl === null ? "" : (s.est ? "estimated" : "measured")]));
+  if(S.seq.length){
+    L.push([],["Frame","Label","Time (s)", ...Object.values(ANG).map(a => `${a.name} (${a.unit === "m" ? "m" : "deg"})`)]);
+    S.seq.forEach((it,i) => L.push([it.frame, it.label, tReal(it.frame - S.seq[0].frame).toFixed(3), ...Object.keys(ANG).map(t => { const v = it.angles[t] ? angleValue(t, it.angles[t]) : null; return v === null ? "" : v.toFixed(t === "tdd" ? 3 : 1); })]));
+  }
+  const txt = L.map(r => r.map(c => { c = String(c ?? ""); return /[",\n]/.test(c) ? `"${c.replace(/"/g,'""')}"` : c; }).join(",")).join("\r\n");
+  download(new Blob(["﻿" + txt], {type:"text/csv"}), "Sprint kinematics data.csv");
+};
+function wP(text, o={}){
+  const sz = o.sz || 20;
+  return `<w:p><w:pPr><w:spacing w:before="${o.before||0}" w:after="${o.after ?? 80}"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/>${o.b?"<w:b/>":""}${o.i?"<w:i/>":""}${o.color?`<w:color w:val="${o.color}"/>`:""}<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/></w:rPr><w:t xml:space="preserve">${xe(text)}</w:t></w:r></w:p>`;
+}
+function wTable(head, rows, widths){
+  const cell = (t, w, hd, b) => `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${hd ? '<w:shd w:val="clear" w:color="auto" w:fill="EFEFEF"/>' : ''}<w:tcMar><w:top w:w="60" w:type="dxa"/><w:bottom w:w="60" w:type="dxa"/><w:left w:w="90" w:type="dxa"/><w:right w:w="90" w:type="dxa"/></w:tcMar></w:tcPr><w:p><w:pPr><w:spacing w:after="0"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/>${hd||b ? '<w:b/>' : ''}<w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">${xe(t)}</w:t></w:r></w:p></w:tc>`;
+  const bd = `<w:tblBorders>${["top","left","bottom","right","insideH","insideV"].map(s=>`<w:${s} w:val="single" w:sz="6" w:space="0" w:color="000000"/>`).join("")}</w:tblBorders>`;
+  return `<w:tbl><w:tblPr><w:tblW w:w="${widths.reduce((a,b)=>a+b,0)}" w:type="dxa"/>${bd}<w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid>${widths.map(w=>`<w:gridCol w:w="${w}"/>`).join("")}</w:tblGrid><w:tr><w:trPr><w:tblHeader/></w:trPr>${head.map((h,i)=>cell(h,widths[i],true)).join("")}</w:tr>${rows.map(r=>`<w:tr>${r.map((c,i)=>cell(c.t ?? c, widths[i], false, c.b)).join("")}</w:tr>`).join("")}</w:tbl>` + wP("", {after:60});
+}
+$("dlWord").onclick = async () => {
+  if(typeof JSZip === "undefined"){ toast("The export library didn't load. Check your connection and refresh."); return; }
+  const R = compute(); let b = "";
+  b += wP("Sprint kinematic analysis", {sz:32, b:true, color:"003D50", after:60});
+  b += wP("SESC02 Mechanics of Human Movement", {sz:20, color:"56636B", after:160});
+  if(S.names.trim()) b += wP(`Name(s): ${S.names.trim()}`, {after:60});
+  if(S.vidName) b += wP(`Video: ${S.vidName}. Each frame = ${(1000/realFps()).toFixed(1)} ms of real time.`, {sz:18, color:"56636B"});
+  if(R.sections.length){
+    b += wP("Velocity and acceleration", {sz:24, b:true, color:"003D50", before:200});
+    b += wTable(["Section","Distance (m)","Time (s)","Velocity (m/s)"], R.sections.map(s=>[`${s.p1}–${s.p2} m`, fmt(s.d), fmt(s.dt,3), {t:fmt(s.v), b:true}]), [2400,2300,2300,2400]);
+    if(R.accels.length) b += wTable(["From → to section","Change in velocity (m/s)","Time between mid-points (s)","Acceleration (m/s²)"], R.accels.map(a=>[`${a.s1.p1}–${a.s1.p2} → ${a.s2.p1}–${a.s2.p2} m`, fmt(a.dv), fmt(a.dt,3), {t:fmt(a.a), b:true}]), [3000,2100,2300,2000]);
+    if(R.overall) b += wP(`Average velocity ${R.overall.p1}–${R.overall.p2} m: ${fmt(R.overall.v)} m/s.`);
+    b += wP("Velocity = distance ÷ time for each section. Acceleration = change in velocity ÷ time between section mid-points.", {sz:17, i:true, color:"56636B"});
+  }
+  if(R.steps.length){
+    const sm = R.sm;
+    b += wP("Steps", {sz:24, b:true, color:"003D50", before:200});
+    const rows = R.steps.map(s => [String(s.n), fmt(s.ct,3), fmt(s.ft,3), fmt(s.stepT,3), fmt(s.sf), fmt(s.sl)]);
+    rows.push([{t:"Average",b:true},{t:fmt(sm.ct,3),b:true},{t:fmt(sm.ft,3),b:true},{t:fmt(sm.stepT,3),b:true},{t:fmt(sm.sf),b:true},{t:fmt(sm.sl),b:true}]);
+    b += wTable(["Contact","Contact time (s)","Flight time (s)","Step time (s)","Step frequency (Hz)","Step length (m)"], rows, [1300,1650,1600,1550,1750,1550]);
+    if(sm.vStep && R.overall) b += wP(`Check: step length × step frequency = ${fmt(sm.vStep)} m/s (markers gave ${fmt(R.overall.v)} m/s).`);
+    b += wP(`Contact time = toe-off − touchdown. Flight time = next touchdown − toe-off. Step frequency = 1 ÷ step time. ${sm.est ? "Step length estimated as velocity ÷ step frequency (no ground scale)." : "Step length measured from the video using a ground scale."}`, {sz:17, i:true, color:"56636B"});
+  }
+  const media = [];
+  if(S.seq.length){
+    b += wP("Photo sequence and angles", {sz:24, b:true, color:"003D50", before:200});
+    const per = 3, colW = 3210, t0 = S.seq[0].frame;
+    const imgs = await Promise.all(S.seq.map(it => frameCanvas(it, 360)));
+    let rowsX = "";
+    for(let r=0; r<Math.ceil(S.seq.length/per); r++){
+      let cells = "";
+      for(let c=0; c<per; c++){
+        const i = r*per + c, it = S.seq[i];
+        let inner = wP("", {after:0});
+        if(it){
+          const cv = imgs[i], rid = `rIdImg${i+1}`;
+          media.push({rid, name:`seq${i+1}.jpeg`, data:cv.toDataURL("image/jpeg", 0.88).split(",")[1]});
+          const cx = 1900000, cy = Math.round(cx * cv.height / cv.width);
+          inner = `<w:p><w:pPr><w:spacing w:after="40"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${i+1}" name="Frame ${i+1}"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${i+1}" name="seq${i+1}.jpeg"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`
+            + wP(`${i+1}. ${it.label} (${tReal(it.frame - t0).toFixed(3)} s)`, {sz:17, b:true, after:20})
+            + Object.entries(it.angles).map(([t,p]) => wP(`${ANG[t].name}: ${fmtAng(t, angleValue(t,p))}`, {sz:16, after:0})).join("");
+        }
+        cells += `<w:tc><w:tcPr><w:tcW w:w="${colW}" w:type="dxa"/><w:tcMar><w:top w:w="60" w:type="dxa"/><w:bottom w:w="60" w:type="dxa"/><w:left w:w="60" w:type="dxa"/><w:right w:w="60" w:type="dxa"/></w:tcMar></w:tcPr>${inner}</w:tc>`;
+      }
+      rowsX += `<w:tr><w:trPr><w:cantSplit/></w:trPr>${cells}</w:tr>`;
+    }
+    b += `<w:tbl><w:tblPr><w:tblW w:w="${colW*per}" w:type="dxa"/><w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid>${`<w:gridCol w:w="${colW}"/>`.repeat(per)}</w:tblGrid>${rowsX}</w:tbl>`;
+    b += wP("Times are relative to the first frame in the sequence. 2D angles measured on the video. Knee flexion: 0° = straight. Hip: + flexion, − extension. Trunk lean and shank angle are relative to the vertical, + = forward. Touchdown distance: + = foot ahead of the hip.", {sz:17, i:true, color:"56636B", before:60});
+  }
+  if(R.flags.length){ b += wP("Sense check notes", {sz:22, b:true, color:"8B3556", before:200}); R.flags.forEach(f => b += wP("• " + f, {sz:18})); }
+  const doc = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"><w:body>${b}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>`;
+  const z = new JSZip();
+  z.file("[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpeg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`);
+  z.file("_rels/.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
+  z.file("word/document.xml", doc);
+  z.file("word/_rels/document.xml.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${media.map(m => `<Relationship Id="${m.rid}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${m.name}"/>`).join("")}</Relationships>`);
+  media.forEach(m => z.file(`word/media/${m.name}`, m.data, {base64:true}));
+  download(await z.generateAsync({type:"blob", mimeType:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"}), "Sprint kinematics - SESC02.docx");
+};
+$("clearAll").onclick = () => {
+  if(!confirm("Clear all your marks and start again?")) return;
+  const keep = {vidId:S.vidId, vidName:S.vidName, fileFps:S.fileFps, fpsDetected:S.fpsDetected, slow:S.slow, capture:S.capture};
+  S = Object.assign(blank(), keep); target = null; angMode = null; save(); renderAll();
+};
+
+
+/* ---------------- photo sequence and angles ---------------- */
+const ANG = {
+  knee:  {name:"Knee flexion", unit:"°", pts:["the hip (greater trochanter)","the knee (centre of the side of the knee)","the ankle (bony bump on the outside)"]},
+  hip:   {name:"Hip angle", unit:"°", pts:["the shoulder","the hip (greater trochanter)","the knee (centre of the side of the knee)"]},
+  ankle: {name:"Ankle angle", unit:"°", pts:["the knee","the ankle (bony bump on the outside)","the tip of the shoe"]},
+  trunk: {name:"Trunk lean", unit:"°", pts:["the hip (greater trochanter)","the shoulder"]},
+  shank: {name:"Shank angle", unit:"°", pts:["the ankle (bony bump on the outside)","the knee"]},
+  tdd:   {name:"Touchdown distance", unit:"m", pts:["the hip (greater trochanter)","the tip of the shoe"], scale:true}
+};
+let angMode = null;   // {idx, type, pts:[]}
+function banner(){
+  const b = $("clickbanner");
+  if(angMode){ const a = ANG[angMode.type]; b.textContent = `${a.name}: click ${a.pts[angMode.pts.length]} (${angMode.pts.length+1} of ${a.pts.length}). Esc to cancel.`; b.style.display = "block"; }
+  else b.style.display = "none";
+}
+function scaleOK(){ const A = S.marks.scaleA, B = S.marks.scaleB; return S.useScale && A && B && Math.hypot(B.x-A.x, B.y-A.y) > 5; }
+function dirSign(){
+  if(S.dir === "right") return 1; if(S.dir === "left") return -1;
+  const a = S.marks.td1, b = S.marks.td2; if(a && b && a.x !== b.x) return Math.sign(b.x - a.x);
+  const c = S.marks.cone0, d = S.marks.cone1; if(c && d && c.x !== d.x) return Math.sign(d.x - c.x);
+  return 1;
+}
+// forward and up directions in the image. The ground scale (if set) defines the horizontal, so camera tilt cancels out.
+function axesRef(){
+  let e = [1,0];
+  if(scaleOK()){ const A = S.marks.scaleA, B = S.marks.scaleB, L = Math.hypot(B.x-A.x, B.y-A.y); e = [(B.x-A.x)/L, (B.y-A.y)/L]; if(e[0] < 0) e = [-e[0], -e[1]]; }
+  const d = dirSign();
+  return {f:[e[0]*d, e[1]*d], up:[e[1], -e[0]]};
+}
+const comp = (w, R) => [w[0]*R.f[0] + w[1]*R.f[1], w[0]*R.up[0] + w[1]*R.up[1]];
+const sub = (a,b) => [a[0]-b[0], a[1]-b[1]];
+const deg = r => r*180/Math.PI;
+function included(a,b,c){ const u = sub(a,b), v = sub(c,b); return deg(Math.acos(Math.max(-1, Math.min(1, (u[0]*v[0]+u[1]*v[1]) / (Math.hypot(...u)*Math.hypot(...v)))))); }
+function angleValue(type, p){
+  const R = axesRef();
+  if(type === "knee") return 180 - included(p[0], p[1], p[2]);
+  if(type === "ankle") return included(p[0], p[1], p[2]);
+  if(type === "hip"){ const a = comp(sub(p[1], p[0]), R), b = comp(sub(p[2], p[1]), R); return deg(Math.atan2(a[0]*b[1] - a[1]*b[0], a[0]*b[0] + a[1]*b[1])); }
+  if(type === "trunk" || type === "shank"){ const c = comp(sub(p[1], p[0]), R); return deg(Math.atan2(c[0], c[1])); }
+  if(type === "tdd"){ if(!scaleOK()) return null; const A = S.marks.scaleA, B = S.marks.scaleB; const pxm = Math.hypot(B.x-A.x, B.y-A.y) / S.scaleLen; return comp(sub(p[1], p[0]), R)[0] / pxm; }
+  return null;
+}
+const fmtAng = (type, v) => v === null ? "–" : (ANG[type].unit === "m" ? `${v>=0?"+":""}${v.toFixed(2)} m` : `${(type==="hip"||type==="trunk"||type==="shank") && v>0 ? "+" : ""}${v.toFixed(0)}°`);
+function drawAngles(g, angles, P, sc){
+  const placed = [];
+  Object.entries(angles || {}).forEach(([type, pts]) => {
+    const q = pts.map(pt => P({x:pt[0], y:pt[1]}));
+    g.lineWidth = 2.5*sc; g.strokeStyle = "#ffd23f"; g.fillStyle = "#ffd23f";
+    g.beginPath(); q.forEach((pt,i) => i ? g.lineTo(...pt) : g.moveTo(...pt)); g.stroke();
+    q.forEach(pt => dot(g, pt, 3.5*sc));
+    const v = angleValue(type, pts), lab = `${ANG[type].name.split(" ")[0]} ${fmtAng(type, v)}`;
+    const at = q[1];
+    g.font = `bold ${Math.round(13*sc)}px Arial`;
+    const w = g.measureText(lab).width + 10*sc, h = 18*sc;
+    let x = at[0] + 8*sc, y = at[1] - 9*sc;
+    while(placed.some(r => x < r.x + r.w && r.x < x + w && y < r.y + r.h && r.y < y + h)) y += h + 2*sc;   // stop labels sitting on top of each other
+    placed.push({x, y, w, h});
+    g.fillStyle = "rgba(0,61,80,.85)"; g.fillRect(x, y, w, h);
+    g.fillStyle = "#fff"; g.fillText(lab, x + 5*sc, y + 13.5*sc);
+  });
+}
+function startAngle(idx, type){
+  const it = S.seq[idx];
+  if(ANG[type].scale && !scaleOK()){ toast("Touchdown distance needs the ground scale. Set it in Step 1 and click both ends in Step 2."); return; }
+  goFrame(it.frame);
+  angMode = {idx, type, pts:[]}; banner(); draw();
+  $("stage").scrollIntoView({block:"nearest", behavior:"smooth"});
+}
+function angleClick(e){
+  const it = S.seq[angMode.idx];
+  if(curFrame() !== it.frame){ goFrame(it.frame); toast("Moved back to the frame you're measuring. Click again."); return; }
+  const [x,y] = toVid(e.clientX, e.clientY);
+  if(x<0 || y<0 || x>vid.videoWidth || y>vid.videoHeight) return;
+  angMode.pts.push([x,y]);
+  if(angMode.pts.length === ANG[angMode.type].pts.length){
+    it.angles[angMode.type] = angMode.pts; angMode = null; save(); renderAll();
+  }
+  banner(); draw();
+}
+$("seqLabel").onchange = e => { if(e.target.value === "__other"){ const t = prompt("Name this frame (e.g. Late swing):"); if(t){ const o = document.createElement("option"); o.textContent = t; e.target.insertBefore(o, e.target.lastElementChild); e.target.value = t; } else e.target.selectedIndex = 0; } };
+$("addFrame").onclick = () => {
+  if(!loaded){ toast("Load your video first."); return; }
+  vid.pause();
+  const f = curFrame();
+  if(S.seq.some(it => it.frame === f)){ toast("This frame is already in your sequence."); return; }
+  const k = Math.min(1, 640 / vid.videoWidth), c = document.createElement("canvas");
+  c.width = Math.round(vid.videoWidth*k); c.height = Math.round(vid.videoHeight*k);
+  c.getContext("2d").drawImage(vid, 0, 0, c.width, c.height);
+  S.seq.push({frame:f, label:$("seqLabel").value, img:c.toDataURL("image/jpeg", 0.85), w:c.width, h:c.height, vw:vid.videoWidth, angles:{}});
+  S.seq.sort((a,b) => a.frame - b.frame);
+  save(); renderAll();
+};
+function renderSeq(){
+  document.querySelectorAll("#dirSeg button").forEach(b => { b.classList.toggle("on", S.dir === b.dataset.v || (S.dir === "auto" && ((dirSign() > 0) === (b.dataset.v === "right")))); b.onclick = () => { S.dir = b.dataset.v; save(); renderAll(); }; });
+  $("dirAuto").textContent = S.dir === "auto" ? "(worked out from your marks)" : "";
+  const L = $("seqList");
+  if(!S.seq.length){ L.innerHTML = '<p class="muted" style="margin:0">Your pictures will appear here once you press <b>Add this frame</b>.</p>'; return; }
+  const t0 = S.seq[0].frame, f = loaded ? curFrame() : -1;
+  L.innerHTML = "";
+  S.seq.forEach((it, i) => {
+    const d = document.createElement("div"); d.className = "sq" + (it.frame === f ? " on" : "");
+    const vals = Object.entries(it.angles).map(([t,p]) => `<span>${ANG[t].name}: <b>${fmtAng(t, angleValue(t,p))}</b> <button class="x" data-del="${t}" title="Delete" style="float:none;padding:0 .2rem">✕</button></span>`).join("");
+    d.innerHTML = `<img src="${it.img}" alt="${xe(it.label)} frame" title="Go to this frame"><div><button class="x" data-rm="1">Remove</button><div class="tt">${i+1}. ${xe(it.label)}</div><div class="muted">Frame ${it.frame} · ${tReal(it.frame - t0).toFixed(3)} s</div>
+      <div class="chips">${Object.keys(ANG).map(t => `<button data-ang="${t}" class="${it.angles[t] ? "has" : ""}">${ANG[t].name}</button>`).join("")}</div><div class="vals">${vals || '<span class="muted">Click a button above, then click the landmarks on the video.</span>'}</div></div>`;
+    d.querySelector("img").onclick = () => goFrame(it.frame);
+    d.querySelector("[data-rm]").onclick = () => { S.seq.splice(i,1); angMode = null; banner(); save(); renderAll(); };
+    d.querySelectorAll("[data-ang]").forEach(b => b.onclick = () => startAngle(i, b.dataset.ang));
+    d.querySelectorAll("[data-del]").forEach(b => b.onclick = () => { delete it.angles[b.dataset.del]; save(); renderAll(); });
+    L.appendChild(d);
+  });
+}
+// a captured frame with its angles drawn on, at a set height
+function frameCanvas(it, H){
+  return new Promise(res => {
+    const im = new Image();
+    im.onload = () => {
+      const sc = H / it.h, c = document.createElement("canvas"); c.width = Math.round(it.w*sc); c.height = H;
+      const g = c.getContext("2d"); g.drawImage(im, 0, 0, c.width, c.height);
+      const k = c.width / it.vw;
+      drawAngles(g, it.angles, m => [m.x*k, m.y*k], H/360);
+      res(c);
+    };
+    im.src = it.img;
+  });
+}
+async function sequenceCanvas(){
+  const H = 360, perRow = Math.min(4, S.seq.length), cap = 46, pad = 10;
+  const frames = await Promise.all(S.seq.map(it => frameCanvas(it, H)));
+  const W = Math.max(...frames.map(c => c.width));
+  const rows = Math.ceil(frames.length / perRow);
+  const out = document.createElement("canvas"); out.width = perRow*(W+pad) + pad; out.height = rows*(H+cap+pad) + pad;
+  const g = out.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0,0,out.width,out.height);
+  const t0 = S.seq[0].frame;
+  frames.forEach((c,i) => {
+    const x = pad + (i%perRow)*(W+pad), y = pad + Math.floor(i/perRow)*(H+cap+pad), it = S.seq[i];
+    g.drawImage(c, x + (W-c.width)/2, y);
+    g.fillStyle = "#003d50"; g.font = "bold 20px Arial"; g.fillText(`${i+1}. ${it.label}`, x+4, y+H+22);
+    g.fillStyle = "#56636b"; g.font = "16px Arial"; g.fillText(`${tReal(it.frame - t0).toFixed(3)} s`, x+4, y+H+41);
+  });
+  return out;
+}
+$("dlSeq").onclick = async () => {
+  if(!S.seq.length){ toast("Add some frames to your sequence first."); return; }
+  const c = await sequenceCanvas();
+  c.toBlob(b => download(b, "Photo sequence - SESC02.png"), "image/png");
+};
+
+/* ---------------- go ---------------- */
+function renderAll(){ renderSetup(); renderMarks(); renderSeq(); renderResults(); readout(); draw(); banner(); }
+load();
+renderAll();
+</script>
+</body>
+</html>
