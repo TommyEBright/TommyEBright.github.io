@@ -1,7 +1,7 @@
 // Time normalisation: each phase between a start event and an end event is resampled to 0-100 %.
 // The filtered data are interpolated with a natural cubic spline at n evenly spaced points.
-import { A, tReal, fwd } from './state.js';
-import { units, spline, mean, sd } from './maths.js';
+import { A, tReal, fwd } from './state.js?v=2.0.2';
+import { units, spline, mean, sd } from './maths.js?v=2.0.2';
 
 // Start/end frames of every phase: each start event paired with the next end event after it.
 export function phases(S, start, end) {

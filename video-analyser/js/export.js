@@ -1,11 +1,11 @@
 // Saving and exporting: project files, three kinds of CSV, images, graphs and the photo sequence.
-import { A, $, esc, status, persist, freshState, points, tReal, fpsReal, download, baseName, VERSION, APP, currentTrial } from './state.js';
-import { toWorld, units, scale } from './maths.js';
-import { seekAsync, seek, viewCanvas } from './video.js';
-import { draw } from './overlay.js';
-import { svgToPng } from './charts.js';
-import { summaryRows, xOffset } from './results.js';
-import { intervalRows } from './events.js';
+import { A, $, esc, status, persist, freshState, points, tReal, fpsReal, download, baseName, VERSION, APP, currentTrial } from './state.js?v=2.0.2';
+import { toWorld, units, scale } from './maths.js?v=2.0.2';
+import { seekAsync, seek, viewCanvas } from './video.js?v=2.0.2';
+import { draw } from './overlay.js?v=2.0.2';
+import { svgToPng } from './charts.js?v=2.0.2';
+import { summaryRows, xOffset } from './results.js?v=2.0.2';
+import { intervalRows } from './events.js?v=2.0.2';
 
 const n = (v, d) => (v === null || v === undefined || Number.isNaN(v) ? '' : (+v).toFixed(d));
 const q = (s) => { s = String(s); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };

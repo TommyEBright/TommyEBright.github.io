@@ -1,11 +1,11 @@
 // Compare trials: key numbers for every trial side by side, group means, overlaid time-normalised curves
 // and combined exports for the whole session.
-import { A, $, esc, fx, status, persist, withState, PALETTE, download, VERSION, APP } from './state.js';
-import { computeData, summaryRows } from './results.js';
-import { normalise, meanSd } from './normalise.js';
-import { mean, sd } from './maths.js';
-import { chart, legend } from './charts.js';
-import { label } from './session.js';
+import { A, $, esc, fx, status, persist, withState, PALETTE, download, VERSION, APP } from './state.js?v=2.0.2';
+import { computeData, summaryRows } from './results.js?v=2.0.2';
+import { normalise, meanSd } from './normalise.js?v=2.0.2';
+import { mean, sd } from './maths.js?v=2.0.2';
+import { chart, legend } from './charts.js?v=2.0.2';
+import { label } from './session.js?v=2.0.2';
 
 let cache = null;
 const groupOf = (t, g) => (g === 'athlete' ? t.labels.athlete || '(no athlete)' : g === 'condition' ? t.labels.condition || '(no condition)' : g === 'both' ? (t.labels.athlete || '?') + ' / ' + (t.labels.condition || '?') : 'All trials');

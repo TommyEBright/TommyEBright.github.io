@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=2.0.2">
 </head>
 <body>
 <header class="top">
@@ -36,6 +36,7 @@
         <li><strong>Film something of known length in the same plane as the athlete</strong> (e.g. a 1 m stick, or two cones 5 m apart on the running line). You calibrate with it.</li>
         <li><strong>Use slow motion</strong> (120 or 240 fps) for sprinting and jumping, and plenty of light so each frame is sharp.</li>
         <li><strong>Mark the joints</strong> with tape or stickers in a colour that stands out, and wear fitted clothing. Automatic tracking follows these markers.</li>
+        <li><strong>Video files:</strong> MP4 or MOV work best. Other files (e.g. AVI from Quintic or lab cameras) are converted to MP4 inside the tool when you open them. You can also convert them yourself with the free HandBrake: choose the &ldquo;Fast 1080p30&rdquo; preset, then in the Video tab set Framerate to &ldquo;Same as source&rdquo; and tick &ldquo;Constant Framerate&rdquo;, so the frame rate is not changed.</li>
         <li><strong>iPhone:</strong> Settings &rarr; Camera &rarr; Formats &rarr; &ldquo;Most Compatible&rdquo;. Move videos by cable, AirDrop or cloud storage rather than WhatsApp or email, which squash the video and can drop frames.</li>
       </ul>
     </div>
@@ -497,6 +498,7 @@
   </section>
   <footer>Kinematic Analysis. Works offline once loaded. Nothing is uploaded. Built by Dr Tommy Bright.</footer>
 </main>
-<script type="module" src="js/app.js"></script>
+<script>window.addEventListener('error',function(e){var s=document.getElementById('status');if(s)s.innerHTML='<span class="bad"><strong>Something went wrong loading the tool.</strong> Try a hard refresh (Ctrl + Shift + R, or Cmd + Shift + R on a Mac). If it keeps happening, tell your tutor: '+(e.message||'')+'</span>';});</script>
+<script type="module" src="js/app.js?v=2.0.2"></script>
 </body>
 </html>

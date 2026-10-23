@@ -1,8 +1,8 @@
 // Key events, the stopwatch (intervals between events), looping and event-based summary values.
-import { A, $, esc, fx, status, persist, eventTypes, tReal, fpsReal, G, points, footMarker, hipMarker } from './state.js';
-import { toWorld, butter, centralDiff, series, mean } from './maths.js';
-import { seek, play, pause } from './video.js';
-import { draw } from './overlay.js';
+import { A, $, esc, fx, status, persist, eventTypes, tReal, fpsReal, G, points, footMarker, hipMarker } from './state.js?v=2.0.2';
+import { toWorld, butter, centralDiff, series, mean } from './maths.js?v=2.0.2';
+import { seek, play, pause } from './video.js?v=2.0.2';
+import { draw } from './overlay.js?v=2.0.2';
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 export function ensureIds() { A.S.events.forEach((e) => { if (!e.id) e.id = uid(); }); }

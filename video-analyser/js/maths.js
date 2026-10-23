@@ -1,7 +1,7 @@
 // Calibration, filtering, differentiation and angle maths.
 // References: Winter (2009) Biomechanics and Motor Control of Human Movement, 4th ed., ch. 2-3;
 // Hamill, Knutzen & Derrick (2015) Biomechanical Basis of Human Movement, 4th ed., ch. 8-9.
-import { A, tReal, fpsReal } from './state.js';
+import { A, tReal, fpsReal } from './state.js?v=2.0.2';
 
 // ---------- calibration ----------
 export function scale() {

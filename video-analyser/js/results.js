@@ -1,10 +1,10 @@
 // Results: filtering, derivatives, angles, graphs, time normalisation, the filter check, quality checks and live data.
-import { A, $, esc, fx, status, persist, points, colourOf, angleDefs, tReal, fpsReal, PALETTE, G, fwd, hipMarker, download, baseName } from './state.js';
-import { toWorld, units, butter, residualCurve, centralDiff, secondDiff, series, angleValue, anglePoints, mean, sd } from './maths.js';
-import { chart, legend } from './charts.js';
-import { seek } from './video.js';
-import { eventStats, statsHTML } from './events.js';
-import { normalise, variableList, eventNames } from './normalise.js';
+import { A, $, esc, fx, status, persist, points, colourOf, angleDefs, tReal, fpsReal, PALETTE, G, fwd, hipMarker, download, baseName } from './state.js?v=2.0.2';
+import { toWorld, units, butter, residualCurve, centralDiff, secondDiff, series, angleValue, anglePoints, mean, sd } from './maths.js?v=2.0.2';
+import { chart, legend } from './charts.js?v=2.0.2';
+import { seek } from './video.js?v=2.0.2';
+import { eventStats, statsHTML } from './events.js?v=2.0.2';
+import { normalise, variableList, eventNames } from './normalise.js?v=2.0.2';
 
 const angCol = (i) => PALETTE[(i + 3) % PALETTE.length];
 

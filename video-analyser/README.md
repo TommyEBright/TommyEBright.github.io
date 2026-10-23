@@ -18,6 +18,7 @@ It runs entirely in the web browser. Videos are opened from the user's own devic
   - marker sets can be saved as a file and loaded again.
 - **Digitise:** click by hand (magnifier, snap-to-marker), or automatic marker tracking. When tracking loses a marker it pauses and asks the user to click it, then carries on by itself. A "Marker hidden" button leaves a gap when a marker cannot be seen. Uncertain frames are listed for checking.
 - **Events:** named event buttons (including your own), nudging a frame at a time, suggested events from a chosen foot marker, a stopwatch for the time between any two events, and looping a phase.
+- **Video formats:** MP4 and MOV open directly. Files the browser cannot play (e.g. AVI from Quintic or lab high-speed cameras) can be converted to MP4 inside the tool with **Convert to MP4**. Every frame is kept, the frame rate is read from the original file, and the result can be saved.
 - **Measure:** distance, joint angle, segment vs vertical or horizontal, and the angle between two lines on a single frame.
 - **Results (per trial):**
   - key numbers, an angle table and values at each event;
@@ -60,7 +61,7 @@ It can be embedded in a VLE page with an iframe:
 
 ## Privacy
 
-Videos are read by the browser on the user's own device and are never uploaded. The session (markers, events, labels and settings, but not the videos) is kept in the browser's local storage and can be saved as a project file. The tool makes no network requests apart from loading its own files.
+Videos are read by the browser on the user's own device and are never uploaded. The session (markers, events, labels and settings, but not the videos) is kept in the browser's local storage and can be saved as a project file. The tool makes no network requests apart from loading its own files. The one exception is the first time someone presses **Convert to MP4**, when it downloads the converter (ffmpeg.wasm core, about 31 MB) from jsDelivr. The conversion itself runs on the user's computer and the video is not uploaded.
 
 ## Methods in brief
 
@@ -99,6 +100,8 @@ js/results.js          results, graphs, time normalisation view, filter check, q
 js/normalise.js        time normalisation maths
 js/compare.js          comparing trials and whole-session exports
 js/charts.js           SVG charts
+js/convert.js          converting unplayable videos (e.g. AVI) to MP4 with ffmpeg.wasm
+js/ffmpeg/             ffmpeg.wasm loader (MIT licence); the converter core is downloaded only when needed
 js/export.js           per-trial CSV exports, images, photo sequence, project files
 sw.js                  offline support
 manifest.webmanifest   app install details

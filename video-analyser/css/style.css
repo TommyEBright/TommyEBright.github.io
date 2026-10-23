@@ -142,3 +142,6 @@ td.small, .small { font-size: .8rem; }
 details.session > summary { font-size: 1rem; }
 label.filebtn { display: inline-flex; align-items: center; margin: 0; }
 .chart.wide { max-width: 860px; }
+.convert { max-width: 620px; margin: 0 auto; color: #e2e8f0; }
+.convert p { margin: .4rem 0; }
+.convert .bad { color: #fca5a5; }

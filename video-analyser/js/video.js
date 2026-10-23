@@ -1,5 +1,5 @@
 // Video loading, frame rendering (with rotate/flip), seeking and frame-rate detection.
-import { A, $, status, esc, persist, freshState, fpsReal, tReal } from './state.js';
+import { A, $, status, esc, persist, freshState, fpsReal, tReal } from './state.js?v=2.0.2';
 
 const vid = () => $('vid');
 let vctx = null, playing = false;
@@ -55,6 +55,7 @@ export function loadVideoURL(url, name, opts) {
   if (A.fn.stopTrackPause) A.fn.stopTrackPause();
   v.src = url;
   v.onloadedmetadata = () => {
+    if (!v.videoWidth) { if (A.fn.videoError) A.fn.videoError(); return; } // no picture the browser can decode
     const S = opts.state || freshState();
     A.S = S;
     S.name = name; S.duration = v.duration; S.srcW = v.videoWidth; S.srcH = v.videoHeight;
@@ -152,5 +153,5 @@ export function initVideo() {
   v.addEventListener('seeked', () => { render(); A.fn.draw(); });
   v.addEventListener('pause', () => { if (playing) { playing = false; $('bPlay').textContent = 'Play'; } });
   window.__KVA_load = loadVideoURL;
-  v.addEventListener('error', () => { if (!v.getAttribute('src')) return; status('<span class="bad"><strong>This video will not play in this browser.</strong> iPhone HEVC videos often fail on Windows. On the iPhone, set Settings &rarr; Camera &rarr; Formats &rarr; &ldquo;Most Compatible&rdquo; and film again, or try Chrome or Safari on a Mac.</span>'); });
+  v.addEventListener('error', () => { if (!v.getAttribute('src')) return; if (A.fn.videoError) A.fn.videoError(); else status('<span class="bad"><strong>This video will not play in this browser.</strong></span>'); });
 }

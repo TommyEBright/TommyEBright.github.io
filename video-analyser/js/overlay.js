@@ -1,7 +1,7 @@
 // Drawing on top of the video, the magnifier, mouse/touch input, digitising and quick measurements.
-import { A, $, esc, status, persist, points, colourOf, angleDefs, tReal } from './state.js';
-import { toWorld, toPixel, jointAngle, segFromVertical, segFromHorizontal, angleValue, anglePoints, units } from './maths.js';
-import { seek, viewCanvas } from './video.js';
+import { A, $, esc, status, persist, points, colourOf, angleDefs, tReal } from './state.js?v=2.0.2';
+import { toWorld, toPixel, jointAngle, segFromVertical, segFromHorizontal, angleValue, anglePoints, units } from './maths.js?v=2.0.2';
+import { seek, viewCanvas } from './video.js?v=2.0.2';
 
 const ov = () => $('ov');
 let ctx = null;

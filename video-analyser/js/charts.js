@@ -1,5 +1,5 @@
 // Small SVG line charts. Click a chart to move the video to that moment.
-import { esc } from './state.js';
+import { esc } from './state.js?v=2.0.2';
 
 export function niceStep(range) {
   if (!(range > 0)) return 1;

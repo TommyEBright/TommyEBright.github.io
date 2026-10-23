@@ -1,14 +1,15 @@
 // Start-up: wires the page together. Setup, calibration, the marker and angle builders, demos and the app install.
-import { A, $, esc, clone, status, persist, points, colourOf, angleDefs, eventTypes, VERSION, APP, download, fwd } from './state.js';
-import { tiltAngle } from './maths.js';
-import { initVideo, seek, recount, render, viewDims, play, pause, isPlaying, detectFps } from './video.js';
-import { initOverlay, draw, renderChips, updateDigiCount, renderMeasures, undo } from './overlay.js';
-import { initTracking, clearFlag, renderFlags } from './tracking.js';
-import { initEvents, renderEventBtns, renderEvents } from './events.js';
-import { initResults, compute, drawResults, live, renderNorm } from './results.js';
-import { initExport, renderExportPoints, renderPhotoOpts } from './export.js';
-import { initSession, addFiles, renderSession } from './session.js';
-import { initCompare, renderCompare } from './compare.js';
+import { A, $, esc, clone, status, persist, points, colourOf, angleDefs, eventTypes, VERSION, APP, download, fwd } from './state.js?v=2.0.2';
+import { tiltAngle } from './maths.js?v=2.0.2';
+import { initVideo, seek, recount, render, viewDims, play, pause, isPlaying, detectFps } from './video.js?v=2.0.2';
+import { initOverlay, draw, renderChips, updateDigiCount, renderMeasures, undo } from './overlay.js?v=2.0.2';
+import { initTracking, clearFlag, renderFlags } from './tracking.js?v=2.0.2';
+import { initEvents, renderEventBtns, renderEvents } from './events.js?v=2.0.2';
+import { initResults, compute, drawResults, live, renderNorm } from './results.js?v=2.0.2';
+import { initExport, renderExportPoints, renderPhotoOpts } from './export.js?v=2.0.2';
+import { initSession, addFiles, renderSession } from './session.js?v=2.0.2';
+import { initCompare, renderCompare } from './compare.js?v=2.0.2';
+import { initConvert } from './convert.js?v=2.0.2';
 
 Object.assign(A.fn, { draw, syncInputs, showCalib, compute, drawResults, clearFlag, renderFlags, live, renderPhotoOpts, renderNorm });
 
@@ -262,7 +263,7 @@ function initPWA() {
 
 function start() {
   initVideo(); initOverlay(); initTracking(); initEvents(); initResults(); initExport(); initCompare();
-  initSetup(); initCalib(); initTemplates(); initAngles(); initControls(); initPWA(); initSession();
+  initSetup(); initCalib(); initTemplates(); initAngles(); initControls(); initPWA(); initSession(); initConvert();
   $('demoCmj').addEventListener('click', () => loadDemo('cmj'));
   $('demoSprint').addEventListener('click', () => loadDemo('sprint'));
   $('ver').textContent = 'v' + VERSION; document.title = APP;
