@@ -1,7 +1,7 @@
 // Calibration, filtering, differentiation and angle maths.
 // References: Robertson et al. (2014) Research Methods in Biomechanics, 2nd ed., ch. 1 and 12;
 // Winter (2009) Biomechanics and Motor Control of Human Movement, 4th ed., ch. 2-3.
-import { A, tReal, fpsReal } from './state.js?v=2.1.0';
+import { A, tReal, fpsReal } from './state.js?v=2.1.1';
 
 // ---------- calibration ----------
 export function scale() {

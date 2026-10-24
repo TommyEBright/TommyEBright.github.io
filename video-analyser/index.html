@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css?v=2.1.0">
+<link rel="stylesheet" href="css/style.css?v=2.1.1">
 </head>
 <body>
 <header class="top">
@@ -320,34 +320,14 @@
       <!-- EXPORT -->
       <div class="pane hide" data-p="files">
         <p class="lead">Downloads for <strong>this trial</strong>. For every trial together, use <strong>Compare trials</strong> at the bottom of the page.</p>
-        <h3>Choose your variables</h3>
-        <div id="expBuilder" class="builder">
-          <p class="muted" style="margin:0 0 .4rem">Pick what you need and download only that. Names follow Robertson et al. (2014): <strong>linear kinematics</strong> of each marker (position, velocity, acceleration in x, y and resultant) and <strong>angular kinematics</strong> of each angle (angular position, angular velocity, angular acceleration).</p>
-          <span class="lab">Markers</span><div class="chks" id="xbMarkers"></div>
-          <span class="lab">Angles</span><div class="chks" id="xbAngles"></div>
-          <span class="lab">Linear kinematics (for each marker ticked)</span><div class="chks" id="xbLin"></div>
-          <span class="lab">Angular kinematics (for each angle ticked)</span><div class="chks" id="xbAng"></div>
-          <div class="row">
-            <div><label for="xbCont">Continuous data (time series)</label><select id="xbCont"><option value="time">Over time (every frame)</option><option value="norm">Time-normalised (0&ndash;100% of the phase set in Results)</option><option value="both">Both</option><option value="off">None</option></select></div>
-            <div><label for="xbAngUnit">Angular units</label><select id="xbAngUnit"><option value="deg">Degrees (&deg;, &deg;/s, &deg;/s&sup2;)</option><option value="rad">Radians (rad, rad/s, rad/s&sup2;)</option></select></div>
-          </div>
-          <label class="inline" style="margin-top:.5rem"><input type="checkbox" id="xbDisc"> <strong>Discrete values</strong> (one number per variable):</label>
-          <div class="chks" id="xbStats"></div>
-          <div class="row">
-            <div><label for="xbT0">Times measured from</label><select id="xbT0"></select></div>
-            <div><label for="xbLayout">Layout</label><select id="xbLayout"><option value="wide">Wide: one column per variable (Excel)</option><option value="long">Long: one row per value (R, SPSS, pivot tables)</option></select></div>
-          </div>
-          <p class="readout" id="xbCount"></p>
-          <div class="row tight"><button class="btn small accent" id="xbGo" type="button">Download my selection (CSV)</button><button class="btn small ghost" id="xbAll" type="button">Tick everything</button><button class="btn small ghost" id="xbNone" type="button">Untick all variables</button></div>
-          <p class="muted">You get one file for each kind of data you choose (continuous, time-normalised, discrete). Your choices are kept for the next trial, and <strong>Compare trials</strong> can export them for the whole session.</p>
-        </div>
-        <h3>Quick downloads</h3>
+        <h3>Data (CSV, opens in Excel)</h3>
         <div class="row tight">
-          <button class="btn small ghost" id="csvAnalysis" type="button">Everything over time</button>
+          <button class="btn small" id="xbCont" type="button">Continuous</button>
+          <button class="btn small" id="xbDisc" type="button">Discrete</button>
+          <button class="btn small" id="xbNorm" type="button">Time-normalised</button>
           <button class="btn small ghost" id="csvSummary" type="button">Summary</button>
-          <button class="btn small ghost" id="nCsv" type="button">Time-normalised (all variables)</button>
         </div>
-        <p class="muted"><strong>Everything over time</strong> is all the filtered linear and angular kinematics, frame by frame. <strong>Summary</strong> is the settings, key numbers, events, stopwatch times and measurements.</p>
+        <p class="muted"><strong>Continuous</strong> is every variable frame by frame (filtered): the linear kinematics of every marker (x and y position, x, y and resultant velocity and acceleration) and the angular kinematics of every angle (angular position, velocity and acceleration). <strong>Discrete</strong> is one value per row for every variable: maximum, minimum, time of each, range, mean and the value at each event, plus event times, stopwatch durations and the activity results (e.g. jump height or cycle time). <strong>Time-normalised</strong> is every variable at 0&ndash;100% of the phase set in Results, for each phase plus the ensemble average (mean and SD). <strong>Summary</strong> is the settings, key numbers, events and measurements. Names follow Robertson et al. (2014).</p>
         <h3>Marker coordinates</h3>
         <p class="muted" style="margin:0">Raw pixel positions, positions in metres and filtered positions, with whether each was clicked or tracked.</p>
         <div id="expPts" class="chips"></div>
@@ -490,10 +470,10 @@
         <h3>Download the whole session</h3>
         <div class="row">
           <div><label for="cmpLayout">Summary layout</label><select id="cmpLayout"><option value="wide">One row per trial (Excel)</option><option value="long">One row per measure (R, SPSS, pivot tables)</option></select></div>
-          <div><label for="cmpNormWhich">Time-normalised data</label><select id="cmpNormWhich"><option value="mine">My export choices</option><option value="all">Every variable</option><option value="one">Only the one shown above</option></select></div>
+          <div><label for="cmpNormWhich">Time-normalised data</label><select id="cmpNormWhich"><option value="all">Every variable</option><option value="one">Only the one shown above</option></select></div>
         </div>
-        <div class="row tight"><button class="btn small accent" id="cmpDiscCsv" type="button">Session: my chosen discrete values (CSV)</button><button class="btn small" id="cmpNormCsv" type="button">Session time-normalised (CSV)</button><button class="btn small ghost" id="cmpCsv" type="button">Session key numbers (CSV)</button></div>
-        <p class="muted">Every file has participant, condition and trial columns, so you can filter or group them in Excel, R or SPSS. &ldquo;My chosen discrete values&rdquo; uses the variables ticked in <strong>Export &rarr; Choose your variables</strong>.</p>
+        <div class="row tight"><button class="btn small accent" id="cmpDiscCsv" type="button">Session discrete values (CSV)</button><button class="btn small" id="cmpNormCsv" type="button">Session time-normalised (CSV)</button><button class="btn small ghost" id="cmpCsv" type="button">Session key numbers (CSV)</button></div>
+        <p class="muted">Every file has participant, condition and trial columns, so you can filter or group them in Excel, R or SPSS.</p>
       </div>
     </div>
   </section>
@@ -530,6 +510,6 @@
   <footer>Kinematic Analysis. Works offline once loaded. Nothing is uploaded. Built by Dr Tommy Bright.</footer>
 </main>
 <script>window.addEventListener('error',function(e){var s=document.getElementById('status');if(s)s.innerHTML='<span class="bad"><strong>Something went wrong loading the tool.</strong> Try a hard refresh (Ctrl + Shift + R, or Cmd + Shift + R on a Mac). If it keeps happening, tell your tutor: '+(e.message||'')+'</span>';});</script>
-<script type="module" src="js/app.js?v=2.1.0"></script>
+<script type="module" src="js/app.js?v=2.1.1"></script>
 </body>
 </html>

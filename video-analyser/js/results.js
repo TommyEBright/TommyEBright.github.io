@@ -1,10 +1,10 @@
 // Results: filtering, derivatives, angles, graphs, time normalisation, the filter check, quality checks and live data.
-import { A, $, esc, fx, status, persist, points, colourOf, angleDefs, tReal, fpsReal, PALETTE, G, fwd, hipMarker, download, baseName } from './state.js?v=2.1.0';
-import { toWorld, units, butter, residualCurve, centralDiff, secondDiff, series, angleValue, anglePoints, canWrap, unwrap, mean, sd } from './maths.js?v=2.1.0';
-import { chart, legend } from './charts.js?v=2.1.0';
-import { seek } from './video.js?v=2.1.0';
-import { eventStats, statsHTML } from './events.js?v=2.1.0';
-import { normalise, variableList, eventNames } from './normalise.js?v=2.1.0';
+import { A, $, esc, fx, status, persist, points, colourOf, angleDefs, tReal, fpsReal, PALETTE, G, fwd, hipMarker, download, baseName } from './state.js?v=2.1.1';
+import { toWorld, units, butter, residualCurve, centralDiff, secondDiff, series, angleValue, anglePoints, canWrap, unwrap, mean, sd } from './maths.js?v=2.1.1';
+import { chart, legend } from './charts.js?v=2.1.1';
+import { seek } from './video.js?v=2.1.1';
+import { eventStats, statsHTML } from './events.js?v=2.1.1';
+import { normalise, variableList, eventNames } from './normalise.js?v=2.1.1';
 
 const angCol = (i) => PALETTE[(i + 3) % PALETTE.length];
 
@@ -346,6 +346,6 @@ export function initResults() {
   $('nEnd').addEventListener('change', () => { N().end = $('nEnd').value; rn(); });
   $('nPts').addEventListener('change', () => { const v = parseInt($('nPts').value, 10); if (v >= 11 && v <= 1001) { N().n = v; rn(); } });
   $('nVar').addEventListener('change', () => { N().v = $('nVar').value; rn(); });
-  $('nCsv').addEventListener('click', normCSV); $('nCsv2').addEventListener('click', normCSV);
+  if ($('nCsv')) $('nCsv').addEventListener('click', normCSV); $('nCsv2').addEventListener('click', normCSV);
   $('fcComp').addEventListener('change', renderFilterCheck);
 }

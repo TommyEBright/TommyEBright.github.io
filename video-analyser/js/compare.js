@@ -1,13 +1,13 @@
 // Compare trials: key numbers for every trial side by side, group means, overlaid time-normalised curves
 // and combined exports for the whole session.
-import { A, $, esc, fx, status, persist, withState, PALETTE, download, VERSION, APP } from './state.js?v=2.1.0';
-import { computeData, summaryRows } from './results.js?v=2.1.0';
-import { normalise, meanSd } from './normalise.js?v=2.1.0';
-import { mean, sd } from './maths.js?v=2.1.0';
-import { chart, legend } from './charts.js?v=2.1.0';
-import { label } from './session.js?v=2.1.0';
-import { sessionDiscreteCSV, selection } from './builder.js?v=2.1.0';
-import { allVariables } from './vars.js?v=2.1.0';
+import { A, $, esc, fx, status, persist, withState, PALETTE, download, VERSION, APP } from './state.js?v=2.1.1';
+import { computeData, summaryRows } from './results.js?v=2.1.1';
+import { normalise, meanSd } from './normalise.js?v=2.1.1';
+import { mean, sd } from './maths.js?v=2.1.1';
+import { chart, legend } from './charts.js?v=2.1.1';
+import { label } from './session.js?v=2.1.1';
+import { sessionDiscreteCSV, selection } from './builder.js?v=2.1.1';
+import { allVariables } from './vars.js?v=2.1.1';
 
 let cache = null;
 const groupOf = (t, g) => (g === 'athlete' ? t.labels.athlete || '(no participant)' : g === 'condition' ? t.labels.condition || '(no condition)' : g === 'both' ? (t.labels.athlete || '?') + ' / ' + (t.labels.condition || '?') : 'All trials');
@@ -113,8 +113,8 @@ function summaryAll() {
 }
 function discreteAll() {
   const data = cache || gather(), r = sessionDiscreteCSV(data, $('cmpLayout').value === 'wide');
-  if (!r) { status('No values match your export choices yet (set them in Export &rarr; Choose your variables).'); return; }
-  download('session_discrete_' + stamp() + '.csv', r.blob); status('Downloaded your chosen discrete values for ' + r.n + ' trial' + (r.n > 1 ? 's' : '') + '.');
+  if (!r) { status('No discrete values yet. Digitise some frames or mark events first.'); return; }
+  download('session_discrete_' + stamp() + '.csv', r.blob); status('Downloaded the discrete values for ' + r.n + ' trial' + (r.n > 1 ? 's' : '') + '.');
 }
 function normAll() {
   const data = (cache || gather()).filter((d) => d.norm && d.norm.cycles.length), N = A.S.norm;

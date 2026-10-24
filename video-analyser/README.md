@@ -34,7 +34,7 @@ It works for any movement filmed side-on (e.g. a squat, throw, kick, lift, gait,
 - **Time normalisation:** any phase between two events (e.g. touchdown to toe-off, or one pedal cycle from an event to the next of the same name) is resampled to 0–100% (101 points by default), with the ensemble average (mean ± SD).
 - **Compare trials (whole session):** a table of chosen measures for every trial with group mean ± SD, and overlaid time-normalised curves by group.
 - **Exports:**
-  - **Choose your variables:** pick markers, angles, linear kinematics (x, y and resultant position, velocity, acceleration) and angular kinematics (angular position, velocity, acceleration, in degrees or radians), then download them as continuous data (over time and/or time-normalised) and/or discrete values (maximum, minimum, time of each, range, mean, value at each event, event times and durations, activity results). Wide or long layout.
+  - **Continuous, Discrete and Time-normalised:** every linear and angular variable, frame by frame; maximum, minimum, time of each, range, mean and values at events; or 0–100% of a phase with the ensemble average.
   - **Quick downloads:** everything over time, summary, time-normalised, marker coordinates (raw pixels, metres and filtered, clicked or tracked), frame and graph images, and a photo sequence.
   - **Whole session:** your chosen discrete values, key numbers and time-normalised data for every trial, with participant, condition and trial columns.
   - **Project file:** saves the whole session (not the videos).

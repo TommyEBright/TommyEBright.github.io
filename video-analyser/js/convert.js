@@ -1,7 +1,7 @@
 // Videos the browser cannot play (e.g. AVI from Quintic or lab cameras) are converted to MP4 (H.264)
 // on the user's own computer with ffmpeg.wasm. Nothing is uploaded. Every frame is kept and the
 // original frame rate is read from the file.
-import { A, $, esc, status, persist, currentTrial, download } from './state.js?v=2.1.0';
+import { A, $, esc, status, persist, currentTrial, download } from './state.js?v=2.1.1';
 
 const CORE = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm/';
 let ff = null, loading = null;
@@ -16,7 +16,7 @@ async function blobURL(url, type, onPct) {
 function getFF(onPct) {
   if (ff) return Promise.resolve(ff);
   if (!loading) loading = (async () => {
-    const { FFmpeg } = await import('./ffmpeg/index.js?v=2.1.0');
+    const { FFmpeg } = await import('./ffmpeg/index.js?v=2.1.1');
     const f = new FFmpeg(), base = window.KVA_FFMPEG_BASE || CORE;
     const coreURL = await blobURL(base + 'ffmpeg-core.js', 'text/javascript');
     const wasmURL = await blobURL(base + 'ffmpeg-core.wasm', 'application/wasm', onPct);

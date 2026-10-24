@@ -1,7 +1,7 @@
 // Shared state and small helpers.
 // A.S is the trial being worked on. A.session holds every trial in the session.
 export const G = 9.81;
-export const VERSION = '2.1.0';
+export const VERSION = '2.1.1';
 export const APP = 'Kinematic Analysis';
 
 export const PALETTE = ['#2563eb', '#be185d', '#0f766e', '#d97706', '#7c3aed', '#0891b2', '#65a30d', '#dc2626', '#475569', '#c026d3', '#0d9488', '#ea580c'];

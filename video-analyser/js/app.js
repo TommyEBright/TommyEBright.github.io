@@ -1,16 +1,16 @@
 // Start-up: wires the page together. Setup, calibration, the marker and angle builders, demos and the app install.
-import { A, $, esc, clone, status, persist, points, colourOf, angleDefs, eventTypes, VERSION, APP, download, fwd } from './state.js?v=2.1.0';
-import { tiltAngle } from './maths.js?v=2.1.0';
-import { initVideo, seek, recount, render, viewDims, play, pause, isPlaying, detectFps } from './video.js?v=2.1.0';
-import { initOverlay, draw, renderChips, updateDigiCount, renderMeasures, undo } from './overlay.js?v=2.1.0';
-import { initTracking, clearFlag, renderFlags } from './tracking.js?v=2.1.0';
-import { initEvents, renderEventBtns, renderEvents } from './events.js?v=2.1.0';
-import { initResults, compute, drawResults, live, renderNorm } from './results.js?v=2.1.0';
-import { initExport, renderExportPoints, renderPhotoOpts } from './export.js?v=2.1.0';
-import { initSession, addFiles, renderSession } from './session.js?v=2.1.0';
-import { initCompare, renderCompare } from './compare.js?v=2.1.0';
-import { initBuilder, renderBuilder } from './builder.js?v=2.1.0';
-import { initConvert } from './convert.js?v=2.1.0';
+import { A, $, esc, clone, status, persist, points, colourOf, angleDefs, eventTypes, VERSION, APP, download, fwd } from './state.js?v=2.1.1';
+import { tiltAngle } from './maths.js?v=2.1.1';
+import { initVideo, seek, recount, render, viewDims, play, pause, isPlaying, detectFps } from './video.js?v=2.1.1';
+import { initOverlay, draw, renderChips, updateDigiCount, renderMeasures, undo } from './overlay.js?v=2.1.1';
+import { initTracking, clearFlag, renderFlags } from './tracking.js?v=2.1.1';
+import { initEvents, renderEventBtns, renderEvents } from './events.js?v=2.1.1';
+import { initResults, compute, drawResults, live, renderNorm } from './results.js?v=2.1.1';
+import { initExport, renderExportPoints, renderPhotoOpts } from './export.js?v=2.1.1';
+import { initSession, addFiles, renderSession } from './session.js?v=2.1.1';
+import { initCompare, renderCompare } from './compare.js?v=2.1.1';
+import { initBuilder, renderBuilder } from './builder.js?v=2.1.1';
+import { initConvert } from './convert.js?v=2.1.1';
 
 Object.assign(A.fn, { draw, syncInputs, showCalib, compute, drawResults, clearFlag, renderFlags, live, renderPhotoOpts, renderNorm });
 

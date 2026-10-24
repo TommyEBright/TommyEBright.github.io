@@ -1,7 +1,7 @@
 // Drawing on top of the video, the magnifier, mouse/touch input, digitising and quick measurements.
-import { A, $, esc, status, persist, points, colourOf, angleDefs, tReal } from './state.js?v=2.1.0';
-import { toWorld, toPixel, jointAngle, segFromVertical, segFromHorizontal, angleValue, anglePoints, units } from './maths.js?v=2.1.0';
-import { seek, viewCanvas } from './video.js?v=2.1.0';
+import { A, $, esc, status, persist, points, colourOf, angleDefs, tReal } from './state.js?v=2.1.1';
+import { toWorld, toPixel, jointAngle, segFromVertical, segFromHorizontal, angleValue, anglePoints, units } from './maths.js?v=2.1.1';
+import { seek, viewCanvas } from './video.js?v=2.1.1';
 
 const ov = () => $('ov');
 let ctx = null;
@@ -39,7 +39,10 @@ export function draw(target, frame) {
   }
   // segments
   g.strokeStyle = 'rgba(255,255,255,.92)'; g.lineWidth = lw;
-  S.template.links.forEach((l) => { if (fr[l[0]] && fr[l[1]]) { g.beginPath(); g.moveTo(fr[l[0]][0], fr[l[0]][1]); g.lineTo(fr[l[1]][0], fr[l[1]][1]); g.stroke(); } });
+  // segments, plus the lines that make up each angle in use (e.g. Hip-Knee and Knee-Ankle for a knee angle)
+  const segs = S.template.links.slice(), key = (p, q) => [p, q].sort().join('\u0000'), seen = new Set(segs.map((l) => key(l[0], l[1])));
+  angleDefs().filter((d) => d.on).forEach((d) => { (d.type === 'joint' ? [[d.a, d.b], [d.b, d.c]] : [[d.a, d.b]]).forEach((l) => { if (!seen.has(key(l[0], l[1]))) { seen.add(key(l[0], l[1])); segs.push(l); } }); });
+  segs.forEach((l) => { if (fr[l[0]] && fr[l[1]]) { g.beginPath(); g.moveTo(fr[l[0]][0], fr[l[0]][1]); g.lineTo(fr[l[1]][0], fr[l[1]][1]); g.stroke(); } });
   pts.forEach((m) => {
     const p = fr[m]; if (!p) return;
     g.fillStyle = colourOf(m); g.strokeStyle = '#fff'; g.lineWidth = lw * 0.8;

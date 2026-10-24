@@ -1,11 +1,11 @@
 // Export builder: the user picks the variables (markers, angles, linear and angular kinematics) and
 // whether they want them as continuous data (over time and/or time-normalised) and/or discrete values
 // (maximum, minimum, time of each, range, mean, values at events). Names follow Robertson et al. (2014).
-import { A, $, esc, fx, status, persist, tReal, download, baseName, defaultExp, APP, VERSION, withState, points, angleDefs, eventTypes } from './state.js?v=2.1.0';
-import { LIN, ANG, allVariables } from './vars.js?v=2.1.0';
-import { normalise, eventNames } from './normalise.js?v=2.1.0';
-import { eventStats, intervalRows } from './events.js?v=2.1.0';
-import { meta } from './export.js?v=2.1.0';
+import { A, $, esc, fx, status, persist, tReal, download, baseName, defaultExp, APP, VERSION, withState, points, angleDefs, eventTypes } from './state.js?v=2.1.1';
+import { LIN, ANG, allVariables } from './vars.js?v=2.1.1';
+import { normalise, eventNames } from './normalise.js?v=2.1.1';
+import { eventStats, intervalRows } from './events.js?v=2.1.1';
+import { meta } from './export.js?v=2.1.1';
 
 export const STATS = [
   { k: 'max', name: 'maximum' }, { k: 'min', name: 'minimum' },
@@ -106,25 +106,30 @@ function discreteCSV(R, e) {
   return { lines, n: rows.length };
 }
 
-export async function downloadSelected() {
-  const e = E(); if (!A.results) A.fn.compute(); const R = A.results;
-  const wantDisc = e.disc && (e.stats.length || e.timing || e.key), wantTime = e.cont === 'time' || e.cont === 'both', wantNorm = e.cont === 'norm' || e.cont === 'both';
-  if (!wantDisc && e.cont === 'off') { status('Choose continuous data, discrete values, or both.'); return; }
-  if (!R && (wantTime || wantNorm || e.stats.length)) { if (!wantDisc) { status('Nothing to export yet. Digitise some frames first.'); return; } }
-  const files = [], notes = [];
-  if (wantTime && R) { const c = continuousCSV(R, e); if (c) files.push([baseName() + '_continuous.csv', c.lines, c.n + ' continuous variables']); else notes.push('no continuous variables match your choices'); }
-  if (wantNorm && R) { const c = normCSV(R, e); if (c.err) notes.push(c.err); else files.push([baseName() + '_time_normalised.csv', c.lines, c.n + ' time-normalised variables']); }
-  if (wantDisc) { const c = discreteCSV(R, e); if (c) files.push([baseName() + '_discrete.csv', c.lines, c.n + ' discrete values']); else notes.push('no discrete values match your choices'); }
-  for (let i = 0; i < files.length; i++) { download(files[i][0], csv(files[i][1])); if (i < files.length - 1) await new Promise((r) => setTimeout(r, 400)); }
-  status(files.length ? 'Downloaded ' + files.map((f) => '<strong>' + esc(f[0]) + '</strong> (' + f[2] + ')').join(' and ') + '.' + (notes.length ? ' Note: ' + esc(notes.join('; ')) + '.' : '') : 'Nothing was exported: ' + esc(notes.join('; ')) + '.');
+// Everything: every marker and angle, every linear and angular variable, every discrete statistic.
+const ALL = { markers: null, angles: null, lin: LIN.map((d) => d.k), ang: ANG.map((d) => d.k), stats: STATS.map((d) => d.k), timing: true, key: true, layout: 'wide', angUnit: 'deg', t0: '' };
+
+function need() { if (!A.results) A.fn.compute(); if (!A.results) status('Nothing to export yet. Digitise some frames first.'); return A.results; }
+export function downloadContinuous() {
+  const R = need(); if (!R) return; const c = continuousCSV(R, ALL); if (!c) { status('No data to export yet.'); return; }
+  const n = baseName() + '_continuous.csv'; download(n, csv(c.lines)); status('Downloaded <strong>' + esc(n) + '</strong> (' + c.n + ' variables, every frame).');
+}
+export function downloadDiscrete() {
+  if (!A.results && Object.keys(A.S.frames).length) A.fn.compute();
+  const c = discreteCSV(A.results, Object.assign({}, ALL, { layout: 'long' })); if (!c) { status('No discrete values yet. Digitise some frames or mark events first.'); return; }
+  const n = baseName() + '_discrete.csv'; download(n, csv(c.lines)); status('Downloaded <strong>' + esc(n) + '</strong> (' + c.n + ' values).');
+}
+export function downloadNormalised() {
+  const R = need(); if (!R) return; const c = normCSV(R, ALL); if (c.err) { status(esc(c.err)); return; }
+  const n = baseName() + '_time_normalised.csv'; download(n, csv(c.lines)); status('Downloaded <strong>' + esc(n) + '</strong> (' + c.n + ' variables, 0&ndash;100%).');
 }
 
 // ---------- the whole session, using these choices ----------
 // data: [{ t, R }] for every trial.
 export function sessionDiscreteCSV(data, wide) {
-  const e = E(), per = data.map((d) => ({ t: d.t, rows: withState(d.t.state, () => discreteRows(d.R, e)) })).filter((d) => d.rows.length);
+  const e = ALL, per = data.map((d) => ({ t: d.t, rows: withState(d.t.state, () => discreteRows(d.R, e)) })).filter((d) => d.rows.length);
   if (!per.length) return null;
-  const lines = ['# ' + APP + ' v' + VERSION + ' | session discrete values (your export choices) | ' + new Date().toISOString()];
+  const lines = ['# ' + APP + ' v' + VERSION + ' | session discrete values (every variable) | ' + new Date().toISOString()];
   if (wide) {
     const cols = []; const seen = new Set();
     per.forEach((d) => d.rows.forEach((r) => { const k = r.variable + ' ' + r.stat + (r.unit ? ' (' + r.unit + ')' : ''); if (!seen.has(k)) { seen.add(k); cols.push(k); } }));
@@ -137,49 +142,11 @@ export function sessionDiscreteCSV(data, wide) {
   return { blob: csv(lines), n: per.length };
 }
 
-// ---------- the panel ----------
-function chk(group, val, on, text) { return '<label class="inline"><input type="checkbox" data-g="' + group + '" value="' + esc(val) + '"' + (on ? ' checked' : '') + '> ' + text + '</label>'; }
-export function renderBuilder() {
-  const box = $('expBuilder'); if (!box) return;
-  const e = E(), S = A.S, pts = points(), angs = angleDefs().filter((d) => d.on).map((d) => d.name), evs = [...new Set(eventNames().concat(eventTypes()))];
-  const inM = (m) => !e.markers || e.markers.includes(m), inA = (a) => !e.angles || e.angles.includes(a);
-  $('xbMarkers').innerHTML = pts.length ? pts.map((m) => chk('markers', m, inM(m), esc(m))).join('') : '<span class="muted">No markers yet.</span>';
-  $('xbAngles').innerHTML = angs.length ? angs.map((a) => chk('angles', a, inA(a), esc(a))).join('') : '<span class="muted">No angles in use (build them in the Markers tab).</span>';
-  $('xbLin').innerHTML = LIN.map((d) => chk('lin', d.k, e.lin.includes(d.k), LIN_LAB[d.k])).join('');
-  $('xbAng').innerHTML = ANG.map((d) => chk('ang', d.k, e.ang.includes(d.k), ANG_LAB[d.k])).join('');
-  $('xbStats').innerHTML = STATS.map((d) => chk('stats', d.k, e.stats.includes(d.k), d.name)).join('') + chk('timing', '1', e.timing, 'event times and stopwatch durations') + chk('key', '1', e.key, 'activity results (e.g. contact time, jump height, cycle time)');
-  $('xbCont').value = e.cont; $('xbDisc').checked = !!e.disc; $('xbLayout').value = e.layout; $('xbAngUnit').value = e.angUnit;
-  $('xbT0').innerHTML = '<option value="">the start of the video</option>' + evs.map((n) => '<option value="' + esc(n) + '"' + (n === e.t0 ? ' selected' : '') + '>the first ' + esc(n) + '</option>').join('');
-  $('xbT0').value = evs.includes(e.t0) ? e.t0 : '';
-  box.querySelectorAll('[data-g]').forEach((c) => c.addEventListener('change', () => { readBuilder(); }));
-  countBuilder();
-}
-function readBuilder() {
-  const e = E(), box = $('expBuilder'), vals = (g) => [...box.querySelectorAll('[data-g="' + g + '"]:checked')].map((c) => c.value), all = (g) => [...box.querySelectorAll('[data-g="' + g + '"]')].map((c) => c.value);
-  const m = vals('markers'), a = vals('angles');
-  e.markers = m.length === all('markers').length ? null : m; e.angles = a.length === all('angles').length ? null : a;
-  e.lin = vals('lin'); e.ang = vals('ang'); e.stats = vals('stats'); e.timing = vals('timing').length > 0; e.key = vals('key').length > 0;
-  e.cont = $('xbCont').value; e.disc = $('xbDisc').checked; e.layout = $('xbLayout').value; e.angUnit = $('xbAngUnit').value; e.t0 = $('xbT0').value;
-  persist(); countBuilder();
-}
-function countBuilder() {
-  const e = E(), nm = (e.markers ? e.markers.filter((m) => points().includes(m)).length : points().length), na = (e.angles ? e.angles.length : angleDefs().filter((d) => d.on).length);
-  const nv = nm * e.lin.length + na * e.ang.length, bits = [];
-  if (e.cont !== 'off') bits.push(nv + ' continuous variable' + (nv === 1 ? '' : 's') + (e.cont === 'both' ? ' (over time and time-normalised)' : e.cont === 'norm' ? ' (time-normalised)' : ' (over time)'));
-  if (e.disc) bits.push('about ' + (nv * e.stats.filter((s) => s !== 'events').length) + ' discrete values' + (e.stats.includes('events') ? ' plus values at each event' : ''));
-  $('xbCount').textContent = bits.length ? 'You will get ' + bits.join(', and ') + '.' : 'Nothing chosen yet.';
-}
-function setAll(on) {
-  const e = E();
-  if (on) { Object.assign(e, { markers: null, angles: null, lin: LIN.map((d) => d.k), ang: ANG.map((d) => d.k), stats: STATS.map((d) => d.k), timing: true, key: true, disc: true, cont: e.cont === 'off' ? 'time' : e.cont }); }
-  else Object.assign(e, { lin: [], ang: [], stats: [], timing: false, key: false });
-  persist(); renderBuilder();
-}
+export function renderBuilder() { /* no options any more: every variable is exported */ }
 export function initBuilder() {
-  ['xbCont', 'xbDisc', 'xbLayout', 'xbAngUnit', 'xbT0'].forEach((id) => $(id).addEventListener('change', readBuilder));
-  $('xbGo').addEventListener('click', downloadSelected);
-  $('xbAll').addEventListener('click', () => setAll(true));
-  $('xbNone').addEventListener('click', () => setAll(false));
+  $('xbCont').addEventListener('click', downloadContinuous);
+  $('xbDisc').addEventListener('click', downloadDiscrete);
+  $('xbNorm').addEventListener('click', downloadNormalised);
   A.fn.renderBuilder = renderBuilder;
-  window.__KVA_builder = { discreteRows, downloadSelected, selection };
+  window.__KVA_builder = { discreteRows, downloadContinuous, downloadDiscrete, downloadNormalised };
 }

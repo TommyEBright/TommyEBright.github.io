@@ -1,11 +1,11 @@
 // Saving and exporting: project files, three kinds of CSV, images, graphs and the photo sequence.
-import { A, $, esc, status, persist, migrate, points, tReal, fpsReal, download, baseName, VERSION, APP, currentTrial } from './state.js?v=2.1.0';
-import { toWorld, units, scale } from './maths.js?v=2.1.0';
-import { seekAsync, seek, viewCanvas } from './video.js?v=2.1.0';
-import { draw } from './overlay.js?v=2.1.0';
-import { svgToPng } from './charts.js?v=2.1.0';
-import { summaryRows, xOffset } from './results.js?v=2.1.0';
-import { intervalRows } from './events.js?v=2.1.0';
+import { A, $, esc, status, persist, migrate, points, tReal, fpsReal, download, baseName, VERSION, APP, currentTrial } from './state.js?v=2.1.1';
+import { toWorld, units, scale } from './maths.js?v=2.1.1';
+import { seekAsync, seek, viewCanvas } from './video.js?v=2.1.1';
+import { draw } from './overlay.js?v=2.1.1';
+import { svgToPng } from './charts.js?v=2.1.1';
+import { summaryRows, xOffset } from './results.js?v=2.1.1';
+import { intervalRows } from './events.js?v=2.1.1';
 
 const n = (v, d) => (v === null || v === undefined || Number.isNaN(v) ? '' : (+v).toFixed(d));
 const q = (s) => { s = String(s); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
@@ -203,7 +203,7 @@ export function renderExportPoints() {
 }
 
 export function initExport() {
-  $('csvAnalysis').addEventListener('click', analysisCSV);
+  if ($('csvAnalysis')) $('csvAnalysis').addEventListener('click', analysisCSV);
   $('csvCoords').addEventListener('click', coordsCSV);
   $('csvSummary').addEventListener('click', summaryCSV);
   $('snapBtn').addEventListener('click', snapshot);

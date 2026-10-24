@@ -2,8 +2,8 @@
 // Linear kinematics of a marker: position, velocity and acceleration (x, y and resultant).
 // Angular kinematics of an angle: angular position, angular velocity and angular acceleration.
 // x is horizontal (+ forwards, or + to the right with no fixed direction) and y is vertical (+ up).
-import { DEG } from './state.js?v=2.1.0';
-import { units } from './maths.js?v=2.1.0';
+import { DEG } from './state.js?v=2.1.1';
+import { units } from './maths.js?v=2.1.1';
 
 export const LIN = [
   { k: 'x', key: 'x', name: 'x position', short: 'x', kind: 'position', get: (s) => s.x },
