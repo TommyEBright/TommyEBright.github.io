@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sprint Kinematics Tool</title>
+<title>Sprint Linear Kinematic Analysis Tool</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   :root{
@@ -132,8 +132,7 @@
 
 <header>
   <span class="pill">SESC02</span>
-  <h1>Sprint kinematics tool</h1>
-  <p>Practical session | Supports the Practical Assessment (40%)</p>
+  <h1>Sprint Linear Kinematic Analysis Tool</h1>
 </header>
 
 <div class="card">
@@ -190,11 +189,11 @@
           <input type="text" id="names" placeholder="e.g. Sam Jones and Alex Patel">
         </div>
         <div class="q">
-          <div class="lab">Press Play at 1×. Does the runner move in slow motion?</div>
-          <div class="seg" id="slowSeg"><button data-v="yes">Yes, it's slow</button><button data-v="no">No, it's real speed</button></div>
-          <div id="capWrap" style="margin-top:.6rem">
-            <div class="inline"><span>Slow-mo setting on the phone:</span><div class="seg" id="capSeg"><button data-v="120">120 fps</button><button data-v="240">240 fps</button></div></div>
-          </div>
+          <div class="lab">Is your video in slow motion?</div>
+          <div class="seg" id="slowSeg"><button data-v="yes">Yes</button><button data-v="no">No, it plays at normal speed</button></div>
+          <p class="hint">Not sure? Press Play at 1×. If the runner moves slower than in real life, it is slow motion.</p>
+          <div class="inline" style="margin-top:.7rem"><label for="capFps" style="font-weight:bold;color:var(--navy)">Frame rate it was filmed at</label><input type="number" id="capFps" min="1" step="1" aria-label="Frame rate the video was filmed at, in frames per second"><span>frames per second (fps)</span></div>
+          <p class="hint" id="capHint"></p>
           <p class="hint" id="timingLine"></p>
         </div>
         <div class="q">
@@ -204,25 +203,27 @@
             <span>How many?</span><select id="cN" aria-label="Number of markers"><option>2</option><option>3</option><option>4</option><option>5</option></select>
           </div>
           <p class="hint" id="coneLine"></p>
+          <div id="birdseye" style="margin-top:.6rem;border:1px solid var(--line);border-radius:.6rem;background:#fff;padding:.4rem"></div>
         </div>
         <div class="q">
           <div class="lab">Foot contacts</div>
           <div class="inline"><span>How many contacts in a row do you want to mark?</span><select id="nC" aria-label="Number of foot contacts"><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select></div>
-          <p class="hint">More contacts give a better average. You need at least 2 for one step, and 5 or more is best.</p>
+          <p class="hint"><b>Watch your whole clip first</b> and count how many foot contacts you can see clearly from touchdown to toe-off, then pick that number. More contacts give a better average. You need at least 2 for one step, and 5 or more is best.</p>
         </div>
         <div class="q" style="margin-bottom:0">
-          <div class="lab">Ground scale (for step length)</div>
+          <div class="lab">Ground scale (to measure step length)</div>
+          <p class="hint" style="margin:0 0 .5rem">A ground scale is a <b>known distance lying flat on the ground in the running lane</b> and in shot (e.g. two discs exactly 2 m apart, or a 2 m strip of tape). The tool uses it to turn distances on the screen into metres. If two of your distance markers are both in shot, you can use them as the scale instead (e.g. 5 m).</p>
           <div class="inline">
-            <div class="seg" id="scaleSeg"><button data-v="yes">I have one</button><button data-v="no">No scale, or camera moved</button></div>
+            <div class="seg" id="scaleSeg"><button data-v="yes">Yes, a scale is in shot</button><button data-v="no">No (or the camera moved)</button></div>
             <span id="scaleLenWrap" class="inline"><span>It is</span><input type="number" id="scaleLen" step="0.1" min="0.2" aria-label="Scale length in metres"><span>m long</span></span>
           </div>
           <p class="hint" id="scaleLine"></p>
         </div>
         <details class="box" style="margin-top:1rem">
-          <summary>Advanced timing settings (only if your numbers look wrong)</summary>
+          <summary>Advanced (only if your tutor asks you to)</summary>
           <div class="inner">
-            <p class="muted" style="margin-top:0">The tool reads your file's frame rate automatically. Only change these if your tutor asks you to.</p>
-            <div class="inline"><span>File frame rate</span><input type="number" id="ffps" step="0.01" min="1"><span>fps. Slowed down by</span><input type="number" id="ffac" step="0.01" min="1" placeholder="auto"><span>×</span></div>
+            <p class="muted" style="margin-top:0">This is the frame rate of the video file itself. The tool reads it automatically and only uses it to step through the clip one frame at a time.</p>
+            <div class="inline"><span>Video file frame rate</span><input type="number" id="ffps" step="0.01" min="1"><span>fps</span></div>
           </div>
         </details>
       </div>
@@ -263,17 +264,13 @@
           </select>
           <button class="main" id="addFrame">Add this frame</button>
         </div>
+        <div class="tw" style="margin-bottom:.8rem"><table class="t" id="angKey"></table></div>
         <div id="seqList"></div>
         <details class="box" style="margin-top:.8rem">
-          <summary>How the angles are measured</summary>
+          <summary>More about the angles (direction and accuracy)</summary>
           <div class="inner">
             <ul>
-              <li><b>Knee flexion</b> (hip, knee, ankle): 0° is a straight leg and bigger means more bent. It is 180° minus the angle between thigh and shank.</li>
-              <li><b>Hip angle</b> (shoulder, hip, knee): the thigh relative to the line of the trunk. Positive is flexion (thigh in front of the trunk line) and negative is extension (thigh behind it).</li>
-              <li><b>Ankle angle</b> (knee, ankle, tip of the shoe): the angle between shank and foot. Bigger means more plantarflexed (toes pointed), smaller means more dorsiflexed.</li>
-              <li><b>Trunk lean</b> (hip, shoulder): the trunk relative to the vertical. Positive is leaning forward.</li>
-              <li><b>Shank angle</b> (ankle, knee): the shin relative to the vertical. Positive means the knee is ahead of the ankle, negative means the foot is out in front of the knee.</li>
-              <li><b>Touchdown distance</b> (hip, tip of the shoe, needs the ground scale): how far in front of the hip the foot lands. A big positive value usually means more braking.</li>
+              <li><b>Joint angles</b> (knee, hip, ankle) are the angle between two body segments. <b>Segment angles</b> (trunk lean, shank angle) are one segment compared with upright.</li>
               <li>The tool works out which way the runner is going so that "forward" is right. If your hip or trunk angles come out with the wrong sign, set it here: <span class="inline" style="display:inline-flex;margin-top:.3rem"><span class="seg" id="dirSeg"><button data-v="right">Running left → right</button><button data-v="left">Running right → left</button></span> <span id="dirAuto" class="muted"></span></span></li>
               <li>If you set a ground scale, the tool uses it as the horizontal, so a slightly tilted phone does not change the angles. These are <b>2D angles</b>, so they are only accurate if the camera is side-on to the movement.</li>
             </ul>
@@ -309,7 +306,7 @@ const STORE = "sesc02-sprint-kin-v2";
 /* ---------------- state ---------------- */
 function blank(){
   return {
-    names:"", slow:"yes", capture:240, fileFps:30, fpsDetected:false, factorOverride:null,
+    names:"", slow:"yes", capFps:null, fileFps:30, fpsDetected:false,
     c0:0, cGap:5, cN:3,
     useScale:true, scaleLen:2,
     vidId:null, vidName:"",
@@ -323,13 +320,9 @@ function save(){ try{ localStorage.setItem(STORE, JSON.stringify(S)); }catch(e){
 function load(){ try{ const r = localStorage.getItem(STORE); if(r){ const s = JSON.parse(r); if(s && s.marks) S = Object.assign(blank(), s); } }catch(e){} }
 
 /* ---------------- timing ---------------- */
-function factor(){
-  if(S.factorOverride) return S.factorOverride;
-  if(S.slow !== "yes") return 1;
-  // a slow-mo clip saved at a normal frame rate (e.g. 240 captured, 30 fps file) plays capture/file times slower
-  return S.fileFps >= S.capture*0.9 ? 1 : S.capture / S.fileFps;
-}
-const realFps = () => S.fileFps * factor();
+// Each frame in the file is one frame the phone captured, so real time per frame = 1 / (frame rate it was filmed at).
+// The file's own frame rate is only used to step through the video one frame at a time.
+const realFps = () => (S.capFps > 0 ? S.capFps : S.fileFps);
 const tReal = frames => frames / realFps();
 
 /* ---------------- the marking plan ---------------- */
@@ -462,6 +455,7 @@ window.addEventListener("resize", draw);
 ov.addEventListener("click", e => {
   if(!loaded){ $("file").click(); return; }
   if(angMode){ angleClick(e); return; }
+  if(!S.capFps){ toast("Enter the frame rate the video was filmed at in Step 1 first."); return; }
   const it = target || firstUndone();
   if(!it){ toast("All marks done. Click an item in the list if you want to redo one."); return; }
   const [x,y] = toVid(e.clientX, e.clientY);
@@ -503,24 +497,66 @@ document.addEventListener("keydown", e => { if(e.key === "Escape" && angMode){ a
 let tt; function toast(t){ const el = $("toast"); el.textContent = t; el.style.display = "block"; clearTimeout(tt); tt = setTimeout(() => el.style.display = "none", 5000); }
 
 /* ---------------- set-up UI ---------------- */
+// bird's-eye view of the set-up, drawn to scale along the lane
+function birdsEye(){
+  const W = 560, H = 250, L = 40, R = 40, laneY = 52, laneH = 46, n = S.cN;
+  const first = conePos(0), last = conePos(n-1), span = Math.max(last - first, 1);
+  const X = m => L + (m - first) / span * (W - L - R);
+  const mid = (X(first) + X(last)) / 2, camY = 196;
+  let g = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Bird's-eye view of the set-up" style="width:100%;height:auto;display:block;font-family:Arial,sans-serif">`;
+  g += `<text x="${L-30}" y="16" font-size="12" fill="#56636b">Bird’s-eye view (looking down from above)</text>`;
+  g += `<rect x="${L-30}" y="${laneY}" width="${W-L-R+60}" height="${laneH}" fill="#e3f3f1" rx="4"/>`;
+  g += `<line x1="${L-30}" x2="${W-R+30}" y1="${laneY+laneH/2}" y2="${laneY+laneH/2}" stroke="#00857e" stroke-width="1.5" stroke-dasharray="6 5"/>`;
+  g += `<text x="${W-R+28}" y="${laneY-6}" font-size="11" fill="#00857e" text-anchor="end">running line →</text>`;
+  for(let i=0;i<n;i++){
+    const x = X(conePos(i));
+    g += `<circle cx="${x}" cy="${laneY+laneH/2}" r="7" fill="#8b3556"/><text x="${x}" y="${laneY+laneH+16}" font-size="12" text-anchor="middle" fill="#003d50" font-weight="bold">${conePos(i)} m</text>`;
+    if(i < n-1){
+      const x2 = X(conePos(i+1)), y = laneY - 18;
+      g += `<line x1="${x+3}" x2="${x2-3}" y1="${y}" y2="${y}" stroke="#56636b" marker-start="url(#ah)" marker-end="url(#ah)"/><text x="${(x+x2)/2}" y="${y-5}" font-size="11" text-anchor="middle" fill="#56636b">${+(conePos(i+1)-conePos(i)).toFixed(2)} m</text>`;
+    }
+  }
+  if(S.useScale){
+    const sx = mid - 18, sx2 = mid + 18, sy = laneY + laneH/2 + 13;
+    g += `<line x1="${sx}" x2="${sx2}" y1="${sy}" y2="${sy}" stroke="#d6a400" stroke-width="4"/><text x="${sx2+6}" y="${sy+4}" font-size="10.5" fill="#9a7400">${S.scaleLen} m ground scale</text>`;
+  }
+  g += `<line x1="${mid}" x2="${X(first)}" y1="${camY-14}" y2="${laneY+laneH}" stroke="#9aa7ae" stroke-dasharray="3 4"/><line x1="${mid}" x2="${X(last)}" y1="${camY-14}" y2="${laneY+laneH}" stroke="#9aa7ae" stroke-dasharray="3 4"/>`;
+  g += `<line x1="${mid}" x2="${mid}" y1="${camY-14}" y2="${laneY+laneH+22}" stroke="#003d50" stroke-width="1.2"/>`;
+  g += `<rect x="${mid-16}" y="${camY-14}" width="32" height="20" rx="4" fill="#003d50"/><circle cx="${mid}" cy="${camY-4}" r="5" fill="#fff"/>`;
+  g += `<text x="${mid}" y="${camY+22}" font-size="11.5" fill="#003d50" text-anchor="middle">Camera: side-on, square to the lane, opposite the middle of your markers</text>`;
+  g += `<defs><marker id="ah" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#56636b"/></marker></defs></svg>`;
+  return g;
+}
 function seg(id, val, fn){ document.querySelectorAll(`#${id} button`).forEach(b => { b.classList.toggle("on", b.dataset.v == val); b.onclick = () => { fn(b.dataset.v); save(); renderAll(); }; }); }
 function renderSetup(){
   $("names").value = S.names;
   seg("slowSeg", S.slow, v => S.slow = v);
-  seg("capSeg", S.capture, v => S.capture = +v);
-  $("capWrap").style.display = S.slow === "yes" ? "" : "none";
+  $("capFps").value = S.capFps || "";
+  $("capFps").placeholder = S.slow === "yes" ? "e.g. 240" : "e.g. 30";
+  $("capHint").textContent = S.slow === "yes"
+    ? "Use your phone's slow-motion setting (usually 120 or 240 fps)."
+    : "Use your phone's video setting (usually 30 or 60 fps).";
   const ms = 1000/realFps();
-  $("timingLine").innerHTML = !loaded ? "" :
-    `${S.fpsDetected ? "" : "<b>Couldn't read the frame rate, so 30 fps is assumed.</b> "}Each frame is <b>${ms.toFixed(1)} ms</b> of real time. ` +
-    (ms > 10 ? '<span class="warnc">That is too coarse for good contact times. Film in slow motion if you can.</span>' : '<span class="tick">✓ Good.</span>');
+  let line = "";
+  if(!S.capFps) line = `<span class="warnc">Enter the frame rate above before you start marking.</span>${loaded && S.fpsDetected ? ` Your video file plays at ${S.fileFps} fps.` : ""}`;
+  else {
+    line = `So each frame is <b>${ms.toFixed(1)} ms</b> of real time (1 ÷ ${S.capFps}). `;
+    if(loaded && S.fpsDetected && S.slow === "no" && Math.abs(S.capFps - S.fileFps)/S.fileFps > 0.05)
+      line += `<span class="warnc">Your video file plays at ${S.fileFps} fps. If the clip plays at normal speed, enter ${S.fileFps}.</span>`;
+    else if(S.slow === "yes" && S.capFps < 100)
+      line += '<span class="warnc">Slow motion is usually filmed at 120 or 240 fps. Check your phone’s setting.</span>';
+    else line += ms > 10 ? '<span class="warnc">That is too coarse for good contact times. Film in slow motion if you can.</span>' : '<span class="tick">✓ Good.</span>';
+  }
+  $("timingLine").innerHTML = line;
   $("nC").value = S.nContacts;
   $("c0").value = S.c0; $("cGap").value = S.cGap; $("cN").value = S.cN;
   $("coneLine").textContent = `So your markers are at ${Array.from({length:S.cN},(_,i)=>conePos(i)+" m").join(", ")}.`;
+  $("birdseye").innerHTML = birdsEye();
   seg("scaleSeg", S.useScale ? "yes" : "no", v => S.useScale = v === "yes");
   $("scaleLenWrap").style.display = S.useScale ? "" : "none";
   $("scaleLen").value = S.scaleLen;
-  $("scaleLine").textContent = S.useScale ? "Step length will be measured from the video." : "Step length will be estimated from velocity ÷ step frequency instead.";
-  $("ffps").value = S.fileFps; $("ffac").value = S.factorOverride || "";
+  $("scaleLine").textContent = S.useScale ? "Step length will be measured from the video. Keep the phone still: the scale only works if the camera does not move or zoom." : "Step length will be estimated from velocity ÷ step frequency instead, which is less accurate.";
+  $("ffps").value = S.fileFps;
 }
 $("names").oninput = e => { S.names = e.target.value; save(); };
 $("c0").onchange = e => { S.c0 = parseFloat(e.target.value)||0; save(); renderAll(); };
@@ -529,7 +565,7 @@ $("cN").onchange = e => { S.cN = +e.target.value; for(let i=S.cN;i<5;i++) delete
 $("nC").onchange = e => { S.nContacts = +e.target.value; for(let k=S.nContacts+1;k<=12;k++){ delete S.marks[`td${k}`]; delete S.marks[`to${k}`]; } save(); renderAll(); };
 $("scaleLen").onchange = e => { const v = parseFloat(e.target.value); if(v>0){ S.scaleLen = v; save(); renderAll(); } };
 $("ffps").onchange = e => { const v = parseFloat(e.target.value); if(v>0){ S.fileFps = v; S.fpsDetected = true; save(); renderAll(); } };
-$("ffac").onchange = e => { const v = parseFloat(e.target.value); S.factorOverride = v>0 ? v : null; save(); renderAll(); };
+$("capFps").onchange = e => { const v = parseFloat(e.target.value); S.capFps = v > 0 ? v : null; save(); renderAll(); };
 
 /* ---------------- marking UI ---------------- */
 function renderMarks(){
@@ -568,7 +604,7 @@ function compute(){
   const t0 = cones.length ? cones[0].t : 0;
   for(let k=0;k<cones.length-1;k++){
     const a = cones[k], b = cones[k+1], d = b.pos - a.pos, dt = b.t - a.t;
-    if(dt > 0) R.sections.push({p1:a.pos, p2:b.pos, d, t1:a.t-t0, t2:b.t-t0, dt, v:d/dt, tmid:(a.t+b.t)/2 - t0});
+    if(dt > 0) R.sections.push({p1:a.pos, p2:b.pos, d, t1:a.t-t0, t2:b.t-t0, dt, v:d/dt, tmid:(a.t+b.t)/2 - t0, f1:S.marks[`cone${a.i}`].frame, f2:S.marks[`cone${b.i}`].frame});
   }
   // acceleration: change in average velocity over the time between section mid-points
   for(let k=0;k<R.sections.length-1;k++){
@@ -583,12 +619,12 @@ function compute(){
   for(let k=1;k<=S.nContacts;k++){
     const td = S.marks[`td${k}`], to = S.marks[`to${k}`], td2 = S.marks[`td${k+1}`];
     if(!td) continue;
-    const s = {n:k, ct:null, ft:null, stepT:null, sf:null, sl:null, est:false};
+    const s = {n:k, ct:null, ft:null, stepT:null, sf:null, sl:null, est:false, ftd:td.frame, fto:to ? to.frame : null, ftd2:td2 ? td2.frame : null, px:null, pxm};
     if(to && to.frame > td.frame) s.ct = tReal(to.frame - td.frame);
     if(td2 && td2.frame > td.frame){
       s.stepT = tReal(td2.frame - td.frame); s.sf = 1/s.stepT;
       if(to && td2.frame > to.frame) s.ft = tReal(td2.frame - to.frame);
-      if(scaleOK) s.sl = Math.abs(((td2.x-td.x)*ux + (td2.y-td.y)*uy) / L) / pxm;   // distance along the line of the scale, i.e. along the lane
+      if(scaleOK){ s.px = Math.abs(((td2.x-td.x)*ux + (td2.y-td.y)*uy) / L); s.sl = s.px / pxm; }   // distance along the line of the scale, i.e. along the lane
       else if(R.overall){ s.sl = R.overall.v * s.stepT; s.est = true; }              // v = SL × SF, so SL = v ÷ SF
     }
     if(s.ct !== null || s.stepT !== null) R.steps.push(s);
@@ -617,6 +653,28 @@ function compute(){
 /* ---------------- results UI ---------------- */
 const fmt = (x,d=2) => (x===null || x===undefined || !isFinite(x)) ? "–" : x.toFixed(d);
 const card = (k,v,u,c="") => `<div class="rc ${c}"><div class="k">${k}</div><div class="v">${v} <span class="u">${u}</span></div></div>`;
+// worked examples using the student's own numbers
+function working(R){
+  const fps = realFps(), W = {vel:[], acc:[], steps:[]};
+  const fr = (a,b) => `(${b} − ${a}) ÷ ${fps} = ${fmt((b-a)/fps,3)} s`;
+  R.sections.forEach(s => W.vel.push(`<b>${s.p1}–${s.p2} m:</b> time = frames between the two markers ÷ frame rate = ${fr(s.f1, s.f2)}. Velocity = distance ÷ time = ${fmt(s.d)} m ÷ ${fmt(s.dt,3)} s = <b>${fmt(s.v)} m/s</b>.`));
+  R.accels.forEach(a => W.acc.push(`<b>${a.s1.p1}–${a.s1.p2} m → ${a.s2.p1}–${a.s2.p2} m:</b> the two velocities belong to the middle of each section in time (${fmt(a.s1.tmid,3)} s and ${fmt(a.s2.tmid,3)} s). Acceleration = change in velocity ÷ time = (${fmt(a.s2.v)} − ${fmt(a.s1.v)}) ÷ (${fmt(a.s2.tmid,3)} − ${fmt(a.s1.tmid,3)}) = <b>${fmt(a.a)} m/s²</b>.`));
+  const s = R.steps.find(x => x.ct !== null && x.stepT !== null) || R.steps[0];
+  if(s){
+    if(s.ct !== null) W.steps.push(`<b>Contact time</b> (contact ${s.n}) = (toe-off frame − touchdown frame) ÷ frame rate = ${fr(s.ftd, s.fto)}.`);
+    if(s.ft !== null) W.steps.push(`<b>Flight time</b> = (next touchdown frame − toe-off frame) ÷ frame rate = ${fr(s.fto, s.ftd2)}.`);
+    if(s.stepT !== null){
+      W.steps.push(`<b>Step time</b> = (next touchdown − this touchdown) ÷ frame rate = ${fr(s.ftd, s.ftd2)}, which is also contact time + flight time.`);
+      W.steps.push(`<b>Step frequency</b> = 1 ÷ step time = 1 ÷ ${fmt(s.stepT,3)} = <b>${fmt(s.sf)} steps per second (Hz)</b>.`);
+    }
+    if(s.sl !== null) W.steps.push(s.est
+      ? `<b>Step length (estimated)</b> = velocity × step time = ${fmt(R.overall.v)} × ${fmt(s.stepT,3)} = <b>${fmt(s.sl)} m</b>. This uses velocity = step length × step frequency and assumes the runner’s speed stayed the same.`
+      : `<b>Step length</b> = distance between the two toe clicks along your ground scale ÷ pixels per metre = ${fmt(s.px,0)} px ÷ ${fmt(s.pxm,1)} px/m = <b>${fmt(s.sl)} m</b>. Pixels per metre comes from your scale (its length on screen ÷ ${S.scaleLen} m).`);
+    W.steps.push(`The <b>averages</b> are the mean of all your contacts. One frame here is 1 ÷ ${fps} = ${fmt(1000/fps,1)} ms, so each time can be out by about one frame.`);
+  }
+  return W;
+}
+const workBox = (title, lines) => lines.length ? `<details class="box" open style="margin:.2rem 0 .9rem"><summary>${title}</summary><div class="inner"><ul style="margin:0;padding-left:1.2rem">${lines.map(l=>`<li style="margin-bottom:.35rem">${l}</li>`).join("")}</ul></div></details>` : "";
 function renderResults(){
   const R = compute(), el = $("results");
   if(!R.sections.length && !R.steps.length && !S.seq.some(it => Object.keys(it.angles).length)){ el.innerHTML = '<p class="muted">Your results will appear here as you mark the video.</p>'; return; }
@@ -630,10 +688,12 @@ function renderResults(){
     h += `</div><div class="tw"><table class="t"><thead><tr><th>Section</th><th>Distance (m)</th><th>Time (s)</th><th>Velocity (m/s)</th></tr></thead><tbody>`;
     R.sections.forEach(s => h += `<tr><td>${s.p1}–${s.p2} m</td><td class="n">${fmt(s.d)}</td><td class="n">${fmt(s.dt,3)}</td><td class="n"><b>${fmt(s.v)}</b></td></tr>`);
     h += `</tbody></table></div><p class="how">Velocity = distance ÷ time <span class="formula">(v = Δd ÷ Δt)</span>. It is the <i>average</i> velocity across each section.</p>`;
+    h += workBox("How these were calculated (with your numbers)", working(R).vel);
     if(R.accels.length){
       h += `<div class="tw"><table class="t"><thead><tr><th>From section → to section</th><th>Change in velocity (m/s)</th><th>Time between section mid-points (s)</th><th>Acceleration (m/s²)</th></tr></thead><tbody>`;
       R.accels.forEach(a => h += `<tr><td>${a.s1.p1}–${a.s1.p2} m → ${a.s2.p1}–${a.s2.p2} m</td><td class="n">${fmt(a.dv)}</td><td class="n">${fmt(a.dt,3)}</td><td class="n"><b>${fmt(a.a)}</b></td></tr>`);
       h += `</tbody></table></div><p class="how">Acceleration = change in velocity ÷ time <span class="formula">(a = Δv ÷ Δt)</span>. Each average velocity belongs to the middle of its section, so Δt is the time between the section mid-points. A negative value means the runner is slowing down.</p>`;
+      h += workBox("How acceleration was calculated (with your numbers)", working(R).acc);
     } else h += `<p class="how">Use three or more markers to get acceleration.</p>`;
     h += `<div class="charts"><div class="chart"><h4>Displacement–time</h4>${chartDisp(R)}</div><div class="chart"><h4>Velocity–time</h4>${chartVel(R)}</div></div>`;
   }
@@ -644,6 +704,7 @@ function renderResults(){
     R.steps.forEach(s => h += `<tr><td>${s.n}</td><td class="n">${fmt(s.ct,3)}</td><td class="n">${fmt(s.ft,3)}</td><td class="n">${fmt(s.stepT,3)}</td><td class="n">${fmt(s.sf)}</td><td class="n">${fmt(s.sl)}</td></tr>`);
     h += `<tr class="avg"><td>Average</td><td class="n">${fmt(sm.ct,3)}</td><td class="n">${fmt(sm.ft,3)}</td><td class="n">${fmt(sm.stepT,3)}</td><td class="n">${fmt(sm.sf)}</td><td class="n">${fmt(sm.sl)}</td></tr></tbody></table></div>`;
     h += `<p class="how"><b>Contact time</b> = toe-off − touchdown. <b>Flight time</b> = next touchdown − toe-off. <b>Step time</b> = one touchdown to the next, and <b>step frequency</b> = 1 ÷ step time. <b>Step length</b> = distance from one touchdown to the next${sm.est ? `, <b>estimated</b> here as velocity ÷ step frequency because there was no scale. This assumes velocity stayed the same over these steps.` : ", measured along the line of your ground scale."}</p>`;
+    h += workBox("How the step results were calculated (with your numbers)", working(R).steps);
     if(sm.vStep && R.overall) h += `<p class="how"><b>Check:</b> step length × step frequency = <b>${fmt(sm.vStep)} m/s</b>, and your markers gave <b>${fmt(R.overall.v)} m/s</b>. These should be close, because velocity = step length × step frequency.</p>`;
   }
   const angRows = S.seq.filter(it => Object.keys(it.angles).length);
@@ -651,7 +712,14 @@ function renderResults(){
     const types = Object.keys(ANG).filter(t => angRows.some(it => it.angles[t]));
     h += `<h3 class="rh">Joint and segment angles</h3><div class="tw"><table class="t"><thead><tr><th>Frame</th>${types.map(t=>`<th>${ANG[t].name}</th>`).join("")}</tr></thead><tbody>`;
     angRows.forEach(it => h += `<tr><td>${S.seq.indexOf(it)+1}. ${xe(it.label)}</td>${types.map(t => `<td class="n">${it.angles[t] ? fmtAng(t, angleValue(t, it.angles[t])) : "–"}</td>`).join("")}</tr>`);
-    h += `</tbody></table></div><p class="how">2D angles measured on the video. Knee flexion: 0° = straight. Hip: + flexion, − extension. Trunk lean and shank angle are relative to the vertical, + = forward. Touchdown distance: + = foot lands ahead of the hip.</p>`;
+    h += `</tbody></table></div>`;
+    h += workBox("How the angles were calculated", [
+      "Each angle comes from the points you clicked on one frame, so it is a <b>2D angle</b> in the plane of the camera (accurate only if the camera was side-on).",
+      "<b>Knee flexion</b> = 180° − the angle at the knee between the thigh (knee → hip) and the shin (knee → ankle). A straight leg gives 0°.",
+      "<b>Hip angle</b> = the angle between the line of the trunk carried on downwards and the thigh. Thigh in front = + (flexion), thigh behind = − (extension).",
+      "<b>Ankle angle</b> = the angle at the ankle between the shin and the line to the tip of the shoe.",
+      "<b>Trunk lean</b> and <b>shank angle</b> = the angle of that segment from upright. If you set a ground scale, it is used as the horizontal, so a slightly tilted phone does not change the answer.",
+      "<b>Touchdown distance</b> = how far forwards the tip of the shoe is from the hip, in pixels, ÷ pixels per metre from your ground scale."]);
   }
   h += R.flags.length ? `<h3 class="rh">Sense check</h3><div class="flags">${R.flags.map(f=>`<p>${f}</p>`).join("")}</div>` : `<p><span class="tick">✓</span> No obvious problems with these numbers.</p>`;
   el.innerHTML = h;
@@ -685,7 +753,7 @@ const xe = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/
 function download(blob, name){ const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
 $("dlCsv").onclick = () => {
   const R = compute(), f = (x,d) => x === null ? "" : x.toFixed(d);
-  const L = [["SESC02 sprint kinematics"],["Name(s)", S.names],["Real time per frame (ms)", (1000/realFps()).toFixed(2)],[],["Section","Distance (m)","Time (s)","Velocity (m/s)","Mid-point time (s)"]];
+  const L = [["SESC02 sprint linear kinematic analysis"],["Name(s)", S.names],["Real time per frame (ms)", (1000/realFps()).toFixed(2)],[],["Section","Distance (m)","Time (s)","Velocity (m/s)","Mid-point time (s)"]];
   R.sections.forEach(s => L.push([`${s.p1}-${s.p2} m`, s.d.toFixed(2), s.dt.toFixed(3), s.v.toFixed(3), s.tmid.toFixed(3)]));
   L.push([],["From section","To section","Change in velocity (m/s)","Time between mid-points (s)","Acceleration (m/s2)"]);
   R.accels.forEach(a => L.push([`${a.s1.p1}-${a.s1.p2} m`, `${a.s2.p1}-${a.s2.p2} m`, a.dv.toFixed(3), a.dt.toFixed(3), a.a.toFixed(3)]));
@@ -710,7 +778,7 @@ function wTable(head, rows, widths){
 $("dlWord").onclick = async () => {
   if(typeof JSZip === "undefined"){ toast("The export library didn't load. Check your connection and refresh."); return; }
   const R = compute(); let b = "";
-  b += wP("Sprint kinematic analysis", {sz:32, b:true, color:"003D50", after:60});
+  b += wP("Sprint linear kinematic analysis", {sz:32, b:true, color:"003D50", after:60});
   b += wP("SESC02 Mechanics of Human Movement", {sz:20, color:"56636B", after:160});
   if(S.names.trim()) b += wP(`Name(s): ${S.names.trim()}`, {after:60});
   if(S.vidName) b += wP(`Video: ${S.vidName}. Each frame = ${(1000/realFps()).toFixed(1)} ms of real time.`, {sz:18, color:"56636B"});
@@ -756,6 +824,11 @@ $("dlWord").onclick = async () => {
     b += `<w:tbl><w:tblPr><w:tblW w:w="${colW*per}" w:type="dxa"/><w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid>${`<w:gridCol w:w="${colW}"/>`.repeat(per)}</w:tblGrid>${rowsX}</w:tbl>`;
     b += wP("Times are relative to the first frame in the sequence. 2D angles measured on the video. Knee flexion: 0° = straight. Hip: + flexion, − extension. Trunk lean and shank angle are relative to the vertical, + = forward. Touchdown distance: + = foot ahead of the hip.", {sz:17, i:true, color:"56636B", before:60});
   }
+  const Wk = working(R), plain = x => x.replace(/<[^>]+>/g, "");
+  if(Wk.vel.length || Wk.steps.length){
+    b += wP("How the results were calculated", {sz:24, b:true, color:"003D50", before:200});
+    [...Wk.vel, ...Wk.acc, ...Wk.steps].forEach(l => b += wP("• " + plain(l), {sz:18}));
+  }
   if(R.flags.length){ b += wP("Sense check notes", {sz:22, b:true, color:"8B3556", before:200}); R.flags.forEach(f => b += wP("• " + f, {sz:18})); }
   const doc = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"><w:body>${b}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>`;
   const z = new JSZip();
@@ -768,19 +841,19 @@ $("dlWord").onclick = async () => {
 };
 $("clearAll").onclick = () => {
   if(!confirm("Clear all your marks and start again?")) return;
-  const keep = {vidId:S.vidId, vidName:S.vidName, fileFps:S.fileFps, fpsDetected:S.fpsDetected, slow:S.slow, capture:S.capture};
+  const keep = {vidId:S.vidId, vidName:S.vidName, fileFps:S.fileFps, fpsDetected:S.fpsDetected, slow:S.slow, capFps:S.capFps};
   S = Object.assign(blank(), keep); target = null; angMode = null; save(); renderAll();
 };
 
 
 /* ---------------- photo sequence and angles ---------------- */
 const ANG = {
-  knee:  {name:"Knee flexion", unit:"°", pts:["the hip (greater trochanter)","the knee (centre of the side of the knee)","the ankle (bony bump on the outside)"]},
-  hip:   {name:"Hip angle", unit:"°", pts:["the shoulder","the hip (greater trochanter)","the knee (centre of the side of the knee)"]},
-  ankle: {name:"Ankle angle", unit:"°", pts:["the knee","the ankle (bony bump on the outside)","the tip of the shoe"]},
-  trunk: {name:"Trunk lean", unit:"°", pts:["the hip (greater trochanter)","the shoulder"]},
-  shank: {name:"Shank angle", unit:"°", pts:["the ankle (bony bump on the outside)","the knee"]},
-  tdd:   {name:"Touchdown distance", unit:"m", pts:["the hip (greater trochanter)","the tip of the shoe"], scale:true}
+  knee:  {name:"Knee flexion", def:"How bent the knee is. 0° = straight leg, bigger = more bent.", unit:"°", pts:["the hip (greater trochanter)","the knee (centre of the side of the knee)","the ankle (bony bump on the outside)"]},
+  hip:   {name:"Hip angle", def:"Where the thigh is compared with the trunk. + = flexion (thigh in front), − = extension (thigh behind).", unit:"°", pts:["the shoulder","the hip (greater trochanter)","the knee (centre of the side of the knee)"]},
+  ankle: {name:"Ankle angle", def:"Angle between shin and foot. Bigger = toes pointed (plantarflexion), smaller = toes pulled up (dorsiflexion).", unit:"°", pts:["the knee","the ankle (bony bump on the outside)","the tip of the shoe"]},
+  trunk: {name:"Trunk lean", def:"How far the trunk leans from upright. + = leaning forward.", unit:"°", pts:["the hip (greater trochanter)","the shoulder"]},
+  shank: {name:"Shank (shin) angle", def:"How far the shin leans from upright. + = knee ahead of ankle, − = foot out in front.", unit:"°", pts:["the ankle (bony bump on the outside)","the knee"]},
+  tdd:   {name:"Touchdown distance", def:"How far in front of the hip the foot lands. Bigger usually means more braking. Needs the ground scale.", unit:"m", pts:["the hip (greater trochanter)","the tip of the shoe"], scale:true}
 };
 let angMode = null;   // {idx, type, pts:[]}
 function banner(){
@@ -866,6 +939,8 @@ $("addFrame").onclick = () => {
   save(); renderAll();
 };
 function renderSeq(){
+  const shortPts = t => ANG[t].pts.map(x => x.replace(/^the /,"").replace(/ \(.*\)$/,"")).join(" → ");
+  $("angKey").innerHTML = `<thead><tr><th>Button</th><th>What it measures</th><th>You click</th></tr></thead><tbody>${Object.keys(ANG).map(t => `<tr><td><b>${ANG[t].name}</b></td><td>${ANG[t].def}</td><td>${shortPts(t)}</td></tr>`).join("")}</tbody>`;
   document.querySelectorAll("#dirSeg button").forEach(b => { b.classList.toggle("on", S.dir === b.dataset.v || (S.dir === "auto" && ((dirSign() > 0) === (b.dataset.v === "right")))); b.onclick = () => { S.dir = b.dataset.v; save(); renderAll(); }; });
   $("dirAuto").textContent = S.dir === "auto" ? "(worked out from your marks)" : "";
   const L = $("seqList");
@@ -876,7 +951,7 @@ function renderSeq(){
     const d = document.createElement("div"); d.className = "sq" + (it.frame === f ? " on" : "");
     const vals = Object.entries(it.angles).map(([t,p]) => `<span>${ANG[t].name}: <b>${fmtAng(t, angleValue(t,p))}</b> <button class="x" data-del="${t}" title="Delete" style="float:none;padding:0 .2rem">✕</button></span>`).join("");
     d.innerHTML = `<img src="${it.img}" alt="${xe(it.label)} frame" title="Go to this frame"><div><button class="x" data-rm="1">Remove</button><div class="tt">${i+1}. ${xe(it.label)}</div><div class="muted">Frame ${it.frame} · ${tReal(it.frame - t0).toFixed(3)} s</div>
-      <div class="chips">${Object.keys(ANG).map(t => `<button data-ang="${t}" class="${it.angles[t] ? "has" : ""}">${ANG[t].name}</button>`).join("")}</div><div class="vals">${vals || '<span class="muted">Click a button above, then click the landmarks on the video.</span>'}</div></div>`;
+      <div class="chips">${Object.keys(ANG).map(t => `<button data-ang="${t}" class="${it.angles[t] ? "has" : ""}" title="${ANG[t].def}">${ANG[t].name}</button>`).join("")}</div><div class="vals">${vals || '<span class="muted">Click a button above, then click the landmarks on the video.</span>'}</div></div>`;
     d.querySelector("img").onclick = () => goFrame(it.frame);
     d.querySelector("[data-rm]").onclick = () => { S.seq.splice(i,1); angMode = null; banner(); save(); renderAll(); };
     d.querySelectorAll("[data-ang]").forEach(b => b.onclick = () => startAngle(i, b.dataset.ang));
