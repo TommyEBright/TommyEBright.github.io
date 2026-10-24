@@ -1,10 +1,10 @@
 // Results: filtering, derivatives, angles, graphs, time normalisation, the filter check, quality checks and live data.
-import { A, $, esc, fx, status, persist, points, colourOf, angleDefs, tReal, fpsReal, PALETTE, G, fwd, hipMarker, download, baseName } from './state.js?v=2.0.2';
-import { toWorld, units, butter, residualCurve, centralDiff, secondDiff, series, angleValue, anglePoints, mean, sd } from './maths.js?v=2.0.2';
-import { chart, legend } from './charts.js?v=2.0.2';
-import { seek } from './video.js?v=2.0.2';
-import { eventStats, statsHTML } from './events.js?v=2.0.2';
-import { normalise, variableList, eventNames } from './normalise.js?v=2.0.2';
+import { A, $, esc, fx, status, persist, points, colourOf, angleDefs, tReal, fpsReal, PALETTE, G, fwd, hipMarker, download, baseName } from './state.js?v=2.1.0';
+import { toWorld, units, butter, residualCurve, centralDiff, secondDiff, series, angleValue, anglePoints, canWrap, unwrap, mean, sd } from './maths.js?v=2.1.0';
+import { chart, legend } from './charts.js?v=2.1.0';
+import { seek } from './video.js?v=2.1.0';
+import { eventStats, statsHTML } from './events.js?v=2.1.0';
+import { normalise, variableList, eventNames } from './normalise.js?v=2.1.0';
 
 const angCol = (i) => PALETTE[(i + 3) % PALETTE.length];
 
@@ -28,7 +28,9 @@ function angleSeries(defs, sers) {
     const idx = ps.map((p) => new Map(sers[p].F.map((f, i) => [f, i])));
     const F = sers[ps[0]].F.filter((f) => idx.every((m) => m.has(f)));
     if (F.length < 3) return;
-    const T = F.map(tReal), V = F.map((f) => { const P = {}; ps.forEach((p, j) => { const s = sers[p], i = idx[j].get(f); P[p] = [s.x[i], s.y[i]]; }); return angleValue(d, P); });
+    const T = F.map(tReal);
+    let V = F.map((f) => { const P = {}; ps.forEach((p, j) => { const s = sers[p], i = idx[j].get(f); P[p] = [s.x[i], s.y[i]]; }); return angleValue(d, P); });
+    if (canWrap(d)) V = unwrap(V);
     out.push({ key: d.name, def: d, col: angCol(k), F, T, V, W: centralDiff(T, V), AA: secondDiff(T, V) });
   });
   return out;
@@ -89,32 +91,35 @@ export function drawResults() {
   const cm = compMode(), evs = S.events.map((e) => ({ t: tReal(e.frame) - off, name: e.name }));
   const o = (ylab, zero) => ({ ylab, zero, evs, xlab: xLabel(), now: tReal(A.cur) - off, minmax: g.minmax, onPick: (t) => { seek(Math.round((t + off) * fpsReal())); setTimeout(drawResults, 30); } });
   const sc = (arr, k) => arr.map((v) => (v === null ? null : v * k));
-  const pos = [], vel = [], acc = [], leg = [];
+  const pos = [], vel = [], acc = [], leg = [], traj = [];
   g.points.filter((m) => R.sers[m]).forEach((m) => {
     const s = R.sers[m], T = s.T.map((t) => t - off), col = colourOf(m), many = g.points.length > 1;
-    if (cm !== 'y') { pos.push({ x: T, y: s.x, col }); leg.push({ name: m + ' horizontal (+ ' + fwd() + ')', col }); }
-    if (cm !== 'x') { pos.push({ x: T, y: s.y, col, dash: '7 5' }); leg.push({ name: m + ' vertical (up +)', col, dash: true }); }
+    if (cm !== 'y') { pos.push({ x: T, y: s.x, col }); leg.push({ name: m + ' x (horizontal, + ' + fwd() + ')', col }); }
+    if (cm !== 'x') { pos.push({ x: T, y: s.y, col, dash: '7 5' }); leg.push({ name: m + ' y (vertical, + up)', col, dash: true }); }
     if (cm === 'speed') { vel.push({ x: T, y: sc(s.speed, vk), col, width: 3 }); acc.push({ x: T, y: s.accMag, col, width: 3 }); }
     else {
       if (cm !== 'y') { vel.push({ x: T, y: sc(s.vx, vk), col }); acc.push({ x: T, y: s.ax, col }); }
       if (cm !== 'x') { vel.push({ x: T, y: sc(s.vy, vk), col, dash: '7 5' }); acc.push({ x: T, y: s.ay, col, dash: '7 5' }); }
     }
-    if (!many && cm === 'speed') leg.push({ name: m + ' resultant (speed / size of acceleration)', col });
+    if (!many && cm === 'speed') leg.push({ name: m + ' resultant (magnitude of velocity and acceleration)', col });
+    traj.push({ x: s.x, y: s.y, col, noMinMax: true });
   });
-  chart($('cPos'), pos, o('Position (' + u + ')'));
-  chart($('cVel'), vel, o((cm === 'speed' ? 'Speed' : 'Velocity') + ' (' + vu + ')', true));
-  chart($('cAcc'), acc, o('Acceleration (' + u + '/s²)', true));
+  chart($('cPos'), pos, o('Linear position (' + u + ')'));
+  chart($('cVel'), vel, o((cm === 'speed' ? 'Resultant velocity' : 'Linear velocity') + ' (' + vu + ')', true));
+  chart($('cAcc'), acc, o((cm === 'speed' ? 'Resultant acceleration' : 'Linear acceleration') + ' (' + u + '/s²)', true));
+  chart($('cTraj'), traj, { xlab: 'x position (' + u + ')', ylab: 'y position (' + u + ')', equal: true });
   const hasAng = R.ang.length > 0;
-  $('angWrap').classList.toggle('hide', !hasAng); $('angVelWrap').classList.toggle('hide', !hasAng);
+  ['angWrap', 'angVelWrap', 'angAccWrap'].forEach((id) => $(id).classList.toggle('hide', !hasAng));
   if (hasAng) {
-    chart($('cAng'), R.ang.map((a) => ({ x: a.T.map((t) => t - off), y: a.V, col: a.col })), o('Angle (°)'));
+    chart($('cAng'), R.ang.map((a) => ({ x: a.T.map((t) => t - off), y: a.V, col: a.col })), o('Angular position (°)'));
     chart($('cAngVel'), R.ang.map((a) => ({ x: a.T.map((t) => t - off), y: a.W, col: a.col })), o('Angular velocity (°/s)', true));
+    chart($('cAngAcc'), R.ang.map((a) => ({ x: a.T.map((t) => t - off), y: a.AA, col: a.col })), o('Angular acceleration (°/s²)', true));
   }
   let lg = legend(leg);
   if (hasAng) lg += legend(R.ang.map((a) => ({ name: a.key, col: a.col })));
   const fcs = g.points.map((m) => R.sers[m] && R.sers[m].fc).filter(Boolean);
   lg += '<p>' + (fcs.length ? 'Filtered at ' + [...new Set(fcs)].join(', ') + ' Hz' : 'Not filtered') + ', sampled at ' + (R.fs ? R.fs.toFixed(1) : '?') + ' Hz. Circles mark the largest and smallest value of each line.</p>';
-  lg += '<p>Joint angles: 180&deg; = straight. Segment angles: from vertical (+ = top end ' + fwd() + ') or from horizontal (+ = second marker higher). Angular velocity of a joint: + = opening (extending), &minus; = closing (flexing).</p>';
+  lg += '<p>Joint (relative) angles: 180&deg; = straight. Segment (absolute) angles: from vertical (+ = top end ' + fwd() + ') or from horizontal (anticlockwise +, 0&deg; = pointing ' + fwd() + '). For a joint angle, + angular velocity = opening (extending) and &minus; = closing (flexing). The trajectory is the path of each marker (y against x).</p>';
   $('legendBox').innerHTML = lg;
   keyStats();
 }
@@ -130,7 +135,18 @@ export function summaryRows(R) {
   const m = S.graph.points.find((p) => R.sers[p]) || (R.sers[hipMarker()] ? hipMarker() : Object.keys(R.sers)[0]), s = R.sers[m], u = units();
   const kmh = S.graph.units === 'kmh' && S.calib, vk = kmh ? 3.6 : 1, vu = kmh ? 'km/h' : u + '/s';
   const peak = (a) => { let v = null, i = -1; a.forEach((x, k) => { if (x !== null && (v === null || x > v)) { v = x; i = k; } }); return [v, i]; };
-  if (S.activity !== 'jump') {
+  const cmk = u === 'm' ? 100 : 1, cu = u === 'm' ? 'cm' : 'px';
+  if (S.activity === 'general' || S.activity === 'cycle') {
+    const [v, i] = peak(s.speed); if (v !== null) out.push(['Peak resultant velocity (' + m + ')', (v * vk).toFixed(2) + ' ' + vu, 'at ' + s.T[i].toFixed(3) + ' s', v * vk, vu, 'card']);
+    if (s.x.length > 2) {
+      const rx = (Math.max(...s.x) - Math.min(...s.x)) * cmk, ry = (Math.max(...s.y) - Math.min(...s.y)) * cmk;
+      let d = 0; for (let k = 1; k < s.x.length; k++) d += Math.hypot(s.x[k] - s.x[k - 1], s.y[k] - s.y[k - 1]);
+      out.push(['Range of x position (' + m + ')', rx.toFixed(1) + ' ' + cu, 'maximum \u2212 minimum', rx, cu, 'card']);
+      out.push(['Range of y position (' + m + ')', ry.toFixed(1) + ' ' + cu, 'maximum \u2212 minimum', ry, cu, 'card']);
+      out.push(['Distance travelled (' + m + ')', (d * cmk).toFixed(1) + ' ' + cu, 'length of the path (filtered)', d * cmk, cu, 'card']);
+    }
+  }
+  if (S.activity === 'sprint') {
     const [v, i] = peak(s.vx); if (v !== null) out.push(['Peak horizontal velocity (' + m + ')', (v * vk).toFixed(2) + ' ' + vu, 'at ' + s.T[i].toFixed(3) + ' s', v * vk, vu, 'card']);
     if (s.x.length > 2) { const dx = s.x[s.x.length - 1] - s.x[0], dT = s.T[s.T.length - 1] - s.T[0]; out.push(['Average horizontal velocity (' + m + ')', (dx / dT * vk).toFixed(2) + ' ' + vu, 'displacement \u00f7 time over ' + dT.toFixed(2) + ' s', dx / dT * vk, vu, 'card']); }
   }
@@ -145,8 +161,8 @@ export function summaryRows(R) {
   }
   R.ang.forEach((a) => {
     const mn = Math.min(...a.V), mx = Math.max(...a.V), iw = peak(a.W.map((w) => (w === null ? null : Math.abs(w))))[1];
-    out.push(['Smallest ' + a.key, mn.toFixed(1) + '\u00b0', '', mn, '\u00b0', 'angle']);
-    out.push(['Largest ' + a.key, mx.toFixed(1) + '\u00b0', '', mx, '\u00b0', 'angle']);
+    out.push(['Minimum ' + a.key, mn.toFixed(1) + '\u00b0', '', mn, '\u00b0', 'angle']);
+    out.push(['Maximum ' + a.key, mx.toFixed(1) + '\u00b0', '', mx, '\u00b0', 'angle']);
     out.push([a.key + ' range of motion', (mx - mn).toFixed(1) + '\u00b0', '', mx - mn, '\u00b0', 'angle']);
     if (iw >= 0) out.push(['Peak ' + a.key + ' angular velocity', a.W[iw].toFixed(0) + '\u00b0/s', 'at ' + a.T[iw].toFixed(3) + ' s', a.W[iw], '\u00b0/s', 'angle']);
   });
@@ -155,8 +171,8 @@ export function summaryRows(R) {
     const fr = S.events.filter((e) => e.name === name).map((e) => e.frame), rep = fr.length > 1 ? ' (mean of ' + fr.length + ')' : '';
     const vals = (F, V) => fr.map((f) => { const i = nearestIdx(F, f); return i >= 0 ? V[i] : null; }).filter((v) => v !== null);
     const vx = vals(s.F, s.vx), vy = vals(s.F, s.vy);
-    if (vx.length) out.push([m + ' horizontal velocity at ' + name, (mean(vx) * vk).toFixed(2) + ' ' + vu, rep, mean(vx) * vk, vu, 'event']);
-    if (vy.length) out.push([m + ' vertical velocity at ' + name, (mean(vy) * vk).toFixed(2) + ' ' + vu, rep, mean(vy) * vk, vu, 'event']);
+    if (vx.length) out.push([m + ' x velocity at ' + name, (mean(vx) * vk).toFixed(2) + ' ' + vu, rep, mean(vx) * vk, vu, 'event']);
+    if (vy.length) out.push([m + ' y velocity at ' + name, (mean(vy) * vk).toFixed(2) + ' ' + vu, rep, mean(vy) * vk, vu, 'event']);
     R.ang.forEach((a) => { const v = vals(a.F, a.V); if (v.length) out.push([a.key + ' at ' + name, mean(v).toFixed(1) + '\u00b0', rep, mean(v), '\u00b0', 'event']); });
   });
   return out.concat(ev);
@@ -166,7 +182,7 @@ function keyStats() {
   $('keyStats').innerHTML = statsHTML(rows.filter((r) => r[5] === 'card')).replace(/^<div class="stats">|<\/div>$/g, '');
   let h = '';
   if (R.ang.length) {
-    h += '<span class="lab">Angles</span><div class="tablewrap"><table><tr><th>Angle</th><th>Smallest</th><th>Largest</th><th>Range</th><th>Peak angular velocity</th></tr>' + R.ang.map((a) => {
+    h += '<span class="lab">Angular kinematics</span><div class="tablewrap"><table><tr><th>Angle</th><th>Minimum</th><th>Maximum</th><th>Range of motion</th><th>Peak angular velocity</th></tr>' + R.ang.map((a) => {
       let iw = -1; a.W.forEach((w, i) => { if (w !== null && (iw < 0 || Math.abs(w) > Math.abs(a.W[iw]))) iw = i; });
       const mn = Math.min(...a.V), mx = Math.max(...a.V), imn = a.V.indexOf(mn), imx = a.V.indexOf(mx);
       return '<tr><td><span class="dot" style="background:' + a.col + '"></span>' + esc(a.key) + '</td><td class="num">' + mn.toFixed(1) + '&deg; <span class="muted">at ' + a.T[imn].toFixed(3) + ' s</span></td><td class="num">' + mx.toFixed(1) + '&deg; <span class="muted">at ' + a.T[imx].toFixed(3) + ' s</span></td><td class="num">' + (mx - mn).toFixed(1) + '&deg;</td><td class="num">' + (iw >= 0 ? a.W[iw].toFixed(0) + '&deg;/s <span class="muted">at ' + a.T[iw].toFixed(3) + ' s</span>' : '') + '</td></tr>';
@@ -243,11 +259,11 @@ export function renderQuality() {
 export function dataTable() {
   const R = A.results; if (!R) return;
   const m = A.S.graph.points.find((p) => R.sers[p]), s = R.sers[m], u = units();
-  const head = '<tr><th>Frame</th><th>Time (s)</th><th>' + esc(m) + ' x (' + u + ')</th><th>y (' + u + ')</th><th>v<sub>x</sub></th><th>v<sub>y</sub></th><th>speed</th><th>a<sub>x</sub></th><th>a<sub>y</sub></th>' + R.ang.map((a) => '<th>' + esc(a.key) + ' (&deg;)</th><th>&omega; (&deg;/s)</th>').join('') + '</tr>';
+  const head = '<tr><th>Frame</th><th>Time (s)</th><th>' + esc(m) + ' x (' + u + ')</th><th>y (' + u + ')</th><th>v<sub>x</sub></th><th>v<sub>y</sub></th><th>v (resultant)</th><th>a<sub>x</sub></th><th>a<sub>y</sub></th>' + R.ang.map((a) => '<th>' + esc(a.key) + ' &theta; (&deg;)</th><th>&omega; (&deg;/s)</th><th>&alpha; (&deg;/s&sup2;)</th>').join('') + '</tr>';
   const amap = R.ang.map((a) => new Map(a.F.map((f, i) => [f, i])));
   const rows = s.F.map((f, i) => {
     let r = '<tr' + (s.filled[i] ? ' class="filled" title="Filled gap"' : '') + '><td class="num">' + f + '</td><td class="num">' + s.T[i].toFixed(3) + '</td><td class="num">' + fx(s.x[i], 3) + '</td><td class="num">' + fx(s.y[i], 3) + '</td><td class="num">' + fx(s.vx[i], 2) + '</td><td class="num">' + fx(s.vy[i], 2) + '</td><td class="num">' + fx(s.speed[i], 2) + '</td><td class="num">' + fx(s.ax[i], 1) + '</td><td class="num">' + fx(s.ay[i], 1) + '</td>';
-    R.ang.forEach((a, k) => { const j = amap[k].get(f); r += '<td class="num">' + (j !== undefined ? fx(a.V[j], 1) : '') + '</td><td class="num">' + (j !== undefined ? fx(a.W[j], 0) : '') + '</td>'; });
+    R.ang.forEach((a, k) => { const j = amap[k].get(f); r += '<td class="num">' + (j !== undefined ? fx(a.V[j], 1) : '') + '</td><td class="num">' + (j !== undefined ? fx(a.W[j], 0) : '') + '</td><td class="num">' + (j !== undefined ? fx(a.AA[j], 0) : '') + '</td>'; });
     return r + '</tr>';
   }).join('');
   $('dataTab').innerHTML = head + rows;
@@ -277,14 +293,14 @@ export function renderNorm() {
   const R = A.results, S = A.S, N = S.norm, names = eventNames();
   const opts = names.map((n) => '<option>' + esc(n) + '</option>').join('');
   $('nStart').innerHTML = opts; $('nEnd').innerHTML = opts; $('nPts').value = N.n || 101;
-  if (!names.length) { $('nInfo').innerHTML = 'Mark events first (e.g. Touchdown and Toe-off, or Start of movement and Take-off). The phase between two events is stretched or squashed to 0&ndash;100%.'; $('nWrap').classList.add('hide'); A.norm = null; return; }
+  if (!names.length) { $('nInfo').innerHTML = 'Mark events first (e.g. Start and End, or the same event at the start of each cycle). The phase between two events is stretched or squashed to 0&ndash;100%.'; $('nWrap').classList.add('hide'); A.norm = null; return; }
   if (!names.includes(N.start)) N.start = names[0];
-  if (!names.includes(N.end)) N.end = names[Math.min(1, names.length - 1)];
+  if (!names.includes(N.end)) N.end = S.activity === 'cycle' ? N.start : names[Math.min(1, names.length - 1)];
   $('nStart').value = N.start; $('nEnd').value = N.end;
   const res = normalise(R, S, N.start, N.end, N.n); A.norm = res;
   const vars = variableList(R).filter((v) => res.vars[v.key]);
   $('nVar').innerHTML = vars.map((v) => '<option value="' + esc(v.key) + '">' + esc(v.label) + '</option>').join('');
-  if (!res.vars[N.v]) N.v = (vars.find((v) => v.key.startsWith('ang|')) || vars[0] || {}).key || '';
+  if (!res.vars[N.v]) N.v = (vars.find((v) => v.key.startsWith('ang|')) || vars.find((v) => /\|y$/.test(v.key)) || vars[0] || {}).key || '';
   $('nVar').value = N.v;
   if (!res.cycles.length || !vars.length) { $('nInfo').innerHTML = 'No phases found. Each <strong>' + esc(N.start) + '</strong> needs a later <strong>' + esc(N.end) + '</strong>, and the markers need digitising across the whole phase.'; $('nWrap').classList.add('hide'); return; }
   $('nWrap').classList.remove('hide');
@@ -296,7 +312,7 @@ export function renderNorm() {
   }
   lines.push({ x: res.pct, y: V.mean, col: '#1f2a33', width: 3.5 });
   chart($('cNorm'), lines, { xlab: '% of ' + N.start + ' to ' + N.end, ylab: V.label + ' (' + V.unit + ')', minmax: S.graph.minmax, xMin: 0, xMax: 100 });
-  $('nInfo').innerHTML = '<strong>' + res.cycles.length + '</strong> phase' + (res.cycles.length > 1 ? 's' : '') + ' found (' + esc(N.start) + ' &rarr; ' + esc(N.end) + '), lasting ' + (d.length > 1 ? mean(d).toFixed(3) + ' &plusmn; ' + sd(d).toFixed(3) + ' s' : d[0].toFixed(3) + ' s') + '. ' + (used < res.cycles.length ? (res.cycles.length - used) + ' could not be used for this variable because the data do not cover the whole phase. ' : '') + 'Thin lines are each phase, the thick line is the mean' + (used > 1 ? ' and the dashed lines are &plusmn; 1 SD.' : '.');
+  $('nInfo').innerHTML = '<strong>' + res.cycles.length + '</strong> phase' + (res.cycles.length > 1 ? 's' : '') + ' found (' + esc(N.start) + ' &rarr; ' + esc(N.end) + '), lasting ' + (d.length > 1 ? mean(d).toFixed(3) + ' &plusmn; ' + sd(d).toFixed(3) + ' s' : d[0].toFixed(3) + ' s') + '. ' + (used < res.cycles.length ? (res.cycles.length - used) + ' could not be used for this variable because the data do not cover the whole phase. ' : '') + 'Thin lines are each phase, the thick line is the ensemble average (mean)' + (used > 1 ? ' and the dashed lines are &plusmn; 1 SD.' : '.');
 }
 export function normCSV() {
   const res = A.norm, S = A.S; if (!res || !res.cycles.length) { status('Set up the time normalisation in Results first.'); return; }

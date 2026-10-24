@@ -1,15 +1,16 @@
 // Start-up: wires the page together. Setup, calibration, the marker and angle builders, demos and the app install.
-import { A, $, esc, clone, status, persist, points, colourOf, angleDefs, eventTypes, VERSION, APP, download, fwd } from './state.js?v=2.0.2';
-import { tiltAngle } from './maths.js?v=2.0.2';
-import { initVideo, seek, recount, render, viewDims, play, pause, isPlaying, detectFps } from './video.js?v=2.0.2';
-import { initOverlay, draw, renderChips, updateDigiCount, renderMeasures, undo } from './overlay.js?v=2.0.2';
-import { initTracking, clearFlag, renderFlags } from './tracking.js?v=2.0.2';
-import { initEvents, renderEventBtns, renderEvents } from './events.js?v=2.0.2';
-import { initResults, compute, drawResults, live, renderNorm } from './results.js?v=2.0.2';
-import { initExport, renderExportPoints, renderPhotoOpts } from './export.js?v=2.0.2';
-import { initSession, addFiles, renderSession } from './session.js?v=2.0.2';
-import { initCompare, renderCompare } from './compare.js?v=2.0.2';
-import { initConvert } from './convert.js?v=2.0.2';
+import { A, $, esc, clone, status, persist, points, colourOf, angleDefs, eventTypes, VERSION, APP, download, fwd } from './state.js?v=2.1.0';
+import { tiltAngle } from './maths.js?v=2.1.0';
+import { initVideo, seek, recount, render, viewDims, play, pause, isPlaying, detectFps } from './video.js?v=2.1.0';
+import { initOverlay, draw, renderChips, updateDigiCount, renderMeasures, undo } from './overlay.js?v=2.1.0';
+import { initTracking, clearFlag, renderFlags } from './tracking.js?v=2.1.0';
+import { initEvents, renderEventBtns, renderEvents } from './events.js?v=2.1.0';
+import { initResults, compute, drawResults, live, renderNorm } from './results.js?v=2.1.0';
+import { initExport, renderExportPoints, renderPhotoOpts } from './export.js?v=2.1.0';
+import { initSession, addFiles, renderSession } from './session.js?v=2.1.0';
+import { initCompare, renderCompare } from './compare.js?v=2.1.0';
+import { initBuilder, renderBuilder } from './builder.js?v=2.1.0';
+import { initConvert } from './convert.js?v=2.1.0';
 
 Object.assign(A.fn, { draw, syncInputs, showCalib, compute, drawResults, clearFlag, renderFlags, live, renderPhotoOpts, renderNorm });
 
@@ -18,13 +19,14 @@ function syncInputs() {
   const S = A.S;
   $('fps').value = S.fps; $('slow').value = S.slow; $('activity').value = S.activity; $('dir').value = S.dir;
   $('rot').value = String(S.rot); $('flip').checked = !!S.flip;
-  $('every').value = String(S.every); $('advance').value = String(S.advance); $('snap').checked = !!S.snap;
+  $('every').value = String(S.every); $('advance').value = String(S.advance); $('snap').checked = !!S.snap; $('trkChecks').checked = S.checks !== false;
+  $('calShow').checked = S.showCal !== false; activityHelp();
   $('cutoff').value = S.cutoff; $('filtOn').checked = S.filt;
   if (S.calib) $('calLen').value = S.calib.len;
   $('vertCheck').checked = !!S.tilt; $('grid').value = String(S.grid || 0);
   if (A.nFrames) $('trkTo').value = Math.max(0, A.nFrames - 1);
   showCalib(); renderChips(); renderEventBtns(); renderEvents(); renderMeasures(); updateDigiCount(); renderFlags();
-  renderTemplateEditor(); renderAngles(); renderExportPoints(); renderPhotoOpts(); live();
+  renderTemplateEditor(); renderAngles(); renderExportPoints(); renderBuilder(); renderPhotoOpts(); live();
   if (A.results) compute(); else { $('resBody').classList.add('hide'); $('resMsg').innerHTML = 'Digitise some frames, then press <strong>Update results</strong>.'; }
 }
 function initSetup() {
@@ -38,12 +40,20 @@ function initSetup() {
     });
   });
   $('detect').addEventListener('click', () => detectFps(false));
-  $('activity').addEventListener('change', function () { A.S.activity = this.value; eventTypes(); persist(); renderEventBtns(); renderEvents(); });
+  $('activity').addEventListener('change', function () { A.S.activity = this.value; eventTypes(); persist(); activityHelp(); renderEventBtns(); renderEvents(); renderBuilder(); if (A.results) compute(); });
   $('dir').addEventListener('change', function () { A.S.dir = this.value; persist(); draw(); if (A.results) compute(); });
   $('snap').addEventListener('change', function () { A.S.snap = this.checked; persist(); });
   $('rot').addEventListener('change', function () { reorient(parseInt(this.value, 10), A.S.flip); });
   $('flip').addEventListener('change', function () { reorient(A.S.rot, this.checked); });
 }
+
+const ACT_HELP = {
+  general: 'Works for any movement filmed side-on (e.g. a squat, throw, kick, lift or gait). You get linear and angular kinematics for every marker and angle, and you add your own events.',
+  cycle: 'For movements that repeat (e.g. cycling, rowing, swimming strokes, walking). Mark the same event at the start of each cycle (or let the tool suggest the highest and lowest point of a marker) to get cycle time, cycle rate (e.g. cadence) and time-normalised cycles.',
+  sprint: 'Adds contact, flight and step times, step length and step frequency from touchdown and toe-off events, and can suggest those events from a foot marker.',
+  jump: 'Adds flight time, jump height and the phases of a vertical jump from its events, and can suggest take-off and landing from a foot marker.'
+};
+function activityHelp() { $('actHelp').textContent = ACT_HELP[A.S.activity] || ''; }
 
 // Rotating or flipping the picture moves every stored coordinate with it.
 function toSrc(p, rot, flip, W, H) {
@@ -66,7 +76,7 @@ function reorient(rot, flip) {
   S.rot = rot; S.flip = flip; S.vw = W1; S.vh = H1;
   $('ov').width = W1; $('ov').height = H1;
   persist(); render(); draw(); showCalib(); if (A.results) compute();
-  status('Picture ' + (rot ? 'rotated ' + rot + '°' : 'not rotated') + (flip ? ' and mirrored' : '') + '. Any points you had moved with it.' + (flip ? ' Remember to check <strong>Which way is the athlete facing?</strong>' : ''));
+  status('Picture ' + (rot ? 'rotated ' + rot + '°' : 'not rotated') + (flip ? ' and mirrored' : '') + '. Any points you had moved with it.' + (flip ? ' Remember to check <strong>Which way is the participant facing?</strong>' : ''));
 }
 
 // ---------- calibration ----------
@@ -83,6 +93,7 @@ function initCalib() {
   $('origStart').addEventListener('click', function () { if (!A.S.vw) return; A.mode = 'origin'; A.pending = []; this.classList.add('on'); status('Click where you want (0, 0) to be (e.g. on the floor at the start line).'); });
   $('calClear').addEventListener('click', () => { A.S.calib = null; A.S.origin = null; persist(); showCalib(); draw(); if (A.results) compute(); });
   $('vertCheck').addEventListener('change', function () { A.S.tilt = this.checked; persist(); showCalib(); draw(); if (A.results) compute(); });
+  $('calShow').addEventListener('change', function () { A.S.showCal = this.checked; persist(); draw(); });
   $('grid').addEventListener('change', function () { A.S.grid = parseFloat(this.value) || 0; if (A.S.grid && !A.S.calib) status('Calibrate first to see the grid.'); persist(); draw(); });
 }
 
@@ -95,6 +106,7 @@ function renameEverywhere(oldN, newN) {
   S.template.links.forEach((l) => { if (l[0] === oldN) l[0] = newN; if (l[1] === oldN) l[1] = newN; });
   (S.angles || []).forEach((d) => ['a', 'b', 'c'].forEach((k) => { if (d[k] === oldN) d[k] = newN; }));
   S.graph.points = S.graph.points.map((p) => (p === oldN ? newN : p));
+  if (S.exp && S.exp.markers) S.exp.markers = S.exp.markers.map((p) => (p === oldN ? newN : p));
 }
 function removeEverywhere(n) {
   const S = A.S;
@@ -166,20 +178,32 @@ function initTemplates() {
 }
 
 // ---------- angle builder ----------
-const TYPE_TXT = { joint: 'Joint angle at the middle point', vertical: 'Segment from vertical', horizontal: 'Segment from horizontal' };
+const TYPE_TXT = { joint: 'Joint (relative) angle at the middle marker', vertical: 'Segment (absolute) angle from vertical', horizontal: 'Segment (absolute) angle from horizontal' };
 function describe(d) {
-  if (d.type === 'joint') return esc(d.a) + ' &ndash; <strong>' + esc(d.b) + '</strong> &ndash; ' + esc(d.c) + (d.flex ? ' (flexion: 0&deg; = straight)' : ' (180&deg; = straight)');
-  if (d.type === 'vertical') return esc(d.a) + ' &rarr; ' + esc(d.b) + ' from vertical (+ = ' + esc(d.b) + ' ' + fwd() + ')';
-  return esc(d.a) + ' &rarr; ' + esc(d.b) + ' from horizontal (+ = ' + esc(d.b) + ' higher)';
+  if (d.type === 'joint') return esc(d.a) + ' &ndash; <strong>' + esc(d.b) + '</strong> &ndash; ' + esc(d.c) + ' <span class="muted">(joint, relative)</span>';
+  if (d.type === 'vertical') return esc(d.a) + ' &rarr; ' + esc(d.b) + ' from vertical <span class="muted">(segment, absolute; + = ' + esc(d.b) + ' ' + fwd() + ')</span>';
+  return esc(d.a) + ' &rarr; ' + esc(d.b) + ' from horizontal <span class="muted">(segment, absolute; anticlockwise +)</span>';
+}
+function optSelect(d, i) {
+  if (d.type === 'joint') {
+    const v = d.mode === 'ccw' ? 'ccw' : d.flex ? 'flex' : 'inc';
+    return '<br><select class="mini" data-opt="' + i + '" aria-label="How the angle is measured"><option value="inc"' + (v === 'inc' ? ' selected' : '') + '>0&ndash;180&deg;, 180&deg; = straight</option><option value="flex"' + (v === 'flex' ? ' selected' : '') + '>Flexion, 0&deg; = straight</option><option value="ccw"' + (v === 'ccw' ? ' selected' : '') + '>0&ndash;360&deg; anticlockwise (shows hyperextension)</option></select>';
+  }
+  if (d.type === 'horizontal') return '<br><select class="mini" data-opt="' + i + '" aria-label="Range"><option value="180"' + (d.range !== '360' ? ' selected' : '') + '>&minus;180&deg; to +180&deg;</option><option value="360"' + (d.range === '360' ? ' selected' : '') + '>0&deg; to 360&deg;</option></select>';
+  return '';
 }
 function renderAngles() {
   const defs = angleDefs(), pts = points();
   $('angList').innerHTML = defs.length ? '<tr><th>Use</th><th>Name</th><th>Markers</th><th>On video</th><th></th></tr>' + defs.map((d, i) =>
-    '<tr><td><input type="checkbox" data-on="' + i + '"' + (d.on ? ' checked' : '') + ' aria-label="Use this angle"></td><td><input type="text" class="mini" data-an="' + i + '" value="' + esc(d.name) + '" aria-label="Angle name"></td><td>' + describe(d) + (d.type === 'joint' ? '<br><label class="inline small"><input type="checkbox" data-fx="' + i + '"' + (d.flex ? ' checked' : '') + '> show as flexion</label>' : '') + '</td><td><input type="checkbox" data-vid="' + i + '"' + (d.video ? ' checked' : '') + ' aria-label="Show on video"></td><td><button type="button" class="btn ghost small" data-adel="' + i + '">Delete</button></td></tr>').join('') : '<tr><td class="muted">' + (pts.length >= 2 ? 'No angles yet. Build one below.' : 'Add at least two markers first, then build angles here.') + '</td></tr>';
+    '<tr><td><input type="checkbox" data-on="' + i + '"' + (d.on ? ' checked' : '') + ' aria-label="Use this angle"></td><td><input type="text" class="mini" data-an="' + i + '" value="' + esc(d.name) + '" aria-label="Angle name"></td><td>' + describe(d) + optSelect(d, i) + '</td><td><input type="checkbox" data-vid="' + i + '"' + (d.video ? ' checked' : '') + ' aria-label="Show on video"></td><td><button type="button" class="btn ghost small" data-adel="' + i + '">Delete</button></td></tr>').join('') : '<tr><td class="muted">' + (pts.length >= 2 ? 'No angles yet. Build one below.' : 'Add at least two markers first, then build angles here.') + '</td></tr>';
   const after = () => { persist(); renderAngles(); draw(); live(); if (A.results) compute(); };
   $('angList').querySelectorAll('[data-on]').forEach((c) => c.addEventListener('change', () => { defs[+c.getAttribute('data-on')].on = c.checked; after(); }));
   $('angList').querySelectorAll('[data-vid]').forEach((c) => c.addEventListener('change', () => { defs[+c.getAttribute('data-vid')].video = c.checked; after(); }));
-  $('angList').querySelectorAll('[data-fx]').forEach((c) => c.addEventListener('change', () => { defs[+c.getAttribute('data-fx')].flex = c.checked; after(); }));
+  $('angList').querySelectorAll('[data-opt]').forEach((c) => c.addEventListener('change', () => {
+    const d = defs[+c.getAttribute('data-opt')];
+    if (d.type === 'joint') { d.flex = c.value === 'flex'; d.mode = c.value === 'ccw' ? 'ccw' : ''; } else d.range = c.value;
+    after();
+  }));
   $('angList').querySelectorAll('[data-an]').forEach((inp) => inp.addEventListener('change', () => { defs[+inp.getAttribute('data-an')].name = inp.value.trim() || 'Angle'; after(); }));
   $('angList').querySelectorAll('[data-adel]').forEach((b) => b.addEventListener('click', () => { defs.splice(+b.getAttribute('data-adel'), 1); after(); }));
   const opts = pts.map((m) => '<option>' + esc(m) + '</option>').join('');
@@ -189,9 +213,9 @@ function renderAngles() {
 function angTypeUI() {
   const t = $('angType').value;
   $('angCWrap').classList.toggle('hide', t !== 'joint');
-  $('angLabA').textContent = t === 'joint' ? 'End point' : t === 'vertical' ? 'Lower end' : 'Back end';
-  $('angLabB').textContent = t === 'joint' ? 'Joint (middle)' : t === 'vertical' ? 'Upper end' : 'Front end';
-  $('angTypeHelp').textContent = TYPE_TXT[t] + (t === 'joint' ? ': the angle between the two segments that meet at the middle point (e.g. hip, knee, ankle for the knee).' : t === 'vertical' ? ': how far the segment leans from upright (e.g. ankle to knee for the shin).' : ': how far the segment tilts from level (e.g. heel to toe for the foot, or hip to hip for the pelvis).');
+  $('angLabA').textContent = t === 'joint' ? 'End marker (proximal)' : t === 'vertical' ? 'Lower end' : 'Proximal end';
+  $('angLabB').textContent = t === 'joint' ? 'Joint (middle)' : t === 'vertical' ? 'Upper end' : 'Distal end';
+  $('angTypeHelp').textContent = TYPE_TXT[t] + (t === 'joint' ? ': the angle between the two segments that meet at the middle marker (e.g. hip, knee, ankle for the knee). Robertson et al. (2014) call this a relative angle.' : t === 'vertical' ? ': how far the segment leans from upright (e.g. ankle to knee for the shank, or hip to shoulder for the trunk).' : ': the segment\u2019s orientation measured anticlockwise from the horizontal, at its proximal end (e.g. knee to ankle for the shank, or heel to toe for the foot). This is the absolute angle in Robertson et al. (2014).');
 }
 function initAngles() {
   $('angType').addEventListener('change', angTypeUI);
@@ -223,7 +247,7 @@ function initControls() {
     document.querySelectorAll('.tab').forEach((x) => x.setAttribute('aria-selected', String(x === t)));
     document.querySelectorAll('.pane').forEach((p) => p.classList.toggle('hide', p.getAttribute('data-p') !== t.getAttribute('data-t')));
     if (t.getAttribute('data-t') === 'digi') { A.mode = 'digi'; A.pending = []; }
-    if (t.getAttribute('data-t') === 'files') { renderExportPoints(); renderPhotoOpts(); }
+    if (t.getAttribute('data-t') === 'files') { renderExportPoints(); renderBuilder(); renderPhotoOpts(); }
   }));
   $('trail').addEventListener('change', draw);
 }
@@ -237,8 +261,8 @@ const DEMOS = {
   },
   sprint: {
     file: 'demo/demo-sprint-240fps-slowed8x', name: 'demo-sprint-240fps-slowed8x',
-    preset: { state: { fps: 30, fpsSet: true, slow: 8, activity: 'sprint', dir: 'left', every: 1 }, labels: { athlete: 'Demo', condition: 'Sprint', trial: '1' },
-      msg: 'Demo loaded: a real sprint, filmed in slow motion at <strong>240 fps</strong> but saved as a <strong>30 fps</strong> file that plays 8&times; slower. That is why <strong>Slowed down by</strong> is set to 8 in Setup: without it every time would be 8&times; too long. There are no markers on the runner and nothing of known length in the picture, so use it for timing events (contact, flight, step) and for clicking joints by hand.' }
+    preset: { state: { fps: 30, fpsSet: true, slow: 8, activity: 'sprint', dir: 'left', every: 1, snap: false }, labels: { athlete: 'Demo', condition: 'Sprint', trial: '1' },
+      msg: 'Demo loaded: a real sprint, filmed in slow motion at <strong>240 fps</strong> but saved as a <strong>30 fps</strong> file that plays 8&times; slower. That is why <strong>Slowed down by</strong> is set to 8 in Setup: without it every time would be 8&times; too long. There are no markers on the runner and nothing of known length in the picture, so use it for timing events (contact, flight, step) and for clicking joints by hand (auto-centre is off for this clip because there are no markers to centre on).' }
   }
 };
 async function loadDemo(k) {
@@ -262,7 +286,7 @@ function initPWA() {
 }
 
 function start() {
-  initVideo(); initOverlay(); initTracking(); initEvents(); initResults(); initExport(); initCompare();
+  initVideo(); initOverlay(); initTracking(); initEvents(); initResults(); initExport(); initBuilder(); initCompare();
   initSetup(); initCalib(); initTemplates(); initAngles(); initControls(); initPWA(); initSession(); initConvert();
   $('demoCmj').addEventListener('click', () => loadDemo('cmj'));
   $('demoSprint').addEventListener('click', () => loadDemo('sprint'));

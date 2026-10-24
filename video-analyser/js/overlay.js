@@ -1,7 +1,7 @@
 // Drawing on top of the video, the magnifier, mouse/touch input, digitising and quick measurements.
-import { A, $, esc, status, persist, points, colourOf, angleDefs, tReal } from './state.js?v=2.0.2';
-import { toWorld, toPixel, jointAngle, segFromVertical, segFromHorizontal, angleValue, anglePoints, units } from './maths.js?v=2.0.2';
-import { seek, viewCanvas } from './video.js?v=2.0.2';
+import { A, $, esc, status, persist, points, colourOf, angleDefs, tReal } from './state.js?v=2.1.0';
+import { toWorld, toPixel, jointAngle, segFromVertical, segFromHorizontal, angleValue, anglePoints, units } from './maths.js?v=2.1.0';
+import { seek, viewCanvas } from './video.js?v=2.1.0';
 
 const ov = () => $('ov');
 let ctx = null;
@@ -21,13 +21,13 @@ export function draw(target, frame) {
   const r = rad(), lw = Math.max(2, r / 2.5), fsz = Math.max(12, r * 2.6);
   g.lineCap = 'round';
   if (S.grid && S.calib) drawGrid(g, lw, fsz);
-  if (S.calib && !target) {
+  if (S.calib && !target && S.showCal !== false) {
     const a = S.calib.p1, b = S.calib.p2;
     g.strokeStyle = '#facc15'; g.lineWidth = lw; g.setLineDash([r * 1.5, r]);
     g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); g.setLineDash([]);
     label(g, S.calib.len + ' m', (a[0] + b[0]) / 2 + r * 2, (a[1] + b[1]) / 2, '#facc15', fsz);
   }
-  if (S.origin && !target) cross(g, S.origin[0], S.origin[1], r * 2, '#facc15', lw);
+  if (S.origin && !target && S.showCal !== false) cross(g, S.origin[0], S.origin[1], r * 2, '#facc15', lw);
   const pts = points(), fr = S.frames[f] || {};
   // trail of the selected marker
   if (!target) {
@@ -45,6 +45,13 @@ export function draw(target, frame) {
     g.fillStyle = colourOf(m); g.strokeStyle = '#fff'; g.lineWidth = lw * 0.8;
     g.beginPath(); g.arc(p[0], p[1], r, 0, 7); g.fill(); g.stroke();
     if (m === A.activeMarker && !target) { g.strokeStyle = '#facc15'; g.lineWidth = lw; g.beginPath(); g.arc(p[0], p[1], r * 1.8, 0, 7); g.stroke(); }
+  });
+  // where tracking thought a marker was, when it paused because the jump looked wrong
+  const P = A.trackResume;
+  if (P && P.suspect && P.frame === f && !target) Object.keys(P.suspect).forEach((m) => {
+    if (fr[m]) return; const p = P.suspect[m];
+    g.strokeStyle = '#ef4444'; g.lineWidth = lw; g.setLineDash([r * 0.5, r * 0.4]); g.beginPath(); g.arc(p[0], p[1], r * 1.6, 0, 7); g.stroke(); g.setLineDash([]);
+    label(g, m + '?', p[0] + r * 2, p[1] - r * 1.6, '#fca5a5', fsz * 0.85);
   });
   // flagged markers
   const fl = S.flags[f];
@@ -101,33 +108,52 @@ export function label(g, t, x, y, col, size, align) {
 }
 function cross(g, x, y, s, col, lw) { g.strokeStyle = col; g.lineWidth = lw; g.beginPath(); g.moveTo(x - s, y); g.lineTo(x + s, y); g.moveTo(x, y - s); g.lineTo(x, y + s); g.stroke(); }
 
-// ---------- snap a click to the centre of a contrasting marker ----------
-export function snapPoint(p) {
-  const R = Math.round(markerHalf() * 1.6), W = A.S.vw, H = A.S.vh;
+// ---------- auto-centre: snap a click to the centre of a marker ----------
+// Looks in a small window around the point for blobs that stand out from the local background
+// (bright reflective markers, coloured tape or dark dots), picks the strongest blob nearest the click
+// and returns its contrast-weighted centre. Returns the point unchanged if no clear marker is there.
+// img (optional) is a whole-frame ImageData; otherwise the frame on screen is used.
+export function findCentre(p, img, opts) {
+  opts = opts || {};
+  const hm = markerHalf(), R = opts.R || Math.max(10, Math.round(hm * 2.2)), W = A.S.vw, H = A.S.vh;
   const x0 = Math.round(p[0]) - R, y0 = Math.round(p[1]) - R, n = 2 * R + 1;
-  if (x0 < 0 || y0 < 0 || x0 + n > W || y0 + n > H) return p;
-  const d = viewCanvas().getContext('2d', { willReadFrequently: true }).getImageData(x0, y0, n, n).data;
-  let br = 0, bg = 0, bb = 0, bn = 0;
-  for (let i = 0; i < n; i++) for (const j of [0, n - 1]) { for (const [x, y] of [[i, j], [j, i]]) { const k = (y * n + x) * 4; br += d[k]; bg += d[k + 1]; bb += d[k + 2]; bn++; } }
-  br /= bn; bg /= bn; bb /= bn;
+  if (x0 < 0 || y0 < 0 || x0 + n > W || y0 + n > H) return null;
+  let d;
+  if (img) { d = new Uint8ClampedArray(n * n * 4); for (let y = 0; y < n; y++) { const src = ((y0 + y) * img.width + x0) * 4; d.set(img.data.subarray(src, src + n * 4), y * n * 4); } }
+  else d = viewCanvas().getContext('2d', { willReadFrequently: true }).getImageData(x0, y0, n, n).data;
+  // background = median colour of the window's border
+  const br = [], bgc = [], bb = [];
+  for (let i = 0; i < n; i++) for (const [x, y] of [[i, 0], [i, n - 1], [0, i], [n - 1, i]]) { const k = (y * n + x) * 4; br.push(d[k]); bgc.push(d[k + 1]); bb.push(d[k + 2]); }
+  const med = (a) => { a.sort((u, v) => u - v); return a[a.length >> 1]; };
+  const mr = med(br), mg = med(bgc), mb = med(bb);
   const dist = new Float32Array(n * n); let mx = 0;
-  for (let i = 0; i < n * n; i++) { const k = i * 4; const v = Math.hypot(d[k] - br, d[k + 1] - bg, d[k + 2] - bb); dist[i] = v; if (v > mx) mx = v; }
-  if (mx < 40) return p;
-  const thr = Math.max(35, mx * 0.5), mask = new Uint8Array(n * n);
-  for (let i = 0; i < n * n; i++) mask[i] = dist[i] > thr ? 1 : 0;
-  // start from the masked pixel nearest the click
-  let s = -1, best = 1e9;
-  for (let i = 0; i < n * n; i++) if (mask[i]) { const x = i % n, y = (i / n) | 0, dd = (x - R) ** 2 + (y - R) ** 2; if (dd < best) { best = dd; s = i; } }
-  if (s < 0 || best > (R * 0.6) ** 2) return p;
-  const q = [s], seen = new Uint8Array(n * n); seen[s] = 1; let sx = 0, sy = 0, sw = 0, cnt = 0;
-  while (q.length) {
-    const i = q.pop(), x = i % n, y = (i / n) | 0, w = dist[i];
-    sx += x * w; sy += y * w; sw += w; cnt++;
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= n || yy >= n) continue; const j = yy * n + xx; if (mask[j] && !seen[j]) { seen[j] = 1; q.push(j); } }
+  const inner = (R * 0.75) ** 2;
+  for (let i = 0; i < n * n; i++) { const k = i * 4, v = Math.hypot(d[k] - mr, d[k + 1] - mg, d[k + 2] - mb); dist[i] = v; const x = i % n - R, y = ((i / n) | 0) - R; if (x * x + y * y <= inner && v > mx) mx = v; }
+  if (mx < 35) return null;
+  const thr = Math.max(28, mx * 0.45), lab = new Int32Array(n * n).fill(-1), blobs = [];
+  for (let i = 0; i < n * n; i++) {
+    if (dist[i] <= thr || lab[i] >= 0) continue;
+    const id = blobs.length, q = [i]; lab[i] = id; let sx = 0, sy = 0, sw = 0, cnt = 0, peak = 0, edge = false, minx = n, maxx = 0, miny = n, maxy = 0;
+    while (q.length) {
+      const j = q.pop(), x = j % n, y = (j / n) | 0, w = dist[j] - thr * 0.8;
+      sx += x * w; sy += y * w; sw += w; cnt++; if (dist[j] > peak) peak = dist[j];
+      if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y;
+      if (x === 0 || y === 0 || x === n - 1 || y === n - 1) edge = true;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= n || yy >= n) continue; const jj = yy * n + xx; if (dist[jj] > thr && lab[jj] < 0) { lab[jj] = id; q.push(jj); } }
+    }
+    const bw = maxx - minx + 1, bh = maxy - miny + 1;
+    blobs.push({ cx: sx / sw, cy: sy / sw, cnt, peak, edge, round: Math.max(bw, bh) / Math.min(bw, bh) <= 2.5 && cnt / (bw * bh) >= 0.4 });
   }
-  if (cnt < 4 || cnt > n * n * 0.6) return p;
-  return [x0 + sx / sw, y0 + sy / sw];
+  // a marker is a compact, roundish blob: not a speck, not most of the window, not an edge of clothing
+  const ok = blobs.filter((b) => b.cnt >= 3 && b.cnt <= n * n * 0.35 && !b.edge && b.round);
+  if (!ok.length) return null;
+  const reach = opts.reach || R;
+  let best = null, bs = -1;
+  ok.forEach((b) => { const dd = Math.hypot(b.cx - R, b.cy - R); if (dd > reach) return; const sc = b.peak / (1 + dd / hm); if (sc > bs) { bs = sc; best = b; } });
+  if (!best) return null;
+  return [x0 + best.cx, y0 + best.cy];
 }
+export function snapPoint(p, img) { const c = findCentre(p, img); return c || p; }
 
 // ---------- input ----------
 function evPt(e) { const r = ov().getBoundingClientRect(); return [(e.clientX - r.left) / r.width * ov().width, (e.clientY - r.top) / r.height * ov().height]; }
@@ -136,8 +162,10 @@ export function placePoint(p, m) {
   const S = A.S; m = m || A.activeMarker || nextMarker();
   if (!points().length) { status('Add your markers in the <strong>Markers</strong> tab first.'); return; }
   if (!m) { status('All markers are placed on this frame. Move to another frame, or drag a marker to adjust it.'); return; }
-  if (S.snap) p = snapPoint(p);
+  let centred = false;
+  if (S.snap) { const c = findCentre(p); if (c) { centred = Math.hypot(c[0] - p[0], c[1] - p[1]) > 0.5; p = c; } }
   if (!S.frames[A.cur]) S.frames[A.cur] = {};
+  $('coords').textContent = S.snap ? (centred ? m + ' centred on the marker.' : m + ' placed where you clicked (no clear marker there to centre on).') : '';
   S.frames[A.cur][m] = [p[0], p[1]];
   A.fn.clearFlag(A.cur, m);
   A.lastAdded.push([A.cur, m]);

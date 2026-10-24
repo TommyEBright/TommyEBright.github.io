@@ -1,8 +1,8 @@
 // Key events, the stopwatch (intervals between events), looping and event-based summary values.
-import { A, $, esc, fx, status, persist, eventTypes, tReal, fpsReal, G, points, footMarker, hipMarker } from './state.js?v=2.0.2';
-import { toWorld, butter, centralDiff, series, mean } from './maths.js?v=2.0.2';
-import { seek, play, pause } from './video.js?v=2.0.2';
-import { draw } from './overlay.js?v=2.0.2';
+import { A, $, esc, fx, status, persist, eventTypes, tReal, fpsReal, G, points, footMarker, hipMarker } from './state.js?v=2.1.0';
+import { toWorld, butter, centralDiff, series, mean } from './maths.js?v=2.1.0';
+import { seek, play, pause } from './video.js?v=2.1.0';
+import { draw } from './overlay.js?v=2.1.0';
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 export function ensureIds() { A.S.events.forEach((e) => { if (!e.id) e.id = uid(); }); }
@@ -25,6 +25,8 @@ export function renderEventBtns() {
 export function renderMarkerPickers() {
   const opts = '<option value="">(choose)</option>' + points().map((m) => '<option>' + esc(m) + '</option>').join('');
   $('evFoot').innerHTML = opts; $('evHip').innerHTML = opts;
+  $('evFootLab').textContent = A.S.activity === 'cycle' ? 'Marker that goes round (e.g. Pedal or Toe)' : 'Foot marker (for contacts and step length)';
+  $('evHipWrap').classList.toggle('hide', A.S.activity === 'cycle');
   $('evFoot').value = footMarker(); $('evHip').value = hipMarker();
 }
 export function renderEvents() {
@@ -94,6 +96,19 @@ export function eventStats() {
     const u = S.calib ? 'm' : 'px';
     if (sl.length) { out.push(['Step length', fx(mean(sl), S.calib ? 2 : 0) + ' ' + u, foot + ' position at touchdowns', mean(sl), u]); if (st.length) out.push(['Speed (step length \u00d7 frequency)', fx(mean(sl) / mean(st), S.calib ? 2 : 0) + ' ' + u + '/s', '', mean(sl) / mean(st), u + '/s']); }
     else if (st.length) out.push(['Step length', '\u2013', foot ? 'Digitise the ' + foot + ' on touchdown frames (or use Measure)' : 'Choose a foot marker above, or use Measure']);
+  } else if (S.activity === 'cycle' || S.activity === 'general') {
+    // repeating movements: the time from one event to the next event of the same name is one cycle
+    // the first event (in the order of the event buttons) that happens more than once marks the cycles
+    const order = eventTypes(), names = [...new Set(ev.map((e) => e.name))].sort((x, y) => (order.indexOf(x) < 0 ? 99 : order.indexOf(x)) - (order.indexOf(y) < 0 ? 99 : order.indexOf(y)));
+    names.filter((nm) => ev.filter((e) => e.name === nm).length > 1).slice(0, 1).forEach((nm) => {
+      const fr = ev.filter((e) => e.name === nm).map((e) => e.frame);
+      const T = []; for (let i = 1; i < fr.length; i++) T.push(dt(fr[i - 1], fr[i]));
+      const m = mean(T), lab = ' (' + nm + ' to ' + nm + ')';
+      out.push(['Cycle time' + lab, fx(m, 3) + ' s', T.length + ' cycle' + (T.length > 1 ? 's' : '') + (T.length > 1 ? ', range ' + fx(Math.min(...T), 3) + '\u2013' + fx(Math.max(...T), 3) : ''), m, 's']);
+      out.push(['Cycle rate' + lab, fx(60 / m, 1) + ' per min', '60 \u00f7 cycle time (e.g. cadence in rpm)', 60 / m, '/min']);
+    });
+    const a = ev.find((e) => e.name === 'Start'), b = ev.find((e) => e.name === 'End');
+    if (a && b && b.frame > a.frame) out.push(['Movement time', fx(dt(a.frame, b.frame), 3) + ' s', 'Start \u2192 End', dt(a.frame, b.frame), 's']);
   } else if (S.activity === 'jump') {
     const f = (n) => { const e = ev.find((x) => is(x, n)); return e ? e.frame : null; };
     const s0 = f('start'), lo = f('lowest'), to = f('take-off'), ld = f('landing');
@@ -105,20 +120,41 @@ export function eventStats() {
   return out;
 }
 
+// ---------- repeating movements: the highest and lowest point of a marker in each cycle ----------
+function suggestCycles(s, mkr) {
+  const S = A.S, note = $('suggestNote'), fs = s.fs, y = butter(s.Y, Math.min(6, fs / 2 * 0.8), fs), added = [];
+  const rng = Math.max(...y) - Math.min(...y);
+  if (!(rng > 0)) { note.textContent = 'The ' + mkr + ' does not move up and down, so there are no cycles to find.'; return; }
+  // turning points that stand out by at least a third of the full up-and-down range (ignores wobbles)
+  const ext = [], thr = rng / 3; let hi = 0, lo = 0, mode = 0;
+  for (let i = 1; i < y.length; i++) {
+    if (y[i] > y[hi]) hi = i; if (y[i] < y[lo]) lo = i;
+    if (mode >= 0 && y[i] < y[hi] - thr) { if (mode === 1 || hi > 0) ext.push(['Highest point', hi]); mode = -1; lo = i; }
+    else if (mode <= 0 && y[i] > y[lo] + thr) { if (mode === -1 || lo > 0) ext.push(['Lowest point', lo]); mode = 1; hi = i; }
+  }
+  const add = (n, f) => { if (!S.events.some((e) => e.name === n && Math.abs(e.frame - f) <= s.step)) { S.events.push({ id: uid(), name: n, frame: f }); added.push(n); } };
+  ext.forEach(([n, i]) => { if (i > 0 && i < y.length - 1) add(n, s.F[i]); });
+  sortEvents(); persist(); renderEvents(); draw();
+  const nh = added.filter((n) => n === 'Highest point').length, nl = added.length - nh;
+  note.innerHTML = added.length ? 'Added ' + nh + ' highest and ' + nl + ' lowest point' + (nl === 1 ? '' : 's') + ' of the ' + esc(mkr) + '. Each highest point to the next is one cycle (e.g. one pedal revolution). <strong>Check each one frame by frame.</strong>' : 'No new turning points found. Digitise more of the movement, or mark events by hand.';
+}
+
 // ---------- suggest events from the foot marker's path ----------
 export function suggestEvents() {
   const S = A.S, note = $('suggestNote');
   const mkr = footMarker(), hip = hipMarker();
   const s = mkr && series(mkr);
-  if (!mkr) { note.textContent = 'Choose the foot marker above first.'; return; }
+  if (S.activity === 'general') { note.innerHTML = 'Suggestions work for running, jumping and repeating movements (choose one in <strong>Setup</strong>). For anything else, mark events by hand.'; return; }
+  if (!mkr) { note.textContent = 'Choose the marker to use above first.'; return; }
   if (!s || s.X.length < 8) { note.textContent = 'Digitise or track the ' + mkr + ' first, on at least 8 frames, then try again.'; return; }
-  // the size of the athlete, so this works without calibration: hip-to-foot distance is roughly 0.9 m
+  // the size of the person, so this works without calibration: hip-to-foot distance is roughly 0.9 m
   let unit = S.calib ? 1 : null;
   if (!unit && hip) {
     const L = []; Object.keys(S.frames).forEach((f) => { const a = S.frames[f][hip], b = S.frames[f][mkr]; if (a && b) { const A1 = toWorld(a), B1 = toWorld(b); L.push(Math.hypot(A1[0] - B1[0], A1[1] - B1[1])); } });
     if (L.length >= 3) { L.sort((a, b) => a - b); unit = L[Math.floor(L.length * 0.9)] / 0.9; }
   }
-  if (!unit) { note.textContent = 'Calibrate, or choose a hip marker above, so the tool knows the size of the athlete.'; return; }
+  if (S.activity === 'cycle') { suggestCycles(s, mkr); return; }
+  if (!unit) { note.textContent = 'Calibrate, or choose a hip marker above, so the tool knows the size of the person.'; return; }
   const fs = s.fs, fc = Math.min(12, fs / 2 * 0.8), y = butter(s.Y, fc, fs), x = butter(s.X, fc, fs);
   const ground = y.slice().sort((a, b) => a - b)[Math.floor(y.length * 0.05)], added = [];
   const add = (n, f) => { if (!S.events.some((e) => e.name === n && Math.abs(e.frame - f) <= s.step)) { S.events.push({ id: uid(), name: n, frame: f }); added.push(n + ' (' + tReal(f).toFixed(3) + ' s)'); } };
@@ -151,7 +187,7 @@ export function suggestEvents() {
     for (let i = 0; i < c.length; i++) {
       if (c[i] && (i === 0 || !c[i - 1])) { let e = i; while (e + 1 < c.length && c[e + 1]) e++; if (e - i + 1 >= minLen && i > 0 && e < c.length - 1) { add('Touchdown', s.F[i]); add('Toe-off', s.F[e]); } i = e; }
     }
-  } else { note.textContent = 'Suggestions work for sprints and jumps. Mark events for other movements by hand.'; return; }
+  }
   sortEvents(); persist(); renderEvents(); draw();
   note.innerHTML = added.length ? 'Added: ' + esc(added.join(', ')) + '. <strong>Check each one frame by frame</strong> and nudge it if needed.' + (S.activity === 'sprint' ? ' These are for the ' + esc(mkr) + ' only. Add the other foot&rsquo;s touchdowns and toe-offs yourself.' : '') : 'No new events found. Mark them by hand.';
 }

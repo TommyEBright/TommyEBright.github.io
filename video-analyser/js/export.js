@@ -1,28 +1,28 @@
 // Saving and exporting: project files, three kinds of CSV, images, graphs and the photo sequence.
-import { A, $, esc, status, persist, freshState, points, tReal, fpsReal, download, baseName, VERSION, APP, currentTrial } from './state.js?v=2.0.2';
-import { toWorld, units, scale } from './maths.js?v=2.0.2';
-import { seekAsync, seek, viewCanvas } from './video.js?v=2.0.2';
-import { draw } from './overlay.js?v=2.0.2';
-import { svgToPng } from './charts.js?v=2.0.2';
-import { summaryRows, xOffset } from './results.js?v=2.0.2';
-import { intervalRows } from './events.js?v=2.0.2';
+import { A, $, esc, status, persist, migrate, points, tReal, fpsReal, download, baseName, VERSION, APP, currentTrial } from './state.js?v=2.1.0';
+import { toWorld, units, scale } from './maths.js?v=2.1.0';
+import { seekAsync, seek, viewCanvas } from './video.js?v=2.1.0';
+import { draw } from './overlay.js?v=2.1.0';
+import { svgToPng } from './charts.js?v=2.1.0';
+import { summaryRows, xOffset } from './results.js?v=2.1.0';
+import { intervalRows } from './events.js?v=2.1.0';
 
 const n = (v, d) => (v === null || v === undefined || Number.isNaN(v) ? '' : (+v).toFixed(d));
 const q = (s) => { s = String(s); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
 const col = (s) => String(s).trim().replace(/[^\w]+/g, '_');
 function csvBlob(lines) { return new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }); }
-function meta() {
+export function meta() {
   const S = A.S, k = scale();
   return [
     [APP, 'v' + VERSION],
     ['Video', S.name],
-    ...(currentTrial() ? [['Athlete', currentTrial().labels.athlete || ''], ['Condition', currentTrial().labels.condition || ''], ['Trial', currentTrial().labels.trial || '']] : []),
+    ...(currentTrial() ? [['Participant', currentTrial().labels.athlete || ''], ['Condition', currentTrial().labels.condition || ''], ['Trial', currentTrial().labels.trial || '']] : []),
     ['Frame rate of file (fps)', S.fps], ['Slowed down by', S.slow], ['Real capture rate (fps)', fpsReal()],
     ['Calibration', S.calib ? S.calib.len + ' m = ' + Math.hypot(S.calib.p2[0] - S.calib.p1[0], S.calib.p2[1] - S.calib.p1[1]).toFixed(1) + ' px (' + (k * 1000).toFixed(3) + ' mm per px)' : 'none (pixels)'],
     ['Tilt correction', S.tilt && S.calib ? 'yes' : 'no'],
-    ['Athlete facing', S.dir === 'right' ? 'right of screen' : S.dir === 'left' ? 'left of screen' : 'no fixed direction'], ['Axes', S.dir === 'none' ? 'x + to the right of the screen, y up +' : 'x forwards +, y up +'],
+    ['Activity', S.activity], ['Participant facing', S.dir === 'right' ? 'right of screen' : S.dir === 'left' ? 'left of screen' : 'no fixed direction'], ['Axes', S.dir === 'none' ? 'x + to the right of the screen, y up +' : 'x forwards +, y up +'],
     ['Filter', S.filt ? 'Butterworth low-pass, 2nd order run forwards and backwards (zero lag), cut-off ' + S.cutoff + ' Hz' : 'none'],
-    ['Derivatives', 'central differences'],
+    ['Derivatives', 'central (finite) differences of the filtered data'],
     ['Exported', new Date().toISOString()]
   ];
 }
@@ -34,13 +34,13 @@ function analysisCSV() {
   mk.forEach((m) => R.sers[m].F.forEach((f) => allF.add(f)));
   const F = [...allF].sort((a, b) => a - b), off = xOffset(), useOff = A.S.graph.xaxis === 'event' && off;
   const head = ['frame', 'time_s']; if (useOff) head.push('time_from_event_s');
-  mk.forEach((m) => { const c = col(m); head.push(c + '_x_' + u, c + '_y_' + u, c + '_vx_' + u + '_s', c + '_vy_' + u + '_s', c + '_speed_' + u + '_s', c + '_ax_' + u + '_s2', c + '_ay_' + u + '_s2', c + '_gap_filled'); });
-  R.ang.forEach((a) => { const c = col(a.key); head.push(c + '_deg', c + '_vel_deg_s', c + '_acc_deg_s2'); });
+  mk.forEach((m) => { const c = col(m); head.push(c + '_x_position_' + u, c + '_y_position_' + u, c + '_x_velocity_' + u + '_s', c + '_y_velocity_' + u + '_s', c + '_resultant_velocity_' + u + '_s', c + '_x_acceleration_' + u + '_s2', c + '_y_acceleration_' + u + '_s2', c + '_resultant_acceleration_' + u + '_s2', c + '_gap_filled'); });
+  R.ang.forEach((a) => { const c = col(a.key); head.push(c + '_angular_position_deg', c + '_angular_velocity_deg_s', c + '_angular_acceleration_deg_s2'); });
   const idx = mk.map((m) => new Map(R.sers[m].F.map((f, i) => [f, i]))), aidx = R.ang.map((a) => new Map(a.F.map((f, i) => [f, i])));
   const lines = meta().map((r) => '# ' + r.map(q).join(',')); lines.push(head.join(','));
   F.forEach((f) => {
     const r = [f, n(tReal(f), 4)]; if (useOff) r.push(n(tReal(f) - off, 4));
-    mk.forEach((m, k) => { const s = R.sers[m], i = idx[k].get(f); if (i === undefined) { r.push('', '', '', '', '', '', '', ''); return; } r.push(n(s.x[i], 5), n(s.y[i], 5), n(s.vx[i], 4), n(s.vy[i], 4), n(s.speed[i], 4), n(s.ax[i], 3), n(s.ay[i], 3), s.filled[i] ? 1 : 0); });
+    mk.forEach((m, k) => { const s = R.sers[m], i = idx[k].get(f); if (i === undefined) { r.push('', '', '', '', '', '', '', '', ''); return; } r.push(n(s.x[i], 5), n(s.y[i], 5), n(s.vx[i], 4), n(s.vy[i], 4), n(s.speed[i], 4), n(s.ax[i], 3), n(s.ay[i], 3), n(s.accMag[i], 3), s.filled[i] ? 1 : 0); });
     R.ang.forEach((a, k) => { const i = aidx[k].get(f); r.push(i === undefined ? '' : n(a.V[i], 2), i === undefined ? '' : n(a.W[i], 1), i === undefined ? '' : n(a.AA[i], 0)); });
     lines.push(r.join(','));
   });
@@ -140,7 +140,7 @@ async function photoSequence() {
   try {
     const cols = Math.max(1, parseInt($('psCols').value, 10) || Math.min(F.length, 4)), rows = Math.ceil(F.length / cols);
     const overlay = $('psOverlay').checked, crop = $('psCrop').checked, lab = $('psLabel').checked;
-    // crop box: the same size on every picture, centred on the athlete's points
+    // crop box: the same size on every picture, centred on the markers
     let cw = S.vw, ch = S.vh; const centres = {};
     if (crop) {
       let bw = 0, bh = 0;
@@ -188,7 +188,7 @@ function loadProject(file) {
       if (!ses && j.frames) ses = { trials: [{ id: 'old1', name: j.name || 'video', labels: { athlete: '', condition: '', trial: '1' }, state: j }], cur: 0 }; // single-video project from version 1
       if (!ses || !Array.isArray(ses.trials)) throw new Error('not a project');
       if (A.session.trials.length && !confirm('Replace the current session with the one in this file?')) return;
-      ses.trials.forEach((t) => { t.state = Object.assign(freshState(), t.state); if (!Array.isArray(t.state.angles)) t.state.angles = []; });
+      ses.trials.forEach((t) => { t.state = migrate(t.state); });
       A.session = ses; A.files = {}; A.results = null;
       $('vid').removeAttribute('src'); $('stage').classList.add('hide'); $('empty').classList.remove('hide');
       persist(); A.fn.openTrial(Math.max(0, Math.min(ses.cur, ses.trials.length - 1)));

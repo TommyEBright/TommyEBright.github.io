@@ -1,6 +1,6 @@
 // Sessions: several videos (trials) worked through one after another, then compared.
-import { A, $, esc, status, persist, freshState, clone, SHARED, restoreSession, forgetSession, currentTrial } from './state.js?v=2.0.2';
-import { loadVideoURL, viewDims } from './video.js?v=2.0.2';
+import { A, $, esc, status, persist, freshState, clone, SHARED, restoreSession, forgetSession, currentTrial } from './state.js?v=2.1.0';
+import { loadVideoURL, viewDims } from './video.js?v=2.1.0';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -92,11 +92,11 @@ export function renderSession() {
   const T = A.session.trials, box = $('sesTab');
   $('sesCount').textContent = T.length ? '(' + T.length + ' trial' + (T.length > 1 ? 's' : '') + ')' : '';
   if (!T.length) { box.innerHTML = '<tr><td class="muted">No videos yet. Press <strong>Add videos</strong> (you can choose several at once).</td></tr>'; $('sesNext').disabled = true; return; }
-  box.innerHTML = '<tr><th>#</th><th>Athlete</th><th>Condition</th><th>Trial</th><th>Video</th><th>Progress</th><th></th></tr>' + T.map((t, i) => {
+  box.innerHTML = '<tr><th>#</th><th>Participant</th><th>Condition</th><th>Trial</th><th>Video</th><th>Progress</th><th></th></tr>' + T.map((t, i) => {
     const S = t.state, nf = Object.keys(S.frames).filter((f) => Object.keys(S.frames[f]).length).length, cur = i === A.session.cur;
     const prog = (S.calib ? 'calibrated, ' : '') + nf + ' frame' + (nf === 1 ? '' : 's') + ', ' + S.events.length + ' event' + (S.events.length === 1 ? '' : 's');
     return '<tr' + (cur ? ' class="current"' : '') + '><td class="num">' + (i + 1) + '</td>' +
-      ['athlete', 'condition', 'trial'].map((k) => '<td><input type="text" class="mini" data-lab="' + k + '" data-i="' + i + '" value="' + esc(t.labels[k] || '') + '" placeholder="' + (k === 'athlete' ? 'e.g. Athlete 1' : k === 'condition' ? 'e.g. Pre' : 'e.g. 1') + '" aria-label="' + k + '"></td>').join('') +
+      ['athlete', 'condition', 'trial'].map((k) => '<td><input type="text" class="mini" data-lab="' + k + '" data-i="' + i + '" value="' + esc(t.labels[k] || '') + '" placeholder="' + (k === 'athlete' ? 'e.g. P01' : k === 'condition' ? 'e.g. Pre' : 'e.g. 1') + '" aria-label="' + (k === 'athlete' ? 'participant' : k) + '"></td>').join('') +
       '<td class="small">' + esc(t.name) + (A.files[t.id] ? '' : ' <span class="muted">(needs re-opening)</span>') + '</td><td class="muted small">' + prog + '</td>' +
       '<td class="nowrap">' + (cur ? '<strong class="small">Open now</strong>' : '<button type="button" class="btn small ghost" data-open="' + i + '">Open</button>') + ' <button type="button" class="btn small ghost" data-del="' + i + '" title="Remove from session">&times;</button></td></tr>';
   }).join('');

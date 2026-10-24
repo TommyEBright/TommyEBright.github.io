@@ -145,3 +145,8 @@ label.filebtn { display: inline-flex; align-items: center; margin: 0; }
 .convert { max-width: 620px; margin: 0 auto; color: #e2e8f0; }
 .convert p { margin: .4rem 0; }
 .convert .bad { color: #fca5a5; }
+/* v2.1: export builder */
+.builder { border: 1px solid var(--line, #e2e8f0); border-radius: 10px; padding: .7rem .8rem; background: #f8fafc; }
+.chks { display: flex; flex-wrap: wrap; gap: .1rem .9rem; margin: .15rem 0 .5rem; }
+.chks label.inline { margin: .1rem 0; }
+select.mini { font-size: .82rem; padding: .15rem .3rem; width: auto; margin-top: .2rem; }

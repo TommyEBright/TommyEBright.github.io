@@ -1,5 +1,5 @@
 // Small SVG line charts. Click a chart to move the video to that moment.
-import { esc } from './state.js?v=2.0.2';
+import { esc } from './state.js?v=2.1.0';
 
 export function niceStep(range) {
   if (!(range > 0)) return 1;
@@ -9,7 +9,7 @@ export function niceStep(range) {
 const num = (v) => +(+v).toFixed(Math.abs(v) < 1 ? 3 : Math.abs(v) < 100 ? 2 : 0);
 
 // series: [{x:[], y:[], col, dash, name, width, dots}]
-// o: {ylab, xlab, zero, evs:[{t,name}], now, minmax, onPick(t), W, H, xMin, xMax, refLine:{a,b} (y = a + b x)}
+// o: {ylab, xlab, zero, evs:[{t,name}], now, minmax, onPick(t), W, H, xMin, xMax, refLine:{a,b} (y = a + b x), equal}
 export function chart(svg, series, o) {
   o = o || {};
   const W = o.W || 640, H = o.H || 300, L = 66, R = 14, T = 16, B = 46, w = W - L - R, h = H - T - B;
@@ -23,6 +23,10 @@ export function chart(svg, series, o) {
   if (y1 - y0 < 1e-9) { y0 -= 1; y1 += 1; }
   const pad = (y1 - y0) * 0.07; y0 -= pad; y1 += pad;
   if (x1 - x0 < 1e-9) x1 = x0 + 1;
+  if (o.equal) { // same scale on both axes (e.g. a trajectory), so the path is not stretched
+    const k = Math.max((x1 - x0) / w, (y1 - y0) / h), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    x0 = cx - k * w / 2; x1 = cx + k * w / 2; y0 = cy - k * h / 2; y1 = cy + k * h / 2;
+  }
   const X = (x) => L + (x - x0) / (x1 - x0) * w, Y = (y) => T + h - (y - y0) / (y1 - y0) * h;
   const F = 'font-family="system-ui, Arial"';
   let s = '<rect width="' + W + '" height="' + H + '" fill="#fff"/>';

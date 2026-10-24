@@ -1,14 +1,16 @@
 // Compare trials: key numbers for every trial side by side, group means, overlaid time-normalised curves
 // and combined exports for the whole session.
-import { A, $, esc, fx, status, persist, withState, PALETTE, download, VERSION, APP } from './state.js?v=2.0.2';
-import { computeData, summaryRows } from './results.js?v=2.0.2';
-import { normalise, meanSd } from './normalise.js?v=2.0.2';
-import { mean, sd } from './maths.js?v=2.0.2';
-import { chart, legend } from './charts.js?v=2.0.2';
-import { label } from './session.js?v=2.0.2';
+import { A, $, esc, fx, status, persist, withState, PALETTE, download, VERSION, APP } from './state.js?v=2.1.0';
+import { computeData, summaryRows } from './results.js?v=2.1.0';
+import { normalise, meanSd } from './normalise.js?v=2.1.0';
+import { mean, sd } from './maths.js?v=2.1.0';
+import { chart, legend } from './charts.js?v=2.1.0';
+import { label } from './session.js?v=2.1.0';
+import { sessionDiscreteCSV, selection } from './builder.js?v=2.1.0';
+import { allVariables } from './vars.js?v=2.1.0';
 
 let cache = null;
-const groupOf = (t, g) => (g === 'athlete' ? t.labels.athlete || '(no athlete)' : g === 'condition' ? t.labels.condition || '(no condition)' : g === 'both' ? (t.labels.athlete || '?') + ' / ' + (t.labels.condition || '?') : 'All trials');
+const groupOf = (t, g) => (g === 'athlete' ? t.labels.athlete || '(no participant)' : g === 'condition' ? t.labels.condition || '(no condition)' : g === 'both' ? (t.labels.athlete || '?') + ' / ' + (t.labels.condition || '?') : 'All trials');
 
 // Work out every trial (uses the current trial's normalisation settings for all of them).
 function gather() {
@@ -50,7 +52,7 @@ export function renderCompare() {
   const chosen = metrics.filter((m) => ses.cmpMetrics.includes(m.name));
   const val = (d, name) => { const r = d.rows.find((x) => x[0] === name); return r ? r[3] : null; };
   const dec = (u) => (u === 's' ? 3 : u === '°' || u === 'cm' || u === 'px' || u === 'px/s' ? 1 : 2);
-  let h = '<table><tr><th>Athlete</th><th>Condition</th><th>Trial</th>' + chosen.map((m) => '<th>' + esc(m.name) + (m.unit ? ' (' + esc(m.unit) + ')' : '') + '</th>').join('') + '</tr>';
+  let h = '<table><tr><th>Participant</th><th>Condition</th><th>Trial</th>' + chosen.map((m) => '<th>' + esc(m.name) + (m.unit ? ' (' + esc(m.unit) + ')' : '') + '</th>').join('') + '</tr>';
   h += data.map((d) => '<tr' + (A.session.trials.indexOf(d.t) === A.session.cur ? ' class="current"' : '') + '><td>' + esc(d.t.labels.athlete || '') + '</td><td>' + esc(d.t.labels.condition || '') + '</td><td>' + esc(d.t.labels.trial || '') + '</td>' + chosen.map((m) => '<td class="num">' + fx(val(d, m.name), dec(m.unit)) + '</td>').join('') + '</tr>').join('');
   if (data.length > 1) {
     const groups = [...new Set(data.map((d) => groupOf(d.t, g)))];
@@ -101,21 +103,27 @@ function summaryAll() {
   const data = cache || gather(); if (!data.length) { status('Nothing to export yet.'); return; }
   const metrics = metricList(data), long = $('cmpLayout').value === 'long', lines = ['# ' + APP + ' v' + VERSION + ' | session summary | ' + new Date().toISOString()];
   if (long) {
-    lines.push('athlete,condition,trial,video,measure,value,unit');
+    lines.push('participant,condition,trial,video,measure,value,unit');
     data.forEach((d) => d.rows.forEach((r) => lines.push([d.t.labels.athlete, d.t.labels.condition, d.t.labels.trial, d.t.name, r[0], fx(r[3], 5), r[4]].map(q).join(','))));
   } else {
-    lines.push(['athlete', 'condition', 'trial', 'video'].concat(metrics.map((m) => m.name + (m.unit ? ' (' + m.unit + ')' : ''))).map(q).join(','));
+    lines.push(['participant', 'condition', 'trial', 'video'].concat(metrics.map((m) => m.name + (m.unit ? ' (' + m.unit + ')' : ''))).map(q).join(','));
     data.forEach((d) => lines.push([d.t.labels.athlete, d.t.labels.condition, d.t.labels.trial, d.t.name].concat(metrics.map((m) => { const r = d.rows.find((x) => x[0] === m.name); return r ? fx(r[3], 5) : ''; })).map(q).join(',')));
   }
   download('session_summary_' + stamp() + '.csv', csv(lines)); status('Downloaded the session summary (' + data.length + ' trials).');
 }
+function discreteAll() {
+  const data = cache || gather(), r = sessionDiscreteCSV(data, $('cmpLayout').value === 'wide');
+  if (!r) { status('No values match your export choices yet (set them in Export &rarr; Choose your variables).'); return; }
+  download('session_discrete_' + stamp() + '.csv', r.blob); status('Downloaded your chosen discrete values for ' + r.n + ' trial' + (r.n > 1 ? 's' : '') + '.');
+}
 function normAll() {
   const data = (cache || gather()).filter((d) => d.norm && d.norm.cycles.length), N = A.S.norm;
   if (!data.length) { status('No time-normalised phases yet. Set them up in Results first.'); return; }
-  const only = $('cmpNormWhich').value === 'one' ? $('cmpVar').value : null;
-  const lines = ['# ' + APP + ' v' + VERSION + ' | time-normalised ' + N.start + ' to ' + N.end + ', ' + data[0].norm.pct.length + ' points | ' + new Date().toISOString(), 'athlete,condition,trial,video,phase,phase_duration_s,variable,unit,percent,value'];
+  const which = $('cmpNormWhich').value, only = which === 'one' ? $('cmpVar').value : null;
+  const sel = selection(), mine = which === 'mine' ? new Set(data.flatMap((d) => withState(d.t.state, () => allVariables(d.R, sel).map((v) => v.key)))) : null;
+  const lines = ['# ' + APP + ' v' + VERSION + ' | time-normalised ' + N.start + ' to ' + N.end + ', ' + data[0].norm.pct.length + ' points | ' + new Date().toISOString(), 'participant,condition,trial,video,phase,phase_duration_s,variable,unit,percent,value'];
   data.forEach((d) => Object.entries(d.norm.vars).forEach(([k, v]) => {
-    if (only && k !== only) return;
+    if ((only && k !== only) || (mine && !mine.has(k))) return;
     v.curves.forEach((c, i) => { if (!c) return; const base = [d.t.labels.athlete, d.t.labels.condition, d.t.labels.trial, d.t.name, i + 1, fx(d.norm.cycles[i].dur, 4), v.label, v.unit].map(q).join(','); d.norm.pct.forEach((p, k2) => lines.push(base + ',' + p.toFixed(2) + ',' + fx(c[k2], 5))); });
   }));
   download('session_time_normalised_' + stamp() + '.csv', csv(lines)); status('Downloaded the time-normalised data for ' + data.length + ' trials.');
@@ -127,5 +135,6 @@ export function initCompare() {
   $('cmpCalc').addEventListener('click', renderCompare);
   $('cmpCsv').addEventListener('click', summaryAll);
   $('cmpNormCsv').addEventListener('click', normAll);
+  $('cmpDiscCsv').addEventListener('click', discreteAll);
   A.fn.renderCompare = renderCompare;
 }

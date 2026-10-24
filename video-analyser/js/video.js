@@ -1,5 +1,5 @@
 // Video loading, frame rendering (with rotate/flip), seeking and frame-rate detection.
-import { A, $, status, esc, persist, freshState, fpsReal, tReal } from './state.js?v=2.0.2';
+import { A, $, status, esc, persist, freshState, fpsReal, tReal } from './state.js?v=2.1.0';
 
 const vid = () => $('vid');
 let vctx = null, playing = false;

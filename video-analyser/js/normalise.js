@@ -1,7 +1,8 @@
 // Time normalisation: each phase between a start event and an end event is resampled to 0-100 %.
 // The filtered data are interpolated with a natural cubic spline at n evenly spaced points.
-import { A, tReal, fwd } from './state.js?v=2.0.2';
-import { units, spline, mean, sd } from './maths.js?v=2.0.2';
+import { A, tReal } from './state.js?v=2.1.0';
+import { allVariables } from './vars.js?v=2.1.0';
+import { units, spline, mean, sd } from './maths.js?v=2.1.0';
 
 // Start/end frames of every phase: each start event paired with the next end event after it.
 export function phases(S, start, end) {
@@ -28,33 +29,19 @@ function resample(T, V, ta, tb, n) {
   return out;
 }
 
-// The variables that can be normalised, in a stable order.
-export function variableList(R) {
-  const u = units(), list = [];
-  Object.keys(R.sers).forEach((m) => {
-    list.push({ key: m + '|x', label: m + ' horizontal position (+ ' + fwd() + ')', unit: u, get: (s) => [s.T, s.x], m });
-    list.push({ key: m + '|y', label: m + ' vertical position (+ up)', unit: u, get: (s) => [s.T, s.y], m });
-    list.push({ key: m + '|vx', label: m + ' horizontal velocity', unit: u + '/s', get: (s) => [s.T, s.vx], m });
-    list.push({ key: m + '|vy', label: m + ' vertical velocity', unit: u + '/s', get: (s) => [s.T, s.vy], m });
-    list.push({ key: m + '|speed', label: m + ' speed (resultant)', unit: u + '/s', get: (s) => [s.T, s.speed], m });
-  });
-  R.ang.forEach((a) => {
-    list.push({ key: 'ang|' + a.key, label: a.key, unit: '°', ang: a, get: () => [a.T, a.V] });
-    list.push({ key: 'angvel|' + a.key, label: a.key + ' angular velocity', unit: '°/s', ang: a, get: () => [a.T, a.W] });
-  });
-  return list;
-}
+// The variables that can be normalised, in a stable order (see vars.js).
+export function variableList(R, opts) { return allVariables(R, opts); }
 
-// Normalise one trial's results. Returns { cycles, vars: { key: { label, unit, curves, mean, sd } }, pct }.
-export function normalise(R, S, start, end, n) {
+// Normalise one trial's results (each phase, then the ensemble average: mean and SD point by point). Returns { cycles, vars: { key: { label, unit, curves, mean, sd } }, pct }.
+export function normalise(R, S, start, end, n, opts) {
   n = Math.max(11, Math.min(1001, n || 101));
   const ph = phases(S, start, end), pct = [];
   for (let k = 0; k < n; k++) pct.push(100 * k / (n - 1));
   const out = { cycles: ph.map((p) => ({ a: p.a, b: p.b, dur: tReal(p.b) - tReal(p.a) })), vars: {}, pct };
   if (!R || !ph.length) return out;
-  variableList(R).forEach((v) => {
-    const curves = [];
-    ph.forEach((p) => { const [T, V] = v.get(R.sers[v.m]); const c = resample(T, V, tReal(p.a), tReal(p.b), n); curves.push(c); });
+  variableList(R, opts).forEach((v) => {
+    const curves = [], [T, , V] = v.get();
+    ph.forEach((p) => { curves.push(resample(T, V, tReal(p.a), tReal(p.b), n)); });
     if (!curves.some(Boolean)) return;
     out.vars[v.key] = { label: v.label, unit: v.unit, curves, ...meanSd(curves.filter(Boolean)) };
   });

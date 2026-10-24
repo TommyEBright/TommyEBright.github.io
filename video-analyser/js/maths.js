@@ -1,7 +1,7 @@
 // Calibration, filtering, differentiation and angle maths.
-// References: Winter (2009) Biomechanics and Motor Control of Human Movement, 4th ed., ch. 2-3;
-// Hamill, Knutzen & Derrick (2015) Biomechanical Basis of Human Movement, 4th ed., ch. 8-9.
-import { A, tReal, fpsReal } from './state.js?v=2.0.2';
+// References: Robertson et al. (2014) Research Methods in Biomechanics, 2nd ed., ch. 1 and 12;
+// Winter (2009) Biomechanics and Motor Control of Human Movement, 4th ed., ch. 2-3.
+import { A, tReal, fpsReal } from './state.js?v=2.1.0';
 
 // ---------- calibration ----------
 export function scale() {
@@ -41,10 +41,30 @@ export function jointAngle(a, b, c) { // included angle at b (degrees); 180 = st
 // World coordinates (x forwards, y up).
 export function segFromVertical(lower, upper) { return Math.atan2(upper[0] - lower[0], upper[1] - lower[1]) * 180 / Math.PI; }
 export function segFromHorizontal(from, to) { return Math.atan2(to[1] - from[1], to[0] - from[0]) * 180 / Math.PI; }
+// Relative (joint) angle measured anticlockwise from segment b->a to segment b->c, 0-360 degrees
+// (x forwards, y up). For a knee (hip, knee, ankle) 180 = straight, under 180 = flexed, over 180 = hyperextended.
+// The same as the difference between the two segments' absolute angles (Robertson et al., 2014), so it
+// does not fold back at 180 degrees and can show hyperextension.
+export function jointAngleCCW(a, b, c) {
+  const t1 = Math.atan2(a[1] - b[1], a[0] - b[0]), t2 = Math.atan2(c[1] - b[1], c[0] - b[0]);
+  let d = (t2 - t1) * 180 / Math.PI; d = ((d % 360) + 360) % 360; return d;
+}
 export function angleValue(def, P) { // P: name -> world coords
-  if (def.type === 'joint') { const v = jointAngle(P[def.a], P[def.b], P[def.c]); return def.flex ? 180 - v : v; }
+  if (def.type === 'joint') {
+    if (def.mode === 'ccw') return jointAngleCCW(P[def.a], P[def.b], P[def.c]);
+    const v = jointAngle(P[def.a], P[def.b], P[def.c]); return def.flex ? 180 - v : v;
+  }
   if (def.type === 'vertical') return segFromVertical(P[def.a], P[def.b]);
-  return segFromHorizontal(P[def.a], P[def.b]);
+  const h = segFromHorizontal(P[def.a], P[def.b]);
+  return def.range === '360' ? (h + 360) % 360 : h;
+}
+// Angles that can cross the 0/360 or +/-180 line are made continuous: a change of more than 180 degrees
+// between samples is taken to be the shorter way round (Robertson et al., 2014, "discontinuity problems").
+export function canWrap(def) { return def.type !== 'joint' || def.mode === 'ccw'; }
+export function unwrap(V) {
+  const out = V.slice();
+  for (let i = 1; i < out.length; i++) { if (out[i] === null || out[i - 1] === null) continue; while (out[i] - out[i - 1] > 180) out[i] -= 360; while (out[i] - out[i - 1] < -180) out[i] += 360; }
+  return out;
 }
 export function anglePoints(def) { return def.type === 'joint' ? [def.a, def.b, def.c] : [def.a, def.b]; }
 
@@ -87,13 +107,13 @@ export function residualCurve(x, fs) {
 }
 
 // ---------- differentiation ----------
-// First central difference: v_i = (x_{i+1} - x_{i-1}) / (t_{i+1} - t_{i-1}).
+// First central difference: v_i = (x_{i+1} - x_{i-1}) / (t_{i+1} - t_{i-1}) (Robertson et al., 2014, eq. 1.6).
 export function centralDiff(t, x) {
   const v = new Array(x.length).fill(null);
   for (let i = 1; i < x.length - 1; i++) if (x[i + 1] !== null && x[i - 1] !== null) v[i] = (x[i + 1] - x[i - 1]) / (t[i + 1] - t[i - 1]);
   return v;
 }
-// Second central difference (works for unequal spacing).
+// Second central difference: a_i = (x_{i+1} - 2x_i + x_{i-1}) / dt^2 (eq. 1.8), written to allow unequal spacing.
 export function secondDiff(t, x) {
   const a = new Array(x.length).fill(null);
   for (let i = 1; i < x.length - 1; i++) {

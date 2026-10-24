@@ -1,7 +1,7 @@
 // Automatic digitising: marker tracking by template matching.
-import { A, $, esc, status, persist, points, fpsReal } from './state.js?v=2.0.2';
-import { seekAsync, grab, seek } from './video.js?v=2.0.2';
-import { draw, rad, markerHalf, renderChips, updateDigiCount } from './overlay.js?v=2.0.2';
+import { A, $, esc, status, persist, points, fpsReal } from './state.js?v=2.1.0';
+import { seekAsync, grab, seek } from './video.js?v=2.1.0';
+import { draw, rad, markerHalf, renderChips, updateDigiCount, findCentre } from './overlay.js?v=2.1.0';
 
 // ---------- flags (points the student should check) ----------
 export function clearFlag(f, m) {
@@ -110,7 +110,11 @@ function showPause() {
   if (!P) { b.classList.add('hide'); $('stage').classList.remove('paused'); return; }
   const left = P.lost.filter((m) => !(A.S.frames[A.cur] && A.S.frames[A.cur][m]));
   b.classList.remove('hide'); $('stage').classList.add('paused');
-  $('trkBannerText').innerHTML = '<strong>Tracking paused at frame ' + A.cur + '.</strong> Click the <strong>' + esc(left.join(', then the ')) + '</strong> where ' + (left.length > 1 ? 'they are' : 'it is') + ' now. Tracking carries on by itself as soon as you have.';
+  const why = left.map((m) => P.why && P.why[m] ? '<br><span class="small">' + esc(m) + ': ' + esc(P.why[m]) + '</span>' : '').join('');
+  const sus = P.suspect && left.some((m) => P.suspect[m]);
+  $('trkOk').classList.toggle('hide', !sus);
+  $('trkBannerText').innerHTML = '<strong>Tracking paused at frame ' + A.cur + '.</strong> Click the <strong>' + esc(left.join(', then the ')) + '</strong> where ' + (left.length > 1 ? 'they are' : 'it is') + ' now. Tracking carries on by itself as soon as you have.' +
+    (sus ? ' The red ring shows where tracking thought it was. If that was right, press <strong>It was right, carry on</strong>.' : '') + why;
   A.activeMarker = left[0] || null; renderChips(); draw();
   status($('trkBannerText').innerHTML);
 }
@@ -124,6 +128,16 @@ export function onTrackClick() {
   const dir = P.dir; A.trackResume = null; showPause();
   setTimeout(() => runTrack(dir, { here: true }), 50);
   return true;
+}
+// "It was right": put back the positions that looked like a jump and carry on.
+async function acceptSuspect() {
+  const P = A.trackResume; if (!P || !P.suspect) return;
+  const S = A.S; if (!S.frames[P.frame]) S.frames[P.frame] = {};
+  Object.keys(P.suspect).forEach((m) => { if (!S.frames[P.frame][m]) { S.frames[P.frame][m] = P.suspect[m]; clearFlag(P.frame, m); } });
+  const fr = S.frames[P.frame], left = P.lost.filter((m) => !fr[m]);
+  if (left.length) { P.lost = left; P.suspect = null; showPause(); return; }
+  const dir = P.dir; A.trackResume = null; showPause(); persist();
+  await runTrack(dir, { here: true });
 }
 // "Marker hidden": leave a gap for the lost marker(s) and carry on tracking the others.
 async function markerHidden() {
@@ -162,26 +176,61 @@ export async function runTrack(dir, opts) {
   const end = endFrame(dir);
   A.trackDir = dir; A.pauseAdvance = false;
   A.stopReq = false; setBusy(true, 'Tracking\u2026');
-  const h = markerHalf(), thr = parseFloat($('trkThr').value);
+  const h = markerHalf(), thr = parseFloat($('trkThr').value), checks = S.checks !== false, refine = !!S.snap;
   await seekAsync(A.cur); let img = grab(); const st = {}, bad = [];
-  mk.forEach((m) => { const p = fr0[m], t = prepT(patchAt(img, p[0], p[1], h)); if (!t) bad.push(m); st[m] = { p: p.slice(), prev: p.slice(), T0: t, Tp: t }; });
+  mk.forEach((m) => { const p = fr0[m], t = prepT(patchAt(img, p[0], p[1], h)); if (!t) bad.push(m); st[m] = { p: p.slice(), prev: p.slice(), T0: t, Tp: t, steps: [] }; });
+  // segment lengths and marker spacing on the start frame, for spotting a marker that jumps to the wrong place
+  const links = S.template.links.filter((l) => mk.includes(l[0]) && mk.includes(l[1])).map((l) => ({ l, L0: Math.hypot(fr0[l[0]][0] - fr0[l[1]][0], fr0[l[0]][1] - fr0[l[1]][1]) }));
+  const gap0 = {}; mk.forEach((a, i) => mk.slice(i + 1).forEach((b) => { gap0[a + '\u0000' + b] = Math.hypot(fr0[a][0] - fr0[b][0], fr0[a][1] - fr0[b][1]); }));
   if (bad.length) { setBusy(false, ''); status(esc(bad.join(', ')) + ' is too close to the edge of the picture to track.'); return; }
   let f = A.cur, done = 0, lost = null; const total = Math.abs(end - A.cur), t0 = performance.now();
+  const medn = (a) => { if (!a.length) return 0; const b = a.slice().sort((x, y) => x - y); return b[b.length >> 1]; };
   while (!A.stopReq) {
     const nf = f + dir; if ((dir > 0 && nf > end) || (dir < 0 && nf < end)) break;
     await seekAsync(nf); img = grab();
     if (!S.frames[nf]) S.frames[nf] = {};
-    const lostHere = [];
+    const lostHere = [], why = {}, found = {}, err = {};
     mk.forEach((m) => {
       const s = st[m], vx = s.p[0] - s.prev[0], vy = s.p[1] - s.prev[1];
       const pred = [s.p[0] + vx, s.p[1] + vy], spd = Math.hypot(vx, vy);
+      s.pred = pred; s.spd = spd;
       const R = Math.max(3 * h, Math.min(10 * h, 2.5 * h + spd));
       let r = matchSearch(img, pred, h, R, [s.T0, s.Tp]);
       if (r.score < thr || r.edge) { // one wider look before giving up (sudden change of speed, e.g. foot contact)
         const r2 = matchSearch(img, pred, h, Math.min(14 * h, R * 1.8), [s.T0, s.Tp]);
         if (r2.score >= thr && !r2.edge) r = r2;
       }
-      if (r.score < thr || r.edge) { lostHere.push(m); return; }
+      if (r.score < thr || r.edge) { lostHere.push(m); why[m] = 'the picture of the marker no longer matches (blurred, hidden or changed shape)'; return; }
+      // auto-centre: pull the match onto the middle of the marker blob, if there is a clear one close by
+      if (refine) { const c = findCentre(r.p, img, { reach: 0.6 * h }); if (c) r.p = c; }
+      found[m] = r; err[m] = Math.hypot(r.p[0] - pred[0], r.p[1] - pred[1]);
+    });
+    // Does any marker look like it has jumped to the wrong place?
+    const suspect = {};
+    if (checks) {
+      const blame = (a, b) => (err[a] === undefined ? b : err[b] === undefined ? a : (err[a] - st[a].typ >= err[b] - st[b].typ ? a : b));
+      Object.keys(found).forEach((m) => { // (a) much further from where it was heading than it has been moving
+        const s = st[m]; s.typ = medn(s.steps);
+        const lim = Math.max(2.5 * h, 1.2 * s.spd + 4 * s.typ + 1.5 * h);
+        if (s.steps.length >= 2 && err[m] > lim) suspect[m] = 'it moved ' + Math.round(err[m]) + ' px away from where it was heading, much more than on the frames before';
+      });
+      links.forEach(({ l, L0 }) => { // (b) a segment suddenly much longer or shorter
+        const [a, b] = l; if (!found[a] || !found[b] || L0 < 3 * h) return;
+        const L = Math.hypot(found[a].p[0] - found[b].p[0], found[a].p[1] - found[b].p[1]), Lp = Math.hypot(st[a].p[0] - st[b].p[0], st[a].p[1] - st[b].p[1]);
+        const step = Math.abs(L - Lp), drift = Math.abs(L / L0 - 1);
+        if ((step > Math.max(2 * h, 0.2 * Lp)) || (drift > 0.35 && Math.abs(L - L0) > 2 * h)) { const m = blame(a, b); if (!suspect[m]) suspect[m] = 'the ' + a + '\u2013' + b + ' segment suddenly became ' + Math.round(Math.abs(L / (step > Math.max(2 * h, 0.2 * Lp) ? Lp : L0) - 1) * 100) + '% ' + (L > Lp ? 'longer' : 'shorter'); }
+      });
+      const fm = Object.keys(found); // (c) two markers that were apart have landed on the same spot
+      fm.forEach((a, i) => fm.slice(i + 1).forEach((b) => {
+        const g0 = gap0[a + '\u0000' + b] !== undefined ? gap0[a + '\u0000' + b] : gap0[b + '\u0000' + a];
+        const g = Math.hypot(found[a].p[0] - found[b].p[0], found[a].p[1] - found[b].p[1]);
+        if (g0 > 3 * h && g < 0.8 * h) { const m = blame(a, b); if (!suspect[m]) suspect[m] = 'it landed on top of the ' + (m === a ? b : a); }
+      }));
+    }
+    Object.keys(found).forEach((m) => {
+      if (suspect[m]) { lostHere.push(m); why[m] = 'paused because ' + suspect[m] + '.'; return; }
+      const s = st[m], r = found[m];
+      s.steps.push(err[m]); if (s.steps.length > 8) s.steps.shift();
       s.prev = s.p; s.p = r.p;
       const t = prepT(patchAt(img, r.p[0], r.p[1], h)); if (t) s.Tp = t;
       S.frames[nf][m] = [r.p[0], r.p[1]];
@@ -191,13 +240,14 @@ export async function runTrack(dir, opts) {
       if (r.score < thr + 0.1) addFlag(nf, m, 'Low match (' + r.score.toFixed(2) + ')', 'track');
     });
     f = nf; done++; progress(done, total); draw();
-    if (lostHere.length) { lost = { f: nf, m: lostHere }; break; }
+    if (lostHere.length) { const sp = {}; Object.keys(suspect).forEach((m) => { sp[m] = found[m].p.slice(); }); lost = { f: nf, m: lostHere, why, suspect: Object.keys(sp).length ? sp : null }; break; }
   }
   const secs = (performance.now() - t0) / 1000;
   qualityFlags(); persist(); setBusy(false, ''); renderFlags(); updateDigiCount();
   if (lost) {
-    lost.m.forEach((m) => { delete S.frames[lost.f][m]; addFlag(lost.f, m, 'Tracking lost here and clicked by hand', 'track'); });
-    A.trackResume = { dir, lost: lost.m, frame: lost.f }; A.pauseAdvance = true;
+    lost.m.forEach((m) => { delete S.frames[lost.f][m]; addFlag(lost.f, m, lost.suspect && lost.suspect[m] ? 'Paused: looked like a jump to the wrong place' : 'Tracking lost here and clicked by hand', 'track'); });
+    A.trackResume = { dir, lost: lost.m, frame: lost.f, why: lost.why, suspect: lost.suspect }; A.pauseAdvance = true;
+    renderFlags();
     setBusy(false); showPause();
   } else {
     renderChips();
@@ -210,8 +260,10 @@ export function initTracking() {
   $('trkFwd').addEventListener('click', () => runTrack(1));
   $('trkBack').addEventListener('click', () => runTrack(-1));
   $('trkHidden').addEventListener('click', markerHidden);
+  $('trkOk').addEventListener('click', acceptSuspect);
+  $('trkChecks').addEventListener('change', function () { A.S.checks = this.checked; persist(); });
   $('trkCancel').addEventListener('click', () => { stopTrackPause(); status('Tracking stopped.'); });
   $('autoStop').addEventListener('click', () => { A.stopReq = true; if (A.trackResume) { stopTrackPause(); status('Tracking stopped.'); } });
   A.fn.onTrackClick = onTrackClick; A.fn.stopTrackPause = stopTrackPause;
-  window.__KVA_track = runTrack; window.__KVA_busy = () => A.busy; window.__KVA_hidden = markerHidden;
+  window.__KVA_track = runTrack; window.__KVA_busy = () => A.busy; window.__KVA_hidden = markerHidden; window.__KVA_ok = acceptSuspect;
 }
