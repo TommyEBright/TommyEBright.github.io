@@ -100,6 +100,26 @@
   .sq .vals span{display:inline-block;margin-right:.7rem}
   .sq .vals b{color:var(--navy)}
   .sq .x{float:right;border:0;background:none;color:var(--plum);cursor:pointer;font:inherit;font-size:.85em}
+  /* technique focus */
+  .fopts{display:grid;grid-template-columns:1fr;gap:.6rem;margin:.6rem 0 1rem}
+  .fopt{border:2px solid var(--line);border-radius:.8rem;padding:.75rem .9rem;background:#fff;cursor:pointer;text-align:left;font:inherit;color:var(--ink)}
+  .fopt:hover{border-color:var(--teal)}
+  .fopt.on{border-color:var(--plum);background:#fbf1f5}
+  .fopt .ft{font-weight:bold;color:var(--navy);font-size:1.02em}
+  .fopt .fd{font-size:.9em;margin:.2rem 0 .3rem}
+  .fopt .fm{font-size:.84em;color:var(--muted)}
+  .ftask{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;padding:.45rem .55rem;border:1px solid var(--line);border-radius:.6rem;margin-bottom:.4rem;font-size:.93em}
+  .ftask .st{width:1.4rem;height:1.4rem;flex:none;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.78em;color:#fff}
+  .ftask.done .st{background:var(--teal);border-color:var(--teal)}
+  .ftask .tx{flex:1 1 55%;min-width:12rem}
+  .ftask .tx small{display:block;color:var(--muted)}
+  .wq{margin:.7rem 0}
+  .wq label{display:block;font-weight:bold;color:var(--navy);font-size:.92em;margin-bottom:.25rem}
+  .wq textarea{width:100%;min-height:58px;border:1px solid var(--line);border-radius:.6rem;padding:.5rem .65rem;font:inherit;font-size:.93em;resize:vertical}
+  .wq .hint{font-size:.84em;color:var(--muted);margin-top:.2rem}
+  h4.fh{color:var(--navy);margin:1rem 0 .4rem;font-size:1em}
+  ol.reading{margin:.3rem 0 0;padding-left:1.2rem;font-size:.9em}
+  ol.reading li{margin-bottom:.35rem}
   /* results */
   .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:.7rem;margin:.5rem 0 1rem}
   .rc{border:1px solid var(--line);border-left:.35rem solid var(--teal);border-radius:.7rem;padding:.65rem .8rem;background:#fff}
@@ -248,10 +268,19 @@
       </div>
     </div>
 
-    <div class="card c-teal">
-      <div class="cardhead"><span class="pill">Step 3 (optional)</span><h2>Photo sequence and joint angles</h2></div>
+
+    <div class="card c-plum" id="focusCard">
+      <div class="cardhead"><span class="pill">Step 3</span><h2>Choose your technique focus</h2></div>
       <div class="cardbody">
-        <p style="margin-top:0">Build a row of still pictures showing key moments of the sprint (like the worked example in the phase analysis), and measure joint angles on them if you want to.</p>
+        <p style="margin-top:0">Your numbers say <i>what</i> happened. A technique focus helps you explain <i>why</i>. <b>Pick ONE feature, measure it, link it to ONE of your linear numbers, then cue it.</b></p>
+        <div class="fopts" id="focusOpts"></div>
+        <div id="focusWork"></div>
+      </div>
+    </div>
+    <div class="card c-teal">
+      <div class="cardhead"><span class="pill">Step 4 (optional)</span><h2>Photo sequence and more angles</h2></div>
+      <div class="cardbody">
+        <p style="margin-top:0">Frames you measured in Step 3 appear here too. Add more key moments to build a photo sequence for your presentation (like the worked example in the phase analysis), and measure extra angles if you want to.</p>
         <ol style="margin:0 0 .9rem;padding-left:1.3rem">
           <li><b>Find a moment</b> in the video, e.g. a touchdown. Tip: click any touchdown or toe-off in the Step 2 list to jump straight to it.</li>
           <li><b>Pick its name</b> below and press <b>Add this frame</b>. A small picture of it appears underneath.</li>
@@ -283,7 +312,7 @@
 </div>
 
 <div class="card c-plum" id="resultsCard">
-  <div class="cardhead"><span class="pill">Step 4</span><h2>Results</h2></div>
+  <div class="cardhead"><span class="pill">Step 5</span><h2>Results</h2></div>
   <div class="cardbody">
     <div id="results"><p class="muted">Your results will appear here as you mark the video.</p></div>
     <div class="dl">
@@ -312,6 +341,7 @@ function blank(){
     vidId:null, vidName:"",
     nContacts:5, dir:"auto",
     marks:{},         // key -> {frame, x, y}
+    focus:null, write:{feature:"", link:"", sowhat:"", cue:""},
     seq:[]            // photo sequence: {frame, label, img, w, h, vw, angles:{type:[[x,y],...]}}
   };
 }
@@ -493,7 +523,7 @@ ov.addEventListener("mousemove", e => {
 });
 ov.addEventListener("mouseleave", () => { loupe.style.display = "none"; guide = null; draw(); });
 window.addEventListener("scroll", () => loupe.style.display = "none", {passive:true});
-document.addEventListener("keydown", e => { if(e.key === "Escape" && angMode){ angMode = null; banner(); draw(); } });
+document.addEventListener("keydown", e => { if(e.key === "Escape" && angMode){ angMode = null; angQueue = []; focusRun = false; banner(); draw(); } });
 let tt; function toast(t){ const el = $("toast"); el.textContent = t; el.style.display = "block"; clearTimeout(tt); tt = setTimeout(() => el.style.display = "none", 5000); }
 
 /* ---------------- set-up UI ---------------- */
@@ -582,7 +612,7 @@ function renderMarks(){
     const c = $("cancelT"); if(c) c.onclick = () => { target = null; renderAll(); };
     const n = $("noMore"); if(n) n.onclick = () => { $("resultsCard").scrollIntoView({behavior:"smooth"}); toast("No problem. Your results use the contacts you have marked. You need at least two touchdowns for one step."); };
   } else {
-    nx.innerHTML = `<div class="lbl">All done</div><h3>Every mark is in <span class="tick">✓</span></h3><p>Scroll down to see and download your results. Click any item below if you want to redo it.</p><div class="bar"><i style="width:100%"></i></div>`;
+    nx.innerHTML = `<div class="lbl">All done</div><h3>Every mark is in <span class="tick">✓</span></h3><p><b>Next: choose your technique focus in Step 3.</b> Click any item below if you want to redo a mark.</p><div class="bar"><i style="width:100%"></i></div>`;
   }
   const ol = $("marks"); ol.innerHTML = "";
   P.forEach(p => {
@@ -677,7 +707,7 @@ function working(R){
 const workBox = (title, lines) => lines.length ? `<details class="box" open style="margin:.2rem 0 .9rem"><summary>${title}</summary><div class="inner"><ul style="margin:0;padding-left:1.2rem">${lines.map(l=>`<li style="margin-bottom:.35rem">${l}</li>`).join("")}</ul></div></details>` : "";
 function renderResults(){
   const R = compute(), el = $("results");
-  if(!R.sections.length && !R.steps.length && !S.seq.some(it => Object.keys(it.angles).length)){ el.innerHTML = '<p class="muted">Your results will appear here as you mark the video.</p>'; return; }
+  if(!R.sections.length && !R.steps.length && !S.focus && !S.seq.some(it => Object.keys(it.angles).length)){ el.innerHTML = '<p class="muted">Your results will appear here as you mark the video.</p>'; return; }
   let h = "";
   if(R.sections.length){
     const am = R.accels.length ? R.accels.reduce((a,b)=>a+b.a,0)/R.accels.length : null;
@@ -706,6 +736,12 @@ function renderResults(){
     h += `<p class="how"><b>Contact time</b> = toe-off − touchdown. <b>Flight time</b> = next touchdown − toe-off. <b>Step time</b> = one touchdown to the next, and <b>step frequency</b> = 1 ÷ step time. <b>Step length</b> = distance from one touchdown to the next${sm.est ? `, <b>estimated</b> here as velocity ÷ step frequency because there was no scale. This assumes velocity stayed the same over these steps.` : ", measured along the line of your ground scale."}</p>`;
     h += workBox("How the step results were calculated (with your numbers)", working(R).steps);
     if(sm.vStep && R.overall) h += `<p class="how"><b>Check:</b> step length × step frequency = <b>${fmt(sm.vStep)} m/s</b>, and your markers gave <b>${fmt(R.overall.v)} m/s</b>. These should be close, because velocity = step length × step frequency.</p>`;
+  }
+  if(S.focus){
+    const F = FOCI[S.focus], w = S.write;
+    h += `<h3 class="rh">Technique focus: ${F.short}</h3><div class="tw">${focusTableHTML()}</div>`;
+    const lines = [["What I found", w.feature], ["Linked number", w.link], ["So what", w.sowhat], ["Coaching cue", w.cue]].filter(x => x[1].trim());
+    h += lines.length ? `<table class="t"><tbody>${lines.map(([k,v]) => `<tr><th style="width:24%">${k}</th><td>${xe(v)}</td></tr>`).join("")}</tbody></table>` : `<p class="how">Fill in the explanation boxes in Step 3 and they will appear here.</p>`;
   }
   const angRows = S.seq.filter(it => Object.keys(it.angles).length);
   if(angRows.length){
@@ -762,6 +798,14 @@ $("dlCsv").onclick = () => {
   if(S.seq.length){
     L.push([],["Frame","Label","Time (s)", ...Object.values(ANG).map(a => `${a.name} (${a.unit === "m" ? "m" : "deg"})`)]);
     S.seq.forEach((it,i) => L.push([it.frame, it.label, tReal(it.frame - S.seq[0].frame).toFixed(3), ...Object.keys(ANG).map(t => { const v = it.angles[t] ? angleValue(t, it.angles[t]) : null; return v === null ? "" : v.toFixed(t === "tdd" ? 3 : 1); })]));
+  }
+  if(S.focus){
+    const {rows} = focusData(), n = x => x === null || x === undefined ? "" : x.toFixed(3);
+    L.push([], ["Technique focus", FOCI[S.focus].name]);
+    if(S.focus === "shin"){ L.push(["Contact","Shin angle at touchdown (deg)","Touchdown distance (m)","Contact time (s)"]); rows.forEach(r => L.push([r.k, n(r.shank), n(r.tdd), n(r.ct)])); }
+    if(S.focus === "trunk"){ L.push(["Contact","Trunk lean at touchdown (deg)"]); rows.forEach(r => L.push([r.k, n(r.trunk)])); }
+    if(S.focus === "front"){ L.push(["Step","Hip extension at toe-off (deg)","Max hip flexion in swing (deg)","Step length (m)","Step frequency (Hz)"]); rows.forEach(r => L.push([r.k, n(r.hipExt), n(r.hipFlex), n(r.sl), n(r.sf)])); }
+    [["What I found", S.write.feature], ["Linked number", S.write.link], ["So what", S.write.sowhat], ["Coaching cue", S.write.cue]].forEach(x => L.push(x));
   }
   const txt = L.map(r => r.map(c => { c = String(c ?? ""); return /[",\n]/.test(c) ? `"${c.replace(/"/g,'""')}"` : c; }).join(",")).join("\r\n");
   download(new Blob(["﻿" + txt], {type:"text/csv"}), "Sprint kinematics data.csv");
@@ -825,6 +869,16 @@ $("dlWord").onclick = async () => {
     b += wP("Times are relative to the first frame in the sequence. 2D angles measured on the video. Knee flexion: 0° = straight. Hip: + flexion, − extension. Trunk lean and shank angle are relative to the vertical, + = forward. Touchdown distance: + = foot ahead of the hip.", {sz:17, i:true, color:"56636B", before:60});
   }
   const Wk = working(R), plain = x => x.replace(/<[^>]+>/g, "");
+  if(S.focus){
+    const F = FOCI[S.focus], {rows} = focusData(), w = S.write, g = (x,d=0,u="°") => { if(x === null || x === undefined) return "–"; if(Math.abs(x) < 0.5) x = 0; return `${x>0 && u==="°" ? "+" : ""}${x.toFixed(d)}${u}`; };
+    b += wP(`Technique focus: ${F.name}`, {sz:24, b:true, color:"003D50", before:200});
+    if(S.focus === "shin") b += wTable(["Contact","Shin angle at touchdown","Touchdown distance","Contact time"], rows.map(r => [String(r.k), g(r.shank), r.tdd === null ? "–" : r.tdd.toFixed(2)+" m", r.ct === null ? "–" : r.ct.toFixed(3)+" s"]), [1600,2700,2600,2700]);
+    if(S.focus === "trunk") b += wTable(["Contact","Trunk lean at touchdown"], rows.map(r => [String(r.k), g(r.trunk)]), [3000,6600]) + (R.accels.length ? wP("Acceleration: " + R.accels.map(a => `${a.s1.p1}–${a.s1.p2} → ${a.s2.p1}–${a.s2.p2} m: ${a.a.toFixed(2)} m/s²`).join("; ")) : "");
+    if(S.focus === "front") b += wTable(["Step","Hip extension at toe-off","Max hip flexion in swing","Step length","Step frequency"], rows.map(r => [String(r.k), g(r.hipExt), g(r.hipFlex), r.sl === null ? "–" : r.sl.toFixed(2)+" m", r.sf === null ? "–" : r.sf.toFixed(2)+" Hz"]), [1100,2200,2200,2000,2100]);
+    [["What I found", w.feature], ["Linked number", w.link], ["So what", w.sowhat], ["Coaching cue", w.cue]].forEach(([k,v]) => { if(v.trim()) b += wP(`${k}: ${v.trim()}`, {sz:19}); });
+    b += wP("Suggested reading", {sz:20, b:true, color:"003D50", before:120});
+    [...READING[S.focus], ...READING.general].forEach(r => b += wP("• " + plain(r), {sz:17}));
+  }
   if(Wk.vel.length || Wk.steps.length){
     b += wP("How the results were calculated", {sz:24, b:true, color:"003D50", before:200});
     [...Wk.vel, ...Wk.acc, ...Wk.steps].forEach(l => b += wP("• " + plain(l), {sz:18}));
@@ -855,7 +909,7 @@ const ANG = {
   shank: {name:"Shank (shin) angle", def:"How far the shin leans from upright. + = knee ahead of ankle, − = foot out in front.", unit:"°", pts:["the ankle (bony bump on the outside)","the knee"]},
   tdd:   {name:"Touchdown distance", def:"How far in front of the hip the foot lands. Bigger usually means more braking. Needs the ground scale.", unit:"m", pts:["the hip (greater trochanter)","the tip of the shoe"], scale:true}
 };
-let angMode = null;   // {idx, type, pts:[]}
+let angMode = null, angQueue = [], focusRun = false;   // {idx, type, pts:[]}
 function banner(){
   const b = $("clickbanner");
   if(angMode){ const a = ANG[angMode.type]; b.textContent = `${a.name}: click ${a.pts[angMode.pts.length]} (${angMode.pts.length+1} of ${a.pts.length}). Esc to cancel.`; b.style.display = "block"; }
@@ -888,7 +942,7 @@ function angleValue(type, p){
   if(type === "tdd"){ if(!scaleOK()) return null; const A = S.marks.scaleA, B = S.marks.scaleB; const pxm = Math.hypot(B.x-A.x, B.y-A.y) / S.scaleLen; return comp(sub(p[1], p[0]), R)[0] / pxm; }
   return null;
 }
-const fmtAng = (type, v) => v === null ? "–" : (ANG[type].unit === "m" ? `${v>=0?"+":""}${v.toFixed(2)} m` : `${(type==="hip"||type==="trunk"||type==="shank") && v>0 ? "+" : ""}${v.toFixed(0)}°`);
+const fmtAng = (type, v) => (v !== null && ANG[type].unit !== "m" && Math.abs(v) < 0.5 && (v = 0), v === null) ? "–" : (ANG[type].unit === "m" ? `${v>=0?"+":""}${v.toFixed(2)} m` : `${(type==="hip"||type==="trunk"||type==="shank") && v>0 ? "+" : ""}${v.toFixed(0)}°`);
 function drawAngles(g, angles, P, sc){
   const placed = [];
   Object.entries(angles || {}).forEach(([type, pts]) => {
@@ -921,23 +975,37 @@ function angleClick(e){
   if(x<0 || y<0 || x>vid.videoWidth || y>vid.videoHeight) return;
   angMode.pts.push([x,y]);
   if(angMode.pts.length === ANG[angMode.type].pts.length){
-    it.angles[angMode.type] = angMode.pts; angMode = null; save(); renderAll();
+    it.angles[angMode.type] = angMode.pts; angMode = null;
+    if(angQueue.length){ const nx = angQueue.shift(); save(); renderAll(); startAngle(S.seq.indexOf(it), nx); banner(); draw(); return; }
+    save(); renderAll();
+    if(focusRun){ focusRun = false; toast("Done. Pick the next task in Step 3."); $("focusCard").scrollIntoView({block:"start", behavior:"smooth"}); }
   }
   banner(); draw();
 }
 $("seqLabel").onchange = e => { if(e.target.value === "__other"){ const t = prompt("Name this frame (e.g. Late swing):"); if(t){ const o = document.createElement("option"); o.textContent = t; e.target.insertBefore(o, e.target.lastElementChild); e.target.value = t; } else e.target.selectedIndex = 0; } };
-$("addFrame").onclick = () => {
-  if(!loaded){ toast("Load your video first."); return; }
+function captureFrame(label){
   vid.pause();
-  const f = curFrame();
-  if(S.seq.some(it => it.frame === f)){ toast("This frame is already in your sequence."); return; }
+  const f = curFrame(), ex = S.seq.find(it => it.frame === f);
+  if(ex) return ex;
   const k = Math.min(1, 640 / vid.videoWidth), c = document.createElement("canvas");
   c.width = Math.round(vid.videoWidth*k); c.height = Math.round(vid.videoHeight*k);
   c.getContext("2d").drawImage(vid, 0, 0, c.width, c.height);
-  S.seq.push({frame:f, label:$("seqLabel").value, img:c.toDataURL("image/jpeg", 0.85), w:c.width, h:c.height, vw:vid.videoWidth, angles:{}});
-  S.seq.sort((a,b) => a.frame - b.frame);
-  save(); renderAll();
+  const it = {frame:f, label, img:c.toDataURL("image/jpeg", 0.85), w:c.width, h:c.height, vw:vid.videoWidth, angles:{}};
+  S.seq.push(it); S.seq.sort((a,b) => a.frame - b.frame);
+  return it;
+}
+$("addFrame").onclick = () => {
+  if(!loaded){ toast("Load your video first."); return; }
+  if(S.seq.some(it => it.frame === curFrame())){ toast("This frame is already in your sequence."); return; }
+  captureFrame($("seqLabel").value); save(); renderAll();
 };
+function seekTo(n){
+  return new Promise(res => {
+    if(curFrame() === n && !vid.seeking){ res(); return; }
+    const done = () => { vid.removeEventListener("seeked", done); setTimeout(res, 60); };
+    vid.addEventListener("seeked", done); goFrame(n); setTimeout(done, 1500);
+  });
+}
 function renderSeq(){
   const shortPts = t => ANG[t].pts.map(x => x.replace(/^the /,"").replace(/ \(.*\)$/,"")).join(" → ");
   $("angKey").innerHTML = `<thead><tr><th>Button</th><th>What it measures</th><th>You click</th></tr></thead><tbody>${Object.keys(ANG).map(t => `<tr><td><b>${ANG[t].name}</b></td><td>${ANG[t].def}</td><td>${shortPts(t)}</td></tr>`).join("")}</tbody>`;
@@ -995,8 +1063,142 @@ $("dlSeq").onclick = async () => {
   c.toBlob(b => download(b, "Photo sequence - SESC02.png"), "image/png");
 };
 
+
+/* ---------------- technique focus ---------------- */
+const FOCI = {
+  shin: {name:"Shin angle and foot placement at touchdown", short:"Shin angle and foot placement",
+    what:"Where the foot lands compared with the hip, and how the shin is angled at touchdown. In acceleration, good sprinters land with the shin leaning forwards (knee ahead of ankle) and the shin then “rolls” forwards over the foot during stance.",
+    why:"Landing with the foot well ahead of the hip (shin leaning back) means more braking and a longer contact time.",
+    links:"Contact time", ph:["e.g. The shin was leaning back at the first three touchdowns (−4° to −7°), with the foot 0.25 m ahead of the hip.","e.g. Contact time was long for an acceleration (0.18 s average).","e.g. Landing with the foot ahead of the hip means more of each contact is spent braking, so the push takes longer."], cues:"e.g. “Step down under you”, “Push the ground back”"},
+  trunk: {name:"Trunk lean through acceleration", short:"Trunk lean",
+    what:"How far the body leans forwards at touchdown, and how gradually it rises over the first steps.",
+    why:"A forward lean points the push backwards and along the ground, which drives acceleration. Popping upright too early usually flattens the acceleration.",
+    links:"Acceleration between your markers", ph:["e.g. Trunk lean dropped from 40° at contact 1 to 12° by contact 3.","e.g. Acceleration fell from 3.1 m/s² (0–5 m → 5–10 m) to 0.9 m/s² later on.","e.g. Standing up early points the push upwards instead of backwards, so less of it drives the runner forwards."], cues:"e.g. “Push long and low”, “Rise gradually”"},
+  front: {name:"Front-side mechanics (thigh drive in swing)", short:"Front-side mechanics",
+    what:"How high the swinging thigh comes through in front of the body (hip flexion), compared with how far the pushing leg extends behind at toe-off (hip extension).",
+    why:"At higher speeds, a good thigh drive helps bring the foot down quickly and close to under the hip, which links to step length and step frequency.",
+    links:"Step length and step frequency", ph:["e.g. The swinging thigh only reached +55° of hip flexion, and the hip was at −5° at toe-off.","e.g. Step length was short (1.65 m) at 4.2 steps per second.","e.g. A low thigh drive leaves the foot reaching out to land, which limits how far and how quickly each step travels."], cues:"e.g. “Drive the knee forwards”, “Step over the opposite knee”"}
+};
+const READING = {
+  general:[
+    "Wild, J., Bezodis, N., Blagrove, R., & Bezodis, I. (2011). A biomechanical comparison of accelerative and maximum velocity sprinting: Specific strength training considerations. <i>Professional Strength and Conditioning, 21</i>, 23–37.",
+    "Haugen, T., Seiler, S., Sandbakk, Ø., & Tønnessen, E. (2019). The training and development of elite sprint performance: An integration of scientific and best practice literature. <i>Sports Medicine – Open, 5</i>, 44."],
+  shin:[
+    "Hicks, D. S., Schuster, J. G., Samozino, P., & Morin, J.-B. (2020). Improving mechanical effectiveness during sprint acceleration: Practical recommendations and guidelines. <i>Strength and Conditioning Journal, 42</i>(2), 45–62.",
+    "Hunter, J. P., Marshall, R. N., & McNair, P. J. (2005). Relationships between ground reaction force impulse and kinematics of sprint-running acceleration. <i>Journal of Applied Biomechanics, 21</i>(1), 31–43. (Stretch reading: focus on the discussion.)"],
+  trunk:[
+    "Hicks, D. S., Schuster, J. G., Samozino, P., & Morin, J.-B. (2020). Improving mechanical effectiveness during sprint acceleration: Practical recommendations and guidelines. <i>Strength and Conditioning Journal, 42</i>(2), 45–62.",
+    "Kugler, F., & Janshen, L. (2010). Body position determines propulsive forces in accelerating running. <i>Journal of Biomechanics, 43</i>(2), 343–348. (Short paper: read the introduction and discussion.)"],
+  front:[
+    "Haugen, T., McGhie, D., & Ettema, G. (2019). Sprint running: From fundamental mechanics to practice. A review. <i>European Journal of Applied Physiology, 119</i>(6), 1273–1287.",
+    "Wild et al. (2011), above: read the section on maximum velocity sprinting."]
+};
+function focusTasks(){
+  const n = S.nContacts, T = [];
+  if(S.focus === "shin"){
+    const m = scaleOK() ? ["shank","tdd"] : ["shank"];
+    for(let k=1;k<=Math.min(3,n);k++) T.push({id:`shin${k}`, label:`Touchdown (contact ${k})`, src:`td${k}`, k, measures:m, how:`Shin angle${m.length>1 ? " and touchdown distance" : ""} at the touchdown of contact ${k}.`});
+  } else if(S.focus === "trunk"){
+    const ks = n >= 5 ? [1,3,5] : Array.from({length:Math.min(n,3)}, (_,i) => i+1);
+    ks.forEach(k => T.push({id:`trunk${k}`, label:`Touchdown (contact ${k})`, src:`td${k}`, k, measures:["trunk"], how:`Trunk lean at the touchdown of contact ${k}.`}));
+  } else if(S.focus === "front"){
+    for(let k=1;k<=Math.min(2,n-1);k++){
+      T.push({id:`fto${k}`, label:`Toe-off (contact ${k})`, src:`to${k}`, k, measures:["hip"], how:`Hip angle of the <b>pushing</b> leg at toe-off of contact ${k} (should be negative, i.e. extension).`});
+      T.push({id:`fmax${k}`, label:`Max hip flexion (swing after contact ${k})`, manual:`to${k}`, k, measures:["hip"], how:`Hip angle of the <b>swinging</b> leg when its thigh is highest, just after toe-off of contact ${k}.`});
+    }
+  }
+  return T;
+}
+const taskItem = t => t.src ? (S.marks[t.src] ? S.seq.find(it => it.frame === S.marks[t.src].frame) : null) : S.seq.find(it => it.label === t.label);
+const taskDone = t => { const it = taskItem(t); return !!it && t.measures.every(m => it.angles[m]); };
+async function runTask(t, useCurrent){
+  if(!loaded){ toast("Load your video first."); return; }
+  if(!S.capFps){ toast("Enter the frame rate in Step 1 first."); return; }
+  if(t.src){
+    const m = S.marks[t.src];
+    if(!m){ toast(`Mark contact ${t.k} (${t.src.startsWith("td") ? "touchdown" : "toe-off"}) in Step 2 first.`); return; }
+    await seekTo(m.frame);
+  } else if(!useCurrent){
+    const m = S.marks[t.manual];
+    if(!m){ toast(`Mark the toe-off of contact ${t.k} in Step 2 first.`); return; }
+    await seekTo(m.frame);
+    toast("Step forwards (→) to the frame where the swinging thigh is highest, then press “Measure on this frame”.");
+    $("stage").scrollIntoView({block:"nearest", behavior:"smooth"});
+    return;
+  }
+  const it = captureFrame(t.label);
+  if(!t.src) it.label = t.label;
+  const todo = t.measures.filter(m => !it.angles[m]);
+  if(!todo.length){ toast("Already measured. Remove the angle in Step 4 if you want to redo it."); save(); renderAll(); return; }
+  save(); renderAll();
+  angQueue = todo.slice(1); focusRun = true;
+  startAngle(S.seq.indexOf(it), todo[0]);
+}
+function focusData(){
+  const R = compute(), rows = [];
+  const at = src => S.marks[src] ? S.seq.find(it => it.frame === S.marks[src].frame) : null;
+  const val = (it, m) => it && it.angles[m] ? angleValue(m, it.angles[m]) : null;
+  if(S.focus === "shin" || S.focus === "trunk"){
+    focusTasks().forEach(t => {
+      const it = at(t.src), st = R.steps.find(x => x.n === t.k);
+      rows.push({k:t.k, shank:val(it,"shank"), tdd:val(it,"tdd"), trunk:val(it,"trunk"), ct:st ? st.ct : null});
+    });
+  } else if(S.focus === "front"){
+    for(let k=1;k<=Math.min(2,S.nContacts-1);k++){
+      const ito = at(`to${k}`), imax = S.seq.find(it => it.label === `Max hip flexion (swing after contact ${k})`), st = R.steps.find(x => x.n === k);
+      rows.push({k, hipExt:val(ito,"hip"), hipFlex:val(imax,"hip"), sl:st ? st.sl : null, sf:st ? st.sf : null});
+    }
+  }
+  return {R, rows};
+}
+function focusTableHTML(){
+  const {R, rows} = focusData(), f = (x,d=0,u="") => { if(x === null || x === undefined) return "–"; if(Math.abs(x) < 0.5*Math.pow(10,-d)) x = 0; return `${x>0 && u==="°" ? "+" : ""}${x.toFixed(d)}${u}`; };
+  if(!rows.length) return "";
+  if(S.focus === "shin"){
+    return `<table class="t"><thead><tr><th>Contact</th><th>Shin angle at touchdown</th>${scaleOK() ? "<th>Touchdown distance</th>" : ""}<th>Contact time</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.k}</td><td class="n">${f(r.shank,0,"°")}</td>${scaleOK() ? `<td class="n">${r.tdd === null ? "–" : r.tdd.toFixed(2)+" m"}</td>` : ""}<td class="n">${r.ct === null ? "–" : r.ct.toFixed(3)+" s"}</td></tr>`).join("")}</tbody></table>
+      <p class="how">Look for a pattern: do the longer contacts go with the shin leaning back (negative angle) or the foot landing further ahead of the hip?</p>`;
+  }
+  if(S.focus === "trunk"){
+    const acc = R.accels.map(a => `${a.s1.p1}–${a.s1.p2} m → ${a.s2.p1}–${a.s2.p2} m: <b>${a.a.toFixed(2)} m/s²</b>`).join("; ");
+    return `<table class="t"><thead><tr><th>Contact</th><th>Trunk lean at touchdown</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.k}</td><td class="n">${f(r.trunk,0,"°")}</td></tr>`).join("")}</tbody></table>
+      <p class="how">Your acceleration: ${acc || "mark at least three distance markers in Step 2 to get acceleration"}.<br>Look for a pattern: does the trunk rise gradually, or is the runner upright within a few steps? Does acceleration drop at the same point?</p>`;
+  }
+  return `<table class="t"><thead><tr><th>Step</th><th>Hip extension at toe-off (pushing leg)</th><th>Max hip flexion in swing</th><th>Step length</th><th>Step frequency</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.k}</td><td class="n">${f(r.hipExt,0,"°")}</td><td class="n">${f(r.hipFlex,0,"°")}</td><td class="n">${r.sl === null ? "–" : r.sl.toFixed(2)+" m"}</td><td class="n">${r.sf === null ? "–" : r.sf.toFixed(2)+" Hz"}</td></tr>`).join("")}</tbody></table>
+    <p class="how">Look for a pattern: a high thigh drive in front (big positive hip angle) with a full push behind (negative hip angle) usually goes with longer, quicker steps.</p>`;
+}
+function renderFocus(){
+  $("focusOpts").innerHTML = Object.entries(FOCI).map(([k,F]) => (S.focus && S.focus !== k)
+    ? `<button class="fopt" data-f="${k}" style="padding:.45rem .9rem"><div class="ft" style="font-size:.92em;font-weight:normal">Switch to: ${F.name}</div></button>`
+    : `<button class="fopt${S.focus === k ? " on" : ""}" data-f="${k}"><div class="ft">${S.focus === k ? "✓ Your focus: " : ""}${F.name}</div><div class="fd">${F.what}</div><div class="fm"><b>Why it matters:</b> ${F.why} <b>Links to:</b> ${F.links}.</div></button>`).join("");
+  document.querySelectorAll(".fopt").forEach(b => b.onclick = () => { S.focus = b.dataset.f; save(); renderAll(); });
+  const W = $("focusWork");
+  if(!S.focus){ W.innerHTML = '<p class="muted" style="margin:0">Choose one feature above. You can change your mind later.</p>'; return; }
+  const F = FOCI[S.focus], T = focusTasks(), done = T.filter(taskDone).length;
+  let h = `<h4 class="fh">1. Measure it (${done} of ${T.length} done)</h4>`;
+  if(S.focus === "shin" && !scaleOK()) h += `<p class="how">Touchdown distance needs a ground scale. Without one you will measure the shin angle only.</p>`;
+  h += T.map(t => `<div class="ftask${taskDone(t) ? " done" : ""}"><span class="st">${taskDone(t) ? "✓" : ""}</span><span class="tx">${t.label}<small>${t.how}</small></span>${t.manual ? `<button class="sec" data-go="${t.id}">Go near it</button><button class="main" data-run="${t.id}">Measure on this frame</button>` : `<button class="main" data-run="${t.id}">${taskDone(t) ? "Redo / view" : "Measure"}</button>`}</div>`).join("");
+  h += `<h4 class="fh">2. Link it to your numbers</h4>${focusTableHTML()}`;
+  const q = (id, lab, hint, ph) => `<div class="wq"><label for="w_${id}">${lab}</label><textarea id="w_${id}" placeholder="${ph}">${xe(S.write[id]||"")}</textarea><div class="hint" id="h_${id}">${hint}</div></div>`;
+  h += `<h4 class="fh">3. Explain it and cue it</h4>`;
+  h += q("feature", "What did you find? (the feature, with its value)", "Give the number and the unit.", F.ph[0]);
+  h += q("link", `Which linear number does it explain? (${F.links})`, "Give that number too.", F.ph[1]);
+  h += q("sowhat", "So what? Why does one affect the other?", "Use the “Why it matters” line above and your reading.", F.ph[2]);
+  h += q("cue", "Your coaching cue (six words or fewer)", `0 / 6 words. ${F.cues}.`, F.cues.replace(/^e\.g\. “([^”]+)”.*$/, "e.g. $1"));
+  h += `<h4 class="fh">Suggested reading</h4><ol class="reading">${[...READING[S.focus], ...READING.general].map(r => `<li>${r}</li>`).join("")}</ol>`;
+  W.innerHTML = h;
+  W.querySelectorAll("[data-run]").forEach(b => b.onclick = () => runTask(T.find(t => t.id === b.dataset.run), true));
+  W.querySelectorAll("[data-go]").forEach(b => b.onclick = () => runTask(T.find(t => t.id === b.dataset.go), false));
+  ["feature","link","sowhat","cue"].forEach(id => $(`w_${id}`).oninput = e => { S.write[id] = e.target.value; save(); renderResults(); if(id === "cue") cueCount(); });
+  cueCount();
+}
+function cueCount(){
+  const el = $("h_cue"); if(!el) return;
+  const n = (S.write.cue.trim().match(/\S+/g) || []).length;
+  el.innerHTML = `<span${n > 6 ? ' class="warnc"' : ""}>${n} / 6 words${n > 6 ? ", try to cut it down" : ""}.</span> ${FOCI[S.focus].cues}.`;
+}
+
 /* ---------------- go ---------------- */
-function renderAll(){ renderSetup(); renderMarks(); renderSeq(); renderResults(); readout(); draw(); banner(); }
+function renderAll(){ renderSetup(); renderMarks(); renderFocus(); renderSeq(); renderResults(); readout(); draw(); banner(); }
 load();
 renderAll();
 </script>
