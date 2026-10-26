@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Two Lenses · MRes Stats Lab</title>
+<link rel="stylesheet" href="assets/lab.css">
+<style>
+  .quiz-q { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; background: #fff; }
+  .quiz-q p { margin: 0 0 6px; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="lab-head">
+    <span class="badge">Stage 4</span>
+    <h1>Two lenses on one study: confidence vs credible intervals</h1>
+    <p>Each simulated study gives a frequentist 95% confidence interval (blue) and a Bayesian 95% credible interval (teal). Change the prior and the sample size, and watch how the two lenses differ.</p>
+  </header>
+  <div class="predict" role="note">
+    <strong>Predict first.</strong> If you use a strong prior that is <em>wrong</em> (centred far from the truth), what happens to the credible intervals when n = 10? And when n = 200?
+    <details class="reveal"><summary>Check your prediction</summary><div>With n = 10 the posterior is pulled towards the wrong prior, so the credible intervals sit off-target and many miss the true value. With n = 200 the data pull the intervals much closer to the truth, but a prior this confident (SD 1.5) still drags many of them off target. Make the prior weaker (SD 5 or more) and the two lenses almost coincide. A credible interval describes what you should believe <em>given the prior and the data</em>. It is not built to capture the true value 95% of the time across repeated studies, which is what a confidence interval is designed for.</div></details>
+  </div>
+  <div class="grid two">
+    <section class="card" aria-labelledby="pl-h">
+      <h2 id="pl-h">Recent studies (newest at top)</h2>
+      <div class="plot" id="plot" style="height:400px"></div>
+      <div class="legend">
+        <span style="--c:#0071bc">95% confidence interval</span>
+        <span style="--c:#00857e">95% credible interval</span>
+        <span style="--c:#8b3556">interval misses the true value</span>
+        <span style="--c:#1d1d1b">true mean</span>
+        <span style="--c:#a85d00">prior mean</span>
+      </div>
+    </section>
+    <section class="card" aria-labelledby="ct-h">
+      <h2 id="ct-h">Truth, design and prior</h2>
+      <div class="controls">
+        <div class="control"><label for="mu">True mean change (SD = 10) <output id="mu-out"></output></label><input type="range" id="mu" min="-5" max="10" step="0.5" value="3"></div>
+        <div class="control"><label for="n">Sample size <output id="n-out"></output></label><input type="range" id="n" min="3" max="200" step="1" value="10"></div>
+        <div class="control"><label>Prior for the mean</label>
+          <div class="row">
+            <button class="btn secondary" type="button" data-p="0,100">Vague N(0, 100)</button>
+            <button class="btn secondary" type="button" data-p="0,10">Weakly informative N(0, 10)</button>
+            <button class="btn secondary" type="button" data-p="3,2">Informed &amp; right N(3, 2)</button>
+            <button class="btn secondary" type="button" data-p="-6,1.5">Strong &amp; wrong N(−6, 1.5)</button>
+          </div>
+        </div>
+        <div class="grid halves">
+          <div class="control"><label for="m0">Prior mean <output id="m0-out"></output></label><input type="range" id="m0" min="-10" max="10" step="0.5" value="0"></div>
+          <div class="control"><label for="s0">Prior SD <output id="s0-out"></output></label><input type="range" id="s0" min="-0.3" max="2" step="0.01" value="1"></div>
+        </div>
+        <div class="row">
+          <button class="btn" type="button" id="play">▶ Play</button>
+          <button class="btn teal" type="button" id="hundred">+100 studies</button>
+          <button class="btn secondary" type="button" id="reset">Reset</button>
+        </div>
+      </div>
+      <h3>Long-run behaviour</h3>
+      <div class="stats" aria-live="polite">
+        <div class="stat"><div class="k">Studies</div><div class="v" id="s-n">0</div></div>
+        <div class="stat"><div class="k">CI covers truth</div><div class="v" id="s-cic">–</div></div>
+        <div class="stat good"><div class="k">CrI covers truth</div><div class="v" id="s-crc">–</div></div>
+        <div class="stat"><div class="k">Mean CI width</div><div class="v" id="s-ciw">–</div></div>
+        <div class="stat good"><div class="k">Mean CrI width</div><div class="v" id="s-crw">–</div></div>
+        <div class="stat"><div class="k">Latest: p (H0: μ = 0)</div><div class="v" id="s-p">–</div></div>
+        <div class="stat good"><div class="k">Latest: P(μ &gt; 0 | data)</div><div class="v" id="s-pp">–</div></div>
+      </div>
+    </section>
+  </div>
+  <section class="card" style="margin-top:12px" aria-labelledby="q-h">
+    <h2 id="q-h">Which lens does each statement belong to?</h2>
+    <p style="margin:0 0 8px;font-size:0.92rem">Choose an answer for each statement and get instant feedback.</p>
+    <div id="quiz"></div>
+    <p id="quiz-score" class="tag" aria-live="polite">0 / 6 correct</p>
+  </section>
+  <p class="foot">MRes Stats Lab · Normal model with known SD (σ = 10) and a normal prior, so the posterior is exact: precision-weighted average of prior mean and sample mean. Further reading: Lambert (2018) ch. 7; Lakens (2022) <a href="https://lakens.github.io/statistical_inferences/07-CI.html" target="_blank" rel="noopener">ch. 7 (opens in a new tab)</a>; van de Schoot et al. (2021).</p>
+</main>
+<script src="assets/lab.js"></script>
+<script>
+(function () {
+  const { R, D, S, Plot, COL, bindRange } = Lab;
+  const $ = id => document.getElementById(id);
+  const SIG = 10, SHOW = 26;
+  let studies = [], timer = null;
+  const plot = new Plot("#plot", { xlim: [-14, 18], ylim: [0, SHOW + 1], xlab: "Estimate of the mean change", ylab: "", margin: { l: 16 }, label: "Paired confidence and credible intervals from simulated studies" });
+  const muEl = bindRange("mu", v => v.toFixed(1), reset);
+  const nEl = bindRange("n", v => v, reset);
+  const m0El = bindRange("m0", v => v.toFixed(1), reset);
+  const s0El = bindRange("s0", v => Math.pow(10, v).toFixed(1), reset); // log10 scale: 1 to 100
+  document.querySelectorAll("[data-p]").forEach(b => b.onclick = () => {
+    const [m, s] = b.dataset.p.split(",").map(Number);
+    m0El.value = m; s0El.value = Math.log10(s);
+    m0El.dispatchEvent(new Event("input")); s0El.dispatchEvent(new Event("input"));
+  });
+  function study() {
+    const mu = +muEl.value, n = +nEl.value, m0 = +m0El.value, s0 = Math.pow(10, +s0El.value);
+    const se = SIG / Math.sqrt(n), xbar = mu + se * R.norm();
+    const ci = [xbar - 1.96 * se, xbar + 1.96 * se];
+    const prec = 1 / (s0 * s0) + 1 / (se * se), pm = (m0 / (s0 * s0) + xbar / (se * se)) / prec, ps = Math.sqrt(1 / prec);
+    const cr = [pm - 1.96 * ps, pm + 1.96 * ps];
+    return { xbar, ci, pm, cr, p: 2 * (1 - D.pnorm(Math.abs(xbar / se))), ppos: 1 - D.pnorm(0, pm, ps),
+      ciHit: ci[0] <= mu && mu <= ci[1], crHit: cr[0] <= mu && mu <= cr[1] };
+  }
+  function add(k) { for (let i = 0; i < k; i++) studies.push(study()); draw(); }
+  function draw() {
+    const mu = +muEl.value, m0 = +m0El.value;
+    plot.clear().frame({ yaxis: false }); plot.yticks = [];
+    plot.vline(0, { dash: [3, 4], width: 1 });
+    plot.vline(m0, { color: COL.amber, dash: [6, 4], width: 2 });
+    plot.vline(mu, { color: COL.ink, width: 2.5 });
+    studies.slice(-SHOW).forEach((s, i) => {
+      const y = i + 1;
+      plot.line(s.ci, [y + 0.18, y + 0.18], { color: s.ciHit ? COL.blue : COL.plum, width: 3 });
+      plot.line(s.cr, [y - 0.18, y - 0.18], { color: s.crHit ? COL.teal : COL.plum, width: 3 });
+      plot.points([s.xbar, s.pm], [y + 0.18, y - 0.18], { color: [COL.blue, COL.teal], r: 3.5, alpha: 1 });
+    });
+    plot.text("truth", mu, SHOW + 0.5, { bold: true, align: "center", halo: true });
+    plot.text("prior mean", m0, 0.4, { color: COL.amber, bold: true, align: "center", halo: true });
+    const N = studies.length, f = x => (100 * x).toFixed(1) + "%";
+    $("s-n").textContent = N;
+    $("s-cic").textContent = N ? f(studies.filter(s => s.ciHit).length / N) : "–";
+    $("s-crc").textContent = N ? f(studies.filter(s => s.crHit).length / N) : "–";
+    $("s-ciw").textContent = N ? S.mean(studies.map(s => s.ci[1] - s.ci[0])).toFixed(1) : "–";
+    $("s-crw").textContent = N ? S.mean(studies.map(s => s.cr[1] - s.cr[0])).toFixed(1) : "–";
+    const L = studies[N - 1];
+    $("s-p").textContent = L ? Lab.fmtP(L.p).replace("= ", "") : "–";
+    $("s-pp").textContent = L ? L.ppos.toFixed(3) : "–";
+  }
+  function reset() { studies = []; draw(); }
+  $("play").onclick = () => { if (timer) { clearInterval(timer); timer = null; $("play").textContent = "▶ Play"; return; } timer = setInterval(() => add(1), 300); $("play").textContent = "❚❚ Pause"; };
+  $("hundred").onclick = () => add(100);
+  $("reset").onclick = reset;
+  plot.onresize = draw;
+
+  const Q = [
+    ["Given the data and my prior, there is a 95% probability that the true mean lies in this interval.", "CrI", "This is the Bayesian credible interval's interpretation: a probability statement about the parameter, conditional on the prior and the model."],
+    ["If the study were repeated many times, 95% of intervals calculated this way would contain the true mean.", "CI", "This is what a confidence interval guarantees: a property of the procedure over repeated samples, not of any single interval."],
+    ["The interval contains 95% of the participants' scores.", "Neither", "Neither interval describes the spread of the raw data. That is closer to a reference range (mean ± about 2 SD)."],
+    ["The interval would change if I used a different prior.", "CrI", "Only the credible interval depends on the prior. With little data the prior can matter a lot, which is why priors must be justified and sensitivity analysed."],
+    ["With a vague prior and a reasonable sample size, the two intervals are numerically almost identical.", "Both", "True: the posterior is then dominated by the likelihood. The numbers agree, but the interpretations still differ."],
+    ["There is a 95% chance that the next study's mean will fall in this interval.", "Neither", "Neither interval does this. The capture percentage of a 95% CI is only about 83%. For the next observation, Bayesians use the wider posterior predictive distribution."],
+  ];
+  const quiz = $("quiz"), answered = new Map();
+  Q.forEach(([text, ans, why], i) => {
+    const div = document.createElement("div"); div.className = "quiz-q";
+    div.innerHTML = "<p><strong>" + (i + 1) + ".</strong> " + text + "</p><div class='row'>" +
+      ["CI", "CrI", "Both", "Neither"].map(o => "<button type='button' class='btn secondary' data-o='" + o + "'>" + ({ CI: "Confidence interval", CrI: "Credible interval", Both: "Both", Neither: "Neither" })[o] + "</button>").join("") +
+      "</div><div class='fb' aria-live='polite'></div>";
+    div.querySelectorAll("button").forEach(b => b.onclick = () => {
+      const ok = b.dataset.o === ans; answered.set(i, ok);
+      div.querySelectorAll("button").forEach(x => x.className = "btn " + (x.dataset.o === ans ? "teal" : x === b ? "plum" : "secondary"));
+      div.querySelector(".fb").innerHTML = "<div class='feedback " + (ok ? "ok" : "no") + "'>" + (ok ? "Correct. " : "Not quite. ") + why + "</div>";
+      $("quiz-score").textContent = [...answered.values()].filter(Boolean).length + " / " + Q.length + " correct";
+    });
+    quiz.appendChild(div);
+  });
+  draw();
+})();
+</script>
+</body>
+</html>

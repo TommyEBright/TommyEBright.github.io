@@ -115,6 +115,37 @@
       return (lo + hi) / 2;
     },
     dcauchy(x, s = 1) { return 1 / (Math.PI * s * (1 + (x / s) * (x / s))); },
+    lbeta(a, b) { return lgamma(a) + lgamma(b) - lgamma(a + b); },
+    dbeta(x, a, b) {
+      if (x < 0 || x > 1) return 0;
+      if (x === 0) return a < 1 ? Infinity : a === 1 ? b : 0;
+      if (x === 1) return b < 1 ? Infinity : b === 1 ? a : 0;
+      return Math.exp((a - 1) * Math.log(x) + (b - 1) * Math.log(1 - x) - D.lbeta(a, b));
+    },
+    pbeta(x, a, b) { return ibeta(Math.min(1, Math.max(0, x)), a, b); },
+    qbeta(p, a, b) {
+      let lo = 0, hi = 1;
+      for (let i = 0; i < 80; i++) { const mid = (lo + hi) / 2; if (D.pbeta(mid, a, b) < p) lo = mid; else hi = mid; }
+      return (lo + hi) / 2;
+    },
+    hdiBeta(a, b, mass = 0.95) { // shortest interval (golden-section search over the lower tail probability)
+      const width = p => D.qbeta(p + mass, a, b) - D.qbeta(p, a, b);
+      let lo = 0, hi = 1 - mass;
+      const g = (Math.sqrt(5) - 1) / 2;
+      for (let i = 0; i < 60; i++) {
+        const m1 = hi - g * (hi - lo), m2 = lo + g * (hi - lo);
+        if (width(m1) < width(m2)) hi = m2; else lo = m1;
+      }
+      const p = (lo + hi) / 2;
+      return [D.qbeta(p, a, b), D.qbeta(p + mass, a, b)];
+    },
+    ldbinom(k, n, p) { return lgamma(n + 1) - lgamma(k + 1) - lgamma(n - k + 1) + k * Math.log(p) + (n - k) * Math.log(1 - p); },
+    binomTest(k, n, p = 0.5) { // exact two-sided p-value, same rule as R's binom.test
+      const ref = Math.exp(D.ldbinom(k, n, p)) * (1 + 1e-7);
+      let s = 0;
+      for (let i = 0; i <= n; i++) { const pi = Math.exp(D.ldbinom(i, n, p)); if (pi <= ref) s += pi; }
+      return Math.min(1, s);
+    },
     // density of S = sqrt(V/df), V ~ chi^2(df); used for exact noncentral-t calculations
     _sgrid(df) {
       const key = df;

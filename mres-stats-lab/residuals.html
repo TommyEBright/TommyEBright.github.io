@@ -9,7 +9,7 @@
 <body>
 <main class="wrap">
   <header class="lab-head">
-    <span class="badge">Stage 5</span>
+    <span class="badge">Stage 7</span>
     <h1>Residual detective: checking a regression model</h1>
     <p>These are the same four plots JASP gives you under <em>Linear Regression → Plots</em> and <em>Statistics → Casewise diagnostics</em>. Learn what a problem looks like before you meet one in your own data.</p>
   </header>
@@ -121,7 +121,7 @@
   const feedback = {
     ok: "No problem here. The residuals form an even, shapeless band around zero, the Q-Q points follow the line, and no case stands out on Cook's distance. Real data are never perfect: you are looking for clear, systematic patterns, not small wobbles.",
     curve: "The relationship is curved. Look at plot 2: the residuals form a U-shape (the smoother bends), so a straight line systematically under- and over-predicts. Consider a quadratic term, a transformation, or a model that fits the curve. Do not rely on R² alone: a curved relationship can still give a decent R².",
-    fan: "The spread of the residuals grows with the predicted value (a funnel shape in plot 2). Standard errors and p-values assume constant variance. Options include robust (HC) standard errors, transforming the outcome, or modelling the variance directly. In Stage 8 you will do this in brms with <span class='kbd'>sigma ~ x</span>.",
+    fan: "The spread of the residuals grows with the predicted value (a funnel shape in plot 2). Standard errors and p-values assume constant variance. Options include robust (HC) standard errors, transforming the outcome, or modelling the variance directly. In Stage 11 you will do this in brms with <span class='kbd'>sigma ~ x</span>.",
     skew: "The residuals are skewed. In plot 3 the points peel away from the line in one tail. With large samples, coefficient estimates are fairly robust to this, but prediction intervals are not. Think about the outcome: counts, times and other strictly positive measures often need a log transform or a different distribution (Poisson, Gamma, lognormal).",
     outlier: "One case has high leverage (an extreme x value) <em>and</em> a large residual, so it drags the line towards it. It shows up clearly on Cook's distance (plot 4). Check it for data-entry errors; if it is genuine, report a sensitivity analysis with and without it. Try Mode 2 to feel how influence works.",
   };

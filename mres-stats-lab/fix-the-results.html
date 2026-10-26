@@ -20,15 +20,16 @@
 <body>
 <main class="wrap">
   <header class="lab-head">
-    <span class="badge">Stage 7</span>
+    <span class="badge">Stage 9</span>
     <h1>Fix the results paragraph</h1>
-    <p>Each paragraph reports a real JASP Data Library analysis and contains several reporting errors. Click every phrase you think is wrong, then press <em>Check</em>.</p>
+    <p>Each paragraph reports a real JASP Data Library analysis, classical or Bayesian, and contains several reporting errors. Click every phrase you think is wrong, then press <em>Check</em>.</p>
   </header>
   <div class="row" style="margin-bottom:10px">
     <div class="seg" id="ex" role="group" aria-label="Exercise">
       <button type="button" data-value="0" aria-pressed="true">1 · t-test</button>
       <button type="button" data-value="1" aria-pressed="false">2 · Factorial ANOVA</button>
       <button type="button" data-value="2" aria-pressed="false">3 · Regression</button>
+      <button type="button" data-value="3" aria-pressed="false">4 · Bayesian reporting</button>
     </div>
   </div>
   <section class="card" aria-labelledby="ctx-h">
@@ -82,7 +83,7 @@
         [" ηp² = .47, which shows that being a runner causes a lower heart rate.", "Participants were not randomly assigned to be runners, so this is an observational comparison and cannot show causation. Runners may differ in age, body mass or genetics. Say runners <em>had</em> lower heart rates."],
         [" Men had lower heart rates than women, F(1, 796) = 185.98, p < .001, ηp² = .19.", null],
         [" The interaction was significant, F(1, 796) = 7.41, p = .007, ηp² = .009, so the effect of running is completely different for men and women.", "This overstates the interaction. Running was associated with a large difference in both genders: 32 bpm lower in women and 26 bpm lower in men. The interaction is a small (ηp² = .009) difference in the size of that gap. Describe the simple effects with their CIs."],
-        [" All assumptions were met.", "Not true. Levene's test was significant, F(3, 796) = 5.56, p < .001: male runners vary less (SD = 12.5) than the other groups (SDs 16.0–17.1). With large, equal group sizes ANOVA is fairly robust, but say so. In Stage 8, a brms model that lets the SD differ by group is clearly preferred by LOO."],
+        [" All assumptions were met.", "Not true. Levene's test was significant, F(3, 796) = 5.56, p < .001: male runners vary less (SD = 12.5) than the other groups (SDs 16.0–17.1). With large, equal group sizes ANOVA is fairly robust, but say so. In Stage 11, a brms model that lets the SD differ by group is clearly preferred by LOO."],
       ],
       model: "A 2 (gender) × 2 (group: runners, sedentary) between-subjects ANOVA was conducted on heart rate after 6 minutes of exercise (n = 200 per cell). Runners had lower heart rates than sedentary participants, F(1, 796) = 695.65, p < .001, ηp² = .47, and men had lower heart rates than women, F(1, 796) = 185.98, p < .001, ηp² = .19. A small gender × group interaction, F(1, 796) = 7.41, p = .007, ηp² = .009, indicated that the difference between runners and controls was larger in women (148.0 vs 116.0 bpm; difference = 32.0 bpm) than in men (130.0 vs 104.0 bpm; difference = 26.0 bpm). Levene's test indicated unequal variances, F(3, 796) = 5.56, p < .001, mainly because male runners varied less (SD = 12.5) than the other groups (SDs 16.0–17.1); with equal and large group sizes the F-test is robust to this. Because group membership was not randomised, these differences cannot be interpreted causally.",
     },
@@ -94,9 +95,23 @@
         [" R² = .15, meaning physical activity explains most of the differences in BMI.", "15% is not 'most': 85% of the variance in BMI is unexplained by steps. Report R² = .15 (adjusted R² = .14) and say activity explained about 15% of the variance."],
         [" For every extra step per day, BMI decreased by 0.65 kg/m².", "Two errors. The units: PA is in <em>thousands</em> of steps, so the slope is per 1,000 steps/day. And 'decreased' implies change within a person; these are cross-sectional data. Say BMI was 0.65 kg/m² <em>lower on average</em> for each additional 1,000 steps/day."],
         [" Therefore, walking more will reduce your BMI.", "A causal claim from observational, cross-sectional data. Reverse causation (people with higher BMI walk less) and confounding (age, health, occupation) are just as plausible. A randomised trial would be needed."],
-        [" The Shapiro–Wilk test was not significant (p = .29), proving that the residuals were normally distributed.", "The same logic as Stage 1: a non-significant test is not proof of the null. Describe what the Q-Q plot and residual plot show, e.g. 'the Q-Q plot showed no marked departure from normality and residuals showed no pattern against predicted values.'"],
+        [" The Shapiro–Wilk test was not significant (p = .29), proving that the residuals were normally distributed.", "The same logic as Stage 2: a non-significant test is not proof of the null. Describe what the Q-Q plot and residual plot show, e.g. 'the Q-Q plot showed no marked departure from normality and residuals showed no pattern against predicted values.'"],
       ],
       model: "Average daily steps were negatively associated with BMI, b = −0.65 kg/m² per 1,000 steps/day, 95% CI [−0.97, −0.34], t(98) = −4.13, p < .001, standardised β = −.39. Physical activity explained about 15% of the variance in BMI (R² = .15, adjusted R² = .14). The residuals-versus-predicted plot showed no systematic pattern, the Q-Q plot showed no marked departure from normality, and no case was unduly influential (maximum Cook's D = 0.17). Adding a quadratic term did not clearly improve the model, F(1, 97) = 3.37, p = .070. Because the data are cross-sectional and observational, the association should not be interpreted as a causal effect of walking on BMI.",
+    },
+    {
+      ctx: "Bayesian analyses from Stages 3 and 6: JASP's <strong>Bayesian independent-samples t-test</strong> on Directed Reading Activities (default settings), and the <strong>Bayesian binomial test</strong> on Emily Rosa's therapeutic-touch data (70 correct out of 150 trials; Beta(1, 1) prior).",
+      parts: [
+        ["A Bayesian independent-samples t-test was run with JASP's default settings.", "State the defaults: a Cauchy prior on the effect size δ with scale r = 0.707, and which alternative hypothesis was tested (two-sided, or δ > 0). A Bayes factor is uninterpretable without its H1."],
+        [" It gave BF₁₀ = 2.22, which proves that Directed Reading Activities work", "A Bayes factor of 2.2 is anecdotal evidence: the data are only about twice as likely under H1 as under H0. Nothing is 'proved'."],
+        [" and means there is only a 2.22% chance that the null hypothesis is true.", "A Bayes factor is a ratio of how well two hypotheses predicted the data, not a probability. P(H0 | data) needs prior odds as well: with 1 : 1 prior odds, P(H1 | data) = 2.22 / 3.22 = .69, so P(H0 | data) = .31."],
+        [" The posterior median effect was δ = 0.57, 95% credible interval [0.01, 1.17],", null],
+        [" meaning that 95% of replication studies would find an effect in this range.", "A credible interval does not mean that (and nor does a CI). Say: given the model and the prior, there is a 95% probability that δ lies between 0.01 and 1.17. The interval is wide, so the size of the effect is very uncertain."],
+        [" A robustness check showed BF₁₀ fell from 2.22 to 1.63 as the prior width increased from 0.707 to 1.414.", null],
+        [" For Emily Rosa's data, the binomial test was not significant (p = .46), which proves that practitioners perform at chance.", "A non-significant p-value cannot prove the null. A Bayes factor can quantify evidence for it: BF₀₊ = 17.0 means the data are 17 times more likely if practitioners are guessing than if they perform above chance (Beta(1, 1) prior; H₊: θ > 0.5)."],
+        [" Because the 95% credible interval for θ, [0.39, 0.55], includes 0.5, the Bayesian result is non-significant.", "'Significance' is a frequentist idea, and checking whether an interval includes 0.5 is not a Bayesian test. Report what the posterior says (θ is most plausibly between .39 and .55, and P(θ > .5 | data) = .21), and use the Bayes factor to test chance performance."],
+      ],
+      model: "A Bayesian independent-samples t-test (JASP; Cauchy prior on δ with r = 0.707; two-sided H1) gave BF₁₀ = 2.22: the data were about twice as likely under H1 as under H0, which is anecdotal evidence. The posterior median effect size was δ = 0.57, 95% credible interval [0.01, 1.17], so the size of the effect remains very uncertain. A robustness check showed similar, slightly weaker evidence with wider priors (BF₁₀ = 1.97 for r = 1; 1.63 for r = 1.414). For Emily Rosa's experiment (70 of 150 trials correct; 46.7%), a Bayesian binomial test with a uniform Beta(1, 1) prior gave BF₀₊ = 17.0 against the hypothesis that practitioners perform better than chance, which is strong evidence for chance performance. The posterior median success rate was 0.47, 95% credible interval [0.39, 0.55], and P(θ > 0.5 | data) = .21.",
     },
   ];
   let cur = 0, checked = false;

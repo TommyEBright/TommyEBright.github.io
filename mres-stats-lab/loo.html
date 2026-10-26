@@ -9,7 +9,7 @@
 <body>
 <main class="wrap">
   <header class="lab-head">
-    <span class="badge">Stage 8</span>
+    <span class="badge">Stage 11</span>
     <h1>Model comparison with leave-one-out cross-validation (LOO)</h1>
     <p>Bayesian regression fitted in your browser, with PSIS-LOO and Pareto k computed by the same algorithm as R's <span class="kbd">loo</span> package. Drag points to see what changes.</p>
   </header>
@@ -70,7 +70,7 @@
       <li>With the simulated data, which model wins? Is the quadratic model's advantage (or disadvantage) larger than 4 elpd, and larger than its se_diff?</li>
       <li>Load the <strong>JASP steps → BMI</strong> data. Compare the table with the brms output on the Canvas page: elpd_loo = −273.7 (SE 6.7) for <span class="kbd">BMI ~ PA</span>, with the linear and quadratic models within 1 elpd of each other and the intercept-only model about 7.6 behind. Small differences are expected, because brms uses slightly different priors and its own random draws.</li>
       <li>Press <strong>Create an influential outlier</strong>. Which person gets k̂ &gt; 0.7, and how does their pointwise elpd compare with everyone else's?</li>
-      <li>Drag a point from the middle of the x-range up and down. Its k̂ hardly changes, but dragging an edge point does change it. Why? (Think back to leverage in Stage 5.)</li>
+      <li>Drag a point from the middle of the x-range up and down. Its k̂ hardly changes, but dragging an edge point does change it. Why? (Think back to leverage in Stage 7.)</li>
     </ol>
   </section>
   <p class="foot">MRes Stats Lab · Model: Gaussian linear regression with the standard non-informative prior p(β, σ²) ∝ 1/σ², 1,000 exact posterior draws. PSIS-LOO follows Vehtari, Gelman &amp; Gabry (2017) and Vehtari et al. (2024). The JASP data are loaded live from the JASP GitHub repository.</p>

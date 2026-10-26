@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prior Lab · MRes Stats Lab</title>
+<link rel="stylesheet" href="assets/lab.css">
+</head>
+<body>
+<main class="wrap">
+  <header class="lab-head">
+    <span class="badge">Stage 7</span>
+    <h1>Choosing priors: prior predictive checks and sensitivity analysis</h1>
+    <p>Model: BMI = α + β × (steps − 8.6k) + error, fitted to the JASP <em>Physical Activity and BMI</em> data. Choose priors, see what they imply <em>before</em> the data, then see how much they matter <em>after</em> it.</p>
+  </header>
+  <div class="predict" role="note">
+    <strong>Predict first.</strong> A "vague" prior such as β ~ Normal(0, 100) feels safe and objective. What kind of BMI values does it predict? And does it change the posterior for the slope, or the Bayes factor, more?
+    <details class="reveal"><summary>Check your prediction</summary><div>The vague prior predicts BMIs of −500 and +600, which is absurd for human beings. With 100 participants, the <strong>posterior</strong> for the slope hardly changes, because the data dominate. The <strong>Bayes factor</strong>, however, falls dramatically as the prior gets wider: a vague H1 spreads its bets over impossible effects and is penalised for it. Use weakly informative priors that respect the scale of your measures, check them with a prior predictive check, and report a sensitivity analysis.</div></details>
+  </div>
+  <div class="row" style="margin-bottom:10px">
+    <button class="btn secondary" type="button" data-preset="weak">Weakly informative (as in our brms model)</button>
+    <button class="btn secondary" type="button" data-preset="vague">Vague, "uninformative"</button>
+    <button class="btn secondary" type="button" data-preset="tight">Overconfident: no effect</button>
+    <button class="btn secondary" type="button" data-preset="lit">Informed by earlier studies</button>
+  </div>
+  <div class="grid two">
+    <section class="card" aria-labelledby="pp-h">
+      <h2 id="pp-h">1 · Prior predictive check: what do these priors expect?</h2>
+      <div class="plot" id="lines" style="height:300px"></div>
+      <div class="legend"><span style="--c:#cfeae7">plausible adult BMI (12–60)</span><span style="--c:#0071bc">regression lines drawn from the prior</span></div>
+      <p id="ppc" aria-live="polite" style="margin:6px 0 0;font-size:0.95rem"></p>
+    </section>
+    <section class="card" aria-labelledby="pc-h">
+      <h2 id="pc-h">Priors</h2>
+      <div class="controls">
+        <div class="control"><label for="mb">Slope β prior mean <output id="mb-out"></output></label><input type="range" id="mb" min="-2" max="2" step="0.05" value="0"></div>
+        <div class="control"><label for="sb">Slope β prior SD <output id="sb-out"></output></label><input type="range" id="sb" min="-1.7" max="2.3" step="0.01" value="0.301">
+          <div class="hint">Log scale, from 0.02 to 200 BMI units per 1,000 steps.</div></div>
+        <div class="control"><label for="ma">Intercept α prior mean (BMI at average steps) <output id="ma-out"></output></label><input type="range" id="ma" min="0" max="40" step="0.5" value="24"></div>
+        <div class="control"><label for="sa">Intercept α prior SD <output id="sa-out"></output></label><input type="range" id="sa" min="-0.3" max="2.3" step="0.01" value="0.699"></div>
+        <div class="control"><label for="ss">Residual SD σ prior mean (exponential) <output id="ss-out"></output></label><input type="range" id="ss" min="0" max="2" step="0.01" value="0.602"></div>
+        <div class="row"><button class="btn teal" type="button" id="redraw">Draw new prior samples</button></div>
+      </div>
+    </section>
+  </div>
+  <div class="grid halves" style="margin-top:12px">
+    <section class="card" aria-labelledby="po-h">
+      <h2 id="po-h">2 · After the data: prior, likelihood and posterior for β</h2>
+      <div class="plot" id="post" style="height:240px"></div>
+      <div class="legend"><span style="--c:#8a9aa2">prior</span><span style="--c:#a85d00">likelihood (data)</span><span style="--c:#00857e">posterior</span></div>
+      <div class="stats" style="margin-top:8px" aria-live="polite">
+        <div class="stat good"><div class="k">Posterior mean β [95% CrI]</div><div class="v" id="pm" style="font-size:1rem">–</div></div>
+        <div class="stat"><div class="k">P(β &lt; −0.25 | data)</div><div class="v" id="pr">–</div></div>
+        <div class="stat"><div class="k">BF₁₀ (β ≠ 0)</div><div class="v" id="bf">–</div></div>
+      </div>
+      <p id="warn" aria-live="polite" style="margin:8px 0 0;font-size:0.9rem"></p>
+    </section>
+    <section class="card" aria-labelledby="se-h">
+      <h2 id="se-h">3 · Sensitivity analysis: how much does the prior SD matter?</h2>
+      <div class="plot" id="sens" style="height:170px"></div>
+      <div class="plot" id="sensbf" style="height:150px"></div>
+      <p style="font-size:0.85rem;margin:6px 0 0;color:#4a5a62">Top: posterior mean and 95% CrI for β against prior SD (with the prior mean you chose). Bottom: the Bayes factor against the same prior SDs. The dot marks your current choice.</p>
+    </section>
+  </div>
+  <section class="card" style="margin-top:12px">
+    <h2>What to take away (WAMBS checklist, Depaoli &amp; van de Schoot, 2017)</h2>
+    <ul style="margin:0;padding-left:1.2rem">
+      <li><strong>Understand the prior</strong>: what values does it make plausible, on the scale of your outcome? A prior predictive check makes this visible.</li>
+      <li><strong>Report and justify</strong> every prior: its distribution, its parameters and where they came from (theory, literature, expert elicitation, or weakly informative defaults).</li>
+      <li><strong>Check prior–data conflict</strong>: if the likelihood sits far in the prior's tail, ask why before trusting the posterior.</li>
+      <li><strong>Run a sensitivity analysis</strong>: refit with wider or narrower priors and report whether your conclusions change. Bayes factors usually need this far more than posterior estimates do.</li>
+    </ul>
+  </section>
+  <p class="foot">MRes Stats Lab · Slope likelihood: b = −0.655, SE = 0.158 (n = 100; JASP Data Library), treated as normal, with a conjugate normal prior, so the posterior is exact. BF by the Savage–Dickey density ratio. Further reading: van de Schoot et al. (2021) <em>Nature Reviews Methods Primers</em>; Lambert (2018) ch. 5; Gelman et al. (2020) <em>Bayesian Workflow</em>.</p>
+</main>
+<script src="assets/lab.js"></script>
+<script>
+(function () {
+  const { R, D, Plot, COL, bindRange } = Lab;
+  const $ = id => document.getElementById(id);
+  const BHAT = -0.6547, SE = 0.1583, XBAR = 8.614;
+  const p10 = v => Math.pow(10, v);
+  const mb = bindRange("mb", v => v.toFixed(2), update), sb = bindRange("sb", v => fmt(p10(v)), update);
+  const ma = bindRange("ma", v => v.toFixed(1), update), sa = bindRange("sa", v => fmt(p10(v)), update);
+  const ss = bindRange("ss", v => fmt(p10(v)), update);
+  function fmt(x) { return x >= 10 ? x.toFixed(0) : x >= 1 ? x.toFixed(1) : x.toFixed(2); }
+  const presets = {
+    weak: { mb: 0, sb: 2, ma: 24, sa: 5, ss: 4 },
+    vague: { mb: 0, sb: 100, ma: 0, sa: 100, ss: 50 },
+    tight: { mb: 0, sb: 0.05, ma: 24, sa: 5, ss: 4 },
+    lit: { mb: -0.5, sb: 0.25, ma: 25, sa: 3, ss: 4 },
+  };
+  document.querySelectorAll("[data-preset]").forEach(b => b.onclick = () => {
+    const p = presets[b.dataset.preset];
+    mb.value = p.mb; sb.value = Math.log10(p.sb); ma.value = p.ma; sa.value = Math.log10(p.sa); ss.value = Math.log10(p.ss);
+    [mb, sb, ma, sa, ss].forEach(el => el.dispatchEvent(new Event("input")));
+  });
+  const lines = new Plot("#lines", { xlim: [0, 20], ylim: [-60, 120], xlab: "Average steps per day (thousands)", ylab: "BMI (kg/m²)", label: "Regression lines drawn from the prior" });
+  const post = new Plot("#post", { xlim: [-2, 1], ylim: [0, 3], xlab: "Slope β (BMI per 1,000 steps)", ylab: "", label: "Prior, likelihood and posterior for the slope" });
+  const sens = new Plot("#sens", { xlim: [-1.7, 2.3], ylim: [-1.4, 0.4], xlab: "", ylab: "β", margin: { b: 22, t: 8 }, xfmt: v => fmt(p10(v)), label: "Posterior for the slope against prior SD" });
+  const sensbf = new Plot("#sensbf", { xlim: [-1.7, 2.3], ylim: [0, 4], xlab: "Prior SD for β (log scale)", ylab: "log₁₀ BF₁₀", margin: { t: 6 }, xfmt: v => fmt(p10(v)), label: "Bayes factor against prior SD" });
+  let seed = 7;
+  $("redraw").onclick = () => { seed++; update(); };
+  function posterior(m0, s0) {
+    const prec = 1 / (s0 * s0) + 1 / (SE * SE), m = (m0 / (s0 * s0) + BHAT / (SE * SE)) / prec;
+    return { m, s: Math.sqrt(1 / prec) };
+  }
+  function bf10(m0, s0) { const P = posterior(m0, s0); return D.dnorm(0, m0, s0) / D.dnorm(0, P.m, P.s); }
+  function update() {
+    const MB = +mb.value, SB = p10(+sb.value), MA = +ma.value, SA = p10(+sa.value), SS = p10(+ss.value);
+    // 1. prior predictive
+    R.seed(seed * 7919);
+    lines.clear().frame();
+    lines.rect(0, 12, 20, 60, { fill: "#cfeae7" });
+    let bad = 0, tot = 0;
+    for (let d = 0; d < 60; d++) {
+      const a = R.norm(MA, SA), b = R.norm(MB, SB), sig = SS * R.exp();
+      lines.fn(x => a + b * (x - XBAR), { color: COL.blue, width: 1.2, alpha: 0.45, n: 2 });
+      for (let j = 0; j < 30; j++) { const x = Math.max(0.5, R.norm(XBAR, 2.32)); const y = a + b * (x - XBAR) + sig * R.norm(); tot++; if (y < 12 || y > 60) bad++; }
+    }
+    lines.hline(0, { width: 1 });
+    $("ppc").innerHTML = "<strong>" + (100 * bad / tot).toFixed(0) + "%</strong> of BMIs simulated from these priors fall outside the plausible 12–60 range. " +
+      (bad / tot > 0.3 ? "These priors expect impossible data, so they are <em>not</em> neutral: they spread belief over absurd effects." : bad / tot > 0.1 ? "Fairly loose, but on roughly the right scale." : "The priors respect the scale of the measure.");
+    // 2. posterior
+    const P = posterior(MB, SB);
+    const xs = [], pr = [], li = [], po = [];
+    for (let i = 0; i <= 300; i++) { const x = -2 + 3 * i / 300; xs.push(x); pr.push(D.dnorm(x, MB, SB)); li.push(D.dnorm(x, BHAT, SE)); po.push(D.dnorm(x, P.m, P.s)); }
+    post.ylim = [0, Math.max(...po, ...li, Math.min(Math.max(...pr), 12)) * 1.1];
+    post.clear().frame({ yaxis: false });
+    post.vline(0, { dash: [3, 4], width: 1 });
+    post.line(xs, pr, { color: "#8a9aa2", width: 2.5, dash: [7, 5] });
+    post.line(xs, li, { color: COL.amber, width: 2 });
+    post.line(xs, po, { color: COL.teal, width: 3, fill: COL.teal, fillAlpha: 0.15 });
+    $("pm").textContent = P.m.toFixed(2) + " [" + (P.m - 1.96 * P.s).toFixed(2) + ", " + (P.m + 1.96 * P.s).toFixed(2) + "]";
+    $("pr").textContent = D.pnorm(-0.25, P.m, P.s).toFixed(3);
+    const B = bf10(MB, SB);
+    $("bf").textContent = B >= 1000 ? B.toExponential(1) : B >= 10 ? B.toFixed(0) : B.toFixed(2);
+    const z = Math.abs(BHAT - MB) / Math.sqrt(SB * SB + SE * SE);
+    $("warn").innerHTML = z > 2.5 ? "<strong style='color:#8b3556'>Prior–data conflict:</strong> the data sit far in the prior's tail, so the posterior is a compromise that neither source supports. Revisit the prior." :
+      SB < SE ? "The prior is narrower than the data's own uncertainty, so it dominates the posterior. Is it really that well justified?" :
+      "The data dominate the posterior: it is close to the likelihood (and so to the classical estimate, −0.65).";
+    // 3. sensitivity
+    const gx = [], gm = [], glo = [], ghi = [], gbf = [];
+    for (let i = 0; i <= 120; i++) { const lv = -1.7 + 4 * i / 120, s0 = p10(lv), q = posterior(MB, s0); gx.push(lv); gm.push(q.m); glo.push(q.m - 1.96 * q.s); ghi.push(q.m + 1.96 * q.s); gbf.push(Math.log10(bf10(MB, s0))); }
+    sens.clear().frame();
+    sens.clip(c => { c.beginPath(); gx.forEach((x, i) => i ? c.lineTo(sens.X(x), sens.Y(ghi[i])) : c.moveTo(sens.X(x), sens.Y(ghi[i]))); for (let i = gx.length - 1; i >= 0; i--) c.lineTo(sens.X(gx[i]), sens.Y(glo[i])); c.closePath(); c.fillStyle = "rgba(0,133,126,0.18)"; c.fill(); });
+    sens.hline(0, { dash: [3, 4], width: 1 }); sens.hline(BHAT, { color: COL.amber, dash: [6, 4], width: 1.5 });
+    sens.line(gx, gm, { color: COL.teal, width: 3 });
+    sens.points([+sb.value], [P.m], { color: COL.plum, r: 6, alpha: 1, stroke: "#fff" });
+    const ylo = Math.min(-0.5, Math.floor(Math.min(...gbf))), yhi = Math.max(1, Math.ceil(Math.max(...gbf)));
+    sensbf.ylim = [ylo, yhi];
+    sensbf.clear().frame();
+    sensbf.hline(0, { width: 1.5 });
+    sensbf.line(gx, gbf, { color: COL.navy, width: 3 });
+    sensbf.points([+sb.value], [Math.log10(B)], { color: COL.plum, r: 6, alpha: 1, stroke: "#fff" });
+  }
+  [lines, post, sens, sensbf].forEach(p => p.onresize = update);
+  update();
+})();
+</script>
+</body>
+</html>

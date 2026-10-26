@@ -1,13 +1,13 @@
 # =====================================================================
-#  MRes Stats Lab - Stage 7: from JASP to R
+#  MRes Stats Lab - Stage 10: from JASP to R (classical AND Bayesian)
 #  Reproduces the JASP Data Library analyses from the Canvas page.
 #  Run it line by line (Ctrl/Cmd + Enter) and check each result
-#  against the JASP output you produced in Stages 4-6.
+#  against the JASP output you produced in Stages 3-8.
 # =====================================================================
 
 # ---- 0. Packages (install once, then comment out) -------------------
 # install.packages(c("tidyverse", "effectsize", "TOSTER", "BayesFactor",
-#                    "car", "emmeans", "performance", "see", "ggdist"))
+#                    "car", "emmeans", "performance", "see", "ggdist", "BAS"))
 library(tidyverse)
 library(effectsize)
 library(TOSTER)
@@ -31,6 +31,18 @@ rolls    <- jasp_data("2. T-Tests", "Kitchen Rolls.csv")
 weight   <- jasp_data("2. T-Tests", "Weight Gain.csv")
 heart    <- jasp_data("3. ANOVA", "Heart Rate.csv") |> rename(HR = `Heart Rate`)
 activity <- jasp_data("4. Regression", "Physical Activity and BMI.csv")
+rosa     <- jasp_data("5. Frequencies", "Emily Rosa.csv")
+
+# ---- 1b. Binomial test, both lenses: Emily Rosa (Stage 3) -----------
+k <- sum(rosa$Outcome == "Correct"); n <- nrow(rosa)    # 70 of 150
+binom.test(k, n, p = 0.5)                               # classical: p = .46, 95% CI [0.385, 0.550]
+# Bayesian binomial test with a Beta(1, 1) prior (JASP's default), computed exactly
+a <- 1; b <- 1
+BF10 <- (beta(a + k, b + n - k) / beta(a, b)) / 0.5^n   # 0.14, so BF01 = 7.1
+post_gt <- 1 - pbeta(0.5, a + k, b + n - k)             # P(theta > .5 | data) = .21
+BFplus0 <- BF10 * post_gt / 0.5                         # one-sided: BF0+ = 1 / BFplus0 = 17.0
+c(BF10 = BF10, BF01 = 1 / BF10, BF0plus = 1 / BFplus0)
+qbeta(c(.025, .5, .975), a + k, b + n - k)              # posterior median 0.47, 95% CrI [0.39, 0.55]
 
 # ---- 2. Independent t-test: Directed Reading Activities -------------
 reading$group <- factor(reading$group, levels = c("Treat", "Control"))
@@ -83,6 +95,13 @@ emmeans(m_hr, pairwise ~ Group | Gender)            # simple effects: 32.0 bpm (
 leveneTest(HR ~ Gender * Group, data = heart, center = mean)   # p < .001: unequal variances
 options(contrasts = c("contr.treatment", "contr.poly"))        # back to R's default
 
+# Bayesian ANOVA (JASP uses the BayesFactor package; fixed-effects prior scale r = 0.5)
+heart$Gender <- factor(heart$Gender); heart$Group <- factor(heart$Group)
+set.seed(2026)
+bf_hr <- anovaBF(HR ~ Gender * Group, data = heart, rscaleFixed = "medium")
+bf_hr                                      # every model vs the null (intercept-only) model
+bf_hr[4] / bf_hr[3]                        # inclusion BF for the interaction: about 4 (moderate)
+
 # ---- 6. Linear regression and model checks: Physical Activity & BMI -
 m_pa <- lm(BMI ~ PA, data = activity)
 summary(m_pa)                         # b = -0.65, R2 = .15
@@ -94,6 +113,14 @@ check_heteroscedasticity(m_pa)
 check_normality(m_pa)
 max(cooks.distance(m_pa))             # 0.17
 anova(m_pa, lm(BMI ~ PA + I(PA^2), data = activity))   # quadratic term: p = .070
+
+# Bayesian linear regression (JASP default: JZS prior, r = 0.354)
+lmBF(BMI ~ PA, data = activity, rscaleCont = sqrt(2) / 4)   # BF10 = 284: extreme evidence
+post_pa <- posterior(lmBF(BMI ~ PA, data = activity, rscaleCont = sqrt(2) / 4), iterations = 20000)
+summary(post_pa)$quantiles["PA", c("2.5%", "50%", "97.5%")]  # about -0.61 [-0.92, -0.30]
+# To reproduce JASP's table exactly (JASP uses the BAS package):
+# bas <- BAS::bas.lm(BMI ~ PA, data = activity, prior = "JZS", alpha = 0.354^2,
+#                    modelprior = BAS::beta.binomial(1, 1)); confint(coef(bas))
 
 # ---- 7. Visualisation with ggplot2 -----------------------------------
 # Raincloud-style plot: distribution + boxplot + raw data

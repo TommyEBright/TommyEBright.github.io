@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bayes' Rule Lab · MRes Stats Lab</title>
+<link rel="stylesheet" href="assets/lab.css">
+<style>
+  .icons { display: grid; grid-template-columns: repeat(40, 1fr); gap: 2px; }
+  .icons i { display: block; aspect-ratio: 1; border-radius: 2px; }
+  .lens { border-radius: var(--radius); padding: 10px 12px; }
+  .lens.freq { background: var(--blue-wash); border-left: 5px solid var(--blue); }
+  .lens.bayes { background: var(--teal-wash); border-left: 5px solid var(--teal); }
+  .lens h3 { margin: 0 0 6px; }
+  .eq { font-family: Georgia, "Times New Roman", serif; font-size: 1.05rem; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; overflow-x: auto; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="lab-head">
+    <span class="badge">Stages 1 &amp; 3</span>
+    <h1>Bayes' rule: from base rates to posteriors</h1>
+    <p>Bayes' theorem in two settings: a diagnostic test with natural frequencies, then updating a belief about an unknown proportion.</p>
+  </header>
+  <div class="row" style="margin-bottom:10px">
+    <div class="seg" id="tab" role="group" aria-label="Activity">
+      <button type="button" data-value="test" aria-pressed="true">A · The anti-doping test</button>
+      <button type="button" data-value="update" aria-pressed="false">B · Updating a proportion</button>
+    </div>
+  </div>
+
+  <section id="test">
+    <div class="predict" role="note"><strong>Predict first.</strong> An anti-doping test detects 95% of athletes who dope and correctly clears 95% of clean athletes. In this sport, 2% of athletes dope. An athlete tests positive. What is the probability they are doping? Write a number down.
+      <details class="reveal"><summary>Check your prediction</summary><div>Only about <strong>28%</strong>. Most positive tests come from the much larger group of clean athletes. The test answers P(positive | doping) = 95%, but the question we care about is P(doping | positive), and that depends on the <strong>base rate</strong> (the prior). Mixing up these two conditional probabilities is the same error as reading a p-value as P(H0 | data).</div></details>
+    </div>
+    <div class="grid two">
+      <section class="card" aria-labelledby="ic-h">
+        <h2 id="ic-h">1,000 athletes</h2>
+        <div class="icons" id="icons" role="img" aria-label="Icon array of 1,000 athletes coloured by doping status and test result"></div>
+        <div class="legend">
+          <span style="--c:#8b3556">doping, test positive</span>
+          <span style="--c:#e3b3c4">doping, test negative (missed)</span>
+          <span style="--c:#a85d00">clean, test positive (false alarm)</span>
+          <span style="--c:#d9e2e7">clean, test negative</span>
+        </div>
+        <p id="freqtext" aria-live="polite" style="margin:10px 0 0;font-size:0.98rem"></p>
+      </section>
+      <section class="card" aria-labelledby="tc-h">
+        <h2 id="tc-h">Settings</h2>
+        <div class="controls">
+          <div class="control"><label for="prev" id="prev-lab">Prior: base rate of doping <output id="prev-out"></output></label><input type="range" id="prev" min="-3" max="-0.3" step="0.01" value="-1.699"></div>
+          <div class="control"><label for="sens" id="sens-lab">Sensitivity: P(positive | doping) <output id="sens-out"></output></label><input type="range" id="sens" min="0.5" max="0.999" step="0.001" value="0.95"></div>
+          <div class="control"><label for="fpr" id="fpr-lab">False-positive rate: P(positive | clean) <output id="fpr-out"></output></label><input type="range" id="fpr" min="0.001" max="0.3" step="0.001" value="0.05"></div>
+          <label style="display:flex;gap:8px;align-items:flex-start;font-size:0.92rem"><input type="checkbox" id="research" style="width:20px;height:20px;margin-top:2px"> <span><strong>Research version:</strong> relabel this as hypothesis testing (true effects, power and α)</span></label>
+        </div>
+        <div class="stats" style="margin-top:10px" aria-live="polite">
+          <div class="stat good"><div class="k" id="post-k">P(doping | positive)</div><div class="v" id="post">–</div></div>
+          <div class="stat"><div class="k" id="post2-k">After a second positive test</div><div class="v" id="post2">–</div></div>
+        </div>
+        <div class="eq" id="eq" style="margin-top:10px"></div>
+      </section>
+    </div>
+    <section class="card" style="margin-top:12px">
+      <h2>What to notice</h2>
+      <ol style="margin:0;padding-left:1.2rem">
+        <li>Lower the base rate to 0.1%. Even an excellent test then produces mostly false alarms. <strong>Priors matter most when evidence is weak relative to them.</strong></li>
+        <li>The "second test" figure uses the first posterior as the new prior. This is <strong>sequential updating</strong>: today's posterior is tomorrow's prior.</li>
+        <li>Tick <em>Research version</em>. The same arithmetic gives the probability that a <em>significant</em> result reflects a true effect: Lakens' positive predictive value (ch. 2.2). With 80% power, α = .05 and only 10% of tested hypotheses true, around a third of significant findings are false positives.</li>
+      </ol>
+    </section>
+  </section>
+
+  <section id="update" hidden>
+    <div class="predict" role="note"><strong>Predict first.</strong> In Emily Rosa's experiment, therapeutic-touch practitioners tried to sense which of their hands was near hers. They were correct on 70 of 150 trials (47%); guessing gives 50%. The classical test gives p = .46. Does that show they <em>cannot</em> do better than chance?
+      <details class="reveal"><summary>Check your prediction</summary><div>The p-value cannot say: non-significant is not evidence for H0. A Bayes factor can. Load the Emily Rosa preset with a flat Beta(1, 1) prior: BF<sub>01</sub> = 7.1, and against the directional claim that practitioners beat chance, BF<sub>0+</sub> = 17. That is strong evidence that they perform at chance.</div></details>
+    </div>
+    <div class="grid two">
+      <section class="card" aria-labelledby="up-h">
+        <h2 id="up-h">Prior × likelihood → posterior for θ (the success rate)</h2>
+        <div class="plot" id="plot" style="height:300px"></div>
+        <div class="legend">
+          <span style="--c:#8a9aa2">prior</span>
+          <span style="--c:#a85d00">likelihood (scaled)</span>
+          <span style="--c:#00857e">posterior</span>
+          <span style="--c:#8b3556">θ = 0.5 (chance)</span>
+        </div>
+        <div class="grid halves" style="margin-top:10px">
+          <div class="lens freq" aria-live="polite"><h3>Frequentist lens</h3><div id="freq" style="font-size:0.92rem"></div></div>
+          <div class="lens bayes" aria-live="polite"><h3>Bayesian lens</h3><div id="bayes" style="font-size:0.92rem"></div></div>
+        </div>
+      </section>
+      <section class="card" aria-labelledby="uc-h">
+        <h2 id="uc-h">Prior and data</h2>
+        <div class="controls">
+          <div class="control"><label>Prior presets</label>
+            <div class="row">
+              <button class="btn secondary" type="button" data-prior="1,1">Flat Beta(1, 1)</button>
+              <button class="btn secondary" type="button" data-prior="0.5,0.5">Jeffreys Beta(½, ½)</button>
+              <button class="btn secondary" type="button" data-prior="20,20">Sceptical Beta(20, 20)</button>
+              <button class="btn secondary" type="button" data-prior="8,2">Believer Beta(8, 2)</button>
+            </div>
+          </div>
+          <div class="grid halves">
+            <div class="control"><label for="pa">Prior a <output id="pa-out"></output></label><input type="range" id="pa" min="0.5" max="60" step="0.5" value="1"></div>
+            <div class="control"><label for="pb">Prior b <output id="pb-out"></output></label><input type="range" id="pb" min="0.5" max="60" step="0.5" value="1"></div>
+          </div>
+          <div class="hint" id="prior-desc"></div>
+          <div class="grid halves">
+            <div class="control"><label for="k">Successes (k)</label><input type="number" id="k" min="0" step="1" value="70"></div>
+            <div class="control"><label for="n">Trials (n)</label><input type="number" id="n" min="0" step="1" value="150"></div>
+          </div>
+          <div class="row">
+            <button class="btn" type="button" id="rosa">Emily Rosa data (70/150)</button>
+            <button class="btn secondary" type="button" id="clear">No data yet</button>
+          </div>
+          <div class="control"><label for="truth">Simulate trials with true θ <output id="truth-out"></output></label><input type="range" id="truth" min="0.05" max="0.95" step="0.01" value="0.65"></div>
+          <div class="row">
+            <button class="btn teal" type="button" id="add1">+1 trial</button>
+            <button class="btn teal" type="button" id="add10">+10 trials</button>
+            <button class="btn secondary" type="button" id="play">▶ Watch data arrive</button>
+          </div>
+        </div>
+      </section>
+    </div>
+    <section class="card" style="margin-top:12px">
+      <h2>Try these</h2>
+      <ol style="margin:0;padding-left:1.2rem">
+        <li>Click <em>No data yet</em>: the posterior equals the prior. Then press <em>+1 trial</em> a few times and watch each observation reshape the posterior.</li>
+        <li>Load the Emily Rosa data and switch between the four priors. The posterior <strong>estimate</strong> barely changes (150 trials outweigh the prior), but the <strong>Bayes factor</strong> moves a lot. Bayes factors are far more sensitive to the prior than posterior estimates are.</li>
+        <li>With the Believer prior, how much data does it take to change the believer's mind? Set true θ = 0.5 and press <em>Watch data arrive</em>.</li>
+        <li>Compare the 95% CI with the 95% credible interval under the flat prior. They are nearly identical in numbers, but they answer different questions (see Stage 4).</li>
+      </ol>
+    </section>
+  </section>
+  <p class="foot">MRes Stats Lab · Beta-binomial model, computed exactly. The JASP Bayesian binomial test uses the same model, with a Beta(1, 1) prior by default. Emily Rosa data: Rosa et al. (1998), JASP Data Library. Further reading: Lambert (2018), chs 2–9; Lakens (2022) <a href="https://lakens.github.io/statistical_inferences/04-bayes.html" target="_blank" rel="noopener">ch. 4 (opens in a new tab)</a>.</p>
+</main>
+<script src="assets/lab.js"></script>
+<script>
+(function () {
+  const { R, D, Plot, COL, bindRange, seg, fmtP } = Lab;
+  const $ = id => document.getElementById(id);
+  const pct = x => (100 * x >= 10 ? (100 * x).toFixed(0) : (100 * x).toFixed(1)) + "%";
+
+  /* ---------- A: diagnostic test ---------- */
+  const icons = $("icons");
+  for (let i = 0; i < 1000; i++) icons.appendChild(document.createElement("i"));
+  const prevEl = bindRange("prev", v => pct(Math.pow(10, v)), drawTest);
+  bindRange("sens", v => pct(v), drawTest);
+  bindRange("fpr", v => pct(v), drawTest);
+  $("research").addEventListener("change", drawTest);
+  function drawTest() {
+    const prev = Math.pow(10, +prevEl.value), sens = +$("sens").value, fpr = +$("fpr").value, rs = $("research").checked;
+    const pos = prev * sens + (1 - prev) * fpr, post = prev * sens / pos;
+    const p2prior = post, post2 = p2prior * sens / (p2prior * sens + (1 - p2prior) * fpr);
+    const nD = Math.round(1000 * prev), nTP = Math.round(nD * sens), nFP = Math.round((1000 - nD) * fpr);
+    const cells = icons.children;
+    for (let i = 0; i < 1000; i++) {
+      let c = "#d9e2e7";
+      if (i < nTP) c = COL.plum; else if (i < nD) c = "#e3b3c4"; else if (i < nD + nFP) c = COL.amber;
+      cells[i].style.background = c;
+    }
+    const L = rs ? { pos: "significant", d: "true effects", clean: "true nulls", who: "hypotheses tested", A: "a true effect" }
+                 : { pos: "positive", d: "dope", clean: "clean athletes", who: "athletes", A: "doping" };
+    $("prev-lab").firstChild.textContent = rs ? "Prior: proportion of hypotheses that are true " : "Prior: base rate of doping ";
+    $("sens-lab").firstChild.textContent = rs ? "Power: P(significant | true effect) " : "Sensitivity: P(positive | doping) ";
+    $("fpr-lab").firstChild.textContent = rs ? "α: P(significant | no effect) " : "False-positive rate: P(positive | clean) ";
+    $("post-k").textContent = rs ? "P(true effect | significant)" : "P(doping | positive)";
+    $("post2-k").textContent = rs ? "After a significant replication" : "After a second positive test";
+    $("post").textContent = pct(post);
+    $("post2").textContent = pct(post2);
+    $("freqtext").innerHTML = "Of 1,000 " + L.who + ", <strong>" + nD + "</strong> are " + (rs ? "true effects" : "doping") + " and " + nTP + " of them come out " + L.pos +
+      ". Of the " + (1000 - nD) + " " + L.clean + ", <strong>" + nFP + "</strong> also come out " + L.pos + ". So only " + nTP + " of the " + (nTP + nFP) + " " + L.pos + " results (" + pct(nTP / Math.max(1, nTP + nFP)) + ") reflect " + L.A + ".";
+    $("eq").innerHTML = "P(" + (rs ? "H₁" : "D") + " | +) = <sup>P(+ | " + (rs ? "H₁" : "D") + ") × P(" + (rs ? "H₁" : "D") + ")</sup>&frasl;<sub>P(+)</sub> = " +
+      sens.toFixed(3) + " × " + prev.toFixed(3) + " ÷ " + pos.toFixed(4) + " = <strong>" + post.toFixed(3) + "</strong>";
+  }
+
+  /* ---------- B: beta-binomial ---------- */
+  const plot = new Plot("#plot", { xlim: [0, 1], ylim: [0, 5], xlab: "θ (probability of a correct answer)", ylab: "Density", label: "Prior, likelihood and posterior for the success rate" });
+  const aEl = bindRange("pa", v => v, drawUpdate), bEl = bindRange("pb", v => v, drawUpdate);
+  bindRange("truth", v => v.toFixed(2));
+  const kEl = $("k"), nEl = $("n");
+  [kEl, nEl].forEach(el => el.addEventListener("input", drawUpdate));
+  document.querySelectorAll("[data-prior]").forEach(b => b.onclick = () => { const [a, bb] = b.dataset.prior.split(","); aEl.value = a; bEl.value = bb; aEl.dispatchEvent(new Event("input")); bEl.dispatchEvent(new Event("input")); });
+  $("rosa").onclick = () => { kEl.value = 70; nEl.value = 150; drawUpdate(); };
+  $("clear").onclick = () => { kEl.value = 0; nEl.value = 0; drawUpdate(); };
+  function addTrials(m) { const t = +$("truth").value; let k = +kEl.value, n = +nEl.value; for (let i = 0; i < m; i++) { n++; if (R.unif() < t) k++; } kEl.value = k; nEl.value = n; drawUpdate(); }
+  $("add1").onclick = () => addTrials(1);
+  $("add10").onclick = () => addTrials(10);
+  let timer = null;
+  $("play").onclick = () => {
+    if (timer) { clearInterval(timer); timer = null; $("play").textContent = "▶ Watch data arrive"; return; }
+    kEl.value = 0; nEl.value = 0; drawUpdate();
+    $("play").textContent = "❚❚ Stop";
+    timer = setInterval(() => { addTrials(1); if (+nEl.value >= 200) { clearInterval(timer); timer = null; $("play").textContent = "▶ Watch data arrive"; } }, 120);
+  };
+  function describePrior(a, b) {
+    const m = a / (a + b), sd = Math.sqrt(a * b / ((a + b) ** 2 * (a + b + 1)));
+    return "Prior mean " + m.toFixed(2) + ", SD " + sd.toFixed(2) + ". This is worth roughly " + (a + b).toFixed(0) + " earlier trials of information (" + (a - 0).toFixed(1) + " successes, " + b.toFixed(1) + " failures).";
+  }
+  function drawUpdate() {
+    const a = +aEl.value, b = +bEl.value;
+    let n = Math.max(0, Math.round(+nEl.value)), k = Math.max(0, Math.min(n, Math.round(+kEl.value)));
+    $("prior-desc").textContent = describePrior(a, b);
+    const A = a + k, B = b + n - k;
+    const xs = [], pr = [], po = [], li = [];
+    for (let i = 1; i < 400; i++) { const x = i / 400; xs.push(x); pr.push(D.dbeta(x, a, b)); po.push(D.dbeta(x, A, B)); li.push(n ? D.dbeta(x, k + 1, n - k + 1) : NaN); }
+    const finite = v => isFinite(v) ? v : 0;
+    const ymax = Math.max(1.5, ...po.map(finite), ...pr.map(v => Math.min(finite(v), 30)), ...li.map(finite)) * 1.1;
+    plot.ylim = [0, Math.min(ymax, 40)];
+    plot.clear().frame();
+    plot.vline(0.5, { color: COL.plum, dash: [4, 3], width: 2 });
+    plot.line(xs, pr, { color: "#8a9aa2", width: 2.5, dash: [7, 5] });
+    if (n) plot.line(xs, li, { color: COL.amber, width: 2 });
+    plot.line(xs, po, { color: COL.teal, width: 3, fill: COL.teal, fillAlpha: 0.15 });
+    const dPr0 = D.dbeta(0.5, a, b), dPo0 = D.dbeta(0.5, A, B);
+    plot.points([0.5, 0.5], [dPr0, dPo0], { color: [COL.muted, COL.plum], r: 5, alpha: 1, stroke: "#fff" });
+    // Bayesian summaries
+    const mean = A / (A + B), cri = [D.qbeta(0.025, A, B), D.qbeta(0.975, A, B)], hdi = D.hdiBeta(A, B), pgt = 1 - D.pbeta(0.5, A, B);
+    const lbf10 = (D.lbeta(A, B) - D.lbeta(a, b)) - n * Math.log(0.5);
+    const bf10 = Math.exp(lbf10);
+    const priorGt = 1 - D.pbeta(0.5, a, b);
+    const bfp0 = bf10 * pgt / priorGt;
+    const fmtBF = x => x >= 1000 ? x.toExponential(1) : x >= 10 ? x.toFixed(1) : x >= 0.01 ? x.toFixed(2) : x.toExponential(1);
+    $("bayes").innerHTML = "Posterior Beta(" + A.toFixed(1) + ", " + B.toFixed(1) + ")<br>Mean θ = <strong>" + mean.toFixed(3) + "</strong><br>95% credible interval [" + cri[0].toFixed(3) + ", " + cri[1].toFixed(3) + "]<br>95% HDI [" + hdi[0].toFixed(3) + ", " + hdi[1].toFixed(3) + "]<br>P(θ &gt; 0.5 | data) = <strong>" + pgt.toFixed(3) + "</strong><br>BF<sub>10</sub> (θ ≠ 0.5) = " + fmtBF(bf10) + "; BF<sub>01</sub> = " + fmtBF(1 / bf10) + "<br>BF<sub>+0</sub> (θ &gt; 0.5) = " + fmtBF(bfp0) + "; BF<sub>0+</sub> = " + fmtBF(1 / bfp0);
+    if (n) {
+      const lo = k === 0 ? 0 : D.qbeta(0.025, k, n - k + 1), hi = k === n ? 1 : D.qbeta(0.975, k + 1, n - k);
+      const p = D.binomTest(k, n, 0.5);
+      $("freq").innerHTML = "Observed proportion = <strong>" + (k / n).toFixed(3) + "</strong> (" + k + "/" + n + ")<br>95% CI (Clopper–Pearson) [" + lo.toFixed(3) + ", " + hi.toFixed(3) + "]<br>Binomial test vs 0.5: p " + fmtP(p) + "<br><span style='color:#4a5a62'>No prior is used, and there is no statement of P(θ | data). With p ≥ .05 you cannot claim θ = 0.5.</span>";
+    } else $("freq").innerHTML = "No data yet: nothing to test. Frequentist inference starts from the data alone.";
+  }
+
+  const setTab = v => { $("test").hidden = v !== "test"; $("update").hidden = v !== "update"; if (v === "update") { plot.resize(); drawUpdate(); } };
+  seg("tab", setTab);
+  plot.onresize = drawUpdate;
+  drawTest(); drawUpdate();
+  if (location.hash === "#update") document.querySelector('#tab [data-value="update"]').click();
+})();
+</script>
+</body>
+</html>

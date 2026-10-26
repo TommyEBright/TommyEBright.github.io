@@ -9,7 +9,7 @@
 <body>
 <main class="wrap">
   <header class="lab-head">
-    <span class="badge">Stage 3</span>
+    <span class="badge">Stage 5</span>
     <h1>Equivalence testing (TOST): evidence of absence</h1>
     <p>A non-significant result does not show "no effect". An equivalence test asks whether you can rule out effects large enough to matter. Lakens, chapter 9.</p>
   </header>
@@ -70,6 +70,16 @@
       <div class="stat" data-cell="nosig-eq"><div class="k">p ≥ α, equivalent</div><div style="font-size:0.92rem">You can reject any effect as big as your SESOI. This is evidence of absence.</div></div>
       <div class="stat" data-cell="nosig-noeq"><div class="k">p ≥ α, not equivalent</div><div style="font-size:0.92rem">Inconclusive. You can reject neither 0 nor your SESOI; you need more data.</div></div>
     </div>
+  </section>
+  <section class="card" style="margin-top:12px;border-left:5px solid var(--teal)" aria-labelledby="rope-h">
+    <h2 id="rope-h">The Bayesian lens: HDI + ROPE (Kruschke)</h2>
+    <p style="margin:0 0 8px;font-size:0.92rem">Treat the equivalence bounds as a <strong>region of practical equivalence (ROPE)</strong>. With a flat prior, the posterior for the mean difference is a t-distribution centred on the observed difference, so the Bayesian answer comes directly from the same numbers.</p>
+    <div class="stats" aria-live="polite">
+      <div class="stat good"><div class="k">Posterior probability inside ROPE</div><div class="v" id="rope-in">–</div></div>
+      <div class="stat"><div class="k">95% HDI of the difference</div><div class="v" id="rope-hdi" style="font-size:1rem">–</div></div>
+      <div class="stat"><div class="k">HDI + ROPE decision</div><div class="v" id="rope-dec" style="font-size:1rem">–</div></div>
+    </div>
+    <p style="margin:8px 0 0;font-size:0.85rem;color:#4a5a62">Kruschke's rule: if the 95% HDI lies entirely inside the ROPE, accept the null value for practical purposes; if it lies entirely outside, reject it; otherwise, withhold judgement. Lakens (9.5) notes that with flat priors this is numerically close to TOST, but TOST uses a 90% CI. The interpretation differs: "a 97% posterior probability that the effect is negligible" versus "we reject effects as large as the bounds with α = .05". With an informative prior the two can diverge.</p>
   </section>
   <p class="foot">MRes Stats Lab · Results match JASP's Equivalence T-Tests module and R's <span class="kbd">TOSTER::t_TOST()</span>. Kitchen Rolls data: Wagenmakers et al. (2015), JASP Data Library. Lakens (2022) <a href="https://lakens.github.io/statistical_inferences/09-equivalencetest.html" target="_blank" rel="noopener">ch. 9 (opens in a new tab)</a>.</p>
 </main>
@@ -142,6 +152,12 @@
       "<tr><td>Null hypothesis (difference = 0)</td><td>" + t0.toFixed(2) + "</td><td>" + dfTxt + "</td><td>" + fmtP(p0).replace("= ", "") + "</td></tr>" +
       "<tr><td>TOST lower (diff &gt; −" + fmtN(raw) + ")</td><td>" + tL.toFixed(2) + "</td><td>" + dfTxt + "</td><td>" + fmtP(pL).replace("= ", "") + "</td></tr>" +
       "<tr><td>TOST upper (diff &lt; +" + fmtN(raw) + ")</td><td>" + tU.toFixed(2) + "</td><td>" + dfTxt + "</td><td>" + fmtP(pU).replace("= ", "") + "</td></tr>";
+    // Bayesian lens: flat prior -> posterior for the difference is t(df) located at diff with scale se
+    const pIn = D.pt((raw - diff) / se, df) - D.pt((-raw - diff) / se, df);
+    const hdi = [diff - t95 * se, diff + t95 * se];
+    $("rope-in").textContent = (100 * pIn).toFixed(1) + "%";
+    $("rope-hdi").textContent = "[" + fmtN(hdi[0]) + ", " + fmtN(hdi[1]) + "]";
+    $("rope-dec").textContent = (hdi[0] >= -raw && hdi[1] <= raw) ? "Accept: practically equivalent" : (hdi[1] < -raw || hdi[0] > raw) ? "Reject: effect outside ROPE" : "Undecided: collect more data";
     const v = $("verdict");
     v.className = "feedback " + (eq ? "ok" : "no");
     v.innerHTML = "<strong>Mean difference = " + fmtN(diff) + ", 90% CI [" + fmtN(ci90[0]) + ", " + fmtN(ci90[1]) + "].</strong> " +

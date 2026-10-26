@@ -1,5 +1,5 @@
 # =====================================================================
-#  MRes Stats Lab - Stage 8: Bayesian regression with brms
+#  MRes Stats Lab - Stage 11: Bayesian regression with brms
 #  Priors -> MCMC (NUTS) -> diagnostics -> posterior -> PPC -> LOO
 #  First time? brms needs a C++ toolchain: Rtools (Windows) or the
 #  Xcode Command Line Tools (Mac). See https://paulbuerkner.com/brms/
@@ -84,7 +84,7 @@ h4 <- brm(bf(HR ~ Group * Gender, sigma ~ Group * Gender),
 summary(h4)          # sigma_GroupRunners:GenderMale = -0.29 [-0.48, -0.10] (log scale)
 loo_compare(loo(h1), loo(h2), loo(h3), loo(h4))
 # h4 is best; h3 is 7.7 elpd worse (SE 4.4); h1 is 92.7 worse (SE 13.1).
-# This is the Bayesian answer to the significant Levene's test in Stage 5.
+# This is the Bayesian answer to the significant Levene's test in Stage 7.
 
 # ---- 8. If something goes wrong ---------------------------------------
 # Divergent transitions:  brm(..., control = list(adapt_delta = 0.99))

@@ -23,22 +23,25 @@
     <p>Interactive companions to the Canvas learning resource. Work through them in order: each one starts with a prediction for you to make.</p>
   </header>
   <div class="hub">
-    <a href="p-values.html" style="--c:#003d50"><div class="card"><span class="tag">Stage 1 · Foundations</span><h2>Which p-values should you expect?</h2><p>Simulate thousands of studies. Type I error, power and Lindley's paradox.</p></div></a>
-    <a href="ci-dance.html" style="--c:#003d50"><div class="card"><span class="tag">Stage 2 · Estimation</span><h2>The dance of the CIs</h2><p>Coverage, capture percentage and how publication bias inflates effect sizes.</p></div></a>
-    <a href="power.html" style="--c:#0071bc"><div class="card"><span class="tag">Stage 3 · Planning</span><h2>Power and sensitivity</h2><p>Exact sample size planning and the smallest effect your study can detect.</p></div></a>
-    <a href="equivalence.html" style="--c:#0071bc"><div class="card"><span class="tag">Stage 3 · Planning</span><h2>Equivalence testing (TOST)</h2><p>Evidence of absence, smallest effect sizes of interest, and the four possible conclusions.</p></div></a>
-    <a href="bayes-factor.html" style="--c:#00857e"><div class="card"><span class="tag">Stage 4 · JASP analysis</span><h2>Bayes factor explorer</h2><p>Prior, posterior, Savage–Dickey ratio and a robustness check, matching JASP's output.</p></div></a>
-    <a href="residuals.html" style="--c:#00857e"><div class="card"><span class="tag">Stage 5 · Model checking</span><h2>Residual detective</h2><p>Diagnose regression problems from the same plots JASP shows, and feel how influence works.</p></div></a>
-    <a href="show-the-data.html" style="--c:#8b3556"><div class="card"><span class="tag">Stage 6 · Visualisation</span><h2>Show the data</h2><p>Bar charts versus rainclouds, and Anscombe's quartet.</p></div></a>
-    <a href="fix-the-results.html" style="--c:#8b3556"><div class="card"><span class="tag">Stage 7 · Writing</span><h2>Fix the results paragraph</h2><p>Spot reporting errors in real JASP analyses, then compare with a model answer.</p></div></a>
-    <a href="mcmc.html" style="--c:#a85d00"><div class="card"><span class="tag">Stage 8 · Bayesian modelling</span><h2>MCMC playground</h2><p>Random walk, HMC and NUTS, live. Divergences, R̂, ESS and a computing-budget race.</p></div></a>
-    <a href="loo.html" style="--c:#a85d00"><div class="card"><span class="tag">Stage 8 · Bayesian modelling</span><h2>LOO model comparison</h2><p>PSIS-LOO, elpd differences and Pareto k̂, with draggable data.</p></div></a>
+    <a href="bayes-rule.html" style="--c:#003d50"><div class="card"><span class="tag">Stages 1 &amp; 3 · Two ways of thinking</span><h2>Bayes' rule lab</h2><p>The anti-doping test and base rates, then prior × likelihood → posterior for a proportion, with frequentist and Bayesian answers side by side.</p></div></a>
+    <a href="p-values.html" style="--c:#0071bc"><div class="card"><span class="tag">Stage 2 · Frequentist inference</span><h2>Which p-values should you expect?</h2><p>Simulate thousands of studies. Type I error, power and Lindley's paradox.</p></div></a>
+    <a href="ci-dance.html" style="--c:#0071bc"><div class="card"><span class="tag">Stage 4 · Estimation</span><h2>The dance of the CIs</h2><p>Coverage, capture percentage and how publication bias inflates effect sizes.</p></div></a>
+    <a href="two-lenses.html" style="--c:#00857e"><div class="card"><span class="tag">Stage 4 · Estimation</span><h2>Two lenses: CI vs credible interval</h2><p>The same studies seen through both lenses. Priors, shrinkage, coverage, and an interpretation quiz.</p></div></a>
+    <a href="power.html" style="--c:#0071bc"><div class="card"><span class="tag">Stage 5 · Planning</span><h2>Power and sensitivity</h2><p>Exact sample size planning and the smallest effect your study can detect.</p></div></a>
+    <a href="equivalence.html" style="--c:#00857e"><div class="card"><span class="tag">Stage 5 · Evidence of absence</span><h2>Equivalence: TOST and ROPE</h2><p>Frequentist TOST and Bayesian HDI + ROPE side by side, with the four possible conclusions.</p></div></a>
+    <a href="bayes-factor.html" style="--c:#00857e"><div class="card"><span class="tag">Stage 6 · JASP analysis</span><h2>Bayes factor explorer</h2><p>Prior, posterior, Savage–Dickey ratio, robustness check and posterior odds, matching JASP's output.</p></div></a>
+    <a href="residuals.html" style="--c:#0071bc"><div class="card"><span class="tag">Stage 7 · Model checking</span><h2>Residual detective</h2><p>Diagnose regression problems from the same plots JASP shows, and feel how influence works.</p></div></a>
+    <a href="priors.html" style="--c:#00857e"><div class="card"><span class="tag">Stage 7 · Model checking</span><h2>Prior lab</h2><p>Prior predictive checks, prior–data conflict and sensitivity analysis for a real regression.</p></div></a>
+    <a href="show-the-data.html" style="--c:#8b3556"><div class="card"><span class="tag">Stage 8 · Visualisation</span><h2>Show the data</h2><p>Bar charts versus rainclouds, and Anscombe's quartet.</p></div></a>
+    <a href="fix-the-results.html" style="--c:#8b3556"><div class="card"><span class="tag">Stage 9 · Writing</span><h2>Fix the results paragraph</h2><p>Spot reporting errors in classical and Bayesian write-ups of real JASP analyses.</p></div></a>
+    <a href="mcmc.html" style="--c:#a85d00"><div class="card"><span class="tag">Stage 11 · Bayesian modelling</span><h2>MCMC playground</h2><p>Random walk, HMC and NUTS, live. Divergences, R̂, ESS and a computing-budget race.</p></div></a>
+    <a href="loo.html" style="--c:#a85d00"><div class="card"><span class="tag">Stage 11 · Bayesian modelling</span><h2>LOO model comparison</h2><p>PSIS-LOO, elpd differences and Pareto k̂, with draggable data.</p></div></a>
   </div>
   <section class="card" style="margin-top:14px">
-    <h2>R scripts for Stages 7–8</h2>
+    <h2>R scripts for Stages 10–11</h2>
     <p style="margin:0">Download, open in RStudio and run line by line. Both scripts read the JASP Data Library files directly from JASP's GitHub repository.</p>
     <ul style="margin:6px 0 0">
-      <li><a href="r/stage7-jasp-to-r.R" download>stage7-jasp-to-r.R</a>: the classical JASP analyses reproduced in R (t-tests, ANOVA, regression, TOST, Bayes factors, ggplot2).</li>
+      <li><a href="r/stage7-jasp-to-r.R" download>stage7-jasp-to-r.R</a>: every JASP analysis reproduced in R, classical and Bayesian (t-tests, binomial, ANOVA, regression, TOST, Bayes factors, ggplot2).</li>
       <li><a href="r/stage8-brms.R" download>stage8-brms.R</a>: Bayesian regression in brms with priors, MCMC diagnostics, posterior predictive checks and LOO.</li>
     </ul>
   </section>
