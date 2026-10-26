@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Power Planner · MRes Stats Lab</title>
+<link rel="stylesheet" href="assets/lab.css">
+</head>
+<body>
+<main class="wrap">
+  <header class="lab-head">
+    <span class="badge">Stage 3</span>
+    <h1>Sample size justification: power and sensitivity</h1>
+    <p>Plan a t-test study. Exact calculations using the noncentral t distribution, the same method JASP's Power module and G*Power use. Lakens, chapter 8.</p>
+  </header>
+  <div class="predict" role="note">
+    <strong>Predict first.</strong> To have 80% power to detect d = 0.5 with two independent groups (α = .05), how many participants do you need <em>per group</em>? Guess before you look.
+    <details class="reveal"><summary>Check your prediction</summary><div><strong>64 per group</strong>, so 128 in total. Many students guess 20–30. Halve the effect to d = 0.25 and you need about 4× as many (253 per group).</div></details>
+  </div>
+  <div class="grid two">
+    <section class="card" aria-labelledby="p1-h">
+      <h2 id="p1-h">A-priori power: how many participants?</h2>
+      <div class="plot" id="plot1" style="height:270px"></div>
+      <p id="req" aria-live="polite" style="margin:8px 0 0;font-size:1rem"></p>
+    </section>
+    <section class="card" aria-labelledby="ctrl-h">
+      <h2 id="ctrl-h">Inputs</h2>
+      <div class="controls">
+        <div class="seg" id="design" role="group" aria-label="Design">
+          <button type="button" data-value="ind" aria-pressed="true">Two independent groups</button>
+          <button type="button" data-value="paired" aria-pressed="false">Paired / one-sample</button>
+        </div>
+        <div class="control">
+          <label for="d">Effect size you want to detect (d) <output id="d-out"></output></label>
+          <input type="range" id="d" min="0.1" max="1.5" step="0.05" value="0.5">
+          <div class="hint">Ideally your <strong>smallest effect size of interest</strong>, not a guess from a small pilot study.</div>
+        </div>
+        <div class="grid halves">
+          <div class="control"><label for="alpha">α</label><select id="alpha"><option value="0.05" selected>.05</option><option value="0.01">.01</option><option value="0.005">.005</option></select></div>
+          <div class="control"><label for="target">Desired power</label><select id="target"><option value="0.8" selected>80%</option><option value="0.9">90%</option><option value="0.95">95%</option></select></div>
+        </div>
+        <div class="seg" id="tails" role="group" aria-label="Test direction">
+          <button type="button" data-value="2" aria-pressed="true">Two-sided</button>
+          <button type="button" data-value="1" aria-pressed="false">One-sided</button>
+        </div>
+      </div>
+    </section>
+  </div>
+  <section class="card" style="margin-top:12px" aria-labelledby="p2-h">
+    <h2 id="p2-h">Sensitivity: what can a study of a given size detect?</h2>
+    <div class="grid two">
+      <div><div class="plot" id="plot2" style="height:270px"></div></div>
+      <div class="controls">
+        <div class="control">
+          <label for="nfix">Sample size you can collect <output id="nfix-out"></output></label>
+          <input type="range" id="nfix" min="5" max="300" step="1" value="20">
+          <div class="hint" id="nfix-hint">per group</div>
+        </div>
+        <div class="stats" aria-live="polite">
+          <div class="stat bad"><div class="k">Smallest observed d that can be significant</div><div class="v" id="dcrit">–</div></div>
+          <div class="stat good"><div class="k">d detectable with your desired power</div><div class="v" id="d80">–</div></div>
+        </div>
+        <p style="font-size:0.88rem;margin:0">The first number is the <strong>minimal statistically detectable effect</strong> (Lakens 8.12). If the effects that matter in your field are smaller than this, your study cannot find them even when they exist.</p>
+      </div>
+    </div>
+  </section>
+  <section class="card" style="margin-top:12px" aria-labelledby="tasks-h">
+    <h2 id="tasks-h">Try these</h2>
+    <ol style="margin:0;padding-left:1.2rem">
+      <li>Find the n per group for d = 0.5, 80% power. Then switch to a <strong>paired</strong> design. Why do you need far fewer participants?</li>
+      <li>In the sensitivity panel, set n = 21. That is the treatment group size in the JASP <em>Directed Reading Activities</em> dataset you will analyse in Stage 4. What effect could that study reliably detect?</li>
+      <li>Change α from .05 to .005. How much bigger does the sample need to be?</li>
+    </ol>
+  </section>
+  <p class="foot">MRes Stats Lab · Lakens (2022) <a href="https://lakens.github.io/statistical_inferences/08-samplesizejustification.html" target="_blank" rel="noopener">ch. 8 Sample size justification (opens in a new tab)</a>. Paired calculations use d<sub>z</sub> (mean difference ÷ SD of the differences).</p>
+</main>
+<script src="assets/lab.js"></script>
+<script>
+(function () {
+  const { D, Plot, COL, bindRange, seg } = Lab;
+  const p1 = new Plot("#plot1", { xlim: [0, 200], ylim: [0, 1], xlab: "Sample size (per group)", ylab: "Power", yfmt: v => Math.round(v * 100) + "%", label: "Power as a function of sample size" });
+  const p2 = new Plot("#plot2", { xlim: [0, 1.5], ylim: [0, 1], xlab: "True effect size d", ylab: "Power", yfmt: v => Math.round(v * 100) + "%", label: "Power as a function of effect size for a fixed sample" });
+  let design = "ind", tails = 2;
+  const dEl = bindRange("d", v => v.toFixed(2), update);
+  const nEl = bindRange("nfix", v => v, update);
+  const aEl = document.getElementById("alpha"), tEl = document.getElementById("target");
+  aEl.onchange = update; tEl.onchange = update;
+  seg("design", v => { design = v; update(); });
+  seg("tails", v => { tails = +v; update(); });
+
+  function dfOf(n) { return design === "ind" ? 2 * n - 2 : n - 1; }
+  function ncpOf(d, n) { return design === "ind" ? d * Math.sqrt(n / 2) : d * Math.sqrt(n); }
+  function tcrit(n, a) { return D.qt(1 - a / tails, dfOf(n)); }
+  function power(d, n, a) {
+    const df = dfOf(n), tc = tcrit(n, a), ncp = ncpOf(d, n);
+    return tails === 2 ? D.powerT(tc, df, ncp) : D.powerT1(tc, df, ncp);
+  }
+  function requiredN(d, a, target) {
+    let lo = 2, hi = 2;
+    while (power(d, hi, a) < target && hi < 200000) hi *= 2;
+    lo = Math.max(2, Math.floor(hi / 2));
+    while (lo < hi) { const mid = Math.floor((lo + hi) / 2); if (power(d, mid, a) >= target) hi = mid; else lo = mid + 1; }
+    return hi;
+  }
+  function update() {
+    const d = +dEl.value, a = +aEl.value, target = +tEl.value, unit = design === "ind" ? "per group" : "pairs";
+    const nreq = requiredN(d, a, target);
+    const nmax = Math.max(40, Math.ceil(nreq * 2.2));
+    p1.xlim = [2, nmax]; p1.xlab = design === "ind" ? "Sample size (per group)" : "Number of pairs";
+    const xs = [], ys = [], steps = 140;
+    for (let i = 0; i <= steps; i++) { const n = Math.max(2, Math.round(2 + (nmax - 2) * i / steps)); xs.push(n); ys.push(power(d, n, a)); }
+    p1.clear().frame();
+    p1.hline(target, { dash: [6, 4], color: COL.muted });
+    p1.vline(nreq, { color: COL.plum, dash: [4, 3], width: 2 });
+    p1.line(xs, ys, { color: COL.blue, width: 3 });
+    p1.points([nreq], [power(d, nreq, a)], { color: COL.plum, r: 6, alpha: 1 });
+    p1.text("n = " + nreq, nreq, 0.1, { color: COL.plum, bold: true, halo: true, align: "left" });
+    document.getElementById("req").innerHTML = "You need <strong>" + nreq.toLocaleString() + " " + unit + "</strong>" +
+      (design === "ind" ? " (" + (2 * nreq).toLocaleString() + " in total)" : "") +
+      " for " + Math.round(target * 100) + "% power to detect d = " + d.toFixed(2) + " with α = " + String(a).replace(/^0/, "") + (tails === 1 ? " (one-sided)." : " (two-sided).");
+    // sensitivity
+    const n = +nEl.value;
+    document.getElementById("nfix-hint").textContent = unit;
+    const df = dfOf(n), tc = tcrit(n, a);
+    const dcrit = design === "ind" ? tc * Math.sqrt(2 / n) : tc / Math.sqrt(n);
+    let lo = 0, hi = 5;
+    for (let i = 0; i < 50; i++) { const mid = (lo + hi) / 2; if (power(mid, n, a) < target) lo = mid; else hi = mid; }
+    const dpow = hi;
+    p2.clear().frame();
+    p2.hline(target, { dash: [6, 4], color: COL.muted });
+    p2.fn(x => power(x, n, a), { color: COL.teal, width: 3, n: 120 });
+    p2.vline(dcrit, { color: COL.plum, dash: [4, 3], width: 2 });
+    p2.vline(dpow, { color: COL.teal, dash: [4, 3], width: 2 });
+    p2.text("d = " + dcrit.toFixed(2) + " (p < α)", Math.min(dcrit, 1.1), 0.92, { color: COL.plum, bold: true, halo: true });
+    document.getElementById("dcrit").textContent = "|d| ≥ " + dcrit.toFixed(2);
+    document.getElementById("d80").textContent = "d ≥ " + dpow.toFixed(2);
+  }
+  p1.onresize = update; p2.onresize = update;
+  update();
+})();
+</script>
+</body>
+</html>

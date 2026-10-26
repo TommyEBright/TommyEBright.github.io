@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCMC Playground · MRes Stats Lab</title>
+<link rel="stylesheet" href="assets/lab.css">
+</head>
+<body>
+<main class="wrap">
+  <header class="lab-head">
+    <span class="badge">Stage 8</span>
+    <h1>MCMC playground: random walk → HMC → NUTS</h1>
+    <p>Watch the samplers that brms and Stan use to explore a posterior. Every path you see comes from a real run, computed live in your browser.</p>
+  </header>
+  <div class="predict" role="note">
+    <strong>Predict first.</strong> The default target is a long, narrow ridge: two strongly correlated parameters, which is very common in regression models. A <em>random-walk</em> sampler takes blind random steps. <em>NUTS</em> rolls a particle across the surface using its slope (the gradient). Which will map the whole ridge faster for the same amount of computation?
+    <details class="reveal"><summary>Check your prediction</summary><div>NUTS (and well-tuned HMC). The random walk must take small steps or most proposals are rejected, so it shuffles slowly along the ridge and its draws are highly autocorrelated (low ESS). HMC and NUTS use the gradient to travel along the ridge in one long, smooth trajectory. Press <em>Race</em> below to measure the difference in effective samples per 1,000 evaluations. With only two parameters the gap is moderate. With the hundreds of parameters in a typical multilevel model the random walk becomes hopeless, while HMC and NUTS still work. That is why Stan and brms use NUTS.</div></details>
+  </div>
+
+  <div class="grid two">
+    <section class="card" aria-labelledby="main-h">
+      <h2 id="main-h">Posterior surface (darker = more probable)</h2>
+      <div class="plot" id="main" style="height:460px"></div>
+      <div class="legend">
+        <span style="--c:#a85d00">current trajectory / proposal</span>
+        <span style="--c:#0071bc">samples (one colour per chain)</span>
+        <span style="--c:#d40000">divergent transition</span>
+      </div>
+      <p id="status" aria-live="polite" style="margin:6px 0 0;font-size:0.92rem;min-height:2.6em"></p>
+    </section>
+    <section class="card" aria-labelledby="ctrl-h">
+      <h2 id="ctrl-h">Controls</h2>
+      <div class="controls">
+        <div class="control">
+          <label for="target">Posterior (target)</label>
+          <select id="target">
+            <option value="corr" selected>Correlated ridge (ρ = .95)</option>
+            <option value="banana">Banana (curved ridge)</option>
+            <option value="funnel">Neal's funnel (hierarchical models)</option>
+            <option value="bimodal">Two separate modes</option>
+            <option value="bmi">Real: BMI ~ steps (raw predictor)</option>
+            <option value="bmic">Real: BMI ~ steps (centred predictor)</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Sampler</label>
+          <div class="seg" id="sampler" role="group" aria-label="Sampler">
+            <button type="button" data-value="rwm" aria-pressed="false">Random walk</button>
+            <button type="button" data-value="hmc" aria-pressed="false">HMC</button>
+            <button type="button" data-value="nuts" aria-pressed="true">NUTS</button>
+          </div>
+        </div>
+        <div class="control">
+          <label for="eps"><span id="eps-lab">Step size ε</span> <output id="eps-out"></output></label>
+          <input type="range" id="eps" min="-3.5" max="0.7" step="0.01" value="-1.2">
+        </div>
+        <div class="control" id="L-box">
+          <label for="L">Leapfrog steps per trajectory (L) <output id="L-out"></output></label>
+          <input type="range" id="L" min="1" max="80" step="1" value="20">
+        </div>
+        <div class="grid halves">
+          <div class="control"><label>Chains</label>
+            <div class="seg" id="chains" role="group" aria-label="Number of chains">
+              <button type="button" data-value="1" aria-pressed="true">1</button>
+              <button type="button" data-value="4" aria-pressed="false">4</button>
+            </div>
+          </div>
+          <div class="control"><label for="speed">Speed <output id="speed-out"></output></label><input type="range" id="speed" min="1" max="5" step="1" value="2"></div>
+        </div>
+        <div class="row">
+          <button class="btn" type="button" id="play">▶ Play</button>
+          <button class="btn secondary" type="button" id="step">Step</button>
+          <button class="btn secondary" type="button" id="reset">Reset</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="grid three" style="margin-top:12px">
+    <section class="card"><h2>Trace plot (parameter 1)</h2><div class="plot" id="trace" style="height:180px"></div><p style="font-size:0.8rem;margin:4px 0 0;color:#4a5a62">Good chains look like a "fuzzy caterpillar" and overlap each other.</p></section>
+    <section class="card"><h2>Draws for parameter 1 vs the true posterior</h2><div class="plot" id="hist" style="height:180px"></div><p style="font-size:0.8rem;margin:4px 0 0;color:#4a5a62">The histogram should match the dashed curve.</p></section>
+    <section class="card"><h2>Diagnostics</h2>
+      <div class="tbl-wrap"><table class="tbl" aria-live="polite"><tbody id="diag"></tbody></table></div>
+      <p style="font-size:0.8rem;margin:4px 0 0;color:#4a5a62">The first 10% of each chain is dropped as warm-up. Aim for R̂ &lt; 1.01, ESS &gt; 400 and 0 divergences.</p>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:12px" aria-labelledby="race-h">
+    <h2 id="race-h">Race: equal computing budget</h2>
+    <p style="margin:0 0 8px;font-size:0.92rem">Runs each sampler with 4 chains, using its own current settings, until it has spent 20,000 model evaluations (density or gradient). Which gives the most <strong>effective</strong> samples? (ESS can be larger than the number of draws when successive draws are negatively correlated, which well-tuned HMC sometimes achieves. Stan reports the same.)</p>
+    <button class="btn teal" type="button" id="race">Race the three samplers</button>
+    <div class="tbl-wrap" style="margin-top:10px"><table class="tbl"><thead><tr><th>Sampler</th><th>Settings</th><th>Draws</th><th>R̂ (worst)</th><th>ESS (worst)</th><th>ESS per 1,000 evals</th><th>Divergences</th></tr></thead><tbody id="race-out"><tr><td colspan="7" style="text-align:left;color:#4a5a62">Press the button to run.</td></tr></tbody></table></div>
+  </section>
+
+  <section class="card" style="margin-top:12px" aria-labelledby="tasks-h">
+    <h2 id="tasks-h">Guided tasks</h2>
+    <ol style="margin:0;padding-left:1.2rem">
+      <li><strong>Random walk on the ridge.</strong> Choose <em>Random walk</em>, speed 2. Most proposals (orange lines) that leave the ridge are rejected. Raise the step size: does the acceptance rate fall? Lower it: do the samples crawl? Look at the trace plot.</li>
+      <li><strong>HMC.</strong> Switch to <em>HMC</em> and watch a trajectory (speed 1). With L too small the particle barely moves; with L very large it can loop back on itself and waste computation.</li>
+      <li><strong>NUTS.</strong> Switch to <em>NUTS</em>. It doubles the trajectory forwards or backwards until the path starts to turn back on itself (a "U-turn"), then picks a point from the path. You no longer choose L.</li>
+      <li><strong>Real data.</strong> Choose <em>BMI ~ steps (raw)</em>. The intercept and slope are correlated at −0.97 because the intercept is BMI at 0 steps/day, far outside the data. Now choose <em>centred</em>: the ridge becomes a round blob. Centring predictors makes sampling easier, which is one reason brms centres them internally. Press <em>Race</em> on both versions and compare NUTS's ESS per 1,000 evaluations.</li>
+      <li><strong>Why NUTS beats fixed-length HMC.</strong> On the <em>centred</em> BMI target, race the samplers with HMC at its default ε = 0.3 and L = 20. A trajectory of length 0.3 × 20 = 6 is almost exactly one full orbit of this posterior (2π ≈ 6.3), so HMC keeps returning to where it started: tiny ESS and a bad R̂. NUTS stops each trajectory at the U-turn, so it never needs you to choose L.</li>
+      <li><strong>Divergences.</strong> Choose <em>Neal's funnel</em> with NUTS and step size ≈ 0.4. Red crosses mark divergent transitions where the simulation blew up in the narrow neck. In brms you would raise <span class="kbd">adapt_delta</span> (smaller steps) or reparameterise the model (non-centred).</li>
+      <li><strong>Multimodality and R̂.</strong> Choose <em>Two separate modes</em>, 4 chains. Each chain gets stuck in one mode. Watch R̂ climb far above 1.01: this is why we run several chains from different starting points.</li>
+    </ol>
+  </section>
+
+  <section class="card" style="margin-top:12px" aria-labelledby="idea-h">
+    <h2 id="idea-h">The big ideas in one minute</h2>
+    <div class="grid three">
+      <div><h3>MCMC</h3><p style="margin:0;font-size:0.92rem">A Markov chain wanders through parameter space, spending time in each region in proportion to its posterior probability. Collect the positions and you have draws from the posterior. Summaries such as the mean, the 95% interval and P(b &lt; 0) are computed from the draws.</p></div>
+      <div><h3>Hamiltonian Monte Carlo</h3><p style="margin:0;font-size:0.92rem">Treat the negative log posterior as a landscape. Give a frictionless particle a random flick (momentum) and simulate its path using the gradient (leapfrog steps of size ε). Physics carries it far along ridges, and energy conservation means almost every move is accepted.</p></div>
+      <div><h3>NUTS</h3><p style="margin:0;font-size:0.92rem">The No-U-Turn Sampler (Hoffman &amp; Gelman, 2014) chooses the path length automatically by building the trajectory in both directions until it starts to double back. During warm-up, Stan also tunes ε and rescales each parameter. NUTS is brms's default.</p></div>
+    </div>
+  </section>
+  <p class="foot">MRes Stats Lab · The BMI posterior is the normal approximation from the JASP Data Library regression (intercept 29.58, SE 1.41; slope −0.65, SE 0.16; correlation −0.97), shown after Stan-style rescaling of each parameter. Divergence = energy error &gt; 1000, as in Stan.</p>
+</main>
+<script src="assets/lab.js"></script>
+<script>
+(function () {
+  "use strict";
+  const { R, S, Plot, COL, bindRange, seg } = Lab;
+  const $ = id => document.getElementById(id);
+
+  /* ---------------- targets ---------------- */
+  function gauss2(rho) {
+    const k = 1 / (1 - rho * rho);
+    return th => {
+      const [x, y] = th;
+      return [-0.5 * k * (x * x - 2 * rho * x * y + y * y), [-k * (x - rho * y), -k * (y - rho * x)]];
+    };
+  }
+  const BMI = { m1: 29.578, s1: 1.412, m2: -0.6547, s2: 0.1583, rho: -0.966 };
+  const BMIc = { m1: 23.939, s1: 0.3655, m2: -0.6547, s2: 0.1583 };
+  const TARGETS = {
+    corr: { name: "Correlated ridge", lpg: gauss2(0.95), view: [[-3.6, 3.6], [-3.6, 3.6]], labs: ["θ₁", "θ₂"],
+      starts: [[-2.2, -1.4], [2.2, 1.4], [1.4, 2.2], [-1.4, -2.2]], eps: { rwm: 0.4, hmc: 0.15, nuts: 0.3 } },
+    banana: { name: "Banana", view: [[-5, 5], [-2.5, 8]], labs: ["θ₁", "θ₂"],
+      lpg: th => { const [x, y] = th, a2 = 1.6 * 1.6, b = 0.5, s2 = 0.36, u = y - b * (x * x - a2);
+        return [-x * x / (2 * a2) - u * u / (2 * s2), [-x / a2 + (u / s2) * 2 * b * x, -u / s2]]; },
+      starts: [[-3.5, 6], [3.5, 6], [0, -2], [0.5, 3]], eps: { rwm: 0.5, hmc: 0.12, nuts: 0.15 } },
+    funnel: { name: "Neal's funnel", view: [[-8, 8], [-5, 5]], labs: ["θ (group effect)", "log τ (group SD)"],
+      lpg: th => { const [x, v] = th, ev = Math.exp(-v);
+        return [-v * v / (2 * 2.25) - 0.5 * x * x * ev - 0.5 * v, [-x * ev, -v / 2.25 + 0.5 * x * x * ev - 0.5]]; },
+      starts: [[-4, 3], [4, 3], [0.5, -1], [-0.5, 0]], eps: { rwm: 0.6, hmc: 0.2, nuts: 0.25 } },
+    bimodal: { name: "Two modes", view: [[-4.5, 4.5], [-4.5, 4.5]], labs: ["θ₁", "θ₂"],
+      lpg: th => { const [x, y] = th, s2 = 0.36;
+        const l1 = -((x + 2) ** 2 + (y + 2) ** 2) / (2 * s2), l2 = -((x - 2) ** 2 + (y - 2) ** 2) / (2 * s2);
+        const m = Math.max(l1, l2), w1 = Math.exp(l1 - m), w2 = Math.exp(l2 - m), z = w1 + w2;
+        return [m + Math.log(z / 2), [(-(x + 2) * w1 - (x - 2) * w2) / (s2 * z), (-(y + 2) * w1 - (y - 2) * w2) / (s2 * z)]]; },
+      starts: [[-2.5, -1.5], [2.5, 1.5], [-1.5, -2.5], [1.5, 2.5]], eps: { rwm: 0.5, hmc: 0.15, nuts: 0.2 } },
+    bmi: { name: "BMI ~ steps (raw)", lpg: gauss2(BMI.rho), view: [[-3.6, 3.6], [-3.6, 3.6]], labs: ["Intercept (BMI at 0 steps)", "Slope (BMI per 1,000 steps)"],
+      fx: z => (BMI.m1 + BMI.s1 * z).toFixed(1), fy: z => (BMI.m2 + BMI.s2 * z).toFixed(2),
+      starts: [[-2.2, 1.4], [2.2, -1.4], [1.4, -2.2], [-1.4, 2.2]], eps: { rwm: 0.4, hmc: 0.15, nuts: 0.3 } },
+    bmic: { name: "BMI ~ steps (centred)", lpg: gauss2(0), view: [[-3.6, 3.6], [-3.6, 3.6]], labs: ["Intercept (BMI at mean steps)", "Slope (BMI per 1,000 steps)"],
+      fx: z => (BMIc.m1 + BMIc.s1 * z).toFixed(1), fy: z => (BMIc.m2 + BMIc.s2 * z).toFixed(2),
+      starts: [[-2.6, -2.4], [2.6, 2.4], [2.4, -2.6], [-2.4, 2.6]], eps: { rwm: 1.2, hmc: 0.3, nuts: 0.5 } },
+  };
+  function safeLpg(T, th) {
+    const out = T.lpg(th);
+    if (!isFinite(out[0]) || !isFinite(out[1][0]) || !isFinite(out[1][1])) return [-Infinity, [0, 0]];
+    return out;
+  }
+
+  /* ---------------- samplers ---------------- */
+  const DMAX = 1000, MAXDEPTH = 8;
+  function leapfrog(T, th, r, g, e) {
+    const rh0 = r[0] + 0.5 * e * g[0], rh1 = r[1] + 0.5 * e * g[1];
+    const th1 = [th[0] + e * rh0, th[1] + e * rh1];
+    const [lp1, g1] = safeLpg(T, th1);
+    return [th1, [rh0 + 0.5 * e * g1[0], rh1 + 0.5 * e * g1[1]], g1, lp1];
+  }
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1];
+  function rwmStep(T, ch, e) {
+    const prop = [ch.th[0] + e * R.norm(), ch.th[1] + e * R.norm()];
+    const [lp, g] = safeLpg(T, prop);
+    const accept = Math.log(R.unif()) < lp - ch.lp;
+    return { kind: "rwm", from: ch.th, prop, accept, th: accept ? prop : ch.th, lp: accept ? lp : ch.lp, g: accept ? g : ch.g, evals: 1, div: false };
+  }
+  function hmcStep(T, ch, e, L) {
+    const r0 = [R.norm(), R.norm()];
+    let th = ch.th, r = r0, g = ch.g, lp = ch.lp;
+    const H0 = -ch.lp + 0.5 * dot(r0, r0);
+    const path = [th];
+    let div = false, evals = 0;
+    for (let i = 0; i < L; i++) {
+      [th, r, g, lp] = leapfrog(T, th, r, g, e); evals++;
+      path.push(th);
+      if (!isFinite(lp) || (-lp + 0.5 * dot(r, r)) - H0 > DMAX) { div = true; break; }
+    }
+    const H1 = -lp + 0.5 * dot(r, r);
+    const accept = !div && Math.log(R.unif()) < H0 - H1;
+    return { kind: "hmc", from: ch.th, r0, fwd: path, bwd: [ch.th], order: path.slice(1).map(p => [1, p]), accept,
+      th: accept ? th : ch.th, lp: accept ? lp : ch.lp, g: accept ? g : ch.g, evals, div, divAt: div ? th : null };
+  }
+  function nutsStep(T, ch, e) {
+    const r0 = [R.norm(), R.norm()];
+    const joint0 = ch.lp - 0.5 * dot(r0, r0);
+    const logu = joint0 - R.exp();
+    const fwd = [ch.th], bwd = [ch.th], order = [];
+    let evals = 0, div = false, divAt = null;
+    function build(th, r, g, v, j) {
+      if (j === 0) {
+        const [th1, r1, g1, lp1] = leapfrog(T, th, r, g, v * e); evals++;
+        (v === 1 ? fwd : bwd).push(th1); order.push([v, th1]);
+        const joint = lp1 - 0.5 * dot(r1, r1);
+        const s = isFinite(joint) && (logu - DMAX) < joint;
+        if (!s) { div = true; divAt = th1; }
+        return { thM: th1, rM: r1, gM: g1, thP: th1, rP: r1, gP: g1, th: th1, lp: lp1, g: g1, n: (logu <= joint) ? 1 : 0, s };
+      }
+      const t = build(th, r, g, v, j - 1);
+      if (t.s) {
+        let t2;
+        if (v === -1) { t2 = build(t.thM, t.rM, t.gM, v, j - 1); t.thM = t2.thM; t.rM = t2.rM; t.gM = t2.gM; }
+        else { t2 = build(t.thP, t.rP, t.gP, v, j - 1); t.thP = t2.thP; t.rP = t2.rP; t.gP = t2.gP; }
+        if (t.n + t2.n > 0 && R.unif() < t2.n / (t.n + t2.n)) { t.th = t2.th; t.lp = t2.lp; t.g = t2.g; }
+        const d = [t.thP[0] - t.thM[0], t.thP[1] - t.thM[1]];
+        t.s = t2.s && dot(d, t.rM) >= 0 && dot(d, t.rP) >= 0;
+        t.n += t2.n;
+      }
+      return t;
+    }
+    let thM = ch.th, rM = r0, gM = ch.g, thP = ch.th, rP = r0, gP = ch.g;
+    let thN = ch.th, lpN = ch.lp, gN = ch.g, n = 1, s = true, j = 0;
+    while (s && j < MAXDEPTH) {
+      const v = R.unif() < 0.5 ? -1 : 1;
+      let t;
+      if (v === -1) { t = build(thM, rM, gM, v, j); thM = t.thM; rM = t.rM; gM = t.gM; }
+      else { t = build(thP, rP, gP, v, j); thP = t.thP; rP = t.rP; gP = t.gP; }
+      if (t.s && R.unif() < t.n / n) { thN = t.th; lpN = t.lp; gN = t.g; }
+      n += t.n;
+      const d = [thP[0] - thM[0], thP[1] - thM[1]];
+      s = t.s && dot(d, rM) >= 0 && dot(d, rP) >= 0;
+      j++;
+    }
+    return { kind: "nuts", from: ch.th, r0, fwd, bwd, order, accept: thN !== ch.th, th: thN, lp: lpN, g: gN, evals, div, divAt, depth: j };
+  }
+
+  /* ---------------- state ---------------- */
+  const st = {
+    target: "corr", sampler: "nuts", nchains: 1, speed: 2,
+    eps: { rwm: 0.4, hmc: 0.15, nuts: 0.3 }, L: 20,
+    chains: [], playing: false, anim: null, evals: 0, divs: [], transitions: 0, accepts: 0, depthSum: 0,
+  };
+  const main = new Plot("#main", { xlab: "θ₁", ylab: "θ₂", margin: { l: 54, b: 44, r: 12, t: 10 }, label: "Posterior density with sampler trajectories and draws" });
+  const trace = new Plot("#trace", { xlab: "Iteration", ylab: "θ₁", margin: { l: 46, b: 36, t: 8 }, label: "Trace plot of parameter 1" });
+  const hist = new Plot("#hist", { xlab: "θ₁", ylab: "", margin: { l: 16, b: 36, t: 8 }, label: "Histogram of draws with the true marginal density" });
+  let bgCanvas = null, sampleLayer = null, marginal = null;
+  const T = () => TARGETS[st.target];
+
+  function makeChains() {
+    const t = T();
+    st.chains = [];
+    for (let c = 0; c < st.nchains; c++) {
+      const th = (st.nchains === 1 ? t.starts[0] : t.starts[c]).slice();
+      const [lp, g] = safeLpg(t, th);
+      st.chains.push({ th, lp, g, xs: [th[0]], ys: [th[1]], col: COL.chains[c] });
+    }
+    st.evals = 0; st.divs = []; st.transitions = 0; st.accepts = 0; st.depthSum = 0; st.anim = null;
+  }
+  function setTarget(name) {
+    st.target = name;
+    const t = T();
+    st.eps = Object.assign({}, t.eps);
+    main.xlim = t.view[0].slice(); main.ylim = t.view[1].slice();
+    main.xlab = t.labs[0]; main.ylab = t.labs[1];
+    main.xfmt = t.fx || Lab.fmtTick; main.yfmt = t.fy || Lab.fmtTick;
+    trace.ylab = t.labs[0].split(" (")[0]; trace.yfmt = t.fx || Lab.fmtTick;
+    hist.xlab = t.labs[0]; hist.xfmt = t.fx || Lab.fmtTick;
+    syncEps();
+    buildBackground();
+    makeChains();
+    redrawSamples();
+    render();
+  }
+  function buildBackground() {
+    const t = T();
+    main.resize();
+    const W = Math.max(1, Math.round(main.pw)), H = Math.max(1, Math.round(main.ph)), step = 3;
+    const nx = Math.ceil(W / step), ny = Math.ceil(H / step);
+    const vals = new Float64Array(nx * ny);
+    let mx = -Infinity;
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      const x = main.xlim[0] + (i + 0.5) / nx * (main.xlim[1] - main.xlim[0]);
+      const y = main.ylim[1] - (j + 0.5) / ny * (main.ylim[1] - main.ylim[0]);
+      const v = t.lpg([x, y])[0]; vals[j * nx + i] = v; if (v > mx) mx = v;
+    }
+    bgCanvas = document.createElement("canvas"); bgCanvas.width = nx; bgCanvas.height = ny;
+    const bctx = bgCanvas.getContext("2d"), img = bctx.createImageData(nx, ny);
+    const marg = new Float64Array(nx);
+    for (let k = 0; k < nx * ny; k++) {
+      const p = isFinite(vals[k]) ? Math.exp(vals[k] - mx) : 0;
+      marg[k % nx] += p;
+      const q = Math.pow(p, 0.6);
+      img.data[4 * k] = Math.round(255 - q * (255 - 0)); img.data[4 * k + 1] = Math.round(255 - q * (255 - 61)); img.data[4 * k + 2] = Math.round(255 - q * (255 - 80));
+      img.data[4 * k + 3] = Math.round(30 + q * 170);
+    }
+    bctx.putImageData(img, 0, 0);
+    // marginal density of parameter 1 over the visible window (numerical integration of the grid)
+    const dx = (main.xlim[1] - main.xlim[0]) / nx, tot = marg.reduce((a, b) => a + b, 0) * dx;
+    marginal = { xs: Array.from({ length: nx }, (_, i) => main.xlim[0] + (i + 0.5) * dx), ys: Array.from(marg, v => v / tot) };
+    sampleLayer = document.createElement("canvas");
+    sampleLayer.width = main.canvas.width; sampleLayer.height = main.canvas.height;
+  }
+  function plotSample(ctx, x, y, col) {
+    if (x < main.xlim[0] || x > main.xlim[1] || y < main.ylim[0] || y > main.ylim[1]) return;
+    const dpr = main.canvas.width / main.w;
+    ctx.fillStyle = col; ctx.globalAlpha = 0.55;
+    ctx.beginPath(); ctx.arc(main.X(x) * dpr, main.Y(y) * dpr, 2.2 * dpr, 0, 2 * Math.PI); ctx.fill();
+  }
+  function redrawSamples() {
+    if (!sampleLayer) return;
+    const ctx = sampleLayer.getContext("2d");
+    ctx.clearRect(0, 0, sampleLayer.width, sampleLayer.height);
+    for (const ch of st.chains) for (let i = 0; i < ch.xs.length; i++) plotSample(ctx, ch.xs[i], ch.ys[i], ch.col);
+  }
+
+  /* ---------------- stepping ---------------- */
+  function transition(ci) {
+    const t = T(), ch = st.chains[ci], e = st.eps[st.sampler];
+    const tr = st.sampler === "rwm" ? rwmStep(t, ch, e) : st.sampler === "hmc" ? hmcStep(t, ch, e, st.L) : nutsStep(t, ch, e);
+    tr.ci = ci;
+    return tr;
+  }
+  function commit(tr) {
+    const ch = st.chains[tr.ci];
+    ch.th = tr.th; ch.lp = tr.lp; ch.g = tr.g;
+    ch.xs.push(tr.th[0]); ch.ys.push(tr.th[1]);
+    st.evals += tr.evals; st.transitions++;
+    if (tr.accept) st.accepts++;
+    if (tr.depth) st.depthSum += tr.depth;
+    if (tr.div) st.divs.push(tr.divAt || tr.th);
+    plotSample(sampleLayer.getContext("2d"), tr.th[0], tr.th[1], ch.col);
+  }
+  let nextChain = 0;
+  function tick() {
+    if (st.anim) {
+      const a = st.anim, per = st.speed === 1 ? 1 : 4;
+      if (a.tr.kind === "rwm") { a.frame++; if (a.frame > (st.speed === 1 ? 24 : 8)) { commit(a.tr); describe(a.tr); st.anim = null; } }
+      else { a.shown = Math.min(a.tr.order.length, a.shown + per); if (a.shown >= a.tr.order.length) { a.hold++; if (a.hold > (st.speed === 1 ? 20 : 6)) { commit(a.tr); describe(a.tr); st.anim = null; } } }
+      return;
+    }
+    if (st.speed <= 2) {
+      const tr = transition(nextChain); nextChain = (nextChain + 1) % st.nchains;
+      st.anim = { tr, shown: 0, hold: 0, frame: 0 };
+    } else if (st.speed === 3) {
+      const tr = transition(nextChain); nextChain = (nextChain + 1) % st.nchains;
+      commit(tr); st.last = tr; describe(tr);
+    } else {
+      const k = st.speed === 4 ? 6 : 40;
+      let tr;
+      for (let i = 0; i < k; i++) for (let c = 0; c < st.nchains; c++) { tr = transition(c); commit(tr); }
+      st.last = tr; describe(tr);
+    }
+  }
+  function describe(tr) {
+    let msg;
+    if (tr.kind === "rwm") msg = "Random walk: proposed a jump of size " + Math.hypot(tr.prop[0] - tr.from[0], tr.prop[1] - tr.from[1]).toFixed(2) + " → " + (tr.accept ? "accepted ✔" : "rejected ✘ (the chain stays put, and the old value is counted again)");
+    else if (tr.kind === "hmc") msg = "HMC: " + tr.evals + " leapfrog steps → " + (tr.div ? "DIVERGED (energy blew up)" : tr.accept ? "end point accepted ✔" : "rejected ✘");
+    else msg = "NUTS: tree depth " + tr.depth + " (" + tr.evals + " leapfrog steps) before the path made a U-turn" + (tr.div ? " → DIVERGENCE detected" : "") + "; one point on the path is kept as the next draw.";
+    $("status").textContent = msg;
+  }
+
+  /* ---------------- rendering ---------------- */
+  function render() {
+    main.clear().frame({ grid: false });
+    const c = main.ctx;
+    if (bgCanvas) { c.save(); c.imageSmoothingEnabled = true; c.drawImage(bgCanvas, main.m.l, main.m.t, main.pw, main.ph); c.restore(); }
+    if (sampleLayer) { c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(sampleLayer, 0, 0); c.restore(); }
+    // divergences
+    st.divs.forEach(p => main.clip(cx => { const x = main.X(p[0]), y = main.Y(p[1]); cx.strokeStyle = "#d40000"; cx.lineWidth = 2.5; cx.beginPath(); cx.moveTo(x - 5, y - 5); cx.lineTo(x + 5, y + 5); cx.moveTo(x + 5, y - 5); cx.lineTo(x - 5, y + 5); cx.stroke(); }));
+    // current chain heads
+    st.chains.forEach(ch => main.points([ch.th[0]], [ch.th[1]], { color: ch.col, r: 6, alpha: 1, stroke: "#fff" }));
+    const a = st.anim;
+    if (a) {
+      const tr = a.tr;
+      if (tr.kind === "rwm") {
+        const col = a.frame > 3 ? (tr.accept ? COL.teal : COL.plum) : COL.amber;
+        main.line([tr.from[0], tr.prop[0]], [tr.from[1], tr.prop[1]], { color: col, width: 2.5 });
+        main.points([tr.prop[0]], [tr.prop[1]], { color: col, r: 5, alpha: 1, stroke: "#fff" });
+      } else {
+        const shown = tr.order.slice(0, a.shown);
+        const f = [tr.from], b = [tr.from];
+        shown.forEach(([v, p]) => (v === 1 ? f : b).push(p));
+        main.line(f.map(p => p[0]), f.map(p => p[1]), { color: COL.amber, width: 2.5 });
+        main.line(b.map(p => p[0]), b.map(p => p[1]), { color: COL.amber, width: 2.5, dash: [5, 3] });
+        main.points(shown.map(s => s[1][0]), shown.map(s => s[1][1]), { color: COL.amber, r: 2.5, alpha: 1 });
+        // initial momentum arrow
+        const sc = 0.35 * (main.xlim[1] - main.xlim[0]) / 7;
+        main.line([tr.from[0], tr.from[0] + tr.r0[0] * sc], [tr.from[1], tr.from[1] + tr.r0[1] * sc], { color: COL.navy, width: 3 });
+        if (a.shown >= tr.order.length) {
+          main.points([tr.th[0]], [tr.th[1]], { color: tr.accept ? COL.teal : COL.plum, r: 8, alpha: 1, stroke: "#fff" });
+          if (tr.div && tr.divAt) main.points([tr.divAt[0]], [tr.divAt[1]], { color: "#d40000", r: 7, alpha: 1 });
+        }
+      }
+    }
+  }
+  let diagTimer = 0;
+  function renderSide() {
+    const warm = ch => Math.floor(ch.xs.length * 0.1);
+    const post = st.chains.map(ch => ({ x: ch.xs.slice(warm(ch)), y: ch.ys.slice(warm(ch)) }));
+    // trace
+    const N = 300;
+    const maxLen = Math.max(...st.chains.map(ch => ch.xs.length));
+    const start = Math.max(0, maxLen - N);
+    trace.xlim = [start, Math.max(start + 20, maxLen)]; trace.ylim = main.xlim.slice();
+    trace.clear().frame();
+    st.chains.forEach(ch => { const xs = [], ys = []; for (let i = start; i < ch.xs.length; i++) { xs.push(i); ys.push(ch.xs[i]); } trace.line(xs, ys, { color: ch.col, width: 1.3, alpha: 0.9 }); });
+    // histogram
+    const all = post.flatMap(p => p.x);
+    hist.xlim = main.xlim.slice();
+    const nb = 36, w = (hist.xlim[1] - hist.xlim[0]) / nb, counts = new Array(nb).fill(0);
+    all.forEach(v => { const k = Math.floor((v - hist.xlim[0]) / w); if (k >= 0 && k < nb) counts[k]++; });
+    const dens = counts.map(c => all.length ? c / (all.length * w) : 0);
+    hist.ylim = [0, Math.max(...marginal.ys, ...dens) * 1.1 || 1];
+    hist.clear().frame({ yaxis: false });
+    dens.forEach((d, k) => hist.rect(hist.xlim[0] + k * w + w * 0.05, 0, hist.xlim[0] + (k + 1) * w - w * 0.05, d, { fill: "#7fb3d9" }));
+    hist.line(marginal.xs, marginal.ys, { color: COL.navy, width: 2.5, dash: [6, 4] });
+    // diagnostics (throttled)
+    if (++diagTimer % 10 !== 1 && st.playing) return;
+    const ok = post[0].x.length >= 20;
+    const rh1 = ok && st.nchains > 1 ? S.rhat(post.map(p => p.x)) : NaN, rh2 = ok && st.nchains > 1 ? S.rhat(post.map(p => p.y)) : NaN;
+    const e1 = ok ? S.ess(post.map(p => p.x)) : NaN, e2 = ok ? S.ess(post.map(p => p.y)) : NaN;
+    const draws = post.reduce((s, p) => s + p.x.length, 0);
+    const cell = (v, good) => '<td style="color:' + (v === null ? "#4a5a62" : good ? "#00857e" : "#8b3556") + ';font-weight:bold">' + (v === null ? "–" : v) + "</td>";
+    const rows = [
+      ["Draws kept", "<td>" + draws.toLocaleString() + "</td>"],
+      [st.sampler === "nuts" ? "Mean tree depth" : "Acceptance rate", st.sampler === "nuts" ? "<td>" + (st.transitions ? (st.depthSum / st.transitions).toFixed(2) : "–") + "</td>" : "<td>" + (st.transitions ? (100 * st.accepts / st.transitions).toFixed(0) + "%" : "–") + "</td>"],
+      ["Model evaluations", "<td>" + st.evals.toLocaleString() + "</td>"],
+      ["R̂ θ₁ / θ₂", st.nchains === 1 ? '<td style="color:#4a5a62">use 4 chains</td>' : cell(isNaN(rh1) ? null : rh1.toFixed(3) + " / " + rh2.toFixed(3), rh1 < 1.01 && rh2 < 1.01)],
+      ["ESS θ₁ / θ₂", cell(isNaN(e1) ? null : Math.round(e1) + " / " + Math.round(e2), e1 > 400 && e2 > 400)],
+      ["ESS per 1,000 evals", "<td>" + (isNaN(e1) || !st.evals ? "–" : (1000 * Math.min(e1, e2) / st.evals).toFixed(1)) + "</td>"],
+      ["Divergences", cell(String(st.divs.length), st.divs.length === 0)],
+    ];
+    $("diag").innerHTML = rows.map(r => "<tr><td>" + r[0] + "</td>" + r[1] + "</tr>").join("");
+  }
+  function loop() {
+    if (!st.playing) return;
+    tick(); render(); renderSide();
+    requestAnimationFrame(loop);
+  }
+
+  /* ---------------- controls ---------------- */
+  const epsEl = $("eps"), LEl = bindRange("L", v => v, v => { st.L = v; });
+  function syncEps() { epsEl.value = Math.log(st.eps[st.sampler]); $("eps-out").textContent = st.eps[st.sampler].toFixed(3); $("eps-lab").textContent = st.sampler === "rwm" ? "Proposal step size (SD)" : "Leapfrog step size ε"; $("L-box").style.display = st.sampler === "hmc" ? "" : "none"; }
+  epsEl.addEventListener("input", () => { st.eps[st.sampler] = Math.exp(+epsEl.value); $("eps-out").textContent = st.eps[st.sampler].toFixed(3); });
+  bindRange("speed", v => ["", "watch each step", "watch trajectories", "fast", "faster", "fastest"][v], v => { st.speed = v; st.anim = null; });
+  $("target").addEventListener("change", e => setTarget(e.target.value));
+  seg("sampler", v => { st.sampler = v; st.anim = null; syncEps(); resetRun(); });
+  seg("chains", v => { st.nchains = +v; resetRun(); });
+  function resetRun() { makeChains(); redrawSamples(); render(); renderSide(); $("status").textContent = ""; }
+  $("reset").onclick = resetRun;
+  const playBtn = $("play");
+  playBtn.onclick = () => { st.playing = !st.playing; playBtn.textContent = st.playing ? "❚❚ Pause" : "▶ Play"; if (st.playing) loop(); else renderSide(); };
+  $("step").onclick = () => {
+    if (st.playing) return;
+    const tr = transition(nextChain); nextChain = (nextChain + 1) % st.nchains;
+    commit(tr); describe(tr);
+    // show the whole finished trajectory for this one transition
+    st.anim = { tr, shown: tr.order ? tr.order.length : 0, hold: 0, frame: 99 };
+    render(); renderSide();
+    st.anim = null;
+  };
+  $("race").onclick = () => {
+    const t = T(), out = [];
+    const budget = 20000;
+    for (const sm of ["rwm", "hmc", "nuts"]) {
+      const chains = t.starts.map(s => { const th = s.slice(), [lp, g] = safeLpg(t, th); return { th, lp, g, xs: [], ys: [] }; });
+      let evals = 0, divs = 0;
+      const e = st.eps[sm];
+      while (evals < budget) {
+        for (const ch of chains) {
+          const tr = sm === "rwm" ? rwmStep(t, ch, e) : sm === "hmc" ? hmcStep(t, ch, e, st.L) : nutsStep(t, ch, e);
+          ch.th = tr.th; ch.lp = tr.lp; ch.g = tr.g; ch.xs.push(tr.th[0]); ch.ys.push(tr.th[1]);
+          evals += tr.evals; if (tr.div) divs++;
+        }
+      }
+      const post = chains.map(ch => { const w = Math.floor(ch.xs.length * 0.1); return { x: ch.xs.slice(w), y: ch.ys.slice(w) }; });
+      const ess = Math.min(S.ess(post.map(p => p.x)), S.ess(post.map(p => p.y)));
+      const rh = Math.max(S.rhat(post.map(p => p.x)), S.rhat(post.map(p => p.y)));
+      const draws = post.reduce((s, p) => s + p.x.length, 0);
+      const settings = sm === "rwm" ? "step " + e.toFixed(2) : sm === "hmc" ? "ε " + e.toFixed(2) + ", L " + st.L : "ε " + e.toFixed(2) + ", auto L";
+      out.push("<tr><td>" + { rwm: "Random walk", hmc: "HMC", nuts: "NUTS" }[sm] + "</td><td>" + settings + "</td><td>" + draws.toLocaleString() + "</td><td style='color:" + (rh < 1.01 ? "#00857e" : "#8b3556") + "'>" + rh.toFixed(3) + "</td><td>" + Math.round(ess).toLocaleString() + "</td><td><strong>" + (1000 * ess / evals).toFixed(1) + "</strong></td><td style='color:" + (divs ? "#8b3556" : "#00857e") + "'>" + divs + "</td></tr>");
+    }
+    $("race-out").innerHTML = out.join("");
+  };
+  main.onresize = () => { buildBackground(); redrawSamples(); render(); };
+  trace.onresize = renderSide; hist.onresize = renderSide;
+  setTarget("corr");
+  renderSide();
+})();
+</script>
+</body>
+</html>

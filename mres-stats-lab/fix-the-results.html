@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fix the Results · MRes Stats Lab</title>
+<link rel="stylesheet" href="assets/lab.css">
+<style>
+  .para { font-size: 1.05rem; line-height: 2; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
+  .ph { font: inherit; color: inherit; background: transparent; border: 0; border-bottom: 2px dotted #9fb1ba; padding: 1px 2px; margin: 0; cursor: pointer; text-align: left; display: inline; line-height: inherit; border-radius: 4px; }
+  .ph:hover { background: var(--blue-wash); }
+  .ph[aria-pressed="true"] { background: var(--amber-wash); border-bottom: 3px solid var(--amber); }
+  .ph.hit { background: #d9f0ed; border-bottom: 3px solid var(--teal); }
+  .ph.miss { background: var(--plum-wash); border-bottom: 3px solid var(--plum); }
+  .ph.false { background: #fff1dc; border-bottom: 3px dashed var(--amber); }
+  .ph.okay { border-bottom-color: transparent; }
+  ol.expl li { margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="lab-head">
+    <span class="badge">Stage 7</span>
+    <h1>Fix the results paragraph</h1>
+    <p>Each paragraph reports a real JASP Data Library analysis and contains several reporting errors. Click every phrase you think is wrong, then press <em>Check</em>.</p>
+  </header>
+  <div class="row" style="margin-bottom:10px">
+    <div class="seg" id="ex" role="group" aria-label="Exercise">
+      <button type="button" data-value="0" aria-pressed="true">1 · t-test</button>
+      <button type="button" data-value="1" aria-pressed="false">2 · Factorial ANOVA</button>
+      <button type="button" data-value="2" aria-pressed="false">3 · Regression</button>
+    </div>
+  </div>
+  <section class="card" aria-labelledby="ctx-h">
+    <h2 id="ctx-h">Context</h2>
+    <p id="ctx" style="margin:0"></p>
+  </section>
+  <section style="margin-top:12px" aria-labelledby="para-h">
+    <h2 id="para-h" class="sr-only">Paragraph to correct</h2>
+    <p class="para" id="para"></p>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" type="button" id="check">Check my answers</button>
+      <button class="btn secondary" type="button" id="clear">Clear</button>
+      <button class="btn teal" type="button" id="model">Show a model answer</button>
+    </div>
+    <div class="legend" style="margin-top:8px"><span style="--c:#00857e">error you found</span><span style="--c:#8b3556">error you missed</span><span style="--c:#a85d00">flagged, but actually fine</span></div>
+  </section>
+  <section class="card" style="margin-top:12px" id="results" hidden aria-live="polite">
+    <h2 id="score"></h2>
+    <ol class="expl" id="expl"></ol>
+  </section>
+  <section class="card" style="margin-top:12px" id="model-box" hidden>
+    <h2>A model answer</h2>
+    <p id="model-text" style="margin:0"></p>
+  </section>
+  <p class="foot">MRes Stats Lab · All numbers were checked in R against the JASP Data Library files (Moore, McCabe &amp; Craig datasets).</p>
+</main>
+<script src="assets/lab.js"></script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const EX = [
+    {
+      ctx: "JASP Data Library → T-Tests → <strong>Directed Reading Activities</strong>. A class of 21 pupils took part in Directed Reading Activities for eight weeks; a control class of 23 did not. Outcome: Degree of Reading Power (drp) score.",
+      parts: [
+        ["Pupils who received Directed Reading Activities (M = 51.48) scored higher than controls (M = 41.52),", "Report the spread and size of each group as well as the mean: M = 51.48, SD = 11.01, n = 21 versus M = 41.52, SD = 17.15, n = 23."],
+        [" t = 2.27,", "The degrees of freedom are missing. A t statistic is uninterpretable without them: t(42) = 2.27 for Student's test, or t(37.86) = 2.31 for Welch's."],
+        [" p = .029.", null],
+        [" This proves that the intervention works", "Statistics never prove anything, and one study with p = .029 is modest evidence. Say the data <em>provide evidence for</em> or are <em>consistent with</em> an improvement."],
+        [" and means there is only a 2.9% probability that the null hypothesis is true.", "This is the most common p-value misconception (Lakens 1.7). p is the probability of data at least this extreme <em>if</em> H0 were true. It is not the probability that H0 is true."],
+        [" The effect was large (d = 0.68),", "Give the confidence interval: d = 0.68, 95% CI [0.07, 1.29]. The interval runs from a negligible effect to a very large one, so calling it 'large' hides the uncertainty."],
+        [" and a Bayesian t-test (BF₁₀ = 2.22) provided strong evidence for H1.", "BF₁₀ = 2.22 means the data are about twice as likely under H1 as under H0. That is anecdotal, not strong. Also state the prior (default Cauchy, r = 0.707) so readers know what H1 was."],
+        [" Levene's test was not significant (p = .13), so equal variances were assumed.", "Better practice is to use Welch's t-test by default rather than letting a (low-powered) Levene test decide. A non-significant Levene test is not evidence that variances are equal. Here the SDs are 11.0 and 17.2."],
+      ],
+      model: "Pupils who received Directed Reading Activities (M = 51.48, SD = 11.01, n = 21) scored higher on the Degree of Reading Power test than pupils in the control class (M = 41.52, SD = 17.15, n = 23). Welch's t-test showed that the mean difference of 9.95 points, 95% CI [1.23, 18.68], was statistically significant, t(37.86) = 2.31, p = .026, d = 0.68, 95% CI [0.07, 1.29]. The interval is wide, so the data are compatible with anything from a negligible to a very large benefit. A Bayesian independent-samples t-test with a default Cauchy prior (r = 0.707) gave BF₁₀ = 2.22: the data were about twice as likely under the alternative as under the null, which is only anecdotal evidence. Because the classes were not randomly assigned, the difference may also reflect pre-existing differences between classes.",
+    },
+    {
+      ctx: "JASP Data Library → ANOVA → <strong>Heart Rate</strong>. Heart rate (bpm) after 6 minutes of exercise in 800 participants: 200 female runners, 200 female sedentary controls, 200 male runners, 200 male controls.",
+      parts: [
+        ["A 2 (gender) × 2 (group: runners, sedentary) between-subjects ANOVA was conducted on heart rate after 6 minutes of exercise.", null],
+        [" There was a highly significant main effect of group, F = 695.65, p = .000,", "Three problems. p-values are not 'more' or 'less' significant. The degrees of freedom are missing: F(1, 796). And p can never be exactly zero, so write p < .001."],
+        [" ηp² = .47, which shows that being a runner causes a lower heart rate.", "Participants were not randomly assigned to be runners, so this is an observational comparison and cannot show causation. Runners may differ in age, body mass or genetics. Say runners <em>had</em> lower heart rates."],
+        [" Men had lower heart rates than women, F(1, 796) = 185.98, p < .001, ηp² = .19.", null],
+        [" The interaction was significant, F(1, 796) = 7.41, p = .007, ηp² = .009, so the effect of running is completely different for men and women.", "This overstates the interaction. Running was associated with a large difference in both genders: 32 bpm lower in women and 26 bpm lower in men. The interaction is a small (ηp² = .009) difference in the size of that gap. Describe the simple effects with their CIs."],
+        [" All assumptions were met.", "Not true. Levene's test was significant, F(3, 796) = 5.56, p < .001: male runners vary less (SD = 12.5) than the other groups (SDs 16.0–17.1). With large, equal group sizes ANOVA is fairly robust, but say so. In Stage 8, a brms model that lets the SD differ by group is clearly preferred by LOO."],
+      ],
+      model: "A 2 (gender) × 2 (group: runners, sedentary) between-subjects ANOVA was conducted on heart rate after 6 minutes of exercise (n = 200 per cell). Runners had lower heart rates than sedentary participants, F(1, 796) = 695.65, p < .001, ηp² = .47, and men had lower heart rates than women, F(1, 796) = 185.98, p < .001, ηp² = .19. A small gender × group interaction, F(1, 796) = 7.41, p = .007, ηp² = .009, indicated that the difference between runners and controls was larger in women (148.0 vs 116.0 bpm; difference = 32.0 bpm) than in men (130.0 vs 104.0 bpm; difference = 26.0 bpm). Levene's test indicated unequal variances, F(3, 796) = 5.56, p < .001, mainly because male runners varied less (SD = 12.5) than the other groups (SDs 16.0–17.1); with equal and large group sizes the F-test is robust to this. Because group membership was not randomised, these differences cannot be interpreted causally.",
+    },
+    {
+      ctx: "JASP Data Library → Regression → <strong>Physical Activity and BMI</strong>. 100 participants: average daily steps (PA, in thousands of steps) and body mass index (BMI, kg/m²). Cross-sectional data.",
+      parts: [
+        ["A linear regression showed that physical activity significantly predicted BMI,", null],
+        [" b = −0.65, t(98) = −4.13, p < .001,", "Add the confidence interval for the slope: b = −0.65, 95% CI [−0.97, −0.34]. The CI tells readers how precisely the slope is estimated, which the p-value does not."],
+        [" R² = .15, meaning physical activity explains most of the differences in BMI.", "15% is not 'most': 85% of the variance in BMI is unexplained by steps. Report R² = .15 (adjusted R² = .14) and say activity explained about 15% of the variance."],
+        [" For every extra step per day, BMI decreased by 0.65 kg/m².", "Two errors. The units: PA is in <em>thousands</em> of steps, so the slope is per 1,000 steps/day. And 'decreased' implies change within a person; these are cross-sectional data. Say BMI was 0.65 kg/m² <em>lower on average</em> for each additional 1,000 steps/day."],
+        [" Therefore, walking more will reduce your BMI.", "A causal claim from observational, cross-sectional data. Reverse causation (people with higher BMI walk less) and confounding (age, health, occupation) are just as plausible. A randomised trial would be needed."],
+        [" The Shapiro–Wilk test was not significant (p = .29), proving that the residuals were normally distributed.", "The same logic as Stage 1: a non-significant test is not proof of the null. Describe what the Q-Q plot and residual plot show, e.g. 'the Q-Q plot showed no marked departure from normality and residuals showed no pattern against predicted values.'"],
+      ],
+      model: "Average daily steps were negatively associated with BMI, b = −0.65 kg/m² per 1,000 steps/day, 95% CI [−0.97, −0.34], t(98) = −4.13, p < .001, standardised β = −.39. Physical activity explained about 15% of the variance in BMI (R² = .15, adjusted R² = .14). The residuals-versus-predicted plot showed no systematic pattern, the Q-Q plot showed no marked departure from normality, and no case was unduly influential (maximum Cook's D = 0.17). Adding a quadratic term did not clearly improve the model, F(1, 97) = 3.37, p = .070. Because the data are cross-sectional and observational, the association should not be interpreted as a causal effect of walking on BMI.",
+    },
+  ];
+  let cur = 0, checked = false;
+  function render() {
+    const e = EX[cur];
+    $("ctx").innerHTML = e.ctx;
+    $("para").innerHTML = e.parts.map((p, i) => '<button type="button" class="ph" aria-pressed="false" data-i="' + i + '">' + p[0] + "</button>").join("");
+    $("para").querySelectorAll(".ph").forEach(b => b.onclick = () => { if (checked) return; b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") === "true" ? "false" : "true"); });
+    $("results").hidden = true; $("model-box").hidden = true; checked = false;
+  }
+  $("check").onclick = () => {
+    const e = EX[cur]; checked = true;
+    let found = 0, total = 0, falseFlags = 0;
+    const items = [];
+    $("para").querySelectorAll(".ph").forEach(b => {
+      const i = +b.dataset.i, err = e.parts[i][1], flagged = b.getAttribute("aria-pressed") === "true";
+      if (err) { total++; if (flagged) { found++; b.className = "ph hit"; } else b.className = "ph miss"; items.push("<li><strong>" + (flagged ? "✔ Found" : "✘ Missed") + ":</strong> “" + e.parts[i][0].trim() + "”<br>" + err + "</li>"); }
+      else if (flagged) { falseFlags++; b.className = "ph false"; items.push("<li><strong>This one is fine:</strong> “" + e.parts[i][0].trim() + "”</li>"); }
+      else b.className = "ph okay";
+    });
+    $("score").textContent = "You found " + found + " of " + total + " problems" + (falseFlags ? " (and flagged " + falseFlags + " phrase" + (falseFlags > 1 ? "s" : "") + " that " + (falseFlags > 1 ? "were" : "was") + " fine)" : "") + ".";
+    $("expl").innerHTML = items.join("");
+    $("results").hidden = false;
+  };
+  $("clear").onclick = render;
+  $("model").onclick = () => { $("model-text").textContent = EX[cur].model; $("model-box").hidden = false; };
+  Lab.seg("ex", v => { cur = +v; render(); });
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bayes Factor Explorer · MRes Stats Lab</title>
+<link rel="stylesheet" href="assets/lab.css">
+</head>
+<body>
+<main class="wrap">
+  <header class="lab-head">
+    <span class="badge">Stage 4</span>
+    <h1>Bayesian t-test: prior, posterior and the Bayes factor</h1>
+    <p>Reproduces JASP's default Bayesian t-test (Cauchy prior on effect size δ). Change the prior and see how the evidence changes. Lakens, chapters 3 and 4.</p>
+  </header>
+  <div class="predict" role="note">
+    <strong>Predict first.</strong> In the JASP <em>Directed Reading Activities</em> data, the classical t-test gives p = .029. Is that strong evidence for an effect? Guess the Bayes factor BF<sub>10</sub> before you load the preset.
+    <details class="reveal"><summary>Check your prediction</summary><div>BF<sub>10</sub> = 2.22: the data are only about twice as likely under H1 as under H0, which is anecdotal evidence. A p-value just under .05 often goes with weak relative evidence (Lakens 1.5 and 3.1). The directional hypothesis δ &gt; 0, which the treatment was designed to test, gives BF<sub>+0</sub> = 4.33.</div></details>
+  </div>
+  <div class="grid two">
+    <section class="card" aria-labelledby="plot-h">
+      <h2 id="plot-h">Prior and posterior for effect size δ</h2>
+      <div class="plot" id="plot1" style="height:300px"></div>
+      <div class="legend">
+        <span style="--c:#8a9aa2">prior</span>
+        <span style="--c:#0071bc">posterior</span>
+        <span style="--c:#8b3556">density at δ = 0 (Savage–Dickey ratio)</span>
+      </div>
+      <div class="stats" style="margin-top:10px" aria-live="polite">
+        <div class="stat good"><div class="k" id="bf-k">BF₁₀</div><div class="v" id="bf">–</div></div>
+        <div class="stat"><div class="k" id="bf01-k">BF₀₁</div><div class="v" id="bf01">–</div></div>
+        <div class="stat"><div class="k">Evidence label*</div><div class="v" id="label" style="font-size:1rem">–</div></div>
+        <div class="stat"><div class="k">Posterior median δ [95% CrI]</div><div class="v" id="post" style="font-size:1rem">–</div></div>
+      </div>
+      <p style="font-size:0.8rem;color:#4a5a62;margin:6px 0 0">*Labels follow Lee &amp; Wagenmakers (2013). They are conventions, not rules: always report the number itself.</p>
+    </section>
+    <section class="card" aria-labelledby="ctrl-h">
+      <h2 id="ctrl-h">Data and prior</h2>
+      <div class="row" style="margin-bottom:8px">
+        <button class="btn secondary" type="button" data-preset="dra">Directed Reading</button>
+        <button class="btn secondary" type="button" data-preset="kr">Kitchen Rolls</button>
+        <button class="btn secondary" type="button" data-preset="wg">Weight Gain (paired)</button>
+      </div>
+      <div class="controls">
+        <div class="seg" id="design" role="group" aria-label="Design">
+          <button type="button" data-value="ind" aria-pressed="true">Independent</button>
+          <button type="button" data-value="one" aria-pressed="false">Paired / one-sample</button>
+        </div>
+        <div class="grid three">
+          <div class="control"><label for="t">t</label><input type="number" id="t" step="any" value="2.2666"></div>
+          <div class="control"><label for="n1" id="n1-lab">n₁</label><input type="number" id="n1" step="1" value="21"></div>
+          <div class="control" id="n2-box"><label for="n2">n₂</label><input type="number" id="n2" step="1" value="23"></div>
+        </div>
+        <div class="control">
+          <label for="r">Prior width r (Cauchy scale) <output id="r-out"></output></label>
+          <input type="range" id="r" min="0.05" max="2" step="0.001" value="0.707">
+          <div class="row" style="margin-top:4px">
+            <button class="btn secondary" type="button" data-r="0.707">Default 0.707</button>
+            <button class="btn secondary" type="button" data-r="1">Wide 1</button>
+            <button class="btn secondary" type="button" data-r="1.414">Ultrawide 1.414</button>
+          </div>
+        </div>
+        <div class="control">
+          <label>Alternative hypothesis</label>
+          <div class="seg" id="side" role="group" aria-label="Alternative hypothesis">
+            <button type="button" data-value="two" aria-pressed="true">δ ≠ 0</button>
+            <button type="button" data-value="plus" aria-pressed="false">δ &gt; 0</button>
+            <button type="button" data-value="minus" aria-pressed="false">δ &lt; 0</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="grid halves" style="margin-top:12px">
+    <section class="card" aria-labelledby="rob-h">
+      <h2 id="rob-h">Robustness check: does the conclusion depend on r?</h2>
+      <div class="plot" id="plot2" style="height:240px"></div>
+      <p style="font-size:0.85rem;margin:6px 0 0">JASP draws this plot when you tick <em>Bayes factor robustness check</em>. Report it whenever your conclusion could depend on the prior.</p>
+    </section>
+    <section class="card" aria-labelledby="odds-h">
+      <h2 id="odds-h">Bayes factors are not posterior probabilities</h2>
+      <p style="margin:0 0 8px;font-size:0.92rem">Posterior odds = Bayes factor × prior odds. How plausible was H1 <em>before</em> you saw the data?</p>
+      <div class="control"><label for="prior-odds">Prior odds H1 : H0</label>
+        <select id="prior-odds"><option value="1">1 : 1 (no preference)</option><option value="0.333333">1 : 3 (sceptical)</option><option value="0.1">1 : 10 (surprising claim)</option><option value="0.01">1 : 100 (extraordinary claim)</option></select></div>
+      <div class="stats" style="margin-top:10px" aria-live="polite">
+        <div class="stat"><div class="k">Posterior odds H1 : H0</div><div class="v" id="po">–</div></div>
+        <div class="stat good"><div class="k">P(H1 | data)</div><div class="v" id="ph1">–</div></div>
+      </div>
+      <p style="font-size:0.85rem;margin:8px 0 0">The same Bayes factor can leave a sceptic unconvinced. That is why you report the BF (the evidence) and let readers bring their own prior odds (Lakens 4.3, misunderstanding 1).</p>
+    </section>
+  </div>
+  <p class="foot">MRes Stats Lab · Exact JZS Bayes factor computed by numerical integration over the noncentral t likelihood; matches JASP and R's <span class="kbd">BayesFactor::ttestBF()</span>. Lakens (2022) <a href="https://lakens.github.io/statistical_inferences/04-bayes.html" target="_blank" rel="noopener">ch. 4 Bayesian statistics (opens in a new tab)</a>.</p>
+</main>
+<script src="assets/lab.js"></script>
+<script>
+(function () {
+  const { D, Plot, COL, bindRange, seg } = Lab;
+  const $ = id => document.getElementById(id);
+  let design = "ind", side = "two";
+  const p1 = new Plot("#plot1", { xlim: [-2, 2], ylim: [0, 1], xlab: "Effect size δ", ylab: "Density", label: "Prior and posterior distributions for effect size" });
+  const p2 = new Plot("#plot2", { xlim: [0, 2], ylim: [-1, 2], xlab: "Prior width r", ylab: "BF₁₀ (log scale)", label: "Bayes factor as a function of prior width",
+    yfmt: v => { const b = Math.pow(10, v); return b >= 1 ? (+b.toPrecision(2)).toString() : "1/" + (+(1 / b).toPrecision(2)); } });
+  const rEl = bindRange("r", v => v.toFixed(3), update);
+  const designSet = seg("design", v => { design = v; layout(); update(); });
+  const sideSet = seg("side", v => { side = v; update(); });
+  ["t", "n1", "n2"].forEach(id => $(id).addEventListener("input", update));
+  $("prior-odds").addEventListener("change", update);
+  document.querySelectorAll("[data-r]").forEach(b => b.onclick = () => { rEl.value = b.dataset.r; rEl.dispatchEvent(new Event("input")); });
+  const presets = { dra: { d: "ind", t: 2.2666, n1: 21, n2: 23 }, kr: { d: "ind", t: -0.7536, n1: 48, n2: 54 }, wg: { d: "one", t: 10.841, n1: 16 } };
+  document.querySelectorAll("[data-preset]").forEach(b => b.onclick = () => {
+    const p = presets[b.dataset.preset];
+    design = p.d;
+    document.querySelectorAll("#design button").forEach(x => x.setAttribute("aria-pressed", x.dataset.value === p.d ? "true" : "false"));
+    $("t").value = p.t; $("n1").value = p.n1; if (p.n2) $("n2").value = p.n2;
+    layout(); update();
+  });
+  function layout() {
+    $("n2-box").style.visibility = design === "ind" ? "visible" : "hidden";
+    $("n1-lab").textContent = design === "ind" ? "n₁" : "n (pairs)";
+  }
+
+  function lik(t, df, neff) { return d => D.dnct(t, df, d * Math.sqrt(neff)); }
+  function priorDen(r) {
+    if (side === "two") return d => D.dcauchy(d, r);
+    if (side === "plus") return d => d >= 0 ? 2 * D.dcauchy(d, r) : 0;
+    return d => d <= 0 ? 2 * D.dcauchy(d, r) : 0;
+  }
+  function setup() {
+    const t = +$("t").value, n1 = Math.round(+$("n1").value), n2 = Math.round(+$("n2").value);
+    const df = design === "ind" ? n1 + n2 - 2 : n1 - 1;
+    const neff = design === "ind" ? n1 * n2 / (n1 + n2) : n1;
+    if (!(df >= 1 && neff > 0 && isFinite(t))) return null;
+    const c = t / Math.sqrt(neff);
+    const half = 14 * Math.sqrt(1 / neff + c * c / (2 * df)) + 0.05;
+    // grid nodes sit on multiples of h so that δ = 0 is always a node (exact one-sided truncation)
+    const h = 2 * half / 1600, i0 = Math.floor((c - half) / h), i1 = Math.ceil((c + half) / h);
+    const N = i1 - i0, xs = new Float64Array(N + 1), Ls = new Float64Array(N + 1);
+    const L = lik(t, df, neff);
+    for (let i = 0; i <= N; i++) { xs[i] = (i0 + i) * h; Ls[i] = L(xs[i]); }
+    return { t, df, neff, L, xs, Ls, h, L0: L(0) };
+  }
+  function marginal(S, r) { // trapezoid rule over the region where the prior is non-zero
+    const pr = priorDen(r);
+    let acc = 0, prev = null;
+    for (let i = 0; i < S.xs.length; i++) {
+      const x = S.xs[i];
+      if ((side === "plus" && x < -1e-12) || (side === "minus" && x > 1e-12)) { prev = null; continue; }
+      const f = S.Ls[i] * (Math.abs(x) < 1e-12 && side !== "two" ? 2 * D.dcauchy(0, r) : pr(x));
+      if (prev !== null) acc += 0.5 * (f + prev) * S.h;
+      prev = f;
+    }
+    return acc;
+  }
+  function label(bf) {
+    const b = bf >= 1 ? bf : 1 / bf, dir = bf >= 1 ? "for H1" : "for H0";
+    const l = b < 1.0001 ? "none" : b < 3 ? "anecdotal" : b < 10 ? "moderate" : b < 30 ? "strong" : b < 100 ? "very strong" : "extreme";
+    return l === "none" ? "no evidence either way" : l + " " + dir;
+  }
+  function fmtBF(b) { return b >= 1000 ? b.toExponential(2) : b >= 10 ? b.toFixed(1) : b.toFixed(2); }
+  function update() {
+    const S = setup();
+    if (!S) return;
+    const r = +rEl.value;
+    const m1 = marginal(S, r);
+    const bf = m1 / S.L0;
+    const sub = side === "two" ? "10" : side === "plus" ? "+0" : "−0";
+    $("bf-k").textContent = "BF" + (sub === "10" ? "₁₀" : sub === "+0" ? "₊₀" : "₋₀");
+    $("bf01-k").textContent = "BF" + (sub === "10" ? "₀₁" : sub === "+0" ? "₀₊" : "₀₋") + " = 1 / BF";
+    $("bf").textContent = fmtBF(bf);
+    $("bf01").textContent = fmtBF(1 / bf);
+    $("label").textContent = label(bf);
+    // posterior summaries
+    const pr = priorDen(r);
+    const post = Array.from(S.xs, (x, i) => S.Ls[i] * pr(x) / m1);
+    let cdf = 0, q = {};
+    for (let i = 1; i < post.length; i++) {
+      const prev = cdf;
+      cdf += 0.5 * (post[i] + post[i - 1]) * S.h;
+      for (const p of [0.025, 0.5, 0.975]) if (q[p] === undefined && cdf >= p) q[p] = S.xs[i - 1] + (p - prev) / (cdf - prev) * S.h;
+    }
+    $("post").textContent = (q[0.5] ?? NaN).toFixed(2) + " [" + (q[0.025] ?? NaN).toFixed(2) + ", " + (q[0.975] ?? NaN).toFixed(2) + "]";
+    // plot 1
+    const lo = Math.min(-2, (q[0.025] ?? 0) - 0.6), hi = Math.max(2, (q[0.975] ?? 0) + 0.6);
+    p1.xlim = [lo, hi];
+    const grid = [], prior = [], posterior = [];
+    for (let i = 0; i <= 400; i++) { const x = lo + (hi - lo) * i / 400; grid.push(x); prior.push(pr(x)); posterior.push(S.L(x) * pr(x) / m1); }
+    const ymax = Math.max(...posterior, ...prior) * 1.12;
+    p1.ylim = [0, ymax];
+    p1.clear().frame();
+    p1.line(grid, prior, { color: "#8a9aa2", width: 2.5, dash: [7, 5] });
+    p1.line(grid, posterior, { color: COL.blue, width: 3, fill: COL.blue, fillAlpha: 0.12 });
+    p1.vline(0, { dash: [3, 4], width: 1 });
+    const pr0 = side === "two" ? pr(0) : 2 * D.dcauchy(0, r), po0 = S.L0 * pr0 / m1;
+    p1.points([0, 0], [pr0, po0], { color: [COL.muted, COL.plum], r: 6, alpha: 1, stroke: "#fff" });
+    p1.text("prior at 0 ÷ posterior at 0 = " + fmtBF(pr0 / po0), lo + (hi - lo) * 0.02, ymax * 0.93, { color: COL.plum, bold: true, halo: true });
+    // plot 2 robustness
+    const rs = [], lbf = [];
+    for (let i = 0; i <= 80; i++) { const rr = 0.05 + (2 - 0.05) * i / 80; rs.push(rr); lbf.push(Math.log10(marginal(S, rr) / S.L0)); }
+    const ylo = Math.min(-1, Math.floor(Math.min(...lbf) * 2) / 2), yhi = Math.max(1, Math.ceil(Math.max(...lbf) * 2) / 2);
+    p2.ylim = [ylo, yhi];
+    p2.yticks = [-2, -1.477, -1, -0.477, 0, 0.477, 1, 1.477, 2, 3, 4, 5, 6].filter(v => v >= ylo && v <= yhi);
+    p2.clear().frame();
+    p2.hline(0, { width: 1.5 });
+    p2.line(rs, lbf, { color: COL.teal, width: 3 });
+    const marks = [[0.707, "default"], [1, "wide"], [1.414, "ultrawide"]];
+    marks.forEach(([rr]) => p2.points([rr], [Math.log10(marginal(S, rr) / S.L0)], { color: COL.muted, r: 4, alpha: 1 }));
+    p2.points([r], [Math.log10(bf)], { color: COL.plum, r: 6, alpha: 1, stroke: "#fff" });
+    // posterior odds
+    const po = bf * +$("prior-odds").value;
+    $("po").textContent = po >= 1 ? fmtBF(po) + " : 1" : "1 : " + fmtBF(1 / po);
+    $("ph1").textContent = (100 * po / (1 + po)).toFixed(1) + "%";
+  }
+  p1.onresize = update; p2.onresize = update;
+  layout(); update();
+})();
+</script>
+</body>
+</html>

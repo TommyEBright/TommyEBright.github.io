@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LOO Lab · MRes Stats Lab</title>
+<link rel="stylesheet" href="assets/lab.css">
+</head>
+<body>
+<main class="wrap">
+  <header class="lab-head">
+    <span class="badge">Stage 8</span>
+    <h1>Model comparison with leave-one-out cross-validation (LOO)</h1>
+    <p>Bayesian regression fitted in your browser, with PSIS-LOO and Pareto k computed by the same algorithm as R's <span class="kbd">loo</span> package. Drag points to see what changes.</p>
+  </header>
+  <div class="predict" role="note">
+    <strong>Predict first.</strong> A more complex model (here, adding x²) <em>always</em> fits the data you have at least as well. Will it also always predict a <em>new</em> person better?
+    <details class="reveal"><summary>Check your prediction</summary><div>No. LOO estimates out-of-sample prediction: for each person, how well does a model fitted to everyone else predict them? Extra parameters that only chase noise make predictions <em>worse</em>. The score is elpd (expected log predictive density); higher is better. Compare models using the difference in elpd and its standard error, not R².</div></details>
+  </div>
+  <div class="row" style="margin-bottom:10px">
+    <div class="seg" id="data" role="group" aria-label="Dataset">
+      <button type="button" data-value="sim" aria-pressed="true">Simulated: training hours → VO₂max (n = 30)</button>
+      <button type="button" data-value="jasp" aria-pressed="false">JASP Data Library: steps → BMI (n = 100)</button>
+    </div>
+  </div>
+  <div class="grid two">
+    <section class="card" aria-labelledby="sc-h">
+      <h2 id="sc-h">Data and posterior mean fits (drag any point)</h2>
+      <div class="plot" id="scatter" style="height:360px"></div>
+      <div class="legend">
+        <span style="--c:#8a9aa2">y ~ 1</span><span style="--c:#003d50">y ~ x</span><span style="--c:#a85d00">y ~ x + x²</span>
+        <span style="--c:#0071bc">k̂ &lt; 0.5</span><span style="--c:#d08a00">0.5–0.7</span><span style="--c:#8b3556">k̂ &gt; 0.7 (unreliable)</span>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn plum" type="button" id="outlier">Create an influential outlier</button>
+        <button class="btn secondary" type="button" id="reset">Reset data</button>
+      </div>
+      <p id="msg" aria-live="polite" style="font-size:0.9rem;margin:6px 0 0"></p>
+    </section>
+    <section class="card" aria-labelledby="cmp-h">
+      <h2 id="cmp-h">loo_compare()</h2>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Model</th><th>elpd_diff</th><th>se_diff</th><th>elpd_loo</th><th>p_loo</th><th>max k̂</th></tr></thead><tbody id="cmp"></tbody></table></div>
+      <div class="note" id="verdict" style="margin-top:10px;font-size:0.92rem" aria-live="polite"></div>
+      <details class="reveal" style="margin-top:8px"><summary>How to read this table</summary><div style="font-size:0.9rem">
+        <p style="margin:0 0 6px"><strong>elpd_loo</strong>: total log predictive density for left-out people (higher is better). <strong>p_loo</strong>: the effective number of parameters; if it is much larger than the real number of parameters, something is wrong. <strong>elpd_diff</strong>: each model compared with the best (top) model, with the <strong>se_diff</strong> of that difference.</p>
+        <p style="margin:0">A common rule of thumb (Vehtari and colleagues): if |elpd_diff| &lt; 4 the models predict about equally well, so prefer the simpler or more theoretically sensible one. Otherwise, a difference several times larger than se_diff is convincing.</p>
+      </div></details>
+    </section>
+  </div>
+  <div class="grid halves" style="margin-top:12px">
+    <section class="card" aria-labelledby="pw-h">
+      <h2 id="pw-h">Pointwise elpd for <span id="selname">y ~ x</span></h2>
+      <div class="seg" id="model" role="group" aria-label="Model to inspect" style="margin-bottom:8px">
+        <button type="button" data-value="0" aria-pressed="false">y ~ 1</button>
+        <button type="button" data-value="1" aria-pressed="true">y ~ x</button>
+        <button type="button" data-value="2" aria-pressed="false">y ~ x + x²</button>
+      </div>
+      <div class="plot" id="pw" style="height:200px"></div>
+      <p style="font-size:0.82rem;margin:4px 0 0;color:#4a5a62">Bars = PSIS-LOO estimate per person; dots = exact LOO (refitting without that person). They agree when k̂ is small.</p>
+    </section>
+    <section class="card" aria-labelledby="k-h">
+      <h2 id="k-h">Pareto k̂ diagnostic</h2>
+      <div class="plot" id="kplot" style="height:240px"></div>
+      <p style="font-size:0.82rem;margin:4px 0 0;color:#4a5a62">k̂ &gt; 0.7 means that leaving this person out changes the posterior so much that the fast PSIS approximation cannot be trusted. Use <span class="kbd">loo(fit, moment_match = TRUE)</span> or <span class="kbd">reloo = TRUE</span>, or rethink the model (for example, Student-t errors).</p>
+    </section>
+  </div>
+  <section class="card" style="margin-top:12px" aria-labelledby="tasks-h">
+    <h2 id="tasks-h">Try these</h2>
+    <ol style="margin:0;padding-left:1.2rem">
+      <li>With the simulated data, which model wins? Is the quadratic model's advantage (or disadvantage) larger than 4 elpd, and larger than its se_diff?</li>
+      <li>Load the <strong>JASP steps → BMI</strong> data. Compare the table with the brms output on the Canvas page: elpd_loo = −273.7 (SE 6.7) for <span class="kbd">BMI ~ PA</span>, with the linear and quadratic models within 1 elpd of each other and the intercept-only model about 7.6 behind. Small differences are expected, because brms uses slightly different priors and its own random draws.</li>
+      <li>Press <strong>Create an influential outlier</strong>. Which person gets k̂ &gt; 0.7, and how does their pointwise elpd compare with everyone else's?</li>
+      <li>Drag a point from the middle of the x-range up and down. Its k̂ hardly changes, but dragging an edge point does change it. Why? (Think back to leverage in Stage 5.)</li>
+    </ol>
+  </section>
+  <p class="foot">MRes Stats Lab · Model: Gaussian linear regression with the standard non-informative prior p(β, σ²) ∝ 1/σ², 1,000 exact posterior draws. PSIS-LOO follows Vehtari, Gelman &amp; Gabry (2017) and Vehtari et al. (2024). The JASP data are loaded live from the JASP GitHub repository.</p>
+</main>
+<script src="assets/lab.js"></script>
+<script>
+(function () {
+  "use strict";
+  const { R, D, S, Plot, COL, seg } = Lab;
+  const $ = id => document.getElementById(id);
+  const SDRAWS = 1000;
+  const MODELS = ["y ~ 1", "y ~ x", "y ~ x + x²"], MCOL = ["#8a9aa2", COL.navy, COL.amber];
+
+  /* ---------- small linear algebra ---------- */
+  function inv(A) {
+    const n = A.length, M = A.map((r, i) => r.concat(Array.from({ length: n }, (_, j) => (i === j ? 1 : 0))));
+    for (let c = 0; c < n; c++) {
+      let p = c; for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+      [M[c], M[p]] = [M[p], M[c]];
+      const d = M[c][c]; for (let j = 0; j < 2 * n; j++) M[c][j] /= d;
+      for (let r = 0; r < n; r++) if (r !== c) { const f = M[r][c]; for (let j = 0; j < 2 * n; j++) M[r][j] -= f * M[c][j]; }
+    }
+    return M.map(r => r.slice(n));
+  }
+  function chol(A) {
+    const n = A.length, L = A.map(() => new Array(n).fill(0));
+    for (let i = 0; i < n; i++) for (let j = 0; j <= i; j++) {
+      let s = A[i][j]; for (let k = 0; k < j; k++) s -= L[i][k] * L[j][k];
+      L[i][j] = i === j ? Math.sqrt(Math.max(s, 1e-300)) : s / L[j][j];
+    }
+    return L;
+  }
+
+  /* ---------- PSIS (port of loo::psis) ---------- */
+  function gpdfit(x) { // x ascending, positive
+    const N = x.length, prior = 3, M = 30 + Math.floor(Math.sqrt(N));
+    const xstar = x[Math.floor(N / 4 + 0.5) - 1];
+    const theta = new Float64Array(M), l = new Float64Array(M);
+    for (let j = 0; j < M; j++) theta[j] = 1 / x[N - 1] + (1 - Math.sqrt(M / (j + 1 - 0.5))) / prior / xstar;
+    for (let j = 0; j < M; j++) {
+      let s = 0; for (let i = 0; i < N; i++) s += Math.log1p(-theta[j] * x[i]);
+      const k = s / N; l[j] = N * (Math.log(-theta[j] / k) - k - 1);
+    }
+    const lse = S.logSumExp(l);
+    let th = 0; for (let j = 0; j < M; j++) th += theta[j] * Math.exp(l[j] - lse);
+    let s = 0; for (let i = 0; i < N; i++) s += Math.log1p(-th * x[i]);
+    let k = s / N; const sigma = -k / th;
+    k = k * N / (N + 10) + 10 * 0.5 / (N + 10);
+    return { k, sigma };
+  }
+  function psis(logRatios) {
+    const n = logRatios.length, mx = Math.max(...logRatios);
+    const lw = Float64Array.from(logRatios, v => v - mx);
+    const M = Math.ceil(Math.min(0.2 * n, 3 * Math.sqrt(n)));
+    const idx = Array.from({ length: n }, (_, i) => i).sort((a, b) => lw[a] - lw[b]);
+    let khat = Infinity;
+    if (M >= 5) {
+      const tail = idx.slice(n - M), cutoff = lw[idx[n - M - 1]];
+      const tv = tail.map(i => lw[i]);
+      if (Math.abs(tv[tv.length - 1] - tv[0]) > 1e-15) {
+        const ec = Math.exp(cutoff);
+        const fit = gpdfit(tv.map(v => Math.exp(v) - ec));
+        khat = fit.k;
+        if (isFinite(fit.k) && fit.sigma > 0) {
+          tail.forEach((i, j) => { const p = (j + 0.5) / M; lw[i] = Math.log(fit.sigma * Math.expm1(-fit.k * Math.log1p(-p)) / fit.k + ec); });
+        }
+      }
+    }
+    for (let i = 0; i < n; i++) if (lw[i] > 0) lw[i] = 0;
+    const z = S.logSumExp(lw);
+    for (let i = 0; i < n; i++) lw[i] -= z;
+    return { lw, k: khat };
+  }
+
+  /* ---------- Bayesian linear regression with exact posterior draws ---------- */
+  function design(x, p) { return x.map(v => p === 1 ? [1] : p === 2 ? [1, v] : [1, v, v * v]); }
+  function fitModel(x, y, p) {
+    const n = x.length, X = design(x, p);
+    const XtX = Array.from({ length: p }, (_, i) => Array.from({ length: p }, (_, j) => X.reduce((s, r) => s + r[i] * r[j], 0)));
+    const Xty = Array.from({ length: p }, (_, i) => X.reduce((s, r, k) => s + r[i] * y[k], 0));
+    const V = inv(XtX), bhat = V.map(r => r.reduce((s, v, j) => s + v * Xty[j], 0));
+    const fit = X.map(r => r.reduce((s, v, j) => s + v * bhat[j], 0)), e = y.map((v, i) => v - fit[i]);
+    const rss = e.reduce((s, v) => s + v * v, 0), dfr = n - p, s2 = rss / dfr;
+    const h = X.map(r => { let s = 0; for (let i = 0; i < p; i++) for (let j = 0; j < p; j++) s += r[i] * V[i][j] * r[j]; return s; });
+    // exact LOO: posterior predictive for the left-out case is Student-t
+    const nu = dfr - 1;
+    const exact = e.map((ei, i) => {
+      const d = ei / (1 - h[i]), s2i = (rss - ei * ei / (1 - h[i])) / nu, sc = Math.sqrt(s2i / (1 - h[i]));
+      return Math.log(D.dt(d / sc, nu)) - Math.log(sc);
+    });
+    // posterior draws (fixed seed so the display is stable while dragging)
+    R.seed(4242 + p);
+    const Lc = chol(V), ll = Array.from({ length: n }, () => new Float64Array(SDRAWS));
+    for (let s = 0; s < SDRAWS; s++) {
+      const sig2 = dfr * s2 / R.chisq(dfr), sig = Math.sqrt(sig2);
+      const z = Array.from({ length: p }, () => R.norm());
+      const b = bhat.map((bh, i) => bh + sig * Lc[i].reduce((acc, v, j) => acc + v * z[j], 0));
+      for (let i = 0; i < n; i++) {
+        let mu = 0; for (let j = 0; j < p; j++) mu += X[i][j] * b[j];
+        const r = (y[i] - mu) / sig;
+        ll[i][s] = -0.5 * r * r - Math.log(sig) - 0.5 * Math.log(2 * Math.PI);
+      }
+    }
+    const elpd = new Float64Array(n), ks = new Float64Array(n), lpd = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      const { lw, k } = psis(Array.from(ll[i], v => -v));
+      let mx = -Infinity; const tmp = new Float64Array(SDRAWS);
+      for (let s = 0; s < SDRAWS; s++) { tmp[s] = lw[s] + ll[i][s]; if (tmp[s] > mx) mx = tmp[s]; }
+      let acc = 0; for (let s = 0; s < SDRAWS; s++) acc += Math.exp(tmp[s] - mx);
+      elpd[i] = mx + Math.log(acc); ks[i] = k;
+      lpd[i] = S.logSumExp(ll[i]) - Math.log(SDRAWS);
+    }
+    const sum = a => a.reduce((s, v) => s + v, 0);
+    const elpdLoo = sum(elpd);
+    return { p, bhat, elpd, ks, exact, elpdLoo, se: Math.sqrt(n * S.variance(Array.from(elpd))), pLoo: sum(lpd) - elpdLoo, exactLoo: sum(exact) };
+  }
+
+  /* ---------- data ---------- */
+  let dataset = "sim", x = [], y = [], orig = null, fits = [], sel = 1, jaspCache = null;
+  function simData() {
+    R.seed(31);
+    const xs = [], ys = [];
+    for (let i = 0; i < 30; i++) { const xi = 0.5 + 9 * R.unif(); xs.push(+xi.toFixed(2)); ys.push(+(38 + 1.6 * xi + R.norm(0, 4)).toFixed(1)); }
+    return { x: xs, y: ys, xlab: "Training (hours per week)", ylab: "VO₂max (ml/kg/min)" };
+  }
+  async function jaspData() {
+    if (jaspCache) return jaspCache;
+    const url = "https://raw.githubusercontent.com/jasp-stats/jasp-desktop/stable/Resources/Data%20Sets/Data%20Library/4.%20Regression/Physical%20Activity%20and%20BMI.csv";
+    const txt = await (await fetch(url)).text();
+    const rows = txt.trim().split(/\r?\n/).slice(1).map(l => l.split(","));
+    jaspCache = { x: rows.map(r => +r[1]), y: rows.map(r => +r[2]), xlab: "Average steps per day (thousands)", ylab: "BMI (kg/m²)" };
+    return jaspCache;
+  }
+  const sc = new Plot("#scatter", { label: "Scatterplot with model fits; points coloured by Pareto k" });
+  const pw = new Plot("#pw", { xlab: "Person", ylab: "elpd_i", margin: { l: 50, b: 36, t: 8 }, label: "Pointwise expected log predictive density" });
+  const kp = new Plot("#kplot", { xlab: "Person", ylab: "Pareto k̂", margin: { l: 50, b: 36, t: 8 }, label: "Pareto k diagnostic for each person" });
+  async function load(which) {
+    dataset = which;
+    let d;
+    try { d = which === "sim" ? simData() : await jaspData(); $("msg").textContent = ""; }
+    catch (err) { $("msg").textContent = "Could not load the JASP data (are you offline?). Showing the simulated data instead."; d = simData(); }
+    x = d.x.slice(); y = d.y.slice(); orig = { x: d.x.slice(), y: d.y.slice() };
+    sc.xlab = d.xlab; sc.ylab = d.ylab;
+    const rx = Math.max(...x) - Math.min(...x), ry = Math.max(...y) - Math.min(...y);
+    sc.xlim = [Math.min(...x) - 0.15 * rx, Math.max(...x) + 0.35 * rx]; sc.ylim = [Math.min(...y) - 0.45 * ry, Math.max(...y) + 0.45 * ry];
+    refit();
+  }
+  function refit() { fits = [1, 2, 3].map(p => fitModel(x, y, p)); draw(); }
+  function kcol(k) { return k > 0.7 ? COL.plum : k > 0.5 ? "#d08a00" : COL.blue; }
+  function draw() {
+    if (!fits.length) return;
+    const f = fits[sel], n = x.length;
+    sc.clear().frame();
+    fits.forEach((m, i) => sc.fn(v => m.bhat[0] + (m.p > 1 ? m.bhat[1] * v : 0) + (m.p > 2 ? m.bhat[2] * v * v : 0), { color: MCOL[i], width: i === sel ? 3.5 : 2, dash: i === 0 ? [6, 4] : [] }));
+    sc.points(x, y, { color: Array.from(f.ks, kcol), r: Array.from(f.ks, k => k > 0.7 ? 8 : 5.5), alpha: 0.9, stroke: "#fff" });
+    $("selname").textContent = MODELS[sel];
+    // pointwise
+    const lo = Math.min(...f.elpd, ...f.exact), hi = Math.max(...f.elpd, ...f.exact);
+    pw.xlim = [0, n + 1]; pw.ylim = [Math.min(lo * 1.08, lo - 0.5), Math.max(0, hi + 0.3)];
+    pw.clear().frame();
+    f.elpd.forEach((v, i) => pw.rect(i + 0.6, 0, i + 1.4, v, { fill: kcol(f.ks[i]), alpha: 0.75 }));
+    pw.hline(0, { width: 1 });
+    pw.points(Array.from({ length: n }, (_, i) => i + 1), f.exact, { color: COL.ink, r: 2.5, alpha: 1 });
+    // k-hat
+    kp.xlim = [0, n + 1]; kp.ylim = [Math.min(-0.2, Math.min(...f.ks) - 0.05), Math.max(1, Math.max(...f.ks) + 0.1)];
+    kp.clear().frame();
+    kp.hline(0.5, { dash: [5, 4], color: "#d08a00" }); kp.hline(0.7, { dash: [5, 4], color: COL.plum });
+    kp.points(Array.from({ length: n }, (_, i) => i + 1), Array.from(f.ks), { color: Array.from(f.ks, kcol), r: 4.5, alpha: 1 });
+    // compare table
+    const order = [0, 1, 2].sort((a, b) => fits[b].elpdLoo - fits[a].elpdLoo), best = fits[order[0]];
+    $("cmp").innerHTML = order.map(i => {
+      const m = fits[i], diff = Array.from(m.elpd, (v, j) => v - best.elpd[j]);
+      const ed = diff.reduce((s, v) => s + v, 0), se = i === order[0] ? 0 : Math.sqrt(n * S.variance(diff));
+      const mk = Math.max(...m.ks);
+      return "<tr><td>" + MODELS[i] + "</td><td>" + (Math.abs(ed) < 0.05 ? "0.0" : ed.toFixed(1)) + "</td><td>" + se.toFixed(1) + "</td><td>" + m.elpdLoo.toFixed(1) + " (" + m.se.toFixed(1) + ")</td><td>" + m.pLoo.toFixed(1) +
+        "</td><td style='color:" + (mk > 0.7 ? COL.plum : COL.teal) + ";font-weight:bold'>" + mk.toFixed(2) + "</td></tr>";
+    }).join("");
+    const second = fits[order[1]], dsec = Array.from(second.elpd, (v, j) => v - best.elpd[j]);
+    const d2 = dsec.reduce((s, v) => s + v, 0), se2 = Math.sqrt(n * S.variance(dsec));
+    const bad = fits.some(m => Math.max(...m.ks) > 0.7);
+    $("verdict").innerHTML = "<strong>" + MODELS[order[0]] + "</strong> has the highest elpd. The runner-up, " + MODELS[order[1]] + ", is " + Math.abs(d2).toFixed(1) + " elpd behind (SE " + se2.toFixed(1) + "). " +
+      (Math.abs(d2) < 4 ? "That is a small difference (|diff| &lt; 4), so the two models predict about equally well: prefer the simpler or more theoretically justified model."
+        : Math.abs(d2) > 2 * se2 ? "The difference is large relative to its SE, so the evidence favours the top model." : "The difference is not large relative to its SE, so be cautious.") +
+      (bad ? " <strong style='color:#8b3556'>Warning:</strong> at least one k̂ &gt; 0.7, so the PSIS estimates for those people are unreliable." : "");
+  }
+  // dragging
+  let drag = -1, raf = 0;
+  const cv = sc.canvas;
+  const pos = ev => { const r = cv.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; };
+  cv.addEventListener("pointerdown", ev => {
+    const [px, py] = pos(ev); let best = -1, bd = 24;
+    x.forEach((v, i) => { const d = Math.hypot(sc.X(v) - px, sc.Y(y[i]) - py); if (d < bd) { bd = d; best = i; } });
+    if (best >= 0) { drag = best; cv.setPointerCapture(ev.pointerId); ev.preventDefault(); }
+  });
+  cv.addEventListener("pointermove", ev => {
+    if (drag < 0) return;
+    const [px, py] = pos(ev);
+    x[drag] = Math.max(sc.xlim[0], Math.min(sc.xlim[1], sc.invX(px))); y[drag] = Math.max(sc.ylim[0], Math.min(sc.ylim[1], sc.invY(py)));
+    cancelAnimationFrame(raf); raf = requestAnimationFrame(refit);
+  });
+  const end = () => { drag = -1; };
+  cv.addEventListener("pointerup", end); cv.addEventListener("pointercancel", end);
+  $("outlier").onclick = () => {
+    let iMax = 0; x.forEach((v, i) => { if (v > x[iMax]) iMax = i; });
+    const rx = Math.max(...orig.x) - Math.min(...orig.x), ry = Math.max(...orig.y) - Math.min(...orig.y);
+    x[iMax] = Math.max(...orig.x) + 0.3 * rx;
+    const slope = fits[1].bhat[1];
+    y[iMax] = fits[1].bhat[0] + slope * x[iMax] - Math.sign(slope || 1) * 0.9 * ry;
+    refit();
+  };
+  $("reset").onclick = () => { x = orig.x.slice(); y = orig.y.slice(); refit(); };
+  seg("model", v => { sel = +v; draw(); });
+  seg("data", v => load(v));
+  [sc, pw, kp].forEach(p => p.onresize = draw);
+  load("sim");
+})();
+</script>
+</body>
+</html>

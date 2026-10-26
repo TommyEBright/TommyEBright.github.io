@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MRes Stats Lab</title>
+<link rel="stylesheet" href="assets/lab.css">
+<style>
+  .hub { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+  .hub a { text-decoration: none; color: inherit; display: block; height: 100%; }
+  .hub .card { height: 100%; border-top: 5px solid var(--c, var(--blue)); transition: transform .12s; }
+  .hub a:hover .card, .hub a:focus-visible .card { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,61,80,.12); }
+  .hub a:focus-visible { outline: 3px solid #ffbf47; outline-offset: 3px; border-radius: var(--radius); }
+  .hub h2 { margin-top: 6px; }
+  .hub p { margin: 0; font-size: 0.92rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="lab-head">
+    <span class="badge">MRes</span>
+    <h1>Stats Lab: from p-values to posteriors</h1>
+    <p>Interactive companions to the Canvas learning resource. Work through them in order: each one starts with a prediction for you to make.</p>
+  </header>
+  <div class="hub">
+    <a href="p-values.html" style="--c:#003d50"><div class="card"><span class="tag">Stage 1 · Foundations</span><h2>Which p-values should you expect?</h2><p>Simulate thousands of studies. Type I error, power and Lindley's paradox.</p></div></a>
+    <a href="ci-dance.html" style="--c:#003d50"><div class="card"><span class="tag">Stage 2 · Estimation</span><h2>The dance of the CIs</h2><p>Coverage, capture percentage and how publication bias inflates effect sizes.</p></div></a>
+    <a href="power.html" style="--c:#0071bc"><div class="card"><span class="tag">Stage 3 · Planning</span><h2>Power and sensitivity</h2><p>Exact sample size planning and the smallest effect your study can detect.</p></div></a>
+    <a href="equivalence.html" style="--c:#0071bc"><div class="card"><span class="tag">Stage 3 · Planning</span><h2>Equivalence testing (TOST)</h2><p>Evidence of absence, smallest effect sizes of interest, and the four possible conclusions.</p></div></a>
+    <a href="bayes-factor.html" style="--c:#00857e"><div class="card"><span class="tag">Stage 4 · JASP analysis</span><h2>Bayes factor explorer</h2><p>Prior, posterior, Savage–Dickey ratio and a robustness check, matching JASP's output.</p></div></a>
+    <a href="residuals.html" style="--c:#00857e"><div class="card"><span class="tag">Stage 5 · Model checking</span><h2>Residual detective</h2><p>Diagnose regression problems from the same plots JASP shows, and feel how influence works.</p></div></a>
+    <a href="show-the-data.html" style="--c:#8b3556"><div class="card"><span class="tag">Stage 6 · Visualisation</span><h2>Show the data</h2><p>Bar charts versus rainclouds, and Anscombe's quartet.</p></div></a>
+    <a href="fix-the-results.html" style="--c:#8b3556"><div class="card"><span class="tag">Stage 7 · Writing</span><h2>Fix the results paragraph</h2><p>Spot reporting errors in real JASP analyses, then compare with a model answer.</p></div></a>
+    <a href="mcmc.html" style="--c:#a85d00"><div class="card"><span class="tag">Stage 8 · Bayesian modelling</span><h2>MCMC playground</h2><p>Random walk, HMC and NUTS, live. Divergences, R̂, ESS and a computing-budget race.</p></div></a>
+    <a href="loo.html" style="--c:#a85d00"><div class="card"><span class="tag">Stage 8 · Bayesian modelling</span><h2>LOO model comparison</h2><p>PSIS-LOO, elpd differences and Pareto k̂, with draggable data.</p></div></a>
+  </div>
+  <section class="card" style="margin-top:14px">
+    <h2>R scripts for Stages 7–8</h2>
+    <p style="margin:0">Download, open in RStudio and run line by line. Both scripts read the JASP Data Library files directly from JASP's GitHub repository.</p>
+    <ul style="margin:6px 0 0">
+      <li><a href="r/stage7-jasp-to-r.R" download>stage7-jasp-to-r.R</a>: the classical JASP analyses reproduced in R (t-tests, ANOVA, regression, TOST, Bayes factors, ggplot2).</li>
+      <li><a href="r/stage8-brms.R" download>stage8-brms.R</a>: Bayesian regression in brms with priors, MCMC diagnostics, posterior predictive checks and LOO.</li>
+    </ul>
+  </section>
+  <p class="foot">Built for MRes students as an open educational companion to Lakens, D. (2022) <em>Improving Your Statistical Inferences</em> (CC BY-NC-SA 4.0). Datasets: JASP Data Library. Everything runs in your browser; nothing is tracked or stored.</p>
+</main>
+</body>
+</html>

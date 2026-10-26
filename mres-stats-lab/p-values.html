@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>p-value Simulator · MRes Stats Lab</title>
+<link rel="stylesheet" href="assets/lab.css">
+</head>
+<body>
+<main class="wrap">
+  <header class="lab-head">
+    <span class="badge">Stage 1</span>
+    <h1>Which p-values should you expect?</h1>
+    <p>Simulate thousands of two-group studies and watch the distribution of p-values. Based on Lakens, chapter 1.</p>
+  </header>
+
+  <div class="predict" role="note">
+    <strong>Predict first.</strong> Set the true effect to <em>d</em> = 0 (no effect at all). If you ran 1,000 studies, what shape would the histogram of p-values take? Write your answer down, then press <em>Run 1,000</em>.
+    <details class="reveal"><summary>Check your prediction</summary><div>When the null hypothesis is true, the histogram is <strong>flat</strong>. Every p-value is equally likely, so about 5% of studies land below .05. That 5% is the Type I error rate you chose with α.</div></details>
+  </div>
+
+  <div class="grid two">
+    <section class="card" aria-labelledby="plot-h">
+      <h2 id="plot-h">Distribution of p-values</h2>
+      <div class="row" style="margin-bottom:8px">
+        <div class="seg" id="view" role="group" aria-label="Histogram range">
+          <button type="button" data-value="full" aria-pressed="true">0 to 1</button>
+          <button type="button" data-value="zoom" aria-pressed="false">Zoom: 0 to .05</button>
+        </div>
+      </div>
+      <div class="plot" id="plot" style="height:340px"></div>
+      <div class="legend">
+        <span style="--c:#00857e">p &lt; α (significant)</span>
+        <span style="--c:#9fb1ba">p ≥ α</span>
+        <span style="--c:#5b6b73">expected if H0 is true (flat)</span>
+        <span style="--c:#a85d00">expected for your chosen d</span>
+      </div>
+      <p id="last" aria-live="polite" style="margin:8px 0 0;font-size:0.95rem"></p>
+    </section>
+
+    <section class="card" aria-labelledby="ctrl-h">
+      <h2 id="ctrl-h">Study design</h2>
+      <div class="controls">
+        <div class="control">
+          <label for="d">True effect size (Cohen's d) <output id="d-out"></output></label>
+          <input type="range" id="d" min="0" max="1.2" step="0.05" value="0">
+          <div class="hint">0 means the null hypothesis is true.</div>
+        </div>
+        <div class="control">
+          <label for="n">Participants per group <output id="n-out"></output></label>
+          <input type="range" id="n" min="5" max="200" step="1" value="20">
+        </div>
+        <div class="control">
+          <label for="alpha">Alpha level (α)</label>
+          <select id="alpha">
+            <option value="0.05" selected>.05</option>
+            <option value="0.01">.01</option>
+            <option value="0.005">.005</option>
+          </select>
+        </div>
+        <div class="row">
+          <button class="btn" type="button" id="run1">Run 1 study</button>
+          <button class="btn" type="button" id="run100">Run 100</button>
+          <button class="btn teal" type="button" id="run1000">Run 1,000</button>
+          <button class="btn secondary" type="button" id="reset">Reset</button>
+        </div>
+      </div>
+      <h3>Results so far</h3>
+      <div class="stats" aria-live="polite">
+        <div class="stat"><div class="k">Studies run</div><div class="v" id="s-n">0</div></div>
+        <div class="stat good"><div class="k">% significant</div><div class="v" id="s-sig">–</div></div>
+        <div class="stat"><div class="k">True power</div><div class="v" id="s-pow">–</div></div>
+      </div>
+      <p style="font-size:0.85rem;color:#4a5a62;margin:8px 0 0">When d = 0, "% significant" is your <strong>Type I error rate</strong>. When d &gt; 0 it estimates your <strong>power</strong>. "True power" is calculated exactly from the noncentral t distribution.</p>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:12px" aria-labelledby="tasks-h">
+    <h2 id="tasks-h">Try these, in order</h2>
+    <ol style="margin:0;padding-left:1.2rem">
+      <li><strong>d = 0, n = 20.</strong> Run 1,000. Is the histogram flat? What % are significant?</li>
+      <li><strong>d = 0.5, n = 20.</strong> Run 1,000. The effect is real, but how often do you get p &lt; .05? What does a non-significant result tell you here?</li>
+      <li><strong>d = 0.5, n = 100.</strong> Zoom in to 0–.05. Are p-values between .04 and .05 common or rare? Compare the orange line with the grey line in that last bin.</li>
+      <li><strong>d = 0.5, n = 200.</strong> Zoom in again. In the .04–.05 bin, is the orange line (H1 true) <em>below</em> the grey line (H0 true)? If so, a p of .045 is more likely when there is <em>no</em> effect. This is <strong>Lindley's paradox</strong>.</li>
+    </ol>
+    <details class="reveal"><summary>What should you take away?</summary><div>
+      <p style="margin:0 0 6px">The p-value distribution depends on power. With no effect it is flat; with high power it piles up close to zero. A single p-value is a noisy draw from this distribution. That is why one p = .03 should not convince you of much, and why a non-significant result from a low-powered study is not evidence that there is no effect.</p>
+    </div></details>
+  </section>
+  <p class="foot">MRes Stats Lab · simulations run in your browser, nothing is stored or sent. Further reading: Lakens, D. (2022) <a href="https://lakens.github.io/statistical_inferences/01-pvalue.html" target="_blank" rel="noopener">Improving Your Statistical Inferences, ch. 1 (opens in a new tab)</a>.</p>
+</main>
+<script src="assets/lab.js"></script>
+<script>
+(function () {
+  const { R, D, Plot, COL, bindRange, seg, fmtP } = Lab;
+  let pvals = [];
+  const plot = new Plot("#plot", { xlim: [0, 1], ylim: [0, 10], xlab: "p-value", ylab: "Number of studies", label: "Histogram of simulated p-values" });
+  let view = "full";
+  const dEl = bindRange("d", v => v.toFixed(2), () => { reset(); });
+  const nEl = bindRange("n", v => v, () => { reset(); });
+  const aEl = document.getElementById("alpha");
+  aEl.addEventListener("change", () => draw());
+  seg("view", v => { view = v; draw(); });
+
+  function simulate() {
+    const d = +dEl.value, n = +nEl.value, df = 2 * n - 2;
+    const diff = d + Math.sqrt(2 / n) * R.norm();
+    const s2 = R.chisq(df) / df;
+    const t = diff / Math.sqrt(s2 * 2 / n);
+    return { t, df, p: D.p2t(t, df), dobs: diff / Math.sqrt(s2) };
+  }
+  function truePower(alpha) {
+    const d = +dEl.value, n = +nEl.value, df = 2 * n - 2;
+    return D.powerT(D.qt(1 - alpha / 2, df), df, d * Math.sqrt(n / 2));
+  }
+  function cdfP(p) { // P(p-value < p) under the chosen d
+    const d = +dEl.value, n = +nEl.value, df = 2 * n - 2;
+    if (p <= 0) return 0; if (p >= 1) return 1;
+    return D.powerT(D.qt(1 - p / 2, df), df, d * Math.sqrt(n / 2));
+  }
+  let expCache = { key: "", vals: [] };
+  function expected(breaks) {
+    const key = dEl.value + "|" + nEl.value + "|" + view;
+    if (expCache.key !== key) { expCache = { key, vals: breaks.map(cdfP) }; }
+    return expCache.vals;
+  }
+  function draw() {
+    const alpha = +aEl.value;
+    const zoom = view === "zoom";
+    const lo = 0, hi = zoom ? 0.05 : 1, k = zoom ? 10 : 20, w = (hi - lo) / k;
+    const breaks = Array.from({ length: k + 1 }, (_, i) => lo + i * w);
+    const counts = plot.hist(pvals, breaks);
+    const N = pvals.length;
+    const ev = expected(breaks);
+    const expH1 = counts.map((_, i) => N * (ev[i + 1] - ev[i]));
+    const expH0 = N * w;
+    let ymax = Math.max(5, ...counts, expH0, ...expH1) * 1.12;
+    plot.xlim = [lo, hi]; plot.ylim = [0, ymax];
+    plot.xticks = zoom ? [0, 0.01, 0.02, 0.03, 0.04, 0.05] : [0, 0.05, 0.2, 0.4, 0.6, 0.8, 1];
+    plot.xfmt = v => v === 0 ? "0" : v.toFixed(zoom ? 2 : 2).replace(/^0/, "");
+    plot.clear().frame();
+    counts.forEach((c, i) => {
+      const sig = breaks[i + 1] <= alpha + 1e-12;
+      plot.rect(breaks[i] + w * 0.04, 0, breaks[i + 1] - w * 0.04, c, { fill: sig ? COL.teal : "#9fb1ba" });
+    });
+    if (N > 0) {
+      plot.hline(expH0, { dash: [6, 4], color: COL.muted, width: 2 });
+      const xs = [], ys = [];
+      expH1.forEach((e, i) => { xs.push(breaks[i], breaks[i + 1]); ys.push(e, e); });
+      plot.line(xs, ys, { color: COL.amber, width: 2.5 });
+    }
+    if (alpha < hi) plot.vline(alpha, { color: COL.plum, dash: [3, 3], width: 2 });
+    if (alpha < hi) plot.text("α = " + String(alpha).replace(/^0/, ""), alpha, ymax * 0.95, { color: COL.plum, bold: true, halo: true, align: "left" });
+    // readouts
+    const sig = pvals.filter(p => p < alpha).length;
+    document.getElementById("s-n").textContent = N.toLocaleString();
+    document.getElementById("s-sig").textContent = N ? (100 * sig / N).toFixed(1) + "%" : "–";
+    document.getElementById("s-pow").textContent = (+dEl.value === 0 ? "n/a (α " : "") + (+dEl.value === 0 ? (100 * alpha).toFixed(1) + "%)" : (100 * truePower(alpha)).toFixed(1) + "%");
+  }
+  function run(k) {
+    let done = 0, last;
+    const perFrame = Math.max(1, Math.ceil(k / 40));
+    (function step() {
+      for (let i = 0; i < perFrame && done < k; i++, done++) { last = simulate(); pvals.push(last.p); }
+      draw();
+      if (done < k) requestAnimationFrame(step);
+      else {
+        const alpha = +aEl.value;
+        document.getElementById("last").textContent = "Latest study: t(" + last.df + ") = " + last.t.toFixed(2) + ", p " + fmtP(last.p) + ", observed d = " + last.dobs.toFixed(2) + (last.p < alpha ? "  ✔ significant" : "  ✘ not significant");
+      }
+    })();
+  }
+  function reset() { pvals = []; document.getElementById("last").textContent = ""; draw(); }
+  document.getElementById("run1").onclick = () => run(1);
+  document.getElementById("run100").onclick = () => run(100);
+  document.getElementById("run1000").onclick = () => run(1000);
+  document.getElementById("reset").onclick = reset;
+  plot.onresize = draw;
+  draw();
+})();
+</script>
+</body>
+</html>

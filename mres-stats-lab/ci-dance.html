@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dance of the CIs · MRes Stats Lab</title>
+<link rel="stylesheet" href="assets/lab.css">
+</head>
+<body>
+<main class="wrap">
+  <header class="lab-head">
+    <span class="badge">Stage 2</span>
+    <h1>The dance of the confidence intervals</h1>
+    <p>Each line is one study estimating the same true mean change, with its confidence interval. Based on Lakens, chapters 6 and 7.</p>
+  </header>
+
+  <div class="predict" role="note">
+    <strong>Predict first.</strong> (1) Over many studies, what percentage of 95% CIs will contain the true value? (2) What percentage of 95% CIs will contain the <em>next</em> study's estimate?
+    <details class="reveal"><summary>Check your prediction</summary><div>(1) About 95%. That is what "95% confidence" means: it describes the long-run procedure, not any single interval. (2) Only about <strong>83%</strong>. This is the <em>capture percentage</em>, and it is lower because the next estimate has sampling error of its own. A CI is not "the range the next study will fall in".</div></details>
+  </div>
+
+  <div class="grid two">
+    <section class="card" aria-labelledby="plot-h">
+      <h2 id="plot-h">Most recent studies (newest at the top)</h2>
+      <div class="plot" id="plot" style="height:400px"></div>
+      <div class="legend">
+        <span style="--c:#0071bc">CI contains the true value</span>
+        <span style="--c:#8b3556">CI misses the true value</span>
+        <span style="--c:#c9d3d8">not significant, so never published (filter on)</span>
+        <span style="--c:#00857e">true mean change</span>
+      </div>
+    </section>
+    <section class="card" aria-labelledby="ctrl-h">
+      <h2 id="ctrl-h">Population and design</h2>
+      <div class="controls">
+        <div class="control">
+          <label for="mu">True mean change (SD = 10) <output id="mu-out"></output></label>
+          <input type="range" id="mu" min="-2" max="8" step="0.5" value="3">
+          <div class="hint">For example, a 3-unit improvement in a performance score: d = 0.3.</div>
+        </div>
+        <div class="control">
+          <label for="n">Sample size <output id="n-out"></output></label>
+          <input type="range" id="n" min="5" max="200" step="1" value="20">
+        </div>
+        <div class="control">
+          <label for="conf">Confidence level</label>
+          <select id="conf"><option value="0.8">80%</option><option value="0.9">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select>
+        </div>
+        <label style="display:flex;gap:8px;align-items:flex-start;font-size:0.92rem"><input type="checkbox" id="filter" style="width:20px;height:20px;margin-top:2px"> <span><strong>Publication filter:</strong> only studies with p &lt; .05 get published</span></label>
+        <div class="row">
+          <button class="btn" type="button" id="play">▶ Play</button>
+          <button class="btn secondary" type="button" id="one">+1 study</button>
+          <button class="btn teal" type="button" id="hundred">+100</button>
+          <button class="btn secondary" type="button" id="reset">Reset</button>
+        </div>
+      </div>
+      <h3>Long-run results</h3>
+      <div class="stats" aria-live="polite">
+        <div class="stat"><div class="k">Studies</div><div class="v" id="s-n">0</div></div>
+        <div class="stat good"><div class="k">CIs containing true value</div><div class="v" id="s-cov">–</div></div>
+        <div class="stat"><div class="k">Capture next estimate</div><div class="v" id="s-cap">–</div></div>
+        <div class="stat"><div class="k">% p &lt; .05 (power)</div><div class="v" id="s-pow">–</div></div>
+        <div class="stat"><div class="k">Mean estimate (all)</div><div class="v" id="s-all">–</div></div>
+        <div class="stat bad"><div class="k">Mean estimate (p &lt; .05 only)</div><div class="v" id="s-pub">–</div></div>
+      </div>
+    </section>
+  </div>
+  <section class="card" style="margin-top:12px" aria-labelledby="tasks-h">
+    <h2 id="tasks-h">Try these</h2>
+    <ol style="margin:0;padding-left:1.2rem">
+      <li>Press <strong>Play</strong> and watch one interval at a time. Can you tell, from a single interval, whether it is one of the misses?</li>
+      <li>Add a few hundred studies. Check that coverage is close to the confidence level you chose, and that the capture percentage settles near 83%.</li>
+      <li>Change n from 20 to 100. What happens to the width of the intervals and how much they "dance" from study to study?</li>
+      <li>Set n = 20 and the true change = 3, and switch on the <strong>publication filter</strong>. Compare "Mean estimate (all)" with "(p &lt; .05 only)". By how much does the published literature exaggerate the effect?</li>
+    </ol>
+    <details class="reveal"><summary>What should you take away?</summary><div><p style="margin:0">A confidence interval describes the precision of an estimate. Wide intervals mean that very different true values are all compatible with your data. If only significant studies are published and power is low, the published effects are <strong>inflated</strong> (Lakens 6.9). Effect sizes in small published studies, or in your own pilot study, are usually overestimates. Bear that in mind when you plan a sample size in Stage 3.</p></div></details>
+  </section>
+  <p class="foot">MRes Stats Lab · Lakens (2022) <a href="https://lakens.github.io/statistical_inferences/07-CI.html" target="_blank" rel="noopener">ch. 7 Confidence intervals (opens in a new tab)</a> · <a href="https://lakens.github.io/statistical_inferences/06-effectsize.html" target="_blank" rel="noopener">ch. 6 Effect sizes (opens in a new tab)</a>.</p>
+</main>
+<script src="assets/lab.js"></script>
+<script>
+(function () {
+  const { R, D, S, Plot, COL, bindRange } = Lab;
+  const SIGMA = 10, SHOW = 32;
+  let studies = [], timer = null, captureHits = 0, captureTotal = 0;
+  const plot = new Plot("#plot", { xlim: [-12, 18], ylim: [0, SHOW + 1], xlab: "Estimated mean change", ylab: "", margin: { l: 16 }, label: "Stacked confidence intervals from simulated studies" });
+  const muEl = bindRange("mu", v => v.toFixed(1), reset);
+  const nEl = bindRange("n", v => v, reset);
+  const confEl = document.getElementById("conf");
+  const filterEl = document.getElementById("filter");
+  confEl.addEventListener("change", reset);
+  filterEl.addEventListener("change", draw);
+
+  function study() {
+    const mu = +muEl.value, n = +nEl.value, conf = +confEl.value, df = n - 1;
+    const m = mu + SIGMA / Math.sqrt(n) * R.norm();
+    const s = SIGMA * Math.sqrt(R.chisq(df) / df);
+    const se = s / Math.sqrt(n), tc = D.qt(1 - (1 - conf) / 2, df);
+    const t = m / se, p = D.p2t(t, df);
+    return { m, lo: m - tc * se, hi: m + tc * se, p, hit: m - tc * se <= mu && mu <= m + tc * se };
+  }
+  function add(k) {
+    for (let i = 0; i < k; i++) {
+      const s = study();
+      const prev = studies[studies.length - 1];
+      if (prev) { captureTotal++; if (s.m >= prev.lo && s.m <= prev.hi) captureHits++; }
+      studies.push(s);
+    }
+    draw();
+  }
+  function draw() {
+    const mu = +muEl.value, filt = filterEl.checked;
+    plot.clear().frame({ yaxis: false });
+    plot.yticks = [];
+    plot.vline(0, { dash: [5, 4], color: COL.muted, width: 1.5 });
+    plot.vline(mu, { color: COL.teal, width: 3 });
+    const recent = studies.slice(-SHOW);
+    recent.forEach((s, i) => {
+      const y = i + 1;
+      const hidden = filt && !(s.p < 0.05);
+      const col = hidden ? "#c9d3d8" : (s.hit ? COL.blue : COL.plum);
+      plot.line([s.lo, s.hi], [y, y], { color: col, width: hidden ? 2 : 3, dash: hidden ? [4, 3] : [] });
+      plot.points([s.m], [y], { color: hidden ? "#c9d3d8" : col, r: 4, alpha: 1 });
+    });
+    plot.text("true value", mu, SHOW + 0.5, { color: COL.teal, bold: true, align: "center", halo: true });
+    const N = studies.length;
+    const sig = studies.filter(s => s.p < 0.05);
+    document.getElementById("s-n").textContent = N.toLocaleString();
+    document.getElementById("s-cov").textContent = N ? (100 * studies.filter(s => s.hit).length / N).toFixed(1) + "%" : "–";
+    document.getElementById("s-cap").textContent = captureTotal ? (100 * captureHits / captureTotal).toFixed(1) + "%" : "–";
+    document.getElementById("s-pow").textContent = N ? (100 * sig.length / N).toFixed(1) + "%" : "–";
+    document.getElementById("s-all").textContent = N ? S.mean(studies.map(s => s.m)).toFixed(2) : "–";
+    document.getElementById("s-pub").textContent = sig.length ? S.mean(sig.map(s => s.m)).toFixed(2) : "–";
+  }
+  function reset() { studies = []; captureHits = 0; captureTotal = 0; draw(); }
+  const playBtn = document.getElementById("play");
+  playBtn.onclick = () => {
+    if (timer) { clearInterval(timer); timer = null; playBtn.textContent = "▶ Play"; return; }
+    timer = setInterval(() => add(1), 260); playBtn.textContent = "❚❚ Pause";
+  };
+  document.getElementById("one").onclick = () => add(1);
+  document.getElementById("hundred").onclick = () => add(100);
+  document.getElementById("reset").onclick = reset;
+  plot.onresize = draw;
+  draw();
+})();
+</script>
+</body>
+</html>

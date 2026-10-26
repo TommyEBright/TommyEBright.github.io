@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Equivalence Tester · MRes Stats Lab</title>
+<link rel="stylesheet" href="assets/lab.css">
+</head>
+<body>
+<main class="wrap">
+  <header class="lab-head">
+    <span class="badge">Stage 3</span>
+    <h1>Equivalence testing (TOST): evidence of absence</h1>
+    <p>A non-significant result does not show "no effect". An equivalence test asks whether you can rule out effects large enough to matter. Lakens, chapter 9.</p>
+  </header>
+  <div class="predict" role="note">
+    <strong>Predict first.</strong> In the JASP <em>Kitchen Rolls</em> replication, rotating a kitchen roll clockwise versus anticlockwise gave t(100) = −0.75, p = .45. Can the authors conclude that rotation has <em>no effect</em> on openness to experience?
+    <details class="reveal"><summary>Check your prediction</summary><div>Not from the p-value alone. Load the preset below: whether you can claim equivalence depends entirely on the <strong>smallest effect size of interest (SESOI)</strong> you set <em>before</em> looking at the data. With bounds of d = ±0.5 the test supports equivalence (p = .040). With stricter raw bounds of ±0.2 scale points it does not (p = .093).</div></details>
+  </div>
+  <div class="grid two">
+    <section class="card" aria-labelledby="plot-h">
+      <h2 id="plot-h">Mean difference with 90% and 95% CIs</h2>
+      <div class="plot" id="plot" style="height:220px"></div>
+      <div class="legend">
+        <span style="--c:#cfeae7">equivalence region (your SESOI bounds)</span>
+        <span style="--c:#003d50">90% CI (used for TOST at α = .05)</span>
+        <span style="--c:#0071bc">95% CI (used for the usual t-test)</span>
+      </div>
+      <div id="verdict" class="feedback ok" aria-live="polite" style="margin-top:10px"></div>
+      <div class="tbl-wrap" style="margin-top:10px">
+        <table class="tbl" aria-label="Test results">
+          <thead><tr><th>Test</th><th>t</th><th>df</th><th>p</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="card" aria-labelledby="ctrl-h">
+      <h2 id="ctrl-h">Data and bounds</h2>
+      <div class="row" style="margin-bottom:8px">
+        <button class="btn secondary" type="button" data-preset="kr5">Kitchen Rolls, ±0.5 d</button>
+        <button class="btn secondary" type="button" data-preset="kr2">Kitchen Rolls, ±0.2 raw</button>
+        <button class="btn secondary" type="button" data-preset="dra">Directed Reading, ±0.5 d</button>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl" aria-label="Group summary inputs">
+          <thead><tr><th></th><th>Mean</th><th>SD</th><th>n</th></tr></thead>
+          <tbody>
+            <tr><td><input id="g1name" aria-label="Group 1 name" value="Group 1" style="width:100%;border:0;font-weight:bold"></td><td><input type="number" id="m1" step="any" aria-label="Group 1 mean"></td><td><input type="number" id="s1" step="any" aria-label="Group 1 SD"></td><td><input type="number" id="n1" step="1" aria-label="Group 1 n"></td></tr>
+            <tr><td><input id="g2name" aria-label="Group 2 name" value="Group 2" style="width:100%;border:0;font-weight:bold"></td><td><input type="number" id="m2" step="any" aria-label="Group 2 mean"></td><td><input type="number" id="s2" step="any" aria-label="Group 2 SD"></td><td><input type="number" id="n2" step="1" aria-label="Group 2 n"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="controls" style="margin-top:10px">
+        <div class="grid halves">
+          <div class="control"><label for="bound">Equivalence bound ±</label><input type="number" id="bound" step="any" value="0.5"></div>
+          <div class="control"><label for="unit">Bound units</label><select id="unit"><option value="d">Cohen's d</option><option value="raw">raw scale units</option></select></div>
+        </div>
+        <div class="grid halves">
+          <div class="control"><label for="alpha">α</label><select id="alpha"><option value="0.05" selected>.05</option><option value="0.01">.01</option></select></div>
+          <div class="control"><label for="test">t-test</label><select id="test"><option value="student" selected>Student (equal variances)</option><option value="welch">Welch</option></select></div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <section class="card" style="margin-top:12px" aria-labelledby="four-h">
+    <h2 id="four-h">The four possible conclusions</h2>
+    <div class="grid halves" id="four">
+      <div class="stat" data-cell="sig-noeq"><div class="k">p &lt; α, not equivalent</div><div style="font-size:0.92rem">There is an effect, and it may be large enough to matter.</div></div>
+      <div class="stat" data-cell="sig-eq"><div class="k">p &lt; α, equivalent</div><div style="font-size:0.92rem">There is an effect, but it is too small to matter.</div></div>
+      <div class="stat" data-cell="nosig-eq"><div class="k">p ≥ α, equivalent</div><div style="font-size:0.92rem">You can reject any effect as big as your SESOI. This is evidence of absence.</div></div>
+      <div class="stat" data-cell="nosig-noeq"><div class="k">p ≥ α, not equivalent</div><div style="font-size:0.92rem">Inconclusive. You can reject neither 0 nor your SESOI; you need more data.</div></div>
+    </div>
+  </section>
+  <p class="foot">MRes Stats Lab · Results match JASP's Equivalence T-Tests module and R's <span class="kbd">TOSTER::t_TOST()</span>. Kitchen Rolls data: Wagenmakers et al. (2015), JASP Data Library. Lakens (2022) <a href="https://lakens.github.io/statistical_inferences/09-equivalencetest.html" target="_blank" rel="noopener">ch. 9 (opens in a new tab)</a>.</p>
+</main>
+<script src="assets/lab.js"></script>
+<script>
+(function () {
+  const { D, Plot, COL, fmtP } = Lab;
+  const presets = {
+    kr5: { g1: "Clockwise", g2: "Anticlockwise", m1: 0.640625, s1: 0.4959, n1: 48, m2: 0.712963, s2: 0.4730, n2: 54, bound: 0.5, unit: "d" },
+    kr2: { g1: "Clockwise", g2: "Anticlockwise", m1: 0.640625, s1: 0.4959, n1: 48, m2: 0.712963, s2: 0.4730, n2: 54, bound: 0.2, unit: "raw" },
+    dra: { g1: "Treatment", g2: "Control", m1: 51.48, s1: 11.01, n1: 21, m2: 41.52, s2: 17.15, n2: 23, bound: 0.5, unit: "d" },
+  };
+  const $ = id => document.getElementById(id);
+  const plot = new Plot("#plot", { xlim: [-1, 1], ylim: [0, 1], xlab: "Mean difference (group 1 − group 2)", ylab: "", margin: { l: 16, t: 10 }, label: "Mean difference with confidence intervals and equivalence bounds" });
+  function load(k) {
+    const p = presets[k];
+    $("g1name").value = p.g1; $("g2name").value = p.g2;
+    ["m1", "s1", "n1", "m2", "s2", "n2", "bound"].forEach(f => $(f).value = p[f]);
+    $("unit").value = p.unit;
+    update();
+  }
+  document.querySelectorAll("[data-preset]").forEach(b => b.onclick = () => load(b.dataset.preset));
+  ["m1", "s1", "n1", "m2", "s2", "n2", "bound", "unit", "alpha", "test"].forEach(f => $(f).addEventListener("input", update));
+
+  function update() {
+    const m1 = +$("m1").value, s1 = +$("s1").value, n1 = Math.round(+$("n1").value);
+    const m2 = +$("m2").value, s2 = +$("s2").value, n2 = Math.round(+$("n2").value);
+    const a = +$("alpha").value, welch = $("test").value === "welch";
+    if (!(n1 > 1 && n2 > 1 && s1 > 0 && s2 > 0)) return;
+    const diff = m1 - m2;
+    let se, df, sdForD;
+    if (welch) {
+      const v1 = s1 * s1 / n1, v2 = s2 * s2 / n2;
+      se = Math.sqrt(v1 + v2);
+      df = (v1 + v2) * (v1 + v2) / (v1 * v1 / (n1 - 1) + v2 * v2 / (n2 - 1));
+      sdForD = Math.sqrt((s1 * s1 + s2 * s2) / 2);
+    } else {
+      const sp = Math.sqrt(((n1 - 1) * s1 * s1 + (n2 - 1) * s2 * s2) / (n1 + n2 - 2));
+      se = sp * Math.sqrt(1 / n1 + 1 / n2); df = n1 + n2 - 2; sdForD = sp;
+    }
+    const b = Math.abs(+$("bound").value), raw = $("unit").value === "raw" ? b : b * sdForD;
+    const t0 = diff / se, p0 = D.p2t(t0, df);
+    const tL = (diff + raw) / se, pL = 1 - D.pt(tL, df);
+    const tU = (diff - raw) / se, pU = D.pt(tU, df);
+    const pT = Math.max(pL, pU);
+    const t90 = D.qt(1 - a, df), t95 = D.qt(1 - a / 2, df);
+    const ci90 = [diff - t90 * se, diff + t90 * se], ci95 = [diff - t95 * se, diff + t95 * se];
+    const lim = Math.max(raw * 1.6, Math.abs(ci95[0]) * 1.15, Math.abs(ci95[1]) * 1.15);
+    plot.xlim = [-lim, lim];
+    plot.clear().frame({ yaxis: false }); plot.yticks = [];
+    plot.rect(-raw, 0, raw, 1, { fill: "#cfeae7" });
+    plot.vline(-raw, { color: COL.teal, width: 2 }); plot.vline(raw, { color: COL.teal, width: 2 });
+    plot.vline(0, { dash: [5, 4] });
+    plot.line(ci95, [0.32, 0.32], { color: COL.blue, width: 3 });
+    plot.line(ci90, [0.66, 0.66], { color: COL.navy, width: 7 });
+    plot.points([diff, diff], [0.32, 0.66], { color: [COL.blue, COL.navy], r: 6, alpha: 1, stroke: "#fff" });
+    plot.text("−" + fmtN(raw), -raw, 0.92, { color: COL.teal, bold: true, align: "center", halo: true });
+    plot.text("+" + fmtN(raw), raw, 0.92, { color: COL.teal, bold: true, align: "center", halo: true });
+    plot.text("90% CI", ci90[1], 0.66, { color: COL.navy, bold: true, align: "left", halo: true });
+    plot.text("95% CI", ci95[1], 0.32, { color: COL.blue, bold: true, align: "left", halo: true });
+    const sig = p0 < a, eq = pT < a;
+    const cell = (sig ? "sig" : "nosig") + "-" + (eq ? "eq" : "noeq");
+    document.querySelectorAll("#four [data-cell]").forEach(el => {
+      const on = el.dataset.cell === cell;
+      el.style.outline = on ? "3px solid " + COL.navy : "none";
+      el.className = "stat" + (on ? " good" : "");
+    });
+    const dfTxt = welch ? df.toFixed(2) : df.toFixed(0);
+    $("tbody").innerHTML =
+      "<tr><td>Null hypothesis (difference = 0)</td><td>" + t0.toFixed(2) + "</td><td>" + dfTxt + "</td><td>" + fmtP(p0).replace("= ", "") + "</td></tr>" +
+      "<tr><td>TOST lower (diff &gt; −" + fmtN(raw) + ")</td><td>" + tL.toFixed(2) + "</td><td>" + dfTxt + "</td><td>" + fmtP(pL).replace("= ", "") + "</td></tr>" +
+      "<tr><td>TOST upper (diff &lt; +" + fmtN(raw) + ")</td><td>" + tU.toFixed(2) + "</td><td>" + dfTxt + "</td><td>" + fmtP(pU).replace("= ", "") + "</td></tr>";
+    const v = $("verdict");
+    v.className = "feedback " + (eq ? "ok" : "no");
+    v.innerHTML = "<strong>Mean difference = " + fmtN(diff) + ", 90% CI [" + fmtN(ci90[0]) + ", " + fmtN(ci90[1]) + "].</strong> " +
+      (eq ? "The 90% CI lies entirely inside ±" + fmtN(raw) + ", so the equivalence test is significant (p " + fmtP(pT) + "). "
+          : "The 90% CI crosses a bound, so equivalence cannot be claimed (p " + fmtP(pT) + "). ") +
+      (sig ? "The usual t-test is significant (p " + fmtP(p0) + ")." : "The usual t-test is not significant (p " + fmtP(p0) + ").");
+  }
+  function fmtN(x) { const a = Math.abs(x); return a >= 10 ? x.toFixed(1) : a >= 1 ? x.toFixed(2) : x.toFixed(3); }
+  plot.onresize = update;
+  load("kr5");
+})();
+</script>
+</body>
+</html>
