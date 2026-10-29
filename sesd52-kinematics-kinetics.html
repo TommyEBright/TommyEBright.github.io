@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kinematics and Kinetics</title>
+<meta name="description" content="SESD52 session tool: kinematics and kinetics, one jump through two lenses.">
+<style>
+:root { --navy:#003d50; --teal:#00857e; --plum:#8b3556; --blue:#0071bc; --ink:#1d1d1b; --muted:#56646c; --line:#d9e2e7; --soft:#f5f9fc; --bg:#f7fbfd; --good:#15803d; --bad:#b91c1c; --warn:#b45309; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.55; font-size: 16px; }
+a { color: var(--blue); }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 1rem; }
+header.top { background: var(--navy); color: #fff; border-radius: .9rem .9rem 0 0; padding: 1.4rem 1.6rem; border-bottom: .35rem solid var(--teal); }
+header.top .badge { display: inline-block; background: #fff; color: var(--navy); font-weight: 700; font-size: .85rem; padding: .25rem .7rem; border-radius: .6rem; border-left: .3rem solid var(--blue); margin-bottom: .6rem; }
+header.top h1 { margin: 0 0 .3rem; font-size: 1.9rem; }
+header.top p { margin: 0; opacity: .92; }
+nav.steps { background: #fff; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 .9rem .9rem; padding: .7rem; display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: 1rem; }
+nav.steps button { flex: 1 1 150px; font: inherit; font-size: .9rem; text-align: left; cursor: pointer; background: var(--soft); color: var(--navy); border: 1px solid var(--line); border-radius: .7rem; padding: .5rem .7rem; display: flex; gap: .5rem; align-items: center; }
+nav.steps button b { flex: none; width: 1.6rem; height: 1.6rem; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #fff; border: 2px solid var(--navy); font-size: .85rem; }
+nav.steps button small { display: block; color: var(--muted); font-size: .75rem; }
+nav.steps button[aria-current=true] { background: var(--navy); color: #fff; border-color: var(--navy); }
+nav.steps button[aria-current=true] b { background: var(--teal); border-color: #fff; color: #fff; }
+nav.steps button[aria-current=true] small { color: #cfe3e8; }
+nav.steps button.done b { background: var(--teal); color: #fff; border-color: var(--teal); }
+section.step { display: none; background: #fff; border: 1px solid var(--line); border-radius: 1rem; overflow: hidden; margin-bottom: 1rem; }
+section.step.on { display: block; }
+.sh { background: var(--navy); color: #fff; padding: 1rem 1.4rem; display: flex; justify-content: space-between; gap: .8rem; flex-wrap: wrap; align-items: center; }
+.sh h2 { margin: 0; font-size: 1.4rem; }
+.sh .time { background: #fff; color: var(--navy); border-radius: .6rem; padding: .25rem .65rem; font-weight: 700; font-size: .85rem; }
+.sh.teal { background: var(--teal); } .sh.blue { background: var(--blue); } .sh.plum { background: var(--plum); }
+.sb { padding: 1.2rem 1.4rem 1.4rem; }
+.lead { font-size: 1.05rem; margin-top: 0; }
+.tip { background: #f2faf9; border-left: .4rem solid var(--teal); border-radius: .7rem; padding: .8rem 1rem; margin: .8rem 0; }
+.note { background: #fbf4f7; border-left: .4rem solid var(--plum); border-radius: .7rem; padding: .8rem 1rem; margin: .8rem 0; }
+.task { background: #fff; border: 1px solid var(--line); border-left: .4rem solid var(--blue); border-radius: .7rem; padding: .9rem 1rem; margin: .8rem 0; }
+.task h3 { margin: 0 0 .4rem; color: var(--navy); font-size: 1.05rem; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: .8rem; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: .8rem; }
+@media (max-width: 860px) { .grid3, .grid2 { grid-template-columns: 1fr; } }
+.btn { font: inherit; font-weight: 700; cursor: pointer; border: 2px solid var(--navy); background: var(--navy); color: #fff; border-radius: .65rem; padding: .5rem .9rem; font-size: .93rem; }
+.btn:hover { filter: brightness(1.12); }
+.btn.ghost { background: #fff; color: var(--navy); }
+.btn.teal { background: var(--teal); border-color: var(--teal); }
+.btn.plum { background: var(--plum); border-color: var(--plum); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #7cc4f2; outline-offset: 2px; }
+.row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.navbtns { display: flex; justify-content: space-between; gap: .6rem; margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid var(--line); flex-wrap: wrap; }
+/* definition cards */
+.def { border: 1px solid var(--line); border-radius: .8rem; padding: 1rem; background: var(--soft); border-top: .35rem solid var(--navy); }
+.def h3 { margin: 0 0 .4rem; color: var(--navy); }
+.def.k1 { border-top-color: var(--blue); } .def.k2 { border-top-color: var(--plum); }
+.def ul { margin: .4rem 0 0; padding-left: 1.2rem; }
+/* quick checks */
+.qc { border: 1px solid var(--line); border-radius: .8rem; padding: .9rem 1rem; margin: .7rem 0; }
+.qc p.q { margin: 0 0 .55rem; font-weight: 700; }
+.opts { display: flex; flex-wrap: wrap; gap: .45rem; }
+.opt { font: inherit; cursor: pointer; background: #fff; border: 2px solid #b8c6ce; color: var(--ink); border-radius: .6rem; padding: .45rem .8rem; text-align: left; }
+.opt:hover { border-color: var(--navy); }
+.opt.pick { border-color: var(--navy); background: #eef5f8; }
+.opt.right { border-color: var(--good); background: #e9f8ee; }
+.opt.wrong { border-color: var(--bad); background: #fdecec; }
+.opts.col { flex-direction: column; } .opts.col .opt { width: 100%; }
+.fb { margin: .55rem 0 0; padding: .55rem .75rem; border-radius: .55rem; display: none; }
+.fb.show { display: block; }
+.fb.good { background: #e9f8ee; border-left: .3rem solid var(--good); }
+.fb.bad { background: #fdecec; border-left: .3rem solid var(--bad); }
+.fb.info { background: #eef5f8; border-left: .3rem solid var(--blue); }
+/* sorter */
+.pool { display: flex; flex-wrap: wrap; gap: .45rem; min-height: 3.2rem; padding: .7rem; border: 2px dashed #b8c6ce; border-radius: .8rem; background: var(--soft); }
+.cardv { font: inherit; cursor: grab; background: #fff; border: 2px solid #9fb2bc; border-radius: .6rem; padding: .4rem .7rem; font-weight: 700; color: var(--navy); user-select: none; touch-action: none; }
+.cardv.sel { border-color: var(--teal); box-shadow: 0 0 0 3px #b4e3df; }
+.cardv.ok { border-color: var(--good); background: #e9f8ee; }
+.cardv.no { border-color: var(--bad); background: #fdecec; }
+.bins { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-top: .8rem; }
+.bin { border: 2px solid var(--line); border-radius: .9rem; min-height: 12rem; padding: .6rem; background: #fff; display: flex; flex-direction: column; }
+.bin h3 { margin: 0 0 .5rem; font-size: 1.05rem; color: #fff; padding: .45rem .7rem; border-radius: .6rem; }
+.bin.a h3 { background: var(--blue); } .bin.b h3 { background: var(--plum); }
+.bin .in { display: flex; flex-wrap: wrap; gap: .4rem; align-content: flex-start; flex: 1; }
+.bin.hot { border-color: var(--teal); background: #f2faf9; }
+.explain { margin-top: .8rem; }
+.explain li { margin: .25rem 0; }
+@media (max-width: 600px) { .bins { grid-template-columns: 1fr; } }
+/* curves quiz */
+.quiz { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr); gap: 1rem; align-items: start; }
+@media (max-width: 860px) { .quiz { grid-template-columns: 1fr; } }
+.plot { width: 100%; height: auto; display: block; background: #fff; border: 1px solid var(--line); border-radius: .7rem; }
+.qhead { display: flex; justify-content: space-between; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .5rem; }
+.pill { display: inline-block; border-radius: 999px; padding: .15rem .65rem; font-size: .8rem; font-weight: 700; color: #fff; }
+.pill.f { background: var(--plum); } .pill.k { background: var(--blue); }
+.dots { display: flex; gap: .25rem; flex-wrap: wrap; }
+.dots i { width: .7rem; height: .7rem; border-radius: 50%; background: #d4dde2; display: inline-block; }
+.dots i.r { background: var(--good); } .dots i.w { background: var(--bad); } .dots i.c { outline: 2px solid var(--navy); }
+/* missions */
+.mission { border: 1px solid var(--line); border-radius: .9rem; margin: .9rem 0; overflow: hidden; }
+.mission > h3 { margin: 0; padding: .7rem 1rem; color: #fff; font-size: 1.1rem; display: flex; justify-content: space-between; gap: .5rem; flex-wrap: wrap; align-items: center; }
+.mission.a > h3 { background: var(--blue); } .mission.b > h3 { background: var(--plum); } .mission.c > h3 { background: var(--teal); }
+.mission > div { padding: .9rem 1rem; }
+.mission h3 a { color: #fff; font-size: .9rem; background: rgba(255,255,255,.18); padding: .25rem .6rem; border-radius: .5rem; text-decoration: none; border: 1px solid rgba(255,255,255,.5); }
+ol.how { margin: .2rem 0 .6rem; padding-left: 1.3rem; }
+ol.how li { margin: .2rem 0; }
+.ans { display: grid; grid-template-columns: minmax(0, 1fr) 8rem auto; gap: .45rem .6rem; align-items: center; padding: .55rem 0; border-top: 1px dashed var(--line); }
+.ans:first-of-type { border-top: 0; }
+.ans label { font-weight: 700; }
+.ans label small { display: block; font-weight: 400; color: var(--muted); }
+.ans input { font: inherit; width: 100%; padding: .4rem .5rem; border: 2px solid #b8c6ce; border-radius: .5rem; }
+.ans .res { grid-column: 1 / -1; display: none; padding: .45rem .65rem; border-radius: .5rem; font-size: .93rem; }
+.ans .res.show { display: block; }
+.ans .res.good { background: #e9f8ee; } .ans .res.close { background: #fff7e6; } .ans .res.bad { background: #fdecec; }
+@media (max-width: 600px) { .ans { grid-template-columns: 1fr auto; } .ans label { grid-column: 1 / -1; } }
+table { width: 100%; border-collapse: collapse; margin: .5rem 0; font-size: .93rem; }
+th, td { border: 1px solid var(--line); padding: .45rem .55rem; text-align: left; vertical-align: top; }
+th { background: var(--soft); color: var(--navy); }
+td.num { font-variant-numeric: tabular-nums; }
+.who td:nth-child(n+2) { text-align: center; }
+.who input { width: 1.1rem; height: 1.1rem; accent-color: var(--teal); }
+.who tr.ok td:first-child { background: #e9f8ee; } .who tr.no td:first-child { background: #fdecec; }
+textarea, input.txt, select { font: inherit; width: 100%; padding: .45rem .55rem; border: 2px solid #b8c6ce; border-radius: .5rem; background: #fff; }
+textarea { min-height: 4.2rem; resize: vertical; }
+label.f { display: block; font-weight: 700; color: var(--navy); margin: .7rem 0 .25rem; }
+label.f small { font-weight: 400; color: var(--muted); }
+.chk { display: flex; flex-wrap: wrap; gap: .3rem 1.1rem; }
+.chk label { display: inline-flex; gap: .35rem; align-items: center; font-weight: 400; }
+.score { font-size: 1.15rem; font-weight: 700; color: var(--navy); }
+footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 1rem; }
+.hide { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="badge">SESD52</span>
+    <h1>Kinematics and kinetics</h1>
+    <p>One jump, two lenses. Work through the six steps in order, at the times your tutor sets.</p>
+  </header>
+  <nav class="steps" id="nav" aria-label="Session steps"></nav>
+
+  <!-- 1 DEFINE -->
+  <section class="step" data-s="1" aria-labelledby="h1">
+    <div class="sh"><h2 id="h1">1. What are we measuring?</h2><span class="time">About 5 minutes</span></div>
+    <div class="sb">
+      <p class="lead">Last year you measured movement with video and force platforms. Before we use both again, get the three key words straight.</p>
+      <div class="grid3">
+        <div class="def"><h3>Biomechanics</h3><p style="margin:0">The study of how living things move, using the methods of mechanics (Hatze, 1974). In sport, it asks two questions: <strong>what happened</strong>, and <strong>why did it happen</strong>?</p></div>
+        <div class="def k1"><h3>Kinematics</h3><p style="margin:0"><strong>Describes</strong> motion without looking at what caused it: <em>what happened</em>.</p><ul><li>position and displacement</li><li>velocity and acceleration</li><li>angles and angular velocity</li><li>timing (e.g. contact time, flight time)</li></ul></div>
+        <div class="def k2"><h3>Kinetics</h3><p style="margin:0"><strong>Explains</strong> motion through the forces that cause it: <em>why it happened</em>.</p><ul><li>force (e.g. ground reaction force)</li><li>impulse and momentum</li><li>moments of force (torque)</li><li>work, energy and power</li></ul></div>
+      </div>
+      <div class="tip"><p style="margin:0"><strong>The link:</strong> Newton&rsquo;s second law, <strong>F = ma</strong>. Force (kinetics) causes acceleration (kinematics). Today you will see one jump through both lenses and watch the force turn into the movement.</p></div>
+      <h3 style="color:var(--navy)">Commit first: kinematic or kinetic?</h3>
+      <p style="margin-top:0">Pick an answer before you look. No one sees your choice.</p>
+      <div id="defQs"></div>
+      <div class="navbtns"><span></span><button class="btn teal" type="button" data-go="2">Next: sort the variables &rsaquo;</button></div>
+    </div>
+  </section>
+
+  <!-- 2 SORT -->
+  <section class="step" data-s="2" aria-labelledby="h2">
+    <div class="sh blue"><h2 id="h2">2. Sort the variables</h2><span class="time">About 10 minutes</span></div>
+    <div class="sb">
+      <p class="lead">Put every variable in the right box. Drag a card, or click a card and then click a box. <strong>Nothing is marked until you press Check my sort</strong>, so commit to your best answer first.</p>
+      <div id="sort1"></div>
+      <div class="task" id="stretch">
+        <h3>Stretch: linear or angular?</h3>
+        <p style="margin:0 0 .5rem">Finished early? Sort these kinematic and kinetic variables again, this time into linear (straight-line) and angular (rotation).</p>
+        <div id="sort2"></div>
+      </div>
+      <div class="navbtns"><button class="btn ghost" type="button" data-go="1">&lsaquo; Back</button><button class="btn teal" type="button" data-go="3">Next: name that curve &rsaquo;</button></div>
+    </div>
+  </section>
+
+  <!-- 3 CURVES -->
+  <section class="step" data-s="3" aria-labelledby="h3">
+    <div class="sh plum"><h2 id="h3">3. Name that curve</h2><span class="time">About 10 minutes</span></div>
+    <div class="sb">
+      <p class="lead">Every movement leaves a fingerprint. Each graph below is either a <strong>force&ndash;time curve</strong> from a force platform (kinetics) or a <strong>knee angle&ndash;time curve</strong> from motion analysis (kinematics). Work out which movement made it.</p>
+      <div id="quiz"></div>
+      <div class="navbtns"><button class="btn ghost" type="button" data-go="2">&lsaquo; Back</button><button class="btn teal" type="button" data-go="4">Next: one jump, two lenses &rsaquo;</button></div>
+    </div>
+  </section>
+
+  <!-- 4 MISSIONS -->
+  <section class="step" data-s="4" aria-labelledby="h4">
+    <div class="sh teal"><h2 id="h4">4. One jump, two lenses</h2><span class="time">About 30 minutes</span></div>
+    <div class="sb">
+      <p class="lead">Both tools have a demo countermovement jump (CMJ), and it is <strong>the same jump</strong>. The video was made from the force platform data, and the clip starts at the same moment as the force file. Your job is to measure the jump with video (Part A), then with force (Part B), then decide what each lens can and cannot tell you (Part C).</p>
+      <div class="note"><p style="margin:0"><strong>Before you start:</strong> open each tool in its own browser tab using the buttons below, and keep this page open in another tab so you can type your answers here. Your answers are saved in this browser as you go.</p></div>
+
+      <div class="mission a">
+        <h3><span>Part A: Kinematic Analysis (video)</span><a href="https://tommyebright.github.io/video-analyser/" target="_blank" rel="noopener">Open Kinematic Analysis &#8599;</a></h3>
+        <div>
+          <ol class="how">
+            <li>Press <strong>Demo: CMJ</strong>. Read the green message: it tells you the frame rate and the markers.</li>
+            <li><strong>Calibrate</strong> on the 1 m pole (click the top and bottom of it).</li>
+            <li><strong>Markers:</strong> add Shoulder, Hip, Knee, Ankle and Toe, and a knee angle (Hip, Knee, Ankle), shown as flexion.</li>
+            <li><strong>Digitise:</strong> click each marker on frame 0, then press <strong>Track forwards</strong>.</li>
+            <li><strong>Events:</strong> mark take-off and landing (step frame by frame with the arrow keys and watch the toe). Then press <strong>Update results</strong>.</li>
+          </ol>
+          <div id="ansA"></div>
+        </div>
+      </div>
+
+      <div class="mission b">
+        <h3><span>Part B: Force Analysis (force platform)</span><a href="https://tommyebright.github.io/force-analyser/" target="_blank" rel="noopener">Open Force Analysis &#8599;</a></h3>
+        <div>
+          <ol class="how">
+            <li>Press <strong>Demo: CMJ</strong> and keep the Level on <strong>Intermediate (Year 2)</strong>.</li>
+            <li>Press <strong>Play the jump</strong> and watch the jumper beside the curve. Hover over the unweighting (blue), braking (orange) and propulsion (green) phases and read the plain-English sentence for each.</li>
+            <li>Open <strong>4. Force to displacement</strong> and press each <strong>Show me</strong> button.</li>
+            <li>Find the numbers below in the key results under the graph, or in <strong>5. Results</strong>. Click a result to see how it was worked out.</li>
+          </ol>
+          <div id="ansB"></div>
+        </div>
+      </div>
+
+      <div class="mission c">
+        <h3><span>Part C: Compare the two lenses</span></h3>
+        <div>
+          <p style="margin-top:0">Your own answers, side by side. Where they differ, decide why.</p>
+          <div id="cmpTable"></div>
+          <h4 style="color:var(--navy);margin:1rem 0 .3rem">Which lens can tell you this?</h4>
+          <p style="margin:0 0 .4rem">Tick every lens that could measure each one in the lab. Then press <strong>Check</strong>.</p>
+          <div id="who"></div>
+          <label class="f" for="refl">In one or two sentences: what does kinematics tell you about this jump that kinetics does not, and the other way round?</label>
+          <textarea id="refl" data-save="refl" placeholder="Kinematics told me… Kinetics told me…"></textarea>
+        </div>
+      </div>
+      <div class="navbtns"><button class="btn ghost" type="button" data-go="3">&lsaquo; Back</button><button class="btn teal" type="button" data-go="5">Next: plan your lab report &rsaquo;</button></div>
+    </div>
+  </section>
+
+  <!-- 5 PLAN -->
+  <section class="step" data-s="5" aria-labelledby="h5">
+    <div class="sh"><h2 id="h5">5. Plan your lab report</h2><span class="time">About 15 minutes</span></div>
+    <div class="sb">
+      <p class="lead">Your Laboratory Report (60%) asks you to collect kinematic <em>and</em> kinetic data on a task of your choice. Use what you have just done to plan it. Work with a partner if you like, but make your own plan.</p>
+      <div class="tip"><p style="margin:0"><strong>A good plan</strong> has a movement you can actually test in our lab, a clear question, variables that answer that question (not just every number the tools give you), and an honest limitation for each tool. Your limitations become part of your discussion later (MLO2).</p></div>
+      <div class="grid2">
+        <div>
+          <label class="f" for="p_move">Movement or task <small>(e.g. CMJ with and without arm swing, drop jumps from two box heights, single-leg hops)</small></label>
+          <input class="txt" id="p_move" data-save="p_move">
+          <label class="f" for="p_link">Link to your Case Study Presentation <small>(optional: leave blank if you are choosing a new movement)</small></label>
+          <textarea id="p_link" data-save="p_link"></textarea>
+          <label class="f" for="p_q">Your question <small>(e.g. Does arm swing change jump height, and how?)</small></label>
+          <textarea id="p_q" data-save="p_q"></textarea>
+          <label class="f">Equipment</label>
+          <div class="chk" id="p_kit"></div>
+          <label class="f" for="p_n">Participants and trials <small>(e.g. 1 participant, 3 trials per condition)</small></label>
+          <input class="txt" id="p_n" data-save="p_n">
+        </div>
+        <div>
+          <label class="f" for="p_k1">Kinematic variable 1, and what it tells you</label><textarea id="p_k1" data-save="p_k1"></textarea>
+          <label class="f" for="p_k2">Kinematic variable 2, and what it tells you</label><textarea id="p_k2" data-save="p_k2"></textarea>
+          <label class="f" for="p_f1">Kinetic variable 1, and what it tells you</label><textarea id="p_f1" data-save="p_f1"></textarea>
+          <label class="f" for="p_f2">Kinetic variable 2, and what it tells you</label><textarea id="p_f2" data-save="p_f2"></textarea>
+        </div>
+      </div>
+      <div class="grid2">
+        <div><label class="f" for="p_lv">One limitation of the video (kinematic) method</label><textarea id="p_lv" data-save="p_lv" placeholder="e.g. 2D only, so…"></textarea></div>
+        <div><label class="f" for="p_lf">One limitation of the force platform (kinetic) method</label><textarea id="p_lf" data-save="p_lf" placeholder="e.g. whole-body only, so…"></textarea></div>
+      </div>
+      <label class="f" for="p_ask">One question to ask your tutor before you collect data</label>
+      <input class="txt" id="p_ask" data-save="p_ask">
+      <div class="row" style="margin-top:1rem"><button class="btn teal" type="button" id="planDocx">Download my plan (Word)</button><button class="btn ghost" type="button" id="planCopy">Copy as text</button><span id="planMsg" class="muted" role="status"></span></div>
+      <div class="navbtns"><button class="btn ghost" type="button" data-go="4">&lsaquo; Back</button><button class="btn teal" type="button" data-go="6">Next: exit ticket &rsaquo;</button></div>
+    </div>
+  </section>
+
+  <!-- 6 EXIT -->
+  <section class="step" data-s="6" aria-labelledby="h6">
+    <div class="sh plum"><h2 id="h6">6. Exit ticket</h2><span class="time">About 5 minutes</span></div>
+    <div class="sb">
+      <p class="lead">Six quick questions. Answer them all, then press <strong>Mark my exit ticket</strong>.</p>
+      <div id="exit"></div>
+      <div class="row"><button class="btn plum" type="button" id="exitMark">Mark my exit ticket</button><span class="score" id="exitScore" role="status"></span></div>
+      <div class="navbtns"><button class="btn ghost" type="button" data-go="5">&lsaquo; Back</button><button class="btn ghost" type="button" id="resetAll">Clear my answers on this computer</button></div>
+    </div>
+  </section>
+
+  <footer>Kinematics and kinetics | SESD52 | Plymouth Marjon University. Your answers stay in this browser and are never sent anywhere.<br>Hatze, H. (1974). The meaning of the term &ldquo;biomechanics&rdquo;. <em>Journal of Biomechanics, 7</em>(2), 189&ndash;190.</footer>
+</div>
+
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+// ---------- saving (this browser only) ----------
+const KEY = 'sesd52-kk-v1';
+let ST = {};
+try { ST = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { ST = {}; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(ST)); } catch (e) { /* private window: carry on */ } }
+
+// ---------- steps ----------
+const STEPS = [[1, 'What are we measuring?', '5 min'], [2, 'Sort the variables', '10 min'], [3, 'Name that curve', '10 min'], [4, 'One jump, two lenses', '30 min'], [5, 'Plan your lab report', '15 min'], [6, 'Exit ticket', '5 min']];
+function show(n) {
+  ST.step = n; save();
+  document.querySelectorAll('section.step').forEach((s) => s.classList.toggle('on', +s.dataset.s === n));
+  document.querySelectorAll('#nav button').forEach((b) => b.setAttribute('aria-current', String(+b.dataset.s === n)));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (n === 3) drawQ();
+  if (n === 4) compareTable();
+}
+$('nav').innerHTML = STEPS.map(([n, t, m]) => '<button type="button" data-s="' + n + '"><b>' + n + '</b><span>' + t + '<small>' + m + '</small></span></button>').join('');
+document.querySelectorAll('#nav button').forEach((b) => b.addEventListener('click', () => show(+b.dataset.s)));
+document.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => { markDone(+b.closest('section').dataset.s); show(+b.dataset.go); }));
+function markDone(n) { ST.done = ST.done || {}; ST.done[n] = 1; save(); document.querySelectorAll('#nav button').forEach((b) => b.classList.toggle('done', !!(ST.done && ST.done[b.dataset.s]))); }
+
+// ---------- generic multiple choice (commit, then feedback) ----------
+function mcq(el, q, key, onAnswer) {
+  const id = key;
+  el.innerHTML += '<div class="qc" id="' + id + '"><p class="q">' + q.q + '</p><div class="opts' + (q.col ? ' col' : '') + '">' + q.o.map((o, i) => '<button type="button" class="opt" data-i="' + i + '">' + o + '</button>').join('') + '</div><p class="fb"></p></div>';
+}
+function wireMcq(id, q, mode, onAnswer) {
+  const box = $(id); if (!box) return;
+  const btns = box.querySelectorAll('.opt'), fb = box.querySelector('.fb');
+  const paint = (pick, reveal) => {
+    btns.forEach((b, i) => { b.classList.toggle('pick', i === pick && !reveal); b.classList.toggle('right', reveal && i === q.a); b.classList.toggle('wrong', reveal && i === pick && i !== q.a); });
+    if (reveal) { fb.className = 'fb show ' + (pick === q.a ? 'good' : 'bad'); fb.innerHTML = (pick === q.a ? '<strong>Yes.</strong> ' : '<strong>Not quite.</strong> ') + q.why; }
+  };
+  const saved = ST[id];
+  if (saved !== undefined) paint(saved, mode === 'instant' || ST[id + '_m']);
+  btns.forEach((b, i) => b.addEventListener('click', () => {
+    if (mode === 'instant' && ST[id] !== undefined) return; // one go
+    ST[id] = i; save(); paint(i, mode === 'instant'); if (onAnswer) onAnswer(i);
+  }));
+  return { reveal: () => { ST[id + '_m'] = 1; save(); paint(ST[id], true); return ST[id] === q.a; }, paint };
+}
+
+// ---------- step 1 ----------
+const DEFQ = [
+  { q: 'A coach says: &ldquo;Her knees collapse inwards when she lands.&rdquo;', o: ['Kinematic', 'Kinetic'], a: 0, why: 'It describes how the body moved (a joint position or angle), not the forces that caused it.' },
+  { q: 'A sport scientist says: &ldquo;He pushes harder into the ground at take-off.&rdquo;', o: ['Kinematic', 'Kinetic'], a: 1, why: 'Pushing harder is about force. You would need a force platform to measure it.' },
+  { q: 'Her jump height was 32 cm, measured on a force platform.', o: ['Kinematic', 'Kinetic'], a: 0, why: 'Jump height describes the motion (how far the centre of mass rose), so it is kinematic, even though a force platform was used to work it out. The <em>variable</em> decides, not the equipment.' }
+];
+(function () { const el = $('defQs'); DEFQ.forEach((q, k) => mcq(el, q, 'd' + k)); DEFQ.forEach((q, k) => wireMcq('d' + k, q, 'instant')); })();
+
+// ---------- step 2: sorters ----------
+const SORT1 = {
+  key: 's1', bins: ['Kinematic (describes the motion)', 'Kinetic (forces that cause it)'],
+  items: [
+    ['Joint angle', 0, 'An angle describes body position.'],
+    ['Angular velocity', 0, 'How fast an angle changes: a description of motion.'],
+    ['Centre of mass displacement', 0, 'How far the centre of mass moved.'],
+    ['Velocity', 0, 'Rate of change of position.'],
+    ['Acceleration', 0, 'Rate of change of velocity. It is caused by force, but on its own it describes motion.'],
+    ['Flight time', 0, 'A timing variable: time is kinematic.'],
+    ['Ground contact time', 0, 'Timing again, even when measured on a force platform.'],
+    ['Jump height', 0, 'How high the centre of mass rose: kinematic, however you measure it.'],
+    ['Step length', 0, 'A distance.'],
+    ['Ground reaction force', 1, 'A force, measured with a force platform.'],
+    ['Impulse', 1, 'Force &times; time: the area under a force&ndash;time curve.'],
+    ['Moment of force (torque)', 1, 'The turning effect of a force about a joint.'],
+    ['Power', 1, 'Force &times; velocity. It needs force, so it is kinetic.'],
+    ['Rate of force development', 1, 'How quickly force rises.'],
+    ['Momentum', 1, 'Mass &times; velocity. It includes mass, so it belongs with kinetics (impulse changes momentum).'],
+    ['Centre of pressure', 1, 'A position, but it is where the ground reaction force acts, worked out from force. A tricky one.'],
+    ['Work', 1, 'Force &times; distance.'],
+    ['Vertical stiffness', 1, 'Force &divide; displacement.']
+  ]
+};
+const SORT2 = {
+  key: 's2', bins: ['Linear (straight line)', 'Angular (rotation)'],
+  items: [
+    ['Velocity', 0, 'm/s along a line.'], ['Angular velocity', 1, 'Degrees or radians per second.'], ['Impulse', 0, 'N&middot;s, from a linear force.'],
+    ['Moment of force (torque)', 1, 'The angular equivalent of force (N&middot;m).'], ['Displacement', 0, 'Metres.'], ['Joint angle', 1, 'Degrees.'],
+    ['Angular impulse', 1, 'Torque &times; time.'], ['Ground reaction force', 0, 'Newtons.'], ['Angular acceleration', 1, 'Degrees per second squared.'], ['Momentum', 0, 'kg&middot;m/s (angular momentum is the rotational version).']
+  ]
+};
+function sorter(el, cfg) {
+  const k = cfg.key;
+  ST[k] = ST[k] || {};
+  el.innerHTML = '<div class="pool" data-b="-1" aria-label="Cards to sort"></div><div class="bins">' + cfg.bins.map((b, i) => '<div class="bin ' + (i ? 'b' : 'a') + '" data-b="' + i + '"><h3>' + b + '</h3><div class="in"></div></div>').join('') + '</div>'
+    + '<div class="row" style="margin-top:.7rem"><button class="btn" type="button" data-act="check">Check my sort</button><button class="btn ghost" type="button" data-act="retry">Move my wrong ones back</button><button class="btn ghost" type="button" data-act="reset">Start again</button><span class="score" data-act="score" role="status"></span></div><div class="explain"></div>';
+  let sel = null, checked = false;
+  const pool = el.querySelector('.pool');
+  const where = (i) => (ST[k][i] === undefined ? -1 : ST[k][i]);
+  // shuffle once per student
+  if (!ST[k + '_o']) { const o = cfg.items.map((_, i) => i); for (let i = o.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [o[i], o[j]] = [o[j], o[i]]; } ST[k + '_o'] = o; save(); }
+  const render = () => {
+    el.querySelectorAll('.in').forEach((x) => { x.innerHTML = ''; }); pool.innerHTML = '';
+    ST[k + '_o'].forEach((i) => {
+      const [name, ans] = cfg.items[i];
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'cardv'; b.textContent = name; b.dataset.i = i;
+      const w = where(i);
+      if (checked && w >= 0) b.classList.add(w === ans ? 'ok' : 'no');
+      if (sel === i) b.classList.add('sel');
+      b.addEventListener('click', (e) => { e.stopPropagation(); sel = sel === i ? null : i; render(); });
+      b.addEventListener('pointerdown', (e) => startDrag(e, i, b));
+      (w < 0 ? pool : el.querySelector('.bin[data-b="' + w + '"] .in')).appendChild(b);
+    });
+    if (!pool.children.length) pool.innerHTML = '<span style="color:var(--muted)">All sorted. Press <strong>Check my sort</strong>.</span>';
+  };
+  const place = (i, b) => { if (b < 0) delete ST[k][i]; else ST[k][i] = b; save(); checked = false; el.querySelector('.explain').innerHTML = ''; el.querySelector('[data-act=score]').textContent = ''; render(); };
+  el.querySelectorAll('.bin, .pool').forEach((bin) => bin.addEventListener('click', () => { if (sel !== null) { place(sel, +bin.dataset.b); sel = null; render(); } }));
+  // drag (mouse, pen and touch)
+  let drag = null;
+  function startDrag(e, i, card) {
+    if (e.button > 0) return;
+    drag = { i, x0: e.clientX, y0: e.clientY, card, ghost: null };
+    const move = (ev) => {
+      if (!drag) return;
+      if (!drag.ghost && Math.hypot(ev.clientX - drag.x0, ev.clientY - drag.y0) < 6) return;
+      if (!drag.ghost) { drag.ghost = card.cloneNode(true); Object.assign(drag.ghost.style, { position: 'fixed', pointerEvents: 'none', zIndex: 50, opacity: '.9' }); document.body.appendChild(drag.ghost); card.style.opacity = '.35'; }
+      drag.ghost.style.left = (ev.clientX - 30) + 'px'; drag.ghost.style.top = (ev.clientY - 16) + 'px';
+      el.querySelectorAll('.bin').forEach((bn) => { const r = bn.getBoundingClientRect(); bn.classList.toggle('hot', ev.clientX > r.left && ev.clientX < r.right && ev.clientY > r.top && ev.clientY < r.bottom); });
+    };
+    const up = (ev) => {
+      document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up);
+      if (drag && drag.ghost) {
+        drag.ghost.remove(); card.style.opacity = '';
+        let dest = null; el.querySelectorAll('.bin, .pool').forEach((bn) => { const r = bn.getBoundingClientRect(); if (ev.clientX > r.left && ev.clientX < r.right && ev.clientY > r.top && ev.clientY < r.bottom) dest = +bn.dataset.b; });
+        el.querySelectorAll('.bin').forEach((bn) => bn.classList.remove('hot'));
+        if (dest !== null) { sel = null; place(drag.i, dest); }
+        drag = null; card.dataset.dragged = '1';
+      } else drag = null;
+    };
+    document.addEventListener('pointermove', move); document.addEventListener('pointerup', up);
+  }
+  el.querySelector('[data-act=check]').addEventListener('click', () => {
+    checked = true; render();
+    let right = 0, placed = 0; const wrong = [];
+    cfg.items.forEach(([name, ans, why], i) => { const w = where(i); if (w < 0) return; placed++; if (w === ans) right++; else wrong.push('<li><strong>' + name + '</strong> is ' + (ans ? cfg.bins[1].split(' (')[0].toLowerCase() : cfg.bins[0].split(' (')[0].toLowerCase()) + ': ' + why + '</li>'); });
+    el.querySelector('[data-act=score]').textContent = right + ' / ' + cfg.items.length + ' right' + (placed < cfg.items.length ? ' (' + (cfg.items.length - placed) + ' not sorted yet)' : '');
+    el.querySelector('.explain').innerHTML = wrong.length ? '<div class="fb show bad"><strong>Have another look at these:</strong><ul style="margin:.3rem 0 0">' + wrong.join('') + '</ul></div>' : (placed === cfg.items.length ? '<div class="fb show good"><strong>All right.</strong> Check the tricky ones with a partner: jump height, contact time, momentum and centre of pressure.</div>' : '');
+  });
+  el.querySelector('[data-act=retry]').addEventListener('click', () => { cfg.items.forEach(([, ans], i) => { if (where(i) >= 0 && where(i) !== ans) delete ST[k][i]; }); save(); checked = false; el.querySelector('.explain').innerHTML = ''; el.querySelector('[data-act=score]').textContent = ''; render(); });
+  el.querySelector('[data-act=reset]').addEventListener('click', () => { ST[k] = {}; delete ST[k + '_o']; save(); sorter(el, cfg); });
+  render();
+}
+sorter($('sort1'), SORT1);
+sorter($('sort2'), SORT2);
+
+// ---------- step 3: name that curve ----------
+const REAL = {"cmj":{"dt":0.008,"t0":0.2,"y":[747,745,744,745,744,743,742,742,742,741,741,741,741,741,740,742,741,740,742,743,742,742,743,743,742,743,742,741,741,741,739,739,738,737,735,735,733,734,733,732,728,727,723,719,712,707,700,690,679,672,660,649,640,633,624,617,611,606,603,596,588,580,568,556,548,539,531,532,533,533,539,544,548,553,555,561,570,574,576,579,572,575,585,588,594,601,600,603,610,614,624,640,654,672,696,716,733,749,766,789,814,840,869,900,932,965,996,1025,1052,1080,1109,1136,1160,1181,1200,1223,1248,1271,1294,1321,1345,1362,1376,1388,1400,1408,1415,1423,1432,1440,1450,1459,1465,1472,1478,1490,1497,1502,1507,1508,1504,1522,1536,1537,1527,1506,1466,1406,1319,1202,1047,868,687,508,350,224,123,49,1,-12,7,-4,-2,-3,-2,-2,-2,-1,-1,-2,-3,-3,-2,-3,-2,-3,-2,-2,-2,-3,-3,-3,-4,-3,-3,-3,-3,-2,-2,-3,-3,-2,-3,-3,-4,-2,-3,-3,-3,-2,-2,-4,-4,-2,-2,64,344,625,505,748,861,1119,1355,1554,1711,1863,2045,2117,2005,1813,1671,1550,1440,1342,1272,1249,1236,1214,1177,1137,1113,1113,1129,1151,1170,1200,1198,1168,1130,1090,1062,1045,1036,1029,1026,1027,1021,1015,1007,1000,991,985,980,974,968,963,956,948,939,931,919,906,892,879,865,850,836,825,814,805,797,788,776,761,747,728,709,691,668,649,629,612,593,575,558,541,525,514,505,497,490,487,484,483,488,496,508,520,540,558,579]},"dj":{"dt":0.005,"t0":1.2,"y":[-2,0,0,0,0,-2,0,0,0,-3,0,1,1,0,0,1,-1,0,2,1,-1,0,0,1,1,1,0,0,1,0,0,0,-2,1,1,0,-1,0,2,0,2,0,2,0,-1,-1,0,2,-2,1,1,0,-1,0,0,1,-1,2,0,0,2,93,358,678,1099,919,1242,1331,1444,1717,1753,1822,1841,1922,2155,2452,2678,2972,2922,2604,2507,2348,2261,2216,2144,2105,2079,2060,2051,2047,2047,2066,2082,2101,2122,2136,2151,2176,2204,2227,2245,2259,2270,2275,2271,2265,2254,2243,2227,2212,2198,2185,2173,2158,2143,2127,2106,2080,2048,2007,1953,1887,1801,1694,1561,1400,1215,1010,791,572,371,195,73,4,-14,6,5,-20,-4,15,0,-12,2,10,-3,-7,1,5,-3,-3,0,2,-1,1,2,2,0,0,2,0,-1,0,0,0,-1,0,1,1,-1,0,2,1,-1,1,0,-1,2,0,3,-1,0,0,0,-2,1,0,-1,0,1,-1,0,-1,2,0,2,-3,1,1,0,1,-1,2,0,-1,3,0,1,0,0,1,-1,2,1,0,-1,0,0,3,0,1,1,1,0,1,-1,0,1,2,0,0,-1,0,0,2,0,2,0,-1,1,0,0,0,-1,1,4,2758,8898,2209,2179,2194,1159,1026,1024,1241,1562,2001,2162,2099,2085,1973,1880,1902,1905,1940,1931,1878,1845,1787,1743,1733,1771,1822,1845,1841,1828,1823,1831,1846,1863,1867,1861,1839,1804,1769,1738,1716,1696,1673,1639,1598,1558,1514,1474,1433,1393,1349,1303,1256,1207,1164,1124,1082,1043,1005,965,922,883,843,806,769,732,697,660,628,599,574,548,521,496,472,452,435,417,401,393,379,372,361,354,352,347,340,339,337,336,340,343,345,345,346,349,351,359,366,371,377,386,397,406,416,424,437,449,461,481,500,520,539,558,577,597,615,635,652,673,693,712,729,744,759,769,779,791,798,802,806,809,811,809,806,804,799,796,793,787,784,778,775,772,769,766,764,761,759,756,756,753,751,748,746,745]},"sj":{"dt":0.005,"t0":1.0,"y":[705,708,705,701,705,703,705,705,706,706,705,704,706,701,706,703,703,704,705,705,705,704,704,706,704,705,703,701,703,708,704,705,705,703,705,703,704,702,706,706,702,703,704,707,703,707,706,706,706,705,704,704,705,703,705,705,704,705,703,706,705,702,705,706,707,708,709,707,706,704,703,703,708,706,704,706,708,707,704,704,703,704,705,703,704,708,705,705,705,704,705,701,705,706,706,707,705,706,706,705,704,755,808,861,919,979,1036,1095,1151,1206,1262,1314,1366,1417,1461,1508,1545,1589,1621,1654,1680,1709,1729,1749,1760,1772,1776,1778,1776,1770,1765,1745,1731,1709,1683,1653,1620,1586,1548,1507,1461,1415,1367,1316,1260,1207,1153,1094,1036,982,922,887,837,746,622,479,335,202,94,26,1,0,-1,1,1,-1,-3,-2,-2,2,0,1,2,0,-1,-2,1,-4,2,1,2,-1,-1,4,2,-2,2,0,1,1,0,1,-2,-2,-2,1,3,1,-2,-3,-1,-1,-3,-2,-2,-1,2,-1,3,-1,1,0,-1,-1,0,3,-2,2,-2,0,3,0,2,1,0,2,2,1,-1,-1,1,1,2,-1,0,-1,-1,-3,0,-1,-2,2,-1,-1,1,2,2,0,-2,-1,2,-2,0,3,0,705,1149,1466,1681,1824,1910,1951,1963,1954,1925,1890,1845,1795,1745,1693,1644,1600,1547,1510,1468,1428,1395,1360,1328,1300,1270,1247,1221,1198,1178,1157,1138,1121,1104,1086,1070,1055,1041,1025,1014,999,987,976,965,953,942,932,922,914,903,895,884,876,869,861,854,845,838,832,827,820,816,808,804,796,795,790,785,778,776,773,764,757,751,742,739,735,728,728,722,726,717,716,717,718,710,713,712,708,710,709,707,707,706,704,707,705,704,705,707,706,705,706,708,704,707,704,701,705,704,704,704,704,705,705,706,705,707,704,703,707,705,705,704,702,706,703,705,705,706,704,708,705,707,704,704,702,705,705,706,708,702,704,704,703,705]}};
+// helpers to build curves
+const range = (t0, t1, dt) => { const a = []; for (let t = t0; t <= t1 + 1e-9; t += dt) a.push(+t.toFixed(4)); return a; };
+let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647 - 0.5; };
+const gauss = (x, m, s) => Math.exp(-(((x - m) / s) ** 2));
+// smooth curve through key points [[x, y], ...] (cosine easing between points)
+function keys(pts, x) { if (x <= pts[0][0]) return pts[0][1]; for (let i = 1; i < pts.length; i++) if (x <= pts[i][0]) { const [x0, y0] = pts[i - 1], [x1, y1] = pts[i]; const u = (x - x0) / (x1 - x0); return y0 + (y1 - y0) * (1 - Math.cos(Math.PI * u)) / 2; } return pts[pts.length - 1][1]; }
+const BW = 750;
+function walkF() { const t = range(0, 1.2, 0.005); return { t, y: t.map((tt) => { const x = (tt - 0.25) / 0.62; if (x < 0 || x > 1) return rnd() * 2; const env = Math.sin(Math.PI * x) ** 0.35; return BW * env * (1.13 * gauss(x, 0.24, 0.13) + 1.08 * gauss(x, 0.77, 0.13) + 0.74 * gauss(x, 0.5, 0.2) * (1 - 0.15)) / 1.0 + rnd() * 4; }) }; }
+function runF() { const t = range(0, 0.8, 0.002); return { t, y: t.map((tt) => { const x = (tt - 0.25) / 0.24; if (x < 0 || x > 1) return rnd() * 2; return BW * (2.55 * Math.sin(Math.PI * x) ** 1.3 + 0.9 * gauss(x, 0.11, 0.045)) + rnd() * 8; }) }; }
+function hopF() { const t = range(0, 3, 0.004); return { t, y: t.map((tt) => { if (tt < 0.6) return BW + rnd() * 6; if (tt < 0.85) return BW * (1 - 0.35 * Math.sin(Math.PI * (tt - 0.6) / 0.25)) + rnd() * 6; const c = (tt - 0.85) % 0.45; if (tt > 2.85) return rnd() * 2; return c < 0.2 ? BW * 3.1 * Math.sin(Math.PI * c / 0.2) ** 1.6 + rnd() * 10 : rnd() * 2; }) }; }
+function imtpF() { const t = range(0, 6, 0.01); return { t, y: t.map((tt) => { const r = tt < 1 ? 0 : tt < 1.35 ? (tt - 1) / 0.35 : tt < 4.5 ? 1 : tt < 4.8 ? 1 - (tt - 4.5) / 0.3 : 0; return BW * (1 + 1.75 * (r < 1 ? (1 - Math.cos(Math.PI * r)) / 2 : 1) * (1 - (tt > 1.35 && tt < 4.5 ? 0.05 * (tt - 1.35) / 3.15 : 0))) + rnd() * (r > 0 ? 25 : 5); }) }; }
+function landF() { const t = range(0, 2, 0.002); return { t, y: t.map((tt) => { if (tt < 0.4) return rnd() * 2; const x = tt - 0.4; return BW * (1 + 2.4 * gauss(x, 0.012, 0.008) + 3.6 * gauss(x, 0.038, 0.014) + 1.4 * gauss(x, 0.11, 0.06) - 0.35 * gauss(x, 0.35, 0.12)) * (1 - Math.exp(-x / 0.004)) + rnd() * 6; }) }; }
+function realF(k) { const r = REAL[k]; return { t: r.y.map((_, i) => +(r.t0 + i * r.dt).toFixed(3)), y: r.y }; }
+function kneeWalk() { const t = range(0, 2.2, 0.01); const P = [[0, 4], [0.14, 18], [0.4, 4], [0.6, 38], [0.72, 62], [0.88, 30], [1, 4]]; return { t, y: t.map((tt) => keys(P, (tt % 1.1) / 1.1) + rnd()) }; }
+function kneeRun() { const t = range(0, 1.4, 0.005); const P = [[0, 16], [0.12, 42], [0.36, 20], [0.55, 70], [0.72, 105], [0.9, 40], [1, 16]]; return { t, y: t.map((tt) => keys(P, (tt % 0.7) / 0.7) + rnd()) }; }
+function kneeCycle() { const t = range(0, 2, 0.01); return { t, y: t.map((tt) => 72 + 38 * Math.cos(2 * Math.PI * tt / 0.667) + rnd()) }; }
+function kneeCmj() { const t = range(0, 2.6, 0.01); const P = [[0, 8], [0.5, 8], [1.16, 86], [1.46, 9], [1.55, 6], [1.84, 10], [2.0, 58], [2.6, 10]]; return { t, y: t.map((tt) => keys(P, tt) + rnd()) }; }
+function kneeSquat() { const t = range(0, 7.5, 0.02); return { t, y: t.map((tt) => { const c = (tt % 2.5) / 2.5; return 6 + 98 * (c < 0.45 ? (1 - Math.cos(Math.PI * c / 0.45)) / 2 : c < 0.55 ? 1 : c < 1 ? (1 + Math.cos(Math.PI * (c - 0.55) / 0.45)) / 2 : 0) + rnd(); }) }; }
+const F_OPTS = ['Countermovement jump', 'Squat jump', 'Drop jump', 'Walking', 'Running', 'Hopping in place', 'Isometric mid-thigh pull', 'Landing from a box (no jump)'];
+const QS = [
+  { kind: 'f', gen: () => realF('cmj'), o: ['Squat jump', 'Countermovement jump', 'Walking', 'Isometric mid-thigh pull'], a: 1, why: 'Standing still at bodyweight, then a <strong>dip below bodyweight</strong> (unweighting), a big rise (braking and propulsion), <strong>zero force in the air</strong>, then a landing spike. The dip before the push is the countermovement.' },
+  { kind: 'f', gen: walkF, o: ['Running', 'Hopping in place', 'Walking', 'Landing from a box (no jump)'], a: 2, why: 'One foot on the plate for about 0.6 s, with <strong>two humps just above bodyweight</strong>: the first as weight is accepted at heel strike, the second as the foot pushes off. The dip in the middle is when the body passes over the foot.' },
+  { kind: 'k', gen: kneeCycle, o: ['Walking', 'Cycling', 'Squat', 'Running'], a: 1, why: 'A smooth, regular wave that never gets close to straight (about 35&deg; to 110&deg;), repeating every 0.67 s (90 rpm). The pedal crank forces the same circle every turn.' },
+  { kind: 'f', gen: runF, o: ['Walking', 'Running', 'Drop jump', 'Countermovement jump'], a: 1, why: 'A short contact (about 0.24 s) with a <strong>sharp impact peak</strong> at touchdown, then one big rounded peak at about 2.5 times bodyweight. Force is zero either side because the runner is in the air.' },
+  { kind: 'k', gen: kneeWalk, o: ['Walking', 'Running', 'Cycling', 'Countermovement jump'], a: 0, why: 'Two bends per stride: a small one (about 15&ndash;20&deg;) as the leg takes the weight, then a bigger one (about 60&deg;) in swing so the foot clears the ground. The knee comes almost straight in between.' },
+  { kind: 'f', gen: () => Object.assign(realF('dj'), { ymax: 4000 }), o: ['Landing from a box (no jump)', 'Countermovement jump', 'Drop jump', 'Hopping in place'], a: 2, why: 'The plate starts <strong>empty</strong> (the participant is on a box), then a hard contact, a flight phase of zero force, and a second landing (its spike goes off the top of the graph). Landing with no jump would not have the flight phase.' },
+  { kind: 'k', gen: kneeCmj, o: ['Squat', 'Countermovement jump', 'Running', 'Walking'], a: 1, why: 'Straight, then one deep bend (about 85&deg;) and a fast extension to nearly straight at take-off, a flat part in the air, then a second bend on landing.' },
+  { kind: 'f', gen: hopF, o: ['Running', 'Walking', 'Countermovement jump', 'Hopping in place'], a: 3, why: 'A small dip, then a <strong>regular series of tall, short contacts</strong> (about 3 times bodyweight) separated by zero force in the air. The rhythm gives it away.' },
+  { kind: 'f', gen: imtpF, o: ['Isometric mid-thigh pull', 'Squat jump', 'Countermovement jump', 'Walking'], a: 0, why: 'Force rises from bodyweight to a <strong>plateau that is held</strong> for several seconds, and never drops to zero. Nothing moves: the participant pulls against a fixed bar.' },
+  { kind: 'k', gen: kneeSquat, o: ['Cycling', 'Squat', 'Walking', 'Countermovement jump'], a: 1, why: 'Slow, repeated bends to about 100&deg; with a short pause at the bottom, then back to straight. No flight, and much slower than a jump.' },
+  { kind: 'f', gen: () => realF('sj'), o: ['Countermovement jump', 'Drop jump', 'Squat jump', 'Landing from a box (no jump)'], a: 2, why: 'Steady at bodyweight (holding a squat), then force rises <strong>without dipping below bodyweight first</strong>. No countermovement, so it is a squat jump.' },
+  { kind: 'k', gen: kneeRun, o: ['Walking', 'Running', 'Cycling', 'Squat'], a: 1, why: 'Like walking but bigger and faster: about 40&deg; of bend in stance and over 100&deg; in swing, repeating every 0.7 s.' },
+  { kind: 'f', gen: landF, o: ['Landing from a box (no jump)', 'Drop jump', 'Running', 'Walking'], a: 0, why: 'The plate starts empty, then a very fast spike (several times bodyweight) as the feet hit, settling back to bodyweight. There is no take-off afterwards.' }
+];
+let qi = ST.qi || 0;
+function plotSVG(d, kind) {
+  const W = 760, H = 360, L = 70, R = 16, T = 16, B = 48, w = W - L - R, h = H - T - B;
+  const t = d.t, y = d.y, x0 = t[0], x1 = t[t.length - 1];
+  let y0 = Math.min(0, ...y), y1 = d.ymax || Math.max(...y); const pad = (y1 - y0) * 0.06; y0 -= kind === 'f' ? 0 : pad; y1 += pad; if (kind === 'k') y0 = Math.min(y0, -5);
+  const X = (v) => L + (v - x0) / (x1 - x0) * w, Y = (v) => T + h - (v - y0) / (y1 - y0) * h;
+  const step = (r) => { const raw = r / 5, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p; return (m < 1.5 ? 1 : m < 3 ? 2 : m < 7 ? 5 : 10) * p; };
+  let s = '<svg class="plot" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + (kind === 'f' ? 'Force–time curve' : 'Knee angle–time curve') + ' to identify">';
+  const ys = step(y1 - y0), xs = step(x1 - x0);
+  for (let v = Math.ceil(y0 / ys) * ys; v <= y1; v += ys) s += '<line x1="' + L + '" x2="' + (L + w) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="#e6ecef"/><text x="' + (L - 7) + '" y="' + (Y(v) + 4) + '" font-size="12" text-anchor="end" fill="#56646c">' + Math.round(v) + '</text>';
+  for (let v = Math.ceil(x0 / xs) * xs; v <= x1 + 1e-9; v += xs) s += '<text x="' + X(v) + '" y="' + (T + h + 18) + '" font-size="12" text-anchor="middle" fill="#56646c">' + (+v.toFixed(2)) + '</text>';
+  if (kind === 'f') s += '<line x1="' + L + '" x2="' + (L + w) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="#9aa5ad"/>';
+  s += '<line x1="' + L + '" x2="' + L + '" y1="' + T + '" y2="' + (T + h) + '" stroke="#1d1d1b"/><line x1="' + L + '" x2="' + (L + w) + '" y1="' + (T + h) + '" y2="' + (T + h) + '" stroke="#1d1d1b"/>';
+  let p = ''; t.forEach((tt, i) => { p += (i ? 'L' : 'M') + X(tt).toFixed(1) + ',' + Y(y[i]).toFixed(1); });
+  s += '<clipPath id="pc"><rect x="' + L + '" y="' + T + '" width="' + w + '" height="' + h + '"/></clipPath><path clip-path="url(#pc)" d="' + p + '" fill="none" stroke="' + (kind === 'f' ? '#8b3556' : '#0071bc') + '" stroke-width="2.4" stroke-linejoin="round"/>';
+  s += '<text x="' + (L + w / 2) + '" y="' + (H - 8) + '" font-size="13" font-weight="bold" text-anchor="middle" fill="#1d1d1b">Time (s)</text>';
+  s += '<text transform="translate(18,' + (T + h / 2) + ') rotate(-90)" font-size="13" font-weight="bold" text-anchor="middle" fill="#1d1d1b">' + (kind === 'f' ? 'Vertical force (N)' : 'Knee flexion angle (°, 0 = straight)') + '</text>';
+  return s + '</svg>';
+}
+function drawQ() {
+  const el = $('quiz');
+  if (qi >= QS.length) {
+    const right = QS.filter((q, i) => ST['q' + i] === q.a).length;
+    el.innerHTML = '<div class="task"><h3>You scored ' + right + ' out of ' + QS.length + '</h3><p>Which ones caught you out? For each one, say out loud what feature of the shape gives it away (e.g. &ldquo;force goes to zero, so they left the plate&rdquo;).</p><div class="dots">' + QS.map((q, i) => '<i class="' + (ST['q' + i] === q.a ? 'r' : 'w') + '"></i>').join('') + '</div><div class="row" style="margin-top:.8rem"><button class="btn ghost" type="button" id="qReview">Look through them again</button><button class="btn ghost" type="button" id="qRedo">Have another go (new order)</button></div></div>';
+    $('qReview').addEventListener('click', () => { qi = 0; ST.qi = 0; save(); drawQ(); });
+    $('qRedo').addEventListener('click', () => { QS.forEach((q, i) => delete ST['q' + i]); qi = 0; ST.qi = 0; save(); drawQ(); });
+    return;
+  }
+  const q = QS[qi]; seed = 7 + qi * 13;
+  const d = q.gen();
+  const answered = ST['q' + qi] !== undefined;
+  el.innerHTML = '<div class="qhead"><span><strong>Curve ' + (qi + 1) + ' of ' + QS.length + '</strong> <span class="pill ' + q.kind + '">' + (q.kind === 'f' ? 'Kinetics: force platform' : 'Kinematics: knee angle') + '</span></span><span class="dots">' + QS.map((qq, i) => '<i class="' + (ST['q' + i] === undefined ? '' : ST['q' + i] === qq.a ? 'r' : 'w') + (i === qi ? ' c' : '') + '"></i>').join('') + '</span></div>'
+    + '<div class="quiz"><div>' + plotSVG(d, q.kind) + '</div><div><p style="margin-top:0;font-weight:700">Which movement made this curve?</p><div class="opts col" id="qo">' + q.o.map((o, i) => '<button type="button" class="opt" data-i="' + i + '">' + o + '</button>').join('') + '</div><p class="fb" id="qfb"></p>'
+    + '<div class="row" style="margin-top:.7rem"><button class="btn ghost" type="button" id="qPrev"' + (qi ? '' : ' disabled') + '>&lsaquo; Previous</button><button class="btn" type="button" id="qNext"' + (answered ? '' : ' disabled') + '>' + (qi === QS.length - 1 ? 'See my score' : 'Next curve &rsaquo;') + '</button></div></div></div>';
+  const paint = () => {
+    const pick = ST['q' + qi]; if (pick === undefined) return;
+    el.querySelectorAll('#qo .opt').forEach((b, i) => { b.classList.toggle('right', i === q.a); b.classList.toggle('wrong', i === pick && pick !== q.a); });
+    const fb = $('qfb'); fb.className = 'fb show ' + (pick === q.a ? 'good' : 'bad'); fb.innerHTML = (pick === q.a ? '<strong>Yes: ' + q.o[q.a] + '.</strong> ' : '<strong>It is ' + q.o[q.a].toLowerCase() + '.</strong> ') + q.why;
+    $('qNext').disabled = false;
+  };
+  el.querySelectorAll('#qo .opt').forEach((b, i) => b.addEventListener('click', () => { if (ST['q' + qi] !== undefined) return; ST['q' + qi] = i; save(); paint(); drawDots(); }));
+  const drawDots = () => { el.querySelector('.qhead .dots').innerHTML = QS.map((qq, i) => '<i class="' + (ST['q' + i] === undefined ? '' : ST['q' + i] === qq.a ? 'r' : 'w') + (i === qi ? ' c' : '') + '"></i>').join(''); };
+  $('qPrev').addEventListener('click', () => { qi--; ST.qi = qi; save(); drawQ(); });
+  $('qNext').addEventListener('click', () => { qi++; ST.qi = qi; save(); drawQ(); });
+  paint();
+}
+
+// ---------- step 4: missions ----------
+// Answer key. Kinematic answers depend on digitising, so they get wider tolerances.
+const ANS_A = [
+  { k: 'a_to', lab: 'Take-off frame', small: 'the first frame where the toe has left the ground', v: 176, tol: 1, close: 3, unit: '', dp: 0, hint: 'Step one frame at a time near take-off and watch the purple toe marker. It is the first frame with a gap under the toe.' },
+  { k: 'a_ld', lab: 'Landing frame', small: 'the first frame where the toe is back on the ground', v: 221, tol: 1, close: 3, unit: '', dp: 0, hint: 'Same again on the way down: the first frame where the toe touches the floor line.' },
+  { k: 'a_ft', lab: 'Flight time (s)', small: 'landing time minus take-off time', v: 0.375, tol: 0.009, close: 0.025, unit: 's', dp: 3, hint: 'Flight time = (landing frame &minus; take-off frame) &divide; 120 fps.' },
+  { k: 'a_jh', lab: 'Jump height from flight time (cm)', small: 'h = g t&sup2; &divide; 8', v: 17.2, tol: 0.9, close: 2.5, unit: 'cm', dp: 1, hint: 'h = 9.81 &times; t&sup2; &divide; 8, in metres. Multiply by 100 for centimetres.' },
+  { k: 'a_dep', lab: 'How far the hip dropped in the countermovement (cm)', small: 'standing hip height minus its lowest height', v: 25.9, tol: 1.5, close: 4, unit: 'cm', dp: 1, hint: 'Look at the hip&rsquo;s vertical position graph (or the data table): standing value minus the lowest value. Check your calibration if you are miles out.' },
+  { k: 'a_knee', lab: 'Knee flexion at the lowest point (&deg;)', small: '0&deg; = straight', v: 86, tol: 4, close: 9, unit: '&deg;', dp: 0, hint: 'Make sure the knee angle is Hip&ndash;Knee&ndash;Ankle shown as flexion, then read it at the frame where the hip is lowest (about frame 139).' }
+];
+const ANS_B = [
+  { k: 'b_mass', lab: 'Body mass (kg)', small: 'from the weighing period', v: 75.7, tol: 0.3, close: 1.5, unit: 'kg', dp: 1, hint: 'In 5. Results under Body, or bodyweight &divide; 9.81.' },
+  { k: 'b_ft', lab: 'Flight time (s)', v: 0.376, tol: 0.003, close: 0.02, unit: 's', dp: 3, hint: 'In the key results under the graph.' },
+  { k: 'b_jhf', lab: 'Jump height from flight time (cm)', v: 17.3, tol: 0.2, close: 1, unit: 'cm', dp: 1, hint: 'Jump height (FT) in the key results.' },
+  { k: 'b_jht', lab: 'Jump height from take-off velocity (cm)', v: 18.9, tol: 0.2, close: 1, unit: 'cm', dp: 1, hint: 'Jump height (TOV) in the key results.' },
+  { k: 'b_dep', lab: 'Countermovement depth (cm)', v: 25.9, tol: 0.3, close: 1.5, unit: 'cm', dp: 1, hint: 'In the key results, or in the Braking group of 5. Results.' },
+  { k: 'b_pf', lab: 'Peak force (N)', v: 1540, tol: 10, close: 60, unit: 'N', dp: 0, hint: 'Peak force in the key results. Check the force units are set to newtons.' },
+  { k: 'b_imp', lab: 'Propulsive impulse, net (N&middot;s)', v: 144.1, tol: 1, close: 5, unit: 'N&middot;s', dp: 1, hint: 'In the key results, or the Propulsion group of 5. Results.' }
+];
+function answers(el, list) {
+  el.innerHTML = list.map((a) => '<div class="ans" data-k="' + a.k + '"><label for="' + a.k + '">' + a.lab + (a.small ? '<small>' + a.small + '</small>' : '') + '</label><input id="' + a.k + '" inputmode="decimal" autocomplete="off" value="' + esc(ST[a.k] || '') + '"><button class="btn ghost" type="button">Check</button><div class="res" role="status"></div></div>').join('');
+  list.forEach((a) => {
+    const row = el.querySelector('[data-k="' + a.k + '"]'), inp = row.querySelector('input'), res = row.querySelector('.res');
+    const check = () => {
+      const v = parseFloat(String(inp.value).replace(',', '.'));
+      if (!Number.isFinite(v)) { res.className = 'res show bad'; res.innerHTML = 'Type a number first.'; return; }
+      const d = Math.abs(v - a.v);
+      if (d <= a.tol) { res.className = 'res show good'; res.innerHTML = '<strong>Spot on.</strong>'; }
+      else if (d <= a.close) { res.className = 'res show close'; res.innerHTML = '<strong>Close.</strong> Small differences are normal; can you say where yours came from? ' + a.hint; }
+      else { res.className = 'res show bad'; res.innerHTML = '<strong>Check again.</strong> ' + a.hint; }
+      ST[a.k + '_c'] = 1; save();
+    };
+    inp.addEventListener('input', () => { ST[a.k] = inp.value; save(); compareTable(); });
+    row.querySelector('button').addEventListener('click', check);
+    if (ST[a.k + '_c'] && ST[a.k]) check();
+  });
+}
+answers($('ansA'), ANS_A); answers($('ansB'), ANS_B);
+function compareTable() {
+  const g = (k) => { const v = parseFloat(String(ST[k] || '').replace(',', '.')); return Number.isFinite(v) ? v : null; };
+  const rows = [
+    ['Flight time (s)', g('a_ft'), g('b_ft'), 3, 'Video can only see whole frames (1/120 s = 0.008 s apart), and you judged contact by eye. The force platform samples 250 times a second and uses a 20 N threshold.'],
+    ['Jump height from flight time (cm)', g('a_jh'), g('b_jhf'), 1, 'Same formula, so any difference comes from flight time.'],
+    ['Countermovement depth (cm)', g('a_dep'), g('b_dep'), 1, 'Video measures the <em>hip marker</em>; the force platform gives the <em>whole-body centre of mass</em>. In this demo they were made to match, but in a real person the arms and trunk move the centre of mass away from the hip.'],
+    ['Jump height: take-off velocity (force) vs flight time (force)', g('b_jht'), g('b_jhf'), 1, 'Flight time assumes the body lands in the same position it took off in. Landing with more bent ankles or knees makes the flight longer, so the two methods differ.']
+  ];
+  $('cmpTable').innerHTML = '<table><thead><tr><th>Measure</th><th>Lens 1</th><th>Lens 2</th><th>Why they might differ</th></tr></thead><tbody>' + rows.map(([n, a, b, dp, why]) => '<tr><td><strong>' + n + '</strong></td><td class="num">' + (a === null ? '<span style="color:var(--muted)">&ndash;</span>' : a.toFixed(dp)) + '</td><td class="num">' + (b === null ? '<span style="color:var(--muted)">&ndash;</span>' : b.toFixed(dp)) + '</td><td>' + why + '</td></tr>').join('') + '</tbody></table><p style="margin:.2rem 0 0;color:var(--muted);font-size:.88rem">Lens 1 is video (Part A) for the first three rows; the last row compares two force platform methods.</p>';
+}
+const WHO = [
+  ['Knee angle at the lowest point', [1, 0], 'Only video can see joint angles. A force platform sees the whole body as one point.'],
+  ['Flight time', [1, 1], 'Both: video from the frames, force from when force drops to zero and comes back.'],
+  ['Peak ground reaction force', [0, 1], 'Only the force platform. Video cannot measure force on its own.'],
+  ['Net propulsive impulse', [0, 1], 'Only the force platform: impulse is the area under the force&ndash;time curve.'],
+  ['How far the hip (or centre of mass) dropped', [1, 1], 'Both: video tracks the hip; the force platform integrates twice to get the centre of mass.'],
+  ['Trunk lean at the lowest point', [1, 0], 'Only video: it is a segment angle.'],
+  ['Take-off velocity', [1, 1], 'Both: video from the hip or centre of mass position change; force from integrating acceleration.'],
+  ['Why one jump went higher than another', [0, 1], 'This needs kinetics: more net impulse means more take-off velocity. Video can show how the movement changed (e.g. a deeper dip), which helps explain it.']
+];
+(function () {
+  const el = $('who');
+  el.innerHTML = '<table class="who"><thead><tr><th>Measure</th><th>Video (kinematic)</th><th>Force platform (kinetic)</th></tr></thead><tbody>' + WHO.map(([n], i) => '<tr data-i="' + i + '"><td>' + n + '<div class="fb" style="margin-top:.3rem"></div></td><td><input type="checkbox" aria-label="' + n + ': video" data-c="0"></td><td><input type="checkbox" aria-label="' + n + ': force platform" data-c="1"></td></tr>').join('') + '</tbody></table><div class="row"><button class="btn" type="button" id="whoCheck">Check</button><span class="score" id="whoScore" role="status"></span></div>';
+  el.querySelectorAll('tr[data-i]').forEach((tr) => { const i = tr.dataset.i; tr.querySelectorAll('input').forEach((c) => { c.checked = !!(ST['w' + i] && ST['w' + i][c.dataset.c]); c.addEventListener('change', () => { ST['w' + i] = ST['w' + i] || [0, 0]; ST['w' + i][c.dataset.c] = c.checked ? 1 : 0; save(); }); }); });
+  $('whoCheck').addEventListener('click', () => {
+    let right = 0;
+    el.querySelectorAll('tr[data-i]').forEach((tr) => {
+      const i = +tr.dataset.i, w = WHO[i], pick = [0, 1].map((c) => (tr.querySelector('[data-c="' + c + '"]').checked ? 1 : 0));
+      const ok = pick[0] === w[1][0] && pick[1] === w[1][1]; if (ok) right++;
+      tr.className = ok ? 'ok' : 'no'; const fb = tr.querySelector('.fb'); fb.className = 'fb show ' + (ok ? 'good' : 'bad'); fb.innerHTML = w[2];
+    });
+    $('whoScore').textContent = right + ' / ' + WHO.length + ' right';
+  });
+})();
+// free-text fields
+document.querySelectorAll('[data-save]').forEach((f) => { f.value = ST[f.dataset.save] || ''; f.addEventListener('input', () => { ST[f.dataset.save] = f.value; save(); }); });
+
+// ---------- step 5: plan ----------
+const KIT = ['Force platform(s) and Force Analysis', '2D high-speed camera and Kinematic Analysis', '3D motion capture (Qualisys)', 'Contact mat or timing gates', 'Other'];
+$('p_kit').innerHTML = KIT.map((k, i) => '<label><input type="checkbox" data-k="' + i + '"' + (ST.kit && ST.kit[i] ? ' checked' : '') + '> ' + k + '</label>').join('');
+$('p_kit').querySelectorAll('input').forEach((c) => c.addEventListener('change', () => { ST.kit = ST.kit || {}; ST.kit[c.dataset.k] = c.checked ? 1 : 0; save(); }));
+const PLAN = [['Movement or task', 'p_move'], ['Link to my Case Study Presentation', 'p_link'], ['My question', 'p_q'], ['Equipment', '_kit'], ['Participants and trials', 'p_n'], ['Kinematic variable 1', 'p_k1'], ['Kinematic variable 2', 'p_k2'], ['Kinetic variable 1', 'p_f1'], ['Kinetic variable 2', 'p_f2'], ['Limitation of the video method', 'p_lv'], ['Limitation of the force platform method', 'p_lf'], ['Question for my tutor', 'p_ask'], ['Kinematics vs kinetics (from Part C)', 'refl']];
+const planVal = (k) => (k === '_kit' ? KIT.filter((_, i) => ST.kit && ST.kit[i]).join('; ') : (ST[k] || '').trim());
+$('planCopy').addEventListener('click', async () => {
+  const txt = 'SESD52 Laboratory Report plan\n\n' + PLAN.map(([l, k]) => l + ':\n' + (planVal(k) || '(not filled in)')).join('\n\n');
+  try { await navigator.clipboard.writeText(txt); $('planMsg').textContent = 'Copied. Paste it into your notes.'; } catch (e) { $('planMsg').textContent = 'Could not copy here: use Download my plan instead.'; }
+});
+// tiny zip writer so the Word file is made in the browser with no outside libraries
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(b) { let c = 0xffffffff; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; }
+function zip(files) {
+  const enc = new TextEncoder(), parts = [], central = []; let off = 0;
+  files.forEach((f) => {
+    const name = enc.encode(f.name), data = enc.encode(f.data), crc = crc32(data);
+    const h = new DataView(new ArrayBuffer(30)); h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(12, 0x21, true); h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, name.length, true);
+    parts.push(new Uint8Array(h.buffer), name, data);
+    const c = new DataView(new ArrayBuffer(46)); c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(14, 0x21, true); c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, name.length, true); c.setUint32(42, off, true);
+    central.push(new Uint8Array(c.buffer), name); off += 30 + name.length + data.length;
+  });
+  const cs = central.reduce((a, b) => a + b.length, 0), e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, cs, true); e.setUint32(16, off, true);
+  return new Blob(parts.concat(central, [new Uint8Array(e.buffer)]), { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+}
+const x = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const run = (t, b, sz) => '<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/>' + (b ? '<w:b/>' : '') + '<w:sz w:val="' + (sz || 22) + '"/></w:rPr><w:t xml:space="preserve">' + x(t) + '</w:t></w:r>';
+const para = (r, after) => '<w:p><w:pPr><w:spacing w:after="' + (after === undefined ? 120 : after) + '"/></w:pPr>' + r + '</w:p>';
+$('planDocx').addEventListener('click', () => {
+  let body = para(run('SESD52 Laboratory Report: my plan', true, 32)) + para(run('Made in the Kinematics and kinetics session, ' + new Date().toLocaleDateString('en-GB') + '.', false, 20), 240);
+  PLAN.forEach(([l, k]) => { body += para(run(l, true, 24), 40); (planVal(k) || '(not filled in yet)').split('\n').forEach((ln) => { body += para(run(ln), 60); }); body += para('', 80); });
+  const doc = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>' + body + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>';
+  const blob = zip([
+    { name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>' },
+    { name: '_rels/.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>' },
+    { name: 'word/document.xml', data: doc }
+  ]);
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'SESD52_lab_report_plan.docx'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+  $('planMsg').textContent = 'Downloaded. Keep it with your lab report notes.';
+});
+
+// ---------- step 6: exit ticket ----------
+const EXIT = [
+  { q: '1. Ground contact time, measured on a force platform, is a&hellip;', o: ['kinematic variable', 'kinetic variable'], a: 0, why: 'It is a time, so it describes the motion. The equipment does not decide; the variable does.' },
+  { q: '2. On a CMJ force&ndash;time curve, force is <em>below</em> bodyweight. What is the centre of mass doing?', o: ['Accelerating upwards', 'Accelerating downwards', 'Not moving', 'Moving at a constant speed'], a: 1, col: true, why: 'Net force is downwards (F &lt; W), so acceleration is downwards: this is unweighting.' },
+  { q: '3. Which of these can you <em>not</em> get from video alone?', o: ['Knee angle', 'Flight time', 'Peak ground reaction force', 'Hip displacement'], a: 2, col: true, why: 'Force needs a force platform (or another force sensor).' },
+  { q: '4. Net impulse divided by body mass gives you&hellip;', o: ['Power', 'Change in velocity', 'Jump height', 'Rate of force development'], a: 1, col: true, why: 'Impulse = change in momentum = m&Delta;v, so impulse &divide; m = &Delta;v.' },
+  { q: '5. Jump height from flight time usually comes out higher than from take-off velocity because&hellip;', o: ['the force platform is not accurate', 'people land with their centre of mass lower than at take-off', 'video frame rates are too low', 'gravity is stronger on the way down'], a: 1, col: true, why: 'Landing with bent knees or flat feet lengthens the flight, so the flight-time method overestimates.' },
+  { q: '6. Two athletes jump: A jumps higher. Which variable best explains <em>why</em>?', o: ['Flight time', 'Jump height', 'Propulsive net impulse', 'Knee angle at take-off'], a: 2, col: true, why: 'More net impulse means more take-off velocity, which means a higher jump. Flight time and jump height describe the result; impulse explains it.' }
+];
+(function () { const el = $('exit'); EXIT.forEach((q, k) => mcq(el, q, 'e' + k)); })();
+const exitW = EXIT.map((q, k) => wireMcq('e' + k, q, 'later'));
+$('exitMark').addEventListener('click', () => {
+  const missing = EXIT.filter((q, k) => ST['e' + k] === undefined).length;
+  if (missing) { $('exitScore').textContent = 'Answer all six first (' + missing + ' to go).'; return; }
+  const r = exitW.filter((w) => w.reveal()).length; ST.exitScore = r; save();
+  $('exitScore').textContent = 'You scored ' + r + ' / 6. ' + (r === 6 ? 'Brilliant.' : r >= 4 ? 'Good. Read the feedback on the ones you missed.' : 'Read the feedback, then ask your tutor about anything that still does not make sense.');
+});
+if (ST.exitScore !== undefined) { exitW.forEach((w) => w.reveal()); $('exitScore').textContent = 'You scored ' + ST.exitScore + ' / 6.'; }
+$('resetAll').addEventListener('click', () => { if (!confirm('Clear all your answers on this computer?')) return; try { localStorage.removeItem(KEY); } catch (e) { /* ignore */ } location.reload(); });
+
+// ---------- start ----------
+markDone(0);
+show(ST.step || 1);
+</script>
+</body>
+</html>
