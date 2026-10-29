@@ -255,9 +255,9 @@ function initControls() {
 // ---------- demo clips ----------
 const DEMOS = {
   cmj: {
-    file: 'demo/demo-cmj-matched-120fps', name: 'demo-cmj-120fps',
+    file: 'demo/demo-cmj-2026-120fps', name: 'demo-cmj-120fps',
     preset: { state: { fps: 120, fpsSet: true, slow: 1, activity: 'jump', dir: 'right', every: 1 }, labels: { athlete: 'Demo', condition: 'CMJ', trial: '1' },
-      msg: 'Demo loaded: a computer-made countermovement jump at <strong>120 fps</strong>. It is the <strong>same jump as the Force Analysis demo CMJ</strong>, so you can compare the two tools. There is a 1 m pole on the left for calibration and five markers on the body (shoulder, hip, knee, ankle, toe). Add those markers in the <strong>Markers</strong> tab, calibrate on the pole, click the markers on one frame, then <strong>Track forwards</strong>.' }
+      msg: 'Demo loaded: a computer-made countermovement jump (hands on hips) filmed at <strong>120 fps</strong>, with a 1 m pole on the left for calibration and five markers on the body (shoulder, hip, knee, ankle, toe). Add those markers in the <strong>Markers</strong> tab, calibrate on the pole, click the markers on one frame, then <strong>Track forwards</strong>.' }
   },
   sprint: {
     file: 'demo/demo-sprint-240fps-slowed8x', name: 'demo-sprint-240fps-slowed8x',

@@ -43,7 +43,7 @@ Variable names follow Robertson et al. (2014) *Research Methods in Biomechanics*
 
 ## Demo clips
 
-- **Demo: CMJ** is a computer-generated countermovement jump at 120 fps, with a 1 m pole for calibration and five markers (shoulder, hip, knee, ankle, toe). It is built from the centre of mass path of the Force Analysis demo CMJ (the BioWare sample jump), so it is the same jump seen through both tools. The clip starts at the same moment as the force file (frame 0 = 0 s). Take-off is frame 176 and landing frame 221 (flight 0.375 s, jump height about 17.2 cm by flight time, against 0.376 s and 17.3 cm on the force platform). The hip drops 25.9 cm in the countermovement, the same as the centre of mass from the force platform, and the knee is flexed about 86° at the lowest point (frame 139). The arms swing up in the air, so the hip rises a little less than the centre of mass after take-off (about 18.4 cm against 18.9 cm), which is a useful talking point about markers versus the centre of mass.
+- **Demo: CMJ** is a computer-generated countermovement jump with hands on hips, at 120 fps, with a 1 m pole for calibration and five markers (shoulder, hip, knee, ankle, toe), built from a real force platform recording of a CMJ. Take-off is frame 176 and landing frame 221 (flight 0.375 s, jump height about 17.2 cm by flight time). The hip drops 25.9 cm in the countermovement, and the knee is flexed about 86° at the lowest point (frame 139), so students can check their answers.
 - **Demo: sprint** is a real sprint filmed at 240 fps but saved as a 30 fps file (slowed 8×). It shows why the slow-down setting matters. There are no markers or calibration object, so it is for event timing and clicking joints by hand.
 
 ## Putting it online (GitHub Pages)
