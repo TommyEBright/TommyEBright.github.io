@@ -2,8 +2,8 @@
 
 A single-file web app that supports the SESH54 Exercise Physiology needs analysis assessment (35%, 1750 words ±10%). It has three tabs.
 
-1. **Needs analysis planner.** A guided builder that follows the five marking criteria, with applicability checks, test-to-demand links, a timeline for re-tests, a coverage view, and export to copy, .txt or .docx.
-2. **Critical writing check.** Students paste a draft or upload a .docx or .txt file. Transparent rules highlight sentences and group feedback by category, with word count, structure, criterion coverage, a paragraph heat map and three priority actions. There is no mark.
+1. **Needs analysis planner.** Five short steps, one per marking criterion (central question and unknowns; a few sourced demands with a population check and the main limiter; tests linked to demands with evidence and an athlete-specific limitation; re-test timing against the scenario timeline; constraints), then a coverage view and export to copy, .txt or .docx.
+2. **Critical writing check.** Students paste or upload either an extract (a paragraph or section, optionally telling the tool which section it is from) or a full draft. Extract mode is designed for checking as you write and skips the whole-document checks (word count, structure, balance, heat map). Full-draft mode adds them. Transparent rules highlight sentences and group feedback by category, with priority actions and no mark.
 3. **Spot the weakness.** Ten short paragraphs across the three scenarios for self-assessed practice.
 
 ## Privacy statement
@@ -54,7 +54,8 @@ Everything editable is in the `CONFIG` object at the top of the first `<script>`
 | `rules` | Each rule's type, category, criterion, severity, word lists and three messages (`detected`, `why`, `ask`). Set `enabled: false` to switch a rule off. Scenario rules have `scenarios: ["S2"]` etc. |
 | `spot` | The Spot the weakness paragraphs, answers and explanations |
 | `scenarios` | Brief facts, athlete descriptors, timeline and events, traps, constraint prompts, and scenario word lists |
-| `planner` | Step titles and "so what" prompts |
+| `planner` | Step titles and introductions |
+| `documentOnlyTypes`, `extractSections` | Rule types skipped in extract mode, and the section choices offered for an extract |
 
 Term syntax: a plain word matches whole words, case-insensitive. A trailing `*` matches a stem (`reliab*`). A term written as `/pattern/` is a regular expression.
 

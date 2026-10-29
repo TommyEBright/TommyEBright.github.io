@@ -255,6 +255,14 @@ const CONFIG = {
       body: ["in conclusion", "to conclude", "in summary", "next steps", "overall"] }
   ],
   structureRequired: ["intro", "demands", "tests", "monitoring", "constraints", "conclusion"],
+  // Rule types that only make sense for a whole draft. They are skipped when a student checks an extract.
+  documentOnlyTypes: ["docRequire", "docUnless"],
+  // Section choices offered when checking an extract ("" lets the tool estimate from keywords).
+  extractSections: [
+    { id: "", label: "Let the tool estimate" }, { id: "intro", label: "Introduction" }, { id: "profile", label: "Sport and athlete profile" },
+    { id: "demands", label: "Performance demands" }, { id: "tests", label: "Test selection" }, { id: "monitoring", label: "Monitoring and progression" },
+    { id: "constraints", label: "Constraints and individualisation" }, { id: "conclusion", label: "Conclusion" }
+  ],
 
   thresholds: {
     headingMaxWords: 10,          // a short line with no closing full stop is treated as a heading
@@ -584,17 +592,15 @@ const CONFIG = {
     }
   },
 
-  // Planner wording. Every step ends with a "so what" prompt.
+  // Planner steps. One per marking criterion, then coverage and export.
   planner: {
     steps: [
-      { id: "profile", title: "Athlete profile", criterion: "c1", soWhat: "So what? Which part of this profile will change what you test or how you interpret it?" },
-      { id: "demands", title: "Performance demands", criterion: "c2", soWhat: "So what? Which of these demands is most likely to limit this athlete, and why?" },
-      { id: "gap", title: "The gap", criterion: "c2", soWhat: "So what? Which uncertainty matters most for the coach's decision?" },
-      { id: "tests", title: "Test selection", criterion: "c3", soWhat: "So what? What decision will each test result change?" },
-      { id: "monitoring", title: "Monitoring and progression", criterion: "c4", soWhat: "So what? What result would make you change the training plan, and how?" },
-      { id: "constraints", title: "Constraints", criterion: "c5", soWhat: "So what? Which constraint changes your test plan most?" },
-      { id: "framing", title: "Introduction and conclusion", criterion: null, soWhat: null },
-      { id: "coverage", title: "Coverage and export", criterion: null, soWhat: null }
+      { id: "profile", title: "Athlete profile", criterion: "c1", intro: "Two notes. What is the question this needs analysis must answer, and what is missing?" },
+      { id: "demands", title: "Performance demands", criterion: "c2", intro: "Add the few demands that matter for this athlete, each with a source. Then name the one most likely to limit them." },
+      { id: "tests", title: "Test selection", criterion: "c3", intro: "Every test should measure a demand. Give its evidence and one limitation that matters for this athlete." },
+      { id: "monitoring", title: "Monitoring", criterion: "c4", intro: "When will you re-test, and what would make you change the training?" },
+      { id: "constraints", title: "Constraints", criterion: "c5", intro: "Which constraints change your plan?" },
+      { id: "coverage", title: "Coverage and export", criterion: null, intro: "Check which criteria your notes cover, then export your outline." }
     ]
   }
 };
@@ -670,7 +676,7 @@ function parseDoc(raw) {
   return { paras, raw };
 }
 
-function classifySections(doc) {
+function classifySections(doc, part) {
   let headingSection = null, seenBody = false;
   const bodies = doc.paras.filter(p => p.kind === "body");
   const anyHeading = doc.paras.some(p => p.kind === "heading" && !p.refsHeading);
@@ -692,7 +698,7 @@ function classifySections(doc) {
         if (sc > bestScore) { bestScore = sc; best = s.id; }
       });
       sec = bestScore >= 1 ? best : "other";
-      if (!anyHeading && !seenBody && sec !== "conclusion") sec = "intro";
+      if (!part && !anyHeading && !seenBody && sec !== "conclusion") sec = "intro";
       if (!anyHeading && p === bodies[bodies.length - 1] && /^(in conclusion|to conclude|in summary|overall)\b/i.test(p.text)) sec = "conclusion";
     }
     p.section = sec; seenBody = true;
@@ -751,7 +757,7 @@ const RULE_FNS = {
     const hits = [], th = CONFIG.thresholds, L = CONFIG.lists.synthesis;
     const words = body(doc).reduce((a, p) => a + p.words, 0);
     const markers = body(doc).reduce((a, p) => a + countTerms(p.text, L), 0);
-    if (words >= 200 && markers / words * 100 < th.synthesisPer100Words)
+    if (!doc.part && words >= 200 && markers / words * 100 < th.synthesisPer100Words)
       hits.push({ p: null, s: null, match: markers + " markers in " + words + " words" });
     body(doc).forEach(p => {
       if (citeCount(p.text) >= th.synthesisParaMinCitations && countTerms(p.text, L) === 0)
@@ -850,7 +856,7 @@ const RULE_FNS = {
   prioritisation(doc, r) {
     const hits = [];
     const text = body(doc).map(p => p.text).join(" ");
-    if (wordCount(text) >= 300 && countTerms(text, CONFIG.lists.priority) < CONFIG.thresholds.priorityTermsMin)
+    if (!doc.part && wordCount(text) >= 300 && countTerms(text, CONFIG.lists.priority) < CONFIG.thresholds.priorityTermsMin)
       hits.push({ p: null, s: null, detected: r.detectedDoc });
     eachSentence(doc, (s) => {
       const qs = CONFIG.lists.qualities.filter(q => termRx(q).test(s.text));
@@ -917,13 +923,14 @@ function eachTestMention(doc, names, f) {
   return hits;
 }
 
-function assessmentLevel(doc) {
-  const out = { items: [] };
+function assessmentLevel(doc, part) {
+  const out = { items: [], part: !!part };
   const counted = doc.paras.filter(p => p.kind === "body");
   out.words = counted.reduce((a, p) => a + p.words, 0);
   out.headingWords = doc.paras.filter(p => p.kind === "heading").reduce((a, p) => a + p.words, 0);
   out.refWords = doc.paras.filter(p => p.kind === "ref").reduce((a, p) => a + p.words, 0);
   out.hasRefs = doc.paras.some(p => p.refsHeading);
+  if (part) return out; // word limit, structure and balance only make sense for a full draft
   const W = CONFIG.wordLimit;
   out.wordStatus = out.words < W.min ? "under" : out.words > W.max ? "over" : "within";
   if (out.wordStatus !== "within") out.items.push({ ruleId: "wordcount", category: "structure", criterion: null, severity: 3, p: null, s: null,
@@ -954,20 +961,28 @@ function assessmentLevel(doc) {
   return out;
 }
 
-function analyse(raw, scenarioId) {
+// opts.mode "part" checks an extract (a paragraph or section): whole-document checks are skipped.
+// opts.section (optional) tells the engine which section the extract belongs to.
+function analyse(raw, scenarioId, opts) {
+  opts = opts || {};
+  const part = opts.mode === "part";
   const sc = CONFIG.scenarios[scenarioId];
-  const doc = parseDoc(raw); classifySections(doc);
+  const doc = parseDoc(raw); classifySections(doc, part);
+  if (opts.section) doc.paras.forEach(p => { if (p.kind === "body") p.section = opts.section; });
+  doc.part = part; doc.forcedSection = opts.section || null;
   const items = [];
   CONFIG.rules.forEach(r => {
     if (r.enabled === false) return;
     if (r.scenarios && !r.scenarios.includes(scenarioId)) return;
+    if (part && CONFIG.documentOnlyTypes.includes(r.type)) return;
+    if (part && r.type === "monitoringGaps" && opts.section !== "monitoring") return;
     const fn = RULE_FNS[r.type]; if (!fn) return;
     fn(doc, r, sc).forEach(h => items.push({
       ruleId: r.id, category: r.category, criterion: r.criterion, severity: r.severity, p: h.p, s: h.s,
       detected: h.detected || r.detected.replace("{match}", h.match || ""), why: r.why, ask: r.ask, match: h.match
     }));
   });
-  const assess = assessmentLevel(doc);
+  const assess = assessmentLevel(doc, part);
   const all = assess.items.concat(items);
   all.forEach((it, k) => it.n = k + 1);
   return { doc, items: all, assess };
@@ -987,15 +1002,28 @@ if (typeof module !== "undefined") module.exports = { CONFIG, analyse, parseDoc,
 
   /* ---------- state ---------- */
   function blankPlan() {
-    return { profile: { known: "", unknown: "", trainingAge: "", goals: "", timeline: "", soWhat: "" },
-      demands: [], demandsSoWhat: "", gapSoWhat: "", tests: [], testsSoWhat: "",
-      monitoring: { retestWeeks: "", interval: "", prescription: "", fatigue: "", soWhat: "" },
-      constraints: { answers: {}, other: "", soWhat: "" }, framing: { intro: "", conclusion: "" } };
+    return { profile: { question: "", unknown: "" }, demands: [], limiter: "", tests: [],
+      monitoring: { retestWeeks: "", plan: "" }, constraints: "" };
+  }
+  // Carries notes from the earlier, longer planner into the simpler one.
+  function migratePlan(p) {
+    const b = Object.assign(blankPlan(), p || {});
+    const join = (...xs) => xs.filter(x => x && String(x).trim()).join("\n");
+    b.profile = Object.assign({ question: "", unknown: "" }, b.profile);
+    if (!b.profile.question && b.framing) b.profile.question = b.framing.intro || "";
+    if (typeof b.constraints !== "string") { const c = b.constraints || {}; b.constraints = join(...Object.values(c.answers || {}), c.other); }
+    b.monitoring = Object.assign({ retestWeeks: "", plan: "" }, b.monitoring);
+    if (!b.monitoring.plan) b.monitoring.plan = join(b.monitoring.interval, b.monitoring.prescription, b.monitoring.fatigue);
+    if (!b.limiter && b.demandsSoWhat) b.limiter = b.demandsSoWhat;
+    b.demands.forEach(d => { if (!d.notest && d.notestReason) d.notest = d.notestReason; if (!d.match && d.app) d.match = Object.values(d.app).some(v => v === "no" || v === "unreported") ? "partly" : (Object.values(d.app).includes("yes") ? "yes" : ""); });
+    b.tests.forEach(t => { if (!t.evidence) t.evidence = join(t.reliability, t.validity, t.population); });
+    return b;
   }
   function blankState() { return { v: 1, scenario: "S1", tab: "plan", step: 0, theme: null, plans: { S1: blankPlan(), S2: blankPlan(), S3: blankPlan() }, drafts: { S1: "", S2: "", S3: "" }, spot: {} }; }
   let state = blankState();
   try { const s = JSON.parse(localStorage.getItem(CONFIG.storageKey)); if (s && s.v === 1) state = Object.assign(blankState(), s); } catch (e) {}
-  ["S1", "S2", "S3"].forEach(k => { state.plans[k] = Object.assign(blankPlan(), state.plans[k] || {}); });
+  ["S1", "S2", "S3"].forEach(k => { state.plans[k] = migratePlan(state.plans[k]); });
+  state.check = Object.assign({ mode: "part", section: "" }, state.check);
   let saveT;
   function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(CONFIG.storageKey, JSON.stringify(state)); } catch (e) {} }, 250); }
   const plan = () => state.plans[state.scenario];
@@ -1062,13 +1090,13 @@ if (typeof module !== "undefined") module.exports = { CONFIG, analyse, parseDoc,
     const ctl = opts.input ? `<input type="text" id="${fid}" data-list="${list}" data-id="${id}" data-key="${key}" value="${esc(v)}">` : `<textarea id="${fid}" data-list="${list}" data-id="${id}" data-key="${key}" rows="${opts.rows || 2}">${esc(v)}</textarea>`;
     return `<label class="f" for="${fid}">${esc(label)}${hint}</label>${ctl}`;
   }
-  function soWhat(path, step) { return step.soWhat ? `<div class="mini sowhat">${field(step.soWhat, path, { hint: "One or two lines. This is the decision that goes into your report." })}</div>` : ""; }
 
   /* ---------- planner checks (shared by steps and coverage) ---------- */
   const filled = s => !!(s && String(s).trim());
+  const words = s => (String(s || "").match(/\S+/g) || []).length;
   function demandLabel(d, i) { return "Demand " + (i + 1) + (filled(d.text) ? ". " + d.text.trim().slice(0, 60) : ""); }
-  function mismatches(d) { return CONFIG.applicability.filter(a => d.app && (d.app[a.id] === "no" || d.app[a.id] === "unreported")); }
-  function demandCovered(d) { return plan().tests.some(t => t.demands.includes(d.id)) || (d.decision === "notest" && filled(d.notestReason)); }
+  function mismatch(d) { return d.match === "partly" || d.match === "no" || d.match === "unreported"; }
+  function demandCovered(d) { return plan().tests.some(t => t.demands.includes(d.id)) || filled(d.notest); }
   function parseWeeks(s) { return String(s || "").split(/[^0-9]+/).filter(Boolean).map(Number); }
   function timelineIssues() {
     const tl = scen().timeline, p = plan(), out = [];
@@ -1084,26 +1112,24 @@ if (typeof module !== "undefined") module.exports = { CONFIG, analyse, parseDoc,
     return out;
   }
   function coverage() {
-    const p = plan(), sc = scen();
-    const st = (n, total, full) => n === 0 ? "missing" : n >= full ? "covered" : "partly";
-    const res = {};
-    const prof = ["known", "unknown", "trainingAge", "goals", "timeline"].filter(k => filled(p.profile[k])).length;
-    res.c1 = { status: st(prof, 5, 4), note: `${prof} of 5 profile fields completed.` };
-    const good = p.demands.filter(d => filled(d.text) && filled(d.source));
-    const unjust = p.demands.filter(d => mismatches(d).length && !filled(d.justify)).length;
-    const types = new Set(good.map(d => d.type)).size;
-    res.c2 = { status: good.length === 0 ? "missing" : (good.length >= 3 && types >= 2 && unjust === 0 ? "covered" : "partly"),
-      note: `${good.length} demand(s) with a source, ${types} type(s)${unjust ? `, ${unjust} population mismatch(es) without justification` : ""}.` };
+    const p = plan(), tl = scen().timeline, res = {};
+    const prof = [p.profile.question, p.profile.unknown].filter(filled).length;
+    res.c1 = { status: prof === 2 ? "covered" : prof ? "partly" : "missing", note: prof === 2 ? "Central question and unknowns noted." : "Note the central question and what is unknown." };
+    const good = p.demands.filter(d => filled(d.text) && filled(d.source)).length;
+    const unjust = p.demands.filter(d => mismatch(d) && !filled(d.justify)).length;
+    res.c2 = { status: good >= 2 && !unjust && filled(p.limiter) ? "covered" : (p.demands.length || filled(p.limiter)) ? "partly" : "missing",
+      note: `${good} demand(s) with a source${unjust ? `, ${unjust} population mismatch(es) to justify` : ""}${filled(p.limiter) ? ", main limiter named" : ", main limiter not yet named"}.` };
     const orphans = p.tests.filter(t => !t.demands.length).length;
-    const complete = p.tests.filter(t => ["reliability", "validity", "population", "limitation"].every(k => filled(t[k]))).length;
+    const complete = p.tests.filter(t => filled(t.evidence) && filled(t.limitation)).length;
     const uncovered = p.demands.filter(d => !demandCovered(d)).length;
-    res.c3 = { status: p.tests.length === 0 ? "missing" : (p.tests.length >= 2 && !orphans && complete === p.tests.length && !uncovered ? "covered" : "partly"),
-      note: `${p.tests.length} test(s), ${complete} fully evidenced, ${orphans} not linked to a demand, ${uncovered} demand(s) with no test or decision.` };
-    const mon = [filled(p.monitoring.retestWeeks) || filled(p.monitoring.interval), filled(p.monitoring.prescription), filled(p.monitoring.fatigue)].filter(Boolean).length;
+    res.c3 = { status: p.tests.length === 0 ? "missing" : (!orphans && complete === p.tests.length && !uncovered ? "covered" : "partly"),
+      note: `${p.tests.length} test(s), ${complete} with evidence and a limitation${orphans ? `, ${orphans} not linked to a demand` : ""}${uncovered ? `, ${uncovered} demand(s) with no test or reason` : ""}.` };
+    const retest = tl.weeks ? filled(p.monitoring.retestWeeks) : /week|month|after|every/i.test(p.monitoring.plan || "");
     const tli = timelineIssues().length;
-    res.c4 = { status: mon === 0 ? "missing" : (mon === 3 && !tli ? "covered" : "partly"), note: `${mon} of 3 monitoring elements${tli ? `, ${tli} timeline warning(s)` : ""}.` };
-    const n = sc.constraints.length, a = sc.constraints.filter((_, i) => filled(p.constraints.answers[i])).length;
-    res.c5 = { status: st(a, n, n - 1), note: `${a} of ${n} constraint prompts answered.` };
+    res.c4 = { status: retest && filled(p.monitoring.plan) && !tli ? "covered" : (retest || filled(p.monitoring.plan)) ? "partly" : "missing",
+      note: `${retest ? "Re-test timing set" : "No re-test timing yet"}${filled(p.monitoring.plan) ? ", link to training noted" : ""}${tli ? `, ${tli} timeline warning(s)` : ""}.` };
+    const w = words(p.constraints);
+    res.c5 = { status: w >= 25 ? "covered" : w ? "partly" : "missing", note: w ? `${w} words of notes.` : "No notes yet." };
     return res;
   }
   const statusText = { covered: "✓ Covered", partly: "◐ Partly covered", missing: "✗ Missing" };
@@ -1111,16 +1137,16 @@ if (typeof module !== "undefined") module.exports = { CONFIG, analyse, parseDoc,
   /* ---------- planner rendering ---------- */
   function renderPlanner() {
     const steps = CONFIG.planner.steps, i = Math.min(state.step, steps.length - 1);
+    state.step = i;
     const cov = coverage();
     const nav = steps.map((s, k) => {
       const c = s.criterion ? cov[s.criterion] : null;
       return `<button type="button" data-step="${k}" ${k === i ? 'aria-current="step"' : ""}><span class="st">Step ${k + 1}${c ? " · " + statusText[c.status].split(" ")[0] : ""}</span>${esc(s.title)}</button>`;
     }).join("");
-    const sc = scen();
     $("#panel-plan").innerHTML = `
       <div class="card"><div class="band teal"><div><p class="pill">Planner</p><h2>Build your needs analysis as decisions</h2></div></div>
       <div class="body">
-        <p class="tight">Work through the five marking criteria in order. Every step ends with a "so what" question, because each part of a needs analysis should lead to a decision about what to test, why, and what happens next. Your notes are yours. The export contains only what you write here.</p>
+        <p class="tight">Five short steps, one per marking criterion. Short notes are enough, and you can come back at any time because your notes are saved in this browser. Each step asks for a decision, not a description.</p>
         <nav aria-label="Planner steps"><div class="stepper" id="stepper">${nav}</div></nav>
         <div id="stepBody"></div>
         <div class="row" style="margin-top:1rem">
@@ -1130,79 +1156,43 @@ if (typeof module !== "undefined") module.exports = { CONFIG, analyse, parseDoc,
       </div></div>`;
     renderStep(i);
   }
-  function stepHead(step, k, extra) {
+  function stepHead(step, k, intro) {
     const c = step.criterion ? CONFIG.criteria.find(x => x.id === step.criterion) : null;
     return `<h3 id="step-h" tabindex="-1" style="margin:.2rem 0 .3rem;color:var(--navy-t)">Step ${k + 1}. ${esc(step.title)}</h3>
-      ${c ? `<p class="muted tight">Marking criterion ${c.id.slice(1)}, ${esc(c.label)} (${c.lo})</p>` : ""}${extra || ""}`;
-  }
-  function trapsBox() {
-    return `<details class="mini plum"><summary><strong>Evidence traps for ${esc(scen().short)}</strong></summary><ul>${scen().traps.map(t => `<li>${esc(t)}</li>`).join("")}</ul></details>`;
+      ${c ? `<p class="muted tight">Marking criterion ${c.id.slice(1)}, ${esc(c.label)}</p>` : ""}${intro ? `<p class="tight">${esc(intro)}</p>` : ""}`;
   }
   function renderStep(k) {
     const step = CONFIG.planner.steps[k], p = plan(), sc = scen(), el = $("#stepBody");
-    let h = "";
+    let h = stepHead(step, k, step.intro);
     if (step.id === "profile") {
-      h = stepHead(step, k) + `
-        <div class="mini blue"><h4>From the brief</h4><dl class="facts">${sc.facts.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl></div>
-        <div class="row"><div>${field("What else is known about this athlete?", "profile.known", { hint: "Facts you can state or reasonably infer from the brief." })}</div>
-        <div>${field("What is unknown and would change your plan?", "profile.unknown", { hint: sc.unknownHint })}</div></div>
-        <div class="row"><div>${field("Training age", "profile.trainingAge", { hint: "Overall, and in the specific qualities you may test. Say if you are assuming." })}</div>
-        <div>${field("Goals", "profile.goals", { hint: "Athlete and coach goals, in their order of importance." })}</div>
-        <div>${field("Timeline", "profile.timeline", { hint: sc.timeline.note })}</div></div>
-        ${soWhat("profile.soWhat", step)}`;
+      h += `<details class="mini blue"><summary><strong>Your athlete, from the brief</strong></summary><dl class="facts" style="margin-top:.6rem">${sc.facts.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl></details>
+        ${field("What is the central question for this athlete?", "profile.question", { rows: 2, hint: "One sentence. It frames your introduction and every decision after it." })}
+        ${field("What don't you know that would change your plan?", "profile.unknown", { rows: 2, hint: sc.unknownHint })}`;
     } else if (step.id === "demands") {
-      h = stepHead(step, k, `<p class="tight">Add each demand with its source. Check whether the source population matches your athlete. A mismatch is allowed, but you must justify using that source.</p>`) + trapsBox() +
-        `<p class="muted tight">Your athlete: ${CONFIG.applicability.map(a => `${a.label.toLowerCase()} ${esc(sc.athlete[a.id])}`).join("; ")}.</p>
-        <div id="demandList">${p.demands.map((d, i) => demandCard(d, i)).join("") || `<p class="flag">No demands yet. Add the first one below.</p>`}</div>
+      h += `<details class="mini plum"><summary><strong>Evidence traps for ${esc(sc.short)}</strong></summary><ul>${sc.traps.map(t => `<li>${esc(t)}</li>`).join("")}</ul></details>
+        <div id="demandList">${p.demands.map((d, i) => demandCard(d, i)).join("") || `<p class="flag">No demands yet. Two to four well-chosen demands are plenty.</p>`}</div>
         <button type="button" class="btn blue" id="addDemand">+ Add a demand</button>
-        ${soWhat("demandsSoWhat", step)}`;
-    } else if (step.id === "gap") {
-      h = stepHead(step, k, `<p class="tight">For each demand, separate what you know about this athlete from what is uncertain. Then ask what you would need to measure to find out. If you decide not to test a demand, say why.</p>`) +
-        (p.demands.length ? p.demands.map((d, i) => `
-          <div class="item"><h4>${esc(demandLabel(d, i))}</h4>
-          <div class="row"><div>${itemField("demands", d.id, "known", "What is known about this athlete?")}</div>
-          <div>${itemField("demands", d.id, "uncertain", "What is uncertain?")}</div></div>
-          ${itemField("demands", d.id, "measure", "What would you need to measure to find out?")}
-          <fieldset style="border:0;padding:0;margin:.6rem 0 0"><legend class="f" style="margin:0">Decision</legend>
-            <div class="checks">
-              <label><input type="radio" name="dec-${d.id}" data-list="demands" data-id="${d.id}" data-key="decision" value="test" ${d.decision === "test" ? "checked" : ""}> Test this (link a test in step 4)</label>
-              <label><input type="radio" name="dec-${d.id}" data-list="demands" data-id="${d.id}" data-key="decision" value="notest" ${d.decision === "notest" ? "checked" : ""}> Decide not to test</label>
-            </div></fieldset>
-          <div data-notest="${d.id}" ${d.decision === "notest" ? "" : "hidden"}>${itemField("demands", d.id, "notestReason", "Why not test it?", { hint: "For example existing data, low priority, burden or risk." })}</div>
-          <div data-flags="gap-${d.id}"></div></div>`).join("") : `<p class="flag">Add demands in step 2 first.</p>`) +
-        soWhat("gapSoWhat", step);
+        <div class="mini sowhat" style="margin-top:1rem">${field("Which demand most likely limits this athlete, and why?", "limiter", { rows: 2, hint: "This is the decision your demands section should lead to." })}</div>`;
     } else if (step.id === "tests") {
-      h = stepHead(step, k, `<p class="tight">Every test must link to at least one demand. Record its evidence and one limitation that matters for this athlete specifically.</p>`) +
-        `<div data-flags="untested"></div>
+      h += `<div data-flags="untested"></div>
         <div id="testList">${p.tests.map((t, i) => testCard(t, i)).join("") || `<p class="flag">No tests yet. Add the first one below.</p>`}</div>
-        <button type="button" class="btn blue" id="addTest">+ Add a test</button>
-        ${soWhat("testsSoWhat", step)}`;
+        <button type="button" class="btn blue" id="addTest">+ Add a test</button>`;
     } else if (step.id === "monitoring") {
       const tl = sc.timeline;
-      h = stepHead(step, k, `<p class="tight">Plan re-tests against the competition timeline, say how results will change prescription, and how you will track fatigue or adaptation between tests.</p>`) +
-        `<div class="mini gold"><h4>Timeline</h4><p class="tight">${esc(tl.note)}</p>${tl.weeks ? `<div id="tlBar"></div><p class="muted tight" id="tlText"></p>` : ""}</div>
-        ${tl.weeks ? field("Re-test weeks", "monitoring.retestWeeks", { input: true, hint: `Week numbers separated by commas, for example 1, 5. Events: ${tl.events.map(e => `week ${e.week} ${e.label.toLowerCase()}`).join(", ")}.` }) : ""}
+      h += `<div class="mini gold"><h4>Timeline</h4><p class="tight">${esc(tl.note)}</p>${tl.weeks ? `<div id="tlBar"></div><p class="muted tight" id="tlText"></p>` : ""}</div>
+        ${tl.weeks ? field("Re-test weeks", "monitoring.retestWeeks", { input: true, hint: "Week numbers separated by commas, for example 1, 5." }) : ""}
         <div data-flags="timeline"></div>
-        ${field(tl.weeks ? "Re-test rationale" : "Re-test interval and rationale", "monitoring.interval", { hint: "Why these points? What change must the test detect, and is the interval long enough for it to occur?" })}
-        ${field("How will results change prescription?", "monitoring.prescription", { hint: "Write if-then rules. For example, if X has not changed by more than the typical error, then..." })}
-        ${field("How will you track fatigue or adaptation between tests?", "monitoring.fatigue", { hint: "Low-burden measures, how often, and what would trigger a change." })}
-        ${soWhat("monitoring.soWhat", step)}`;
+        ${field(tl.weeks ? "What result would change the training, and how will you track fatigue between tests?" : "When will you re-test, what result would change the training, and how will you track fatigue between tests?", "monitoring.plan", { rows: 4, hint: "Try an if-then rule. If X has not changed by more than the test's typical error by week Y, then..." })}`;
     } else if (step.id === "constraints") {
-      h = stepHead(step, k, `<p class="tight">Constraints decide what is possible. Answer the prompts for ${esc(sc.short)}.</p>`) +
-        sc.constraints.map((c, ci) => field(c, "constraints.answers." + ci)).join("") +
-        field("Any other constraint or individual need", "constraints.other") +
-        soWhat("constraints.soWhat", step);
-    } else if (step.id === "framing") {
-      h = stepHead(step, k, `<p class="tight">Your introduction should explain why a needs analysis matters and how it informs test selection. Your conclusion should synthesise and set out next steps, including how test data inform training prescription.</p>`) +
-        field("Introduction notes", "framing.intro", { rows: 4, hint: "What is the purpose, and what is this athlete's central question?" }) +
-        field("Conclusion and next steps notes", "framing.conclusion", { rows: 4, hint: "Which decisions does your plan lead to, and what happens after the first round of testing?" });
+      h += `<div class="mini"><h4>Prompts for ${esc(sc.short)}</h4><ul class="tight" style="padding-left:1.2rem">${sc.constraints.map(c => `<li>${esc(c)}</li>`).join("")}</ul></div>
+        ${field("Which constraints change your plan, and how?", "constraints", { rows: 5, hint: "Pick the two or three that matter most. For each, say what you will do differently." })}`;
     } else if (step.id === "coverage") {
-      h = stepHead(step, k) + `<div id="covBox"></div>
-        <div class="mini blue"><h4>Word budget (a suggestion for planning only)</h4>
-        <p class="tight muted">This is not a requirement. It shows one way to fit 1750 words so that test selection and monitoring get enough space.</p>
+      h += `<div id="covBox"></div>
+        <details class="mini blue"><summary><strong>Word budget (a suggestion for planning only)</strong></summary>
+        <p class="tight muted" style="margin-top:.5rem">Not a requirement. One way to fit 1750 words so that test selection and monitoring get enough space.</p>
         <div class="tablewrap"><table><caption class="sr-only">Suggested word budget</caption><thead><tr><th scope="col">Section</th><th scope="col">Suggested words</th></tr></thead><tbody>
         ${CONFIG.wordBudget.map(b => `<tr><th scope="row" style="background:var(--card);color:var(--text)">${esc(b.label)}</th><td>${b.words}</td></tr>`).join("")}
-        <tr><th scope="row" style="background:var(--card);color:var(--text)">Total</th><td>${CONFIG.wordBudget.reduce((a, b) => a + b.words, 0)}</td></tr></tbody></table></div></div>
+        </tbody></table></div></details>
         <div class="mini teal"><h4>Export your plan</h4><p class="tight">The outline contains only your own notes under headings. It is a plan to write from, not text to submit.</p>
         <div class="toolbar"><button type="button" class="btn" id="expCopy">Copy outline</button><button type="button" class="btn teal" id="expTxt">Download .txt</button><button type="button" class="btn blue" id="expDocx">Download .docx</button></div>
         <p class="muted tight" style="margin-top:.5rem">If a download does not start inside Canvas, use "Open in a new tab" at the top.</p></div>`;
@@ -1212,19 +1202,17 @@ if (typeof module !== "undefined") module.exports = { CONFIG, analyse, parseDoc,
   }
   function demandCard(d, i) {
     const types = CONFIG.demandTypes.map(t => `<option value="${t.id}" ${d.type === t.id ? "selected" : ""}>${esc(t.label)}</option>`).join("");
-    const app = CONFIG.applicability.map(a => {
-      const id = `app-${d.id}-${a.id}`, v = (d.app || {})[a.id] || "";
-      return `<div><label class="f" for="${id}" style="margin-top:.2rem">${esc(a.label)}<span class="hint">Athlete: ${esc(scen().athlete[a.id])}</span></label>
-        <select id="${id}" data-list="demands" data-id="${d.id}" data-key="app.${a.id}"><option value="" ${!v ? "selected" : ""}>Not checked</option><option value="yes" ${v === "yes" ? "selected" : ""}>Matches</option><option value="no" ${v === "no" ? "selected" : ""}>Does not match</option><option value="unreported" ${v === "unreported" ? "selected" : ""}>Not reported</option></select></div>`;
-    }).join("");
+    const a = scen().athlete, who = `${a.sex}, ${a.age}, ${a.level}, ${a.role}`;
+    const opt = (v, l) => `<option value="${v}" ${(d.match || "") === v ? "selected" : ""}>${l}</option>`;
     return `<div class="item" data-item="${d.id}"><div class="item-head"><h4 data-demand-label="${d.id}">${esc(demandLabel(d, i))}</h4>
       <button type="button" class="btn ghost small" data-del-demand="${d.id}" aria-label="Remove ${esc(demandLabel(d, i))}">Remove</button></div>
-      <div class="row"><div style="flex:0 1 220px"><label class="f" for="type-${d.id}">Type</label><select id="type-${d.id}" data-list="demands" data-id="${d.id}" data-key="type">${types}</select></div>
+      <div class="row"><div style="flex:0 1 200px"><label class="f" for="type-${d.id}">Type</label><select id="type-${d.id}" data-list="demands" data-id="${d.id}" data-key="type">${types}</select></div>
       <div>${itemField("demands", d.id, "text", "Demand", { input: true, hint: "For example repeated high-intensity efforts late in matches." })}</div></div>
-      ${itemField("demands", d.id, "source", "Source", { input: true, hint: "Author, year, and the population studied. Use [REF: ...] if you have not found it yet." })}
-      <fieldset style="border:0;padding:0;margin:.7rem 0 0"><legend class="f" style="margin:0 0 .3rem">Applicability check. Does the source population match your athlete?</legend><div class="appgrid">${app}</div></fieldset>
+      ${itemField("demands", d.id, "source", "Source", { input: true, hint: "Author and year. Use [REF: ...] until you have found it." })}
+      <label class="f" for="match-${d.id}">Does the source population match your athlete?<span class="hint">Your athlete: ${esc(who)}. Check sex, level, event or position, and competition format.</span></label>
+      <select id="match-${d.id}" data-list="demands" data-id="${d.id}" data-key="match">${opt("", "Not checked yet")}${opt("yes", "Yes, it matches")}${opt("partly", "Partly")}${opt("no", "No")}${opt("unreported", "The study does not say")}</select>
       <div data-flags="dem-${d.id}"></div>
-      <div data-justify="${d.id}">${itemField("demands", d.id, "justify", "Justification for using this source", { hint: "Why use it despite the mismatch, and how will you interpret it cautiously?" })}</div>
+      <div data-justify="${d.id}">${itemField("demands", d.id, "justify", "Why use it anyway, and how will you interpret it cautiously?")}</div>
     </div>`;
   }
   function testCard(t, i) {
@@ -1232,13 +1220,10 @@ if (typeof module !== "undefined") module.exports = { CONFIG, analyse, parseDoc,
     const links = p.demands.length ? p.demands.map((d, k) => `<label><input type="checkbox" data-link="${t.id}" value="${d.id}" ${t.demands.includes(d.id) ? "checked" : ""}> <span data-demand-label="${d.id}">${esc(demandLabel(d, k))}</span></label>`).join("") : `<p class="muted tight">Add demands in step 2 to link them here.</p>`;
     return `<div class="item" data-item="${t.id}"><div class="item-head"><h4>Test ${i + 1}${filled(t.name) ? ". " + esc(t.name) : ""}</h4>
       <button type="button" class="btn ghost small" data-del-test="${t.id}" aria-label="Remove test ${i + 1}">Remove</button></div>
-      ${itemField("tests", t.id, "name", "Test name and protocol", { input: true })}
-      <fieldset class="checks" style="border:0;padding:0;margin:.6rem 0 0"><legend class="f" style="margin:0">Linked demands (at least one)</legend>${links}</fieldset>
-      <div class="row"><div>${itemField("tests", t.id, "reliability", "Reliability evidence", { hint: "Statistic (ICC, CV, TE, SEM) and source. Use [REF: ...] placeholders until found." })}</div>
-      <div>${itemField("tests", t.id, "validity", "Validity evidence", { hint: "What is it valid for, against what criterion, and source." })}</div></div>
-      <div class="row"><div>${itemField("tests", t.id, "population", "Population it was validated in", { hint: "Sex, level, sport or event. Does it match?" })}</div>
-      <div>${itemField("tests", t.id, "burden", "Practical burden", { hint: "Time, equipment, fatigue, recovery needed, cost." })}</div></div>
-      ${itemField("tests", t.id, "limitation", "One limitation specific to this athlete", { hint: "Not \"small sample\". What does the limitation mean for this athlete's result?" })}
+      ${itemField("tests", t.id, "name", "Test", { input: true })}
+      <fieldset class="checks" style="border:0;padding:0;margin:.6rem 0 0"><legend class="f" style="margin:0">Which demand does it measure?</legend>${links}</fieldset>
+      ${itemField("tests", t.id, "evidence", "Evidence", { hint: "Reliability (for example ICC, CV or typical error) and validity, and the population it was tested in. Use [REF: ...] placeholders." })}
+      ${itemField("tests", t.id, "limitation", "One limitation for this athlete", { hint: "Not \"small sample\". What does the limitation mean for this athlete's result?" })}
       <div data-flags="test-${t.id}"></div></div>`;
   }
   function flagHtml(list) { return list.map(f => `<p class="flag ${f.cls || ""}"><strong>${esc(f.label)}</strong> ${esc(f.text)}</p>`).join(""); }
@@ -1246,31 +1231,26 @@ if (typeof module !== "undefined") module.exports = { CONFIG, analyse, parseDoc,
     const p = plan();
     p.demands.forEach(d => {
       const box = $(`[data-flags="dem-${d.id}"]`), jb = $(`[data-justify="${d.id}"]`);
-      if (box) {
-        const mm = mismatches(d), fl = [];
-        if (!filled(d.source)) fl.push({ label: "No source.", text: "Every demand needs a peer-reviewed source." });
-        const unchecked = CONFIG.applicability.filter(a => !(d.app || {})[a.id]);
-        if (unchecked.length) fl.push({ label: "Applicability not checked:", text: unchecked.map(a => a.label.toLowerCase()).join(", ") + "." });
-        if (mm.length) fl.push({ cls: filled(d.justify) ? "" : "bad", label: "⚠ Population mismatch:", text: mm.map(a => a.label.toLowerCase() + (d.app[a.id] === "unreported" ? " (not reported)" : "")).join(", ") + (filled(d.justify) ? ". Justification recorded." : ". Write a justification below.") });
-        else if (!unchecked.length) fl.push({ cls: "ok", label: "✓ Population matches", text: "on every dimension you checked." });
-        box.innerHTML = flagHtml(fl);
-        if (jb) jb.hidden = !mm.length;
-      }
-      const g = $(`[data-flags="gap-${d.id}"]`);
-      if (g) g.innerHTML = demandCovered(d) ? flagHtml([{ cls: "ok", label: "✓ Decided.", text: plan().tests.some(t => t.demands.includes(d.id)) ? "A test is linked to this demand." : "Recorded as not tested, with a reason." }])
-        : flagHtml([{ cls: "bad", label: "⚠ No test and no decision.", text: d.decision === "notest" ? "Give a reason for not testing." : "Link a test in step 4 or decide not to test." }]);
+      if (!box) return;
+      const fl = [];
+      if (!filled(d.source)) fl.push({ label: "No source yet.", text: "Every demand needs a peer-reviewed source." });
+      if (mismatch(d)) fl.push({ cls: filled(d.justify) ? "" : "bad", label: "⚠ Population mismatch.", text: filled(d.justify) ? "Justification recorded." : "Say why you are using it below." });
+      else if (d.match === "yes" && filled(d.source)) fl.push({ cls: "ok", label: "✓ Source matches your athlete.", text: "" });
+      box.innerHTML = flagHtml(fl);
+      if (jb) jb.hidden = !mismatch(d);
     });
     const un = $(`[data-flags="untested"]`);
-    if (un) { const u = p.demands.filter(d => !demandCovered(d)); un.innerHTML = u.length ? flagHtml([{ cls: "bad", label: "⚠ Demands with no test or decision:", text: u.map(d => demandLabel(d, p.demands.indexOf(d))).join("; ") + "." }]) : ""; }
+    if (un) {
+      const u = p.demands.filter(d => !p.tests.some(t => t.demands.includes(d.id)));
+      un.innerHTML = u.length ? `<div class="mini gold"><h4>Demands without a test</h4><p class="tight">Link a test below, or say briefly why you will not test it.</p>${u.map(d => itemField("demands", d.id, "notest", demandLabel(d, p.demands.indexOf(d)) + ". Reason for not testing", { input: true })).join("")}</div>` : "";
+    }
     p.tests.forEach(t => {
       const box = $(`[data-flags="test-${t.id}"]`); if (!box) return;
       const fl = [];
-      if (!t.demands.length) fl.push({ cls: "bad", label: "⚠ Orphan test.", text: "Link it to at least one demand, or remove it." });
-      const miss = [["reliability", "reliability"], ["validity", "validity"], ["population", "validation population"], ["limitation", "athlete-specific limitation"]].filter(([k]) => !filled(t[k])).map(x => x[1]);
-      if (miss.length) fl.push({ label: "Missing:", text: miss.join(", ") + "." });
+      if (!t.demands.length) fl.push({ cls: "bad", label: "⚠ Not linked to a demand.", text: "Tick at least one demand, or remove the test." });
       const gl = CONFIG.rules.find(r => r.id === "genericLimit");
       if (filled(t.limitation) && findTerm(t.limitation, gl.terms) && !findTerm(t.limitation, gl.consequence)) fl.push({ label: "Generic limitation?", text: "Say what it means for this athlete's result." });
-      if (!fl.length) fl.push({ cls: "ok", label: "✓ Linked and evidenced.", text: "" });
+      if (t.demands.length && filled(t.evidence) && filled(t.limitation) && !fl.length) fl.push({ cls: "ok", label: "✓ Linked and evidenced.", text: "" });
       box.innerHTML = flagHtml(fl);
     });
     const tlb = $("#tlBar");
@@ -1280,16 +1260,12 @@ if (typeof module !== "undefined") module.exports = { CONFIG, analyse, parseDoc,
       $("#tlText").textContent = "Events: " + tl.events.map(e => `week ${e.week}, ${e.label}`).join("; ") + ". Re-tests: " + (ws.length ? ws.map(w => "week " + w).join(", ") : "none entered") + ".";
     }
     const tf = $(`[data-flags="timeline"]`);
-    if (tf) tf.innerHTML = flagHtml(timelineIssues().map(t => ({ label: "Timeline:", text: t })));
-    const cb = $("#covBox");
-    if (cb) {
-      const cov = coverage();
-      cb.innerHTML = `<div class="tablewrap"><table><caption class="sr-only">Coverage of the five marking criteria in your plan</caption><thead><tr><th scope="col">Marking criterion</th><th scope="col">Status</th><th scope="col">Detail</th></tr></thead><tbody>
-        ${CONFIG.criteria.map(c => `<tr><th scope="row" style="background:var(--card);color:var(--text)">${c.id.slice(1)}. ${esc(c.label)}</th><td><span class="status ${cov[c.id].status}">${statusText[cov[c.id].status]}</span></td><td>${esc(cov[c.id].note)}</td></tr>`).join("")}
-        </tbody></table></div><p class="muted tight" style="margin-top:.4rem">Status reflects whether you have filled in the planner, not the quality of your thinking.</p>`;
-    }
-    // refresh stepper status labels
+    if (tf) tf.innerHTML = flagHtml(timelineIssues().map(t => ({ label: "Timeline.", text: t })));
     const cov = coverage();
+    const cb = $("#covBox");
+    if (cb) cb.innerHTML = `<div class="tablewrap"><table><caption class="sr-only">Coverage of the five marking criteria in your plan</caption><thead><tr><th scope="col">Marking criterion</th><th scope="col">Status</th><th scope="col">Detail</th></tr></thead><tbody>
+        ${CONFIG.criteria.map(c => `<tr><th scope="row" style="background:var(--card);color:var(--text)">${c.id.slice(1)}. ${esc(c.label)}</th><td><span class="status ${cov[c.id].status}">${statusText[cov[c.id].status]}</span></td><td>${esc(cov[c.id].note)}</td></tr>`).join("")}
+        </tbody></table></div><p class="muted tight" style="margin-top:.4rem">Status shows whether you have made notes, not the quality of your thinking.</p>`;
     $$("#stepper [data-step]").forEach(b => { const s = CONFIG.planner.steps[+b.dataset.step]; if (s.criterion) b.querySelector(".st").textContent = `Step ${+b.dataset.step + 1} · ${statusText[cov[s.criterion].status].split(" ")[0]}`; });
   }
 
@@ -1300,10 +1276,9 @@ if (typeof module !== "undefined") module.exports = { CONFIG, analyse, parseDoc,
     if (t.dataset.bind) { setPath(p, t.dataset.bind, t.value); }
     else if (t.dataset.list) {
       const o = p[t.dataset.list].find(x => x.id === t.dataset.id); if (!o) return;
-      if (t.type === "radio") { if (!t.checked) return; }
       setPath(o, t.dataset.key, t.value);
       if (t.dataset.key === "text") $$(`[data-demand-label="${o.id}"]`).forEach(l => l.textContent = demandLabel(o, p.demands.indexOf(o)));
-      if (t.dataset.key === "decision") { const nb = $(`[data-notest="${o.id}"]`); if (nb) nb.hidden = t.value !== "notest"; }
+      if (t.dataset.key === "notest") { save(); return; } // keep focus in the reason field
     } else if (t.dataset.link) {
       const o = p.tests.find(x => x.id === t.dataset.link);
       o.demands = t.checked ? Array.from(new Set(o.demands.concat(t.value))) : o.demands.filter(x => x !== t.value);
@@ -1315,16 +1290,16 @@ if (typeof module !== "undefined") module.exports = { CONFIG, analyse, parseDoc,
     const p = plan();
     if (b.dataset.step != null) { state.step = +b.dataset.step; save(); renderPlanner(); $("#step-h").focus(); return; }
     if (b.id === "prevStep" || b.id === "nextStep") { state.step += b.id === "nextStep" ? 1 : -1; save(); renderPlanner(); $("#step-h").focus(); return; }
-    if (b.id === "addDemand") { const d = { id: uid(), type: "energy", text: "", source: "", app: {}, justify: "", known: "", uncertain: "", measure: "", decision: "", notestReason: "" }; p.demands.push(d); save(); renderStep(state.step); const f = $(`#f-demands-${d.id}-text`); if (f) f.focus(); announce("Demand added."); return; }
-    if (b.id === "addTest") { const t = { id: uid(), name: "", demands: [], reliability: "", validity: "", population: "", burden: "", limitation: "" }; p.tests.push(t); save(); renderStep(state.step); const f = $(`#f-tests-${t.id}-name`); if (f) f.focus(); announce("Test added."); return; }
+    if (b.id === "addDemand") { const d = { id: uid(), type: "energy", text: "", source: "", match: "", justify: "", notest: "" }; p.demands.push(d); save(); renderStep(state.step); const f = $(`#f-demands-${d.id}-text`); if (f) f.focus(); announce("Demand added."); return; }
+    if (b.id === "addTest") { const t = { id: uid(), name: "", demands: [], evidence: "", limitation: "" }; p.tests.push(t); save(); renderStep(state.step); const f = $(`#f-tests-${t.id}-name`); if (f) f.focus(); announce("Test added."); return; }
     if (b.dataset.delDemand) { if (!confirm("Remove this demand?")) return; p.demands = p.demands.filter(d => d.id !== b.dataset.delDemand); p.tests.forEach(t => t.demands = t.demands.filter(x => x !== b.dataset.delDemand)); save(); renderStep(state.step); announce("Demand removed."); return; }
     if (b.dataset.delTest) { if (!confirm("Remove this test?")) return; p.tests = p.tests.filter(t => t.id !== b.dataset.delTest); save(); renderStep(state.step); announce("Test removed."); return; }
     if (b.id === "expCopy") { copyText(outlineText()); return; }
     if (b.id === "expTxt") { download(new Blob([outlineText()], { type: "text/plain;charset=utf-8" }), "needs-analysis-plan.txt"); return; }
     if (b.id === "expDocx") { download(makeDocx(outline()), "needs-analysis-plan.docx"); return; }
   });
-  // selects, radios and checkboxes fire change; route them through the input handler
-  pp.addEventListener("change", e => { const t = e.target; if (t.tagName === "SELECT" || t.type === "radio" || t.type === "checkbox") t.dispatchEvent(new Event("input", { bubbles: true })); });
+  // selects and checkboxes fire change; route them through the input handler
+  pp.addEventListener("change", e => { const t = e.target; if (t.tagName === "SELECT" || t.type === "checkbox") t.dispatchEvent(new Event("input", { bubbles: true })); });
 
   /* ---------- export ---------- */
   function outline() {
@@ -1332,33 +1307,30 @@ if (typeof module !== "undefined") module.exports = { CONFIG, analyse, parseDoc,
     const H1 = t => L.push({ lv: 1, t }), H2 = t => L.push({ lv: 2, t }), B = (label, v) => { if (filled(v)) L.push({ lv: 0, t: (label ? label + ": " : "") + String(v).trim() }); };
     L.push({ lv: 1, t: "SESH54 needs analysis plan, " + sc.short });
     L.push({ lv: 0, t: "My planning notes, exported " + new Date().toLocaleDateString("en-GB") + ". This is an outline to write from, not text for submission." });
-    H1("1. Introduction"); B("Notes", p.framing.intro);
+    H1("1. Introduction"); B("Central question", p.profile.question);
     H1("2. Sport and athlete profile");
     sc.facts.forEach(([a, b]) => B("Brief, " + a.toLowerCase(), b));
-    B("Also known", p.profile.known); B("Unknown", p.profile.unknown); B("Training age", p.profile.trainingAge); B("Goals", p.profile.goals); B("Timeline", p.profile.timeline); B("So what", p.profile.soWhat);
+    B("Unknowns", p.profile.unknown);
     H1("3. Performance demands");
     p.demands.forEach((d, i) => {
       H2(demandLabel(d, i) + " [" + (CONFIG.demandTypes.find(t => t.id === d.type) || {}).label + "]");
       B("Source", d.source);
-      const ap = CONFIG.applicability.map(a => a.label + " " + ({ yes: "matches", no: "does not match", unreported: "not reported" }[(d.app || {})[a.id]] || "not checked")).join("; ");
-      B("Applicability", ap); B("Justification", d.justify);
-      B("Known", d.known); B("Uncertain", d.uncertain); B("To measure", d.measure);
-      const linked = p.tests.filter(t => t.demands.includes(d.id)).map(t => t.name || "unnamed test");
-      B("Decision", linked.length ? "Test with " + linked.join(", ") : d.decision === "notest" ? "Not tested. " + (d.notestReason || "") : "Not decided");
+      B("Population match", { yes: "matches", partly: "partly matches", no: "does not match", unreported: "not reported" }[d.match] || "not checked");
+      B("Justification", d.justify);
     });
-    B("So what (demands)", p.demandsSoWhat); B("So what (gap)", p.gapSoWhat);
+    B("Main limiter", p.limiter);
     H1("4. Test selection and justification");
     p.tests.forEach((t, i) => {
       H2("Test " + (i + 1) + (filled(t.name) ? ", " + t.name : ""));
-      B("Linked demands", t.demands.map(id => { const k = p.demands.findIndex(d => d.id === id); return k < 0 ? null : demandLabel(p.demands[k], k); }).filter(Boolean).join("; ") || "none");
-      B("Reliability", t.reliability); B("Validity", t.validity); B("Validated in", t.population); B("Burden", t.burden); B("Limitation for this athlete", t.limitation);
+      B("Measures", t.demands.map(id => { const k = p.demands.findIndex(d => d.id === id); return k < 0 ? null : demandLabel(p.demands[k], k); }).filter(Boolean).join("; ") || "no demand linked");
+      B("Evidence", t.evidence); B("Limitation for this athlete", t.limitation);
     });
-    B("So what", p.testsSoWhat);
+    p.demands.filter(d => filled(d.notest)).forEach(d => B("Not testing " + (d.text || "a demand"), d.notest));
     H1("5. Monitoring and progression");
-    B("Re-test weeks", p.monitoring.retestWeeks); B("Re-test rationale", p.monitoring.interval); B("Prescription rules", p.monitoring.prescription); B("Fatigue and adaptation tracking", p.monitoring.fatigue); B("So what", p.monitoring.soWhat);
-    H1("6. Constraints and individualisation");
-    sc.constraints.forEach((c, i) => B(c.split(".")[0], p.constraints.answers[i])); B("Other", p.constraints.other); B("So what", p.constraints.soWhat);
-    H1("7. Conclusion and next steps"); B("Notes", p.framing.conclusion);
+    B("Re-test weeks", p.monitoring.retestWeeks); B("Plan", p.monitoring.plan);
+    H1("6. Constraints and individualisation"); B("Notes", p.constraints);
+    H1("7. Conclusion and next steps");
+    L.push({ lv: 0, t: "Bring together the main limiter, the tests that measure it, and what happens after the first round of testing." });
     return L;
   }
   function outlineText() { return outline().map(l => l.lv === 1 ? "\n" + l.t.toUpperCase() : l.lv === 2 ? "\n  " + l.t : "  - " + l.t).join("\n").trim() + "\n"; }
@@ -1411,8 +1383,23 @@ if (typeof module !== "undefined") module.exports = { CONFIG, analyse, parseDoc,
     $("#panel-check").innerHTML = `
       <div class="card"><div class="band blue"><div><p class="pill">Writing check</p><h2>Check your draft for critical writing patterns</h2></div></div>
       <div class="body">
-        <div class="mini plum"><h3>Read this first</h3><p class="tight">This tool detects patterns in your own writing using fixed rules. It will produce false positives and it will miss problems. It never rewrites your text and it does not give a mark. It does not replace tutor feedback, the exemplar, or Studiosity. Treat every flag as a question to ask of your draft.</p></div>
-        <label class="f" for="draft">Your draft<span class="hint">Paste your text, or upload a .docx or .txt file. Put each heading on its own line. Text after a "References" heading is excluded from the word count and the checks.</span></label>
+        <div class="mini teal"><h3>Use it as you write</h3>
+          <p class="tight">You do not need a finished draft. Check one paragraph or one section as soon as you have written it, fix what is useful, and move on. Check the whole draft at the end for word count, structure and balance.</p>
+          <ol class="tight" style="padding-left:1.2rem;margin-top:.5rem">
+            <li><strong>Choose what you are checking</strong> below: a paragraph or section, or your full draft.</li>
+            <li><strong>Paste your text</strong> or upload a .docx or .txt file, then select "Check my writing".</li>
+            <li><strong>Read the highlights.</strong> A yellow sentence matched a pattern. The numbers in square brackets, such as [3], point to the feedback items listed below your text.</li>
+            <li><strong>Treat each item as a question</strong>, not a correction. Decide whether it applies, and if it does, revise in your own words.</li>
+          </ol></div>
+        <fieldset class="mini" style="margin-bottom:.8rem"><legend class="f" style="margin:0;padding:0 .3rem">What are you checking?</legend>
+          <div class="checks">
+            <label><input type="radio" name="cmode" value="part" ${state.check.mode === "part" ? "checked" : ""}> A paragraph or section <span class="muted">(skips word count and structure checks)</span></label>
+            <label><input type="radio" name="cmode" value="full" ${state.check.mode === "full" ? "checked" : ""}> My full draft <span class="muted">(adds word count, structure, balance between criteria and a heat map)</span></label>
+          </div>
+          <div id="secWrap" ${state.check.mode === "part" ? "" : "hidden"}><label class="f" for="cSection">Which part of the report is it from?<span class="hint">Choosing a section makes section-specific checks, such as test evidence or re-test timing, more accurate.</span></label>
+          <select id="cSection" style="max-width:24rem">${CONFIG.extractSections.map(s => `<option value="${s.id}" ${state.check.section === s.id ? "selected" : ""}>${esc(s.label)}</option>`).join("")}</select></div>
+        </fieldset>
+        <label class="f" for="draft">Your text<span class="hint">One paragraph per line. For a full draft, put each heading on its own line. Anything after a "References" heading is ignored.</span></label>
         <textarea id="draft" class="big">${esc(state.drafts[state.scenario] || "")}</textarea>
         <div class="toolbar">
           <button type="button" class="btn blue" id="runCheck">Check my writing</button>
@@ -1422,18 +1409,24 @@ if (typeof module !== "undefined") module.exports = { CONFIG, analyse, parseDoc,
         </div>
         <p class="muted tight" id="fileMsg" role="status"></p>
         <details class="mini"><summary><strong>Evidence traps for ${esc(sc.short)}</strong></summary><ul>${sc.traps.map(t => `<li>${esc(t)}</li>`).join("")}</ul></details>
+        <p class="muted tight">This tool matches patterns using fixed rules. It will flag some sentences that are fine and miss some problems. It never rewrites your text and gives no mark, and it does not replace tutor feedback, the exemplar or Studiosity.</p>
         <div id="results"></div>
       </div></div>`;
     if (lastResult && lastResult.scenario === state.scenario && lastResult.text === state.drafts[state.scenario]) renderResults(lastResult.res);
   }
   const pc = $("#panel-check");
   pc.addEventListener("input", e => { if (e.target.id === "draft") { state.drafts[state.scenario] = e.target.value; save(); } });
+  pc.addEventListener("change", e => {
+    if (e.target.name === "cmode") { state.check.mode = e.target.value; $("#secWrap").hidden = state.check.mode !== "part"; save(); }
+    if (e.target.id === "cSection") { state.check.section = e.target.value; save(); }
+  });
   pc.addEventListener("click", e => {
     const b = e.target.closest("button"); if (!b) return;
     if (b.id === "runCheck") {
       const text = $("#draft").value;
       if (!text.trim()) { announce("Paste or upload some text first."); $("#draft").focus(); return; }
-      const res = analyse(text, state.scenario);
+      const part = state.check.mode === "part";
+      const res = analyse(text, state.scenario, { mode: state.check.mode, section: part ? state.check.section : "" });
       lastResult = { scenario: state.scenario, text, res };
       renderResults(res); $("#res-h").focus();
       announce(`Check complete. ${res.items.length} items found.`);
@@ -1498,8 +1491,8 @@ if (typeof module !== "undefined") module.exports = { CONFIG, analyse, parseDoc,
     const secLabel = id => (CONFIG.sections.find(s => s.id === id) || { label: "Unclassified" }).label;
     const heatRows = body(doc).map(p => { const c = byPara[p.i] || 0, l = levelOf(c); return `<tr><td><a href="#para-${p.i}">¶${p.n}</a></td><td>${esc(secLabel(p.section))}</td><td>${p.words}</td><td class="h l${l}">${c} (${lvName[l]})</td></tr>`; }).join("");
     const budget = {}; CONFIG.wordBudget.forEach(b => budget[b.section] = b.words);
-    const maxW = Math.max(1, ...assess.criteria.map(c => c.words), ...CONFIG.criteria.map(c => { const s = CONFIG.sections.find(x => x.criterion === c.id); return budget[s.id] || 0; }));
-    const covRows = assess.criteria.map(c => {
+    const maxW = Math.max(1, ...(assess.criteria || []).map(c => c.words), ...CONFIG.criteria.map(c => { const s = CONFIG.sections.find(x => x.criterion === c.id); return budget[s.id] || 0; }));
+    const covRows = (assess.criteria || []).map(c => {
       const s = CONFIG.sections.find(x => x.criterion === c.id), bw = budget[s.id] || 0;
       return `<tr><th scope="row" style="background:var(--card);color:var(--text)">${c.id.slice(1)}. ${esc(c.label)}</th><td>${c.words}<div class="bar" aria-hidden="true"><span style="width:${Math.round(c.words / maxW * 100)}%"></span></div></td><td>${bw}<div class="bar budget" aria-hidden="true"><span style="width:${Math.round(bw / maxW * 100)}%"></span></div></td></tr>`;
     }).join("");
@@ -1510,6 +1503,20 @@ if (typeof module !== "undefined") module.exports = { CONFIG, analyse, parseDoc,
       return `<div class="fb" id="fb-${it.n}"><p><strong>[${it.n}] ${esc(where)}</strong> <span class="tag-c">${esc(critLabel(it.criterion))}</span> ${link}</p>${q ? `<q>${esc(q.length > 220 ? q.slice(0, 220) + "..." : q)}</q>` : ""}
         <p><strong>Detected.</strong> ${esc(it.detected)}</p><p><strong>Why it matters.</strong> ${esc(it.why)}</p><p><strong>Ask yourself.</strong> ${esc(it.ask)}</p></div>`;
     }).join("")}</details>`).join("");
+    const actions = `<div class="mini blue"><h4>${assess.part ? "Where to start" : "Three priority actions"}</h4>${scored.length ? `<ol class="actions">${scored.map(s => `<li><strong>${esc(cats[s.k].label)}</strong> (${groups[s.k].length} item${groups[s.k].length > 1 ? "s" : ""}). ${esc(s.first.ask)}</li>`).join("")}</ol>` : "<p class=\"tight\">No patterns detected. That does not mean the writing is strong. Use the exemplar and the self-check list.</p>"}</div>`;
+    const textBlock = `<h4 style="color:var(--navy-t);margin-top:1.2rem">Your text with highlights</h4>
+      <p class="muted tight">Yellow sentences matched at least one pattern. The numbers in square brackets are the feedback items below. Numbers next to a paragraph marker (¶) apply to the whole paragraph.</p>
+      <div class="doc" id="docView">${docHtml}</div>
+      <h4 style="color:var(--navy-t);margin-top:1.2rem">Feedback by category</h4>
+      ${fb || "<p>No items.</p>"}`;
+    if (assess.part) {
+      const secName = doc.forcedSection ? (CONFIG.sections.find(s => s.id === doc.forcedSection) || {}).label : null;
+      $("#results").innerHTML = `
+        <h3 id="res-h" tabindex="-1" style="color:var(--navy-t);margin-top:1.4rem">Your results</h3>
+        <p class="tight"><strong>${assess.words}</strong> words checked as ${secName ? `part of your ${esc(secName.toLowerCase())} section` : "an extract (section estimated from keywords)"}. <strong>${items.length}</strong> item${items.length === 1 ? "" : "s"} found. Word count, structure and balance checks run when you check your full draft.</p>
+        ${actions}${textBlock}`;
+      return;
+    }
     $("#results").innerHTML = `
       <h3 id="res-h" tabindex="-1" style="color:var(--navy-t);margin-top:1.4rem">Your results</h3>
       <div class="row">
@@ -1518,19 +1525,16 @@ if (typeof module !== "undefined") module.exports = { CONFIG, analyse, parseDoc,
           <p class="tight muted">Headings excluded (${assess.headingWords} words). ${assess.hasRefs ? `Reference list excluded (${assess.refWords} words).` : "No reference list heading found, so nothing was excluded as references."} In-text citations are included.</p></div>
         <div class="mini"><h4>Structure detected</h4><ul class="tight" style="padding-left:1.2rem">${assess.structure.map(s => `<li>${s.present ? "✓" : "✗"} ${esc(s.label)}${s.present ? "" : " (not found)"}</li>`).join("")}</ul></div>
       </div>
-      <div class="mini blue"><h4>Three priority actions</h4>${scored.length ? `<ol class="actions">${scored.map(s => `<li><strong>${esc(cats[s.k].label)}</strong> (${groups[s.k].length} item${groups[s.k].length > 1 ? "s" : ""}). ${esc(s.first.ask)}</li>`).join("")}</ol>` : "<p class=\"tight\">No patterns detected. That does not mean the draft is strong. Use the exemplar and the self-check list.</p>"}</div>
+      ${actions}
       <div class="row">
         <div><h4 style="color:var(--navy-t)">Counts by category</h4><div class="tablewrap"><table><caption class="sr-only">Feedback items by category</caption><thead><tr><th scope="col">Category</th><th scope="col">Items</th></tr></thead><tbody>${catKeys.map(k => `<tr><td>${esc(cats[k].label)}</td><td>${groups[k].length}</td></tr>`).join("") || "<tr><td>None</td><td>0</td></tr>"}</tbody></table></div></div>
         <div><h4 style="color:var(--navy-t)">Words per criterion</h4><div class="tablewrap"><table><caption class="sr-only">Estimated words per criterion compared with the suggested budget</caption><thead><tr><th scope="col">Criterion</th><th scope="col">Your words (estimate)</th><th scope="col">Suggested</th></tr></thead><tbody>${covRows}</tbody></table></div>
         <p class="muted tight">Estimated from headings and keywords. Introduction and conclusion are not counted against a criterion.</p></div>
       </div>
       <h4 style="color:var(--navy-t)">Paragraph heat map</h4>
+      <p class="muted tight">One row per paragraph, showing how many items point at it (none, low 1 to 2, medium 3 to 4, high 5 or more). Use it to see where problems cluster, then select a paragraph number to jump to it.</p>
       <div class="tablewrap heat"><table><caption class="sr-only">Number of flags in each paragraph</caption><thead><tr><th scope="col">Paragraph</th><th scope="col">Section (estimated)</th><th scope="col">Words</th><th scope="col">Flags</th></tr></thead><tbody>${heatRows}</tbody></table></div>
-      <h4 style="color:var(--navy-t);margin-top:1.2rem">Your text with highlights</h4>
-      <p class="muted tight">Highlighted sentences carry item numbers in square brackets. Paragraph-level items appear next to the paragraph number.</p>
-      <div class="doc" id="docView">${docHtml}</div>
-      <h4 style="color:var(--navy-t);margin-top:1.2rem">Feedback by category</h4>
-      ${fb || "<p>No items.</p>"}`;
+      ${textBlock}`;
   }
   pc.addEventListener("click", e => {
     const a = e.target.closest("a[data-jump]"); if (!a) return;
