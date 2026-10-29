@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portfolio Planner and Checker · SESH58 Nutrition Lab</title>
+<link rel="stylesheet" href="assets/lab.css">
+<style>
+  .sec { border-left: 5px solid var(--c); }
+  .ticks label { display: flex; gap: 8px; align-items: flex-start; font-size: .92rem; padding: 3px 0; }
+  .ticks input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--teal); flex: none; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="index.html">&larr; All Nutrition Lab tools</a>
+  <header class="lab-head">
+    <span class="badge">SESH58</span>
+    <h1>Portfolio planner and checker</h1>
+    <p>Plan each of the five sections, paste in your draft and run rule-based checks. Nothing leaves your browser, and no AI is involved: the checks are simple, transparent rules.</p>
+  </header>
+
+  <section class="card" aria-labelledby="h-prog">
+    <h2 id="h-prog">Your progress</h2>
+    <div class="meter" aria-hidden="true"><span id="bar" style="width:0"></span></div>
+    <p id="progTxt" style="margin:6px 0 0;font-size:.9rem" role="status"></p>
+    <div class="row" style="margin-top:8px">
+      <div class="control" style="width:220px"><label for="target">Word target (optional)</label><input type="number" id="target" min="0" step="50" placeholder="for example 3000"></div>
+      <button class="btn secondary" id="export">Download my draft (.txt)</button>
+      <button class="btn secondary" id="reset">Clear everything</button>
+    </div>
+  </section>
+  <div id="secs"></div>
+  <p class="foot">The checks look for patterns such as first-person words, figure labels and author–year citations. They cannot judge the quality of your argument: use them alongside the marking criteria and feedback from the teaching team.</p>
+</main>
+<script src="assets/lab.js"></script>
+<script>
+(() => {
+  const { $, $$, esc, store } = Lab;
+  const SECTIONS = [
+    { id: 'intro', title: '1. Introduction', c: '#003d50', ticks: [
+      'Introduce the athlete and their sport', 'Describe training volume, season and competition demands', 'Explain the energy systems and fitness requirements',
+      'Identify common nutritional challenges in the sport', 'State a clear aim (for example, to evaluate the athlete\'s dietary intake)'] },
+    { id: 'methods', title: '2. Data collection', c: '#0071bc', ticks: [
+      'Describe the methods clearly, in the third person', 'Reference the tools or questionnaires used (put copies in the appendix)',
+      'Justify the length of the dietary assessment', 'Justify the interview questions or prompts', 'Explain your decisions, including ethics and consent'] },
+    { id: 'eval', title: '3. Evaluation', c: '#00857e', ticks: [
+      'Say what you learnt about the athlete from the data', 'Present the data in titled tables and figures you made yourself',
+      'Compare intake with evidence-based targets', 'Identify areas for improvement, supported by research'] },
+    { id: 'refl', title: '4. Reflections', c: '#8b3556', ticks: [
+      'Use and justify a reflective model', 'Say what went well and what did not, and why', 'Judge whether the methods gave a full picture of diet and lifestyle', 'Say what you would do differently next time'] },
+    { id: 'fb', title: '5. Feedback', c: '#a85d00', ticks: [
+      'Choose a format that suits the athlete (leaflet, infographic, recipes...)', 'Keep the language plain and the tone friendly', 'Give practical, specific actions', 'Link each action back to your findings'] }
+  ];
+  const st = store.get('port', { ticks: {}, text: {}, target: '' });
+  $('#target').value = st.target || '';
+
+  $('#secs').innerHTML = SECTIONS.map(s => `
+    <section class="card sec" style="--c:${s.c};margin-top:12px" aria-labelledby="h-${s.id}">
+      <h2 id="h-${s.id}">${s.title}</h2>
+      <div class="grid two">
+        <div class="control"><label for="tx-${s.id}">Draft</label><textarea id="tx-${s.id}" data-s="${s.id}" style="min-height:170px">${esc(st.text[s.id] || '')}</textarea><div class="hint" id="wc-${s.id}"></div></div>
+        <div><h3>Checklist</h3><div class="ticks">${s.ticks.map((t, i) => `<label><input type="checkbox" data-t="${s.id}:${i}" ${st.ticks[s.id + ':' + i] ? 'checked' : ''}> ${t}</label>`).join('')}</div>
+        <h3>Automatic checks</h3><ul class="chk" id="ck-${s.id}"></ul></div>
+      </div>
+    </section>`).join('');
+
+  const words = s => (s.trim().match(/\S+/g) || []).length;
+  const sentences = s => s.split(/(?<=[.!?])\s+/).filter(x => words(x) > 2);
+  const cites = s => (s.match(/\(([A-Z][A-Za-z'\-]+( et al\.?| and [A-Z][a-z]+| & [A-Z][a-z]+)?),? \d{4}[a-z]?(; ?[^)]+)?\)|[A-Z][A-Za-z'\-]+ (et al\.? )?\(\d{4}\)/g) || []).length;
+  const count = (s, re) => (s.match(re) || []).length;
+  const FIRST = /\b(I|I'm|I've|me|my|we|our|us)\b/g;
+  const JARGON = /\b(glycogen|macronutrients?|periodi[sz]ation|kcal\/kg|g\/kg|energy availability|bioavailability|leucine threshold|muscle protein synthesis|MPS|LEA|REDs|FFM)\b/gi;
+
+  const RULES = {
+    intro: t => [
+      cites(t) >= 3 ? ['pass', `${cites(t)} citations support the context.`] : ['fail', 'Use at least three citations to support the demands and nutritional challenges of the sport.'],
+      /\baims?\b|\bpurpose\b/i.test(t) ? ['pass', 'An aim is stated.'] : ['fail', 'No aim found. State it clearly, usually at the end of the introduction.'],
+      /energy system|aerobic|anaerobic|phosphocreatine|glycoly/i.test(t) ? ['pass', 'Energy systems are mentioned.'] : ['info', 'Consider describing the energy systems the sport relies on.']
+    ],
+    methods: t => {
+      const fp = count(t, FIRST);
+      return [
+        fp ? ['fail', `${fp} first-person word(s) found (I, my, we...). Write the methods in the third person, for example "The athlete completed..."`] : ['pass', 'Written in the third person.'],
+        /24[- ]?h|recall|food diary|weighed|food record|questionnaire|FFQ/i.test(t) ? ['pass', 'The assessment method is named.'] : ['fail', 'Name the dietary assessment method (for example, a 24-hour recall).'],
+        /\bbecause\b|\bto reduce\b|\bto ensure\b|\bwas chosen\b|\bwere chosen\b|\brationale\b|\bjustif/i.test(t) ? ['pass', 'There is some justification of decisions.'] : ['fail', 'Justify your choices: why this method and this length of assessment?'],
+        /consent|ethic|anonym|confidential/i.test(t) ? ['pass', 'Ethics or consent is addressed.'] : ['info', 'Mention consent and how the athlete\'s data were kept confidential.'],
+        cites(t) >= 2 ? ['pass', `${cites(t)} citations support the methods.`] : ['fail', 'Reference the tools you used and evidence for the method.']
+      ];
+    },
+    eval: t => {
+      const figs = count(t, /\b(Figure|Fig\.|Table) \d+/g);
+      return [
+        figs ? ['pass', `${figs} reference(s) to numbered figures or tables in the text.`] : ['fail', 'Refer to each figure and table by number in the text (for example, "Figure 1 shows...").'],
+        /g\/kg|g·kg|g per kg/i.test(t) ? ['pass', 'Intake is expressed relative to body mass.'] : ['fail', 'Express carbohydrate and protein in g/kg, so they can be compared with guidelines.'],
+        cites(t) >= 4 ? ['pass', `${cites(t)} citations support the analysis.`] : ['fail', 'Back up your interpretation with more evidence (at least four citations is a sensible minimum).'],
+        /significant/i.test(t) ? ['info', '"Significant" suggests a statistical test. Use "substantial" or "large" unless you ran one.'] : ['pass', 'Careful wording, with no unsupported "significant".'],
+        /myfitnesspal|screenshot/i.test(t) ? ['info', 'If you mention MyFitnessPal, make sure all figures are your own, not screenshots.'] : null
+      ];
+    },
+    refl: t => [
+      /gibbs|kolb|driscoll|sch[öo]n|rolfe|johns|borton|atkins/i.test(t) ? ['pass', 'A reflective model is named.'] : ['fail', 'Name the reflective model you used and say why you chose it.'],
+      count(t, /\bbecause\b|\btherefore\b|\bthis meant\b|\bas a result\b/gi) >= 2 ? ['pass', 'You explain why things happened.'] : ['fail', 'Explain why things went the way they did, not just what happened.'],
+      /next time|in future|I would|I will|instead/i.test(t) ? ['pass', 'You say what you would change.'] : ['fail', 'Finish with specific changes for next time.'],
+      cites(t) >= 1 ? ['pass', 'Reflection is linked to evidence.'] : ['info', 'Link at least one point to research on dietary assessment.']
+    ],
+    fb: t => {
+      const ss = sentences(t), avg = ss.length ? words(t) / ss.length : 0, jar = [...new Set((t.match(JARGON) || []).map(j => j.toLowerCase()))];
+      return [
+        !ss.length ? ['info', 'Paste your feedback text to check readability.'] : avg <= 18 ? ['pass', `Average sentence length is ${avg.toFixed(0)} words. Easy to read.`] : ['fail', `Average sentence length is ${avg.toFixed(0)} words. Aim for 18 or fewer for an athlete audience.`],
+        jar.length ? ['fail', `Jargon your athlete may not know: ${jar.join(', ')}. Explain it or use everyday words.`] : ['pass', 'No technical jargon found.'],
+        count(t, /\b(try|add|swap|aim|have|include|eat|drink|choose|plan|keep)\b/gi) >= 3 ? ['pass', 'Uses action words that tell the athlete what to do.'] : ['fail', 'Use clear action words (try, swap, add, aim for...).'],
+        /\b\d+ ?(g|grams?|ml|portions?|times)\b/i.test(t) ? ['pass', 'Includes practical amounts.'] : ['info', 'Give practical amounts, for example "about 25 g of protein, such as a 200 g pot of Greek yoghurt".']
+      ];
+    }
+  };
+
+  function update() {
+    let tot = 0, done = 0, all = 0;
+    SECTIONS.forEach(s => {
+      const t = st.text[s.id] || '', w = words(t); tot += w;
+      $('#wc-' + s.id).textContent = `${w} words`;
+      $('#ck-' + s.id).innerHTML = w ? RULES[s.id](t).filter(Boolean).map(([c, m]) => `<li class="${c}">${m}</li>`).join('') : '<li class="info">Paste or write your draft to run the checks.</li>';
+      s.ticks.forEach((x, i) => { all++; if (st.ticks[s.id + ':' + i]) done++; });
+    });
+    $('#bar').style.width = (done / all * 100) + '%';
+    const tg = +st.target;
+    $('#progTxt').textContent = `${done} of ${all} checklist items ticked. ${tot} words in total${tg ? `, ${Math.round(tot / tg * 100)}% of your ${tg}-word target` : ''}.`;
+    store.set('port', st);
+  }
+  document.addEventListener('input', e => {
+    if (e.target.dataset.s) st.text[e.target.dataset.s] = e.target.value;
+    else if (e.target.dataset.t) st.ticks[e.target.dataset.t] = e.target.checked;
+    else if (e.target.id === 'target') st.target = e.target.value;
+    else return;
+    update();
+  });
+  $('#export').onclick = () => Lab.downloadText(SECTIONS.map(s => `${s.title}\n\n${st.text[s.id] || ''}`).join('\n\n\n'), 'portfolio-draft.txt');
+  $('#reset').onclick = () => { if (confirm('Clear all drafts and ticks?')) { store.del('port'); location.reload(); } };
+  update();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nutrition for Adaptation Quiz · SESH58 Nutrition Lab</title>
+<link rel="stylesheet" href="assets/lab.css">
+<style>
+  .opt { display: block; width: 100%; text-align: left; font: inherit; background: #fff; border: 2px solid var(--line); border-radius: 10px; padding: 9px 12px; margin: 6px 0; cursor: pointer; color: var(--ink); }
+  .opt:hover:not([disabled]) { border-color: var(--blue); }
+  .opt:focus-visible { outline: 3px solid #ffbf47; outline-offset: 2px; }
+  .opt.right { border-color: var(--teal); background: var(--teal-wash); font-weight: bold; }
+  .opt.wrong { border-color: var(--plum); background: var(--plum-wash); }
+  .opt[disabled] { cursor: default; }
+</style>
+</head>
+<body>
+<main class="wrap" style="max-width:820px">
+  <a class="back" href="index.html">&larr; All Nutrition Lab tools</a>
+  <header class="lab-head">
+    <span class="badge">SESH58</span>
+    <h1>Nutrition for adaptation quiz</h1>
+    <p>Nine applied scenarios. Each answer explains the evidence, so use it to find gaps before you write your evaluation.</p>
+  </header>
+  <div class="stats" style="margin-bottom:12px"><div class="stat"><div class="k">Question</div><div class="v" id="qn"></div></div><div class="stat good"><div class="k">Score</div><div class="v" id="score">0</div></div></div>
+  <section class="card" aria-live="polite" id="q"></section>
+</main>
+<script src="assets/lab.js"></script>
+<script>
+(() => {
+  const { $, esc } = Lab;
+  const Q = [
+    { q: 'A 75 kg rower wants to spread protein evenly across four meals. Roughly how much protein should each meal contain?', o: ['About 10 g', 'About 20 to 25 g', 'About 50 g', 'It does not matter as long as the daily total is met'], a: 1,
+      e: 'About 0.3 g/kg per meal (0.25 to 0.4 g/kg) is suggested, which is about 22 g for 75 kg, eaten every 3 to 4 hours (Jäger et al. 2017). The daily total still matters most, but distribution helps.' },
+    { q: 'A cyclist trains 2 hours a day at moderate to high intensity. Which daily carbohydrate range fits best?', o: ['3 to 5 g/kg', '5 to 7 g/kg', '6 to 10 g/kg', '12 to 15 g/kg'], a: 2,
+      e: 'For 1 to 3 hours a day of moderate to high-intensity exercise, 6 to 10 g/kg a day is suggested (Thomas et al. 2016).' },
+    { q: 'Why might a coach plan some low-intensity sessions with low carbohydrate availability ("train low")?', o: ['To burn more calories for weight loss only', 'To increase cell signalling linked to mitochondrial adaptations', 'To improve sprint performance in that session', 'Because carbohydrate is not needed for endurance sport'], a: 1,
+      e: 'Low glycogen can increase signalling (for example AMPK and PGC-1α) linked to oxidative adaptations. It should be planned around the work required, because it can reduce the quality of hard sessions (Impey et al. 2018).' },
+    { q: 'A swimmer has two hard sessions 5 hours apart. What is the priority straight after the first session?', o: ['Wait until the next main meal', 'About 1.0 to 1.2 g/kg/h of carbohydrate for the first few hours', 'Protein only', 'A high-fat meal to slow digestion'], a: 1,
+      e: 'When there is less than about 8 hours between sessions, rapid glycogen restoration matters: about 1.0 to 1.2 g/kg/h for the first 4 hours (Thomas et al. 2016). Adding protein also supports repair.' },
+    { q: 'An athlete eats 2400 kcal, expends 600 kcal in exercise and has 60 kg of fat-free mass. What is their energy availability?', o: ['20 kcal/kg FFM', '30 kcal/kg FFM', '40 kcal/kg FFM', '50 kcal/kg FFM'], a: 1,
+      e: '(2400 − 600) ÷ 60 = 30 kcal/kg FFM. That is at the level often described as low, but thresholds are not diagnostic and need interpreting with other evidence (Mountjoy et al. 2023).' },
+    { q: 'An endurance athlete takes high doses of vitamin C and E every day "to recover faster". What might the evidence suggest?', o: ['It will double training adaptations', 'High doses may blunt some training adaptations', 'It has no possible effect', 'It replaces the need for carbohydrate'], a: 1,
+      e: 'Exercise-induced reactive oxygen species act as signals for adaptation. Some studies show that high-dose antioxidant supplements can blunt adaptations, so routine use in training is questioned (see Rothschild and Bishop 2020 on supplements and endurance adaptation).' },
+    { q: 'About how much protein before sleep has been studied for overnight muscle protein synthesis?', o: ['About 5 g', 'About 15 g', 'About 30 to 40 g casein', 'Over 100 g'], a: 2,
+      e: 'Pre-sleep casein of about 30 to 40 g can increase overnight muscle protein synthesis (Kerksick et al. 2017; Jäger et al. 2017).' },
+    { q: 'What is the main weakness of using a single 24-hour recall to describe an athlete\'s diet?', o: ['It always overestimates protein', 'One day may not represent habitual intake, and under-reporting is common', 'It cannot record drinks', 'It is not allowed in research'], a: 1,
+      e: 'Day-to-day variation is large and athletes often under-report intake (Capling et al. 2017). Justify the length of assessment in your methods and discuss it in your reflection.' },
+    { q: 'What share of daily energy is usually suggested to come from fat?', o: ['Under 10%', '20 to 35%', '45 to 60%', 'Over 60%'], a: 1,
+      e: 'About 20 to 35% of energy from fat, avoiding chronic intakes below 20% (Thomas et al. 2016).' }
+  ];
+  let i = 0, score = 0;
+  function show() {
+    $('#qn').textContent = `${i + 1} / ${Q.length}`; $('#score').textContent = score;
+    const x = Q[i];
+    $('#q').innerHTML = `<h2>${esc(x.q)}</h2>${x.o.map((o, k) => `<button class="opt" data-k="${k}">${esc(o)}</button>`).join('')}<div id="fb"></div>`;
+    $('#q').querySelectorAll('.opt').forEach(b => b.onclick = () => answer(+b.dataset.k));
+    $('#q .opt').focus();
+  }
+  function answer(k) {
+    const x = Q[i], ok = k === x.a; if (ok) score++;
+    $('#q').querySelectorAll('.opt').forEach((b, j) => { b.disabled = true; if (j === x.a) b.classList.add('right'); else if (j === k) b.classList.add('wrong'); });
+    $('#score').textContent = score;
+    $('#fb').innerHTML = `<div class="feedback ${ok ? 'ok' : 'no'}"><strong>${ok ? 'Correct.' : 'Not quite.'}</strong> ${esc(x.e)}</div><div class="row" style="margin-top:10px"><button class="btn" id="next">${i < Q.length - 1 ? 'Next question' : 'See my score'}</button></div>`;
+    $('#next').onclick = () => { i++; i < Q.length ? show() : end(); }; $('#next').focus();
+  }
+  function end() {
+    $('#qn').textContent = 'Done';
+    $('#q').innerHTML = `<h2>You scored ${score} out of ${Q.length}</h2><p>${score >= 8 ? 'Strong understanding. Make sure your portfolio shows it with citations.' : score >= 5 ? 'Good start. Revisit the readings behind the questions you missed.' : 'Worth another look at the key readings on the Canvas page before writing your evaluation.'}</p><button class="btn" id="again">Try again</button>`;
+    $('#again').onclick = () => { i = 0; score = 0; show(); };
+  }
+  show();
+})();
+</script>
+</body>
+</html>

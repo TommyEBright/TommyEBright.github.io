@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reflective Writing Scaffold · SESH58 Nutrition Lab</title>
+<link rel="stylesheet" href="assets/lab.css">
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="index.html">&larr; All Nutrition Lab tools</a>
+  <header class="lab-head">
+    <span class="badge">SESH58</span>
+    <h1>Reflective writing scaffold</h1>
+    <p>Choose a model, write each stage, then check the balance. Strong reflection spends most of its words on analysis and what you will do next, not on describing what happened.</p>
+  </header>
+
+  <section class="card" aria-labelledby="h-choose">
+    <h2 id="h-choose">1. Which model suits you?</h2>
+    <p style="margin:0 0 8px;font-size:.9rem">Answer three questions for a suggestion. You still need to justify your choice in the portfolio.</p>
+    <div class="grid three">
+      <div class="control"><label for="q1">How much structure do you want?</label><select id="q1"><option value="high">A lot, step by step</option><option value="low">Light, a few big questions</option></select></div>
+      <div class="control"><label for="q2">What matters most to you?</label><select id="q2"><option value="feel">Including feelings and their effect</option><option value="learn">Linking experience to theory and testing it</option><option value="act">Moving quickly to action</option></select></div>
+      <div class="control"><label for="q3">When are you reflecting?</label><select id="q3"><option value="after">After the data collection</option><option value="during">During it, as well as after</option></select></div>
+    </div>
+    <div id="suggest" class="feedback ok" role="status"></div>
+    <div class="tbl-wrap" style="margin-top:10px">
+      <table class="tbl">
+        <thead><tr><th>Model</th><th style="text-align:left">Stages</th><th style="text-align:left">Strength</th><th style="text-align:left">Watch out for</th></tr></thead>
+        <tbody>
+          <tr><td>Gibbs (1988)</td><td style="text-align:left">6</td><td style="text-align:left">Detailed and easy to follow; includes feelings</td><td style="text-align:left">Can become long and descriptive</td></tr>
+          <tr><td>Kolb (1984)</td><td style="text-align:left">4</td><td style="text-align:left">Links experience to theory, then to testing a change</td><td style="text-align:left">A learning cycle more than a writing frame</td></tr>
+          <tr><td>Driscoll (1994)</td><td style="text-align:left">3</td><td style="text-align:left">Short, flexible and action-focused</td><td style="text-align:left">Easy to stay shallow without prompts</td></tr>
+          <tr><td>Schön (1983)</td><td style="text-align:left">2</td><td style="text-align:left">Separates thinking during and after the event</td><td style="text-align:left">Gives few prompts for structure</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card" style="margin-top:12px" aria-labelledby="h-write">
+    <h2 id="h-write">2. Write your reflection</h2>
+    <div class="row" style="margin-bottom:8px"><div class="seg" role="group" aria-label="Reflective model" id="models"></div></div>
+    <div id="stages" class="controls"></div>
+    <p class="hint" style="font-size:.82rem;color:var(--muted)">Your writing is saved in this browser only. First person is fine in the reflections section.</p>
+  </section>
+
+  <section class="card" style="margin-top:12px" aria-labelledby="h-check">
+    <h2 id="h-check">3. Check the balance</h2>
+    <div class="plot"><canvas id="bal" role="img" aria-label="Words written at each stage"></canvas></div>
+    <ul class="chk" id="checks" style="margin-top:8px"></ul>
+    <div class="row" style="margin-top:8px"><button class="btn" id="copyAll">Copy all text</button><button class="btn secondary" id="dl">Download as .txt</button></div>
+  </section>
+
+  <details class="card reveal" style="margin-top:12px"><summary>Descriptive or critical? Two examples</summary><div>
+    <p><strong>Descriptive:</strong> "I used MyFitnessPal to record the athlete's diet. It took a long time and some foods were hard to find."</p>
+    <p><strong>Critical:</strong> "Finding items in the app took longer than planned, so I accepted near matches for two home-cooked meals. This probably underestimated fat intake, which matters because Figure 4 is used to judge fat as a share of energy. Next time I would weigh the ingredients of composite dishes and enter them separately, and I would check database entries against food labels."</p>
+    <p style="font-size:.9rem;color:var(--muted)">The critical version explains why, links to the data, judges the impact and commits to a specific change.</p>
+  </div></details>
+</main>
+<script src="assets/lab.js"></script>
+<script>
+(() => {
+  const { $, $$, esc, store, C } = Lab;
+  const MODELS = {
+    gibbs: { name: 'Gibbs', stages: [
+      ['Description', 'What happened? Give a brief, factual account of the data collection.', 'd'],
+      ['Feelings', 'What were you thinking and feeling, and how did that affect what you did?', 'd'],
+      ['Evaluation', 'What went well and what went less well?', 'a'],
+      ['Analysis', 'Why did it go that way? Link to evidence on dietary assessment methods.', 'a'],
+      ['Conclusion', 'What else could you have done? What have you learnt?', 'a'],
+      ['Action plan', 'If you did this again, exactly what would you change and how?', 'x']] },
+    kolb: { name: 'Kolb', stages: [
+      ['Concrete experience', 'What did you do?', 'd'],
+      ['Reflective observation', 'What did you notice? What surprised you?', 'a'],
+      ['Abstract conceptualisation', 'How does theory or research explain what happened?', 'a'],
+      ['Active experimentation', 'What will you try next time, and how will you know it worked?', 'x']] },
+    driscoll: { name: 'Driscoll', stages: [
+      ['What?', 'What happened during the data collection?', 'd'],
+      ['So what?', 'Why does it matter? What did it mean for your data and your athlete?', 'a'],
+      ['Now what?', 'What will you do differently, and what are the likely consequences?', 'x']] },
+    schon: { name: 'Schön', stages: [
+      ['Reflection in action', 'What did you notice and change while collecting the data?', 'a'],
+      ['Reflection on action', 'Looking back, what would you do differently and why?', 'x']] }
+  };
+  let model = store.get('refl:model', 'gibbs');
+  const text = store.get('refl:text', {});
+
+  $('#models').innerHTML = Object.entries(MODELS).map(([k, m]) => `<button data-m="${k}" aria-pressed="${k === model}">${m.name}</button>`).join('');
+  $('#models').onclick = e => { const k = e.target.dataset.m; if (!k) return; model = k; store.set('refl:model', k); $$('#models button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === k)); render(); };
+
+  function render() {
+    const m = MODELS[model];
+    $('#stages').innerHTML = m.stages.map(([s, p], i) => `<div class="control"><label for="st${i}">${i + 1}. ${s}</label><div class="hint" style="margin:0 0 4px">${p}</div><textarea id="st${i}" data-k="${model}:${i}">${esc(text[model + ':' + i] || '')}</textarea></div>`).join('');
+    check();
+  }
+  $('#stages').addEventListener('input', e => { if (e.target.dataset.k) { text[e.target.dataset.k] = e.target.value; store.set('refl:text', text); check(); } });
+
+  const words = s => (s.trim().match(/\S+/g) || []).length;
+  const WHY = /\bbecause\b|\bdue to\b|\bas a result\b|\btherefore\b|\bthis meant\b|\bwhich meant\b|\bthis suggests\b|\bso that\b/gi;
+  const EVID = /\(([A-Z][A-Za-z'\-]+( et al\.?| and [A-Z][a-z]+)?),? \d{4}[a-z]?\)|[A-Z][A-Za-z'\-]+ (et al\.? )?\(\d{4}\)/g;
+  const ACT = /\bI would\b|\bI will\b|\bnext time\b|\bin future\b|\binstead\b|\bI plan\b/gi;
+  const VAGUE = /\bwent well\b|\bwas good\b|\bwas bad\b|\bit was fine\b|\binteresting\b/gi;
+
+  function check() {
+    const m = MODELS[model], counts = m.stages.map((s, i) => words(text[model + ':' + i] || ''));
+    const total = counts.reduce((a, b) => a + b, 0);
+    const kind = t => m.stages.filter(s => s[2] === t).reduce((a, s) => a + counts[m.stages.indexOf(s)], 0);
+    Lab.bars($('#bal'), { title: `Words per stage (total ${total})`, labels: m.stages.map(s => s[0]), values: counts, colors: m.stages.map(s => s[2] === 'd' ? '#9fb6c1' : s[2] === 'a' ? C.blue : C.teal), yLabel: 'Words', dp: 0, height: 240 });
+    const all = m.stages.map((s, i) => text[model + ':' + i] || '').join('\n');
+    const out = [];
+    if (!total) { $('#checks').innerHTML = '<li class="info">Start writing and the checks will appear here. Grey bars are description, blue are analysis and teal are action.</li>'; return; }
+    const dShare = kind('d') / total;
+    out.push(dShare > 0.4 ? ['fail', `${Math.round(dShare * 100)}% of your words are description. Aim for well under 40% and move the effort into analysis.`] : ['pass', `Description is ${Math.round(dShare * 100)}% of your words, so most of the reflection is analysis and action.`]);
+    const why = (all.match(WHY) || []).length;
+    out.push(why >= 3 ? ['pass', `You explain causes ${why} times (because, therefore, this meant...).`] : ['fail', `Only ${why} explanation word(s) found. Say why things happened, not just what happened.`]);
+    const ev = (all.match(EVID) || []).length;
+    out.push(ev >= 2 ? ['pass', `${ev} citations found. Good, reflection should still use evidence.`] : ['fail', 'Fewer than two citations. Link your experience to research on dietary assessment or reflective practice.']);
+    const act = (all.match(ACT) || []).length, actWords = kind('x');
+    out.push(act && actWords >= 40 ? ['pass', 'Your action stage commits to specific changes.'] : ['fail', 'Make the action stage specific: what exactly would you do differently, and how?']);
+    const vague = all.match(VAGUE) || [];
+    if (vague.length) out.push(['info', `Vague phrases to sharpen: ${[...new Set(vague.map(v => v.toLowerCase()))].map(v => '"' + esc(v) + '"').join(', ')}.`]);
+    out.push(['info', 'These are rule-based prompts, not a mark. Read your work against the marking criteria too.']);
+    $('#checks').innerHTML = out.map(([c, t]) => `<li class="${c}">${t}</li>`).join('');
+  }
+
+  function suggest() {
+    const a = $('#q1').value, b = $('#q2').value, c = $('#q3').value;
+    let k = 'gibbs';
+    if (c === 'during') k = 'schon'; else if (b === 'learn') k = 'kolb'; else if (a === 'low' || b === 'act') k = 'driscoll';
+    const why = { gibbs: 'gives a detailed step-by-step structure and includes feelings.', kolb: 'connects what happened to theory and to testing a change.', driscoll: 'uses three short questions and moves quickly to action.', schon: 'separates what you changed during the data collection from what you learnt afterwards.' }[k];
+    $('#suggest').innerHTML = `<strong>Try ${MODELS[k].name}.</strong> It ${why} <button class="btn secondary" id="useIt" style="margin-left:6px">Use this model</button>`;
+    $('#useIt').onclick = () => { $(`#models [data-m="${k}"]`).click(); $('#h-write').scrollIntoView({ behavior: 'smooth' }); };
+  }
+  ['q1', 'q2', 'q3'].forEach(id => $('#' + id).addEventListener('input', suggest));
+
+  const full = () => { const m = MODELS[model]; return `Reflection using ${m.name}'s model\n\n` + m.stages.map(([s], i) => `${s}\n${text[model + ':' + i] || ''}`).join('\n\n'); };
+  $('#copyAll').onclick = e => Lab.copy(full(), e.target);
+  $('#dl').onclick = () => Lab.downloadText(full(), 'reflection.txt');
+  let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(check, 150); });
+  suggest(); render();
+})();
+</script>
+</body>
+</html>

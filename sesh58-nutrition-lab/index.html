@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SESH58 Nutrition Lab</title>
+<link rel="stylesheet" href="assets/lab.css">
+<style>
+  .hub { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+  .hub a { text-decoration: none; color: inherit; display: block; height: 100%; }
+  .hub .card { height: 100%; border-top: 5px solid var(--c, var(--blue)); transition: transform .12s; }
+  .hub a:hover .card, .hub a:focus-visible .card { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,61,80,.12); }
+  .hub a:focus-visible { outline: 3px solid #ffbf47; outline-offset: 3px; border-radius: var(--radius); }
+  .hub h2 { margin-top: 6px; }
+  .hub p { margin: 0; font-size: 0.92rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="lab-head">
+    <span class="badge">SESH58</span>
+    <h1>Nutrition Lab: assessment portfolio tools</h1>
+    <p>Interactive companions to the Nutrition for Adaptation Canvas page. Everything runs in your browser. Nothing you type or upload is sent anywhere.</p>
+  </header>
+  <div class="hub">
+    <a href="diet-analyser.html" style="--c:#003d50"><div class="card"><span class="tag">Data collection station</span><h2>Diet recall analyser</h2><p>Enter or paste your 24-hour recall and build your own labelled figures: g/kg targets, protein per meal and energy across the day. Download them as images.</p></div></a>
+    <a href="fuel-calculator.html" style="--c:#00857e"><div class="card"><span class="tag">Evaluation</span><h2>Energy availability and fuelling</h2><p>Calculate energy availability and match carbohydrate and protein targets to the training load of the day.</p></div></a>
+    <a href="reflection.html" style="--c:#0071bc"><div class="card"><span class="tag">Reflection station</span><h2>Reflective writing scaffold</h2><p>Choose a model, write stage by stage and see whether your reflection is mostly description or moves into analysis and action.</p></div></a>
+    <a href="portfolio-checker.html" style="--c:#8b3556"><div class="card"><span class="tag">Portfolio guidance</span><h2>Portfolio planner and checker</h2><p>Plan the five portfolio sections and run rule-based checks on your draft: voice, figure labels, citations and readability.</p></div></a>
+    <a href="feedback-builder.html" style="--c:#a85d00"><div class="card"><span class="tag">Feedback section</span><h2>Athlete feedback builder</h2><p>Turn your three key findings into a clear, practical one-page summary for your athlete.</p></div></a>
+    <a href="quiz.html" style="--c:#003d50"><div class="card"><span class="tag">Self-check</span><h2>Nutrition for adaptation quiz</h2><p>Nine applied scenarios on fuelling, protein, timing, energy availability and dietary assessment.</p></div></a>
+  </div>
+  <p class="foot">The targets in these tools come from published position statements (Thomas et al. 2016; Jäger et al. 2017; Kerksick et al. 2017; Mountjoy et al. 2023). They are starting points for discussion, not prescriptions. SESH58, Plymouth Marjon University.</p>
+</main>
+</body>
+</html>

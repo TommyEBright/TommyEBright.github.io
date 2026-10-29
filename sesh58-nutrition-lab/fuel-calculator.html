@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Energy Availability and Fuelling · SESH58 Nutrition Lab</title>
+<link rel="stylesheet" href="assets/lab.css">
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="index.html">&larr; All Nutrition Lab tools</a>
+  <header class="lab-head">
+    <span class="badge">SESH58</span>
+    <h1>Energy availability and fuelling</h1>
+    <p>Is there enough energy left for health and adaptation once training is paid for? And does carbohydrate match the work required on each day?</p>
+  </header>
+
+  <div class="predict"><strong>Predict first.</strong> An athlete eats 2400 kcal, burns 600 kcal in training and has 60 kg of fat-free mass. Is their energy availability adequate? Work it out, then check it below.</div>
+
+  <div class="grid halves">
+    <section class="card" aria-labelledby="h-ea">
+      <h2 id="h-ea">1. Energy availability</h2>
+      <p style="margin:0 0 8px;font-size:.9rem">EA = (energy intake − exercise energy expenditure) ÷ fat-free mass</p>
+      <div class="controls">
+        <div class="grid halves">
+          <div class="control"><label for="mass">Body mass (kg)</label><input type="number" id="mass" value="70" min="30" max="200" step="0.1"></div>
+          <div class="control"><label for="bf">Body fat (%)</label><input type="number" id="bf" value="15" min="3" max="50" step="0.5"><div class="hint">From skinfolds, BIA or DXA. Say which in your methods.</div></div>
+        </div>
+        <div class="control"><label for="ei">Energy intake (kcal/day)</label><input type="number" id="ei" value="2600" min="0" step="10"><div class="hint" id="eiHint"></div></div>
+        <div class="control"><label for="eee">Exercise energy expenditure (kcal/day)</label><input type="number" id="eee" value="600" min="0" step="10"><div class="hint">Enter it directly, or estimate it from a session below.</div></div>
+        <details class="reveal"><summary>Estimate from a session (METs)</summary><div>
+          <div class="grid three">
+            <div class="control"><label for="act">Activity</label><select id="act">
+              <option value="7">Running, about 8 km/h (7 MET)</option>
+              <option value="9.8">Running, about 10 km/h (9.8 MET)</option>
+              <option value="8">Cycling, moderate to vigorous (8 MET)</option>
+              <option value="7">Football or rugby training (7 MET)</option>
+              <option value="6">Swimming, moderate (6 MET)</option>
+              <option value="5">Resistance training, vigorous (5 MET)</option>
+              <option value="3.5">Resistance training, light (3.5 MET)</option>
+            </select></div>
+            <div class="control"><label for="mins">Minutes</label><input type="number" id="mins" value="60" min="0" step="5"></div>
+            <div class="control"><label>&nbsp;</label><button class="btn teal" id="addSess">Add session</button></div>
+          </div>
+          <p class="hint" style="font-size:.8rem;color:var(--muted)">Net cost = (MET − 1) × body mass (kg) × hours, so resting energy is not counted twice. MET values are approximate (Ainsworth et al. 2011 Compendium); a heart rate or GPS estimate is usually better.</p>
+        </div></details>
+      </div>
+      <div class="stats" style="margin-top:10px" id="eaStats"></div>
+      <div id="eaMsg" class="feedback" role="status"></div>
+      <div class="plot" style="margin-top:8px"><canvas id="eaPlot" role="img" aria-label="Energy availability on a scale with reference zones"></canvas></div>
+    </section>
+
+    <section class="card" aria-labelledby="h-fuel">
+      <h2 id="h-fuel">2. Fuel for the work required</h2>
+      <div class="control"><label for="load">Training on this day</label>
+        <select id="load">
+          <option value="light">Light or skill-based</option>
+          <option value="moderate" selected>Moderate, about 1 h a day</option>
+          <option value="high">High, 1 to 3 h a day</option>
+          <option value="veryhigh">Very high, 4 to 5 h a day</option>
+        </select></div>
+      <div class="grid halves" style="margin-top:8px">
+        <div class="control"><label for="sessLen">Longest session (min)</label><input type="number" id="sessLen" value="75" min="0" step="5"></div>
+        <div class="control"><label for="gap">Hours to the next session</label><input type="number" id="gap" value="24" min="0" step="1"></div>
+      </div>
+      <div class="tbl-wrap" style="margin-top:10px"><table class="tbl" id="targets"></table></div>
+      <div class="plot" style="margin-top:8px"><canvas id="fuelPlot" role="img" aria-label="Carbohydrate targets for each type of training day"></canvas></div>
+      <div class="row" style="margin-top:6px"><button class="btn secondary" id="dlFuel">Download PNG</button></div>
+      <div class="note" style="margin-top:10px;font-size:.9rem"><strong>Periodisation.</strong> Carbohydrate is matched to the demands of each session, not fixed every day. Deliberately training with low carbohydrate before some lower-intensity sessions may increase training adaptations, but it can reduce the quality of high-intensity work (Impey et al. 2018). Energy availability uses fat-free mass, but these targets use total body mass.</div>
+    </section>
+  </div>
+
+  <div class="warn" style="margin-top:12px"><strong>Interpret with care.</strong> The 2023 IOC consensus on REDs (Mountjoy et al. 2023) notes that EA thresholds such as 30 and 45 kcal/kg FFM come mainly from short laboratory studies in women and are not diagnostic. Measurement error in intake, expenditure and body composition adds up. Treat EA as one piece of evidence, alongside symptoms, history and screening tools, and refer concerns on.</div>
+  <p class="foot">Targets from Thomas et al. (2016) and Jäger et al. (2017). Recovery guidance applies when there are fewer than about 8 hours between demanding sessions.</p>
+</main>
+<script src="assets/lab.js"></script>
+<script>
+(() => {
+  const { $, num, fmt, store, C } = Lab;
+  const BANDS = { light: [3, 5], moderate: [5, 7], high: [6, 10], veryhigh: [8, 12] };
+  const saved = store.get('diet:rows', null);
+  if (saved && saved.length) {
+    const kcal = saved.reduce((a, r) => a + num(r[3]), 0);
+    if (kcal > 0) { $('#ei').value = Math.round(kcal); $('#eiHint').textContent = 'Filled in from your diet recall analyser entries.'; }
+  }
+  const m0 = store.get('diet:mass', null); if (m0) $('#mass').value = m0;
+  const l0 = store.get('diet:load', null); if (l0) $('#load').value = l0;
+
+  $('#addSess').onclick = () => {
+    const met = num($('#act').value), mins = num($('#mins').value), mass = num($('#mass').value);
+    $('#eee').value = Math.round(num($('#eee').value) + (met - 1) * mass * mins / 60);
+    update();
+  };
+  ['mass', 'bf', 'ei', 'eee', 'load', 'sessLen', 'gap'].forEach(id => $('#' + id).addEventListener('input', update));
+
+  function update() {
+    const mass = Math.max(1, num($('#mass').value)), bf = num($('#bf').value), ffm = mass * (1 - bf / 100);
+    const ei = num($('#ei').value), eee = num($('#eee').value), ea = (ei - eee) / Math.max(1, ffm);
+    $('#eaStats').innerHTML = [['Fat-free mass', fmt(ffm, 1) + ' kg'], ['Energy after training', fmt(ei - eee) + ' kcal'], ['Energy availability', fmt(ea, 1) + ' kcal/kg FFM']]
+      .map(([k, v]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+    const msg = $('#eaMsg');
+    if (ea < 30) { msg.className = 'feedback no'; msg.innerHTML = '<strong>Below 30 kcal/kg FFM.</strong> This is often described as low energy availability. If it persists it may be linked to problems with health and performance (REDs). Check the data first, then think about how you would raise this sensitively.'; }
+    else if (ea < 45) { msg.className = 'feedback no'; msg.innerHTML = '<strong>Between 30 and 45 kcal/kg FFM.</strong> Sometimes described as reduced or sub-optimal. It may be planned for a short period (for example, body composition goals) but should be monitored.'; }
+    else { msg.className = 'feedback ok'; msg.innerHTML = '<strong>45 kcal/kg FFM or more.</strong> Often described as adequate for healthy physiological function in adults.'; }
+    drawEA(ea);
+
+    const band = BANDS[$('#load').value], len = num($('#sessLen').value), gap = num($('#gap').value);
+    const during = len < 45 ? 'Not needed' : len <= 75 ? 'Small amounts or a mouth rinse' : len <= 150 ? '30 to 60 g per hour' : 'Up to 90 g per hour (mixed sugars)';
+    const rows = [
+      ['Daily carbohydrate', `${band[0]} to ${band[1]} g/kg`, `${fmt(band[0] * mass)} to ${fmt(band[1] * mass)} g`],
+      ['Daily protein', '1.2 to 2.0 g/kg', `${fmt(1.2 * mass)} to ${fmt(2 * mass)} g`],
+      ['Protein per meal', 'about 0.3 g/kg, every 3 to 4 h', `about ${fmt(0.3 * mass)} g`],
+      ['Before a long session (over 60 min)', '1 to 4 g/kg, 1 to 4 h before', `${fmt(mass)} to ${fmt(4 * mass)} g`],
+      ['During the longest session', during, ''],
+      ['Recovery', gap < 8 ? '1.0 to 1.2 g/kg/h CHO for the first 4 h' : 'Normal meals meet needs over 24 h', gap < 8 ? `${fmt(mass)} to ${fmt(1.2 * mass)} g per hour` : '']
+    ];
+    $('#targets').innerHTML = `<thead><tr><th>Target</th><th style="text-align:left">Guide</th><th style="text-align:left">For ${fmt(mass, 1)} kg</th></tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td style="text-align:left">${c}</td>`).join('')}</tr>`).join('')}</tbody>`;
+    const keys = Object.keys(BANDS), cur = $('#load').value;
+    Lab.bars($('#fuelPlot'), { title: 'Daily carbohydrate across training days (g)', labels: ['Light', 'Moderate', 'High', 'Very high'], values: keys.map(k => (BANDS[k][0] + BANDS[k][1]) / 2 * mass), bands: keys.map(k => [BANDS[k][0] * mass, BANDS[k][1] * mass]), colors: keys.map(k => k === cur ? C.navy : '#9fb6c1'), yLabel: 'Carbohydrate (g/day)', dp: 0, height: 260 });
+  }
+
+  function drawEA(ea) {
+    const cv = $('#eaPlot'); const w = cv.parentElement.clientWidth || 500, h = 90;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2); cv.style.height = h + 'px';
+    cv.width = w * dpr; cv.height = h * dpr; const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+    const x = v => 10 + Math.max(0, Math.min(70, v)) / 70 * (w - 20);
+    [[0, 30, '#f3d6e0', 'Low'], [30, 45, '#fde9cf', 'Reduced'], [45, 70, '#d3eeeb', 'Adequate']].forEach(([a, b, c, l]) => {
+      ctx.fillStyle = c; ctx.fillRect(x(a), 20, x(b) - x(a), 30);
+      ctx.fillStyle = C.navy; ctx.font = '12px Arial'; ctx.textAlign = 'center'; ctx.fillText(l, (x(a) + x(b)) / 2, 40);
+    });
+    ctx.fillStyle = C.muted; [0, 15, 30, 45, 60].forEach(v => ctx.fillText(v, x(v), 66));
+    ctx.fillText('kcal per kg fat-free mass per day', w / 2, 84);
+    ctx.fillStyle = C.plum; ctx.beginPath(); const px = x(ea); ctx.moveTo(px, 18); ctx.lineTo(px - 7, 6); ctx.lineTo(px + 7, 6); ctx.fill();
+    ctx.fillRect(px - 1.5, 18, 3, 34);
+  }
+  $('#dlFuel').onclick = () => Lab.download($('#fuelPlot'), 'carbohydrate-targets');
+  let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(update, 150); });
+  update();
+})();
+</script>
+</body>
+</html>

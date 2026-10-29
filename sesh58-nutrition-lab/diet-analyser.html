@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diet Recall Analyser · SESH58 Nutrition Lab</title>
+<link rel="stylesheet" href="assets/lab.css">
+</head>
+<body>
+<main class="wrap">
+  <a class="back no-print" href="index.html">&larr; All Nutrition Lab tools</a>
+  <header class="lab-head">
+    <span class="badge">SESH58</span>
+    <h1>Diet recall analyser</h1>
+    <p>Build your own figures from a 24-hour recall. Enter meals by hand or paste an export, then download each figure and its caption for your portfolio.</p>
+  </header>
+
+  <div class="predict"><strong>Predict first.</strong> Before you enter anything, guess your athlete's carbohydrate and protein intake in g/kg of body mass. Which meal do you think carries the most protein? Note your guesses and compare them with the figures below.</div>
+
+  <div class="grid two">
+    <section class="card" aria-labelledby="h-athlete">
+      <h2 id="h-athlete">1. The athlete and the day</h2>
+      <div class="grid halves">
+        <div class="control"><label for="mass">Body mass (kg)</label><input type="number" id="mass" min="30" max="200" step="0.1" value="70"></div>
+        <div class="control"><label for="load">Training load on this day</label>
+          <select id="load">
+            <option value="light">Light or skill-based (3 to 5 g/kg CHO)</option>
+            <option value="moderate" selected>Moderate, about 1 h a day (5 to 7 g/kg)</option>
+            <option value="high">High, 1 to 3 h a day (6 to 10 g/kg)</option>
+            <option value="veryhigh">Very high, 4 to 5 h a day (8 to 12 g/kg)</option>
+          </select>
+        </div>
+      </div>
+      <p class="hint" style="font-size:.82rem;color:var(--muted);margin:.5rem 0 0">Carbohydrate ranges from Thomas et al. (2016). Protein 1.2 to 2.0 g/kg a day (Thomas et al. 2016) and about 0.3 g/kg per meal (Jäger et al. 2017). Fat 20 to 35% of energy (Thomas et al. 2016).</p>
+    </section>
+    <section class="card" aria-labelledby="h-import">
+      <h2 id="h-import">Or paste an export</h2>
+      <p style="margin:0 0 6px;font-size:.88rem">Paste CSV or spreadsheet rows with a header row. Columns are matched by name: meal (or group), time, food, energy or kcal, carbohydrate, protein, fat, fibre. Cronometer's free export and most copied MyFitnessPal tables work.</p>
+      <label class="sr-only" for="paste">Pasted data</label>
+      <textarea id="paste" placeholder="Meal,Food,Energy (kcal),Carbs (g),Protein (g),Fat (g)&#10;Breakfast,Porridge with milk,320,48,13,8"></textarea>
+      <div class="row" style="margin-top:6px"><button class="btn" id="import">Import rows</button><button class="btn secondary" id="example">Load example day</button><button class="btn secondary" id="clear">Clear all</button></div>
+      <p id="importMsg" role="status" style="font-size:.85rem;margin:6px 0 0"></p>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:12px" aria-labelledby="h-entry">
+    <h2 id="h-entry">2. Foods and drinks</h2>
+    <div class="tbl-wrap">
+      <table class="tbl entry" id="entry">
+        <thead><tr><th>Meal</th><th>Time</th><th>Food or drink</th><th>Energy (kcal)</th><th>CHO (g)</th><th>Protein (g)</th><th>Fat (g)</th><th>Fibre (g)</th><th><span class="sr-only">Remove</span></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="row" style="margin-top:8px"><button class="btn teal" id="add">Add a row</button><span style="font-size:.85rem;color:var(--muted)">Rows with the same meal name are grouped together. Your entries are saved in this browser only.</span></div>
+  </section>
+
+  <section class="card" style="margin-top:12px" aria-labelledby="h-summary">
+    <h2 id="h-summary">3. Summary and data checks</h2>
+    <div class="stats" id="stats"></div>
+    <h3>Data quality checks</h3>
+    <ul class="chk" id="checks"></ul>
+  </section>
+
+  <section style="margin-top:12px" aria-labelledby="h-figs">
+    <h2 id="h-figs" style="color:var(--navy);font-size:1.1rem">4. Your figures</h2>
+    <p style="margin:0 0 8px;font-size:.9rem">Each figure has a suggested caption. Edit it so it describes <strong>your</strong> athlete, then write one or two sentences that interpret it. Number figures in the order they appear in your portfolio.</p>
+    <div class="grid halves">
+      <figure class="card fig"><div class="plot"><canvas id="f1" role="img" aria-label="Carbohydrate and protein intake in grams per kilogram compared with target ranges"></canvas></div><figcaption id="c1"></figcaption><div class="row no-print"><button class="btn secondary" data-dl="f1">Download PNG</button><button class="btn secondary" data-cp="c1">Copy caption</button></div></figure>
+      <figure class="card fig"><div class="plot"><canvas id="f2" role="img" aria-label="Protein per meal compared with 0.3 grams per kilogram"></canvas></div><figcaption id="c2"></figcaption><div class="row no-print"><button class="btn secondary" data-dl="f2">Download PNG</button><button class="btn secondary" data-cp="c2">Copy caption</button></div></figure>
+      <figure class="card fig"><div class="plot"><canvas id="f3" role="img" aria-label="Energy intake per meal"></canvas></div><figcaption id="c3"></figcaption><div class="row no-print"><button class="btn secondary" data-dl="f3">Download PNG</button><button class="btn secondary" data-cp="c3">Copy caption</button></div></figure>
+      <figure class="card fig"><div class="plot"><canvas id="f4" role="img" aria-label="Share of energy from carbohydrate, protein and fat"></canvas></div><figcaption id="c4"></figcaption><div class="row no-print"><button class="btn secondary" data-dl="f4">Download PNG</button><button class="btn secondary" data-cp="c4">Copy caption</button></div></figure>
+    </div>
+    <div class="card">
+      <h2>Table 1. Intake by meal</h2>
+      <div class="tbl-wrap"><table class="tbl" id="t1"></table></div>
+      <div class="row no-print" style="margin-top:8px"><button class="btn secondary" id="copyTable">Copy table (paste into Word or Excel)</button><button class="btn secondary" id="csv">Download CSV</button></div>
+    </div>
+  </section>
+
+  <div class="warn" style="margin-top:12px"><strong>Method limits to discuss in your portfolio.</strong> A single 24-hour recall may not represent habitual intake, under-reporting is common in athletes, and app food databases include user-entered items that can be wrong (Capling et al. 2017). Say how you reduced these errors, for example multiple-pass prompts, portion-size aids and checking database entries.</div>
+  <p class="foot">Energy from macronutrients uses 4 kcal/g carbohydrate and protein and 9 kcal/g fat. Alcohol is not included. Targets are population guidance; interpret them against the athlete's goals, sport and training phase.</p>
+</main>
+<script src="assets/lab.js"></script>
+<script>
+(() => {
+  const { $, $$, num, fmt, esc, store, C } = Lab;
+  const BANDS = { light: [3, 5], moderate: [5, 7], high: [6, 10], veryhigh: [8, 12] };
+  const LOADNAME = { light: 'a light training day', moderate: 'a moderate training day', high: 'a high-load training day', veryhigh: 'a very high-load training day' };
+  const FIELDS = ['meal', 'time', 'food', 'kcal', 'cho', 'pro', 'fat', 'fib'];
+  const EXAMPLE = [
+    ['Breakfast', '07:30', 'Porridge oats made with semi-skimmed milk', 290, 40, 13, 8, 4],
+    ['Breakfast', '07:30', 'Banana', 105, 27, 1, 0, 3],
+    ['Breakfast', '07:30', 'Orange juice, 250 ml', 110, 26, 2, 0, 0],
+    ['Snack', '10:30', 'Cereal bar', 130, 20, 2, 5, 1],
+    ['Lunch', '13:00', 'Chicken and salad wrap', 420, 45, 28, 13, 4],
+    ['Lunch', '13:00', 'Crisps', 130, 13, 2, 8, 1],
+    ['Pre-training', '16:30', 'Jam on white toast (2 slices)', 250, 48, 6, 3, 2],
+    ['Dinner', '19:30', 'Spaghetti bolognese', 650, 80, 35, 18, 7],
+    ['Dinner', '19:30', 'Garlic bread', 180, 22, 4, 9, 1],
+    ['Evening', '21:30', 'Greek yoghurt with honey', 210, 22, 16, 6, 0]
+  ];
+  let rows = store.get('diet:rows', null) || EXAMPLE.map(r => r.slice());
+  $('#mass').value = store.get('diet:mass', 70);
+  $('#load').value = store.get('diet:load', 'moderate');
+
+  const tbody = $('#entry tbody');
+  function renderRows() {
+    tbody.innerHTML = rows.map((r, i) => `<tr>${FIELDS.map((f, j) => `<td><input ${j > 2 ? 'type="number" min="0" step="any" inputmode="decimal"' : 'type="text"'} data-r="${i}" data-c="${j}" value="${esc(r[j] ?? '')}" aria-label="${f} row ${i + 1}" style="${j === 2 ? 'min-width:180px' : j < 2 ? 'min-width:90px' : 'min-width:70px'}"></td>`).join('')}<td><button class="btn secondary" data-del="${i}" aria-label="Remove row ${i + 1}" style="min-height:32px;padding:4px 10px">×</button></td></tr>`).join('');
+  }
+  tbody.addEventListener('input', e => {
+    const t = e.target; if (!t.dataset.r) return;
+    rows[+t.dataset.r][+t.dataset.c] = +t.dataset.c > 2 ? num(t.value) : t.value; update();
+  });
+  tbody.addEventListener('click', e => { const d = e.target.dataset.del; if (d != null) { rows.splice(+d, 1); renderRows(); update(); } });
+  $('#add').onclick = () => { rows.push(['', '', '', 0, 0, 0, 0, 0]); renderRows(); update(); $$('#entry tbody tr:last-child input')[0].focus(); };
+  $('#example').onclick = () => { rows = EXAMPLE.map(r => r.slice()); renderRows(); update(); $('#importMsg').textContent = 'Example day loaded (a student footballer, made-up data).'; };
+  $('#clear').onclick = () => { if (confirm('Remove every row?')) { rows = []; renderRows(); update(); } };
+  ['mass', 'load'].forEach(id => $('#' + id).addEventListener('input', update));
+
+  const MATCH = {
+    meal: /meal|group|category|occasion/i, time: /time|day/i, food: /food|item|description|name/i,
+    kcal: /kcal|energy|calor/i, cho: /carb|cho/i, pro: /protein/i, fat: /^(total )?fat|fat \(|fat$/i, fib: /fib(re|er)/i
+  };
+  $('#import').onclick = () => {
+    const data = Lab.parseCSV($('#paste').value.trim());
+    const msg = $('#importMsg');
+    if (data.length < 2) { msg.textContent = 'I need a header row and at least one data row.'; return; }
+    const head = data[0].map(h => h.trim()), idx = {};
+    FIELDS.forEach(f => {
+      idx[f] = head.findIndex((h, k) => MATCH[f].test(h) && !Object.values(idx).includes(k) && !(f === 'fat' && /saturat|trans|mono|poly/i.test(h)) && !(f === 'kcal' && /kj/i.test(h)));
+    });
+    if (idx.kcal < 0 && idx.cho < 0 && idx.pro < 0) { msg.textContent = 'No energy, carbohydrate or protein columns found. Check the header row.'; return; }
+    const added = data.slice(1).filter(r => !/^total/i.test(r[0] || '')).map(r => FIELDS.map((f, j) => idx[f] < 0 ? (j > 2 ? 0 : '') : (j > 2 ? num(r[idx[f]]) : (r[idx[f]] || '').trim())));
+    added.forEach(r => { if (!r[0]) r[0] = 'Unassigned'; });
+    rows = rows.filter(r => r.slice(3).some(v => v)).concat(added);
+    renderRows(); update();
+    const found = FIELDS.filter(f => idx[f] >= 0).map(f => ({ meal: 'meal', time: 'time', food: 'food', kcal: 'energy', cho: 'carbohydrate', pro: 'protein', fat: 'fat', fib: 'fibre' }[f]));
+    msg.textContent = `Imported ${added.length} rows. Matched columns: ${found.join(', ')}.`;
+  };
+
+  function meals() {
+    const m = new Map();
+    rows.forEach(r => {
+      const k = (r[0] || 'Unassigned').trim() || 'Unassigned';
+      if (!m.has(k)) m.set(k, { name: k, time: r[1] || '', kcal: 0, cho: 0, pro: 0, fat: 0, fib: 0 });
+      const o = m.get(k); if (!o.time && r[1]) o.time = r[1];
+      o.kcal += num(r[3]); o.cho += num(r[4]); o.pro += num(r[5]); o.fat += num(r[6]); o.fib += num(r[7]);
+    });
+    return [...m.values()].sort((a, b) => (a.time && b.time) ? a.time.localeCompare(b.time) : 0);
+  }
+
+  let lastMeals = [];
+  function update() {
+    const mass = Math.max(1, num($('#mass').value)), load = $('#load').value, band = BANDS[load];
+    store.set('diet:rows', rows); store.set('diet:mass', mass); store.set('diet:load', load);
+    const ms = lastMeals = meals();
+    const T = ms.reduce((a, m) => { ['kcal', 'cho', 'pro', 'fat', 'fib'].forEach(k => a[k] += m[k]); return a; }, { kcal: 0, cho: 0, pro: 0, fat: 0, fib: 0 });
+    const macroKcal = T.cho * 4 + T.pro * 4 + T.fat * 9;
+    const choKg = T.cho / mass, proKg = T.pro / mass, fatPct = macroKcal ? T.fat * 9 / macroKcal * 100 : 0;
+    const inBand = (v, b) => v >= b[0] && v <= b[1];
+    $('#stats').innerHTML = [
+      ['Energy', fmt(T.kcal) + ' kcal', null],
+      ['Energy per kg', fmt(T.kcal / mass, 1) + ' kcal/kg', null],
+      ['Carbohydrate', fmt(choKg, 1) + ' g/kg', inBand(choKg, band)],
+      ['Protein', fmt(proKg, 1) + ' g/kg', inBand(proKg, [1.2, 2.0])],
+      ['Fat', fmt(fatPct, 0) + '% energy', inBand(fatPct, [20, 35])],
+      ['Fibre', fmt(T.fib) + ' g', T.fib >= 30]
+    ].map(([k, v, ok]) => `<div class="stat ${ok == null ? '' : ok ? 'good' : 'bad'}"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+
+    const checks = [];
+    if (!rows.length) checks.push(['info', 'Add some foods to start.']);
+    if (T.kcal > 0 && macroKcal > 0) {
+      const diff = (macroKcal - T.kcal) / T.kcal * 100;
+      checks.push(Math.abs(diff) > 10 ? ['fail', `Energy from the macronutrients (${fmt(macroKcal)} kcal) differs from recorded energy by ${fmt(diff, 0)}%. Check for missing values, alcohol or wrong database entries.`] : ['pass', `Recorded energy and energy calculated from macronutrients agree within ${fmt(Math.abs(diff), 0)}%.`]);
+    }
+    if (T.kcal > 0 && T.kcal / mass < 25) checks.push(['fail', `Energy intake is ${fmt(T.kcal / mass, 0)} kcal per kg. That is low for an athlete, so consider under-reporting or a missed meal before drawing conclusions.`]);
+    if (T.kcal / mass > 70) checks.push(['fail', 'Energy intake is very high for one day. Check portion sizes and duplicate entries.']);
+    const noTime = rows.filter(r => !r[1]).length;
+    if (noTime) checks.push(['info', `${noTime} row(s) have no time, so the meal order may be wrong in Figures 2 and 3.`]);
+    const lowPro = ms.filter(m => m.pro < 0.3 * mass * 0.67 && m.kcal > 150).map(m => m.name);
+    if (lowPro.length) checks.push(['info', `Meals well below the per-meal protein guide: ${lowPro.map(esc).join(', ')}. Is that a pattern or just this day?`]);
+    if (T.fib < 30 && T.kcal > 0) checks.push(['info', `Fibre is ${fmt(T.fib)} g. UK adults are advised to eat 30 g a day (SACN 2015).`]);
+    checks.push(['info', 'This is one day. Say in your methods why you chose this length of assessment and what it cannot tell you.']);
+    $('#checks').innerHTML = checks.map(([c, t]) => `<li class="${c}">${t}</li>`).join('');
+
+    Lab.bars($('#f1'), { title: 'Daily intake relative to body mass', labels: ['Carbohydrate', 'Protein'], values: [choKg, proKg], colors: [C.blue, C.teal], bands: [band, [1.2, 2.0]], yLabel: 'g per kg body mass per day' });
+    $('#c1').textContent = `Figure 1. Daily carbohydrate and protein intake (g/kg body mass) on ${LOADNAME[load]}. Shaded areas show target ranges of ${band[0]} to ${band[1]} g/kg for carbohydrate and 1.2 to 2.0 g/kg for protein (Thomas et al., 2016).`;
+    Lab.bars($('#f2'), { title: 'Protein per eating occasion', labels: ms.map(m => m.name), values: ms.map(m => m.pro), colors: ms.map(m => m.pro >= 0.3 * mass ? C.teal : C.blue), ref: { value: 0.3 * mass, label: `0.3 g/kg = ${fmt(0.3 * mass)} g` }, yLabel: 'Protein (g)', dp: 0 });
+    $('#c2').textContent = `Figure 2. Protein intake at each eating occasion. The dashed line shows about 0.3 g/kg body mass per meal (${fmt(0.3 * mass)} g for this athlete), as suggested by Jäger et al. (2017).`;
+    Lab.bars($('#f3'), { title: 'Energy intake across the day', labels: ms.map(m => m.time ? `${m.name} (${m.time})` : m.name), values: ms.map(m => m.kcal), colors: ms.map(() => C.navy), yLabel: 'Energy (kcal)', dp: 0 });
+    $('#c3').textContent = `Figure 3. Energy intake (kcal) at each eating occasion across the recorded day. Total intake was ${fmt(T.kcal)} kcal (${fmt(T.kcal / mass, 1)} kcal/kg).`;
+    Lab.donut($('#f4'), { title: 'Share of energy from macronutrients', labels: ['Carbohydrate', 'Protein', 'Fat'], values: [T.cho * 4, T.pro * 4, T.fat * 9], colors: [C.blue, C.teal, C.amber], centre: fmt(macroKcal) + ' kcal' });
+    $('#c4').textContent = `Figure 4. Percentage of energy from carbohydrate, protein and fat. Fat provided ${fmt(fatPct, 0)}% of energy against a guide of 20 to 35% (Thomas et al., 2016).`;
+
+    const head = ['Eating occasion', 'Time', 'Energy (kcal)', 'Carbohydrate (g)', 'Protein (g)', 'Fat (g)', 'Fibre (g)'];
+    const body = ms.map(m => [m.name, m.time, fmt(m.kcal), fmt(m.cho), fmt(m.pro), fmt(m.fat), fmt(m.fib)]);
+    const total = ['Total', '', fmt(T.kcal), fmt(T.cho), fmt(T.pro), fmt(T.fat), fmt(T.fib)];
+    const perKg = ['Per kg body mass', '', fmt(T.kcal / mass, 1), fmt(choKg, 1), fmt(proKg, 1), fmt(T.fat / mass, 1), '–'];
+    lastTable = [head, ...body, total, perKg];
+    $('#t1').innerHTML = `<thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${[...body, total, perKg].map((r, i) => `<tr${i >= body.length ? ' style="font-weight:bold"' : ''}>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody>`;
+  }
+  let lastTable = [];
+  $('#copyTable').onclick = e => Lab.copy(lastTable.map(r => r.join('\t')).join('\n'), e.target);
+  $('#csv').onclick = () => Lab.downloadText(lastTable.map(r => r.map(c => /[",]/.test(c) ? `"${String(c).replace(/"/g, '""')}"` : c).join(',')).join('\n'), 'table-1-intake-by-meal.csv', 'text/csv');
+  $$('[data-dl]').forEach(b => b.onclick = () => Lab.download($('#' + b.dataset.dl), 'figure-' + b.dataset.dl.slice(1)));
+  $$('[data-cp]').forEach(b => b.onclick = () => Lab.copy($('#' + b.dataset.cp).textContent, b));
+  let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(update, 150); });
+  renderRows(); update();
+})();
+</script>
+</body>
+</html>

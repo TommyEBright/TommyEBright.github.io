@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Athlete Feedback Builder · SESH58 Nutrition Lab</title>
+<link rel="stylesheet" href="assets/lab.css">
+<style>
+  #sheet { background: #fff; border: 1px solid var(--line); border-radius: 1rem; overflow: hidden; max-width: 800px; margin: 0 auto; }
+  #sheet .top { background: var(--th); color: #fff; padding: 22px 24px; }
+  #sheet .top h2 { margin: 0; font-size: 1.6rem; color: #fff; }
+  #sheet .top p { margin: 6px 0 0; }
+  #sheet .body { padding: 18px 24px 22px; display: grid; gap: 12px; }
+  #sheet .tip { border-radius: .8rem; padding: 12px 14px; background: var(--tw); border-left: 6px solid var(--th); }
+  #sheet .tip h3 { margin: 0 0 4px; color: var(--th); font-size: 1.1rem; }
+  #sheet .tip p { margin: 3px 0; }
+  #sheet .tip .do { font-weight: bold; }
+  #sheet .foot2 { font-size: .85rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; }
+  @media print { .wrap > *:not(#preview) { display: none !important; } #preview { border: 0; padding: 0; } #sheet { border: 0; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="index.html">&larr; All Nutrition Lab tools</a>
+  <header class="lab-head">
+    <span class="badge">SESH58</span>
+    <h1>Athlete feedback builder</h1>
+    <p>Turn your three key findings into a one-page summary for your athlete: what you found, why it matters to them, and one thing to do.</p>
+  </header>
+
+  <div class="grid halves">
+    <section class="card" aria-labelledby="h-in">
+      <h2 id="h-in">Your content</h2>
+      <div class="controls">
+        <div class="grid halves">
+          <div class="control"><label for="who">Athlete (first name or initials)</label><input type="text" id="who" value="Sam"></div>
+          <div class="control"><label for="sport">Sport</label><input type="text" id="sport" value="football"></div>
+        </div>
+        <div class="control"><label for="theme">Colour</label><select id="theme"><option value="#003d50|#eef6fa">Navy</option><option value="#00857e|#eaf7f6">Teal</option><option value="#0071bc|#eef6fc">Blue</option><option value="#8b3556|#fbf3f6">Plum</option></select></div>
+        <div id="tips"></div>
+        <div class="control"><label for="close">Closing message</label><input type="text" id="close" value="Small changes, done most days, add up. Let's review in four weeks."></div>
+      </div>
+    </section>
+    <section class="card" aria-labelledby="h-chk">
+      <h2 id="h-chk">Plain-language check</h2>
+      <ul class="chk" id="checks"></ul>
+      <div class="note" style="margin-top:10px;font-size:.9rem"><strong>Keep it athlete-centred.</strong> Lead with what is going well, keep to three actions, use foods they already eat and avoid judgemental words such as "bad" or "junk". Be cautious with energy or body-composition messages, and refer any concerns about disordered eating or REDs.</div>
+      <div class="row" style="margin-top:10px"><button class="btn" id="print">Print or save as PDF</button><button class="btn secondary" id="copy">Copy as text</button></div>
+    </section>
+  </div>
+
+  <section id="preview" class="card" style="margin-top:12px" aria-label="Preview">
+    <div id="sheet"></div>
+  </section>
+</main>
+<script src="assets/lab.js"></script>
+<script>
+(() => {
+  const { $, $$, esc, store } = Lab;
+  const DEF = [
+    { f: 'Your carbohydrate on training days is lower than your sessions need.', w: 'Carbohydrate is the main fuel for high-intensity running, so topping it up helps you keep quality high late in sessions.', d: 'Add a carbohydrate snack 1 to 3 hours before training, such as a bagel with jam or a banana and a cereal bar.' },
+    { f: 'Breakfast and lunch are light on protein.', w: 'Spreading protein across the day helps your muscles repair and adapt after training.', d: 'Aim for about 20 to 25 g at each meal, for example two eggs on toast or a 200 g pot of Greek yoghurt.' },
+    { f: 'You eat well in the evening and you are drinking enough water.', w: 'A good evening meal sets up your recovery overnight.', d: 'Keep doing this, and add a portion of vegetables, such as peas or a side salad, for more fibre.' }
+  ];
+  const st = store.get('fb', { who: 'Sam', sport: 'football', theme: '#003d50|#eef6fa', close: $('#close').value, tips: DEF });
+  ['who', 'sport', 'theme', 'close'].forEach(k => $('#' + k).value = st[k]);
+  $('#tips').innerHTML = st.tips.map((t, i) => `
+    <fieldset style="border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:0 0 10px"><legend style="font-weight:bold;color:var(--navy)">Finding ${i + 1}</legend>
+      <div class="control"><label for="f${i}">What I found</label><input type="text" id="f${i}" data-i="${i}" data-k="f" value="${esc(t.f)}"></div>
+      <div class="control"><label for="w${i}">Why it matters to you</label><input type="text" id="w${i}" data-i="${i}" data-k="w" value="${esc(t.w)}"></div>
+      <div class="control"><label for="d${i}">Try this</label><input type="text" id="d${i}" data-i="${i}" data-k="d" value="${esc(t.d)}"></div>
+    </fieldset>`).join('');
+  document.addEventListener('input', e => {
+    const t = e.target;
+    if (t.dataset.k) st.tips[+t.dataset.i][t.dataset.k] = t.value; else if (st[t.id] !== undefined) st[t.id] = t.value; else return;
+    render();
+  });
+
+  const JARGON = /\b(glycogen|macronutrients?|periodi[sz]ation|kcal\/kg|g\/kg|energy availability|muscle protein synthesis|leucine|FFM|REDs|LEA|deficit|substrate)\b/gi;
+  const JUDGE = /\b(bad|junk|unhealthy|cheat|naughty|poor diet|clean eating)\b/gi;
+  function render() {
+    store.set('fb', st);
+    const [th, tw] = st.theme.split('|');
+    const sh = $('#sheet'); sh.style.setProperty('--th', th); sh.style.setProperty('--tw', tw);
+    sh.innerHTML = `<div class="top"><h2>${esc(st.who)}, your fuelling plan</h2><p>Three things from your food diary to help your ${esc(st.sport)}</p></div>
+      <div class="body">${st.tips.map((t, i) => `<div class="tip"><h3>${i + 1}. ${esc(t.f)}</h3><p>${esc(t.w)}</p><p class="do">Try this: ${esc(t.d)}</p></div>`).join('')}
+      <p style="margin:0;font-weight:bold">${esc(st.close)}</p><p class="foot2">Based on one day of food records, so it is a starting point for a conversation, not a full picture.</p></div>`;
+    const all = st.tips.map(t => [t.f, t.w, t.d].join(' ')).join(' ');
+    const sents = all.split(/(?<=[.!?])\s+/).filter(Boolean), wc = (all.match(/\S+/g) || []).length, avg = wc / Math.max(1, sents.length);
+    const jar = [...new Set((all.match(JARGON) || []).map(x => x.toLowerCase()))], jd = [...new Set((all.match(JUDGE) || []).map(x => x.toLowerCase()))];
+    const out = [
+      avg <= 18 ? ['pass', `Average sentence ${avg.toFixed(0)} words.`] : ['fail', `Average sentence ${avg.toFixed(0)} words. Shorten to 18 or fewer.`],
+      jar.length ? ['fail', `Jargon: ${jar.join(', ')}.`] : ['pass', 'No jargon found.'],
+      jd.length ? ['fail', `Judgemental words: ${jd.join(', ')}. Reframe them positively.`] : ['pass', 'Positive, non-judgemental language.'],
+      st.tips.every(t => /\d/.test(t.d) || /such as|for example|like/i.test(t.d)) ? ['pass', 'Every action has an example or amount.'] : ['fail', 'Give every "try this" a specific food example or amount.'],
+      wc <= 220 ? ['pass', `${wc} words. Short enough to read in a minute.`] : ['info', `${wc} words. Could you cut it down?`]
+    ];
+    $('#checks').innerHTML = out.map(([c, t]) => `<li class="${c}">${t}</li>`).join('');
+  }
+  $('#print').onclick = () => window.print();
+  $('#copy').onclick = e => Lab.copy(`${st.who}, your fuelling plan\n\n` + st.tips.map((t, i) => `${i + 1}. ${t.f}\n${t.w}\nTry this: ${t.d}`).join('\n\n') + `\n\n${st.close}`, e.target);
+  render();
+})();
+</script>
+</body>
+</html>
