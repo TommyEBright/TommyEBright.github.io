@@ -1,0 +1,25 @@
+Introduction
+A needs analysis is a decision tool. It identifies the demands of the sport, compares them with what is known about the athlete, and uses the gap to decide what to test and why [REF: needs analysis framework]. For this 21-year-old WSL central midfielder, the central question is why her high-intensity running fell in the final 20 minutes of matches, and the plan has six weeks of preseason to answer it.
+
+Athlete profile
+She is a professional central midfielder known for high work rate. Her training age is not stated, so it is treated as an unknown that would change how far she can progress in six weeks. Her recurring hamstring tightness and the fixture schedule shape every decision that follows.
+
+Physiological demands
+Central midfielders in female professional football tend to cover the greatest total distance of the outfield positions [REF: female professional soccer time-motion data]. Late-match declines in high-intensity running are reported in female players [REF: female match-running decline], whereas other work suggests that these declines vary with match context and may reflect pacing or tactics [REF: match-running variability]. Taken together, the evidence suggests that her GPS decline is consistent with fatigue but does not confirm it. The first priority is therefore to separate physiological from contextual explanations.
+Intermittent high-intensity work depends on phosphocreatine resynthesis between efforts, and that recovery is linked to aerobic capacity [REF: primary study of PCr recovery and aerobic fitness]. Because most of this work used male participants, these findings are treated as indicative for her, and female data are used where available [REF: female intermittent exercise physiology].
+
+Test selection
+The 30-15 Intermittent Fitness Test is selected because it targets the intermittent capacity identified above and gives a running speed for prescription [REF: 30-15 IFT validity in female players]. Its test-retest reliability was established in trained female players [REF: 30-15 IFT reliability, ICC and CV], so a change larger than the typical error can be interpreted with some confidence. For her, the main limitation is that a maximal shuttle test loads the hamstrings, so it will only run after medical clearance.
+A repeated sprint ability test is used to examine whether her late decline relates to sprint recovery [REF: RSA reliability in female soccer]. Because its reliability for the decrement score is lower than for the best time [REF: RSA decrement reliability], the best and mean times are prioritised in interpretation.
+
+Monitoring and progression
+The 30-15 IFT is scheduled in week one and repeated in week five, so the result can adjust training before the league opener in week six without adding fatigue in that week. Training running speeds are prescribed from her final velocity, and if her score has not improved by more than the typical error, high-intensity intermittent volume is increased in weeks five and six. Between tests, GPS high-intensity running in standardised drills and session RPE are tracked weekly to monitor load and fatigue.
+
+Constraints and individualisation
+The hamstring history is treated as a constraint and a referral question rather than a test. The medical team decides when she is cleared for maximal sprinting, and eccentric loading follows their plan. Once Champions League qualifiers begin, fixture congestion leaves little room for maximal testing, so monitoring shifts to low-burden measures.
+
+Conclusion
+Overall, the plan prioritises establishing whether her late decline is physiological, tests intermittent capacity with evidence of reliability in female players, and links each result to a training decision before the league starts.
+
+References
+[REF: list]

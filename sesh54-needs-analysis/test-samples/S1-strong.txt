@@ -1,0 +1,24 @@
+Introduction
+A needs analysis is a decision tool. It compares the demands of the event with what is known about the athlete and uses the gap to choose tests [REF: needs analysis framework]. This national 400 m sprinter starts strongly but fades in the final 100 m, and his improved strength and power have not clearly transferred to the track.
+
+Athlete profile
+He is a 24-year-old national-level sprinter with a personal best of 46.9 s who aims to qualify for the European Championships. His training age in sprinting is at least three seasons, but his training age in the gym is not stated, so it is treated as an unknown.
+
+Performance demands
+Estimates of the glycolytic contribution to the 400 m vary with the method used and the population studied [REF: 400 m energy contribution, method comparison]. Declines in velocity over the final 100 m are reported in trained 400 m sprinters [REF: 400 m velocity profile], whereas other work suggests that pacing in the first 200 m shapes the size of that decline [REF: 400 m pacing strategy]. Taken together, his fade could reflect limited glycolytic capacity, poor pacing, or both. The first priority is therefore to separate these explanations before prescribing more speed endurance work.
+
+Test selection
+Race split analysis is selected because it shows how his velocity changes across the race, which targets the fade directly [REF: split timing reliability in sprinters]. A 300 m time trial with post-test blood lactate is used to assess speed endurance capacity [REF: 300 m test reliability in trained sprinters]. Its reliability was established in trained male sprinters, close to his level, so a change larger than the typical error can be interpreted for him. Its limitation for this athlete is that a single maximal effort does not show how he paces a full race, so it is read alongside his splits.
+Because transfer from the gym is unclear, a countermovement jump is used to track whether his power gains persist, and the result is compared with his own baseline rather than with norms [REF: CMJ reliability in sprinters].
+
+Monitoring and progression
+The 300 m trial is repeated after a six-week block, and the CMJ is recorded weekly because it carries little fatigue. If his first 200 m is fast relative to his 300 m capacity, pacing becomes the training priority. If his capacity has not changed by more than the typical error, the speed endurance programme is adjusted.
+
+Constraints and individualisation
+Maximal testing is scheduled away from hard track sessions and races, and any injury history is checked with the medical team before maximal sprinting. Weather and track conditions are recorded because they affect timed trials.
+
+Conclusion
+Overall, the plan prioritises explaining his fade, uses tests with reliability evidence in trained sprinters, and links each result to a training decision before the qualifying window.
+
+References
+[REF: list]

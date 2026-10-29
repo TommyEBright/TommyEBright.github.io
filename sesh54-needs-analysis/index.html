@@ -1,0 +1,1598 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Needs Analysis Studio</title>
+<meta name="description" content="SESH54 needs analysis planner and critical writing check. Runs entirely in your browser.">
+<style>
+:root{
+  --navy:#003d50;--teal:#00857e;--blue:#0071bc;--plum:#8b3556;--gold:#a68e30;
+  --bg:#f7fbfd;--card:#ffffff;--card2:#f8fcfe;--line:#d9e2e7;--line2:#abd6d9;--text:#1d1d1b;--muted:#4d5a62;
+  --teal-t:#00706a;--blue-t:#005f9e;--plum-t:#8b3556;--gold-t:#6b5a18;--navy-t:#003d50;
+  --flag-bg:#fff1bf;--flag-line:#a68e30;--ok-bg:#e6f5f3;--bad-bg:#fbedf2;--warn-bg:#fff7e3;
+  --btn-dark:#002c3a;--focus:#0071bc;--heat0:#ffffff;--heat1:#fff5d6;--heat2:#ffe08a;--heat3:#f4b6c9;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c1a20;--card:#12262e;--card2:#172f38;--line:#2b4652;--line2:#2f6a70;--text:#e7eff2;--muted:#a8bcc4;
+  --teal-t:#53c8be;--blue-t:#73bdf0;--plum-t:#e899b8;--gold-t:#d9c26e;--navy-t:#9fd3e6;
+  --flag-bg:#4a3d0e;--flag-line:#d9c26e;--ok-bg:#133a33;--bad-bg:#3e1d2a;--warn-bg:#352d10;
+  --btn-dark:#001c25;--focus:#73bdf0;--heat0:#12262e;--heat1:#2e2a12;--heat2:#5a4a10;--heat3:#5e2438;color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0c1a20;--card:#12262e;--card2:#172f38;--line:#2b4652;--line2:#2f6a70;--text:#e7eff2;--muted:#a8bcc4;
+  --teal-t:#53c8be;--blue-t:#73bdf0;--plum-t:#e899b8;--gold-t:#d9c26e;--navy-t:#9fd3e6;
+  --flag-bg:#4a3d0e;--flag-line:#d9c26e;--ok-bg:#133a33;--bad-bg:#3e1d2a;--warn-bg:#352d10;
+  --btn-dark:#001c25;--focus:#73bdf0;--heat0:#12262e;--heat1:#2e2a12;--heat2:#5a4a10;--heat3:#5e2438;color-scheme:dark;}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;line-height:1.58;font-size:16px}
+a{color:var(--blue-t)}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.wrap{max-width:1220px;margin:0 auto;padding:16px}
+.article{border:2px solid var(--line2);border-radius:1rem;background:var(--bg);overflow:hidden}
+header.top{background:#003d50;color:#fff;padding:1.6rem 1.6rem 1.3rem;border-bottom:.4rem solid var(--teal)}
+.pill{display:inline-block;background:#fff;color:#003d50;padding:.3rem .8rem;font-size:.85em;font-weight:bold;border-left:.35rem solid var(--blue);border-radius:.65rem;margin:0 0 .6rem}
+header.top h1{margin:0;font-size:1.9em;line-height:1.18}
+header.top p.sub{margin:.5rem 0 0;max-width:60ch}
+.toolbar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-top:1rem}
+.btn{font:inherit;font-weight:bold;cursor:pointer;border:0;border-bottom:.25rem solid var(--btn-dark);border-radius:.75rem;padding:.6rem 1rem;min-height:2.75rem;background:#003d50;color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem}
+.btn.teal{background:var(--teal);border-bottom-color:#006a65}
+.btn.blue{background:var(--blue);border-bottom-color:#00568f}
+.btn.plum{background:var(--plum);border-bottom-color:#682840}
+.btn.ghost{background:var(--card);color:var(--navy-t);border:2px solid var(--line2);border-bottom-width:.25rem}
+header .btn.ghost{background:#fff;color:#003d50;border-color:#fff}
+.btn.small{padding:.35rem .7rem;min-height:2.25rem;font-size:.9em}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.privacy{margin:1rem 1.2rem 0;background:var(--card);border:1px solid var(--line);border-left:.4rem solid var(--teal);border-radius:.75rem;padding:.9rem 1.1rem}
+.privacy h2{margin:0 0 .3rem;font-size:1.05em;color:var(--teal-t)}
+.privacy p{margin:0}
+.scen{margin:1rem 1.2rem 0;background:var(--card);border:1px solid var(--line);border-radius:.75rem;padding:.9rem 1.1rem}
+.scen fieldset{border:0;margin:0;padding:0}
+.scen legend{font-weight:bold;color:var(--navy-t);padding:0;margin-bottom:.5rem}
+.scen-opts{display:flex;flex-wrap:wrap;gap:.6rem}
+.scen-opts label{flex:1 1 220px;display:flex;gap:.6rem;align-items:flex-start;border:2px solid var(--line);border-radius:.75rem;padding:.6rem .8rem;cursor:pointer;background:var(--card2)}
+.scen-opts input{margin-top:.3rem;width:1.1rem;height:1.1rem;accent-color:var(--teal)}
+.scen-opts label:has(input:checked){border-color:var(--teal);box-shadow:inset .35rem 0 0 var(--teal)}
+.scen-opts small{display:block;color:var(--muted)}
+nav.tabs{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 1.2rem 0;border-bottom:2px solid var(--line2);padding-bottom:.6rem}
+nav.tabs [role=tab]{font:inherit;font-weight:bold;cursor:pointer;border:2px solid var(--line2);background:var(--card);color:var(--navy-t);border-radius:.75rem;padding:.55rem 1rem;min-height:2.75rem}
+nav.tabs [role=tab][aria-selected=true]{background:#003d50;color:#fff;border-color:#003d50;border-bottom:.25rem solid var(--teal)}
+main{padding:0 1.2rem 1.4rem}
+.panel{padding-top:1rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:1rem;overflow:hidden;margin-bottom:1.2rem}
+.card>.band{background:#003d50;color:#fff;padding:1rem 1.3rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.6rem}
+.band.teal{background:var(--teal)}.band.blue{background:var(--blue)}.band.plum{background:var(--plum)}
+.band .pill{margin:0 0 .35rem}
+.band.teal .pill{color:#00706a}.band.blue .pill{color:#005f9e;border-left-color:#003d50}.band.plum .pill{color:#8b3556;border-left-color:#003d50}
+.band h2,.band h3{margin:0;font-size:1.35em;color:#fff}
+.card>.body{padding:1.2rem 1.3rem}
+.mini{background:var(--card2);border:1px solid var(--line);border-left:.4rem solid var(--navy);border-radius:.75rem;padding:1rem;margin-bottom:1rem}
+.mini.teal{border-left-color:var(--teal)}.mini.blue{border-left-color:var(--blue)}.mini.plum{border-left-color:var(--plum)}.mini.gold{border-left-color:var(--gold)}
+.mini h3,.mini h4{margin:0 0 .5rem;color:var(--navy-t);font-size:1.05em}
+.row{display:flex;flex-wrap:wrap;gap:1rem;align-items:stretch}
+.row>*{flex:1 1 280px;min-width:0}
+label.f{display:block;font-weight:bold;color:var(--navy-t);margin:.7rem 0 .25rem}
+.hint{display:block;font-weight:normal;color:var(--muted);font-size:.92em}
+input[type=text],input[type=number],textarea,select{font:inherit;color:var(--text);background:var(--card);border:2px solid var(--line);border-radius:.6rem;padding:.5rem .65rem;width:100%}
+textarea{min-height:4.2rem;resize:vertical}
+textarea.big{min-height:16rem}
+input:focus,textarea:focus,select:focus{border-color:var(--blue)}
+dl.facts{display:grid;grid-template-columns:minmax(8rem,max-content) 1fr;gap:.25rem 1rem;margin:0}
+dl.facts dt{font-weight:bold;color:var(--navy-t)}dl.facts dd{margin:0}
+.stepper{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem}
+.stepper button{font:inherit;cursor:pointer;border:2px solid var(--line2);background:var(--card);color:var(--navy-t);border-radius:.7rem;padding:.4rem .7rem;min-height:2.6rem;text-align:left}
+.stepper button[aria-current=step]{background:var(--teal);color:#fff;border-color:var(--teal)}
+.stepper .st{font-size:.8em;display:block;font-weight:bold}
+.flag{background:var(--warn-bg);border:1px solid var(--line);border-left:.4rem solid var(--gold);border-radius:.6rem;padding:.55rem .8rem;margin:.5rem 0}
+.flag.bad{background:var(--bad-bg);border-left-color:var(--plum)}
+.flag.ok{background:var(--ok-bg);border-left-color:var(--teal)}
+.flag strong{color:var(--text)}
+.item{border:1px solid var(--line);border-radius:.75rem;padding:1rem;margin-bottom:1rem;background:var(--card2)}
+.item h4{margin:0 0 .4rem;color:var(--navy-t)}
+.item-head{display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;align-items:center}
+.appgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.5rem}
+.checks label{display:flex;gap:.5rem;align-items:flex-start;margin:.25rem 0;font-weight:normal}
+.checks input{width:1.1rem;height:1.1rem;margin-top:.25rem;accent-color:var(--teal)}
+.sowhat{border-left-color:var(--plum)}
+.status{display:inline-block;font-weight:bold;border-radius:.5rem;padding:.1rem .5rem;border:2px solid}
+.status.covered{color:var(--teal-t);border-color:var(--teal)}
+.status.partly{color:var(--gold-t);border-color:var(--gold)}
+.status.missing{color:var(--plum-t);border-color:var(--plum)}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid var(--line);padding:.45rem .6rem;text-align:left;vertical-align:top}
+th{background:#003d50;color:#fff}
+.tablewrap{overflow-x:auto;border-radius:.75rem;border:1px solid var(--line)}
+.timeline{display:flex;gap:2px;margin:.6rem 0 .3rem;overflow-x:auto}
+.timeline .wk{flex:1 0 2.6rem;text-align:center;border:1px solid var(--line);border-radius:.4rem;padding:.25rem 0;font-size:.85em;background:var(--card)}
+.timeline .wk.ev{background:var(--bad-bg);border-color:var(--plum)}
+.timeline .wk.rt{box-shadow:inset 0 -.35rem 0 var(--teal)}
+.timeline .tag{display:block;font-weight:bold;font-size:.8em}
+.bar{height:.9rem;background:var(--line);border-radius:.5rem;overflow:hidden}
+.bar>span{display:block;height:100%;background:var(--teal)}
+.bar.budget>span{background:var(--blue)}
+.doc{background:var(--card);border:1px solid var(--line);border-radius:.75rem;padding:1rem 1.2rem;max-height:70vh;overflow:auto}
+.doc p{margin:0 0 .9rem}
+.doc .ph{font-weight:bold;color:var(--navy-t);margin:.8rem 0 .4rem}
+.doc .pnum{font-size:.75em;font-weight:bold;color:var(--muted);margin-right:.35rem}
+mark.hl{background:var(--flag-bg);color:var(--text);border-bottom:2px solid var(--flag-line);padding:0 .1rem;border-radius:.2rem}
+mark.hl:target,mark.hl.pulse{outline:3px solid var(--focus)}
+sup.fn{font-weight:bold;color:var(--plum-t);font-size:.72em;margin-left:.15rem}
+details.cat{border:1px solid var(--line);border-radius:.75rem;margin-bottom:.7rem;background:var(--card)}
+details.cat>summary{cursor:pointer;padding:.7rem .9rem;font-weight:bold;color:var(--navy-t)}
+details.cat .fb{border-top:1px solid var(--line);padding:.7rem .9rem}
+.fb q{display:block;font-style:italic;color:var(--muted);margin:.25rem 0}
+.fb p{margin:.25rem 0}
+.tag-c{display:inline-block;font-size:.8em;font-weight:bold;border:1px solid var(--line2);border-radius:.4rem;padding:0 .4rem;color:var(--navy-t)}
+.heat td.h{font-weight:bold}
+.heat .l0{background:var(--heat0)}.heat .l1{background:var(--heat1)}.heat .l2{background:var(--heat2)}.heat .l3{background:var(--heat3)}
+.spot p.para{line-height:1.9}
+button.sent{font:inherit;color:inherit;background:transparent;border:0;border-bottom:2px dotted var(--line2);padding:0 .1rem;cursor:pointer;text-align:left;display:inline;line-height:1.9}
+button.sent[aria-pressed=true]{background:var(--flag-bg);border-bottom:2px solid var(--flag-line)}
+button.sent[aria-pressed=true]::before{content:"⚑ ";font-weight:bold}
+.pick{display:inline-block;margin:.2rem .3rem;vertical-align:middle}
+.pick select{width:auto;max-width:100%;padding:.2rem .4rem;font-size:.9em}
+.res{margin:.3rem 0;padding:.5rem .7rem;border-radius:.5rem;border:1px solid var(--line)}
+.res.good{background:var(--ok-bg)}.res.miss{background:var(--bad-bg)}.res.part{background:var(--warn-bg)}
+ol.actions li{margin-bottom:.5rem}
+.muted{color:var(--muted)}
+.tight{margin:.2rem 0}
+footer.foot{padding:1rem 1.2rem 1.4rem;color:var(--muted);font-size:.92em;text-align:center}
+@media (max-width:600px){
+  .wrap{padding:8px}
+  header.top{padding:1.2rem 1rem}
+  header.top h1{font-size:1.5em}
+  .privacy,.scen,nav.tabs{margin-left:.6rem;margin-right:.6rem}
+  main{padding:0 .6rem 1rem}
+  .card>.body{padding:1rem .8rem}
+  dl.facts{grid-template-columns:1fr}
+  nav.tabs [role=tab]{flex:1 1 auto}
+}
+@media print{nav.tabs,.toolbar,.scen,.stepper{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="article">
+<header class="top" id="top">
+  <p class="pill">SESH54</p>
+  <h1>Needs Analysis Studio</h1>
+  <p class="sub">Plan your needs analysis as a set of decisions, check your draft for critical writing patterns, and practise spotting weak sentences.</p>
+  <div class="toolbar">
+    <button type="button" class="btn ghost small" id="themeBtn" aria-pressed="false">Dark theme</button>
+    <button type="button" class="btn ghost small" id="clearBtn">Clear my data</button>
+    <a class="btn ghost small" id="newTab" href="#" target="_blank" rel="noopener" hidden>Open in a new tab</a>
+  </div>
+</header>
+
+<section class="privacy" aria-labelledby="privacy-h">
+  <h2 id="privacy-h">Private by design</h2>
+  <p>Everything runs in your browser using transparent rules. There is no AI model, no server and no API calls, and your writing is never stored or sent anywhere. Your notes are saved only in this browser on this device, and "Clear my data" removes them. If you upload a .docx file, the tool downloads a small open-source reader (mammoth.js) to read the file on your device. Your file itself is never uploaded.</p>
+</section>
+
+<section class="scen" aria-labelledby="scen-h">
+  <fieldset>
+    <legend id="scen-h">Your scenario (this personalises prompts, traps and checks in every tab)</legend>
+    <div class="scen-opts" id="scenOpts"></div>
+  </fieldset>
+</section>
+
+<nav class="tabs" aria-label="Tool sections"><div role="tablist" aria-label="Tool sections" style="display:contents">
+  <button role="tab" id="tab-plan" aria-controls="panel-plan" aria-selected="true">1. Needs analysis planner</button>
+  <button role="tab" id="tab-check" aria-controls="panel-check" aria-selected="false" tabindex="-1">2. Critical writing check</button>
+  <button role="tab" id="tab-spot" aria-controls="panel-spot" aria-selected="false" tabindex="-1">3. Spot the weakness</button>
+</div></nav>
+
+<main id="main">
+  <section role="tabpanel" id="panel-plan" aria-labelledby="tab-plan" class="panel" tabindex="0"></section>
+  <section role="tabpanel" id="panel-check" aria-labelledby="tab-check" class="panel" tabindex="0" hidden></section>
+  <section role="tabpanel" id="panel-spot" aria-labelledby="tab-spot" class="panel" tabindex="0" hidden></section>
+</main>
+<div id="live" class="sr-only" role="status" aria-live="polite"></div>
+<footer class="foot">SESH54 Exercise Physiology | Plymouth Marjon University. This tool detects patterns. It cannot judge quality and it does not give a mark.</footer>
+</div>
+</div>
+
+<script>
+/* ===== CONFIG START =====
+   Everything a tutor may want to edit lives in this object: scenarios, traps,
+   planner prompts, writing rules, word lists, thresholds, feedback messages
+   and the Spot the weakness paragraphs. The logic below only reads it.
+
+   Term lists: plain words match whole words, case-insensitive.
+   A trailing * matches a word stem (e.g. "reliab*" matches reliable, reliability).
+   A term written as "/pattern/" is treated as a regular expression.
+*/
+const CONFIG = {
+  storageKey: "sesh54-needs-analysis-v1",
+  mammothUrl: "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js",
+  mammothSri: "sha384-nFoSjZIoH3CCp8W639jJyQkuPHinJ2NHe7on1xvlUA7SuGfJAfvMldrsoAVm6ECz",
+
+  wordLimit: { target: 1750, min: 1575, max: 1925 },
+
+  criteria: [
+    { id: "c1", short: "Profile", label: "Sport and athlete profile", lo: "LO2" },
+    { id: "c2", short: "Demands", label: "Performance demands", lo: "LO1, LO2" },
+    { id: "c3", short: "Testing", label: "Testing justification", lo: "LO1, LO3" },
+    { id: "c4", short: "Monitoring", label: "Monitoring and progression strategy", lo: "LO3" },
+    { id: "c5", short: "Constraints", label: "Constraints and individualisation", lo: "LO2" }
+  ],
+
+  // Planning suggestion only. Totals 1750. Shown with a clear "suggestion" label.
+  wordBudget: [
+    { section: "intro", label: "Introduction", words: 150 },
+    { section: "profile", label: "Sport and athlete profile", words: 175 },
+    { section: "demands", label: "Performance demands", words: 425 },
+    { section: "tests", label: "Test selection and justification", words: 500 },
+    { section: "monitoring", label: "Monitoring and progression", words: 250 },
+    { section: "constraints", label: "Constraints and individualisation", words: 150 },
+    { section: "conclusion", label: "Conclusion and next steps", words: 100 }
+  ],
+
+  // Section detection for the writing check. Headings are matched first, then body keywords.
+  sections: [
+    { id: "intro", label: "Introduction", criterion: null,
+      heading: ["introduction", "background", "rationale"],
+      body: ["needs analysis", "this report", "purpose", "aim of", "this assignment", "inform test selection"] },
+    { id: "profile", label: "Sport and athlete profile", criterion: "c1",
+      heading: ["profile", "athlete", "the sport"],
+      body: ["year-old", "years old", "training age", "personal best", "goal*", "national squad", "Women's Super League", "WSL", "lightweight double", "profile"] },
+    { id: "demands", label: "Performance demands", criterion: "c2",
+      heading: ["demand*", "determinant*", "physiolog*", "energy system*", "time-motion", "requirement*"],
+      body: ["time-motion", "energy system*", "aerobic", "anaerobic", "glycolytic", "phosphocreatine", "high-intensity running", "high-speed running", "work-to-rest", "intensity zone*", "demand*", "determinant*", "metabolic", "movement pattern*", "VO2*"] },
+    { id: "tests", label: "Test selection", criterion: "c3",
+      heading: ["test*", "assessment*", "battery", "protocol*"],
+      body: ["test*", "reliab*", "valid*", "ICC", "coefficient of variation", "typical error", "protocol*", "battery"] },
+    { id: "monitoring", label: "Monitoring and progression", criterion: "c4",
+      heading: ["monitor*", "progression", "re-test*", "retest*", "prescription", "programming"],
+      body: ["monitor*", "re-test*", "retest*", "track*", "prescri*", "RPE", "HRV", "wellness", "progress*", "readiness"] },
+    { id: "constraints", label: "Constraints and individualisation", criterion: "c5",
+      heading: ["constraint*", "individualis*", "limitation*", "considerations", "practical"],
+      body: ["constraint*", "injur*", "hamstring", "travel", "time availab*", "making weight", "medical", "environment*", "logistic*", "fixture*", "congestion", "referral", "clearance"] },
+    { id: "conclusion", label: "Conclusion", criterion: null,
+      heading: ["conclusion*", "summary", "next steps"],
+      body: ["in conclusion", "to conclude", "in summary", "next steps", "overall"] }
+  ],
+  structureRequired: ["intro", "demands", "tests", "monitoring", "constraints", "conclusion"],
+
+  thresholds: {
+    headingMaxWords: 10,          // a short line with no closing full stop is treated as a heading
+    demandsToTestsRatio: 1.6,     // warn if demand words exceed this multiple of test + monitoring words
+    citationChainRun: 2,          // consecutive "Author found..." openings that trigger a flag
+    hedgesPerSentence: 3,         // hedges in one sentence that trigger a flag
+    hedgeDensityPerSentence: 1.0, // hedges per sentence across a paragraph (3+ sentences)
+    synthesisPer100Words: 0.35,   // integration markers per 100 words below which the document is flagged
+    synthesisParaMinCitations: 3, // paragraphs with this many citations and no markers are flagged
+    priorityTermsMin: 2,          // whole-document prioritisation language below this is flagged
+    qualitiesListMin: 4,          // a sentence listing this many qualities without priority language
+    testEvidenceWindow: 2,        // sentences after a test is named in which reliability or validity evidence must appear
+    negationWords: 4,             // a term preceded within this many words by not, rather than or instead of is ignored
+    heatBands: [0, 1, 3, 5]       // flag counts for none, low, medium, high
+  },
+
+  // Citation patterns. Matches (Author, 2020), Author et al. (2020), [REF: ...] placeholders and [1] numeric styles.
+  citationPattern: "\\[REF:[^\\]]*\\]|\\([^()]*\\b(?:19|20)\\d{2}[a-z]?\\b[^()]*\\)|\\b[A-Z][A-Za-z'\\-]+(?:\\s+et\\s+al\\.?|\\s+(?:and|&)\\s+[A-Z][A-Za-z'\\-]+)?\\s*\\((?:19|20)\\d{2}[a-z]?\\)|\\[\\d+(?:[\\s,\\u2013-]+\\d+)*\\]",
+  numberPattern: "(?:\\d+(?:\\.\\d+)?|\\[X[^\\]]*\\]|\\[VALUE[^\\]]*\\])",
+
+  categories: {
+    structure:   { label: "Assessment requirements", order: 0 },
+    descriptive: { label: "Descriptive citation chain", order: 1 },
+    overclaim:   { label: "Overclaiming", order: 2 },
+    hedge:       { label: "Over-hedging", order: 3 },
+    vague:       { label: "Vague attribution", order: 4 },
+    unsupported: { label: "Unsupported claim", order: 5 },
+    reasoning:   { label: "Missing reasoning", order: 6 },
+    synthesis:   { label: "Low synthesis", order: 7 },
+    causal:      { label: "Causal language on associative evidence", order: 8 },
+    binary:      { label: "Binary results language", order: 9 },
+    secondary:   { label: "Secondary citing", order: 10 },
+    population:  { label: "Missing population context", order: 11 },
+    energy:      { label: "Energy-system certainty", order: 12 },
+    normative:   { label: "Unmatched normative comparison", order: 13 },
+    testEvidence:{ label: "Test without reliability or validity evidence", order: 14 },
+    genericLimit:{ label: "Generic test limitation", order: 15 },
+    testLink:    { label: "Test not linked to a demand", order: 16 },
+    monitoring:  { label: "Monitoring and prescription gaps", order: 17 },
+    priority:    { label: "No prioritisation", order: 18 },
+    scenario:    { label: "Scenario-specific", order: 19 }
+  },
+
+  // Shared word lists used by several rules.
+  lists: {
+    synthesis: ["however", "in contrast", "by contrast", "consistent with", "whereas", "this may reflect", "conversely", "similarly", "together", "taken together", "although", "while", "despite", "in line with", "contrary to", "alternatively", "this suggests", "these findings", "both"],
+    reasoning: ["this athlete", "the athlete", "for this", "therefore", "thus", "this suggests", "this means", "which means", "implies", "implication*", "so the", "so a", "so his", "so her", "consequently", "for him", "for her", "in this case", "because"],
+    evidence: ["ICC", "intraclass", "CV", "coefficient of variation", "typical error", "TE", "SWC", "smallest worthwhile", "SEM", "standard error of measurement", "reliab*", "valid*", "correlat*", "/\\br\\s*=/", "limits of agreement", "test-retest", "test–retest"],
+    priority: ["priorit*", "most important", "primary", "first priority", "key limiter", "limiting factor", "limiter", "rank*", "secondary", "above all", "more important", "less important", "main focus", "takes precedence"],
+    qualities: ["speed", "strength", "power", "endurance", "agility", "flexibility", "mobility", "aerobic capacity", "anaerobic capacity", "speed endurance", "repeated sprint ability", "aerobic fitness", "anaerobic fitness", "body composition", "stamina"],
+    testGeneric: ["Wingate", "VO2max test", "vertical jump", "beep test", "multistage fitness test", "MSFT", "sprint test", "jump test", "strength test", "fitness test", "blood lactate", "lactate threshold", "incremental", "step test", "1RM"],
+    linkGeneric: ["demand*", "determinant*", "identified", "to assess", "to measure", "target*", "reflect*", "relates to", "related to", "linked", "because", "underpin*", "requirement*", "capacity", "ability to", "specific to", "mirrors", "replicates"]
+  },
+
+  /* Writing rules. type = which detector runs. Every rule gives three messages:
+     detected (what was found), why (why it matters here, with criterion or LO), ask (a question or rewrite pattern).
+     {match} is replaced with the matched words. severity 1 to 3 feeds the priority actions. */
+  rules: [
+    { id: "chain", type: "openingChain", category: "descriptive", criterion: "c2", severity: 3,
+      verbs: ["found", "reported", "showed", "stated", "observed", "demonstrated", "noted", "concluded", "identified", "investigated", "examined"],
+      notSubjects: ["The", "This", "These", "It", "Research", "Studies", "Evidence", "Data", "He", "She", "They", "His", "Her", "Their", "One", "A", "An", "Another", "Previous", "Recent", "Results", "Testing", "Coaches"],
+      detected: "Consecutive sentences open with an author followed by a reporting verb (\"{match}\").",
+      why: "A run of study-by-study summaries describes the literature rather than evaluating it. LO1 asks you to critically evaluate, and criterion 2 rewards evidence used to make a point about this athlete.",
+      ask: "Lead with your claim, then cite the studies that support it together. Try \"Claim [REF A; REF B]. However, REF C differs because... For this athlete, this means...\"" },
+    { id: "overclaim", type: "termList", category: "overclaim", criterion: "c2", severity: 2, skipNegated: true,
+      terms: ["proves", "proven", "prove that", "clearly", "definitely", "undoubtedly", "it is well known", "well established that", "all studies", "always", "never", "guarantees", "guarantee", "without doubt", "certainly", "obviously"],
+      detected: "Certainty word \"{match}\".",
+      why: "Physiological evidence is probabilistic and population-specific. Overclaiming suggests the evidence has not been weighed, which works against LO1.",
+      ask: "What does the evidence actually show, in whom, and how confident can you be? Replace the certainty word with a calibrated verb (indicates, is consistent with) and say why." },
+    { id: "hedge", type: "hedge", category: "hedge", criterion: "c2", severity: 1,
+      terms: ["may", "might", "could", "possibly", "perhaps", "potentially", "appears to", "seems", "seem to", "somewhat", "slightly", "to some extent", "arguably", "it is possible", "likely", "unlikely", "probably"],
+      detected: "Hedge density is high ({match}).",
+      why: "Calibrated language is good, but stacked hedges hide what you actually think. A needs analysis has to reach decisions (criterion 3 and 4).",
+      ask: "Keep one hedge where the evidence is genuinely uncertain, then state your decision. \"The evidence is mixed, so the decision is to test X because...\"" },
+    { id: "vague", type: "uncited", category: "vague", criterion: "c2", severity: 2,
+      terms: ["research shows", "research suggests", "research has shown", "studies show", "studies suggest", "studies have shown", "it has been found", "it has been shown", "literature suggests", "the literature shows", "experts agree", "evidence shows", "evidence suggests", "it is suggested", "it is thought", "many studies", "some studies", "previous research"],
+      detected: "\"{match}\" with no citation in the sentence.",
+      why: "The marker cannot check which research, in which population. Criterion 2 requires peer-reviewed support.",
+      ask: "Which study, in which athletes? Name it and say whether that population matches your athlete." },
+    { id: "unsupported", type: "unsupported", category: "unsupported", criterion: "c2", severity: 2,
+      claimTerms: ["is the most", "are the most", "is a key", "are key", "key determinant*", "determine*", "account* for", "contribut*", "predominant*", "primarily", "is essential", "are essential", "is crucial", "is vital", "is important for", "are important for", "greater than", "higher than", "lower than", "more than", "cover the", "covers the", "require*", "elite", "relies on", "rely on", "dominant", "majority of"],
+      sections: ["demands", "tests", "other"],
+      exclude: ["this report", "will be", "would be", "will use", "could be used", "should be", "is planned", "I will", "we will", "is recommended", "the coach", "the brief", "in this scenario", "this athlete", "his ", "her ", "personal best", "46.9", "72.5"],
+      detected: "A factual or evaluative claim with no citation in this or the neighbouring sentence.",
+      why: "Claims about demands must be supported by peer-reviewed literature (criterion 2, LO2).",
+      ask: "Is this your claim or the literature's? If it is the literature's, cite it and name the population. If it is your inference, signal it (\"this suggests\") and show the reasoning." },
+    { id: "reasoning", type: "reasoning", category: "reasoning", criterion: "c2", severity: 3,
+      detected: "This paragraph cites evidence but never says what it means for your athlete.",
+      why: "The gap between the sport's demands and this athlete's profile is where the marks are. Evidence without application reads as description (LO2).",
+      ask: "Add a sentence after the evidence. \"For this athlete, this matters because... so the decision is...\"" },
+    { id: "synthesis", type: "synthesis", category: "synthesis", criterion: "c2", severity: 2,
+      detected: "Few contrast or integration markers ({match}).",
+      why: "Synthesis means comparing sources, explaining disagreement and weighing evidence (LO1). Without markers such as however, whereas or consistent with, sources tend to sit side by side.",
+      ask: "Where do your sources agree or disagree, and why might they differ (method, sex, level, competition format)?" },
+    { id: "causal", type: "near", category: "causal", criterion: "c2", severity: 2,
+      terms: ["leads to", "lead to", "led to", "causes", "caused", "cause", "results in", "resulted in", "improves", "improved", "increases", "reduces", "drives", "is responsible for", "determines"],
+      near: ["associat*", "correlat*", "relationship", "linked", "related to", "cross-sectional", "observational", "predict*"],
+      detected: "Causal wording (\"{match}\") near associative evidence.",
+      why: "Correlational or cross-sectional data cannot show cause. Treating them as causal weakens test and training decisions (LO1).",
+      ask: "Was this an intervention or an association? If an association, try \"X was associated with Y in [population]\"." },
+    { id: "binary", type: "binary", category: "binary", criterion: "c2", severity: 2,
+      terms: ["significant*", "no effect", "had no effect", "found a difference", "no difference", "a difference", "did not differ", "insignificant", "non-significant", "nonsignificant"],
+      magnitude: ["/\\b(?:d|g|r|ES|ICC|CV|TE)\\s*[=≈<>]/", "/\\d+(?:\\.\\d+)?\\s*%/", "±", "CI", "confidence interval", "effect size", "SWC", "smallest worthwhile", "trivial", "small", "moderate", "large", "/\\[X[^\\]]*\\]/", "/\\[VALUE[^\\]]*\\]/"],
+      detected: "\"{match}\" without a magnitude or uncertainty.",
+      why: "A p-value threshold says little about whether a change matters for one athlete. Criterion 3 and 4 depend on magnitude, such as change relative to the smallest worthwhile change or typical error. Avoid \"significant\" in its everyday sense too, because readers will take it as a statistical claim.",
+      ask: "How big was the difference, with what uncertainty, and is it larger than the test's typical error?" },
+    { id: "secondary", type: "secondary", category: "secondary", criterion: "c2", severity: 2,
+      terms: ["cited in", "as cited", "cited by", "quoted in", "in: "],
+      sourceTerms: ["review", "textbook", "handbook", "essentials of", "/\\[REF:\\s*(?:textbook|review)/"],
+      detected: "{match}",
+      why: "Numbers taken second-hand may be rounded, out of date or from a different population. Criterion 2 rewards primary peer-reviewed data for specific values.",
+      ask: "Can you find the original study for this value and check its population and method?" },
+    { id: "population", type: "population", category: "population", criterion: "c2", severity: 2,
+      units: ["%", "m", "km", "km·h", "km/h", "km·h⁻¹", "m·s", "m/s", "bpm", "b·min", "beats", "mmol", "mM", "mL", "ml", "L·min", "L/min", "W", "W·kg", "W/kg", "s", "min", "m·min"],
+      descriptors: ["female", "male", "women*", "men*", "elite", "professional", "national", "international", "junior", "senior", "youth", "players", "sprinters", "rowers", "athletes", "amateur", "sub-elite", "trained", "untrained", "level", "WSL", "lightweight", "heavyweight", "midfielders", "/\\bU\\d{2}\\b/", "years", "aged", "sample", "cohort", "participants"],
+      selfTerms: ["this athlete", "his PB", "personal best", "46.9", "72.5", "his ", "her ", "he ", "she "],
+      sections: ["demands", "tests", "other"],
+      // a distance followed by one of these words is a test or event name, not a demand value
+      nameWords: ["sprint*", "test*", "trial*", "time trial", "event*", "race*", "sprinter*", "runner*", "running", "ergometer", "piece*", "split*", "is", "was"],
+      detected: "A numeric demand (\"{match}\") with no population named nearby.",
+      why: "Demand values differ by sex, level, position and format. Without the population the reader cannot judge whether the value applies to your athlete (criterion 2).",
+      ask: "Whose data is this (sex, level, position or event, competition format)? Does that match your athlete, and if not, what does that change?" },
+    { id: "energy", type: "energy", category: "energy", criterion: "c2", severity: 3,
+      systemTerms: ["aerobic", "anaerobic", "glycolytic", "glycolysis", "phosphocreatine", "PCr", "ATP-PC", "ATP–PC", "phosphagen", "oxidative", "energy system*", "energy contribution", "energetic contribution"],
+      variability: ["estimat*", "vary", "varies", "variation", "range*", "depend*", "method*", "approximately", "around", "about", "~", "between", "differ*", "accumulated oxygen deficit", "AOD", "model*", "up to", "roughly"],
+      detected: "A single energy-system percentage (\"{match}\") stated as fact.",
+      why: "Energy-system contributions are estimates that depend on method, athlete level and event. Presenting one figure as fact is a common trap in this assessment (criterion 2, LO1).",
+      ask: "How was this contribution estimated, in whom, and do other methods give different values? What does the range mean for your test choice?" },
+    { id: "normative", type: "normative", category: "normative", criterion: "c3", severity: 2, skipNegated: true,
+      terms: ["normative", "norms", "norm values", "above average", "below average", "percentile", "typical values", "reference values", "compared with elite", "compared to elite", "benchmark*"],
+      detected: "A normative comparison (\"{match}\") with no matched population named.",
+      why: "Norms from another sex, level or event can mislead interpretation (LO3, criterion 3).",
+      ask: "Which population do these norms come from, and does it match your athlete on sex, level and event or position?" },
+    { id: "testEvidence", type: "testEvidence", category: "testEvidence", criterion: "c3", severity: 3,
+      detected: "Test named (\"{match}\") without reliability or validity evidence and a citation in the paragraph.",
+      why: "Criterion 3 asks for valid and reliable tests. A test is only useful if its error is smaller than the change you want to detect (LO3).",
+      ask: "What is the test's reliability (for example ICC, CV or typical error) and validity, in which population, and is that close to your athlete?" },
+    { id: "bareValid", type: "binary", category: "testEvidence", criterion: "c3", severity: 3, uncitedOnly: true,
+      terms: ["valid and reliable", "reliable and valid", "is valid", "is reliable", "is a valid", "is a reliable", "gold standard", "has good reliability", "has good validity", "is accurate"],
+      magnitude: ["ICC", "CV", "/\bTE\b/", "typical error", "SEM", "SWC", "/\br\s*=/", "limits of agreement", "/\[X[^\]]*\]/"],
+      detected: "\"{match}\" asserted with no statistic or citation.",
+      why: "Calling a test valid or reliable is a claim that needs evidence. Criterion 3 asks for reliability and validity evidence, in a relevant population (LO3).",
+      ask: "Valid for what, against which criterion? Reliable to what degree (ICC, CV or typical error), in which athletes, according to whom?" },
+    { id: "genericLimit", type: "genericLimit", category: "genericLimit", criterion: "c3", severity: 2,
+      terms: ["small sample", "sample size", "not sport-specific", "not sport specific", "lacks sport specificity", "more research is needed", "further research is needed", "more research", "further research", "lacks ecological validity", "low ecological validity", "has limitations", "has some limitations", "not perfect"],
+      consequence: ["this athlete", "for him", "for her", "so ", "therefore", "which means", "meaning", "this would", "this could", "this may", "as a result", "consequently", "his ", "her ", "she ", "he "],
+      // the next sentence counts as the consequence only if it starts with one of these
+      nextStarts: ["this", "so", "therefore", "for him", "for her", "for this", "as a result", "consequently", "which", "that means", "his result", "her result", "because of this"],
+      detected: "A generic limitation (\"{match}\") with no consequence for your athlete.",
+      why: "Reflexive critique earns little. Criterion 3 rewards limitations that change how you would test or interpret results for this athlete.",
+      ask: "So what? Does the limitation mean a wider error margin, a different test, a familiarisation trial, or cautious interpretation for this athlete?" },
+    { id: "testLink", type: "testLink", category: "testLink", criterion: "c3", severity: 3,
+      detected: "Test paragraph (\"{match}\") does not refer back to a demand or the athlete's issue.",
+      why: "Every test should answer a question raised by the needs analysis. Orphan tests suggest a battery chosen by habit (criterion 3).",
+      ask: "Which demand or gap does this test measure, and what decision will the result change?" },
+    { id: "monitoring", type: "monitoringGaps", category: "monitoring", criterion: "c4", severity: 3,
+      retest: ["re-test*", "retest*", "repeat*", "reassess*", "re-assess*", "test again", "tested again", "follow-up test*"],
+      time: ["week*", "fortnight*", "month*", "day*", "every", "block", "mesocycle", "/\\bwk\\b/"],
+      prescription: ["prescri*", "adjust*", "modif*", "individualis*", "training zone*", "intensit*", "programm*", "load*", "progress*", "periodis*", "training", "volume", "next block"],
+      detectedRetest: "No re-test interval found in the monitoring section.",
+      detectedPrescription: "No link from results to training prescription found in the monitoring section.",
+      why: "Criterion 4 asks how results inform prescription and when you will re-test, relative to this athlete's timeline (LO3).",
+      ask: "When exactly will you re-test (relative to the competition dates), and what result would make you change the training?" },
+    { id: "priority", type: "prioritisation", category: "priority", criterion: "c2", severity: 2,
+      detectedDoc: "Little prioritisation language across the document.",
+      detectedList: "Several qualities listed with no indication of which matters most (\"{match}\").",
+      why: "A needs analysis is a decision tool. Listing every quality as important does not tell the coach what to test or train first (criterion 2 and 3).",
+      ask: "Which quality is the main limiter for this athlete, and how does the evidence justify that ranking?" },
+
+    // Scenario-specific rules (scenarios: only run for the listed scenarios).
+    { id: "s2male", type: "nearUnless", category: "scenario", criterion: "c2", severity: 3, scenarios: ["S2"],
+      terms: ["male", "men's", "men", "Premier League", "EPL", "male players", "Championship"],
+      unless: ["female", "women*", "caution*", "may not", "might not", "differ*", "justif*", "limited", "lack of", "in the absence", "indicative", "transfer", "applicab*", "few studies", "scarce"],
+      detected: "Male data indicator (\"{match}\") without justification nearby.",
+      why: "Time-motion, physiological and normative data from male players may not apply to a female WSL midfielder. Using them without justification is a population mismatch (criterion 2, LO2).",
+      ask: "Is female professional data available? If you must use male data, say why and what difference it might make to your interpretation." },
+    { id: "s2hamstring", type: "docUnless", category: "scenario", criterion: "c5", severity: 3, scenarios: ["S2"],
+      terms: ["hamstring*"],
+      unless: ["physio*", "medical", "refer*", "clearance", "cleared", "screen*", "constraint*", "contraindicat*", "load management", "multidisciplinary", "MDT", "practitioner"],
+      detected: "Hamstring tightness is discussed without referral or constraint framing.",
+      why: "Recurring hamstring tightness is a medical and constraint question before it is a fitness test question. It changes what you can test, when, and how maximal sprint or eccentric tests are scheduled (criterion 5).",
+      ask: "Who needs to clear her before maximal testing, and how does the hamstring history change your test order or burden?" },
+    { id: "s2timeline", type: "docRequire", category: "scenario", criterion: "c5", severity: 2, scenarios: ["S2"],
+      terms: ["six weeks", "6 weeks", "6-week", "six-week", "fixture*", "congest*", "Champions League", "preseason", "pre-season"],
+      detected: "The short preseason and fixture congestion are not mentioned.",
+      why: "Six weeks to the league and Champions League qualifiers two weeks later limit test burden and re-test options (criterion 4 and 5).",
+      ask: "How does the timeline limit how many tests you can run, and when?" },
+    { id: "s3absolute", type: "coOccur", category: "scenario", criterion: "c2", severity: 3, scenarios: ["S3"],
+      groups: [["L·min", "L/min", "l/min", "l·min", "litres per minute", "/\\d\\s*W\\b(?![·\\/])/", "watts", "absolute"]],
+      unless: ["W·kg", "W/kg", "mL·kg", "ml/kg", "ml·kg", "mL/kg", "relative", "per kilogram", "body mass", "kg⁻¹", "power-to-weight", "power to weight", "/kg"],
+      detected: "An absolute value (\"{match}\") with no relative value or body-mass context nearby.",
+      why: "For a lightweight rower with a 72.5 kg limit, absolute and relative values can point to different decisions. Reporting only absolute values hides the trade-off (criterion 2 and 5).",
+      ask: "What is this value relative to body mass, and would an increase in absolute power be worthwhile if mass also rose?" },
+    { id: "s3mass", type: "docRequire", category: "scenario", criterion: "c5", severity: 3, scenarios: ["S3"],
+      terms: ["body mass", "weight", "72.5", "making weight", "lightweight limit"],
+      detected: "Body mass is not discussed.",
+      why: "The 72.5 kg limit is the defining constraint for this athlete. It affects test choice, interpretation and nutrition around testing (criterion 5).",
+      ask: "How does the body-mass limit change what you test and how you interpret the results?" },
+    { id: "s3heavy", type: "nearUnless", category: "scenario", criterion: "c2", severity: 2, scenarios: ["S3"],
+      terms: ["heavyweight", "open-weight", "openweight"],
+      unless: ["lightweight", "differ*", "caution*", "justif*", "may not", "limited", "indicative"],
+      detected: "Heavyweight data (\"{match}\") used without justification.",
+      why: "Heavyweight rowers differ in body mass and absolute power, so their values may not transfer to a lightweight (criterion 2).",
+      ask: "Are lightweight data available? If not, what difference might body mass make?" },
+    { id: "s1transfer", type: "coOccur", category: "scenario", criterion: "c2", severity: 3, scenarios: ["S1"], sentenceOnly: true,
+      groups: [["strength", "power", "jump*", "squat*", "CMJ", "force"], ["transfer*", "translate*", "carry over", "carries over", "/will (?:also )?improve/", "will make", "will lead", "improve* his", "improve* speed", "faster", "benefit his"]],
+      unless: ["unclear", "not", "whether", "may", "might", "test*", "assess*", "evidence", "/\\[REF:/", "/\\((?:19|20)\\d{2}/", "uncertain", "not necessarily"],
+      detected: "Strength or power gains are assumed to transfer to the track (\"{match}\").",
+      why: "The brief says transfer is unclear. Assuming it skips the question the needs analysis should answer (criterion 2 and 3).",
+      ask: "What evidence links this quality to speed maintenance in the final 100 m, and how would you test whether transfer has happened for him?" },
+    { id: "s1fade", type: "docRequire", category: "scenario", criterion: "c1", severity: 2, scenarios: ["S1"],
+      terms: ["final 100", "last 100", "fade*", "speed maintenance", "maintain speed", "second 200", "deceleration"],
+      detected: "The athlete's fade in the final 100 m is not discussed.",
+      why: "The presenting problem should drive the demands you prioritise and the tests you select (criterion 1 and 2).",
+      ask: "Which demands and tests speak directly to his fade in the final 100 m?" }
+  ],
+
+  // Spot the weakness. answer is a category key, or null for a sound sentence.
+  spot: [
+    { id: "p1", scenario: "S1", title: "S1 performance demands", sentences: [
+      { t: "The 400 m is a predominantly anaerobic event, and the glycolytic system contributes exactly [X]% of the energy [REF: 400 m energy contribution].", a: "energy", e: "One percentage is presented as fact. Estimates vary with method and population, so state the range and why it differs." },
+      { t: "[REF: author A] found that sprinters slow down in the final 100 m.", a: "descriptive", e: "This is the start of a study-by-study chain. It reports a finding without evaluating it or linking it to this athlete." },
+      { t: "[REF: author B] reported that blood lactate is high after the race.", a: "descriptive", e: "A second consecutive \"Author reported\" sentence. Integrate the sources around a claim instead." },
+      { t: "[REF: author C] showed that speed endurance is important.", a: "descriptive", e: "Third in the chain, and it ends without saying what this means for an athlete who fades." } ] },
+    { id: "p2", scenario: "S1", title: "S1 test selection", sentences: [
+      { t: "His strength and power have improved, so his 400 m time will also improve.", a: "scenario", e: "Transfer is assumed. The brief says transfer is unclear, which is exactly what the analysis should test." },
+      { t: "A countermovement jump test will be used.", a: "testLink", e: "The test is not linked to a demand or to the fade in the final 100 m. What question does it answer?" },
+      { t: "It is a valid and reliable test.", a: "testEvidence", e: "No statistics, no citation and no population. Valid for what, and reliable to what degree in trained sprinters?" },
+      { t: "One limitation is that the sample size in the original study was small.", a: "genericLimit", e: "A reflexive limitation. What does a small validation sample mean for interpreting his result?" } ] },
+    { id: "p3", scenario: "S1", title: "S1 performance demands (strong)", sentences: [
+      { t: "Estimates of the glycolytic contribution to 400 m running vary with the method used and the population studied [REF: 400 m energy contribution, method comparison].", a: null, e: "Sound. It acknowledges method and population rather than quoting one figure." },
+      { t: "Because this athlete fades in the final 100 m, the question is less which estimate is correct than whether his decline reflects limited glycolytic capacity, pacing, or both.", a: null, e: "Sound. It turns the evidence into a question about this athlete." },
+      { t: "Comparing his race splits with a 300 m time trial and post-test blood lactate would help separate these explanations [REF: 300 m test reliability in trained sprinters].", a: null, e: "Sound. The test is linked to the demand and to a reliability source in a relevant population." },
+      { t: "If his first 200 m is fast relative to his capacity, pacing becomes the first training priority.", a: null, e: "Sound. It states how a result would change the decision." } ] },
+    { id: "p4", scenario: "S2", title: "S2 performance demands", sentences: [
+      { t: "Central midfielders cover the greatest total distance of any outfield position.", a: "unsupported", e: "A factual claim with no citation and no population (sex, level)." },
+      { t: "Research shows that high-intensity running declines in the final 15 minutes of matches.", a: "vague", e: "Which research, in which players? Vague attribution cannot be checked." },
+      { t: "Players in the Premier League cover [X] m of high-speed running per match [REF: Premier League time-motion data].", a: "scenario", e: "Male professional data are applied to a female WSL midfielder without justification." },
+      { t: "This clearly proves that fatigue causes the late drop in her running.", a: "overclaim", e: "Overclaiming, and it ignores tactical and substitution explanations for the late-game decline." } ] },
+    { id: "p5", scenario: "S2", title: "S2 constraints", sentences: [
+      { t: "She has had hamstring tightness, so a Nordic hamstring test will show whether her hamstrings are strong enough.", a: "scenario", e: "Hamstring tightness is treated as a test question. It is first a constraint and referral question for the medical team." },
+      { t: "All tests will be completed in the first week of preseason.", a: null, e: "A clear and specific decision. Stronger work would also justify the burden, but this sentence is not itself a problem." },
+      { t: "It may possibly be that she could perhaps be slightly fatigued at the end of games.", a: "hedge", e: "Five hedges in one sentence. Say what the evidence allows you to conclude." },
+      { t: "[REF: author D] found a significant difference in hamstring strength between injured and uninjured players.", a: "binary", e: "Binary results language. How large was the difference, with what uncertainty, and in which players?" } ] },
+    { id: "p6", scenario: "S2", title: "S2 performance demands (strong)", sentences: [
+      { t: "Her late-game decline in high-intensity running could reflect fatigue, tactical role or substitution patterns, and GPS totals alone cannot separate these [REF: female soccer match-running variability].", a: null, e: "Sound. It names alternative explanations before choosing a test." },
+      { t: "The analysis would therefore compare her final 20 minutes with team-mates in the same matches and with the match context.", a: null, e: "Sound. It explains how the uncertainty would be reduced." },
+      { t: "Data from female professional players are limited, so male data are used only as indicative and are flagged as such [REF: female professional soccer time-motion data].", a: null, e: "Sound. It justifies the population mismatch openly." },
+      { t: "Her recurring hamstring tightness is treated as a constraint and a referral question for the medical team, so maximal sprint and eccentric testing wait for clearance.", a: null, e: "Sound. The hamstring history changes the test plan rather than becoming a test." } ] },
+    { id: "p7", scenario: "S3", title: "S3 test selection", sentences: [
+      { t: "His VO2max of [X] L·min⁻¹ shows he has a good aerobic engine.", a: "scenario", e: "An absolute value with no relative value or body-mass context, for an athlete with a 72.5 kg limit." },
+      { t: "This is above average compared with normative data for rowers [REF: rowing normative data].", a: "normative", e: "Which rowers? Heavyweight or open-weight norms would not match a lightweight." },
+      { t: "A 2000 m ergometer test will be used because it is the gold standard.", a: "testEvidence", e: "\"Gold standard\" is not evidence. Give reliability and validity data and the population they came from." },
+      { t: "More research is needed on this test.", a: "genericLimit", e: "A generic limitation with no consequence for testing or interpreting this athlete." } ] },
+    { id: "p8", scenario: "S3", title: "S3 monitoring", sentences: [
+      { t: "Monitoring is important for all athletes.", a: "monitoring", e: "Generic. It says nothing about what, when or why for this athlete in a ten-week block." },
+      { t: "He will be tested regularly to see if he improves.", a: "monitoring", e: "No re-test interval relative to the regatta and the World Championships, and no link to prescription." },
+      { t: "Studies suggest that heart rate variability always detects overtraining.", a: "overclaim", e: "\"Always\" overclaims, and \"studies suggest\" is vague attribution." },
+      { t: "Higher training load leads to better performance, as shown by [REF: correlational study of training load and rowing performance].", a: "causal", e: "Causal wording on correlational evidence." } ] },
+    { id: "p9", scenario: "S3", title: "S3 monitoring (strong)", sentences: [
+      { t: "With a national regatta in week four and the World Championships in week ten, the full laboratory step test is scheduled in week one and repeated in week six, so neither falls in a taper.", a: null, e: "Sound. Re-test timing is tied to the competition dates." },
+      { t: "Between these points, morning body mass, session RPE and a standardised submaximal ergometer piece are tracked weekly because they carry little fatigue [REF: submaximal rowing test reliability].", a: null, e: "Sound. Low-burden monitoring with a reason and a reliability source." },
+      { t: "Power at the lactate threshold is reported in watts and relative to body mass, since an absolute gain that comes with a rise in mass may not help a lightweight crew.", a: null, e: "Sound. Absolute and relative values are both reported, with the reason." },
+      { t: "If threshold power has not changed by more than the test's typical error at week six while mass is stable, the next block shifts its emphasis toward threshold work.", a: null, e: "Sound. A clear rule linking the result to prescription." } ] },
+    { id: "p10", scenario: "S1", title: "S1 introduction", sentences: [
+      { t: "A needs analysis identifies the demands of a sport so that tests are chosen for a reason rather than by habit [REF: needs analysis framework].", a: null, e: "Sound. It frames the needs analysis as a decision tool." },
+      { t: "It is well known that every athlete should complete a VO2max test.", a: "overclaim", e: "Overclaiming. Whether a test is needed depends on the athlete's demands and gap." },
+      { t: "[REF: textbook], cited in [REF: review], states that 400 m runners need high anaerobic capacity.", a: "secondary", e: "Secondary citing. Find and read the primary source." },
+      { t: "This report therefore starts from his fade in the final 100 m and works back to the tests that could explain it.", a: null, e: "Sound. It sets up the athlete's problem as the driver of the analysis." } ] }
+  ],
+
+  // Planner demand types and applicability dimensions.
+  demandTypes: [
+    { id: "energy", label: "Energy system" }, { id: "kpi", label: "KPI" }, { id: "movement", label: "Movement pattern" },
+    { id: "w2r", label: "Work-to-rest" }, { id: "zone", label: "Intensity zone" }, { id: "other", label: "Other determinant" }
+  ],
+  applicability: [
+    { id: "sex", label: "Sex" }, { id: "age", label: "Age group" }, { id: "level", label: "Level" },
+    { id: "role", label: "Event or position" }, { id: "format", label: "Competition format" }
+  ],
+
+  /* Scenarios. facts are taken from the brief. timeline.weeks is null when the brief gives no dates.
+     traps are shown in the planner and the writing check. constraints are planner prompts.
+     matchTerms count as a matched population for normative comparisons.
+     athleteTerms count as reasoning about the athlete. issueTerms count as a test-to-demand link. */
+  scenarios: {
+    S1: {
+      short: "S1 400 m sprinter", blurb: "24-year-old male, national level, PB 46.9 s",
+      facts: [["Athlete", "24-year-old male"], ["Event", "400 m"], ["Level", "National, competing for three seasons. PB 46.9 s"], ["Goal", "Qualify for the European Championships later this year"], ["Training", "Sprint intervals, technical sessions and gym-based strength training"], ["Presenting issue", "Starts strongly but fades in the final 100 m"], ["Open question", "Strength and power have improved, but transfer to the track is unclear"]],
+      athlete: { sex: "Male", age: "24 (senior)", level: "National", role: "400 m", format: "Single race, rounds at championships" },
+      unknownHint: "For example training age in sprinting and in the gym, race splits, injury history, current test data, recovery between rounds.",
+      timeline: { weeks: null, events: [], taper: 1, note: "The brief gives no fixed dates (\"later this year\", \"ahead of the outdoor season\"). State your assumed timeline and plan re-tests against it." },
+      traps: ["Quoting a single energy-system percentage for 400 m as fact when estimates vary with method and population.", "Assuming that strength and power gains transfer to speed maintenance in the final 100 m.", "Using normative data from a different level (for example world-class or club sprinters).", "Describing the fade without separating capacity from pacing."],
+      constraints: ["Competition calendar. When is the qualifying window, and how many races remain before it?", "Testing burden. Which tests are maximal, and how much recovery do they need before a hard track session?", "Injury and medical history. What do you need to know before maximal sprint or strength testing?", "Facilities and environment. Indoor or outdoor track, timing gates, laboratory access, weather.", "Individual factors. Training age, response to past training blocks, athlete preferences."],
+      eventTerms: ["400 m", "400m", "400-m"],
+      matchTerms: ["400 m sprinters", "400-m", "400m", "400 m runners", "national-level", "national level", "trained sprinters", "male sprinters", "quarter-mil*"],
+      athleteTerms: ["he", "his", "him", "this sprinter", "final 100", "fade*"],
+      issueTerms: ["fade*", "final 100", "last 100", "speed maintenance", "speed endurance", "transfer*", "glycolytic", "anaerobic", "maximal speed", "acceleration", "400 m", "pacing", "split*"],
+      testNames: ["countermovement jump", "CMJ", "squat jump", "drop jump", "reactive strength", "IMTP", "isometric mid-thigh", "30 m sprint", "flying 30", "flying 20", "150 m", "200 m time trial", "300 m", "600 m", "split times", "Wingate", "force-velocity", "force plate", "maximal anaerobic running test", "MART", "1RM", "back squat"]
+    },
+    S2: {
+      short: "S2 WSL midfielder", blurb: "21-year-old female, professional, central midfield",
+      facts: [["Athlete", "21-year-old female"], ["Position", "Central midfielder"], ["Level", "Professional, Women's Super League"], ["Known for", "Work rate and covering large distances"], ["Presenting issue", "GPS showed a drop in high-intensity running in the final 20 minutes last season"], ["Injury", "Recurring hamstring tightness, missed two matches"], ["Timeline", "Preseason after a short off-season. League starts in six weeks, Champions League qualifiers two weeks later"]],
+      athlete: { sex: "Female", age: "21 (senior)", level: "Professional, WSL", role: "Central midfielder", format: "90-minute matches, congested league and European fixtures" },
+      unknownHint: "For example training age, playing minutes last season, GPS data context (substitutions, tactics), hamstring assessment findings, menstrual cycle data if appropriate.",
+      timeline: { weeks: 8, events: [{ week: 6, label: "League opener" }, { week: 8, label: "Champions League qualifiers" }], taper: 1, note: "Week 1 is the first week of preseason." },
+      traps: ["Applying male professional time-motion and normative data to a female WSL player.", "Describing the late-game decline without asking whether the cause is physiological, tactical or substitution-related.", "Treating hamstring tightness as a fitness test issue rather than a constraint and referral question.", "Ignoring the short preseason and fixture congestion when choosing test burden."],
+      constraints: ["Hamstring history. What must the medical team clear before maximal sprint or eccentric testing, and who decides?", "Preseason length. Six weeks to the league opener. How much testing burden can preseason carry?", "Fixture congestion. What can you still measure once league and Champions League fixtures overlap?", "Squad context. Which tests can run with the whole squad, and which need individual time?", "Wellbeing and menstrual cycle. Will you record cycle phase or symptoms, with consent and a clear purpose, and how would that change interpretation?", "Environment. Pitch, weather and GPS system differences between training and matches."],
+      matchTerms: ["female", "women", "women's", "WSL", "Women's Super League", "female professional"],
+      athleteTerms: ["she", "her", "this player", "the player", "final 20", "midfielder"],
+      issueTerms: ["high-intensity running", "high-speed running", "repeated sprint*", "repeated high-intensity", "final 20", "late", "aerobic", "intermittent", "hamstring", "sprint*", "deceleration*", "match*", "fatigue"],
+      testNames: ["Yo-Yo", "30-15", "IFT", "intermittent fitness test", "repeated sprint", "RSA", "VO2max", "incremental treadmill", "lactate threshold", "Nordic", "NordBord", "hamstring strength", "isokinetic", "CMJ", "countermovement jump", "10 m sprint", "20 m sprint", "30 m sprint", "40 m sprint", "submaximal", "heart rate recovery"]
+    },
+    S3: {
+      short: "S3 lightweight sculler", blurb: "28-year-old male, international, under 72.5 kg",
+      facts: [["Athlete", "28-year-old male"], ["Boat", "Lightweight double sculls"], ["Level", "International, six years in the national squad"], ["Body mass", "Must stay under 72.5 kg"], ["Timeline", "National regatta in four weeks, World Championships in ten weeks"], ["Presenting issue", "Strong in shorter pieces, struggles to hold pace across the race distance"], ["Coaching request", "Conditioning, training response, and balancing strength, endurance and weight management"]],
+      athlete: { sex: "Male", age: "28 (senior)", level: "International lightweight", role: "Lightweight double sculls", format: "Race distance in heats to final" },
+      unknownHint: "For example training age, current ergometer scores, body-mass history across the season, nutrition and hydration practice, crew partner data.",
+      timeline: { weeks: 10, events: [{ week: 4, label: "National regatta" }, { week: 10, label: "World Championships" }], taper: 1, note: "Week 1 is the current week." },
+      traps: ["Ignoring the body-mass limit when selecting tests and interpreting results, such as reporting absolute but not relative values.", "Assuming heavyweight rowing data apply to a lightweight.", "Overlooking testing burden and fatigue in a ten-week window with a regatta at week four."],
+      constraints: ["Body mass. How will testing, nutrition and hydration be handled so tests do not compromise making weight?", "Regatta at week four. Which tests would add fatigue before it, and could the regatta itself provide data?", "Testing burden. How many maximal tests can a ten-week block carry?", "Crew boat context. How will you relate individual ergometer data to on-water performance in a double?", "Travel and environment. Training camps, heat or travel before the World Championships."],
+      eventTerms: ["2000 m", "2000m", "2 km"],
+      matchTerms: ["lightweight", "lightweight rowers", "lightweight male"],
+      athleteTerms: ["he", "his", "him", "the rower", "this rower", "lightweight", "body mass", "race distance", "hold pace"],
+      issueTerms: ["race pace", "hold pace", "race distance", "aerobic", "threshold", "lactate", "2000 m", "2 km", "body mass", "power", "endurance", "pacing", "on-water"],
+      testNames: ["2000 m", "2 km", "2k", "6 min", "6-min", "step test", "incremental", "VO2max", "lactate threshold", "lactate profile", "ergometer", "500 m", "100 m", "power profile", "1RM", "DXA", "DEXA", "skinfold", "body composition", "submaximal"]
+    }
+  },
+
+  // Planner wording. Every step ends with a "so what" prompt.
+  planner: {
+    steps: [
+      { id: "profile", title: "Athlete profile", criterion: "c1", soWhat: "So what? Which part of this profile will change what you test or how you interpret it?" },
+      { id: "demands", title: "Performance demands", criterion: "c2", soWhat: "So what? Which of these demands is most likely to limit this athlete, and why?" },
+      { id: "gap", title: "The gap", criterion: "c2", soWhat: "So what? Which uncertainty matters most for the coach's decision?" },
+      { id: "tests", title: "Test selection", criterion: "c3", soWhat: "So what? What decision will each test result change?" },
+      { id: "monitoring", title: "Monitoring and progression", criterion: "c4", soWhat: "So what? What result would make you change the training plan, and how?" },
+      { id: "constraints", title: "Constraints", criterion: "c5", soWhat: "So what? Which constraint changes your test plan most?" },
+      { id: "framing", title: "Introduction and conclusion", criterion: null, soWhat: null },
+      { id: "coverage", title: "Coverage and export", criterion: null, soWhat: null }
+    ]
+  }
+};
+/* ===== CONFIG END ===== */
+</script>
+
+<script>
+/* ===== ENGINE START =====
+   Pure text analysis. No DOM access, so it can be tested outside the browser. */
+const _rx = new Map();
+function norm(s) { return String(s).replace(/[‘’]/g, "'").replace(/[“”]/g, '"'); }
+function termRx(t, g) {
+  const key = t + (g ? "#g" : "");
+  if (_rx.has(key)) return _rx.get(key);
+  let r;
+  if (t.length > 2 && t[0] === "/" && t.lastIndexOf("/") > 0) {
+    r = new RegExp(t.slice(1, t.lastIndexOf("/")), "i" + (g ? "g" : ""));
+  } else {
+    const stem = t.endsWith("*");
+    const s = stem ? t.slice(0, -1) : t;
+    const e = s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+    const pre = /^\w/.test(s) ? "\\b" : "";
+    const post = stem ? "" : (/\w$/.test(s) ? "\\b" : "");
+    r = new RegExp(pre + e + post, "i" + (g ? "g" : ""));
+  }
+  _rx.set(key, r);
+  return r;
+}
+function findTerm(text, terms) {
+  const n = norm(text);
+  for (const t of terms || []) { const m = n.match(termRx(t)); if (m) return m[0]; }
+  return null;
+}
+function countTerms(text, terms) {
+  const n = norm(text); let c = 0;
+  for (const t of terms || []) c += (n.match(termRx(t, true)) || []).length;
+  return c;
+}
+function wordCount(s) { return (String(s).match(/[A-Za-z0-9À-ɏ]+(?:['’\-][A-Za-z0-9]+)*/g) || []).length; }
+const CITE_RX = new RegExp(CONFIG.citationPattern);
+function hasCite(s) { return CITE_RX.test(norm(s)); }
+function citeCount(s) { return (norm(s).match(new RegExp(CONFIG.citationPattern, "g")) || []).length; }
+
+function splitSentences(p) {
+  const SAFE = "․";
+  let t = p.replace(/\b(et al|e\.g|i\.e|cf|vs|approx|Fig|No|Dr|Prof|ca|etc)\./gi, m => m.replace(/\./g, SAFE))
+           .replace(/(\d)\.(\d)/g, "$1" + SAFE + "$2");
+  // protect full stops inside [REF: ...] and (...) citations
+  t = t.replace(/\[[^\]]*\]|\([^()]*\)/g, m => m.replace(/[.!?]/g, c => c === "." ? SAFE : c));
+  const parts = t.split(/(?<=[.!?]["'”’)]?)\s+(?=["'“‘(\[]?[A-Z0-9\[])/);
+  return parts.map(x => x.replace(new RegExp(SAFE, "g"), ".").trim()).filter(Boolean);
+}
+
+function parseDoc(raw) {
+  const lines = norm(raw).replace(/\r/g, "").split(/\n+/).map(l => l.trim()).filter(Boolean);
+  const paras = []; let inRefs = false;
+  lines.forEach(line => {
+    let text = line, kind = "body";
+    const md = /^#{1,6}\s+/.test(text);
+    if (md) text = text.replace(/^#{1,6}\s+/, "");
+    const clean = text.replace(/^\d+(\.\d+)*\.?\s+/, "");
+    if (/^(references?|reference list|bibliography|works cited)\s*:?$/i.test(clean)) { inRefs = true; paras.push({ text, kind: "heading", refsHeading: true }); return; }
+    if (inRefs) { paras.push({ text, kind: "ref" }); return; }
+    const wc = wordCount(text);
+    if (md || (wc <= CONFIG.thresholds.headingMaxWords && !/[.?!:;,]$/.test(text) && !hasCite(text))) kind = "heading";
+    paras.push({ text, kind });
+  });
+  paras.forEach((p, i) => {
+    p.i = i;
+    p.words = wordCount(p.text);
+    p.sentences = p.kind === "body" ? splitSentences(p.text).map(s => ({ text: s, cited: hasCite(s), words: wordCount(s) })) : [];
+  });
+  return { paras, raw };
+}
+
+function classifySections(doc) {
+  let headingSection = null, seenBody = false;
+  const bodies = doc.paras.filter(p => p.kind === "body");
+  const anyHeading = doc.paras.some(p => p.kind === "heading" && !p.refsHeading);
+  doc.paras.forEach(p => {
+    if (p.kind === "heading") {
+      if (p.refsHeading) return;
+      const m = CONFIG.sections.find(s => findTerm(p.text, s.heading));
+      headingSection = m ? m.id : null;
+      p.section = headingSection;
+      return;
+    }
+    if (p.kind !== "body") return;
+    let sec = headingSection;
+    if (!sec) {
+      let best = null, bestScore = 0;
+      CONFIG.sections.forEach(s => {
+        let sc = countTerms(p.text, s.body);
+        if (s.id === "conclusion" && /^(in conclusion|to conclude|in summary|overall)\b/i.test(p.text)) sc += 5;
+        if (sc > bestScore) { bestScore = sc; best = s.id; }
+      });
+      sec = bestScore >= 1 ? best : "other";
+      if (!anyHeading && !seenBody && sec !== "conclusion") sec = "intro";
+      if (!anyHeading && p === bodies[bodies.length - 1] && /^(in conclusion|to conclude|in summary|overall)\b/i.test(p.text)) sec = "conclusion";
+    }
+    p.section = sec; seenBody = true;
+  });
+}
+
+const RULE_FNS = {
+  openingChain(doc, r) {
+    const hits = [];
+    const rx = new RegExp("^(?:\\[REF:[^\\]]*\\]|(?!(?:" + r.notSubjects.join("|") + ")\\b)[A-Z][A-Za-z'\\-]+(?:\\s+et\\s+al\\.?|\\s+(?:and|&)\\s+[A-Z][A-Za-z'\\-]+)?(?:\\s*\\((?:19|20)\\d{2}[a-z]?\\))?)\\s*,?\\s+(?:also\\s+|further\\s+|similarly\\s+)?(" + r.verbs.join("|") + ")\\b");
+    body(doc).forEach(p => {
+      let run = [];
+      const flush = () => { if (run.length >= CONFIG.thresholds.citationChainRun) run.forEach(o => hits.push({ p: p.i, s: o.j, match: o.m })); run = []; };
+      p.sentences.forEach((s, j) => { const m = s.text.match(rx); if (m) run.push({ j, m: m[0] }); else flush(); });
+      flush();
+    });
+    return hits;
+  },
+  termList(doc, r) { return eachSentence(doc, (s) => { const m = findTerm(s.text, r.terms); return m && !(r.skipNegated && negated(s.text, m)) ? m : null; }); },
+  hedge(doc, r) {
+    const hits = [], th = CONFIG.thresholds;
+    body(doc).forEach(p => {
+      let total = 0, flagged = false;
+      p.sentences.forEach((s, j) => {
+        const c = countTerms(s.text, r.terms); total += c;
+        if (c >= th.hedgesPerSentence) { hits.push({ p: p.i, s: j, match: c + " hedges in one sentence" }); flagged = true; }
+      });
+      if (!flagged && p.sentences.length >= 3 && total / p.sentences.length >= th.hedgeDensityPerSentence)
+        hits.push({ p: p.i, s: null, match: total + " hedges across " + p.sentences.length + " sentences" });
+    });
+    return hits;
+  },
+  uncited(doc, r) { return eachSentence(doc, (s, j, p) => s.cited || (j > 0 && p.sentences[j - 1].cited) ? null : findTerm(s.text, r.terms)); },
+  unsupported(doc, r) {
+    const numRx = new RegExp(CONFIG.numberPattern + "\\s*(?:%|m\\b|km|bpm|mmol|ml|mL|W\\b|s\\b)");
+    return eachSentence(doc, (s, j, p) => {
+      if (!inSections(p, r.sections)) return null;
+      if (s.cited || near(p, j, x => x.cited)) return null;
+      if (findTerm(s.text, r.exclude)) return null;
+      const m = findTerm(s.text, r.claimTerms) || (numRx.test(norm(s.text)) ? "numeric value" : null);
+      return m;
+    });
+  },
+  reasoning(doc, r, sc) {
+    const hits = [], terms = CONFIG.lists.reasoning.concat(sc.athleteTerms);
+    body(doc).forEach(p => {
+      if (!p.sentences.some(s => s.cited)) return;
+      if (!inSections(p, ["demands", "tests", "other"])) return;
+      if (p.sentences.some(s => findTerm(s.text, terms))) return;
+      let last = -1; p.sentences.forEach((s, j) => { if (s.cited) last = j; });
+      hits.push({ p: p.i, s: last, match: "" });
+    });
+    return hits;
+  },
+  synthesis(doc, r) {
+    const hits = [], th = CONFIG.thresholds, L = CONFIG.lists.synthesis;
+    const words = body(doc).reduce((a, p) => a + p.words, 0);
+    const markers = body(doc).reduce((a, p) => a + countTerms(p.text, L), 0);
+    if (words >= 200 && markers / words * 100 < th.synthesisPer100Words)
+      hits.push({ p: null, s: null, match: markers + " markers in " + words + " words" });
+    body(doc).forEach(p => {
+      if (citeCount(p.text) >= th.synthesisParaMinCitations && countTerms(p.text, L) === 0)
+        hits.push({ p: p.i, s: null, match: "none in a paragraph with " + citeCount(p.text) + " citations" });
+    });
+    return hits;
+  },
+  near(doc, r) {
+    return eachSentence(doc, (s, j, p) => {
+      const m = findTerm(s.text, r.terms); if (!m) return null;
+      return (findTerm(s.text, r.near) || near(p, j, x => findTerm(x.text, r.near))) ? m : null;
+    });
+  },
+  binary(doc, r) {
+    return eachSentence(doc, (s) => { if (r.uncitedOnly && s.cited) return null; const m = findTerm(s.text, r.terms); return m && !findTerm(s.text, r.magnitude) ? m : null; });
+  },
+  secondary(doc, r) {
+    const num = new RegExp(CONFIG.numberPattern + "\\s*(?:%|m\\b|km|bpm|mmol|ml|mL|W\\b|s\\b|L)");
+    return eachSentence(doc, (s) => {
+      const m = findTerm(s.text, r.terms); if (m) return "Secondary citation (\"" + m.trim() + "\").";
+      if (num.test(norm(s.text)) && findTerm(s.text, r.sourceTerms)) return "A specific value attributed to a review or textbook.";
+      return null;
+    });
+  },
+  population(doc, r, sc) {
+    const units = r.units.map(u => u.replace(/[.*+?^${}()|[\]\\\/]/g, "\\$&")).sort((a, b) => b.length - a.length).join("|");
+    const rx = new RegExp(CONFIG.numberPattern + "\\s*(?:" + units + ")(?![A-Za-z])");
+    const desc = r.descriptors.concat(sc.matchTerms);
+    return eachSentence(doc, (s, j, p) => {
+      if (!inSections(p, r.sections)) return null;
+      const t = norm(s.text), m = t.match(rx); if (!m) return null;
+      if (findTerm(s.text, r.selfTerms)) return null;
+      if (findTerm(m[0], sc.eventTerms || [])) return null;
+      const after = t.slice(m.index + m[0].length).trim().split(/\s+/)[0] || "";
+      if (/\bm$/.test(m[0]) && findTerm(after, r.nameWords)) return null;
+      if (findTerm(s.text, desc) || (j > 0 && findTerm(p.sentences[j - 1].text, desc))) return null;
+      return m[0];
+    });
+  },
+  energy(doc, r) {
+    const pct = new RegExp(CONFIG.numberPattern + "\\s*%", "g");
+    const range = new RegExp(CONFIG.numberPattern + "\\s*%?\\s*(?:\\u2013|-|to)\\s*" + CONFIG.numberPattern + "\\s*%");
+    return eachSentence(doc, (s) => {
+      const t = norm(s.text);
+      if (!findTerm(t, r.systemTerms)) return null;
+      const ms = t.match(pct); if (!ms) return null;
+      if (range.test(t) || findTerm(t, r.variability)) return null;
+      return ms[0];
+    });
+  },
+  normative(doc, r, sc) {
+    return eachSentence(doc, (s, j, p) => {
+      const m = findTerm(s.text, r.terms); if (!m) return null;
+      if (r.skipNegated && negated(s.text, m)) return null;
+      if (findTerm(s.text, sc.matchTerms) || near(p, j, x => findTerm(x.text, sc.matchTerms))) return null;
+      return m;
+    });
+  },
+  testEvidence(doc, r, sc) {
+    const names = sc.testNames.concat(CONFIG.lists.testGeneric);
+    const W = CONFIG.thresholds.testEvidenceWindow;
+    return eachTestMention(doc, names, (p, m, j) => {
+      const win = p.sentences.slice(j, j + W + 1);
+      const ok = win.some(s => findTerm(s.text, CONFIG.lists.evidence)) && win.some(s => s.cited);
+      return ok ? null : { s: j, match: m };
+    });
+  },
+  genericLimit(doc, r) {
+    return eachSentence(doc, (s, j, p) => {
+      const m = findTerm(s.text, r.terms); if (!m) return null;
+      const next = p.sentences[j + 1];
+      const rest = s.text.slice(norm(s.text).toLowerCase().indexOf(m.toLowerCase()) + m.length);
+      if (findTerm(rest, r.consequence) || (next && r.nextStarts.some(w => norm(next.text).toLowerCase().startsWith(w)))) return null;
+      return m;
+    });
+  },
+  testLink(doc, r, sc) {
+    const names = sc.testNames.concat(CONFIG.lists.testGeneric), link = CONFIG.lists.linkGeneric.concat(sc.issueTerms);
+    return eachTestMention(doc, names, (p, m, j) => {
+      const t = p.sentences.slice(Math.max(0, j - 1), j + 3).map(s => s.text).join(" ").split(m).join(" ");
+      return findTerm(t, link) ? null : { s: j, match: m };
+    });
+  },
+  monitoringGaps(doc, r) {
+    let paras = body(doc).filter(p => p.section === "monitoring");
+    const scope = paras.length ? paras : body(doc);
+    if (!scope.length) return [];
+    const anchor = paras.length ? paras[0].i : null;
+    const hits = [];
+    const hasRetest = scope.some(p => p.sentences.some(s => findTerm(s.text, r.retest) && findTerm(s.text, r.time)));
+    const hasPresc = scope.some(p => findTerm(p.text, r.prescription));
+    if (!hasRetest) hits.push({ p: anchor, s: null, detected: r.detectedRetest });
+    if (!hasPresc) hits.push({ p: anchor, s: null, detected: r.detectedPrescription });
+    return hits;
+  },
+  prioritisation(doc, r) {
+    const hits = [];
+    const text = body(doc).map(p => p.text).join(" ");
+    if (wordCount(text) >= 300 && countTerms(text, CONFIG.lists.priority) < CONFIG.thresholds.priorityTermsMin)
+      hits.push({ p: null, s: null, detected: r.detectedDoc });
+    eachSentence(doc, (s) => {
+      const qs = CONFIG.lists.qualities.filter(q => termRx(q).test(s.text));
+      return qs.length >= CONFIG.thresholds.qualitiesListMin && !findTerm(s.text, CONFIG.lists.priority) ? qs.join(", ") : null;
+    }).forEach(h => hits.push({ ...h, detected: r.detectedList.replace("{match}", h.match) }));
+    return hits;
+  },
+  nearUnless(doc, r) {
+    return eachSentence(doc, (s, j, p) => {
+      const m = findTerm(s.text, r.terms); if (!m) return null;
+      if (findTerm(s.text, r.unless) || near(p, j, x => findTerm(x.text, r.unless))) return null;
+      return m;
+    });
+  },
+  coOccur(doc, r) {
+    return eachSentence(doc, (s, j, p) => {
+      const ms = r.groups.map(g => findTerm(s.text, g));
+      if (ms.some(x => !x)) return null;
+      if (findTerm(s.text, r.unless) || (!r.sentenceOnly && near(p, j, x => findTerm(x.text, r.unless)))) return null;
+      return ms.join(" ... ");
+    });
+  },
+  docUnless(doc, r) {
+    const ps = body(doc).filter(p => findTerm(p.text, r.terms));
+    if (!ps.length) return [];
+    if (ps.some(p => findTerm(p.text, r.unless))) return [];
+    const j = ps[0].sentences.findIndex(s => findTerm(s.text, r.terms));
+    return [{ p: ps[0].i, s: j < 0 ? null : j, match: "" }];
+  },
+  docRequire(doc, r) {
+    const text = body(doc).map(p => p.text).join(" ");
+    if (wordCount(text) < 150) return [];
+    return findTerm(text, r.terms) ? [] : [{ p: null, s: null, match: "" }];
+  }
+};
+function body(doc) { return doc.paras.filter(p => p.kind === "body"); }
+function near(p, j, f) { const a = p.sentences[j - 1], b = p.sentences[j + 1]; return (a && f(a)) || (b && f(b)); }
+function eachSentence(doc, f) {
+  const hits = [];
+  body(doc).forEach(p => p.sentences.forEach((s, j) => { const m = f(s, j, p); if (m) hits.push({ p: p.i, s: j, match: m }); }));
+  return hits;
+}
+function inSections(p, list) { return !list || !p.section || list.includes(p.section); }
+function negated(text, m) {
+  const t = norm(text), i = t.toLowerCase().indexOf(m.toLowerCase()); if (i < 0) return false;
+  const before = t.slice(0, i).trim().split(/\s+/).slice(-CONFIG.thresholds.negationWords).join(" ");
+  return /\b(not|never|rather than|instead of|without|no)\b|n\x27t\b/i.test(before);
+}
+// Calls f once for each distinct test named in a test-related paragraph, at the sentence where it first appears.
+function eachTestMention(doc, names, f) {
+  const hits = [];
+  body(doc).forEach(p => {
+    if (p.section && ["intro", "conclusion", "profile", "monitoring", "constraints"].includes(p.section)) return;
+    if (p.section !== "tests" && !findTerm(p.text, ["test*", "assess*", "protocol*"])) return;
+    const seen = new Set();
+    p.sentences.forEach((s, j) => {
+      // sentences that continue discussing a test already named are not new mentions
+      if (/^(It|Its|This|These|The test|However|Although)\b/.test(s.text) || /limitation/i.test(s.text)) return;
+      const m = findTerm(s.text, names); if (!m || seen.has(m.toLowerCase())) return;
+      seen.add(m.toLowerCase());
+      const h = f(p, m, j); if (h) hits.push({ p: p.i, ...h });
+    });
+  });
+  return hits;
+}
+
+function assessmentLevel(doc) {
+  const out = { items: [] };
+  const counted = doc.paras.filter(p => p.kind === "body");
+  out.words = counted.reduce((a, p) => a + p.words, 0);
+  out.headingWords = doc.paras.filter(p => p.kind === "heading").reduce((a, p) => a + p.words, 0);
+  out.refWords = doc.paras.filter(p => p.kind === "ref").reduce((a, p) => a + p.words, 0);
+  out.hasRefs = doc.paras.some(p => p.refsHeading);
+  const W = CONFIG.wordLimit;
+  out.wordStatus = out.words < W.min ? "under" : out.words > W.max ? "over" : "within";
+  if (out.wordStatus !== "within") out.items.push({ ruleId: "wordcount", category: "structure", criterion: null, severity: 3, p: null, s: null,
+    detected: out.words + " words counted, " + (out.wordStatus === "under" ? "below" : "above") + " the " + W.min + " to " + W.max + " range.",
+    why: "The brief sets 1750 words ± 10%. Check the module handbook for how the word limit is applied.",
+    ask: out.wordStatus === "under" ? "Which criterion is thinnest? Use the coverage bars to decide where words are needed." : "Which descriptive sentences could go so that test selection and monitoring keep their space?" });
+  // structure
+  const present = {};
+  doc.paras.forEach(p => { if (p.section) present[p.section] = (present[p.section] || 0) + (p.kind === "body" ? p.words : 0) + (p.kind === "heading" ? 1 : 0); });
+  out.structure = CONFIG.structureRequired.map(id => ({ id, label: CONFIG.sections.find(s => s.id === id).label, present: !!present[id] }));
+  out.structure.filter(s => !s.present).forEach(s => out.items.push({ ruleId: "structure-" + s.id, category: "structure", criterion: (CONFIG.sections.find(x => x.id === s.id) || {}).criterion, severity: 2, p: null, s: null,
+    detected: "No " + s.label.toLowerCase() + " section detected.",
+    why: "The suggested structure includes this section, and the marking criteria expect it. Detection uses headings and keywords, so a clear heading helps the marker as well as this tool.",
+    ask: "Is this section present? If so, does a heading make it obvious?" }));
+  // criterion coverage by words
+  const bySection = {};
+  counted.forEach(p => { bySection[p.section] = (bySection[p.section] || 0) + p.words; });
+  out.bySection = bySection;
+  out.criteria = CONFIG.criteria.map(c => {
+    const secs = CONFIG.sections.filter(s => s.criterion === c.id).map(s => s.id);
+    return { ...c, words: secs.reduce((a, s) => a + (bySection[s] || 0), 0) };
+  });
+  const dem = bySection.demands || 0, tm = (bySection.tests || 0) + (bySection.monitoring || 0);
+  if (dem > 150 && dem > CONFIG.thresholds.demandsToTestsRatio * Math.max(tm, 1)) out.items.push({ ruleId: "balance", category: "structure", criterion: "c3", severity: 3, p: null, s: null,
+    detected: "About " + dem + " words on demands but only " + tm + " on test selection and monitoring.",
+    why: "Description of the sport is only the first step. Criteria 3 and 4 reward decisions about testing and monitoring.",
+    ask: "Which demand descriptions could be shortened so each one leads straight to a test decision?" });
+  return out;
+}
+
+function analyse(raw, scenarioId) {
+  const sc = CONFIG.scenarios[scenarioId];
+  const doc = parseDoc(raw); classifySections(doc);
+  const items = [];
+  CONFIG.rules.forEach(r => {
+    if (r.enabled === false) return;
+    if (r.scenarios && !r.scenarios.includes(scenarioId)) return;
+    const fn = RULE_FNS[r.type]; if (!fn) return;
+    fn(doc, r, sc).forEach(h => items.push({
+      ruleId: r.id, category: r.category, criterion: r.criterion, severity: r.severity, p: h.p, s: h.s,
+      detected: h.detected || r.detected.replace("{match}", h.match || ""), why: r.why, ask: r.ask, match: h.match
+    }));
+  });
+  const assess = assessmentLevel(doc);
+  const all = assess.items.concat(items);
+  all.forEach((it, k) => it.n = k + 1);
+  return { doc, items: all, assess };
+}
+if (typeof module !== "undefined") module.exports = { CONFIG, analyse, parseDoc, splitSentences };
+/* ===== ENGINE END ===== */
+</script>
+
+<script>
+/* ===== APP (user interface) ===== */
+(function () {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const uid = () => Math.random().toString(36).slice(2, 9);
+  const announce = m => { const l = $("#live"); l.textContent = ""; setTimeout(() => l.textContent = m, 30); };
+
+  /* ---------- state ---------- */
+  function blankPlan() {
+    return { profile: { known: "", unknown: "", trainingAge: "", goals: "", timeline: "", soWhat: "" },
+      demands: [], demandsSoWhat: "", gapSoWhat: "", tests: [], testsSoWhat: "",
+      monitoring: { retestWeeks: "", interval: "", prescription: "", fatigue: "", soWhat: "" },
+      constraints: { answers: {}, other: "", soWhat: "" }, framing: { intro: "", conclusion: "" } };
+  }
+  function blankState() { return { v: 1, scenario: "S1", tab: "plan", step: 0, theme: null, plans: { S1: blankPlan(), S2: blankPlan(), S3: blankPlan() }, drafts: { S1: "", S2: "", S3: "" }, spot: {} }; }
+  let state = blankState();
+  try { const s = JSON.parse(localStorage.getItem(CONFIG.storageKey)); if (s && s.v === 1) state = Object.assign(blankState(), s); } catch (e) {}
+  ["S1", "S2", "S3"].forEach(k => { state.plans[k] = Object.assign(blankPlan(), state.plans[k] || {}); });
+  let saveT;
+  function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(CONFIG.storageKey, JSON.stringify(state)); } catch (e) {} }, 250); }
+  const plan = () => state.plans[state.scenario];
+  const scen = () => CONFIG.scenarios[state.scenario];
+
+  /* ---------- theme ---------- */
+  function applyTheme() {
+    const root = document.documentElement;
+    if (state.theme) root.setAttribute("data-theme", state.theme); else root.removeAttribute("data-theme");
+    const dark = state.theme ? state.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    const b = $("#themeBtn"); b.setAttribute("aria-pressed", String(dark)); b.textContent = dark ? "Light theme" : "Dark theme";
+  }
+  $("#themeBtn").addEventListener("click", () => {
+    const dark = document.documentElement.getAttribute("data-theme") ? state.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    state.theme = dark ? "light" : "dark"; applyTheme(); save();
+  });
+  applyTheme();
+  try { if (window.self !== window.top) { const a = $("#newTab"); a.href = location.href.split("#")[0]; a.hidden = false; } } catch (e) {}
+
+  $("#clearBtn").addEventListener("click", () => {
+    if (!confirm("Clear all your notes, drafts and scores from this browser? This cannot be undone.")) return;
+    try { localStorage.removeItem(CONFIG.storageKey); } catch (e) {}
+    const theme = state.theme; state = blankState(); state.theme = theme; renderAll(); announce("Your data has been cleared from this browser.");
+  });
+
+  /* ---------- scenario selector ---------- */
+  function renderScen() {
+    $("#scenOpts").innerHTML = Object.entries(CONFIG.scenarios).map(([k, s]) =>
+      `<label><input type="radio" name="scen" value="${k}" ${state.scenario === k ? "checked" : ""}><span><strong>${esc(s.short)}</strong><small>${esc(s.blurb)}</small></span></label>`).join("");
+  }
+  $("#scenOpts").addEventListener("change", e => { if (e.target.name === "scen") { state.scenario = e.target.value; save(); renderPanels(); announce(scen().short + " selected."); } });
+
+  /* ---------- tabs ---------- */
+  const tabs = $$("[role=tab]");
+  function selectTab(id, focus) {
+    tabs.forEach(t => { const on = t.id === "tab-" + id; t.setAttribute("aria-selected", on); t.tabIndex = on ? 0 : -1; $("#" + t.getAttribute("aria-controls")).hidden = !on; if (on && focus) t.focus(); });
+    state.tab = id; save();
+  }
+  tabs.forEach((t, i) => {
+    t.addEventListener("click", () => selectTab(t.id.slice(4)));
+    t.addEventListener("keydown", e => {
+      let k = null;
+      if (e.key === "ArrowRight") k = (i + 1) % tabs.length; else if (e.key === "ArrowLeft") k = (i - 1 + tabs.length) % tabs.length;
+      else if (e.key === "Home") k = 0; else if (e.key === "End") k = tabs.length - 1;
+      if (k !== null) { e.preventDefault(); selectTab(tabs[k].id.slice(4), true); }
+    });
+  });
+
+  /* ---------- binding helpers ---------- */
+  function getPath(o, path) { return path.split(".").reduce((a, k) => (a == null ? a : a[k]), o); }
+  function setPath(o, path, v) { const ks = path.split("."); const last = ks.pop(); const t = ks.reduce((a, k) => (a[k] = a[k] || {}), o); t[last] = v; }
+  function field(label, path, opts = {}) {
+    const id = "f-" + path.replace(/\W/g, "-") + (opts.suffix || "");
+    const v = opts.value != null ? opts.value : (getPath(plan(), path) || "");
+    const hint = opts.hint ? `<span class="hint">${esc(opts.hint)}</span>` : "";
+    const ctl = opts.input ? `<input type="text" id="${id}" data-bind="${path}" value="${esc(v)}">` : `<textarea id="${id}" data-bind="${path}" rows="${opts.rows || 3}">${esc(v)}</textarea>`;
+    return `<label class="f" for="${id}">${esc(label)}${hint}</label>${ctl}`;
+  }
+  function itemField(list, id, key, label, opts = {}) {
+    const obj = plan()[list].find(x => x.id === id) || {};
+    const fid = `f-${list}-${id}-${key.replace(/\W/g, "-")}`;
+    const v = getPath(obj, key) || "";
+    const hint = opts.hint ? `<span class="hint">${esc(opts.hint)}</span>` : "";
+    const ctl = opts.input ? `<input type="text" id="${fid}" data-list="${list}" data-id="${id}" data-key="${key}" value="${esc(v)}">` : `<textarea id="${fid}" data-list="${list}" data-id="${id}" data-key="${key}" rows="${opts.rows || 2}">${esc(v)}</textarea>`;
+    return `<label class="f" for="${fid}">${esc(label)}${hint}</label>${ctl}`;
+  }
+  function soWhat(path, step) { return step.soWhat ? `<div class="mini sowhat">${field(step.soWhat, path, { hint: "One or two lines. This is the decision that goes into your report." })}</div>` : ""; }
+
+  /* ---------- planner checks (shared by steps and coverage) ---------- */
+  const filled = s => !!(s && String(s).trim());
+  function demandLabel(d, i) { return "Demand " + (i + 1) + (filled(d.text) ? ". " + d.text.trim().slice(0, 60) : ""); }
+  function mismatches(d) { return CONFIG.applicability.filter(a => d.app && (d.app[a.id] === "no" || d.app[a.id] === "unreported")); }
+  function demandCovered(d) { return plan().tests.some(t => t.demands.includes(d.id)) || (d.decision === "notest" && filled(d.notestReason)); }
+  function parseWeeks(s) { return String(s || "").split(/[^0-9]+/).filter(Boolean).map(Number); }
+  function timelineIssues() {
+    const tl = scen().timeline, p = plan(), out = [];
+    if (!tl.weeks) return out;
+    const ws = parseWeeks(p.monitoring.retestWeeks);
+    ws.forEach(w => {
+      if (w < 1 || w > tl.weeks) out.push(`Week ${w} is outside the ${tl.weeks}-week window.`);
+      const ev = tl.events.find(e => e.week === w);
+      if (ev) out.push(`Week ${w} clashes with the ${ev.label.toLowerCase()}. Testing then adds fatigue or competes with the event itself.`);
+      tl.events.forEach(e => { if (w < e.week && w >= e.week - tl.taper) out.push(`Week ${w} falls in the taper before the ${e.label.toLowerCase()} (week ${e.week}). Is a test worth the fatigue there?`); });
+    });
+    if (ws.length && !ws.some(w => w < tl.events[0].week)) out.push(`No re-test before the ${tl.events[0].label.toLowerCase()} (week ${tl.events[0].week}). Is that deliberate?`);
+    return out;
+  }
+  function coverage() {
+    const p = plan(), sc = scen();
+    const st = (n, total, full) => n === 0 ? "missing" : n >= full ? "covered" : "partly";
+    const res = {};
+    const prof = ["known", "unknown", "trainingAge", "goals", "timeline"].filter(k => filled(p.profile[k])).length;
+    res.c1 = { status: st(prof, 5, 4), note: `${prof} of 5 profile fields completed.` };
+    const good = p.demands.filter(d => filled(d.text) && filled(d.source));
+    const unjust = p.demands.filter(d => mismatches(d).length && !filled(d.justify)).length;
+    const types = new Set(good.map(d => d.type)).size;
+    res.c2 = { status: good.length === 0 ? "missing" : (good.length >= 3 && types >= 2 && unjust === 0 ? "covered" : "partly"),
+      note: `${good.length} demand(s) with a source, ${types} type(s)${unjust ? `, ${unjust} population mismatch(es) without justification` : ""}.` };
+    const orphans = p.tests.filter(t => !t.demands.length).length;
+    const complete = p.tests.filter(t => ["reliability", "validity", "population", "limitation"].every(k => filled(t[k]))).length;
+    const uncovered = p.demands.filter(d => !demandCovered(d)).length;
+    res.c3 = { status: p.tests.length === 0 ? "missing" : (p.tests.length >= 2 && !orphans && complete === p.tests.length && !uncovered ? "covered" : "partly"),
+      note: `${p.tests.length} test(s), ${complete} fully evidenced, ${orphans} not linked to a demand, ${uncovered} demand(s) with no test or decision.` };
+    const mon = [filled(p.monitoring.retestWeeks) || filled(p.monitoring.interval), filled(p.monitoring.prescription), filled(p.monitoring.fatigue)].filter(Boolean).length;
+    const tli = timelineIssues().length;
+    res.c4 = { status: mon === 0 ? "missing" : (mon === 3 && !tli ? "covered" : "partly"), note: `${mon} of 3 monitoring elements${tli ? `, ${tli} timeline warning(s)` : ""}.` };
+    const n = sc.constraints.length, a = sc.constraints.filter((_, i) => filled(p.constraints.answers[i])).length;
+    res.c5 = { status: st(a, n, n - 1), note: `${a} of ${n} constraint prompts answered.` };
+    return res;
+  }
+  const statusText = { covered: "✓ Covered", partly: "◐ Partly covered", missing: "✗ Missing" };
+
+  /* ---------- planner rendering ---------- */
+  function renderPlanner() {
+    const steps = CONFIG.planner.steps, i = Math.min(state.step, steps.length - 1);
+    const cov = coverage();
+    const nav = steps.map((s, k) => {
+      const c = s.criterion ? cov[s.criterion] : null;
+      return `<button type="button" data-step="${k}" ${k === i ? 'aria-current="step"' : ""}><span class="st">Step ${k + 1}${c ? " · " + statusText[c.status].split(" ")[0] : ""}</span>${esc(s.title)}</button>`;
+    }).join("");
+    const sc = scen();
+    $("#panel-plan").innerHTML = `
+      <div class="card"><div class="band teal"><div><p class="pill">Planner</p><h2>Build your needs analysis as decisions</h2></div></div>
+      <div class="body">
+        <p class="tight">Work through the five marking criteria in order. Every step ends with a "so what" question, because each part of a needs analysis should lead to a decision about what to test, why, and what happens next. Your notes are yours. The export contains only what you write here.</p>
+        <nav aria-label="Planner steps"><div class="stepper" id="stepper">${nav}</div></nav>
+        <div id="stepBody"></div>
+        <div class="row" style="margin-top:1rem">
+          <div><button type="button" class="btn ghost" id="prevStep" ${i === 0 ? "disabled" : ""}>← Previous step</button></div>
+          <div style="text-align:right"><button type="button" class="btn teal" id="nextStep" ${i === steps.length - 1 ? "disabled" : ""}>Next step →</button></div>
+        </div>
+      </div></div>`;
+    renderStep(i);
+  }
+  function stepHead(step, k, extra) {
+    const c = step.criterion ? CONFIG.criteria.find(x => x.id === step.criterion) : null;
+    return `<h3 id="step-h" tabindex="-1" style="margin:.2rem 0 .3rem;color:var(--navy-t)">Step ${k + 1}. ${esc(step.title)}</h3>
+      ${c ? `<p class="muted tight">Marking criterion ${c.id.slice(1)}, ${esc(c.label)} (${c.lo})</p>` : ""}${extra || ""}`;
+  }
+  function trapsBox() {
+    return `<details class="mini plum"><summary><strong>Evidence traps for ${esc(scen().short)}</strong></summary><ul>${scen().traps.map(t => `<li>${esc(t)}</li>`).join("")}</ul></details>`;
+  }
+  function renderStep(k) {
+    const step = CONFIG.planner.steps[k], p = plan(), sc = scen(), el = $("#stepBody");
+    let h = "";
+    if (step.id === "profile") {
+      h = stepHead(step, k) + `
+        <div class="mini blue"><h4>From the brief</h4><dl class="facts">${sc.facts.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl></div>
+        <div class="row"><div>${field("What else is known about this athlete?", "profile.known", { hint: "Facts you can state or reasonably infer from the brief." })}</div>
+        <div>${field("What is unknown and would change your plan?", "profile.unknown", { hint: sc.unknownHint })}</div></div>
+        <div class="row"><div>${field("Training age", "profile.trainingAge", { hint: "Overall, and in the specific qualities you may test. Say if you are assuming." })}</div>
+        <div>${field("Goals", "profile.goals", { hint: "Athlete and coach goals, in their order of importance." })}</div>
+        <div>${field("Timeline", "profile.timeline", { hint: sc.timeline.note })}</div></div>
+        ${soWhat("profile.soWhat", step)}`;
+    } else if (step.id === "demands") {
+      h = stepHead(step, k, `<p class="tight">Add each demand with its source. Check whether the source population matches your athlete. A mismatch is allowed, but you must justify using that source.</p>`) + trapsBox() +
+        `<p class="muted tight">Your athlete: ${CONFIG.applicability.map(a => `${a.label.toLowerCase()} ${esc(sc.athlete[a.id])}`).join("; ")}.</p>
+        <div id="demandList">${p.demands.map((d, i) => demandCard(d, i)).join("") || `<p class="flag">No demands yet. Add the first one below.</p>`}</div>
+        <button type="button" class="btn blue" id="addDemand">+ Add a demand</button>
+        ${soWhat("demandsSoWhat", step)}`;
+    } else if (step.id === "gap") {
+      h = stepHead(step, k, `<p class="tight">For each demand, separate what you know about this athlete from what is uncertain. Then ask what you would need to measure to find out. If you decide not to test a demand, say why.</p>`) +
+        (p.demands.length ? p.demands.map((d, i) => `
+          <div class="item"><h4>${esc(demandLabel(d, i))}</h4>
+          <div class="row"><div>${itemField("demands", d.id, "known", "What is known about this athlete?")}</div>
+          <div>${itemField("demands", d.id, "uncertain", "What is uncertain?")}</div></div>
+          ${itemField("demands", d.id, "measure", "What would you need to measure to find out?")}
+          <fieldset style="border:0;padding:0;margin:.6rem 0 0"><legend class="f" style="margin:0">Decision</legend>
+            <div class="checks">
+              <label><input type="radio" name="dec-${d.id}" data-list="demands" data-id="${d.id}" data-key="decision" value="test" ${d.decision === "test" ? "checked" : ""}> Test this (link a test in step 4)</label>
+              <label><input type="radio" name="dec-${d.id}" data-list="demands" data-id="${d.id}" data-key="decision" value="notest" ${d.decision === "notest" ? "checked" : ""}> Decide not to test</label>
+            </div></fieldset>
+          <div data-notest="${d.id}" ${d.decision === "notest" ? "" : "hidden"}>${itemField("demands", d.id, "notestReason", "Why not test it?", { hint: "For example existing data, low priority, burden or risk." })}</div>
+          <div data-flags="gap-${d.id}"></div></div>`).join("") : `<p class="flag">Add demands in step 2 first.</p>`) +
+        soWhat("gapSoWhat", step);
+    } else if (step.id === "tests") {
+      h = stepHead(step, k, `<p class="tight">Every test must link to at least one demand. Record its evidence and one limitation that matters for this athlete specifically.</p>`) +
+        `<div data-flags="untested"></div>
+        <div id="testList">${p.tests.map((t, i) => testCard(t, i)).join("") || `<p class="flag">No tests yet. Add the first one below.</p>`}</div>
+        <button type="button" class="btn blue" id="addTest">+ Add a test</button>
+        ${soWhat("testsSoWhat", step)}`;
+    } else if (step.id === "monitoring") {
+      const tl = sc.timeline;
+      h = stepHead(step, k, `<p class="tight">Plan re-tests against the competition timeline, say how results will change prescription, and how you will track fatigue or adaptation between tests.</p>`) +
+        `<div class="mini gold"><h4>Timeline</h4><p class="tight">${esc(tl.note)}</p>${tl.weeks ? `<div id="tlBar"></div><p class="muted tight" id="tlText"></p>` : ""}</div>
+        ${tl.weeks ? field("Re-test weeks", "monitoring.retestWeeks", { input: true, hint: `Week numbers separated by commas, for example 1, 5. Events: ${tl.events.map(e => `week ${e.week} ${e.label.toLowerCase()}`).join(", ")}.` }) : ""}
+        <div data-flags="timeline"></div>
+        ${field(tl.weeks ? "Re-test rationale" : "Re-test interval and rationale", "monitoring.interval", { hint: "Why these points? What change must the test detect, and is the interval long enough for it to occur?" })}
+        ${field("How will results change prescription?", "monitoring.prescription", { hint: "Write if-then rules. For example, if X has not changed by more than the typical error, then..." })}
+        ${field("How will you track fatigue or adaptation between tests?", "monitoring.fatigue", { hint: "Low-burden measures, how often, and what would trigger a change." })}
+        ${soWhat("monitoring.soWhat", step)}`;
+    } else if (step.id === "constraints") {
+      h = stepHead(step, k, `<p class="tight">Constraints decide what is possible. Answer the prompts for ${esc(sc.short)}.</p>`) +
+        sc.constraints.map((c, ci) => field(c, "constraints.answers." + ci)).join("") +
+        field("Any other constraint or individual need", "constraints.other") +
+        soWhat("constraints.soWhat", step);
+    } else if (step.id === "framing") {
+      h = stepHead(step, k, `<p class="tight">Your introduction should explain why a needs analysis matters and how it informs test selection. Your conclusion should synthesise and set out next steps, including how test data inform training prescription.</p>`) +
+        field("Introduction notes", "framing.intro", { rows: 4, hint: "What is the purpose, and what is this athlete's central question?" }) +
+        field("Conclusion and next steps notes", "framing.conclusion", { rows: 4, hint: "Which decisions does your plan lead to, and what happens after the first round of testing?" });
+    } else if (step.id === "coverage") {
+      h = stepHead(step, k) + `<div id="covBox"></div>
+        <div class="mini blue"><h4>Word budget (a suggestion for planning only)</h4>
+        <p class="tight muted">This is not a requirement. It shows one way to fit 1750 words so that test selection and monitoring get enough space.</p>
+        <div class="tablewrap"><table><caption class="sr-only">Suggested word budget</caption><thead><tr><th scope="col">Section</th><th scope="col">Suggested words</th></tr></thead><tbody>
+        ${CONFIG.wordBudget.map(b => `<tr><th scope="row" style="background:var(--card);color:var(--text)">${esc(b.label)}</th><td>${b.words}</td></tr>`).join("")}
+        <tr><th scope="row" style="background:var(--card);color:var(--text)">Total</th><td>${CONFIG.wordBudget.reduce((a, b) => a + b.words, 0)}</td></tr></tbody></table></div></div>
+        <div class="mini teal"><h4>Export your plan</h4><p class="tight">The outline contains only your own notes under headings. It is a plan to write from, not text to submit.</p>
+        <div class="toolbar"><button type="button" class="btn" id="expCopy">Copy outline</button><button type="button" class="btn teal" id="expTxt">Download .txt</button><button type="button" class="btn blue" id="expDocx">Download .docx</button></div>
+        <p class="muted tight" style="margin-top:.5rem">If a download does not start inside Canvas, use "Open in a new tab" at the top.</p></div>`;
+    }
+    el.innerHTML = h;
+    updateFlags();
+  }
+  function demandCard(d, i) {
+    const types = CONFIG.demandTypes.map(t => `<option value="${t.id}" ${d.type === t.id ? "selected" : ""}>${esc(t.label)}</option>`).join("");
+    const app = CONFIG.applicability.map(a => {
+      const id = `app-${d.id}-${a.id}`, v = (d.app || {})[a.id] || "";
+      return `<div><label class="f" for="${id}" style="margin-top:.2rem">${esc(a.label)}<span class="hint">Athlete: ${esc(scen().athlete[a.id])}</span></label>
+        <select id="${id}" data-list="demands" data-id="${d.id}" data-key="app.${a.id}"><option value="" ${!v ? "selected" : ""}>Not checked</option><option value="yes" ${v === "yes" ? "selected" : ""}>Matches</option><option value="no" ${v === "no" ? "selected" : ""}>Does not match</option><option value="unreported" ${v === "unreported" ? "selected" : ""}>Not reported</option></select></div>`;
+    }).join("");
+    return `<div class="item" data-item="${d.id}"><div class="item-head"><h4 data-demand-label="${d.id}">${esc(demandLabel(d, i))}</h4>
+      <button type="button" class="btn ghost small" data-del-demand="${d.id}" aria-label="Remove ${esc(demandLabel(d, i))}">Remove</button></div>
+      <div class="row"><div style="flex:0 1 220px"><label class="f" for="type-${d.id}">Type</label><select id="type-${d.id}" data-list="demands" data-id="${d.id}" data-key="type">${types}</select></div>
+      <div>${itemField("demands", d.id, "text", "Demand", { input: true, hint: "For example repeated high-intensity efforts late in matches." })}</div></div>
+      ${itemField("demands", d.id, "source", "Source", { input: true, hint: "Author, year, and the population studied. Use [REF: ...] if you have not found it yet." })}
+      <fieldset style="border:0;padding:0;margin:.7rem 0 0"><legend class="f" style="margin:0 0 .3rem">Applicability check. Does the source population match your athlete?</legend><div class="appgrid">${app}</div></fieldset>
+      <div data-flags="dem-${d.id}"></div>
+      <div data-justify="${d.id}">${itemField("demands", d.id, "justify", "Justification for using this source", { hint: "Why use it despite the mismatch, and how will you interpret it cautiously?" })}</div>
+    </div>`;
+  }
+  function testCard(t, i) {
+    const p = plan();
+    const links = p.demands.length ? p.demands.map((d, k) => `<label><input type="checkbox" data-link="${t.id}" value="${d.id}" ${t.demands.includes(d.id) ? "checked" : ""}> <span data-demand-label="${d.id}">${esc(demandLabel(d, k))}</span></label>`).join("") : `<p class="muted tight">Add demands in step 2 to link them here.</p>`;
+    return `<div class="item" data-item="${t.id}"><div class="item-head"><h4>Test ${i + 1}${filled(t.name) ? ". " + esc(t.name) : ""}</h4>
+      <button type="button" class="btn ghost small" data-del-test="${t.id}" aria-label="Remove test ${i + 1}">Remove</button></div>
+      ${itemField("tests", t.id, "name", "Test name and protocol", { input: true })}
+      <fieldset class="checks" style="border:0;padding:0;margin:.6rem 0 0"><legend class="f" style="margin:0">Linked demands (at least one)</legend>${links}</fieldset>
+      <div class="row"><div>${itemField("tests", t.id, "reliability", "Reliability evidence", { hint: "Statistic (ICC, CV, TE, SEM) and source. Use [REF: ...] placeholders until found." })}</div>
+      <div>${itemField("tests", t.id, "validity", "Validity evidence", { hint: "What is it valid for, against what criterion, and source." })}</div></div>
+      <div class="row"><div>${itemField("tests", t.id, "population", "Population it was validated in", { hint: "Sex, level, sport or event. Does it match?" })}</div>
+      <div>${itemField("tests", t.id, "burden", "Practical burden", { hint: "Time, equipment, fatigue, recovery needed, cost." })}</div></div>
+      ${itemField("tests", t.id, "limitation", "One limitation specific to this athlete", { hint: "Not \"small sample\". What does the limitation mean for this athlete's result?" })}
+      <div data-flags="test-${t.id}"></div></div>`;
+  }
+  function flagHtml(list) { return list.map(f => `<p class="flag ${f.cls || ""}"><strong>${esc(f.label)}</strong> ${esc(f.text)}</p>`).join(""); }
+  function updateFlags() {
+    const p = plan();
+    p.demands.forEach(d => {
+      const box = $(`[data-flags="dem-${d.id}"]`), jb = $(`[data-justify="${d.id}"]`);
+      if (box) {
+        const mm = mismatches(d), fl = [];
+        if (!filled(d.source)) fl.push({ label: "No source.", text: "Every demand needs a peer-reviewed source." });
+        const unchecked = CONFIG.applicability.filter(a => !(d.app || {})[a.id]);
+        if (unchecked.length) fl.push({ label: "Applicability not checked:", text: unchecked.map(a => a.label.toLowerCase()).join(", ") + "." });
+        if (mm.length) fl.push({ cls: filled(d.justify) ? "" : "bad", label: "⚠ Population mismatch:", text: mm.map(a => a.label.toLowerCase() + (d.app[a.id] === "unreported" ? " (not reported)" : "")).join(", ") + (filled(d.justify) ? ". Justification recorded." : ". Write a justification below.") });
+        else if (!unchecked.length) fl.push({ cls: "ok", label: "✓ Population matches", text: "on every dimension you checked." });
+        box.innerHTML = flagHtml(fl);
+        if (jb) jb.hidden = !mm.length;
+      }
+      const g = $(`[data-flags="gap-${d.id}"]`);
+      if (g) g.innerHTML = demandCovered(d) ? flagHtml([{ cls: "ok", label: "✓ Decided.", text: plan().tests.some(t => t.demands.includes(d.id)) ? "A test is linked to this demand." : "Recorded as not tested, with a reason." }])
+        : flagHtml([{ cls: "bad", label: "⚠ No test and no decision.", text: d.decision === "notest" ? "Give a reason for not testing." : "Link a test in step 4 or decide not to test." }]);
+    });
+    const un = $(`[data-flags="untested"]`);
+    if (un) { const u = p.demands.filter(d => !demandCovered(d)); un.innerHTML = u.length ? flagHtml([{ cls: "bad", label: "⚠ Demands with no test or decision:", text: u.map(d => demandLabel(d, p.demands.indexOf(d))).join("; ") + "." }]) : ""; }
+    p.tests.forEach(t => {
+      const box = $(`[data-flags="test-${t.id}"]`); if (!box) return;
+      const fl = [];
+      if (!t.demands.length) fl.push({ cls: "bad", label: "⚠ Orphan test.", text: "Link it to at least one demand, or remove it." });
+      const miss = [["reliability", "reliability"], ["validity", "validity"], ["population", "validation population"], ["limitation", "athlete-specific limitation"]].filter(([k]) => !filled(t[k])).map(x => x[1]);
+      if (miss.length) fl.push({ label: "Missing:", text: miss.join(", ") + "." });
+      const gl = CONFIG.rules.find(r => r.id === "genericLimit");
+      if (filled(t.limitation) && findTerm(t.limitation, gl.terms) && !findTerm(t.limitation, gl.consequence)) fl.push({ label: "Generic limitation?", text: "Say what it means for this athlete's result." });
+      if (!fl.length) fl.push({ cls: "ok", label: "✓ Linked and evidenced.", text: "" });
+      box.innerHTML = flagHtml(fl);
+    });
+    const tlb = $("#tlBar");
+    if (tlb) {
+      const tl = scen().timeline, ws = parseWeeks(p.monitoring.retestWeeks);
+      tlb.innerHTML = `<div class="timeline" aria-hidden="true">${Array.from({ length: tl.weeks }, (_, k) => k + 1).map(w => { const ev = tl.events.find(e => e.week === w); const rt = ws.includes(w); return `<div class="wk ${ev ? "ev" : ""} ${rt ? "rt" : ""}">W${w}${ev ? `<span class="tag">${esc(ev.label)}</span>` : ""}${rt ? `<span class="tag">Re-test</span>` : ""}</div>`; }).join("")}</div>`;
+      $("#tlText").textContent = "Events: " + tl.events.map(e => `week ${e.week}, ${e.label}`).join("; ") + ". Re-tests: " + (ws.length ? ws.map(w => "week " + w).join(", ") : "none entered") + ".";
+    }
+    const tf = $(`[data-flags="timeline"]`);
+    if (tf) tf.innerHTML = flagHtml(timelineIssues().map(t => ({ label: "Timeline:", text: t })));
+    const cb = $("#covBox");
+    if (cb) {
+      const cov = coverage();
+      cb.innerHTML = `<div class="tablewrap"><table><caption class="sr-only">Coverage of the five marking criteria in your plan</caption><thead><tr><th scope="col">Marking criterion</th><th scope="col">Status</th><th scope="col">Detail</th></tr></thead><tbody>
+        ${CONFIG.criteria.map(c => `<tr><th scope="row" style="background:var(--card);color:var(--text)">${c.id.slice(1)}. ${esc(c.label)}</th><td><span class="status ${cov[c.id].status}">${statusText[cov[c.id].status]}</span></td><td>${esc(cov[c.id].note)}</td></tr>`).join("")}
+        </tbody></table></div><p class="muted tight" style="margin-top:.4rem">Status reflects whether you have filled in the planner, not the quality of your thinking.</p>`;
+    }
+    // refresh stepper status labels
+    const cov = coverage();
+    $$("#stepper [data-step]").forEach(b => { const s = CONFIG.planner.steps[+b.dataset.step]; if (s.criterion) b.querySelector(".st").textContent = `Step ${+b.dataset.step + 1} · ${statusText[cov[s.criterion].status].split(" ")[0]}`; });
+  }
+
+  // planner events (delegated)
+  const pp = $("#panel-plan");
+  pp.addEventListener("input", e => {
+    const t = e.target, p = plan();
+    if (t.dataset.bind) { setPath(p, t.dataset.bind, t.value); }
+    else if (t.dataset.list) {
+      const o = p[t.dataset.list].find(x => x.id === t.dataset.id); if (!o) return;
+      if (t.type === "radio") { if (!t.checked) return; }
+      setPath(o, t.dataset.key, t.value);
+      if (t.dataset.key === "text") $$(`[data-demand-label="${o.id}"]`).forEach(l => l.textContent = demandLabel(o, p.demands.indexOf(o)));
+      if (t.dataset.key === "decision") { const nb = $(`[data-notest="${o.id}"]`); if (nb) nb.hidden = t.value !== "notest"; }
+    } else if (t.dataset.link) {
+      const o = p.tests.find(x => x.id === t.dataset.link);
+      o.demands = t.checked ? Array.from(new Set(o.demands.concat(t.value))) : o.demands.filter(x => x !== t.value);
+    } else return;
+    save(); updateFlags();
+  });
+  pp.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    const p = plan();
+    if (b.dataset.step != null) { state.step = +b.dataset.step; save(); renderPlanner(); $("#step-h").focus(); return; }
+    if (b.id === "prevStep" || b.id === "nextStep") { state.step += b.id === "nextStep" ? 1 : -1; save(); renderPlanner(); $("#step-h").focus(); return; }
+    if (b.id === "addDemand") { const d = { id: uid(), type: "energy", text: "", source: "", app: {}, justify: "", known: "", uncertain: "", measure: "", decision: "", notestReason: "" }; p.demands.push(d); save(); renderStep(state.step); const f = $(`#f-demands-${d.id}-text`); if (f) f.focus(); announce("Demand added."); return; }
+    if (b.id === "addTest") { const t = { id: uid(), name: "", demands: [], reliability: "", validity: "", population: "", burden: "", limitation: "" }; p.tests.push(t); save(); renderStep(state.step); const f = $(`#f-tests-${t.id}-name`); if (f) f.focus(); announce("Test added."); return; }
+    if (b.dataset.delDemand) { if (!confirm("Remove this demand?")) return; p.demands = p.demands.filter(d => d.id !== b.dataset.delDemand); p.tests.forEach(t => t.demands = t.demands.filter(x => x !== b.dataset.delDemand)); save(); renderStep(state.step); announce("Demand removed."); return; }
+    if (b.dataset.delTest) { if (!confirm("Remove this test?")) return; p.tests = p.tests.filter(t => t.id !== b.dataset.delTest); save(); renderStep(state.step); announce("Test removed."); return; }
+    if (b.id === "expCopy") { copyText(outlineText()); return; }
+    if (b.id === "expTxt") { download(new Blob([outlineText()], { type: "text/plain;charset=utf-8" }), "needs-analysis-plan.txt"); return; }
+    if (b.id === "expDocx") { download(makeDocx(outline()), "needs-analysis-plan.docx"); return; }
+  });
+  // selects, radios and checkboxes fire change; route them through the input handler
+  pp.addEventListener("change", e => { const t = e.target; if (t.tagName === "SELECT" || t.type === "radio" || t.type === "checkbox") t.dispatchEvent(new Event("input", { bubbles: true })); });
+
+  /* ---------- export ---------- */
+  function outline() {
+    const p = plan(), sc = scen(), L = [];
+    const H1 = t => L.push({ lv: 1, t }), H2 = t => L.push({ lv: 2, t }), B = (label, v) => { if (filled(v)) L.push({ lv: 0, t: (label ? label + ": " : "") + String(v).trim() }); };
+    L.push({ lv: 1, t: "SESH54 needs analysis plan, " + sc.short });
+    L.push({ lv: 0, t: "My planning notes, exported " + new Date().toLocaleDateString("en-GB") + ". This is an outline to write from, not text for submission." });
+    H1("1. Introduction"); B("Notes", p.framing.intro);
+    H1("2. Sport and athlete profile");
+    sc.facts.forEach(([a, b]) => B("Brief, " + a.toLowerCase(), b));
+    B("Also known", p.profile.known); B("Unknown", p.profile.unknown); B("Training age", p.profile.trainingAge); B("Goals", p.profile.goals); B("Timeline", p.profile.timeline); B("So what", p.profile.soWhat);
+    H1("3. Performance demands");
+    p.demands.forEach((d, i) => {
+      H2(demandLabel(d, i) + " [" + (CONFIG.demandTypes.find(t => t.id === d.type) || {}).label + "]");
+      B("Source", d.source);
+      const ap = CONFIG.applicability.map(a => a.label + " " + ({ yes: "matches", no: "does not match", unreported: "not reported" }[(d.app || {})[a.id]] || "not checked")).join("; ");
+      B("Applicability", ap); B("Justification", d.justify);
+      B("Known", d.known); B("Uncertain", d.uncertain); B("To measure", d.measure);
+      const linked = p.tests.filter(t => t.demands.includes(d.id)).map(t => t.name || "unnamed test");
+      B("Decision", linked.length ? "Test with " + linked.join(", ") : d.decision === "notest" ? "Not tested. " + (d.notestReason || "") : "Not decided");
+    });
+    B("So what (demands)", p.demandsSoWhat); B("So what (gap)", p.gapSoWhat);
+    H1("4. Test selection and justification");
+    p.tests.forEach((t, i) => {
+      H2("Test " + (i + 1) + (filled(t.name) ? ", " + t.name : ""));
+      B("Linked demands", t.demands.map(id => { const k = p.demands.findIndex(d => d.id === id); return k < 0 ? null : demandLabel(p.demands[k], k); }).filter(Boolean).join("; ") || "none");
+      B("Reliability", t.reliability); B("Validity", t.validity); B("Validated in", t.population); B("Burden", t.burden); B("Limitation for this athlete", t.limitation);
+    });
+    B("So what", p.testsSoWhat);
+    H1("5. Monitoring and progression");
+    B("Re-test weeks", p.monitoring.retestWeeks); B("Re-test rationale", p.monitoring.interval); B("Prescription rules", p.monitoring.prescription); B("Fatigue and adaptation tracking", p.monitoring.fatigue); B("So what", p.monitoring.soWhat);
+    H1("6. Constraints and individualisation");
+    sc.constraints.forEach((c, i) => B(c.split(".")[0], p.constraints.answers[i])); B("Other", p.constraints.other); B("So what", p.constraints.soWhat);
+    H1("7. Conclusion and next steps"); B("Notes", p.framing.conclusion);
+    return L;
+  }
+  function outlineText() { return outline().map(l => l.lv === 1 ? "\n" + l.t.toUpperCase() : l.lv === 2 ? "\n  " + l.t : "  - " + l.t).join("\n").trim() + "\n"; }
+  function copyText(t) {
+    const done = () => announce("Outline copied to the clipboard.");
+    const fallback = () => { const ta = document.createElement("textarea"); ta.value = t; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); done(); } catch (e) { announce("Copy failed. Use the .txt download instead."); } ta.remove(); };
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(done, fallback); else fallback();
+  }
+  function download(blob, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); announce(name + " downloaded."); }
+  // Minimal .docx writer (stored zip, no compression library needed).
+  const CRC = (() => { const t = []; for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function crc32(b) { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+  function zip(files) {
+    const enc = new TextEncoder(), chunks = [], central = []; let off = 0;
+    files.forEach(f => {
+      const name = enc.encode(f.name), data = enc.encode(f.data), crc = crc32(data);
+      const h = new DataView(new ArrayBuffer(30));
+      h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true);
+      h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, name.length, true);
+      chunks.push(new Uint8Array(h.buffer), name, data);
+      const c = new DataView(new ArrayBuffer(46));
+      c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true);
+      c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, name.length, true); c.setUint32(42, off, true);
+      central.push(new Uint8Array(c.buffer), name);
+      off += 30 + name.length + data.length;
+    });
+    const csize = central.reduce((a, b) => a + b.length, 0);
+    const e = new DataView(new ArrayBuffer(22));
+    e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, csize, true); e.setUint32(16, off, true);
+    return new Blob(chunks.concat(central, [new Uint8Array(e.buffer)]), { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  }
+  function makeDocx(lines) {
+    const x = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "");
+    const W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+    const body = lines.map(l => `<w:p>${l.lv ? `<w:pPr><w:pStyle w:val="Heading${l.lv}"/></w:pPr>` : `<w:pPr><w:pStyle w:val="ListBullet"/></w:pPr>`}<w:r><w:t xml:space="preserve">${x(l.lv ? l.t : "• " + l.t)}</w:t></w:r></w:p>`).join("");
+    const st = (id, name, sz, extra) => `<w:style w:type="paragraph" w:styleId="${id}"><w:name w:val="${name}"/><w:basedOn w:val="Normal"/><w:pPr><w:keepNext/><w:spacing w:before="240" w:after="80"/>${extra}</w:pPr><w:rPr><w:b/><w:color w:val="003D50"/><w:sz w:val="${sz}"/></w:rPr></w:style>`;
+    return zip([
+      { name: "[Content_Types].xml", data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>' },
+      { name: "_rels/.rels", data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>' },
+      { name: "word/_rels/document.xml.rels", data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' },
+      { name: "word/styles.xml", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles ${W}><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="22"/><w:lang w:val="en-GB"/></w:rPr></w:rPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:pPr><w:spacing w:after="80" w:line="300" w:lineRule="auto"/></w:pPr></w:style>${st("Heading1", "heading 1", 30, '<w:outlineLvl w:val="0"/>')}${st("Heading2", "heading 2", 24, '<w:outlineLvl w:val="1"/>')}<w:style w:type="paragraph" w:styleId="ListBullet"><w:name w:val="List Bullet"/><w:basedOn w:val="Normal"/><w:pPr><w:ind w:left="360"/></w:pPr></w:style></w:styles>` },
+      { name: "word/document.xml", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${W}><w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="709" w:footer="709" w:gutter="0"/></w:sectPr></w:body></w:document>` }
+    ]);
+  }
+
+  /* ---------- writing check ---------- */
+  let lastResult = null;
+  function renderCheck() {
+    const sc = scen();
+    $("#panel-check").innerHTML = `
+      <div class="card"><div class="band blue"><div><p class="pill">Writing check</p><h2>Check your draft for critical writing patterns</h2></div></div>
+      <div class="body">
+        <div class="mini plum"><h3>Read this first</h3><p class="tight">This tool detects patterns in your own writing using fixed rules. It will produce false positives and it will miss problems. It never rewrites your text and it does not give a mark. It does not replace tutor feedback, the exemplar, or Studiosity. Treat every flag as a question to ask of your draft.</p></div>
+        <label class="f" for="draft">Your draft<span class="hint">Paste your text, or upload a .docx or .txt file. Put each heading on its own line. Text after a "References" heading is excluded from the word count and the checks.</span></label>
+        <textarea id="draft" class="big">${esc(state.drafts[state.scenario] || "")}</textarea>
+        <div class="toolbar">
+          <button type="button" class="btn blue" id="runCheck">Check my writing</button>
+          <label class="btn ghost" for="fileIn" style="cursor:pointer">Upload .docx or .txt</label>
+          <input type="file" id="fileIn" accept=".docx,.txt,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="sr-only">
+          <button type="button" class="btn ghost" id="clearDraft">Clear text</button>
+        </div>
+        <p class="muted tight" id="fileMsg" role="status"></p>
+        <details class="mini"><summary><strong>Evidence traps for ${esc(sc.short)}</strong></summary><ul>${sc.traps.map(t => `<li>${esc(t)}</li>`).join("")}</ul></details>
+        <div id="results"></div>
+      </div></div>`;
+    if (lastResult && lastResult.scenario === state.scenario && lastResult.text === state.drafts[state.scenario]) renderResults(lastResult.res);
+  }
+  const pc = $("#panel-check");
+  pc.addEventListener("input", e => { if (e.target.id === "draft") { state.drafts[state.scenario] = e.target.value; save(); } });
+  pc.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.id === "runCheck") {
+      const text = $("#draft").value;
+      if (!text.trim()) { announce("Paste or upload some text first."); $("#draft").focus(); return; }
+      const res = analyse(text, state.scenario);
+      lastResult = { scenario: state.scenario, text, res };
+      renderResults(res); $("#res-h").focus();
+      announce(`Check complete. ${res.items.length} items found.`);
+    }
+    if (b.id === "clearDraft") { $("#draft").value = ""; state.drafts[state.scenario] = ""; save(); $("#results").innerHTML = ""; lastResult = null; announce("Text cleared."); }
+  });
+  pc.addEventListener("change", async e => {
+    if (e.target.id !== "fileIn") return;
+    const f = e.target.files[0]; if (!f) return;
+    const msg = $("#fileMsg");
+    try {
+      let text;
+      if (/\.txt$/i.test(f.name)) text = await f.text();
+      else if (/\.docx$/i.test(f.name)) {
+        msg.textContent = "Reading your file on this device...";
+        const m = await loadMammoth();
+        const r = await m.convertToHtml({ arrayBuffer: await f.arrayBuffer() });
+        const div = document.createElement("div"); div.innerHTML = r.value;
+        text = Array.from(div.children).map(n => (/^H[1-6]$/.test(n.tagName) ? "# " : "") + n.textContent.trim()).filter(Boolean).join("\n");
+        if (!text) text = Array.from(div.querySelectorAll("p,li,h1,h2,h3,h4,h5,h6")).map(n => n.textContent.trim()).filter(Boolean).join("\n");
+      } else { msg.textContent = "Please choose a .docx or .txt file."; return; }
+      $("#draft").value = text; state.drafts[state.scenario] = text; save();
+      msg.textContent = `Loaded ${f.name}. Select "Check my writing" to run the checks.`;
+    } catch (err) { msg.textContent = "Sorry, that file could not be read. Try saving it as .txt, or paste the text instead."; }
+    e.target.value = "";
+  });
+  function loadMammoth() {
+    return new Promise((res, rej) => {
+      if (window.mammoth) return res(window.mammoth);
+      const s = document.createElement("script"); s.src = CONFIG.mammothUrl; s.integrity = CONFIG.mammothSri; s.crossOrigin = "anonymous"; s.referrerPolicy = "no-referrer";
+      s.onload = () => res(window.mammoth); s.onerror = rej; document.head.appendChild(s);
+    });
+  }
+  function critLabel(id) { const c = CONFIG.criteria.find(x => x.id === id); return c ? `Criterion ${id.slice(1)}, ${c.label}` : "Assessment requirements"; }
+  function renderResults(res) {
+    const { doc, items, assess } = res, W = CONFIG.wordLimit, cats = CONFIG.categories;
+    const bySent = {}, byPara = {};
+    items.forEach(it => {
+      if (it.p != null) { byPara[it.p] = (byPara[it.p] || 0) + 1; if (it.s != null) (bySent[it.p + "-" + it.s] = bySent[it.p + "-" + it.s] || []).push(it.n); }
+    });
+    // annotated document
+    let bodyN = 0;
+    const docHtml = doc.paras.map(p => {
+      if (p.kind === "heading") return `<p class="ph">${esc(p.text)}${p.refsHeading ? ' <span class="muted">(excluded from the count and checks)</span>' : ""}</p>`;
+      if (p.kind === "ref") return `<p class="muted" style="font-size:.9em">${esc(p.text)}</p>`;
+      bodyN++; p.n = bodyN;
+      const paraNotes = items.filter(it => it.p === p.i && it.s == null).map(it => it.n);
+      return `<p id="para-${p.i}"><span class="pnum">¶${bodyN}${paraNotes.length ? ` [${paraNotes.join(", ")}]` : ""}</span>${p.sentences.map((s, j) => {
+        const ns = bySent[p.i + "-" + j];
+        return ns ? `<mark class="hl" id="s-${p.i}-${j}" tabindex="-1">${esc(s.text)}<sup class="fn">[${ns.join(", ")}]</sup></mark>` : esc(s.text);
+      }).join(" ")}</p>`;
+    }).join("");
+    const paraNum = i => { const p = doc.paras[i]; return p && p.n ? p.n : null; };
+    // category counts
+    const groups = {};
+    items.forEach(it => (groups[it.category] = groups[it.category] || []).push(it));
+    const catKeys = Object.keys(groups).sort((a, b) => cats[a].order - cats[b].order);
+    // priority actions
+    const scored = catKeys.map(k => ({ k, score: groups[k].reduce((a, it) => a + it.severity, 0), first: groups[k][0] })).sort((a, b) => b.score - a.score).slice(0, 3);
+    // heat map
+    const bands = CONFIG.thresholds.heatBands, levelOf = c => c >= bands[3] ? 3 : c >= bands[2] ? 2 : c >= bands[1] ? 1 : 0, lvName = ["None", "Low", "Medium", "High"];
+    const secLabel = id => (CONFIG.sections.find(s => s.id === id) || { label: "Unclassified" }).label;
+    const heatRows = body(doc).map(p => { const c = byPara[p.i] || 0, l = levelOf(c); return `<tr><td><a href="#para-${p.i}">¶${p.n}</a></td><td>${esc(secLabel(p.section))}</td><td>${p.words}</td><td class="h l${l}">${c} (${lvName[l]})</td></tr>`; }).join("");
+    const budget = {}; CONFIG.wordBudget.forEach(b => budget[b.section] = b.words);
+    const maxW = Math.max(1, ...assess.criteria.map(c => c.words), ...CONFIG.criteria.map(c => { const s = CONFIG.sections.find(x => x.criterion === c.id); return budget[s.id] || 0; }));
+    const covRows = assess.criteria.map(c => {
+      const s = CONFIG.sections.find(x => x.criterion === c.id), bw = budget[s.id] || 0;
+      return `<tr><th scope="row" style="background:var(--card);color:var(--text)">${c.id.slice(1)}. ${esc(c.label)}</th><td>${c.words}<div class="bar" aria-hidden="true"><span style="width:${Math.round(c.words / maxW * 100)}%"></span></div></td><td>${bw}<div class="bar budget" aria-hidden="true"><span style="width:${Math.round(bw / maxW * 100)}%"></span></div></td></tr>`;
+    }).join("");
+    const fb = catKeys.map(k => `<details class="cat" open><summary>${esc(cats[k].label)} (${groups[k].length})</summary>${groups[k].map(it => {
+      const where = it.p == null ? "Whole document" : `¶${paraNum(it.p)}${it.s != null ? ", sentence " + (it.s + 1) : ""}`;
+      const q = it.p != null && it.s != null ? doc.paras[it.p].sentences[it.s].text : null;
+      const link = it.p != null ? `<a href="#${it.s != null ? `s-${it.p}-${it.s}` : `para-${it.p}`}" data-jump>Show in text</a>` : "";
+      return `<div class="fb" id="fb-${it.n}"><p><strong>[${it.n}] ${esc(where)}</strong> <span class="tag-c">${esc(critLabel(it.criterion))}</span> ${link}</p>${q ? `<q>${esc(q.length > 220 ? q.slice(0, 220) + "..." : q)}</q>` : ""}
+        <p><strong>Detected.</strong> ${esc(it.detected)}</p><p><strong>Why it matters.</strong> ${esc(it.why)}</p><p><strong>Ask yourself.</strong> ${esc(it.ask)}</p></div>`;
+    }).join("")}</details>`).join("");
+    $("#results").innerHTML = `
+      <h3 id="res-h" tabindex="-1" style="color:var(--navy-t);margin-top:1.4rem">Your results</h3>
+      <div class="row">
+        <div class="mini ${assess.wordStatus === "within" ? "teal" : "plum"}"><h4>Word count</h4>
+          <p class="tight"><strong>${assess.words}</strong> words (${assess.wordStatus === "within" ? "within" : assess.wordStatus === "under" ? "below" : "above"} ${W.min} to ${W.max}).</p>
+          <p class="tight muted">Headings excluded (${assess.headingWords} words). ${assess.hasRefs ? `Reference list excluded (${assess.refWords} words).` : "No reference list heading found, so nothing was excluded as references."} In-text citations are included.</p></div>
+        <div class="mini"><h4>Structure detected</h4><ul class="tight" style="padding-left:1.2rem">${assess.structure.map(s => `<li>${s.present ? "✓" : "✗"} ${esc(s.label)}${s.present ? "" : " (not found)"}</li>`).join("")}</ul></div>
+      </div>
+      <div class="mini blue"><h4>Three priority actions</h4>${scored.length ? `<ol class="actions">${scored.map(s => `<li><strong>${esc(cats[s.k].label)}</strong> (${groups[s.k].length} item${groups[s.k].length > 1 ? "s" : ""}). ${esc(s.first.ask)}</li>`).join("")}</ol>` : "<p class=\"tight\">No patterns detected. That does not mean the draft is strong. Use the exemplar and the self-check list.</p>"}</div>
+      <div class="row">
+        <div><h4 style="color:var(--navy-t)">Counts by category</h4><div class="tablewrap"><table><caption class="sr-only">Feedback items by category</caption><thead><tr><th scope="col">Category</th><th scope="col">Items</th></tr></thead><tbody>${catKeys.map(k => `<tr><td>${esc(cats[k].label)}</td><td>${groups[k].length}</td></tr>`).join("") || "<tr><td>None</td><td>0</td></tr>"}</tbody></table></div></div>
+        <div><h4 style="color:var(--navy-t)">Words per criterion</h4><div class="tablewrap"><table><caption class="sr-only">Estimated words per criterion compared with the suggested budget</caption><thead><tr><th scope="col">Criterion</th><th scope="col">Your words (estimate)</th><th scope="col">Suggested</th></tr></thead><tbody>${covRows}</tbody></table></div>
+        <p class="muted tight">Estimated from headings and keywords. Introduction and conclusion are not counted against a criterion.</p></div>
+      </div>
+      <h4 style="color:var(--navy-t)">Paragraph heat map</h4>
+      <div class="tablewrap heat"><table><caption class="sr-only">Number of flags in each paragraph</caption><thead><tr><th scope="col">Paragraph</th><th scope="col">Section (estimated)</th><th scope="col">Words</th><th scope="col">Flags</th></tr></thead><tbody>${heatRows}</tbody></table></div>
+      <h4 style="color:var(--navy-t);margin-top:1.2rem">Your text with highlights</h4>
+      <p class="muted tight">Highlighted sentences carry item numbers in square brackets. Paragraph-level items appear next to the paragraph number.</p>
+      <div class="doc" id="docView">${docHtml}</div>
+      <h4 style="color:var(--navy-t);margin-top:1.2rem">Feedback by category</h4>
+      ${fb || "<p>No items.</p>"}`;
+  }
+  pc.addEventListener("click", e => {
+    const a = e.target.closest("a[data-jump]"); if (!a) return;
+    e.preventDefault(); const t = $(a.getAttribute("href")); if (!t) return;
+    t.scrollIntoView({ behavior: "smooth", block: "center" }); if (t.tagName === "MARK") { t.focus({ preventScroll: true }); t.classList.add("pulse"); setTimeout(() => t.classList.remove("pulse"), 1800); }
+  });
+
+  /* ---------- spot the weakness ---------- */
+  function catOptions(sel) {
+    return `<option value="">Choose the problem</option>` + Object.entries(CONFIG.categories).filter(([k]) => k !== "structure").map(([k, c]) => `<option value="${k}" ${sel === k ? "selected" : ""}>${esc(c.label)}</option>`).join("");
+  }
+  function renderSpot() {
+    const order = CONFIG.spot.slice().sort((a, b) => (a.scenario === state.scenario ? 0 : 1) - (b.scenario === state.scenario ? 0 : 1));
+    let found = 0, weak = 0, matched = 0, over = 0, checked = 0;
+    CONFIG.spot.forEach(p => { const st = state.spot[p.id]; if (!st || !st.checked) return; checked++;
+      p.sentences.forEach((s, j) => { const pick = st.picks[j]; if (s.a) { weak++; if (pick != null) { found++; if (pick === s.a) matched++; } } else if (pick != null) over++; }); });
+    $("#panel-spot").innerHTML = `
+      <div class="card"><div class="band plum"><div><p class="pill">Practice</p><h2>Spot the weakness</h2></div></div>
+      <div class="body spot">
+        <p class="tight">Select any sentence you judge weak, choose the problem type, then check the paragraph. Some paragraphs are strong, so not every sentence is a problem. Your ${esc(scen().short)} paragraphs come first.</p>
+        <div class="mini teal" aria-live="polite"><h3>Your self-assessment</h3><p class="tight">${checked ? `Across ${checked} checked paragraph${checked > 1 ? "s" : ""}, you found <strong>${found} of ${weak}</strong> weak sentences and matched the problem type for <strong>${matched}</strong>. You flagged <strong>${over}</strong> sound sentence${over === 1 ? "" : "s"}.` : "Check a paragraph to see your score. This is for your own practice and is not recorded anywhere else."}</p></div>
+        ${order.map(p => spotCard(p)).join("")}
+      </div></div>`;
+  }
+  function spotCard(p) {
+    const st = state.spot[p.id] || { picks: {}, checked: false };
+    const sents = p.sentences.map((s, j) => {
+      const on = st.picks[j] !== undefined;
+      return `<button type="button" class="sent" data-spot="${p.id}" data-j="${j}" aria-pressed="${on}" ${st.checked ? "disabled" : ""}>${esc(s.t)}</button>${on && !st.checked ? `<span class="pick"><label class="sr-only" for="pk-${p.id}-${j}">Problem type for sentence ${j + 1}</label><select id="pk-${p.id}-${j}" data-pick="${p.id}" data-j="${j}">${catOptions(st.picks[j])}</select></span>` : ""}`;
+    }).join(" ");
+    let fb = "";
+    if (st.checked) fb = p.sentences.map((s, j) => {
+      const pick = st.picks[j], picked = pick !== undefined;
+      let cls, head;
+      if (s.a && picked && pick === s.a) { cls = "good"; head = "✓ Correct, and the right problem type."; }
+      else if (s.a && picked) { cls = "part"; head = `◐ Weak, yes. The main problem is ${CONFIG.categories[s.a].label.toLowerCase()}${pick ? `, not ${CONFIG.categories[pick].label.toLowerCase()}` : ""}.`; }
+      else if (s.a) { cls = "miss"; head = `✗ Missed. Problem type: ${CONFIG.categories[s.a].label.toLowerCase()}.`; }
+      else if (picked) { cls = "part"; head = "◐ This sentence is sound."; }
+      else { cls = "good"; head = "✓ Sound, and you left it alone."; }
+      return `<div class="res ${cls}"><strong>Sentence ${j + 1}. ${esc(head)}</strong> ${esc(s.e)}</div>`;
+    }).join("");
+    return `<div class="item" id="spot-${p.id}"><h3 style="margin:0 0 .4rem;color:var(--navy-t);font-size:1.05em">${esc(p.title)}</h3>
+      <p class="para">${sents}</p>
+      <div class="toolbar">${st.checked ? `<button type="button" class="btn ghost small" data-reset="${p.id}">Try again</button>` : `<button type="button" class="btn plum small" data-check="${p.id}">Check this paragraph</button>`}</div>
+      <div aria-live="polite">${fb}</div></div>`;
+  }
+  const ps = $("#panel-spot");
+  ps.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    const id = b.dataset.spot || b.dataset.check || b.dataset.reset; if (!id) return;
+    const st = state.spot[id] = state.spot[id] || { picks: {}, checked: false };
+    if (b.dataset.spot) { const j = b.dataset.j; if (st.picks[j] !== undefined) delete st.picks[j]; else st.picks[j] = ""; save(); renderSpot(); const nb = $(`#pk-${id}-${j}`) || $(`button.sent[data-spot="${id}"][data-j="${j}"]`); if (nb) nb.focus(); }
+    else if (b.dataset.check) { st.checked = true; save(); renderSpot(); const r = $(`#spot-${id} [data-reset]`); if (r) r.focus(); announce("Paragraph checked. Feedback is shown below it."); }
+    else if (b.dataset.reset) { state.spot[id] = { picks: {}, checked: false }; save(); renderSpot(); const f = $(`#spot-${id} button.sent`); if (f) f.focus(); }
+  });
+  ps.addEventListener("change", e => { const s = e.target; if (!s.dataset.pick) return; state.spot[s.dataset.pick].picks[s.dataset.j] = s.value; save(); });
+
+  /* ---------- boot ---------- */
+  function renderPanels() { renderPlanner(); renderCheck(); renderSpot(); }
+  function renderAll() { applyTheme(); renderScen(); renderPanels(); selectTab(state.tab || "plan"); }
+  renderAll();
+})();
+</script>
+</body>
+</html>

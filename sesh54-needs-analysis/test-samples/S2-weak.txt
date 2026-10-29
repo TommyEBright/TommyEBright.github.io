@@ -1,0 +1,24 @@
+Introduction
+This report is a needs analysis of a female football player. Football is a very popular sport and it is played all over the world.
+
+Demands of football
+Central midfielders cover the greatest total distance of any outfield position. Research shows that high-intensity running declines in the last 15 minutes of matches. Players in the Premier League cover [X] m of high-speed running per match [REF: Premier League time-motion data]. [REF: author A] found that players run less in the second half. [REF: author B] reported that fatigue increases at the end of matches. [REF: author C] showed that aerobic fitness is important for midfielders.
+Football is an intermittent sport and the aerobic system provides [X]% of the energy [REF: soccer energy systems]. This clearly proves that aerobic fitness is the most important quality. Players need speed, strength, power, endurance and agility.
+Male professional players have a VO2max of [X] ml/kg/min [REF: male soccer physiology].
+
+Test selection
+The Yo-Yo intermittent recovery test level 1 will be used. It is a valid and reliable test. One limitation is that the sample size was small.
+A Nordic hamstring test will show whether her hamstrings are strong enough because she has had hamstring tightness.
+A 30 m sprint test will also be done. Her results will be compared with normative data [REF: soccer normative data].
+
+Monitoring
+Monitoring is important for all athletes. She will be tested regularly to see if she improves. Studies suggest that GPS always detects fatigue.
+
+Constraints
+It may possibly be that she could perhaps be slightly tired at the end of games. [REF: author D] found a significant difference in hamstring strength between injured and uninjured players.
+
+Conclusion
+In conclusion, fitness testing is important and more research is needed.
+
+References
+[REF: list]

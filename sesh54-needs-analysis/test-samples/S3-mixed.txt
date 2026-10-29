@@ -1,0 +1,23 @@
+Introduction
+A needs analysis identifies the demands of a sport and the gap between those demands and the athlete, so that tests are chosen for a reason [REF: needs analysis framework]. This lightweight sculler struggles to hold pace across the race distance and has ten weeks until the World Championships.
+
+Athlete profile
+He is a 28-year-old international lightweight who must stay under 72.5 kg. He has six years in the national squad, which suggests a long training age.
+
+Performance demands
+Race performance in lightweight rowers is strongly related to aerobic power [REF: lightweight rowing physiology]. However, energy-system estimates for rowing vary with the method used [REF: rowing energy contribution methods]. Elite rowers produce high power outputs of [X] W during racing [REF: heavyweight rowing power]. For him, holding pace suggests that threshold power, rather than peak power, may be the limiter.
+
+Test selection
+An incremental step test on the ergometer is selected to identify power at the lactate threshold, which reflects the ability to hold race pace [REF: rowing step test validity]. The test has good test-retest reliability in trained rowers [REF: rowing step test reliability]. A 2000 m test will also be used. It has limitations.
+
+Monitoring
+The step test will be repeated in week six. Body mass will be recorded every morning. Training intensities will be adjusted using the threshold power from each test.
+
+Constraints
+The regatta in week four means that maximal testing should be avoided in week four. Making weight could affect performance in tests if he is dehydrated.
+
+Conclusion
+In conclusion, the priority is threshold power relative to body mass.
+
+References
+[REF: list]

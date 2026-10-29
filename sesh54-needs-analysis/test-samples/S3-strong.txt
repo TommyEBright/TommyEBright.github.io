@@ -1,0 +1,24 @@
+Introduction
+A needs analysis is a decision tool that compares the demands of the event with the athlete's profile and uses the gap to choose tests [REF: needs analysis framework]. For this lightweight double sculler, the question is why he holds pace in shorter pieces but not across the race distance, within a ten-week block that includes a national regatta in week four.
+
+Athlete profile
+He is a 28-year-old international lightweight with six years in the national squad, so his training age is long and large gains in aerobic capacity are unlikely in ten weeks. He must stay under 72.5 kg, which makes body mass a constraint on both training and interpretation.
+
+Performance demands
+Race performance in lightweight rowers is associated with aerobic power expressed relative to body mass [REF: lightweight rowing physiology]. Estimates of the aerobic contribution to racing vary with the method used and the athletes studied [REF: rowing energy contribution methods], so the exact proportion matters less than the consistent finding that sustained aerobic power dominates the race. In contrast, his strength in shorter pieces suggests that peak power is not his limiter. Taken together, this points to power at the lactate threshold, relative to body mass, as the first priority.
+
+Test selection
+An incremental ergometer step test is selected to measure power at the lactate threshold, which targets his ability to hold race pace [REF: rowing step test validity]. Its test-retest reliability was established in trained lightweight rowers [REF: rowing step test reliability, CV and TE], so changes larger than the typical error can be interpreted for him. Its main limitation for this athlete is that ergometer power may not reflect on-water speed in a crew boat, so on-water pace data are reviewed alongside it.
+Body mass is measured each morning under standardised conditions, because a gain in absolute power that comes with a rise in mass may not help a lightweight crew. Power is therefore reported both in watts and relative to body mass.
+
+Monitoring and progression
+The step test is scheduled in week one and repeated in week six, so neither test falls in the taper before the regatta or the World Championships. If threshold power has not risen by more than the typical error at week six while mass is stable, the next block increases threshold work. Session RPE and a standardised submaximal piece are tracked weekly to monitor fatigue [REF: submaximal rowing monitoring reliability].
+
+Constraints and individualisation
+Making weight constrains testing, because dehydration can reduce performance, so tests are scheduled away from weigh-in periods and with the nutrition team's input. The regatta in week four also serves as a performance test, which reduces the need for extra maximal testing in a crowded block.
+
+Conclusion
+Overall, the priority is threshold power relative to body mass, measured with a reliable step test, re-tested at week six, and linked to clear training decisions before the World Championships.
+
+References
+[REF: list]
