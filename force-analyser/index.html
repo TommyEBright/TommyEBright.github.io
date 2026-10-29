@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Force Analysis</title>
+<meta name="description" content="Force–time analysis of jumps from your own force platform files. Runs in the browser; your data never leave your device.">
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="stylesheet" href="css/style.css?v=1.0.0">
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1><img src="icons/icon-192.png" alt="">Force Analysis <span class="muted" id="ver" style="color:#94a3b8;font-weight:400"></span></h1>
+    <p>Force&ndash;time analysis of jumps from your own force platform files. Everything runs in your browser and nothing is uploaded.</p>
+  </div>
+  <div class="actions">
+    <label class="btn light filebtn">Add files<input type="file" id="file" accept=".txt,.csv,.tsv,.dat,.asc,text/plain,text/csv" multiple aria-label="Add force files"></label>
+    <button class="btn light" id="demoCmj" type="button">Demo: CMJ</button>
+    <button class="btn light" id="demoSj" type="button">Demo: squat jump</button>
+    <button class="btn light" id="demoDj" type="button">Demo: drop jump</button>
+    <label class="lvl" for="level">Level
+      <select id="level">
+        <option value="1">Foundation (Year 1)</option>
+        <option value="2">Intermediate (Year 2)</option>
+        <option value="3">Advanced (Year 3 and MSc)</option>
+      </select>
+    </label>
+    <button class="btn accent hide" id="installBtn" type="button">Install as an app</button>
+  </div>
+</header>
+
+<main>
+  <details class="help">
+    <summary>Before you collect: how to get force data you can analyse</summary>
+    <div class="hb">
+      <ul>
+        <li><strong>Zero (reset) the plates with nobody on them</strong> before every trial. If not, every force is shifted by the same amount and the results drift.</li>
+        <li><strong>Stand completely still for at least 1 s</strong> before a countermovement or squat jump (for a squat jump, still in the squat). This is how the tool weighs the participant, and bodyweight has to be very accurate.</li>
+        <li><strong>Drop jumps:</strong> start recording before the participant steps off the box, and <strong>stand still for at least 1 s after landing</strong>. The tool can then work out the real touchdown velocity by itself (backward integration). Also note the box height. If the box stands on a plate, switch that plate off in Setup.</li>
+        <li><strong>Keep everything on the plates.</strong> All of both feet on the plate(s), and nothing else touching the floor. Arms: decide on hands on hips or arm swing and keep it the same.</li>
+        <li><strong>Sample fast:</strong> 1000 Hz is ideal for jumps and landings. Lower rates (e.g. 250 Hz) work, but peaks and events are less precise.</li>
+        <li><strong>Export from BioWare as a text (ASCII) file</strong> and open it here with <strong>Add files</strong>. Other force software works too if it can save a text or CSV file with a time column and force columns (check them in Setup &rarr; Plates and columns).</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- SESSION -->
+  <details class="help session" open>
+    <summary>Session: your trials <span id="sesCount" class="muted"></span></summary>
+    <div class="hb">
+      <p class="muted">Add one file or several (e.g. one participant&rsquo;s trials, or one trial from each participant). Label each one, then compare them all in <strong>Compare trials</strong>. Settings carry over from one trial to the next.</p>
+      <div class="tablewrap" style="max-height:260px"><table id="sesTab"></table></div>
+      <div class="row tight">
+        <label class="btn small filebtn">Add files<input type="file" id="file2" accept=".txt,.csv,.tsv,.dat,.asc,text/plain,text/csv" multiple aria-label="Add force files"></label>
+        <button class="btn small accent" id="sesNext" type="button" disabled>Next trial &rsaquo;</button>
+        <button class="btn small ghost" id="sesNew" type="button">New session</button>
+      </div>
+    </div>
+  </details>
+
+  <!-- TRACE -->
+  <section class="card" id="traceCard">
+    <div class="card-head">
+      <h2>Force&ndash;time curve <span class="muted" id="trialName"></span></h2>
+      <div class="row tight toolbar">
+        <span class="lab inl">Show</span>
+        <span class="chips" id="showChips"></span>
+        <label class="inline" for="units" style="margin:0">Force in</label>
+        <select id="units" class="mini">
+          <option value="N">newtons (N)</option>
+          <option value="Nkg">N per kg (N/kg)</option>
+          <option value="BW">bodyweights (&times; BW)</option>
+        </select>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="emptyBox" id="empty">
+        <p><strong>Press Add files</strong> to open a force platform file (BioWare text export, or any text or CSV file with force columns).</p>
+        <p class="muted">New to this? Try one of the demo trials first.</p>
+      </div>
+      <div id="traceWrap" class="hide">
+        <div class="tracebar">
+          <div class="row tight">
+            <button class="btn small" id="bPlay" type="button" title="Play the jump (Space)">&#9654; Play the jump</button>
+            <select id="pSpeed" class="mini" title="Playback speed"><option value="0.1">0.1&times;</option><option value="0.25" selected>0.25&times;</option><option value="0.5">0.5&times;</option><option value="1">1&times; (real time)</option></select>
+            <span class="sep"></span>
+            <button class="btn ghost small" id="zJump" type="button">Zoom to the jump</button>
+            <button class="btn ghost small" id="zAll" type="button">Whole trial</button>
+            <button class="btn ghost small" id="zIn" type="button" title="Zoom in around the cursor">+</button>
+            <button class="btn ghost small" id="zOut" type="button" title="Zoom out">&minus;</button>
+          </div>
+          <div class="phaseKey" id="phaseKey"></div>
+        </div>
+        <div class="tracegrid">
+          <div id="mainChart" class="chartbox"></div>
+          <div class="figbox" id="figBox">
+            <div id="figChart"></div>
+            <div class="figkey"><span><i class="ar v"></i>velocity</span><span><i class="ar f"></i>net force</span></div>
+          </div>
+        </div>
+        <div id="overview" class="chartbox ovbox" title="Drag the window to move along the trial"></div>
+        <p class="muted hint">Hover to read values. Click to pin the cursor, then use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> to move one sample (<kbd>Shift</kbd> for ten). Drag the coloured handles at the top to move an event. Drag across the graph to zoom in; double-click to zoom back to the jump.</p>
+        <div class="readout" id="readout"></div>
+        <div class="stats" id="keyStats"></div>
+        <div id="warnBox"></div>
+      </div>
+      <p class="status" id="status" role="status">Add a file to begin.</p>
+    </div>
+  </section>
+
+  <!-- PANEL -->
+  <section class="card full" id="panel">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" type="button" data-t="setup" aria-selected="true">1. Setup</button>
+      <button class="tab" role="tab" type="button" data-t="events" aria-selected="false">2. Events</button>
+      <button class="tab" role="tab" type="button" data-t="filter" aria-selected="false">3. Filter</button>
+      <button class="tab" role="tab" type="button" data-t="integ" aria-selected="false">4. Force to displacement</button>
+      <button class="tab" role="tab" type="button" data-t="results" aria-selected="false">5. Results</button>
+      <button class="tab" role="tab" type="button" data-t="compare" aria-selected="false">Compare trials</button>
+      <button class="tab" role="tab" type="button" data-t="files" aria-selected="false">Export</button>
+    </div>
+
+    <!-- SETUP -->
+    <div class="pane" data-p="setup">
+      <div class="gridc">
+        <div>
+          <label for="jump">Which jump is this?</label>
+          <select id="jump">
+            <option value="cmj">Countermovement jump (CMJ)</option>
+            <option value="sj">Squat jump (SJ)</option>
+            <option value="dj">Drop jump (DJ)</option>
+          </select>
+          <p class="muted" id="jumpHelp" style="margin:.25rem 0 0"></p>
+          <div id="djBox" class="hide">
+            <div class="row">
+              <div><label for="drop">Box (drop) height (m)</label><input type="number" id="drop" min="0" step="0.05" placeholder="e.g. 0.30"></div>
+              <div><label for="djDir">Touchdown velocity from</label>
+                <select id="djDir">
+                  <option value="auto">Best available (automatic)</option>
+                  <option value="backward">Still standing after landing (backward integration)</option>
+                  <option value="forward">The box height (forward integration)</option>
+                </select></div>
+            </div>
+            <p class="muted" style="margin:.25rem 0 0">A drop jump starts in the air, so the velocity at touchdown is not zero. The tool can work it out from the box height (&radic;2gh) or, better, by integrating <em>backwards</em> from the still standing after landing, where velocity is zero. That gives the real drop, which is rarely exactly the box height.</p>
+          </div>
+          <h3>Bodyweight</h3>
+          <div class="row">
+            <div><label for="bwMode">Bodyweight from</label>
+              <select id="bwMode">
+                <option value="auto">Still standing in the trial (automatic)</option>
+                <option value="header">The body weight stored in the file</option>
+                <option value="mass">A body mass I type in</option>
+              </select></div>
+            <div id="massWrap" class="hide"><label for="mass">Body mass (kg)</label><input type="number" id="mass" min="10" step="0.1"></div>
+          </div>
+          <p class="readout" id="bwInfo"></p>
+        </div>
+        <div>
+          <h3 style="margin-top:.2rem">Plates and columns</h3>
+          <p class="muted" style="margin:.1rem 0 .3rem">The forces from every plate that is switched on are added together. Mark plates as <strong>Left</strong> and <strong>Right</strong> (one foot on each) to get left vs right results.</p>
+          <div id="plateBox"></div>
+          <div class="row">
+            <div><label for="fsIn">Sample rate (Hz)</label><input type="number" id="fsIn" min="1" step="1"></div>
+            <div class="auto"><span class="muted" id="fsInfo"></span></div>
+          </div>
+        </div>
+      </div>
+      <details class="more" id="advSetup">
+        <summary>More options: thresholds and integration</summary>
+        <div class="row">
+          <div><label for="thr">Contact threshold (N)</label><input type="number" id="thr" min="1" step="1"></div>
+          <div><label for="hold">Must last at least (ms)</label><input type="number" id="hold" min="0" step="1"></div>
+          <div><label for="onsetK">Start of movement: bodyweight &plusmn; (SD)</label><input type="number" id="onsetK" min="1" step="0.5"></div>
+          <div><label for="onsetBack">&hellip; then back by (ms)</label><input type="number" id="onsetBack" min="0" step="1"></div>
+          <div><label for="method">Integration</label><select id="method"><option value="trap">Trapezoid rule</option><option value="rect">Rectangles (Riemann sum)</option></select></div>
+        </div>
+        <p class="muted">Take-off and landing are where force crosses the contact threshold and stays there for the time given (so a single noisy sample is ignored). The start of movement is the first sample more than this many SDs of the weighing period away from bodyweight, moved back by the time given (5 SD and 30 ms; Owen et al., 2014). Integration: see <strong>4. Force to displacement</strong>.</p>
+      </details>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="pane hide" data-p="events">
+      <p class="lead">Events are found automatically. Check each one on the graph. You can drag an editable event on the graph, or nudge it here one sample at a time. Events worked out from velocity (grey) move by themselves when you change the others.</p>
+      <div class="tablewrap" style="max-height:none"><table id="evTab"></table></div>
+      <div class="row tight"><button class="btn small ghost" id="evReset" type="button">Put every event back to automatic</button></div>
+      <details class="more">
+        <summary>How each event is found</summary>
+        <ul id="evHow" class="method"></ul>
+      </details>
+    </div>
+
+    <!-- FILTER -->
+    <div class="pane hide" data-p="filter">
+      <p class="lead">A low-pass filter smooths out high-frequency noise. Force data are usually <strong>left unfiltered</strong> for jumps, because integration already smooths them and filtering rounds off sharp changes (e.g. take-off, landing and impact peaks), which moves the events. Use this tab to see what a filter would do.</p>
+      <div class="row">
+        <div class="auto"><label class="inline"><input type="checkbox" id="filtOn"> Use the filtered force for the analysis</label></div>
+        <div><label for="cutoff">Cut-off frequency (Hz)</label><input type="number" id="cutoff" min="1" step="1" value="50"></div>
+        <div class="auto"><button class="btn ghost small" id="suggestFc" type="button">Suggest a cut-off (residual analysis)</button></div>
+      </div>
+      <p id="fcInfo" class="readout"></p>
+      <div class="gridc">
+        <div><span class="lab">Raw (grey) and filtered (blue) force, for the part of the trial on the main graph</span><div id="cFilt" class="chartbox"></div></div>
+        <div><span class="lab">Residual analysis</span><div id="cResid" class="chartbox"></div></div>
+      </div>
+      <span class="lab">What the filter removed, over time</span><div id="cResT" class="chartbox"></div>
+      <p class="muted">The filter is the same as in Kinematic Analysis: a Butterworth low-pass filter, 2nd order, run forwards and then backwards so there is no time lag (4th order overall), with the cut-off corrected for the two passes (Winter, 2009). Residual analysis (Winter, 2009; Robertson et al., 2014): the data are filtered at every cut-off and the difference from the raw data (the residual) is plotted. At high cut-offs only noise is removed, so the curve is a straight line (dashed). The suggested cut-off is where the curve meets the height at which that line crosses zero.</p>
+    </div>
+
+    <!-- INTEGRATION -->
+    <div class="pane hide" data-p="integ">
+      <p class="lead">A force platform measures force. Everything else (acceleration, velocity, displacement, power, jump height) is worked out from it in four steps. Hover over any graph to see the numbers at that moment, or press <strong>Play the jump</strong> to watch velocity and displacement build up.</p>
+      <div class="steps" id="steps">
+        <button type="button" class="stepbtn" data-s="1"><b>1</b> Net force<span>force &minus; bodyweight</span></button>
+        <span class="arrow">&rarr;</span>
+        <button type="button" class="stepbtn" data-s="2"><b>2</b> Acceleration<span>net force &divide; mass</span></button>
+        <span class="arrow">&rarr;</span>
+        <button type="button" class="stepbtn" data-s="3"><b>3</b> Velocity<span>add up the area under acceleration</span></button>
+        <span class="arrow">&rarr;</span>
+        <button type="button" class="stepbtn" data-s="4"><b>4</b> Displacement<span>add up the area under velocity</span></button>
+      </div>
+      <div class="integgrid">
+        <div class="stack">
+          <div class="pnl" data-k="1"><div class="pnlh"><span>1. Net force</span><span class="muted" id="ihF"></span></div><div id="cI1" class="chartbox"></div></div>
+          <div class="pnl" data-k="2"><div class="pnlh"><span>2. Acceleration of the centre of mass</span><span class="muted" id="ihA"></span></div><div id="cI2" class="chartbox"></div></div>
+          <div class="pnl" data-k="3"><div class="pnlh"><span>3. Velocity of the centre of mass</span><span class="muted" id="ihV"></span></div><div id="cI3" class="chartbox"></div></div>
+          <div class="pnl" data-k="4"><div class="pnlh"><span>4. Displacement of the centre of mass</span><span class="muted" id="ihS"></span></div><div id="cI4" class="chartbox"></div></div>
+        </div>
+        <aside class="worked">
+          <h3>At the cursor</h3>
+          <div id="worked"><p class="muted">Hover over a graph.</p></div>
+          <div class="row tight" style="margin-top:.5rem">
+            <label class="inline"><input type="checkbox" id="buildUp"> Build up as it plays</label>
+          </div>
+          <div id="links"></div>
+          <div id="advInteg"></div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="pane hide" data-p="results">
+      <div class="row tight" style="justify-content:space-between">
+        <p class="lead" style="margin:0">Every result for this trial. Click a row to see exactly how it was worked out, with this trial&rsquo;s numbers. The level (top right) sets how many are shown.</p>
+        <button class="btn small ghost" id="resCsv" type="button">Download results (CSV)</button>
+      </div>
+      <div id="resTab"></div>
+      <details class="help" style="margin-top:.8rem"><summary>Quality checks</summary><div class="hb" id="qualBox"></div></details>
+    </div>
+
+    <!-- COMPARE -->
+    <div class="pane hide" data-p="compare">
+      <p id="cmpMsg" class="muted"></p>
+      <div id="cmpBody" class="hide">
+        <div class="row">
+          <div><label for="cmpGroup">Group by</label><select id="cmpGroup"><option value="athlete">Participant</option><option value="condition">Condition</option><option value="both">Participant and condition</option><option value="none">No groups</option></select></div>
+          <div class="auto"><button class="btn small" id="cmpCalc" type="button">Update comparison</button></div>
+        </div>
+        <span class="lab">Measures in the table</span>
+        <div class="chips" id="cmpMetrics"></div>
+        <div class="tablewrap" style="max-height:420px" id="cmpTab"></div>
+        <h3>Curves</h3>
+        <div class="row">
+          <div><label for="cmpVar">Show</label><select id="cmpVar"><option value="F">Force</option><option value="v">Velocity</option><option value="s">Displacement</option><option value="P">Power</option></select></div>
+          <div><label for="cmpAlign">Time axis</label><select id="cmpAlign"><option value="to">Lined up at take-off (seconds)</option><option value="norm">Time-normalised (0&ndash;100%)</option></select></div>
+          <div class="auto"><label class="inline"><input type="checkbox" id="cmpTrials" checked> Show each trial</label></div>
+        </div>
+        <p class="muted" id="cmpNormInfo"></p>
+        <div id="cCmp" class="chartbox"></div>
+        <div id="cmpLegend"></div>
+        <h3>Download the whole session</h3>
+        <div class="row">
+          <div><label for="cmpLayout">Summary layout</label><select id="cmpLayout"><option value="wide">One row per trial (Excel)</option><option value="long">One row per measure (R, SPSS, pivot tables)</option></select></div>
+        </div>
+        <div class="row tight"><button class="btn small accent" id="cmpDiscCsv" type="button">Session results (CSV)</button><button class="btn small" id="cmpNormCsv" type="button">Session time-normalised curves (CSV)</button></div>
+        <p class="muted">Every file has participant, condition and trial columns, so you can filter or group them in Excel, R or SPSS.</p>
+      </div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="pane hide" data-p="files">
+      <p class="lead">Downloads for <strong>this trial</strong>. For every trial together, use <strong>Compare trials</strong>.</p>
+      <h3>Data (CSV, opens in Excel)</h3>
+      <div class="row tight">
+        <button class="btn small accent" id="xCont" type="button">Continuous (every sample)</button>
+        <button class="btn small" id="xDisc" type="button">Discrete (results)</button>
+        <button class="btn small" id="xNorm" type="button">Time-normalised (0&ndash;100%)</button>
+      </div>
+      <p class="muted"><strong>Continuous</strong> has every sample: time, each plate&rsquo;s Fx, Fy and Fz, total vertical force (raw and as analysed), net force, acceleration, velocity, displacement, power and the phase. <strong>Discrete</strong> has every result with its units. <strong>Time-normalised</strong> is force, velocity, displacement and power from the start of movement (or touchdown) to take-off, resampled to 101 points.</p>
+      <h3>Report and images</h3>
+      <div class="row tight">
+        <button class="btn small accent" id="xDocx" type="button">Word report (.docx)</button>
+        <button class="btn small" id="xPng" type="button">Force&ndash;time graph (PNG)</button>
+        <button class="btn small" id="xPngI" type="button">Force-to-displacement graphs (PNG)</button>
+      </div>
+      <h3>Project file</h3>
+      <p class="muted" style="margin:.2rem 0">Saves the whole session (files, labels, settings and events) so you can carry on later or on another computer.</p>
+      <div class="row tight">
+        <button class="btn small" id="xProj" type="button">Save project file</button>
+        <label class="btn small ghost filebtn">Open project file<input type="file" id="projIn" accept=".json,application/json" aria-label="Open project file"></label>
+      </div>
+    </div>
+  </section>
+
+  <section class="card full">
+    <div class="card-body">
+      <details class="help method">
+        <summary>How everything is calculated</summary>
+        <div class="hb">
+          <ol>
+            <li><strong>Force.</strong> The vertical forces (Fz) of every plate that is switched on are added together. Fx and Fy (the horizontal forces) can be shown on the graph but are not used in the analysis.</li>
+            <li><strong>Bodyweight.</strong> The mean force while the participant stands still: the last still period before a CMJ or squat jump (up to 1 s), or the first still period after landing in a drop jump. Body mass = bodyweight &divide; g (9.81 m/s&sup2;). Bodyweight has to be very accurate: it is subtracted from every sample, so a small error grows bigger and bigger as it is integrated (Robertson et al., 2014; Street et al., 2001).</li>
+            <li><strong>Contact, take-off and landing.</strong> In contact when force is above the threshold (20 N unless changed), for at least the set time (10 ms) so that single noisy samples are ignored. Take-off is the first sample below the threshold; landing is the first sample back above it.</li>
+            <li><strong>Start of movement</strong> (CMJ and squat jump): the first sample after weighing where force moves more than 5 SD of the weighing period away from bodyweight (below it for a CMJ, above it for a squat jump), moved back by 30 ms (Owen et al., 2014).</li>
+            <li><strong>Net force and acceleration.</strong> <span class="formula">F<sub>net</sub> = F &minus; W</span> and <span class="formula">a = F<sub>net</sub> &divide; m</span> (Newton&rsquo;s second law). Positive is upwards.</li>
+            <li><strong>Velocity and displacement</strong> by numerical integration (Robertson et al., 2014, ch. 4). Trapezoid rule (default): <span class="formula">v<sub>i</sub> = v<sub>i&minus;1</sub> + &frac12;(a<sub>i&minus;1</sub> + a<sub>i</sub>) &Delta;t</span>, then the same for displacement from velocity. Rectangles (Riemann sum): <span class="formula">v<sub>i</sub> = v<sub>i&minus;1</sub> + a<sub>i</sub> &Delta;t</span> and <span class="formula">s<sub>i</sub> = s<sub>i&minus;1</sub> + v<sub>i</sub> &Delta;t</span>. Each step needs a starting value (the constant of integration): velocity and displacement are zero at the start of movement in a CMJ or squat jump. In a drop jump the touchdown velocity comes either from the box height (<span class="formula">v = &minus;&radic;(2gh)</span>, forward integration), or from integrating backwards from the still standing after landing, where velocity is zero (backward integration). Displacement is zero at the start of movement (CMJ, squat jump) or at touchdown (drop jump).</li>
+            <li><strong>Phases</strong> (McMahon et al., 2018). CMJ: unweighting (start of movement to peak downward velocity, where force comes back up to bodyweight), braking (to zero velocity, the lowest point), propulsion (to take-off). Squat jump: propulsion (start of the push to take-off). Drop jump: braking (touchdown to zero velocity) and propulsion (to take-off). Flight (take-off to landing) and landing (landing to zero velocity).</li>
+            <li><strong>Impulse</strong> is the area under the force&ndash;time curve. <em>Net</em> impulse is the area between the curve and bodyweight (the shaded areas on the graph), worked out with the same rule as the integration. Net impulse = change in momentum (<span class="formula">m&Delta;v</span>), so the propulsive impulse decides take-off velocity.</li>
+            <li><strong>Jump height.</strong> From take-off velocity: <span class="formula">h = v<sup>2</sup> &divide; 2g</span>. From flight time: <span class="formula">h = g t<sup>2</sup> &divide; 8</span>, which assumes the body is in the same position at landing as at take-off, so it usually comes out a little higher (Linthorne, 2001; Moir, 2008).</li>
+            <li><strong>Power</strong> = force &times; centre of mass velocity, at every sample.</li>
+            <li><strong>Other results.</strong> RSImod = jump height (take-off velocity) &divide; time to take-off (Ebben &amp; Petushek, 2010). RSI = jump height (flight time) &divide; contact time (Flanagan &amp; Comyns, 2008). Rate of force development (RFD) = change in force &divide; time. Vertical stiffness = peak force &divide; centre of mass displacement. Left vs right asymmetry = (left &minus; right) &divide; the bigger &times; 100.</li>
+            <li><strong>Filtering</strong> (off by default): a Butterworth low-pass filter, 2nd order, run forwards and backwards (zero lag, 4th order overall), with the cut-off corrected for the two passes (&divide; 0.802; Winter, 2009) and the ends padded with a mirror image.</li>
+            <li><strong>Time normalisation</strong> resamples the start of movement (or touchdown) to take-off to 101 points (0&ndash;100%) by linear interpolation, which is accurate because force data are sampled so densely. Group curves are the mean &plusmn; SD point by point.</li>
+            <li><strong>Limits.</strong> This is the centre of mass of the whole body, from the force under the feet. It cannot tell you what each joint did. The arms, a foot off the plate or anything else touching the ground will change the results.</li>
+          </ol>
+          <p class="muted"><strong>References.</strong> Ebben, W.P. and Petushek, E.J. (2010) Using the reactive strength index modified to evaluate plyometric performance. <em>Journal of Strength and Conditioning Research</em>, 24(8), 1983&ndash;1987. Flanagan, E.P. and Comyns, T.M. (2008) The use of contact time and the reactive strength index to optimize fast stretch-shortening cycle training. <em>Strength and Conditioning Journal</em>, 30(5), 32&ndash;38. Linthorne, N.P. (2001) Analysis of standing vertical jumps using a force platform. <em>American Journal of Physics</em>, 69(11), 1198&ndash;1204. McMahon, J.J., Suchomel, T.J., Lake, J.P. and Comfort, P. (2018) Understanding the key phases of the countermovement jump force-time curve. <em>Strength and Conditioning Journal</em>, 40(4), 96&ndash;106. Moir, G.L. (2008) Three different methods of calculating vertical jump height from force platform data in men and women. <em>Measurement in Physical Education and Exercise Science</em>, 12(4), 207&ndash;218. Owen, N.J., Watkins, J., Kilduff, L.P., Bevan, H.R. and Bennett, M.A. (2014) Development of a criterion method to determine peak mechanical power output in a countermovement jump. <em>Journal of Strength and Conditioning Research</em>, 28(6), 1552&ndash;1558. Robertson, D.G.E., Caldwell, G.E., Hamill, J., Kamen, G. and Whittlesey, S.N. (2014) <em>Research Methods in Biomechanics</em>, 2nd edn. Human Kinetics. Street, G., McMillan, S., Board, W., Rasmussen, M. and Heneghan, J.M. (2001) Sources of error in determining countermovement jump height with the impulse method. <em>Journal of Applied Biomechanics</em>, 17(1), 43&ndash;54. Winter, D.A. (2009) <em>Biomechanics and Motor Control of Human Movement</em>, 4th edn. Wiley.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+  <footer>Force Analysis. Works offline once loaded. Nothing is uploaded. Built by Dr Tommy Bright.</footer>
+</main>
+<script>window.addEventListener('error',function(e){var s=document.getElementById('status');if(s)s.innerHTML='<span class="bad"><strong>Something went wrong.</strong> Try a hard refresh (Ctrl + Shift + R, or Cmd + Shift + R on a Mac). If it keeps happening, tell your tutor: '+(e.message||'')+'</span>';});</script>
+<script type="module" src="js/app.js?v=1.0.0"></script>
+</body>
+</html>
