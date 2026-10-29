@@ -35,7 +35,7 @@ It runs entirely in the web browser. Files are opened from the user's own device
 
 ## Demo trials
 
-- **Demo: CMJ** is the BioWare sample countermovement jump (one plate, 250 Hz).
+- **Demo: CMJ** is the BioWare sample countermovement jump (one plate, 250 Hz). The Kinematic Analysis demo CMJ is built from this jump, so students can measure the same jump with both tools.
 - **Demo: drop jump** is a real drop jump from two plates at 1000 Hz, with still standing after landing, so backward integration works.
 - **Demo: squat jump** is computer-generated (one plate, 1000 Hz, body mass 72 kg). The push starts at 1.50 s from a still squat. Take-off velocity at the true take-off (1.80 s) is 2.29 m/s (26.7 cm), and the flight time is 0.475 s (27.7 cm by flight time, because it lands 2 cm lower than it took off). The tool gives about 1 cm more from take-off velocity (27.8 cm), because take-off is found where force drops below the 20 N threshold, a few milliseconds before the true take-off, when the body is still slightly faster. That makes a useful discussion point.
 
