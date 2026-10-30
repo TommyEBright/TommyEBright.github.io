@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Velocity-Based Training | SESD56</title>
+<meta name="description" content="Set up GymAware, build a load–velocity profile, train in a velocity zone, use velocity loss and compare phone apps. SESD56, Plymouth Marjon University.">
+<style>
+:root{
+  --navy:#003d50; --navy-d:#002c3a; --teal:#00857e; --teal-d:#00625d; --blue:#0071bc; --blue-d:#00568f; --plum:#8b3556; --plum-d:#682840;
+  --bg:#f7fbfd; --card:#ffffff; --soft:#f2faf9; --soft2:#f8fcfe; --line:#d9e2e7; --edge:#abd6d9;
+  --ink:#1d1d1b; --ink2:#3d4a52; --muted:#5b6770;
+  --good:#1b7a45; --good-bg:#eaf6ef; --warn:#8a5a00; --warn-bg:#fff5e0; --bad:#b42318; --bad-bg:#fdecea;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#eaf3f7;color:var(--ink);line-height:1.5;font-size:16px}
+.wrap{max-width:1100px;margin:.8rem auto;padding:1rem;background:var(--bg);border:2px solid var(--edge);border-radius:1rem}
+header.hero{background:var(--navy);color:#fff;padding:1.6rem 1.5rem;border-radius:.9rem .9rem 0 0;border-bottom:.4rem solid var(--teal)}
+.badge{display:inline-block;background:#fff;color:var(--navy);padding:.3rem .8rem;margin:0 0 .7rem;font-size:.86em;border-left:.35rem solid var(--blue);border-radius:.65rem;font-weight:bold}
+header.hero h1{margin:0 0 .35rem;font-size:1.9em;line-height:1.2}
+header.hero p{margin:0;max-width:60rem}
+nav.tabs{background:#fff;padding:.8rem;margin-bottom:1.2rem;border:1px solid var(--line);border-top:0;border-radius:0 0 .9rem .9rem;display:flex;gap:.5rem;flex-wrap:wrap}
+nav.tabs button{flex:1 1 150px;min-height:2.9rem;border:0;border-radius:.75rem;color:#fff;font:bold .95em Arial,Helvetica,sans-serif;cursor:pointer;padding:.55rem .6rem;opacity:.72}
+nav.tabs button[aria-selected="true"]{opacity:1;outline:3px solid #fff;box-shadow:0 0 0 3px var(--ink)}
+#tab-setup{background:var(--navy);border-bottom:.25rem solid var(--navy-d)}
+#tab-lvp{background:var(--blue);border-bottom:.25rem solid var(--blue-d)}
+#tab-zone{background:var(--teal);border-bottom:.25rem solid var(--teal-d)}
+#tab-vl{background:var(--plum);border-bottom:.25rem solid var(--plum-d)}
+#tab-apps{background:#4d5b63;border-bottom:.25rem solid #333f45}
+.panel{display:none}.panel.active{display:block}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:1rem;margin-bottom:1.2rem;overflow:hidden}
+.card-head{color:#fff;padding:1rem 1.3rem}
+.card-head .chip{display:inline-block;background:#fff;padding:.2rem .65rem;font-size:.8em;margin:0 0 .35rem;border-left:.3rem solid var(--navy);border-radius:.55rem;font-weight:bold}
+.card-head h2{margin:0;font-size:1.3em}
+.card-body{padding:1.1rem 1.3rem}
+.h-navy{background:var(--navy)}.h-navy .chip{color:var(--navy);border-left-color:var(--blue)}
+.h-blue{background:var(--blue)}.h-blue .chip{color:var(--blue)}
+.h-teal{background:var(--teal)}.h-teal .chip{color:var(--teal)}
+.h-plum{background:var(--plum)}.h-plum .chip{color:var(--plum)}
+.h-grey{background:#4d5b63}.h-grey .chip{color:#4d5b63}
+.box{background:#fff;border:1px solid var(--line);border-left:.4rem solid var(--blue);border-radius:.75rem;padding:.85rem 1rem;margin-top:.9rem}
+.box.teal{border-left-color:var(--teal)}.box.plum{border-left-color:var(--plum)}.box.navy{border-left-color:var(--navy)}.box.warn{border-left-color:var(--warn);background:var(--warn-bg)}
+.box h3{margin:0 0 .4rem;color:var(--navy);font-size:1.05em}
+.box ul,.box ol{margin:.2rem 0 0;padding-left:1.25rem}
+.box li{margin:.2rem 0}
+.box p{margin:.3rem 0}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem}
+@media (max-width:820px){.grid2{grid-template-columns:1fr}}
+.ref{color:var(--muted);font-size:.84em;margin:.7rem 0 0}
+.btn{display:inline-block;border:0;border-radius:.75rem;padding:.6rem 1rem;font:bold .95em Arial,Helvetica,sans-serif;cursor:pointer;color:#fff;background:var(--navy);border-bottom:.2rem solid var(--navy-d);min-height:2.6rem}
+.btn.teal{background:var(--teal);border-bottom-color:var(--teal-d)}.btn.plum{background:var(--plum);border-bottom-color:var(--plum-d)}.btn.blue{background:var(--blue);border-bottom-color:var(--blue-d)}
+.btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+.btn.small{padding:.35rem .7rem;min-height:2.1rem;font-size:.86em}
+.btn:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.btn-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.9rem}
+label.fld{display:block;font-weight:bold;color:var(--navy);font-size:.9em;margin:.4rem 0 .2rem}
+input[type=text],input[type=number],select{font:1em Arial,Helvetica,sans-serif;padding:.45rem .5rem;border:1px solid #b9c7cf;border-radius:.5rem;background:#fff;color:var(--ink);width:100%}
+.msg{margin:.7rem 0 0;padding:.6rem .8rem;border-radius:.6rem;font-weight:bold}
+.msg.ok{background:var(--good-bg);color:var(--good)}.msg.no{background:var(--bad-bg);color:var(--bad)}.msg.info{background:var(--warn-bg);color:var(--warn)}
+.hidden{display:none}
+table.t{width:100%;border-collapse:collapse;font-size:.93em}
+table.t th,table.t td{border:1px solid var(--line);padding:.4rem .5rem;text-align:left;vertical-align:top}
+table.t th{background:var(--soft2);color:var(--navy)}
+table.t input{padding:.35rem .4rem}
+.checks label{display:flex;gap:.6rem;align-items:flex-start;padding:.5rem .1rem;border-bottom:1px solid var(--line);cursor:pointer}
+.checks label:last-child{border-bottom:0}
+.checks input{width:1.3rem;height:1.3rem;margin:.05rem 0 0;flex:none;accent-color:var(--teal)}
+.checks h4{margin:.9rem 0 .2rem;color:var(--teal-d);font-size:.95em;text-transform:uppercase;letter-spacing:.03em}
+.chart{width:100%;height:auto;display:block;background:#fff;border:1px solid var(--line);border-radius:.7rem}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.6rem;margin-top:.7rem}
+.stat div{background:var(--soft2);border:1px solid var(--line);border-radius:.6rem;padding:.55rem .7rem}
+.stat b{display:block;font-size:1.25em;color:var(--navy)}
+.stat span{font-size:.8em;color:var(--muted)}
+.big{font-size:1.6em;font-weight:bold}
+.reps{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem}
+.rep{border:1px solid var(--line);border-radius:.5rem;padding:.3rem .55rem;font-size:.9em;background:#fff}
+.rep.best{border-color:var(--teal);background:var(--soft)}
+.rep.over{border-color:var(--bad);background:var(--bad-bg)}
+.stop{margin-top:.8rem;padding:.9rem 1rem;border-radius:.7rem;font-weight:bold;font-size:1.15em;text-align:center}
+.stop.go{background:var(--good-bg);color:var(--good)}.stop.end{background:var(--bad-bg);color:var(--bad)}
+.lifter-a{color:#0071bc}.lifter-b{color:#8b3556}
+footer{text-align:center;padding:1rem;border:2px solid var(--navy);border-top-width:6px;border-radius:10px;background:#fff;margin-top:1rem;font-size:.9em}
+footer p{margin:.2rem 0}
+@media print{
+  body{background:#fff}.wrap{border:0;padding:0;margin:0}
+  nav.tabs,footer,.noprint,header.hero p{display:none}
+  .panel{display:none!important}#p-setup{display:block!important}
+  header.hero{padding:.6rem 1rem}header.hero h1{font-size:1.3em}
+  section.card{border:0}.card-body{padding:.4rem 0}.checks label{padding:.2rem 0;font-size:10.5pt}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <span class="badge">SESD56 &middot; Application of Velocity-Based Training</span>
+  <h1>Velocity-Based Training</h1>
+  <p>Set up the GymAware, build a load&ndash;velocity profile, train in a velocity zone, stop sets using velocity loss, and decide whether a phone app could do the job.</p>
+</header>
+<nav class="tabs" role="tablist" aria-label="Tool pages">
+  <button id="tab-setup" role="tab" aria-selected="true" aria-controls="p-setup">1. Set-up</button>
+  <button id="tab-lvp" role="tab" aria-selected="false" aria-controls="p-lvp">2. Load&ndash;velocity profile</button>
+  <button id="tab-zone" role="tab" aria-selected="false" aria-controls="p-zone">3. Train in a zone</button>
+  <button id="tab-vl" role="tab" aria-selected="false" aria-controls="p-vl">4. Velocity loss</button>
+  <button id="tab-apps" role="tab" aria-selected="false" aria-controls="p-apps">5. Phone apps</button>
+</nav>
+
+<main>
+<!-- 1 SETUP -->
+<div class="panel active" id="p-setup" role="tabpanel" aria-labelledby="tab-setup">
+  <section class="card">
+    <div class="card-head h-navy"><span class="chip">Task 1 &middot; one-page checklist</span><h2>Set up the GymAware yourselves</h2></div>
+    <div class="card-body">
+      <p style="margin-top:0" class="noprint">Work through the list as a group. Only ask for help if you're stuck. You can also print this page.</p>
+      <div class="checks">
+        <h4>Before you start</h4>
+        <label><input type="checkbox"> <span>The unit is charged and switched on, and the iPad has the GymAware app open with Bluetooth on.</span></label>
+        <label><input type="checkbox"> <span>The unit is connected to the app, and you've checked you're connected to the right unit (not the group next to you).</span></label>
+        <label><input type="checkbox"> <span>The lifter is selected in the app, along with the exercise (e.g. back squat).</span></label>
+        <h4>Position the unit</h4>
+        <label><input type="checkbox"> <span>The unit sits on the floor (its magnetic feet hold it in place), directly under the path of the bar.</span></label>
+        <label><input type="checkbox"> <span>The tether runs straight up to the bar and won't catch on the rack, the plates or the lifter's feet.</span></label>
+        <label><input type="checkbox"> <span>The tether is strapped firmly to the bar with the Velcro strap, close to the plates, on the inside of the collar.</span></label>
+        <h4>Enter the load and test it</h4>
+        <label><input type="checkbox"> <span>The load in the app is the total weight on the bar, bar plus plates.</span></label>
+        <label><input type="checkbox"> <span>A test rep with the empty bar is counted once (no &ldquo;ghost&rdquo; reps from unracking), and the velocity looks sensible.</span></label>
+        <h4>Every set</h4>
+        <label><input type="checkbox"> <span>Every rep is done with maximal intent, as fast as possible on the way up. VBT only works if effort is maximal.</span></label>
+        <label><input type="checkbox"> <span>Same depth and technique on every rep, and the same velocity measure (mean velocity) recorded every time.</span></label>
+        <label><input type="checkbox"> <span>At the end, the tether is guided back to the unit rather than let go.</span></label>
+      </div>
+      <div class="btn-row noprint"><button class="btn ghost small" onclick="window.print()">Print this checklist</button></div>
+      <div class="box teal noprint">
+        <h3>Quick check: which velocity are we using?</h3>
+        <p><strong>Mean velocity</strong> is the average bar speed over the whole upward phase. It's what we'll use today. Some studies report <strong>mean propulsive velocity</strong>, which only covers the part where the lifter is still pushing the bar up. At light loads the two differ, because the bar slows down near the top. So only compare numbers measured the same way.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- 2 LVP -->
+<div class="panel" id="p-lvp" role="tabpanel" aria-labelledby="tab-lvp">
+  <section class="card">
+    <div class="card-head h-blue"><span class="chip">Task 2</span><h2>Why build a load&ndash;velocity profile?</h2></div>
+    <div class="card-body">
+      <div class="grid2">
+        <div class="box navy" style="margin-top:0">
+          <h3>The idea in one line</h3>
+          <p>The heavier the bar, the slower it moves. If you measure how fast someone lifts a few different loads, you get a line that is <strong>unique to that person and that exercise</strong>.</p>
+        </div>
+        <div class="box teal" style="margin-top:0">
+          <h3>What it lets you do</h3>
+          <ul>
+            <li><strong>Prescribe:</strong> find the load that gives any target speed.</li>
+            <li><strong>Compare:</strong> see whether someone is relatively faster or stronger.</li>
+            <li><strong>Monitor:</strong> retest and see whether the line has moved.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head h-blue"><span class="chip">Build it</span><h2>Enter your data</h2></div>
+    <div class="card-body">
+      <p style="margin-top:0">Test 4&ndash;6 loads, from light to heavy (e.g. about 20% up to 80&ndash;90% of 1RM). Do 2&ndash;3 fast reps at each load and record the <strong>best mean velocity</strong>. Add a second lifter to compare.</p>
+      <div class="grid2">
+        <div>
+          <label class="fld" for="nameA"><span class="lifter-a">&#9632;</span> Lifter A</label>
+          <input type="text" id="nameA" placeholder="Name">
+          <table class="t" style="margin-top:.4rem" aria-label="Lifter A data"><thead><tr><th>Load (kg)</th><th>Best mean velocity (m/s)</th></tr></thead><tbody id="rowsA"></tbody></table>
+        </div>
+        <div>
+          <label class="fld" for="nameB"><span class="lifter-b">&#9632;</span> Lifter B (optional)</label>
+          <input type="text" id="nameB" placeholder="Name">
+          <table class="t" style="margin-top:.4rem" aria-label="Lifter B data"><thead><tr><th>Load (kg)</th><th>Best mean velocity (m/s)</th></tr></thead><tbody id="rowsB"></tbody></table>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn blue" id="example">Load example data</button>
+        <button class="btn ghost" id="clear-lvp">Clear</button>
+      </div>
+      <p class="ref">The example data are made up for practice. They are not real lifters.</p>
+      <svg id="lvp-chart" class="chart" viewBox="0 0 640 380" role="img" aria-label="Load-velocity chart" style="margin-top:.9rem"></svg>
+      <div id="lvp-stats"></div>
+      <div class="box">
+        <h3>Find the load for a target speed</h3>
+        <div class="grid2">
+          <div><label class="fld" for="tv">Target mean velocity (m/s)</label><input type="number" id="tv" step="0.01" min="0" placeholder="e.g. 0.75"></div>
+          <div id="tv-out" style="align-self:end"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head h-navy"><span class="chip">Make sense of it</span><h2>What do different results mean?</h2></div>
+    <div class="card-body">
+      <div id="interp" class="box plum" style="margin-top:0"><p>Enter at least three loads for a lifter to see an explanation of their line.</p></div>
+      <div class="grid2">
+        <div class="box">
+          <h3>Reading the line</h3>
+          <ul>
+            <li><strong>Height of the line.</strong> A line that sits higher means faster at every load.</li>
+            <li><strong>Slope.</strong> A steep line means speed drops quickly as load is added. A flat line means the lifter holds speed better with heavy loads.</li>
+            <li><strong>Where it hits the velocity axis (V0).</strong> The theoretical speed with no load, which is the &ldquo;speed end&rdquo; of the profile.</li>
+            <li><strong>Where it hits the load axis (L0).</strong> The theoretical load at zero speed, which is the &ldquo;force end&rdquo;. It is <em>not</em> a 1RM.</li>
+          </ul>
+        </div>
+        <div class="box">
+          <h3>Using it properly</h3>
+          <ul>
+            <li>Profiles are usually very straight (r&sup2; close to 1) when every rep is at maximal intent. A messy line usually means a technique, depth or effort problem.</li>
+            <li>The textbook warns that using the profile to <strong>estimate 1RM</strong> tends to overestimate it and can lead to loads that are too heavy. Test 1RM directly if you need it.</li>
+            <li>Retest on another day under the same conditions. If the line has moved up or to the right by more than the day-to-day noise, the lifter has improved.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="ref">Haff (Ed.), <em>Essentials of Strength Training and Conditioning</em> (5th ed.), Chapter 14 (Load&ndash;velocity profile). Weakley et al. (2021), Velocity-based training: from theory to application, <em>Strength and Conditioning Journal</em>, 43(2), 31&ndash;49.</p>
+    </div>
+  </section>
+</div>
+
+<!-- 3 ZONES -->
+<div class="panel" id="p-zone" role="tabpanel" aria-labelledby="tab-zone">
+  <section class="card">
+    <div class="card-head h-teal"><span class="chip">Task 3</span><h2>The velocity zones and where they come from</h2></div>
+    <div class="card-body">
+      <p style="margin-top:0">These are the zones in your textbook (Table 14.13). They are practitioner guidance from Mann (2021), reprinted in the NSCA textbook. They are a useful starting point, but not exact thresholds.</p>
+      <div style="overflow-x:auto">
+      <table class="t">
+        <thead><tr><th>Zone</th><th>% 1RM</th><th>Lower body</th><th>Upper body</th></tr></thead>
+        <tbody>
+          <tr><td>Absolute strength</td><td>80&ndash;100%</td><td>&lt; 0.50 m/s</td><td>&lt; 0.40 m/s</td></tr>
+          <tr><td>Accelerative strength</td><td>60&ndash;80%</td><td>0.50&ndash;0.75 m/s</td><td>0.40&ndash;0.60 m/s</td></tr>
+          <tr><td>Strength&ndash;speed</td><td>40&ndash;60%</td><td>0.75&ndash;1.0 m/s</td><td>0.60&ndash;0.85 m/s</td></tr>
+          <tr><td>Speed&ndash;strength</td><td>20&ndash;40%</td><td>1.0&ndash;1.3 m/s</td><td>0.85&ndash;1.1 m/s</td></tr>
+          <tr><td>Starting strength</td><td>Body weight to 20%</td><td>&gt; 1.3 m/s</td><td>&gt; 1.1 m/s</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="box warn">
+        <h3>Reality check from the research</h3>
+        <ul>
+          <li>In <strong>80 strength-trained men</strong> doing a full squat, mean velocity at 1RM was <strong>0.32 &plusmn; 0.03 m/s</strong>, and velocity was very closely linked to %1RM (Sánchez-Medina et al., 2017).</li>
+          <li>In <strong>352 young recreational athletes</strong> (full squat, mean propulsive velocity), men lifted 70% 1RM at <strong>0.61 &plusmn; 0.09 m/s</strong> and women at <strong>0.55 &plusmn; 0.10 m/s</strong>. The authors note that their values at 50% 1RM were about the same as those reported at 70% 1RM in trained athletes, and that velocity at each %1RM varied a lot between people (Fernandez Ortega et al., 2022).</li>
+          <li>Because of this spread, those authors recommend working out the load&ndash;velocity relationship individually for people who aren't strength-trained (Fernandez Ortega et al., 2022).</li>
+        </ul>
+        <p><strong>The take-home:</strong> the same velocity can mean a different %1RM for different people, exercises and devices. Use the zones as a guide, and use each lifter's own profile to set their loads.</p>
+      </div>
+      <p class="ref">Haff (Ed.), <em>Essentials of Strength Training and Conditioning</em> (5th ed.), Table 14.13. Sánchez-Medina et al. (2017), <em>Sports Medicine International Open</em>, 1, E80&ndash;E88. Fernandez Ortega et al. (2022), <em>International Journal of Environmental Research and Public Health</em>, 19(11), 6756.</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head h-teal"><span class="chip">Do it</span><h2>Train in a zone</h2></div>
+    <div class="card-body">
+      <div class="grid2">
+        <div>
+          <label class="fld" for="zsel">Target zone</label>
+          <select id="zsel"></select>
+          <label class="fld" for="zbody">Exercise type</label>
+          <select id="zbody"><option value="lower">Lower body (e.g. squat)</option><option value="upper">Upper body (e.g. bench press)</option></select>
+          <div id="zload" class="box" style="margin-top:.8rem"></div>
+        </div>
+        <div>
+          <label class="fld" for="zrep">First rep mean velocity (m/s)</label>
+          <input type="number" id="zrep" step="0.01" min="0" placeholder="e.g. 0.82">
+          <div id="zout"></div>
+        </div>
+      </div>
+      <div class="box navy">
+        <h3>How to run it</h3>
+        <ol>
+          <li>Choose a zone and pick a starting load (use your profile if you built one in Task 2).</li>
+          <li>Do one fast rep and enter its mean velocity.</li>
+          <li>Adjust the load until the first rep lands in the zone, then do the set.</li>
+          <li>Discuss: would a %1RM from last month have given the same load today?</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- 4 VELOCITY LOSS -->
+<div class="panel" id="p-vl" role="tabpanel" aria-labelledby="tab-vl">
+  <section class="card">
+    <div class="card-head h-plum"><span class="chip">Task 4</span><h2>Velocity loss: when should the set stop?</h2></div>
+    <div class="card-body">
+      <p style="margin-top:0">As fatigue builds, each rep slows down. Velocity loss is how much slower the current rep is than the fastest rep in the set. Coaches set a limit (e.g. 20%) and end the set once a rep goes past it.</p>
+      <div class="grid2">
+        <div>
+          <label class="fld" for="vlname">Lifter</label><input type="text" id="vlname" placeholder="Name">
+          <label class="fld" for="vlload">Load (kg)</label><input type="number" id="vlload" placeholder="Same load for both sets">
+          <label class="fld" for="vlth">Velocity loss limit</label>
+          <select id="vlth"><option value="10">10%</option><option value="20" selected>20%</option><option value="30">30%</option><option value="40">40%</option></select>
+        </div>
+        <div>
+          <label class="fld" for="vlv">Rep mean velocity (m/s)</label>
+          <input type="number" id="vlv" step="0.01" min="0" placeholder="Type and press Add rep">
+          <div class="btn-row"><button class="btn plum" id="vladd">Add rep</button><button class="btn ghost" id="vlundo">Undo</button><button class="btn teal" id="vlsave">Save set</button></div>
+        </div>
+      </div>
+      <div class="reps" id="vlreps"></div>
+      <div id="vlstop"></div>
+      <h3 style="color:var(--navy);margin:1.2rem 0 .3rem">Saved sets</h3>
+      <div style="overflow-x:auto"><table class="t"><thead><tr><th>Lifter</th><th>Load</th><th>Limit</th><th>Reps done</th><th>Fastest</th><th>Last rep</th><th>Loss at end</th></tr></thead><tbody id="vlsaved"><tr><td colspan="7" style="color:var(--muted)">No sets saved yet.</td></tr></tbody></table></div>
+      <div class="box navy">
+        <h3>Try this</h3>
+        <p>Same lifter, same load, two sets on different stations or after full rest: one stopped at <strong>10%</strong> loss and one at <strong>30%</strong>. Compare the reps done and how each set felt. Which would you use before a match, and which in an off-season hypertrophy block?</p>
+      </div>
+      <div class="box warn">
+        <h3>What the research found</h3>
+        <ul>
+          <li>Over 8 weeks of squat training, stopping sets at <strong>20%</strong> velocity loss gave similar strength gains to <strong>40%</strong>, and bigger improvements in CMJ (9.5% vs 3.5%), despite about 40% fewer reps.</li>
+          <li>The 40% group got more growth in two of the quadriceps muscles, but also lost some of their fastest (type IIX) muscle fibres.</li>
+          <li>A 2025 study found the best strength gains with a moderate (20%) limit compared with 40%.</li>
+        </ul>
+      </div>
+      <p class="ref">Pareja-Blanco et al. (2017), <em>Scandinavian Journal of Medicine &amp; Science in Sports</em>, 27(7), 724&ndash;735. Sánchez-Valdepeñas et al. (2025), <em>Scandinavian Journal of Medicine &amp; Science in Sports</em>, 35(6), e70090.</p>
+    </div>
+  </section>
+</div>
+
+<!-- 5 APPS -->
+<div class="panel" id="p-apps" role="tabpanel" aria-labelledby="tab-apps">
+  <section class="card">
+    <div class="card-head h-grey"><span class="chip">Task 5</span><h2>Could your phone do this?</h2></div>
+    <div class="card-body">
+      <p style="margin-top:0">A GymAware is expensive. Several phone apps use the camera to track the bar and give you mean velocity. Your clients won't have a GymAware, but they will have a phone. So is a phone good enough?</p>
+      <div class="box warn">
+        <h3>What the research says</h3>
+        <ul>
+          <li>A 2026 systematic review found that phone apps are <strong>less valid and less reliable</strong> than dedicated devices, and that results varied between apps, exercises and loads. Its conclusion was that they are suitable for recreational and applied settings, but not for high-precision research.</li>
+          <li>In competitive powerlifters filmed alongside 3D motion capture, one app (Qwik VBT) was as accurate as a linear position transducer. Two others (Metric VBT and MyLift) were less accurate and missed reps (52 and 175 of 589). In that study the phone was on a stand 1 m high, 3 m from the end of the bar.</li>
+          <li>When Metric was tested against a GymAware, agreement was good for the squat, but poorer for the bench press and deadlift.</li>
+          <li>Apps update often, so a validation study of an older version may not apply to the version on your phone.</li>
+        </ul>
+        <p class="ref">Puppyn &amp; Brughelli (2026), <em>International Journal of Sports Science &amp; Coaching</em>, doi:10.1177/17479541261447622. Renner et al. (2024), <em>PLOS ONE</em>, 19(11), e0313919. Puppyn et al. (2025), <em>International Journal of Sports Science &amp; Coaching</em>, doi:10.1177/17479541251391967.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head h-grey"><span class="chip">Test it</span><h2>GymAware vs your phone</h2></div>
+    <div class="card-body">
+      <p style="margin-top:0">If someone in your group has a VBT app, film a set while the GymAware records it, then enter both numbers for each rep.</p>
+      <div style="overflow-x:auto"><table class="t"><thead><tr><th>Rep</th><th>GymAware (m/s)</th><th>Phone app (m/s)</th><th>Difference</th></tr></thead><tbody id="approws"></tbody></table></div>
+      <div id="appout"></div>
+      <div class="box navy">
+        <h3>Discuss in your group</h3>
+        <ol>
+          <li>Is the difference big enough to change which zone the lifter is in, or when a set would stop?</li>
+          <li>Would you trust the app for <strong>tracking one client over time</strong> (same phone, same set-up) more than for comparing with published zones? Why?</li>
+          <li>Could you use an app with the client in your Practical Assessment? What would you need to keep the same every session?</li>
+          <li>What could go wrong in a busy gym (e.g. people walking in front of the camera, the phone moving, plates hiding the bar)?</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+</div>
+</main>
+
+<footer>
+  <p><strong style="color:var(--navy)">SESD56 | Applied Strength and Conditioning for Sport and Exercise</strong></p>
+  <p>Plymouth Marjon University &middot; For teaching use. Every rep at maximal intent, or the numbers mean nothing.</p>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id);};
+var esc=function(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});};
+var f2=function(x){return (Math.round(x*100)/100).toFixed(2);};
+
+/* Tabs */
+var tabs=[["tab-setup","p-setup"],["tab-lvp","p-lvp"],["tab-zone","p-zone"],["tab-vl","p-vl"],["tab-apps","p-apps"]];
+tabs.forEach(function(t){$(t[0]).addEventListener("click",function(){
+  tabs.forEach(function(u){$(u[0]).setAttribute("aria-selected",u[0]===t[0]);$(u[1]).classList.toggle("active",u[0]===t[0]);});
+  if(t[0]==="tab-zone") drawZone();
+});});
+
+/* ---------- LVP ---------- */
+var N=6;
+function rowsHtml(id){var s="";for(var i=0;i<N;i++){s+='<tr><td><input type="number" step="0.5" min="0" data-l="'+id+'" data-i="'+i+'" data-k="load" aria-label="Load '+(i+1)+'"></td><td><input type="number" step="0.01" min="0" data-l="'+id+'" data-i="'+i+'" data-k="v" aria-label="Velocity '+(i+1)+'"></td></tr>';}return s;}
+$("rowsA").innerHTML=rowsHtml("A"); $("rowsB").innerHTML=rowsHtml("B");
+function getData(id){
+  var pts=[];
+  for(var i=0;i<N;i++){
+    var l=parseFloat(document.querySelector('input[data-l="'+id+'"][data-i="'+i+'"][data-k="load"]').value);
+    var v=parseFloat(document.querySelector('input[data-l="'+id+'"][data-i="'+i+'"][data-k="v"]').value);
+    if(isFinite(l)&&isFinite(v)&&l>=0&&v>0) pts.push([l,v]);
+  }
+  return pts;
+}
+function fit(pts){
+  if(pts.length<3) return null;
+  var n=pts.length,sx=0,sy=0,sxx=0,sxy=0,syy=0;
+  pts.forEach(function(p){sx+=p[0];sy+=p[1];sxx+=p[0]*p[0];sxy+=p[0]*p[1];syy+=p[1]*p[1];});
+  var d=n*sxx-sx*sx; if(d===0) return null;
+  var b=(n*sxy-sx*sy)/d, a=(sy-b*sx)/n;
+  var r=(n*sxy-sx*sy)/Math.sqrt(d*(n*syy-sy*sy));
+  if(!(b<0)) return {bad:true,a:a,b:b,r2:r*r,n:n};
+  return {a:a,b:b,r2:r*r,L0:-a/b,n:n};
+}
+var COL={A:"#0071bc",B:"#8b3556"};
+function name(id){return $("name"+id).value.trim()||("Lifter "+id);}
+function drawLVP(){
+  var A=getData("A"),B=getData("B"),fa=fit(A),fb=fit(B);
+  var all=A.concat(B);
+  var svg=$("lvp-chart"),W=640,H=380,m={l:58,r:20,t:20,b:50};
+  var maxL=10,maxV=0.5;
+  all.forEach(function(p){maxL=Math.max(maxL,p[0]);maxV=Math.max(maxV,p[1]);});
+  [fa,fb].forEach(function(f){if(f&&!f.bad){maxV=Math.max(maxV,f.a);}});
+  maxL=Math.ceil(maxL*1.15/10)*10; maxV=Math.ceil(maxV*1.1*10)/10;
+  var X=function(l){return m.l+(l/maxL)*(W-m.l-m.r);}, Y=function(v){return H-m.b-(v/maxV)*(H-m.t-m.b);};
+  var g='';
+  for(var i=0;i<=5;i++){var v=maxV*i/5;g+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="#e8eef1"/><text x="'+(m.l-8)+'" y="'+(Y(v)+4)+'" font-size="12" text-anchor="end" fill="#5b6770">'+v.toFixed(2)+'</text>';}
+  for(var j=0;j<=5;j++){var l=maxL*j/5;g+='<text x="'+X(l)+'" y="'+(H-m.b+18)+'" font-size="12" text-anchor="middle" fill="#5b6770">'+Math.round(l)+'</text>';}
+  g+='<line x1="'+m.l+'" x2="'+m.l+'" y1="'+m.t+'" y2="'+(H-m.b)+'" stroke="#3d4a52" stroke-width="1.5"/><line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+(H-m.b)+'" y2="'+(H-m.b)+'" stroke="#3d4a52" stroke-width="1.5"/>';
+  g+='<text x="'+((W+m.l)/2)+'" y="'+(H-10)+'" font-size="13" text-anchor="middle" fill="#3d4a52">Load (kg)</text>';
+  g+='<text transform="translate(16,'+((H-m.b+m.t)/2)+') rotate(-90)" font-size="13" text-anchor="middle" fill="#3d4a52">Mean velocity (m/s)</text>';
+  [["A",A,fa],["B",B,fb]].forEach(function(s){
+    var c=COL[s[0]];
+    if(s[2]&&!s[2].bad){
+      var x1=0,x2=Math.min(maxL,s[2].L0), y1=s[2].a, y2=s[2].a+s[2].b*x2;
+      g+='<line x1="'+X(x1)+'" y1="'+Y(y1)+'" x2="'+X(x2)+'" y2="'+Y(Math.max(0,y2))+'" stroke="'+c+'" stroke-width="2" stroke-dasharray="6 4"/>';
+    }
+    s[1].forEach(function(p){g+='<circle cx="'+X(p[0])+'" cy="'+Y(p[1])+'" r="5.5" fill="'+c+'" stroke="#fff" stroke-width="1.5"/>';});
+  });
+  if(!all.length) g+='<text x="'+(W/2)+'" y="'+(H/2)+'" text-anchor="middle" font-size="15" fill="#5b6770">Enter loads and velocities, or load the example data</text>';
+  svg.innerHTML=g;
+
+  var st='';
+  [["A",fa],["B",fb]].forEach(function(s){
+    var f=s[1]; if(!f) return;
+    if(f.bad){st+='<p class="msg no">'+esc(name(s[0]))+': velocity isn\'t going down as load goes up. Check the numbers were entered against the right loads.</p>';return;}
+    st+='<h3 style="margin:1rem 0 .2rem;color:'+COL[s[0]]+'">'+esc(name(s[0]))+'</h3><div class="stat">'+
+      '<div><b>'+f.a.toFixed(2)+' m/s</b><span>V0: speed with no load</span></div>'+
+      '<div><b>'+Math.round(f.L0)+' kg</b><span>L0: load at zero speed (not a 1RM)</span></div>'+
+      '<div><b>'+(f.b*10).toFixed(3)+'</b><span>Slope: m/s lost per 10 kg added</span></div>'+
+      '<div><b>'+f.r2.toFixed(3)+'</b><span>r&sup2;: how straight the line is (1 = perfect)</span></div></div>';
+    if(f.r2<0.9) st+='<p class="msg info">'+esc(name(s[0]))+'\'s line isn\'t very straight. Check depth, technique and that every rep was at full effort.</p>';
+  });
+  $("lvp-stats").innerHTML=st;
+  interp(fa,fb); drawTarget(); drawZone();
+}
+function interp(fa,fb){
+  var okA=fa&&!fa.bad, okB=fb&&!fb.bad, s='';
+  if(!okA&&!okB){$("interp").innerHTML='<p>Enter at least three loads for a lifter to see an explanation of their line.</p>';return;}
+  var one=okA?["A",fa]:["B",fb];
+  s+='<h3>What this tells you</h3><ul>';
+  s+='<li>Each extra 10 kg costs '+esc(name(one[0]))+' about <strong>'+Math.abs(one[1].b*10).toFixed(2)+' m/s</strong> of bar speed.</li>';
+  s+='<li>Use the target-speed box above to find the load for any zone. That\'s how a profile turns into a prescription.</li>';
+  if(okA&&okB){
+    var nA=esc(name("A")),nB=esc(name("B"));
+    var common=Math.min(fa.L0,fb.L0)*0.5;
+    var vA=fa.a+fa.b*common, vB=fb.a+fb.b*common;
+    var faster=vA>vB?nA:nB;
+    s+='<li>At '+Math.round(common)+' kg, '+nA+' would move the bar at about '+f2(vA)+' m/s and '+nB+' at about '+f2(vB)+' m/s, so <strong>'+faster+' is faster with that load</strong>.</li>';
+    var cx=(fb.a-fa.a)/(fa.b-fb.b);
+    if(isFinite(cx)&&cx>0&&cx<Math.min(fa.L0,fb.L0)){
+      var lightFast=fa.a>fb.a?nA:nB, heavyFast=lightFast===nA?nB:nA;
+      s+='<li>Their lines cross at about <strong>'+Math.round(cx)+' kg</strong>. Below that load '+lightFast+' is faster. Above it, '+heavyFast+' is faster. Who is &ldquo;better&rdquo; depends on the load you ask about.</li>';
+    }
+    var steeper=Math.abs(fa.b)>Math.abs(fb.b)?nA:nB, flatter=steeper===nA?nB:nA;
+    s+='<li><strong>'+steeper+'\'s line is steeper.</strong> They lose speed more quickly as load goes up, so they are relatively better with light, fast loads. <strong>'+flatter+'</strong> holds speed better with heavy loads, so is relatively stronger.</li>';
+    s+='<li>Training idea: the lifter with the steeper line may benefit more from heavy strength work. The one with the flatter line may benefit more from lighter, faster work. Check this against their sport and their 1RM before deciding.</li>';
+  }else{
+    s+='<li>Add a second lifter to compare two profiles. Differences in the height and slope of the lines are where the coaching decisions come from.</li>';
+  }
+  s+='</ul>';
+  $("interp").innerHTML=s;
+}
+function drawTarget(){
+  var t=parseFloat($("tv").value), out='';
+  if(isFinite(t)&&t>0){
+    [["A",fit(getData("A"))],["B",fit(getData("B"))]].forEach(function(s){
+      var f=s[1]; if(!f||f.bad) return;
+      var load=(t-f.a)/f.b;
+      out+='<p style="margin:.2rem 0"><strong style="color:'+COL[s[0]]+'">'+esc(name(s[0]))+':</strong> '+(load>0?'about <strong>'+Math.round(load)+' kg</strong>':'faster than this line predicts at any load')+'</p>';
+    });
+  }
+  $("tv-out").innerHTML=out||'<p class="ref" style="margin:0">Build a profile, then enter a target speed.</p>';
+}
+document.addEventListener("input",function(ev){ if(ev.target.dataset.l||ev.target.id==="nameA"||ev.target.id==="nameB"){ drawLVP(); } });
+$("tv").addEventListener("input",drawTarget);
+$("example").addEventListener("click",function(){
+  var ex={A:[[40,1.16],[60,0.99],[80,0.81],[100,0.63],[120,0.46]],B:[[40,1.31],[60,1.07],[80,0.83],[100,0.58]]};
+  $("nameA").value="Example lifter A"; $("nameB").value="Example lifter B";
+  ["A","B"].forEach(function(id){for(var i=0;i<N;i++){var p=ex[id][i];
+    document.querySelector('input[data-l="'+id+'"][data-i="'+i+'"][data-k="load"]').value=p?p[0]:"";
+    document.querySelector('input[data-l="'+id+'"][data-i="'+i+'"][data-k="v"]').value=p?p[1]:"";}});
+  drawLVP();
+});
+$("clear-lvp").addEventListener("click",function(){
+  Array.prototype.forEach.call(document.querySelectorAll("#rowsA input,#rowsB input"),function(i){i.value="";});
+  $("nameA").value="";$("nameB").value="";$("tv").value=""; drawLVP();
+});
+
+/* ---------- Zones ---------- */
+var Z=[
+ {n:"Absolute strength",p:"80–100%",lo:{lower:0,upper:0},hi:{lower:0.50,upper:0.40}},
+ {n:"Accelerative strength",p:"60–80%",lo:{lower:0.50,upper:0.40},hi:{lower:0.75,upper:0.60}},
+ {n:"Strength–speed",p:"40–60%",lo:{lower:0.75,upper:0.60},hi:{lower:1.0,upper:0.85}},
+ {n:"Speed–strength",p:"20–40%",lo:{lower:1.0,upper:0.85},hi:{lower:1.3,upper:1.1}},
+ {n:"Starting strength",p:"BW–20%",lo:{lower:1.3,upper:1.1},hi:{lower:null,upper:null}}
+];
+$("zsel").innerHTML=Z.map(function(z,i){return '<option value="'+i+'"'+(i===2?' selected':'')+'>'+z.n+' ('+z.p+')</option>';}).join("");
+function rng(z,b){return (z.hi[b]==null?'> '+z.lo[b].toFixed(2):(z.lo[b]===0?'< '+z.hi[b].toFixed(2):z.lo[b].toFixed(2)+'–'+z.hi[b].toFixed(2)))+' m/s';}
+function drawZone(){
+  var z=Z[+$("zsel").value], b=$("zbody").value, s='<h3>Target: '+rng(z,b)+'</h3>';
+  var lv=[["A",fit(getData("A"))],["B",fit(getData("B"))]].filter(function(x){return x[1]&&!x[1].bad;});
+  if(lv.length){
+    lv.forEach(function(x){
+      var f=x[1], vHi=z.hi[b]==null?f.a:z.hi[b], vLo=z.lo[b];
+      var lA=Math.max(0,(vHi-f.a)/f.b), lB=(vLo-f.a)/f.b;
+      var txt = z.lo[b]===0 ? 'heavier than about <strong>'+Math.round(lA)+' kg</strong>' : 'about <strong>'+Math.round(lA)+'–'+Math.round(lB)+' kg</strong>';
+      s+='<p style="margin:.2rem 0"><strong style="color:'+COL[x[0]]+'">'+esc(name(x[0]))+'</strong>: '+txt+' (from their profile)</p>';
+    });
+    s+='<p class="ref" style="margin-top:.3rem">Loads only apply to the exercise the profile was built on.</p>';
+  }else{
+    s+='<p class="ref" style="margin:0">Build a profile in Task 2 and this box will suggest a load range for each lifter.</p>';
+  }
+  $("zload").innerHTML=s; checkRep();
+}
+function checkRep(){
+  var v=parseFloat($("zrep").value), z=Z[+$("zsel").value], b=$("zbody").value, o='';
+  if(isFinite(v)&&v>0){
+    var lo=z.lo[b], hi=z.hi[b];
+    if(v<lo) o='<div class="stop end"><div class="big">'+f2(v)+' m/s</div>Too slow for this zone. Take some weight off.</div>';
+    else if(hi!=null&&v>hi) o='<div class="stop end" style="background:var(--warn-bg);color:var(--warn)"><div class="big">'+f2(v)+' m/s</div>Too fast for this zone. Add some weight.</div>';
+    else o='<div class="stop go"><div class="big">'+f2(v)+' m/s</div>In the zone. Do the set at this load.</div>';
+  }
+  $("zout").innerHTML=o;
+}
+$("zsel").addEventListener("change",drawZone); $("zbody").addEventListener("change",drawZone); $("zrep").addEventListener("input",checkRep);
+
+/* ---------- Velocity loss ---------- */
+var reps=[], saved=[];
+function drawVL(){
+  var th=+$("vlth").value, best=0, o='', stopAt=-1;
+  reps.forEach(function(v,i){ if(i===0||v>best) best=Math.max(best,v); });
+  var runBest=0;
+  o=reps.map(function(v,i){
+    runBest=Math.max(runBest,v); var loss=(runBest-v)/runBest*100;
+    var over=loss>th; if(over&&stopAt<0) stopAt=i;
+    var cls=v===runBest?" best":(over?" over":"");
+    return '<span class="rep'+cls+'">Rep '+(i+1)+': <strong>'+f2(v)+'</strong>'+(i?' &middot; '+loss.toFixed(0)+'% loss':'')+'</span>';
+  }).join("");
+  $("vlreps").innerHTML=o;
+  if(!reps.length){$("vlstop").innerHTML='';return;}
+  var last=reps[reps.length-1], lossNow=(runBest-last)/runBest*100;
+  $("vlstop").innerHTML = stopAt>=0
+    ? '<div class="stop end">STOP THE SET. Rep '+(stopAt+1)+' went past the '+th+'% limit.</div>'
+    : '<div class="stop go">Keep going. Current loss is '+lossNow.toFixed(0)+'%, so the set ends when a rep is more than '+th+'% slower than '+f2(runBest)+' m/s (below '+f2(runBest*(1-th/100))+' m/s).</div>';
+}
+function addRep(){var v=parseFloat($("vlv").value); if(!(v>0)) return; reps.push(v); $("vlv").value=""; $("vlv").focus(); drawVL();}
+$("vladd").addEventListener("click",addRep);
+$("vlv").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();addRep();}});
+$("vlundo").addEventListener("click",function(){reps.pop();drawVL();});
+$("vlth").addEventListener("change",drawVL);
+$("vlsave").addEventListener("click",function(){
+  if(!reps.length) return;
+  var best=Math.max.apply(null,reps), last=reps[reps.length-1];
+  saved.push({n:$("vlname").value.trim()||"-",l:$("vlload").value||"-",t:$("vlth").value,r:reps.length,b:best,last:last,loss:(best-last)/best*100});
+  reps=[]; drawVL();
+  $("vlsaved").innerHTML=saved.map(function(s){return '<tr><td>'+esc(s.n)+'</td><td>'+esc(s.l)+(s.l!=="-"?' kg':'')+'</td><td>'+s.t+'%</td><td>'+s.r+'</td><td>'+f2(s.b)+' m/s</td><td>'+f2(s.last)+' m/s</td><td>'+s.loss.toFixed(0)+'%</td></tr>';}).join("");
+});
+
+/* ---------- Apps ---------- */
+var AR=6;
+$("approws").innerHTML=Array.apply(null,{length:AR}).map(function(_,i){
+  return '<tr><td>'+(i+1)+'</td><td><input type="number" step="0.01" data-a="g" data-i="'+i+'" aria-label="GymAware rep '+(i+1)+'"></td><td><input type="number" step="0.01" data-a="p" data-i="'+i+'" aria-label="Phone rep '+(i+1)+'"></td><td id="d'+i+'">-</td></tr>';
+}).join("");
+$("approws").addEventListener("input",function(){
+  var diffs=[];
+  for(var i=0;i<AR;i++){
+    var g=parseFloat(document.querySelector('[data-a="g"][data-i="'+i+'"]').value), p=parseFloat(document.querySelector('[data-a="p"][data-i="'+i+'"]').value);
+    if(isFinite(g)&&isFinite(p)&&g>0){ var d=p-g; diffs.push(d); $("d"+i).textContent=(d>=0?"+":"")+f2(d)+" m/s ("+(d>=0?"+":"")+(d/g*100).toFixed(0)+"%)"; }
+    else $("d"+i).textContent="-";
+  }
+  if(diffs.length<2){$("appout").innerHTML="";return;}
+  var mean=diffs.reduce(function(a,b){return a+b;},0)/diffs.length;
+  var mad=diffs.reduce(function(a,b){return a+Math.abs(b);},0)/diffs.length;
+  $("appout").innerHTML='<div class="stat"><div><b>'+(mean>=0?"+":"")+f2(mean)+' m/s</b><span>Average difference (bias). Positive means the phone reads higher.</span></div><div><b>'+f2(mad)+' m/s</b><span>Average size of the difference, ignoring direction</span></div></div>';
+});
+
+drawLVP();
+})();
+</script>
+</body>
+</html>

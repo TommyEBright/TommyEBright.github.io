@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Developing Power | SESD56</title>
+<meta name="description" content="Place exercises on the load–velocity curve, see why fast squats feel different, and plan a power-focused training week. SESD56, Plymouth Marjon University.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --navy:#003d50; --navy-d:#002c3a; --teal:#00857e; --teal-d:#00625d; --blue:#0071bc; --blue-d:#00568f; --plum:#8b3556; --plum-d:#682840;
+  --bg:#f7fbfd; --card:#ffffff; --soft:#f2faf9; --soft2:#f8fcfe; --line:#d9e2e7; --edge:#abd6d9;
+  --ink:#1d1d1b; --ink2:#3d4a52; --muted:#5b6770;
+  --good:#1b7a45; --good-bg:#eaf6ef; --warn:#8a5a00; --warn-bg:#fff5e0; --bad:#b42318; --bad-bg:#fdecea;
+  --z1:#e8f1f8; --z2:#e3f3f2; --z3:#eef0f8; --z4:#f6ecf0; --z5:#f3f3ee;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#eaf3f7;color:var(--ink);line-height:1.5;font-size:16px}
+.wrap{max-width:1120px;margin:.8rem auto;padding:1rem;background:var(--bg);border:2px solid var(--edge);border-radius:1rem}
+header.hero{background:var(--navy);color:#fff;padding:1.6rem 1.5rem;border-radius:.9rem .9rem 0 0;border-bottom:.4rem solid var(--teal)}
+.badge{display:inline-block;background:#fff;color:var(--navy);padding:.3rem .8rem;margin:0 0 .7rem;font-size:.86em;border-left:.35rem solid var(--blue);border-radius:.65rem;font-weight:bold}
+header.hero h1{margin:0 0 .35rem;font-size:1.9em;line-height:1.2}
+header.hero p{margin:0;max-width:60rem}
+nav.tabs{background:#fff;padding:.8rem;margin-bottom:1.2rem;border:1px solid var(--line);border-top:0;border-radius:0 0 .9rem .9rem;display:flex;gap:.6rem;flex-wrap:wrap}
+nav.tabs button{flex:1 1 200px;min-height:2.9rem;border:0;border-radius:.75rem;color:#fff;font:bold 1em Arial,Helvetica,sans-serif;cursor:pointer;padding:.6rem .8rem;opacity:.72}
+nav.tabs button[aria-selected="true"]{opacity:1;outline:3px solid #fff;box-shadow:0 0 0 3px var(--ink)}
+#tab-curve{background:var(--navy);border-bottom:.25rem solid var(--navy-d)}
+#tab-squat{background:var(--teal);border-bottom:.25rem solid var(--teal-d)}
+#tab-plan{background:var(--plum);border-bottom:.25rem solid var(--plum-d)}
+.panel{display:none}.panel.active{display:block}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:1rem;margin-bottom:1.2rem;overflow:hidden}
+.card-head{color:#fff;padding:1rem 1.3rem}
+.card-head .chip{display:inline-block;background:#fff;padding:.2rem .65rem;font-size:.8em;margin:0 0 .35rem;border-left:.3rem solid var(--navy);border-radius:.55rem;font-weight:bold}
+.card-head h2{margin:0;font-size:1.3em}
+.card-body{padding:1.1rem 1.3rem}
+.h-navy{background:var(--navy)}.h-navy .chip{color:var(--navy);border-left-color:var(--blue)}
+.h-blue{background:var(--blue)}.h-blue .chip{color:var(--blue)}
+.h-teal{background:var(--teal)}.h-teal .chip{color:var(--teal)}
+.h-plum{background:var(--plum)}.h-plum .chip{color:var(--plum)}
+.box{background:#fff;border:1px solid var(--line);border-left:.4rem solid var(--blue);border-radius:.75rem;padding:.85rem 1rem;margin-top:.9rem}
+.box.teal{border-left-color:var(--teal)}.box.plum{border-left-color:var(--plum)}.box.navy{border-left-color:var(--navy)}
+.box h3{margin:0 0 .4rem;color:var(--navy);font-size:1.05em}
+.box ul,.box ol{margin:.2rem 0 0;padding-left:1.25rem}
+.ref{color:var(--muted);font-size:.84em;margin:.7rem 0 0}
+.btn{display:inline-block;border:0;border-radius:.75rem;padding:.6rem 1rem;font:bold .95em Arial,Helvetica,sans-serif;cursor:pointer;color:#fff;background:var(--navy);border-bottom:.2rem solid var(--navy-d);min-height:2.6rem}
+.btn.teal{background:var(--teal);border-bottom-color:var(--teal-d)}.btn.plum{background:var(--plum);border-bottom-color:var(--plum-d)}.btn.blue{background:var(--blue);border-bottom-color:var(--blue-d)}
+.btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+.btn.small{padding:.35rem .7rem;min-height:2.1rem;font-size:.86em}
+.btn:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.btn-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.9rem}
+.msg{margin:.7rem 0 0;padding:.6rem .8rem;border-radius:.6rem;font-weight:bold;display:none}
+.msg.ok{background:var(--good-bg);color:var(--good)}.msg.no{background:var(--bad-bg);color:var(--bad)}.msg.info{background:var(--warn-bg);color:var(--warn)}
+
+/* Curve */
+.tray{display:flex;flex-wrap:wrap;gap:.5rem;min-height:3.4rem;padding:.6rem;border:2px dashed var(--edge);border-radius:.8rem;background:var(--soft2)}
+.ex{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;border:2px solid var(--navy);background:#fff;color:var(--navy);border-radius:.7rem;padding:.5rem .75rem;font-weight:bold;font-size:.95em}
+.ex.sel{background:var(--navy);color:#fff}
+.ex.placed{cursor:pointer;border-color:var(--good);color:var(--good);font-size:.85em;padding:.35rem .55rem;width:100%;text-align:center}
+.ex.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.ghostdrag{position:fixed;pointer-events:none;z-index:50;opacity:.9;transform:translate(-50%,-50%);box-shadow:0 6px 18px rgba(0,0,0,.2)}
+.chart{position:relative;margin-top:1rem}
+.chart .ylab{position:absolute;left:-.2rem;top:50%;transform:rotate(-90deg) translateX(50%);transform-origin:left top;font-size:.82em;color:var(--muted);white-space:nowrap}
+.plot{position:relative;margin-left:1.6rem;border-left:2px solid var(--ink2);border-bottom:2px solid var(--ink2);height:420px}
+.zones{position:absolute;inset:0;display:grid;grid-template-columns:repeat(5,1fr)}
+.zone{position:relative;border-right:1px dashed #c6d3da;padding:.35rem .3rem;display:flex;flex-direction:column;gap:.3rem;justify-content:flex-end}
+.zone:nth-child(1){background:var(--z1)}.zone:nth-child(2){background:var(--z2)}.zone:nth-child(3){background:var(--z3)}.zone:nth-child(4){background:var(--z4)}.zone:nth-child(5){background:var(--z5);border-right:0}
+.zone.hover{outline:3px solid var(--teal);outline-offset:-3px}
+.zone .zt{position:absolute;top:.35rem;left:.3rem;right:.3rem;font-size:.78em;line-height:1.25;color:var(--navy);font-weight:bold;pointer-events:none;z-index:2;background:rgba(255,255,255,.75);border-radius:.35rem;padding:.15rem .25rem;overflow-wrap:anywhere;hyphens:auto}
+.zone .zt span{display:block;font-weight:normal;color:var(--ink2)}
+.zone .drops{display:flex;flex-direction:column;gap:.3rem;position:relative;z-index:2}
+.plot svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.xaxis{display:grid;grid-template-columns:repeat(5,1fr);margin-left:1.6rem;font-size:.8em;color:var(--muted)}
+.xaxis div{text-align:center;padding-top:.25rem}
+.xt{text-align:center;font-size:.85em;color:var(--muted);margin-left:1.6rem}
+.rx{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:.8rem;margin-top:.6rem}
+.rx .box{margin-top:0}
+.rx .box p{margin:.25rem 0;font-size:.93em}
+.rx .zone-tag{display:inline-block;font-size:.78em;font-weight:bold;background:var(--soft);color:var(--teal-d);border-radius:.4rem;padding:.1rem .45rem}
+@media (max-width:700px){.plot{height:520px}.zone .zt{font-size:.6em;padding:.1rem}.ex.placed{font-size:.72em}}
+
+/* Squat explainer */
+.steps3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem}
+@media (max-width:760px){.steps3{grid-template-columns:1fr}}
+.step{border:1px solid var(--line);border-radius:.8rem;padding:.9rem;background:#fff;text-align:center}
+.step .n{display:inline-flex;align-items:center;justify-content:center;width:2.2rem;height:2.2rem;border-radius:50%;background:var(--teal);color:#fff;font-weight:bold;margin-bottom:.4rem}
+.step h3{margin:.1rem 0 .3rem;color:var(--navy);font-size:1.05em}
+.step p{margin:0;font-size:.95em}
+.reveal{display:none}
+.reveal.show{display:block}
+.bars{margin-top:.6rem}
+.bar{display:grid;grid-template-columns:7.5rem 1fr 3.2rem;align-items:center;gap:.5rem;margin:.35rem 0;font-size:.92em}
+.bar .track{background:#edf2f5;border-radius:.4rem;height:1.3rem;overflow:hidden}
+.bar .fill{height:100%;background:var(--teal);border-radius:.4rem}
+.bar .fill.lost{background:var(--plum)}
+
+.eqs{display:grid;gap:.5rem;margin-top:.4rem}
+.eq{display:grid;grid-template-columns:9rem 1fr;gap:.8rem;align-items:center;background:var(--soft2);border:1px solid var(--line);border-radius:.6rem;padding:.55rem .8rem}
+.eq .f{font:bold 1.25em Georgia,"Times New Roman",serif;color:var(--navy)}
+@media (max-width:560px){.eq{grid-template-columns:1fr;gap:.2rem}}
+.calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.6rem;margin-top:.5rem}
+input[type=number]{font:1em Arial,Helvetica,sans-serif;padding:.45rem .5rem;border:1px solid #b9c7cf;border-radius:.5rem;background:#fff;color:var(--ink);width:100%}
+.pres{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.6rem;margin-top:.8rem}
+.pres div{background:var(--soft2);border:1px solid var(--line);border-radius:.6rem;padding:.6rem .75rem}
+.pres b{display:block;font-size:1.35em;color:var(--navy)}
+.pres span{font-size:.82em;color:var(--muted)}
+.pres .hi{background:var(--soft);border-color:var(--teal)}
+/* Planner */
+.profile{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.4rem 1rem;font-size:.95em}
+.profile p{margin:.15rem 0}
+.names{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.6rem}
+label.fld{display:block;font-weight:bold;color:var(--navy);font-size:.9em;margin:.2rem 0 .2rem}
+input[type=text],input[type=file],select,textarea{font:1em Arial,Helvetica,sans-serif;padding:.45rem .5rem;border:1px solid #b9c7cf;border-radius:.5rem;background:#fff;color:var(--ink);width:100%}
+textarea{min-height:4rem;resize:vertical}
+.day{border:1px solid var(--line);border-radius:.8rem;margin-top:.8rem;overflow:hidden;background:#fff}
+.day-head{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;padding:.6rem .8rem;background:var(--soft2);border-bottom:1px solid var(--line)}
+.day-head strong{color:var(--navy);min-width:6.5rem}
+.day-head select{width:auto;min-width:12rem}
+.day-body{padding:.5rem .8rem .8rem}
+table.rows{width:100%;border-collapse:collapse;font-size:.92em}
+table.rows th{text-align:left;color:var(--navy);font-size:.82em;padding:.3rem .25rem;border-bottom:1px solid var(--line)}
+table.rows td{padding:.25rem;vertical-align:top}
+table.rows td input{padding:.35rem .4rem;font-size:.95em}
+table.rows .del{border:0;background:none;color:var(--bad);cursor:pointer;font-size:1.1em;padding:.3rem}
+.c-ex{width:28%}.c-s{width:7%}.c-r{width:8%}.c-l{width:14%}.c-rest{width:10%}.c-n{width:30%}
+@media (max-width:760px){
+  table.rows thead{display:none}
+  table.rows tr{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.3rem;border:1px solid var(--line);border-radius:.6rem;padding:.4rem;margin-top:.4rem}
+  table.rows td{padding:0}
+  table.rows td.ex-cell,table.rows td.n-cell{grid-column:1/-1}
+  table.rows td::before{content:attr(data-l);display:block;font-size:.72em;color:var(--muted);font-weight:bold}
+}
+.empty{color:var(--muted);font-style:italic;font-size:.92em;margin:.3rem 0}
+.checks label{display:flex;gap:.55rem;align-items:flex-start;padding:.4rem 0;border-bottom:1px solid var(--line);cursor:pointer}
+.checks label:last-child{border-bottom:0}
+.checks input{width:1.2rem;height:1.2rem;margin:.1rem 0 0;flex:none;accent-color:var(--teal)}
+.peer table{width:100%;border-collapse:collapse;font-size:.9em;margin-top:.5rem}
+.peer th,.peer td{border:1px solid var(--line);padding:.35rem .45rem;text-align:left;vertical-align:top}
+.peer th{background:var(--soft2);color:var(--navy)}
+footer{text-align:center;padding:1rem;border:2px solid var(--navy);border-top-width:6px;border-radius:10px;background:#fff;margin-top:1rem;font-size:.9em}
+footer p{margin:.2rem 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <span class="badge">SESD56 &middot; Developing Power</span>
+  <h1>Developing Power</h1>
+  <p>Place exercises on the load&ndash;velocity curve, work out why a fast squat feels so different from a slow one, then plan a week of power training for an athlete.</p>
+</header>
+<nav class="tabs" role="tablist" aria-label="Tool pages">
+  <button id="tab-curve" role="tab" aria-selected="true" aria-controls="p-curve">1. Place it on the curve</button>
+  <button id="tab-squat" role="tab" aria-selected="false" aria-controls="p-squat">2. Why the fast squat?</button>
+  <button id="tab-plan" role="tab" aria-selected="false" aria-controls="p-plan">3. Plan the week</button>
+</nav>
+
+<main>
+<!-- TAB 1 -->
+<div class="panel active" id="p-curve" role="tabpanel" aria-labelledby="tab-curve">
+  <section class="card">
+    <div class="card-head h-navy"><span class="chip">Task 1</span><h2>Where does each exercise sit on the load&ndash;velocity curve?</h2></div>
+    <div class="card-body">
+      <p style="margin-top:0">Drag each exercise into the zone where it is mainly trained. On a phone, tap an exercise and then tap a zone. When you get one right, its prescription appears underneath.</p>
+      <div class="tray" id="tray" aria-label="Exercises to place"></div>
+      <div class="chart">
+        <span class="ylab">Bar velocity (m/s) &uarr;</span>
+        <div class="plot" id="plot">
+          <div class="zones" id="zones"></div>
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <polyline points="0,6.25 20,18.75 40,37.5 60,53.1 80,68.75 100,81.25" fill="none" stroke="#003d50" stroke-width="0.9" vector-effect="non-scaling-stroke" style="stroke-width:3px"/>
+          </svg>
+        </div>
+        <div class="xaxis"><div>0&ndash;20%</div><div>20&ndash;40%</div><div>40&ndash;60%</div><div>60&ndash;80%</div><div>80&ndash;100%</div></div>
+        <p class="xt">Load (% 1RM) &rarr;</p>
+      </div>
+      <p class="msg" id="curve-msg" role="status"></p>
+      <div class="btn-row"><button class="btn ghost small" id="curve-reset">Start again</button></div>
+      <p class="ref">Zones and velocity ranges for lower body exercises from Table 14.13 in Haff (Ed.), <em>Essentials of Strength Training and Conditioning</em> (5th ed.), reprinted there from Mann (2021). The line is a sketch drawn through those ranges, not one athlete's data. Upper body velocities are lower at the same %1RM.</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head h-teal"><span class="chip">Prescriptions</span><h2>What the book says for each exercise</h2></div>
+    <div class="card-body">
+      <p style="margin-top:0" id="rx-intro">Place an exercise correctly to unlock its prescription.</p>
+      <div class="rx" id="rx"></div>
+      <div class="box plum" id="rx-summary" style="display:none">
+        <h3>The point of this task</h3>
+        <ul>
+          <li>Power isn't one exercise. Good programmes train across the curve, from heavy strength work to fast, light jumps.</li>
+          <li>Notice how the reps drop and the rest gets longer as the work gets heavier or faster. Every rep should be high quality, so power sets stop well before fatigue.</li>
+          <li>Weaker athletes often improve power most by getting stronger first (Chapter 18). Keep that in mind for Task 3.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- TAB 2 -->
+<div class="panel" id="p-squat" role="tabpanel" aria-labelledby="tab-squat">
+  <section class="card">
+    <div class="card-head h-teal"><span class="chip">Task 2</span><h2>Slow squat vs fast squat</h2></div>
+    <div class="card-body">
+      <div class="box navy" style="margin-top:0">
+        <h3>Do it first</h3>
+        <ol>
+          <li>Do 3 bodyweight squats slowly. Pause at the bottom, then stand up.</li>
+          <li>Now do 3 where you <strong>drop fast, slam the handbrake on and drive up as quickly as you can</strong>.</li>
+          <li>With your partner, answer one question: <strong>which one felt more powerful, and why?</strong></li>
+        </ol>
+        <label class="fld" for="sq-guess" style="margin-top:.7rem">Our answer</label>
+        <textarea id="sq-guess" placeholder="e.g. The fast one felt springier because..."></textarea>
+        <div class="btn-row"><button class="btn teal" id="sq-reveal">Show me why</button></div>
+      </div>
+
+      <div class="reveal" id="sq-why">
+        <h3 style="color:var(--navy);margin:1.2rem 0 .6rem">What just happened</h3>
+        <div class="steps3">
+          <div class="step"><div class="n">1</div><h3>Drop fast</h3><p>Your muscles and tendons are stretched quickly, a bit like pulling back an elastic band.</p></div>
+          <div class="step"><div class="n">2</div><h3>Handbrake</h3><p>You stop quickly. The shorter this pause, the less of that stored &ldquo;stretch&rdquo; you lose.</p></div>
+          <div class="step"><div class="n">3</div><h3>Drive up</h3><p>The stored energy and a reflex boost from the quick stretch add to your push, so you move faster.</p></div>
+        </div>
+        <div class="box teal">
+          <h3>The one-line version</h3>
+          <p style="margin:0">A fast stretch followed straight away by a fast push is called the <strong>stretch&ndash;shortening cycle</strong>. It lets you produce more force, more quickly, than pushing from a standstill.</p>
+        </div>
+        <div class="box">
+          <h3>Why the pause matters</h3>
+          <p style="margin:.2rem 0 .4rem">In a bench press study reported in Chapter 19, the longer the pause between lowering and pushing, the more stored energy was lost.</p>
+          <div class="bars" id="bars"></div>
+        </div>
+        <div class="box plum">
+          <h3>So what for training?</h3>
+          <ul>
+            <li><strong>Intent matters.</strong> Ask for every rep to be as fast as possible, even with a heavy load.</li>
+            <li><strong>Coach the stop.</strong> &ldquo;Short and stiff&rdquo; contacts make jumps and plyometrics work better.</li>
+            <li><strong>Fast and slow SSC.</strong> Chapter 19 describes drills with contacts under 0.25 s as fast SSC (e.g. depth jumps, hops) and longer ones as slow SSC (e.g. a CMJ). Sports need both.</li>
+          </ul>
+        </div>
+        <div class="box navy">
+          <h3>What is power? The definitions</h3>
+          <div class="eqs">
+            <div class="eq"><span class="f">W = F &times; d</span><span>Work (J) = force (N) &times; distance moved in the direction of the force (m)</span></div>
+            <div class="eq"><span class="f">P = W &divide; t</span><span>Power (W, i.e. J/s) = work (J) &divide; time taken (s)</span></div>
+            <div class="eq"><span class="f">P = F &times; v</span><span>Because distance &divide; time = velocity, power is also force (N) &times; velocity (m/s)</span></div>
+          </div>
+          <p style="margin-top:.6rem">So there are two ways to be more powerful. Do <strong>more work in the same time</strong>, or do <strong>the same work in less time</strong>.</p>
+        </div>
+
+        <div class="box teal">
+          <h3>Back to your squats</h3>
+          <ul>
+            <li>In both versions you lifted the same body the same distance, so you did roughly the <strong>same work</strong>.</li>
+            <li>The fast version did that work in <strong>less time</strong>, so power (P = W &divide; t) was higher.</li>
+            <li>The quick drop and stop also let you push harder at the start of the drive (more <strong>F</strong>) and get moving faster (more <strong>v</strong>). With both higher, P = F &times; v is higher too.</li>
+          </ul>
+        </div>
+
+        <div class="box">
+          <h3>Worked example: try it with your own numbers</h3>
+          <p>Lifting your body weight means pushing with a force of about m &times; g (mass &times; 9.81). Change the numbers to match you and your partner. Time each rep with a phone stopwatch, from the bottom of the squat to standing.</p>
+          <div class="calc">
+            <div><label class="fld" for="pm">Body mass (kg)</label><input type="number" id="pm" value="75" min="1" step="1"></div>
+            <div><label class="fld" for="pd">Distance hips rise (m)</label><input type="number" id="pd" value="0.40" min="0.01" step="0.01"></div>
+            <div><label class="fld" for="ts">Slow rep: time up (s)</label><input type="number" id="ts" value="1.2" min="0.05" step="0.05"></div>
+            <div><label class="fld" for="tf">Fast rep: time up (s)</label><input type="number" id="tf" value="0.4" min="0.05" step="0.05"></div>
+          </div>
+          <div id="pout"></div>
+          <div class="box plum" style="margin-top:.8rem">
+            <h3>Question for your pair</h3>
+            <p>The work was the same for both squats, so why was the power so different? And if a heavy back squat moves a big force slowly and a jump moves a small force quickly, where would you expect power to be highest on the curve from Task 1?</p>
+            <div class="btn-row"><button class="btn small ghost" id="pq">Show the answer</button></div>
+            <div class="reveal" id="pq-a">
+              <p><strong>Same work, less time, so more power.</strong> Power is the <em>rate</em> of doing work.</p>
+              <p>Because P = F &times; v, power is low at both ends of the curve. With very heavy loads velocity is close to zero, and with no load the force is small. It peaks somewhere in between, and where exactly depends on the exercise (Chapter 18 lists body weight to 30% 1RM for jump squats, and 60&ndash;80% 1RM for the hang power clean). That's why power programmes train across the whole curve.</p>
+            </div>
+          </div>
+          <p class="ref">This is a simplified calculation. It uses an average force equal to body weight and ignores the extra force needed to speed up and slow down, so real fast-squat forces are higher. A force plate measures F directly, so it gives a more accurate power.</p>
+        </div>
+        <p class="ref">Source: Haff (Ed.), <em>Essentials of Strength Training and Conditioning</em> (5th ed.), Chapter 2 (work and power) and Chapter 19 (Plyometric Mechanics and Physiology).</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- TAB 3 -->
+<div class="panel" id="p-plan" role="tabpanel" aria-labelledby="tab-plan">
+  <section class="card">
+    <div class="card-head h-plum"><span class="chip">Task 3 &middot; in pairs</span><h2>Your athlete</h2></div>
+    <div class="card-body">
+      <p style="margin-top:0">Every pair plans for the same athlete. Design one training week however you think is best, then download it and swap with another pair.</p>
+      <div class="box navy" style="margin-top:0">
+        <h3>Jordan, university volleyball outside hitter</h3>
+        <div class="profile">
+          <p><strong>Age:</strong> 21</p>
+          <p><strong>Body mass:</strong> 75 kg</p>
+          <p><strong>Back squat 1RM:</strong> 110 kg (about 1.5 &times; body mass)</p>
+          <p><strong>Hang power clean 1RM:</strong> 70 kg</p>
+          <p><strong>CMJ height:</strong> 41 cm</p>
+          <p><strong>Training history:</strong> 3 years of gym work, good squat and clean technique, has done basic plyometrics</p>
+          <p><strong>Time of year:</strong> pre-season, 4 weeks before the first match</p>
+          <p><strong>Fixed commitments:</strong> team practice Tuesday, Thursday and Saturday evenings</p>
+          <p><strong>Gym access:</strong> up to 3 sessions a week, about 60 minutes each</p>
+          <p><strong>Goal:</strong> jump higher and be quicker off the floor</p>
+          <p><strong>Injuries:</strong> none at the moment</p>
+        </div>
+      </div>
+      <div class="names" style="margin-top:.9rem">
+        <div><label class="fld" for="pair">Pair names</label><input type="text" id="pair" placeholder="e.g. Alex and Sam"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head h-blue"><span class="chip">Build it</span><h2>Jordan's week</h2></div>
+    <div class="card-body">
+      <p style="margin-top:0">Choose what each day is for, then add exercises. Pick from the suggestions or type your own. Load can be a %1RM, kg or &ldquo;BW&rdquo; (body weight).</p>
+      <div id="days"></div>
+      <div class="box teal">
+        <h3>Check your plan before you download it</h3>
+        <div class="checks">
+          <label><input type="checkbox"> <span>Is there a reason for every exercise, linked to jumping higher or being quicker off the floor?</span></label>
+          <label><input type="checkbox"> <span>Do the loads and reps match the zones from Task 1 (e.g. power sets of 5 reps or fewer)?</span></label>
+          <label><input type="checkbox"> <span>Are there 48&ndash;72 hours between plyometric sessions, and between hard lower body days?</span></label>
+          <label><input type="checkbox"> <span>Have you thought about the team practices (jumping volume on Tuesday, Thursday and Saturday)?</span></label>
+          <label><input type="checkbox"> <span>Are plyometric contacts and rest periods realistic for Jordan's experience?</span></label>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn plum" id="dl">Download our plan (Excel)</button>
+        <button class="btn ghost" id="clear-plan">Clear the plan</button>
+      </div>
+      <p class="msg" id="plan-msg" role="status"></p>
+    </div>
+  </section>
+
+  <section class="card peer">
+    <div class="card-head h-teal"><span class="chip">Swap</span><h2>Review another pair's plan</h2></div>
+    <div class="card-body">
+      <p style="margin-top:0">Open the Excel file another pair has shared with you.</p>
+      <input type="file" id="peer-file" accept=".xlsx,.xls">
+      <p class="msg" id="peer-msg" role="status"></p>
+      <div id="peer-view"></div>
+      <div id="peer-review" style="display:none">
+        <div class="box">
+          <h3>Your feedback</h3>
+          <label class="fld" for="r1">One thing they did well, and why</label><textarea id="r1"></textarea>
+          <label class="fld" for="r2">One thing you would change, and why</label><textarea id="r2"></textarea>
+          <label class="fld" for="r3">One question you would ask them</label><textarea id="r3"></textarea>
+          <div class="btn-row"><button class="btn teal" id="dl-review">Download plan with our feedback</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <p class="ref">Planning guidance: Haff (Ed.), <em>Essentials of Strength Training and Conditioning</em> (5th ed.), Chapter 18 (Program Design for Resistance Training) and Chapter 19 (Plyometric Training). Your plan stays on this device until you download it.</p>
+</div>
+</main>
+
+<footer>
+  <p><strong style="color:var(--navy)">SESD56 | Applied Strength and Conditioning for Sport and Exercise</strong></p>
+  <p>Plymouth Marjon University &middot; For teaching use.</p>
+</footer>
+</div>
+
+<datalist id="exlist">
+  <option value="Back squat"><option value="Front squat"><option value="Speed back squat (max intent)"><option value="Trap bar deadlift">
+  <option value="Romanian deadlift"><option value="Hang power clean"><option value="Power clean"><option value="Hang pull">
+  <option value="Mid-thigh pull"><option value="Jump shrug"><option value="Push press"><option value="Loaded jump squat">
+  <option value="Trap bar jump"><option value="Countermovement jump"><option value="Squat jump"><option value="Box jump">
+  <option value="Depth jump"><option value="Drop landing"><option value="Pogo hops"><option value="Hurdle hops">
+  <option value="Single-leg hop and stick"><option value="Bounds"><option value="Med ball overhead throw"><option value="Med ball chest pass">
+  <option value="Bench press"><option value="Pull-up"><option value="Nordic hamstring curl"><option value="Split squat">
+  <option value="Calf raise"><option value="Plank"><option value="Warm-up (RAMP)"><option value="Mobility">
+</datalist>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){return document.getElementById(id);};
+var esc = function(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});};
+
+/* ---------- Tabs ---------- */
+var tabs=[["tab-curve","p-curve"],["tab-squat","p-squat"],["tab-plan","p-plan"]];
+tabs.forEach(function(t){$(t[0]).addEventListener("click",function(){
+  tabs.forEach(function(u){$(u[0]).setAttribute("aria-selected",u[0]===t[0]);$(u[1]).classList.toggle("active",u[0]===t[0]);});
+});});
+
+/* ---------- Task 1: curve ---------- */
+var ZONES=[
+ {id:"ss", name:"Starting strength", v:"> 1.3 m/s"},
+ {id:"sps",name:"Speed&ndash;strength", v:"1.0&ndash;1.3 m/s"},
+ {id:"stsp",name:"Strength&ndash;speed", v:"0.75&ndash;1.0 m/s"},
+ {id:"acc",name:"Accelerative strength", v:"0.50&ndash;0.75 m/s"},
+ {id:"abs",name:"Absolute strength", v:"< 0.50 m/s"}
+];
+var EXS=[
+ {id:"cmj",name:"Countermovement jump (body weight)",zone:"ss",
+  rx:["Count foot contacts, not sets and reps.","Low-intensity drills, beginners 80&ndash;100 contacts a session. Intermediate 100&ndash;120.","Leave 48&ndash;72 h between plyometric sessions."],src:"Chapter 19, Table 19.6"},
+ {id:"dj",name:"Depth jump",zone:"ss",
+  rx:["High-intensity plyometric (fast SSC).","Not recommended for beginners. Intermediate up to 20 contacts, advanced 20&ndash;40 a session.","5&ndash;10 s between reps, 2&ndash;5 min between sets."],src:"Chapter 19, Table 19.6 and Recovery"},
+ {id:"js",name:"Loaded jump squat",zone:"sps",
+  rx:["Peak power in jump squats comes with loads from body weight to about 30% 1RM.","Keep sets short, e.g. 4 &times; 3.","Rest 2&ndash;5 min so every rep is fast."],src:"Chapter 18, Assigning loads for power; Table 18.15"},
+ {id:"spsq",name:"Speed back squat (max intent)",zone:"stsp",
+  rx:["Moderate loads (40&ndash;70% 1RM) were the most appropriate for power development in a meta-analysis reported in Chapter 18.","5 reps or fewer per set, every rep as fast as possible.","Rest 2&ndash;5 min."],src:"Chapter 18, Swinton et al. findings; Table 18.15"},
+ {id:"hpc",name:"Hang power clean",zone:"acc",
+  rx:["Catching variations (hang power clean, power clean) produced their highest power at 60&ndash;80% 1RM.","Multiple-effort sports: 3&ndash;5 reps at 75&ndash;85% 1RM.","Rest 2&ndash;5 min."],src:"Chapter 18, Tables 18.11 and 18.15"},
+ {id:"bs",name:"Heavy back squat",zone:"abs",
+  rx:["Strength: &ge; 85% 1RM for &le; 6 reps.","Intermediate and advanced lifters: 3 or more sets.","Rest 2&ndash;5 min."],src:"Chapter 18, Tables 18.11, 18.13 and 18.15"}
+];
+var placed={}, selected=null;
+function zoneName(id){return ZONES.filter(function(z){return z.id===id;})[0].name;}
+function drawZones(){
+  $("zones").innerHTML=ZONES.map(function(z){
+    return '<div class="zone" data-z="'+z.id+'" tabindex="0" role="button" aria-label="'+z.name.replace(/&ndash;/g,"-")+' zone"><div class="zt">'+z.name+'<span>'+z.v+'</span></div><div class="drops"></div></div>';
+  }).join("");
+}
+function drawCurve(){
+  var ORDER=["hpc","cmj","bs","js","dj","spsq"]; var shuffled=ORDER.map(function(id){return EXS.filter(function(e){return e.id===id;})[0];});
+  $("tray").innerHTML=shuffled.filter(function(e){return !placed[e.id];}).map(function(e){
+    return '<button type="button" class="ex'+(selected===e.id?' sel':'')+'" data-e="'+e.id+'">'+esc(e.name)+'</button>';
+  }).join("") || '<p class="empty" style="margin:.4rem">All placed. Well done.</p>';
+  Array.prototype.forEach.call(document.querySelectorAll(".zone"),function(z){
+    var d=z.querySelector(".drops");
+    d.innerHTML=EXS.filter(function(e){return placed[e.id]&&e.zone===z.dataset.z;}).map(function(e){
+      return '<span class="ex placed" data-e="'+e.id+'">'+esc(e.name)+'</span>';
+    }).join("");
+  });
+  var done=EXS.filter(function(e){return placed[e.id];});
+  $("rx").innerHTML=done.map(function(e){
+    return '<div class="box teal"><h3>'+esc(e.name)+'</h3><span class="zone-tag">'+zoneName(e.zone)+'</span>'+
+      e.rx.map(function(r){return '<p>'+r+'</p>';}).join("")+'<p class="ref" style="margin-top:.35rem">'+e.src+'</p></div>';
+  }).join("");
+  $("rx-intro").style.display=done.length?"none":"block";
+  $("rx-summary").style.display=done.length===EXS.length?"block":"none";
+}
+function msg(el,text,kind){var m=$(el);m.textContent=text;m.className="msg "+kind;m.style.display="block";clearTimeout(m._t);m._t=setTimeout(function(){m.style.display="none";},3500);}
+function tryPlace(eid,zid){
+  var e=EXS.filter(function(x){return x.id===eid;})[0]; if(!e||placed[eid]) return;
+  if(e.zone===zid){ placed[eid]=true; selected=null; drawCurve(); msg("curve-msg","Correct! "+e.name+" sits in "+zoneName(zid).replace(/&ndash;/g,"-")+". Its prescription is now unlocked below.","ok"); }
+  else{
+    selected=eid; drawCurve();
+    var b=document.querySelector('.ex[data-e="'+eid+'"]'); if(b){b.classList.add("shake");}
+    var dir = ZONES.findIndex(function(z){return z.id===e.zone;}) > ZONES.findIndex(function(z){return z.id===zid;}) ? "heavier and slower" : "lighter and faster";
+    msg("curve-msg","Not quite. Think about the load used. This one is trained "+dir+" than that.","no");
+  }
+}
+/* Pointer drag + tap */
+var drag=null;
+$("tray").addEventListener("pointerdown",function(ev){
+  var b=ev.target.closest(".ex"); if(!b) return;
+  drag={id:b.dataset.e,x:ev.clientX,y:ev.clientY,moved:false,el:null,src:b};
+  b.setPointerCapture(ev.pointerId);
+});
+$("tray").addEventListener("pointermove",function(ev){
+  if(!drag) return;
+  if(!drag.moved && Math.hypot(ev.clientX-drag.x,ev.clientY-drag.y)>6){
+    drag.moved=true; var g=drag.src.cloneNode(true); g.classList.add("ghostdrag"); document.body.appendChild(g); drag.el=g;
+  }
+  if(drag.moved){
+    drag.el.style.left=ev.clientX+"px"; drag.el.style.top=ev.clientY+"px";
+    Array.prototype.forEach.call(document.querySelectorAll(".zone"),function(z){z.classList.remove("hover");});
+    drag.el.style.display="none"; var under=document.elementFromPoint(ev.clientX,ev.clientY); drag.el.style.display="";
+    var z=under&&under.closest&&under.closest(".zone"); if(z) z.classList.add("hover");
+  }
+});
+function endDrag(ev){
+  if(!drag) return;
+  Array.prototype.forEach.call(document.querySelectorAll(".zone"),function(z){z.classList.remove("hover");});
+  if(drag.moved){
+    drag.el.style.display="none"; var under=document.elementFromPoint(ev.clientX,ev.clientY); drag.el.remove();
+    var z=under&&under.closest&&under.closest(".zone"); var id=drag.id; drag=null;
+    if(z) tryPlace(id,z.dataset.z);
+  }else{
+    var id2=drag.id; drag=null; selected = selected===id2?null:id2; drawCurve();
+    if(selected) msg("curve-msg","Now tap the zone where it belongs.","info");
+  }
+}
+$("tray").addEventListener("pointerup",endDrag);
+$("tray").addEventListener("pointercancel",function(){ if(drag&&drag.el) drag.el.remove(); drag=null; });
+$("zones").addEventListener("click",function(ev){
+  var z=ev.target.closest(".zone"); if(!z||!selected) return; tryPlace(selected,z.dataset.z);
+});
+$("zones").addEventListener("keydown",function(ev){
+  if((ev.key==="Enter"||ev.key===" ")&&selected){ev.preventDefault(); tryPlace(selected,ev.target.closest(".zone").dataset.z);}
+});
+$("curve-reset").addEventListener("click",function(){placed={};selected=null;drawCurve();});
+drawZones(); drawCurve();
+
+/* ---------- Task 2 ---------- */
+var LOSS=[["No pause",null],["0.35 s pause",25],["0.9 s pause",52],["1 s pause",55],["1.5 s pause",70]];
+$("bars").innerHTML=LOSS.slice(1).map(function(l){
+  return '<div class="bar"><span>'+l[0]+'</span><div class="track"><div class="fill lost" style="width:'+l[1]+'%"></div></div><span><strong>'+l[1]+'%</strong></span></div>';
+}).join("")+'<p class="ref" style="margin-top:.3rem">Bars show the percentage of stored elastic energy lost.</p>';
+$("sq-reveal").addEventListener("click",function(){ $("sq-why").classList.add("show"); $("sq-why").scrollIntoView({behavior:"smooth",block:"start"}); });
+
+
+function powerCalc(){
+  var m=parseFloat($("pm").value),d=parseFloat($("pd").value),ts=parseFloat($("ts").value),tf=parseFloat($("tf").value);
+  if(!(m>0&&d>0&&ts>0&&tf>0)){$("pout").innerHTML='<p class="msg no" style="display:block">Enter positive numbers in every box.</p>';return;}
+  var F=m*9.81,W=F*d,ps=W/ts,pf=W/tf,vs=d/ts,vf=d/tf;
+  $("pout").innerHTML='<div class="pres">'+
+    '<div><b>'+Math.round(F)+' N</b><span>Force: '+m+' kg &times; 9.81</span></div>'+
+    '<div><b>'+Math.round(W)+' J</b><span>Work: '+Math.round(F)+' N &times; '+d+' m (same for both reps)</span></div>'+
+    '<div><b>'+Math.round(ps)+' W</b><span>Slow: '+Math.round(W)+' J &divide; '+ts+' s (or '+Math.round(F)+' N &times; '+vs.toFixed(2)+' m/s)</span></div>'+
+    '<div class="hi"><b>'+Math.round(pf)+' W</b><span>Fast: '+Math.round(W)+' J &divide; '+tf+' s (or '+Math.round(F)+' N &times; '+vf.toFixed(2)+' m/s)</span></div>'+
+    '</div><p style="margin:.6rem 0 0"><strong>The fast rep produced '+(pf/ps).toFixed(1)+' times the power</strong>, for the same work.</p>';
+}
+["pm","pd","ts","tf"].forEach(function(id){$(id).addEventListener("input",powerCalc);});
+powerCalc();
+$("pq").addEventListener("click",function(){$("pq-a").classList.add("show");});
+
+/* ---------- Task 3: planner ---------- */
+var DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+var TYPES=["Choose...","Gym: strength and power","Gym: power","Gym: strength","Plyometrics","Team practice","Team practice + short gym session","Recovery / mobility","Rest"];
+var KEY="sesd56-power-plan";
+var mem=null;
+function blank(){
+  return {pair:"",days:DAYS.map(function(d){
+    var t = (d==="Tuesday"||d==="Thursday"||d==="Saturday") ? "Team practice" : "Choose...";
+    return {day:d,type:t,rows:[]};
+  })};
+}
+function load(){try{var r=localStorage.getItem(KEY);if(r) return JSON.parse(r);}catch(e){} return mem||blank();}
+function save(){mem=plan;try{localStorage.setItem(KEY,JSON.stringify(plan));}catch(e){}}
+var plan=load();
+function rowHtml(r,di,ri){
+  var f=function(k,l,cls,ph,list){return '<td class="'+cls+'" data-l="'+l+'"><input type="text" data-d="'+di+'" data-r="'+ri+'" data-k="'+k+'" value="'+esc(r[k])+'" placeholder="'+ph+'"'+(list?' list="exlist"':'')+' aria-label="'+l+'"></td>';};
+  return '<tr>'+f("ex","Exercise","ex-cell","Exercise",true)+f("sets","Sets","","e.g. 3")+f("reps","Reps","","e.g. 3")+f("load","Load","","e.g. 80% / BW")+f("rest","Rest","","e.g. 3 min")+f("notes","Notes / cues","n-cell","Why? Key cue?")+
+    '<td><button class="del" data-d="'+di+'" data-r="'+ri+'" aria-label="Remove row">&times;</button></td></tr>';
+}
+function drawPlan(){
+  $("pair").value=plan.pair||"";
+  $("days").innerHTML=plan.days.map(function(d,di){
+    var opts=TYPES.map(function(t){return '<option'+(t===d.type?' selected':'')+'>'+t+'</option>';}).join("");
+    var body = d.rows.length ? '<table class="rows"><thead><tr><th class="c-ex">Exercise</th><th class="c-s">Sets</th><th class="c-r">Reps</th><th class="c-l">Load</th><th class="c-rest">Rest</th><th class="c-n">Notes / cues</th><th></th></tr></thead><tbody>'+
+      d.rows.map(function(r,ri){return rowHtml(r,di,ri);}).join("")+'</tbody></table>' : '<p class="empty">No exercises yet.</p>';
+    return '<div class="day"><div class="day-head"><strong>'+d.day+'</strong><select data-type="'+di+'" aria-label="'+d.day+' session type">'+opts+'</select>'+
+      '<button class="btn small blue" data-add="'+di+'">+ Add exercise</button></div><div class="day-body">'+body+'</div></div>';
+  }).join("");
+}
+$("days").addEventListener("input",function(ev){
+  var t=ev.target;
+  if(t.dataset.k){ plan.days[+t.dataset.d].rows[+t.dataset.r][t.dataset.k]=t.value; save(); }
+});
+$("days").addEventListener("change",function(ev){
+  var t=ev.target; if(t.dataset.type!==undefined){ plan.days[+t.dataset.type].type=t.value; save(); }
+});
+$("days").addEventListener("click",function(ev){
+  var a=ev.target.closest("[data-add]"), d=ev.target.closest(".del");
+  if(a){ var di=+a.dataset.add; plan.days[di].rows.push({ex:"",sets:"",reps:"",load:"",rest:"",notes:""}); save(); drawPlan();
+    var inputs=document.querySelectorAll('input[data-d="'+di+'"][data-k="ex"]'); if(inputs.length) inputs[inputs.length-1].focus(); }
+  if(d){ plan.days[+d.dataset.d].rows.splice(+d.dataset.r,1); save(); drawPlan(); }
+});
+$("pair").addEventListener("input",function(){plan.pair=this.value;save();});
+$("clear-plan").addEventListener("click",function(){ plan=blank(); save(); drawPlan(); });
+drawPlan();
+
+var PROFILE=[["Athlete","Jordan, 21, university volleyball outside hitter"],["Body mass","75 kg"],["Back squat 1RM","110 kg"],["Hang power clean 1RM","70 kg"],["CMJ height","41 cm"],["Time of year","Pre-season, 4 weeks before the first match"],["Fixed commitments","Team practice Tue, Thu, Sat"],["Goal","Jump higher and be quicker off the floor"]];
+function planRows(p){
+  var out=[["Day","Session","Exercise","Sets","Reps","Load","Rest","Notes / cues"]];
+  p.days.forEach(function(d){
+    if(!d.rows.length) out.push([d.day,d.type==="Choose..."?"":d.type,"","","","","",""]);
+    d.rows.forEach(function(r,i){ out.push([i?"":d.day,i?"":(d.type==="Choose..."?"":d.type),r.ex,r.sets,r.reps,r.load,r.rest,r.notes]); });
+  });
+  return out;
+}
+function buildBook(p,review){
+  var wb=XLSX.utils.book_new();
+  var head=[["SESD56 Developing Power: training week"],["Pair",p.pair||""],[]].concat(PROFILE).concat([[]]);
+  var ws=XLSX.utils.aoa_to_sheet(head.concat(planRows(p)));
+  ws["!cols"]=[{wch:14},{wch:30},{wch:30},{wch:7},{wch:7},{wch:14},{wch:10},{wch:40}];
+  XLSX.utils.book_append_sheet(wb,ws,"Plan");
+  if(review){
+    var rs=XLSX.utils.aoa_to_sheet([["Peer review"],["Reviewed by",review.by||""],[],["One thing they did well",review.r1],["One thing we would change",review.r2],["Our question",review.r3]]);
+    rs["!cols"]=[{wch:28},{wch:90}];
+    XLSX.utils.book_append_sheet(wb,rs,"Peer review");
+  }
+  var ds=XLSX.utils.aoa_to_sheet([[JSON.stringify(p)],["This sheet lets the Developing Power tool reopen the plan. Please don't edit it."]]);
+  XLSX.utils.book_append_sheet(wb,ds,"tool_data");
+  return wb;
+}
+function fileName(p,suffix){
+  var n=(p.pair||"our_pair").replace(/[^A-Za-z0-9]+/g,"_").replace(/^_|_$/g,"")||"our_pair";
+  return "SESD56_Power_Week_"+n+(suffix||"")+".xlsx";
+}
+function csvFallback(rows,name){
+  var csv=rows.map(function(r){return r.map(function(c){c=String(c==null?"":c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(",");}).join("\n");
+  var url=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); var a=document.createElement("a"); a.href=url; a.download=name.replace(/\.xlsx$/,".csv");
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+$("dl").addEventListener("click",function(){
+  var filled=plan.days.some(function(d){return d.rows.some(function(r){return r.ex.trim();});});
+  if(!filled){ msg("plan-msg","Add at least one exercise before downloading.","no"); return; }
+  if(typeof XLSX==="undefined"){ csvFallback(planRows(plan),fileName(plan)); msg("plan-msg","Excel isn't available offline, so a CSV was downloaded instead (it opens in Excel).","info"); return; }
+  XLSX.writeFile(buildBook(plan),fileName(plan));
+  msg("plan-msg","Downloaded. Share the file with another pair.","ok");
+});
+
+/* Peer review */
+var peer=null;
+$("peer-file").addEventListener("change",function(){
+  var f=this.files[0]; if(!f) return;
+  if(typeof XLSX==="undefined"){ msg("peer-msg","Can't open Excel files without an internet connection.","no"); return; }
+  var rd=new FileReader();
+  rd.onload=function(e){
+    try{
+      var wb=XLSX.read(new Uint8Array(e.target.result),{type:"array"});
+      var p=null;
+      if(wb.Sheets.tool_data){ var a1=wb.Sheets.tool_data.A1; if(a1) p=JSON.parse(a1.v); }
+      if(!p||!p.days) throw new Error("no data");
+      peer=p; showPeer(); msg("peer-msg","Plan opened.","ok");
+    }catch(err){ peer=null; $("peer-view").innerHTML=""; $("peer-review").style.display="none"; msg("peer-msg","That file wasn't made with this tool, so it can't be opened here. Open it in Excel instead.","no"); }
+  };
+  rd.readAsArrayBuffer(f);
+});
+function showPeer(){
+  var rows=planRows(peer);
+  $("peer-view").innerHTML='<h3 style="color:var(--navy);margin:.8rem 0 .2rem">Plan by '+esc(peer.pair||"another pair")+'</h3><div style="overflow-x:auto"><table><thead><tr>'+
+    rows[0].map(function(h){return '<th>'+h+'</th>';}).join("")+'</tr></thead><tbody>'+
+    rows.slice(1).map(function(r){return '<tr>'+r.map(function(c){return '<td>'+esc(c)+'</td>';}).join("")+'</tr>';}).join("")+'</tbody></table></div>';
+  $("peer-review").style.display="block";
+}
+$("dl-review").addEventListener("click",function(){
+  if(!peer) return;
+  var rv={by:plan.pair||"",r1:$("r1").value,r2:$("r2").value,r3:$("r3").value};
+  XLSX.writeFile(buildBook(peer,rv),fileName(peer,"_reviewed"));
+});
+})();
+</script>
+</body>
+</html>
