@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coaching Cards | SESD56</title>
+<meta name="description" content="Coach, lift, observe. Simple resistance training coaching cards for the fitness suite. SESD56, Plymouth Marjon University.">
+<style>
+:root{
+  --navy:#003d50; --navy-d:#002c3a; --teal:#00857e; --teal-d:#00625d; --blue:#0071bc; --blue-d:#00568f; --plum:#8b3556; --plum-d:#682840;
+  --bg:#f7fbfd; --card:#ffffff; --soft:#f2faf9; --line:#d9e2e7; --edge:#abd6d9;
+  --ink:#1d1d1b; --ink2:#3d4a52; --muted:#5b6770;
+  --good:#1b7a45; --good-bg:#eaf6ef; --warn:#8a5a00; --warn-bg:#fff5e0;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#eaf3f7;color:var(--ink);line-height:1.5;font-size:16px}
+.wrap{max-width:760px;margin:.6rem auto;padding:.8rem;background:var(--bg);border:2px solid var(--edge);border-radius:1rem}
+header.hero{background:var(--navy);color:#fff;padding:1.4rem 1.2rem;border-radius:.9rem .9rem 0 0;border-bottom:.4rem solid var(--teal)}
+.badge{display:inline-block;background:#fff;color:var(--navy);padding:.3rem .75rem;margin:0 0 .7rem;font-size:.85em;border-left:.35rem solid var(--blue);border-radius:.65rem;font-weight:bold}
+header.hero h1{margin:0 0 .35rem;font-size:1.7em;line-height:1.2}
+header.hero p{margin:0;font-size:1em}
+nav.tabs{background:#fff;padding:.7rem;margin-bottom:1rem;border:1px solid var(--line);border-top:0;border-radius:0 0 .9rem .9rem;display:flex;gap:.5rem}
+nav.tabs button{flex:1;min-height:2.9rem;border:0;border-radius:.75rem;color:#fff;font:bold 1em Arial,Helvetica,sans-serif;cursor:pointer;padding:.6rem .5rem;opacity:.72}
+nav.tabs button[aria-selected="true"]{opacity:1;outline:3px solid #fff;box-shadow:0 0 0 3px var(--ink)}
+#tab-coach{background:var(--navy);border-bottom:.25rem solid var(--navy-d)}
+#tab-notes{background:var(--teal);border-bottom:.25rem solid var(--teal-d)}
+.panel{display:none}.panel.active{display:block}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:1rem;margin-bottom:1rem;overflow:hidden}
+.card-head{color:#fff;padding:.9rem 1.1rem}
+.card-head .chip{display:inline-block;background:#fff;padding:.2rem .6rem;font-size:.8em;margin:0 0 .35rem;border-left:.3rem solid var(--navy);border-radius:.55rem;font-weight:bold}
+.card-head h2{margin:0;font-size:1.25em}
+.card-body{padding:1rem 1.1rem}
+.h-navy{background:var(--navy)}.h-navy .chip{color:var(--navy);border-left-color:var(--blue)}
+.h-blue{background:var(--blue)}.h-blue .chip{color:var(--blue)}
+.h-teal{background:var(--teal)}.h-teal .chip{color:var(--teal)}
+.h-plum{background:var(--plum)}.h-plum .chip{color:var(--plum)}
+.stations{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
+@media (min-width:600px){.stations{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.stations button{min-height:3.2rem;border:2px solid var(--line);background:#fff;border-radius:.75rem;font:bold .98em Arial,Helvetica,sans-serif;color:var(--navy);cursor:pointer;padding:.5rem}
+.stations button[aria-pressed="true"]{border-color:var(--navy);background:var(--navy);color:#fff}
+.box{background:#fff;border:1px solid var(--line);border-left:.4rem solid var(--blue);border-radius:.75rem;padding:.8rem .9rem;margin-top:.8rem}
+.box.teal{border-left-color:var(--teal)}.box.plum{border-left-color:var(--plum)}.box.navy{border-left-color:var(--navy)}.box.warn{border-left-color:var(--warn);background:var(--warn-bg)}
+.box h3{margin:0 0 .4rem;color:var(--navy);font-size:1.05em}
+.box ul{margin:.2rem 0 0;padding-left:1.2rem}
+.box li{margin:.2rem 0}
+.ref{color:var(--muted);font-size:.85em;margin:.6rem 0 0}
+.cues{display:flex;flex-direction:column;gap:.45rem;margin-top:.3rem}
+.cue{display:flex;align-items:center;justify-content:space-between;gap:.6rem;text-align:left;min-height:2.9rem;border:2px solid var(--line);background:#fff;border-radius:.7rem;padding:.5rem .7rem;font:1em Arial,Helvetica,sans-serif;color:var(--ink);cursor:pointer}
+.cue[aria-pressed="true"]{border-color:var(--teal);background:var(--soft)}
+.cue[aria-pressed="true"]::before{content:"✓";color:var(--teal);font-weight:bold;margin-right:.2rem}
+.cue span.t{flex:1}
+.tag{font-size:.75em;font-weight:bold;border-radius:.4rem;padding:.1rem .45rem;white-space:nowrap}
+.tag.ext{background:#e3f3f2;color:var(--teal-d)}.tag.int{background:#eef3f6;color:var(--navy)}
+label.fld{display:block;font-weight:bold;color:var(--navy);font-size:.92em;margin:.8rem 0 .25rem}
+input[type=text],textarea{font:1em Arial,Helvetica,sans-serif;padding:.55rem .6rem;border:1px solid #b9c7cf;border-radius:.5rem;background:#fff;color:var(--ink);width:100%}
+textarea{min-height:4.2rem;resize:vertical}
+.ticks label{display:flex;gap:.6rem;align-items:flex-start;padding:.55rem .2rem;border-bottom:1px solid var(--line);cursor:pointer}
+.ticks label:last-child{border-bottom:0}
+.ticks input{width:1.35rem;height:1.35rem;margin:.05rem 0 0;flex:none;accent-color:var(--teal)}
+.btn{display:inline-block;border:0;border-radius:.75rem;padding:.7rem 1rem;font:bold 1em Arial,Helvetica,sans-serif;cursor:pointer;color:#fff;background:var(--navy);border-bottom:.2rem solid var(--navy-d);min-height:2.9rem}
+.btn.teal{background:var(--teal);border-bottom-color:var(--teal-d)}.btn.plum{background:var(--plum);border-bottom-color:var(--plum-d)}
+.btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+.btn:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.btn-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}
+.btn-row .btn{flex:1 1 140px}
+.msg{margin:.7rem 0 0;padding:.6rem .8rem;border-radius:.6rem;background:var(--good-bg);color:var(--good);font-weight:bold;display:none}
+.note{border:1px solid var(--line);border-left:.4rem solid var(--teal);border-radius:.7rem;padding:.7rem .85rem;margin-top:.7rem;background:#fff}
+.note h3{margin:0 0 .3rem;font-size:1em;color:var(--navy)}
+.note p{margin:.2rem 0;font-size:.95em}
+.note .x{float:right;border:0;background:none;color:var(--muted);font-size:.9em;cursor:pointer;text-decoration:underline}
+.empty{color:var(--muted);font-style:italic}
+footer{text-align:center;padding:1rem;border:2px solid var(--navy);border-top-width:6px;border-radius:10px;background:#fff;margin-top:1rem;font-size:.9em}
+footer p{margin:.2rem 0}
+#print{display:none}
+@media print{
+  @page{size:A4;margin:12mm}
+  body{background:#fff;font-size:10.5pt}
+  .wrap{display:none}
+  #print{display:block}
+  .pcard{page-break-after:always;break-after:page}
+  .pcard:last-child{page-break-after:auto;break-after:auto}
+  .pcard h2{margin:0 0 2mm;color:#003d50;font-size:15pt;border-bottom:2pt solid #00857e;padding-bottom:1.5mm}
+  .pcard h3{margin:3mm 0 1mm;color:#003d50;font-size:11pt}
+  .pcard ul{margin:0;padding-left:5mm}
+  .pcard li{margin:.6mm 0}
+  .pcols{display:grid;grid-template-columns:1fr 1fr;gap:5mm}
+  .pline{border-bottom:1px solid #999;height:7mm}
+  .ptick{display:flex;gap:2mm;margin:1.2mm 0}
+  .ptick span.b{display:inline-block;width:4mm;height:4mm;border:1px solid #333;flex:none;margin-top:.5mm}
+  .pfoot{margin-top:3mm;font-size:8.5pt;color:#555}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <span class="badge">SESD56 &middot; Resistance Training (Coaching)</span>
+  <h1>Coach, Lift, Observe</h1>
+  <p>Work in threes. One coaches, one lifts, one observes, then swap. Pick a station, set the lifter up, give one or two cues and spot when it's needed. The observer ticks the card.</p>
+</header>
+<nav class="tabs" role="tablist" aria-label="Tool pages">
+  <button id="tab-coach" role="tab" aria-selected="true" aria-controls="p-coach">1. Coach a lift</button>
+  <button id="tab-notes" role="tab" aria-selected="false" aria-controls="p-notes">2. My notes <span id="count"></span></button>
+</nav>
+
+<main>
+<div class="panel active" id="p-coach" role="tabpanel" aria-labelledby="tab-coach">
+
+  <section class="card">
+    <div class="card-head h-navy"><span class="chip">Step 1</span><h2>Pick your station</h2></div>
+    <div class="card-body">
+      <div class="stations" id="stations"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head h-blue"><span class="chip">Step 2 &middot; Coach</span><h2 id="ex-name">Back squat</h2></div>
+    <div class="card-body">
+      <div class="box navy"><h3>Set up</h3><ul id="setup"></ul></div>
+      <div class="box" id="spot-box"><h3>Spotting</h3><ul id="spot"></ul></div>
+      <div class="box teal">
+        <h3>Cue it (pick 1 or 2)</h3>
+        <div class="cues" id="cues"></div>
+        <label class="fld" for="own-cue">Or write your own cue</label>
+        <input type="text" id="own-cue" placeholder="e.g. Push the floor away">
+      </div>
+      <div class="box plum"><h3>Watch for</h3><ul id="errors"></ul></div>
+      <p class="ref" id="ref"></p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head h-teal"><span class="chip">Step 3 &middot; Observe</span><h2>Observer's card</h2></div>
+    <div class="card-body">
+      <label class="fld" for="coach-name" style="margin-top:0">Who coached?</label>
+      <input type="text" id="coach-name" placeholder="Name">
+      <div class="ticks" style="margin-top:.6rem">
+        <label><input type="checkbox" id="t1"> <span>Safe set-up (area clear, rack or bench set, collars on)</span></label>
+        <label><input type="checkbox" id="t2"> <span>Used 1 or 2 short, clear cues</span></label>
+        <label><input type="checkbox" id="t3"> <span>Spot agreed before the set (or rightly not needed)</span></label>
+        <label><input type="checkbox" id="t4"> <span>Gave feedback after the set, not all the way through it</span></label>
+      </div>
+      <label class="fld" for="changed">What changed after the cue?</label>
+      <textarea id="changed" placeholder="e.g. Knees stopped caving in by rep 3"></textarea>
+      <label class="fld" for="next">Keep or change next time</label>
+      <textarea id="next" placeholder="e.g. Fewer words, say the cue before the set not during it"></textarea>
+      <div class="btn-row">
+        <button class="btn teal" id="save">Save to my notes</button>
+        <button class="btn ghost" id="clear">Clear card</button>
+      </div>
+      <p class="msg" id="saved" role="status">Saved. Swap roles and go again.</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head h-plum"><span class="chip">Quick rules</span><h2>Good coaching in the gym</h2></div>
+    <div class="card-body">
+      <ul style="margin:0;padding-left:1.2rem">
+        <li>Fewest words, biggest effect. Overcoaching gets in the way of the lifter feeling and fixing the movement.</li>
+        <li>Early on, external cues (about the bar, floor or a target) usually work well. Internal cues (about a body part) suit small refinements later.</li>
+        <li>Give feedback after the set. Lots of feedback at first, then less as the lifter improves.</li>
+        <li>Agree the spot before the set (e.g. how many reps, the liftoff count, the word for "take it").</li>
+      </ul>
+      <p class="ref">Haff (Ed.), <em>Essentials of Strength Training and Conditioning</em> (5th ed.), Chapter 9 (instructions, cues and feedback) and Chapter 16 (technique and spotting).</p>
+    </div>
+  </section>
+</div>
+
+<div class="panel" id="p-notes" role="tabpanel" aria-labelledby="tab-notes">
+  <section class="card">
+    <div class="card-head h-teal"><span class="chip">Your session</span><h2>My notes</h2></div>
+    <div class="card-body">
+      <p style="margin-top:0">These stay on this phone only. Copy or download them before you leave, then use them in your induction plan and portfolio reflection.</p>
+      <div id="notes"></div>
+      <div class="btn-row">
+        <button class="btn" id="copy">Copy all</button>
+        <button class="btn teal" id="download">Download .txt</button>
+        <button class="btn ghost" id="wipe">Delete all</button>
+      </div>
+      <p class="msg" id="copied" role="status">Copied.</p>
+    </div>
+  </section>
+  <section class="card">
+    <div class="card-head h-navy"><span class="chip">No phone?</span><h2>Paper version</h2></div>
+    <div class="card-body">
+      <p style="margin-top:0">Print one A4 card per station with the same set-up, cues, spotting and observer boxes.</p>
+      <div class="btn-row"><button class="btn plum" id="print-btn">Print paper cards</button></div>
+    </div>
+  </section>
+</div>
+</main>
+
+<footer>
+  <p><strong style="color:var(--navy)">SESD56 | Applied Strength and Conditioning for Sport and Exercise</strong></p>
+  <p>Plymouth Marjon University &middot; For teaching use. Light loads only today, as the focus is coaching, not lifting heavy.</p>
+</footer>
+</div>
+
+<div id="print"></div>
+
+<script>
+(function(){
+"use strict";
+var EX = [
+ {id:"squat", name:"Back squat", ref:"Chapter 16, exercise 22 (p. 439)",
+  setup:["Bar on the upper back, closed grip, elbows up to make a shelf","Signal the spotters, lift the bar off, take one or two steps back","Feet about shoulder width, toes slightly out","Safety bars set just below the lifter's lowest point"],
+  spot:["Two spotters, one at each end of the bar","Hands close to but not touching the bar, follow it down and up","Agree the reps and the word for help before the set"], spotNeeded:true,
+  cues:[["Spread the floor with your feet","ext"],["Chest up, head neutral","int"],["Drive through your heels","int"]],
+  errors:["Heels lifting off the floor","Torso tipping forward or upper back rounding on the way up","Knees caving in or pushing out"]},
+ {id:"bench", name:"Bench press", ref:"Chapter 16, exercise 14 (p. 430)",
+  setup:["Five-point contact: head, shoulders and upper back, bottom, both feet flat","Eyes under the racked bar","Closed grip, slightly wider than shoulders","Bar over the chest with arms straight to start"],
+  spot:["One spotter at the head of the bench","Alternated grip, inside the lifter's hands","Agree the liftoff count (e.g. \"1, 2, 3\") and help rack at the end","Dumbbell version: spot the forearms near the wrists, not the elbows"], spotNeeded:true,
+  cues:[["Push yourself away from the bar","ext"],["Try to bend the bar","ext"]],
+  errors:["Bouncing the bar off the chest","Hips lifting off the bench","Thumbs not wrapped around the bar"]},
+ {id:"rdl", name:"Romanian deadlift", ref:"Chapter 16, exercise 31 (p. 454)",
+  setup:["Closed, overhand grip","Deadlift the bar to standing first","Soft bend in the knees and keep it there"],
+  spot:["No spotter needed","Clear the area around the bar"], spotNeeded:false,
+  cues:[["Slide the bar down your thighs","ext"],["Push your hips back","int"],["Soft flex of the knees","int"]],
+  errors:["Back rounding","Bar drifting away from the legs","Hips not pushed back far enough"]},
+ {id:"row", name:"Bent-over row", ref:"Chapter 16, exercise 4 (p. 420)",
+  setup:["Overhand grip, wider than shoulders","Lift the bar from the floor as for a deadlift","Hinge until the torso is just above parallel, knees slightly bent","Eyes on the floor a little ahead of the feet"],
+  spot:["No spotter needed","Clear the area around the bar"], spotNeeded:false,
+  cues:[["Squeeze a pencil between your shoulder blades","ext"],["Focus on a point ahead of your toes","ext"],["Keep a flat back","int"]],
+  errors:["Jerking the torso up to move the bar","Upper back rounding","Locking the knees or rising onto the toes"]},
+ {id:"pulldown", name:"Lat pulldown", ref:"Chapter 16, exercise 7 (p. 423)",
+  setup:["Adjust the thigh pad so the thighs are held down","Overhand grip, wider than shoulders","Lean back slightly, arms straight to start"],
+  spot:["No spotter needed","Check the pin is fully in the weight stack"], spotNeeded:false,
+  cues:[["Lead with your elbows","int"],["Chest up, shoulders back","int"],["Full stretch at the top","int"]],
+  errors:["Leaning back too far","Pulling the bar behind the neck"]},
+ {id:"lunge", name:"Dumbbell lunge", ref:"Chapter 16, exercise 25 (p. 445), dumbbell version",
+  setup:["Dumbbells held at the sides, closed neutral grip","Stand tall, feet together","Clear space in front of the lifter"],
+  spot:["Usually no spotter with dumbbells","With a barbell: spotter stands close behind, hands near the hips if needed"], spotNeeded:false,
+  cues:[["Step forward leading with your heel","int"],["Front shin vertical at the bottom","int"],["Drive through your front heel","int"]],
+  errors:["Step too short, so the front knee travels well past the foot","Torso tipping forward"]}
+];
+var TAGS = {ext:"External", int:"Internal"};
+var KEY = "sesd56-coaching-notes";
+var cur = EX[0], picked = [];
+var $ = function(id){return document.getElementById(id);};
+var esc = function(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});};
+var mem = [];
+function load(){try{var r=localStorage.getItem(KEY);return r?JSON.parse(r):mem;}catch(e){return mem;}}
+function store(a){mem=a;try{localStorage.setItem(KEY,JSON.stringify(a));}catch(e){}}
+
+function li(arr){return arr.map(function(x){return "<li>"+esc(x)+"</li>";}).join("");}
+
+function drawStations(){
+  $("stations").innerHTML = EX.map(function(e){
+    return '<button type="button" data-id="'+e.id+'" aria-pressed="'+(e===cur)+'">'+esc(e.name)+'</button>';
+  }).join("");
+}
+function drawCard(){
+  $("ex-name").textContent = cur.name;
+  $("setup").innerHTML = li(cur.setup);
+  $("spot").innerHTML = li(cur.spot);
+  $("spot-box").className = "box " + (cur.spotNeeded ? "warn" : "");
+  $("errors").innerHTML = li(cur.errors);
+  $("ref").textContent = "Source: " + cur.ref + ", Essentials of Strength Training and Conditioning (5th ed.).";
+  $("cues").innerHTML = cur.cues.map(function(c,i){
+    return '<button type="button" class="cue" data-i="'+i+'" aria-pressed="'+(picked.indexOf(i)>-1)+'"><span class="t">'+esc(c[0])+'</span><span class="tag '+c[1]+'">'+TAGS[c[1]]+'</span></button>';
+  }).join("");
+}
+$("stations").addEventListener("click",function(ev){
+  var b = ev.target.closest("button"); if(!b) return;
+  cur = EX.filter(function(e){return e.id===b.dataset.id;})[0];
+  picked = []; drawStations(); drawCard();
+});
+$("cues").addEventListener("click",function(ev){
+  var b = ev.target.closest(".cue"); if(!b) return;
+  var i = +b.dataset.i, k = picked.indexOf(i);
+  if(k>-1) picked.splice(k,1);
+  else { picked.push(i); if(picked.length>2) picked.shift(); }
+  drawCard();
+});
+
+function clearCard(){
+  ["coach-name","own-cue","changed","next"].forEach(function(id){$(id).value="";});
+  ["t1","t2","t3","t4"].forEach(function(id){$(id).checked=false;});
+  picked=[]; drawCard();
+}
+$("clear").addEventListener("click",clearCard);
+$("save").addEventListener("click",function(){
+  var cues = picked.map(function(i){return cur.cues[i][0];});
+  var own = $("own-cue").value.trim(); if(own) cues.push(own);
+  var ticks = ["t1","t2","t3","t4"].filter(function(id){return $(id).checked;}).length;
+  var n = {ex:cur.name, coach:$("coach-name").value.trim(), cues:cues, ticks:ticks,
+    changed:$("changed").value.trim(), next:$("next").value.trim(),
+    time:new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})};
+  var a = load(); a.push(n); store(a);
+  clearCard(); drawNotes();
+  var m=$("saved"); m.style.display="block"; setTimeout(function(){m.style.display="none";},2500);
+});
+
+function noteText(n){
+  return n.ex + (n.coach?" (coach: "+n.coach+")":"") + ", " + n.time + "\n" +
+    "Cues: " + (n.cues.length?n.cues.join("; "):"none recorded") + "\n" +
+    "Observer ticks: " + n.ticks + "/4\n" +
+    "What changed: " + (n.changed||"-") + "\n" +
+    "Keep or change: " + (n.next||"-");
+}
+function drawNotes(){
+  var a = load();
+  $("count").textContent = a.length ? "("+a.length+")" : "";
+  if(!a.length){ $("notes").innerHTML = '<p class="empty">Nothing saved yet. Save an observer card on page 1.</p>'; return; }
+  $("notes").innerHTML = a.map(function(n,i){
+    return '<div class="note"><button class="x" data-i="'+i+'">Delete</button><h3>'+esc(n.ex)+(n.coach?" &middot; "+esc(n.coach):"")+' &middot; '+esc(n.time)+'</h3>'+
+      '<p><strong>Cues:</strong> '+esc(n.cues.join("; ")||"none recorded")+'</p>'+
+      '<p><strong>Ticks:</strong> '+n.ticks+'/4</p>'+
+      '<p><strong>What changed:</strong> '+esc(n.changed||"-")+'</p>'+
+      '<p><strong>Keep or change:</strong> '+esc(n.next||"-")+'</p></div>';
+  }).join("");
+}
+$("notes").addEventListener("click",function(ev){
+  var b = ev.target.closest(".x"); if(!b) return;
+  var a = load(); a.splice(+b.dataset.i,1); store(a); drawNotes();
+});
+function allText(){ return "SESD56 Resistance Training (Coaching) notes\n\n" + load().map(noteText).join("\n\n"); }
+$("copy").addEventListener("click",function(){
+  var t = allText(), m=$("copied");
+  var done=function(){m.style.display="block";setTimeout(function(){m.style.display="none";},2000);};
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done,function(){fallback(t);done();}); }
+  else { fallback(t); done(); }
+});
+function fallback(t){var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);}
+$("download").addEventListener("click",function(){
+  var url = URL.createObjectURL(new Blob([allText()],{type:"text/plain"}));
+  var a = document.createElement("a"); a.href=url; a.download="SESD56_coaching_notes.txt";
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(url);},1000);
+});
+$("wipe").addEventListener("click",function(){
+  if(!load().length) return;
+  store([]); drawNotes();
+});
+
+function buildPrint(){
+  var lines = function(n){var s="";for(var i=0;i<n;i++)s+='<div class="pline"></div>';return s;};
+  var tick = function(t){return '<div class="ptick"><span class="b"></span><span>'+t+'</span></div>';};
+  $("print").innerHTML = EX.map(function(e){
+    return '<div class="pcard"><h2>SESD56 Coaching card: '+esc(e.name)+'</h2><div class="pcols"><div>'+
+      '<h3>Set up</h3><ul>'+li(e.setup)+'</ul><h3>Spotting</h3><ul>'+li(e.spot)+'</ul>'+
+      '<h3>Cues (pick 1 or 2)</h3><ul>'+e.cues.map(function(c){return "<li>"+esc(c[0])+" ("+TAGS[c[1]].toLowerCase()+")</li>";}).join("")+'</ul>'+
+      '<h3>Watch for</h3><ul>'+li(e.errors)+'</ul></div><div>'+
+      '<h3>Observer\'s card</h3><p>Who coached? ____________________</p>'+
+      tick("Safe set-up (area clear, rack or bench set, collars on)")+tick("Used 1 or 2 short, clear cues")+
+      tick("Spot agreed before the set (or rightly not needed)")+tick("Gave feedback after the set")+
+      '<h3>Cue used</h3>'+lines(1)+'<h3>What changed after the cue?</h3>'+lines(3)+'<h3>Keep or change next time</h3>'+lines(3)+
+      '</div></div><p class="pfoot">Source: '+esc(e.ref)+', Essentials of Strength Training and Conditioning (5th ed.). Plymouth Marjon University.</p></div>';
+  }).join("");
+}
+$("print-btn").addEventListener("click",function(){window.print();});
+
+var tabs = [["tab-coach","p-coach"],["tab-notes","p-notes"]];
+tabs.forEach(function(t){
+  $(t[0]).addEventListener("click",function(){
+    tabs.forEach(function(u){ $(u[0]).setAttribute("aria-selected",u[0]===t[0]); $(u[1]).classList.toggle("active",u[0]===t[0]); });
+    window.scrollTo(0,0);
+  });
+});
+
+drawStations(); drawCard(); drawNotes(); buildPrint();
+})();
+</script>
+</body>
+</html>
