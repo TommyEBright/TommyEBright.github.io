@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/deck.css?v=5">
+<link rel="stylesheet" href="assets/deck.css?v=8">
 </head>
 <body>
 <div id="announce" class="sr-only" aria-live="polite"></div>
@@ -607,6 +607,14 @@
   <aside class="notes"><p>A 95% confidence interval comes from a procedure that captures the true value in about 95% of repeated studies; for any one study we can't know whether ours is one of the 95 or one of the 5.</p><p>Two reading rules. If a 95% CI for a difference includes zero, the result is not significant at p &lt; 0.05. The width of the interval shows precision: narrow means precise, wide means uncertain, whether or not it crosses zero.</p><p class="tiny">Corrected: "If the interval overlaps 0, the results are highly uncertain" and "All values in the interval are equally likely" (incorrect) have been replaced.</p></aside>
 </section>
 
+<!-- ===================== NEW: confidence interval simulator ===================== -->
+<section class="slide added" data-title="Confidence interval simulator" data-time="4">
+  <header class="head"><h2 class="tbox">What does "95%" mean?</h2>
+    <div class="kicker">Take sample after sample from the same population. How often does the interval catch the <b>true mean</b>?</div></header>
+  <div class="body" style="top:200px"><div data-widget="cisim"></div></div>
+  <aside class="notes"><p><strong>About 4 minutes.</strong> Adapted from your confidence interval simulator, now using CMJ height: a hypothetical population of athletes with true mean 40 cm and SD 6 cm. Each line is one study of n athletes: the dot is that sample's mean and the line its confidence interval. Green intervals contain the true mean; pink ones miss it.</p><p>Press <em>+50 samples</em> a few times. Coverage settles close to 95%: about 1 interval in 20 misses. Ask: "Was the pink study done badly?" No: it was just unlucky, and in real life we never know which kind of interval we have.</p><p>Then change things. Drop n to 5: intervals get much wider, but coverage stays near 95%. Raise n to 100: much narrower (more precise), same coverage. Move the confidence level to 80%: narrower intervals but more misses; 99%: wider, fewer misses. Watch the average width readout.</p><p>Key message: the 95% is a property of the method across many studies, not the probability that one particular interval contains the true value. Width tells you precision, which links straight to the next slide.</p></aside>
+</section>
+
 <!-- ===================== NEW: why not just p (replaces original 34 and its answers) ===================== -->
 <section class="slide added" data-title="Both significant: same story?" data-time="5">
   <header class="head"><h2 class="tbox">Both significant: same story?</h2>
@@ -626,13 +634,6 @@
     <div class="card c-pink step" style="margin-top:6px;padding:10px 20px"><p><b class="hl-p">Discuss:</b> both studies "worked" by p &lt; 0.05. Which result would you trust to change a coach's programme, and why? What would you report so a reader can tell them apart?</p></div>
   </div>
   <aside class="notes"><p><strong>About 5 minutes.</strong> This replaces the fish example. Hypothetical teaching data (calculated in R: independent t-test, equal SDs of 3.5 cm and 3.6 cm).</p><p>Start with only the p-values showing. Ask: "Both significant. Are these the same finding?" Most students will say yes.</p><p>Press → once: the mean differences and 95% confidence intervals appear, with the plot. Study A's interval is narrow (3.4 to 6.6 cm) and sits entirely above the 2 cm line, so we can be fairly confident the effect is real <em>and</em> big enough to matter. Study B's interval is wide (0.2 to 6.3 cm): the data are compatible with almost no benefit or a very large one. It only just excludes zero.</p><p>Press → again: effect sizes. Study A d = 1.43, large, with a tight interval. Study B d = 0.89 looks large, but its interval runs from 0.04 (trivial) to 1.72; with 12 per group we simply don't know.</p><p>Key messages: a p-value says how surprising the data would be if there were no effect. It does not tell you how big the effect is, how precisely it is estimated, or whether it matters in practice. Always report the effect size and its confidence interval alongside p (Wasserstein &amp; Lazar, 2016). The 2 cm "smallest worthwhile change" is an example; in practice it comes from the sport and the test's typical error (Hopkins, 2000).</p><p>Possible follow-up question: "What would Study B need to do next?" (A larger sample, or replication, to narrow the interval.)</p></aside>
-</section>
-
-<!-- ===================== 35 ===================== -->
-<section class="slide orig" data-title="Visuals" data-time="1">
-  <img class="bg" data-src="slides/s35.jpg" alt="Visuals: rpsychologist.com/viz, a collection of interactive statistics visualisations.">
-  <a class="hotlink" href="https://rpsychologist.com/viz" target="_blank" rel="noopener" style="left:395px;top:318px;width:546px;height:62px" aria-label="Open rpsychologist.com/viz in a new tab"></a>
-  <aside class="notes"><p>The link is clickable. Kristoffer Magnusson's interactive visualisations are excellent for revising p-values, confidence intervals, effect sizes and power. Encourage students to explore them after the lecture.</p></aside>
 </section>
 
 <!-- ===================== NEW: exit question ===================== -->
@@ -713,8 +714,8 @@
   </div>
 </div>
 
-<script src="assets/data.js?v=5"></script>
-<script src="assets/viz.js?v=5"></script>
-<script src="assets/deck.js?v=5"></script>
+<script src="assets/data.js?v=8"></script>
+<script src="assets/viz.js?v=8"></script>
+<script src="assets/deck.js?v=8"></script>
 </body>
 </html>

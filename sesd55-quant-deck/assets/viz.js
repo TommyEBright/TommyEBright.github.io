@@ -598,6 +598,87 @@
     explore();
   };
 
+  /* ---------- confidence interval simulator (adapted from Dr Ellis's CI simulator) ---------- */
+  W.cisim = function (el) {
+    var MU = 40, SIGMA = 6, LO = 26, HI = 54, ROWS = 50, w = 900, h = 530;
+    var conf = 0.95, n = 20, speed = 5, list = [], drawn = 0, hit = 0, widthSum = 0, running = false, timer = null;
+    var r = rng(55);
+    function qnorm(p) {
+      var a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
+      var b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01];
+      var c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
+      var d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00];
+      var q, t;
+      if (p < 0.02425) { q = Math.sqrt(-2 * Math.log(p)); return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); }
+      if (p <= 0.97575) { q = p - 0.5; t = q * q; return (((((a[0] * t + a[1]) * t + a[2]) * t + a[3]) * t + a[4]) * t + a[5]) * q / (((((b[0] * t + b[1]) * t + b[2]) * t + b[3]) * t + b[4]) * t + 1); }
+      q = Math.sqrt(-2 * Math.log(1 - p)); return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+    }
+    function qt(p, df) { // Cornish-Fisher expansion of the t quantile
+      var x = qnorm(p);
+      if (df > 200) return x;
+      var g1 = (Math.pow(x, 3) + x) / 4, g2 = (5 * Math.pow(x, 5) + 16 * Math.pow(x, 3) + 3 * x) / 96;
+      var g3 = (3 * Math.pow(x, 7) + 19 * Math.pow(x, 5) + 17 * Math.pow(x, 3) - 15 * x) / 384;
+      var g4 = (79 * Math.pow(x, 9) + 776 * Math.pow(x, 7) + 1482 * Math.pow(x, 5) - 1920 * Math.pow(x, 3) - 945 * x) / 92160;
+      return x + g1 / df + g2 / (df * df) + g3 / Math.pow(df, 3) + g4 / Math.pow(df, 4);
+    }
+    var row = hx('div', 'row', null, el); row.style.cssText = 'gap:26px;align-items:flex-start';
+    var left = hx('div', '', null, row); left.style.cssText = 'flex:0 0 400px;display:flex;flex-direction:column;gap:12px';
+    function slider(label, min, max, step, val, fmt, on) {
+      var box = hx('div', '', null, left);
+      var lab = hx('div', 'ctrl-label', label + ' <span style="color:#38c8f0;font-size:24px;text-transform:none">' + fmt(val) + '</span>', box);
+      var s = hx('input', '', null, box); s.type = 'range'; s.min = min; s.max = max; s.step = step; s.value = val; s.style.width = '100%'; s.setAttribute('aria-label', label);
+      s.addEventListener('input', function () { lab.querySelector('span').textContent = fmt(+s.value); on(+s.value); });
+    }
+    slider('Confidence level', 0.5, 0.99, 0.01, conf, function (v) { return Math.round(v * 100) + '%'; }, function (v) { conf = v; });
+    slider('Sample size (n)', 5, 100, 1, n, function (v) { return v; }, function (v) { n = v; });
+    slider('Speed', 1, 10, 1, speed, function (v) { return v; }, function (v) { speed = v; });
+    var b1 = hx('div', 'row', null, left); b1.style.cssText = 'gap:8px;flex-wrap:wrap';
+    var go = btn('Start', b1, 'sm'), one = btn('+1', b1, 'sm'), fifty = btn('+50 samples', b1, 'sm'), rs = btn('Reset', b1, 'sm');
+    var ro = hx('div', 'readouts', null, left);
+    var vD = readout(ro, 'Intervals', C.ink), vH = readout(ro, 'Caught true mean', C.green), vC = readout(ro, 'Coverage', C.cyan), vW = readout(ro, 'Average width', C.yellow);
+    var note = hx('div', 'small', '', left); note.style.fontSize = '19px';
+    var svg = svgRoot(row, w, h, 'Confidence intervals from repeated samples; green intervals capture the true mean of 40 cm, pink ones miss it');
+    svg.style.cssText = 'flex:1 1 0;min-width:0';
+    var x = lin(LO, HI, 30, w - 20), top = 40, rowH = (h - top - 60) / ROWS, base = top + ROWS * rowH;
+    function sample() {
+      var sum = 0, ss = 0, v, i;
+      for (i = 0; i < n; i++) { v = MU + SIGMA * gauss(r); sum += v; ss += v * v; }
+      var m = sum / n, sd = Math.sqrt(Math.max(0, (ss - n * m * m) / (n - 1))), half = qt(1 - (1 - conf) / 2, n - 1) * sd / Math.sqrt(n);
+      var it = { m: m, lo: m - half, hi: m + half }; it.ok = it.lo <= MU && it.hi >= MU;
+      list.push(it); if (list.length > ROWS) list.shift();
+      drawn++; if (it.ok) hit++; widthSum += 2 * half;
+    }
+    function draw() {
+      clear(svg);
+      for (var t = LO + 2; t <= HI - 2; t += 4) {
+        sv('line', { x1: x(t), x2: x(t), y1: base, y2: base + 8, stroke: C.axis, 'stroke-width': 2 }, svg);
+        sv('text', { x: x(t), y: base + 32, 'text-anchor': 'middle', 'font-size': 20, fill: C.text }, svg).textContent = t;
+      }
+      sv('line', { x1: x(LO), x2: x(HI), y1: base, y2: base, stroke: C.axis, 'stroke-width': 2 }, svg);
+      sv('text', { x: x(MU), y: base + 56, 'text-anchor': 'middle', 'font-size': 19, 'font-weight': 700, fill: C.text }, svg).textContent = 'CMJ height (cm): each line is one sample’s mean and confidence interval';
+      sv('line', { x1: x(MU), x2: x(MU), y1: top - 6, y2: base, stroke: C.ink, 'stroke-width': 2.5, 'stroke-dasharray': '8 6' }, svg);
+      sv('text', { x: x(MU), y: top - 14, 'text-anchor': 'middle', 'font-size': 21, 'font-weight': 700, fill: C.ink }, svg).textContent = 'true mean μ = 40 cm';
+      list.slice().reverse().forEach(function (it, i) {
+        var y = top + i * rowH + rowH / 2, col = it.ok ? C.green : C.pink, op = (1 - 0.6 * i / ROWS).toFixed(2);
+        sv('line', { x1: x(Math.max(LO, it.lo)), x2: x(Math.min(HI, it.hi)), y1: y, y2: y, stroke: col, 'stroke-width': 4, 'stroke-linecap': 'round', opacity: op }, svg);
+        sv('circle', { cx: x(it.m), cy: y, r: 4.5, fill: col, opacity: op }, svg);
+      });
+      vD.textContent = drawn; vH.textContent = hit;
+      vC.textContent = drawn ? fx(hit / drawn * 100, 1) + '%' : '–';
+      vW.textContent = drawn ? fx(widthSum / drawn, 1) + ' cm' : '–';
+      note.innerHTML = drawn < 20 ? 'Each sample is ' + n + ' athletes drawn from a population with mean 40 cm and SD 6 cm. Press <b>Start</b> or <b>+50</b>.'
+        : 'Coverage settles near the confidence level (' + Math.round(conf * 100) + '%). Any <i>one</i> interval either captured μ or it didn’t: the 95% describes the method, not a single interval.';
+    }
+    function current() { var s = el.closest('.slide'); return !s || s.classList.contains('current'); }
+    function tick() { if (!running) return; if (!current()) { toggle(); return; } sample(); draw(); timer = setTimeout(tick, Math.round(800 / speed)); }
+    function toggle() { running = !running; go.textContent = running ? 'Pause' : 'Start'; go.setAttribute('aria-pressed', running); if (running) tick(); else clearTimeout(timer); }
+    go.addEventListener('click', toggle);
+    one.addEventListener('click', function () { sample(); draw(); });
+    fifty.addEventListener('click', function () { for (var i = 0; i < 50; i++) sample(); draw(); });
+    rs.addEventListener('click', function () { if (running) toggle(); list = []; drawn = hit = 0; widthSum = 0; draw(); });
+    draw();
+  };
+
   window.DeckWidgets = W;
   window.DeckStats = St;
 })();

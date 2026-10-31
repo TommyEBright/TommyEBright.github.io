@@ -2,7 +2,7 @@
 
 Live: https://tommyebright.github.io/sesd55-quant-deck/
 
-58 slides: 35 of the 36 original slides kept in order (as images, with seven wording corrections laid over them; original slide 34 was replaced at the lecturer's request), plus 23 added slides for the descriptive statistics block, knowledge checks and interactives.
+58 slides: 34 of the 36 original slides kept in order (as images, with seven wording corrections laid over them; original slides 34 and 35 were replaced at the lecturer's request), plus 24 added slides for the descriptive statistics block, knowledge checks and interactives, including a confidence interval simulator (slide 54) adapted from the lecturer's own.
 
 ## Presenting
 
