@@ -95,6 +95,7 @@ input[type=range]{width:100%;accent-color:var(--teal);height:28px}
 .seg button:hover:not(:disabled){border-color:#9fc3cc}
 .seg button[aria-checked="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
 .seg button:disabled{opacity:.4;cursor:not-allowed;text-decoration:line-through}
+.select{width:100%;min-height:44px;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff;font-weight:700;color:var(--ink)}
 .seg button small{display:block;font-weight:400;font-size:12px;opacity:.8}
 .preset-row{display:flex;flex-wrap:wrap;gap:8px;padding-top:14px}
 .btn{border:0;border-radius:12px;padding:11px 16px;min-height:44px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
@@ -266,6 +267,14 @@ input[type=range]{width:100%;accent-color:var(--teal);height:28px}
         <div class="card-h"><h2>Camera set-up</h2></div>
         <div class="controls">
           <div class="group">
+            <h3>Your camera</h3>
+            <div class="ctl">
+              <div class="ctl-top"><label for="model">Quintic camera model</label></div>
+              <select id="model" class="select"></select>
+              <p class="hint" style="margin-top:6px">Check the label on the camera. Not sure? Ask your tutor. Changing it resets to a good set-up for that camera.</p>
+            </div>
+          </div>
+          <div class="group">
             <h3>Where the camera goes</h3>
             <div class="ctl">
               <div class="ctl-top"><label for="dist">Distance from the athlete</label><output id="o-dist"></output></div>
@@ -281,29 +290,31 @@ input[type=range]{width:100%;accent-color:var(--teal);height:28px}
             </div>
           </div>
           <div class="group">
-            <h3>Lens and camera settings</h3>
+            <h3>Lens and capture settings</h3>
             <div class="ctl">
               <div class="ctl-top"><span class="lbl" id="l-lens">Lens</span><span class="note" id="n-lens"></span></div>
-              <div class="seg" role="radiogroup" aria-labelledby="l-lens" data-key="lens">
-                <button role="radio" data-v="4">4 mm<small>very wide</small></button><button role="radio" data-v="6">6 mm<small>wide</small></button><button role="radio" data-v="8">8 mm<small>normal</small></button><button role="radio" data-v="12">12 mm<small>narrow</small></button>
+              <div class="seg" role="radiogroup" aria-labelledby="l-lens" data-key="lens" id="lensSeg"></div>
+            </div>
+            <div class="ctl">
+              <div class="ctl-top"><span class="lbl" id="l-fps">Frame rate and image size</span></div>
+              <div class="seg" role="radiogroup" aria-labelledby="l-fps" data-key="fps" id="fpsSeg"></div>
+            </div>
+            <div class="ctl">
+              <div class="ctl-top"><span class="lbl" id="l-exp">Exposure time</span><span class="note">in Camera Settings</span></div>
+              <div class="seg" role="radiogroup" aria-labelledby="l-exp" data-key="exp">
+                <button role="radio" data-v="4">4 ms<small>1/250 s</small></button><button role="radio" data-v="2">2 ms<small>1/500 s</small></button><button role="radio" data-v="1">1 ms<small>1/1000 s</small></button><button role="radio" data-v="0.5">0.5 ms<small>1/2000 s</small></button><button role="radio" data-v="0.25">0.25 ms<small>1/4000 s</small></button>
               </div>
             </div>
             <div class="ctl">
-              <div class="ctl-top"><span class="lbl" id="l-fps">Frame rate</span><span class="note" id="n-fps"></span></div>
-              <div class="seg" role="radiogroup" aria-labelledby="l-fps" data-key="fps">
-                <button role="radio" data-v="100">100</button><button role="radio" data-v="220">220</button><button role="radio" data-v="300">300</button><button role="radio" data-v="500">500</button><button role="radio" data-v="750">750</button>
-              </div>
-            </div>
-            <div class="ctl">
-              <div class="ctl-top"><span class="lbl" id="l-shutter">Shutter speed</span></div>
-              <div class="seg" role="radiogroup" aria-labelledby="l-shutter" data-key="shutter">
-                <button role="radio" data-v="250">1/250</button><button role="radio" data-v="500">1/500</button><button role="radio" data-v="1000">1/1000</button><button role="radio" data-v="2000">1/2000</button><button role="radio" data-v="4000">1/4000</button>
+              <div class="ctl-top"><span class="lbl" id="l-gain">Gain boost</span></div>
+              <div class="seg" role="radiogroup" aria-labelledby="l-gain" data-key="gain">
+                <button role="radio" data-v="off">Off</button><button role="radio" data-v="on">On<small>brighter, grainier</small></button>
               </div>
             </div>
             <div class="ctl">
               <div class="ctl-top"><span class="lbl" id="l-iris">Iris (aperture ring on the lens)</span></div>
               <div class="seg" role="radiogroup" aria-labelledby="l-iris" data-key="iris">
-                <button role="radio" data-v="1.4">f/1.4<small>wide open</small></button><button role="radio" data-v="2.8">f/2.8</button><button role="radio" data-v="5.6">f/5.6</button><button role="radio" data-v="8">f/8<small>nearly shut</small></button>
+                <button role="radio" data-v="1.4">f/1.4<small>wide open</small></button><button role="radio" data-v="2.8">f/2.8</button><button role="radio" data-v="4">f/4</button><button role="radio" data-v="5.6">f/5.6</button><button role="radio" data-v="8">f/8<small>nearly shut</small></button>
               </div>
             </div>
             <div class="ctl">
@@ -374,7 +385,7 @@ input[type=range]{width:100%;accent-color:var(--teal);height:28px}
   </div>
 </section>
 </main>
-<p class="foot">Simulated athlete and high-speed camera (monochrome, global shutter, 1440 × 1080 pixels at up to 220 fps; higher frame rates record fewer rows). Errors are worked out by filming the simulated athlete through the camera you set up, then measuring from that picture as you would in the Kinematic Analysis tool. Based on Robertson et al. (2014) <i>Research Methods in Biomechanics</i>, chapters 1 and 12.</p>
+<p class="foot">Simulated athlete and Quintic high-speed camera. Frame rates and image sizes for each model come from the Quintic V35 camera tutorials and product page; sensor pixel sizes for the USB3 1 MP and GigE/USB2 cameras are estimates. Higher frame rates record a smaller image (area of interest). Errors are worked out by filming the simulated athlete through the camera you set up, then measuring from that picture as you would in the Kinematic Analysis tool. Based on Robertson et al. (2014) <i>Research Methods in Biomechanics</i>, chapters 1 and 12.</p>
 
 <script>
 "use strict";
@@ -382,8 +393,25 @@ input[type=range]{width:100%;accent-color:var(--teal);height:28px}
    Maths helpers
    ============================================================ */
 const DEG=Math.PI/180, G=9.81;
-const IMG_W=1440, IMG_H=1080, SENSOR_W=4.97;            // Sony IMX273: 1440 x 1080, 3.45 µm pixels
-const ROWS={100:1080,220:1080,300:800,500:462,750:292};   // area of interest at each frame rate
+/* Quintic cameras: full image (W x H pixels), pixel size (mm), frame-rate presets [fps, width, height] */
+const CAMERAS={
+  "1.6mp":{name:"USB3 1.6 MP (or GigE 1.6 MP)",W:1440,H:1080,pitch:.00345,presets:[[100,1440,1080],[220,1440,1080],[300,1440,800],[500,1440,462],[750,1440,292]],
+    ideal:{sprint:{fps:220,lens:"8",dist:8},cmj:{fps:220,lens:"6",dist:5}}},
+  "1.3mp":{name:"USB3 1.3 MP",W:1280,H:1024,pitch:.0053,presets:[[169,1280,1024],[250,1280,650],[300,1280,500],[400,1280,350],[500,1200,300]],
+    ideal:{sprint:{fps:250,lens:"12",dist:10},cmj:{fps:169,lens:"8",dist:5}}},
+  "4mp":{name:"USB3 4 MP",W:2048,H:1550,pitch:.0055,presets:[[100,2048,1550],[200,2048,762],[300,2048,504],[400,2048,376],[500,2048,298]],
+    ideal:{sprint:{fps:200,lens:"16",dist:9},cmj:{fps:100,lens:"16",dist:7}}},
+  "1mp":{name:"USB3 1 MP",W:1280,H:1024,pitch:.0053,presets:[[60,1280,1024],[100,1280,600],[200,1280,288],[300,1280,182]],
+    ideal:{sprint:{fps:100,lens:"8",dist:9},cmj:{fps:100,lens:"8",dist:7}}},
+  "gige":{name:"GigE or USB2 (older)",W:752,H:480,pitch:.006,presets:[[100,752,480],[150,560,400],[200,460,286],[250,352,220]],
+    ideal:{sprint:{fps:150,lens:"6",dist:8},cmj:{fps:100,lens:"6",dist:6}}}
+};
+const LENSES=["4","6","8","12","16","25"];
+let MODEL="1.6mp",IMG_W=1440,IMG_H=1080,PITCH=.00345;
+function applyModel(m){MODEL=m;const c=CAMERAS[m];IMG_W=c.W;IMG_H=c.H;PITCH=c.pitch;}
+const aoi=cfg=>{const p=CAMERAS[MODEL].presets.find(x=>x[0]===cfg.fps)||CAMERAS[MODEL].presets[0];return{w:p[1],h:p[2]};};
+const tanHalf=lens=>IMG_W*PITCH/2/+lens;
+const lensWord=lens=>{const t=tanHalf(lens);return t>=.58?"very wide":t>=.45?"wide":t>=.25?"normal":"narrow";};
 const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
 const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
 const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
@@ -476,8 +504,8 @@ const SPR=(()=>{
 const MOVES={
   sprint:{
     targetY:1.0,
-    ideal:{dist:8,angle:0,height:1.0,lens:"8",fps:220,shutter:1000,iris:2.8,light:"bright",scale:"line",side:"near"},
-    range(cfg){const tH=SENSOR_W/2/+cfg.lens;return clamp(cfg.dist*tH+3,5,30);},
+    ideal:{dist:8,angle:0,height:1.0,lens:"8",fps:220,exp:1,iris:2.8,gain:"off",light:"bright",scale:"line",side:"near"},
+    range(cfg){return clamp(cfg.dist*aoi(cfg).w*PITCH/2/+cfg.lens+3,5,30);},
     duration(cfg){return 2*this.range(cfg)/SPR.v;},
     pose(t,cfg){
       const R=this.range(cfg),ph=((t*SPR.sf+.37)%1+1)%1,p2=(ph+.5)%1,hx=-R+SPR.v*t+SPR.px(ph);
@@ -536,7 +564,7 @@ const MOVES={
     }
     return{
       targetY:1.2, T, tTO, tLand,
-      ideal:{dist:5,angle:0,height:1.1,lens:"6",fps:220,shutter:1000,iris:2.8,light:"bright",scale:"line",side:"near"},
+      ideal:{dist:5,angle:0,height:1.1,lens:"6",fps:220,exp:1,iris:2.8,gain:"off",light:"bright",scale:"line",side:"near"},
       duration(){return T},
       pose(t){
         const g=(t>tTO&&t<tLand)?air(t):ground(t);
@@ -557,21 +585,21 @@ const MOVES={
 /* ============================================================
    Camera
    ============================================================ */
-const LENS_K={"4":-.08,"6":-.02,"8":-.008,"12":0};
+const lensK=lens=>{const t=tanHalf(lens);return t>=.58?-.08:t>=.45?-.02:t>=.3?-.008:0;};
 function makeCam(cfg,mv){
   const a=cfg.angle*DEG,D=cfg.dist,C=[D*Math.sin(a),cfg.height,D*Math.cos(a)];
   const f=norm(sub([0,mv.targetY,0],C)),r=norm(cross(f,[0,1,0])),u=cross(r,f);
-  return{C,f,r,u,tH:SENSOR_W/2/+cfg.lens,k:LENS_K[cfg.lens],pitch:Math.asin(f[1])/DEG,rows:ROWS[cfg.fps]};
+  const A=aoi(cfg);return{C,f,r,u,tH:tanHalf(cfg.lens),k:lensK(cfg.lens),pitch:Math.asin(f[1])/DEG,aw:A.w,ah:A.h};
 }
 function proj(cam,P){
   const d=sub(P,cam.C),zc=dot(d,cam.f); if(zc<.05)return null;
   let x=dot(d,cam.r)/zc/cam.tH,y=dot(d,cam.u)/zc/cam.tH; const s=1+cam.k*Math.min(x*x+y*y,2.4); x*=s;y*=s;
   return[IMG_W/2*(1+x),IMG_H/2-y*IMG_W/2];
 }
-const inPic=(cam,q,mx=0,my=0)=>q&&q[0]>=mx&&q[0]<=IMG_W-mx&&Math.abs(q[1]-IMG_H/2)<=cam.rows/2-my;
-const exposure=cfg=>Math.min(1/cfg.shutter,1/cfg.fps);
+const inPic=(cam,q,mx=0,my=0)=>q&&Math.abs(q[0]-IMG_W/2)<=cam.aw/2-mx&&Math.abs(q[1]-IMG_H/2)<=cam.ah/2-my;
+const exposure=cfg=>Math.min(cfg.exp/1000,1/cfg.fps);
 const LUX={dim:.3,bright:1,outdoor:10};
-const brightness=cfg=>LUX[cfg.light]*(exposure(cfg)/.001)*(2.8/cfg.iris)**2;   // 1 = well exposed
+const brightness=cfg=>LUX[cfg.light]*(exposure(cfg)/.001)*(2.8/cfg.iris)**2*(PITCH/.00345)**2*(cfg.gain==="on"?2:1);   // 1 = well exposed (bigger pixels gather more light)
 function scaleZ(cfg){return cfg.scale==="line"?0:cfg.scale==="near"?.8:-.8}
 function scaleEnds(cfg){const z=scaleZ(cfg);return[[-.5,.012,z],[.5,.012,z]]}
 
@@ -588,16 +616,16 @@ function analyse(move,cfg){
   const [e1,e2]=scaleEnds(cfg),p1=proj(cam,e1),p2=proj(cam,e2);
   const mpp=(p1&&p2)?1/Math.hypot(p1[0]-p2[0],p1[1]-p2[1]):NaN;
   const toM=p=>[(p[0]-IMG_W/2)*mpp,(IMG_H/2-p[1])*mpp];
-  const dt=1/cfg.fps,dur=mv.duration(cfg),t0=.0031,mx=.04*IMG_W,my=.025*IMG_W;
+  const dt=1/cfg.fps,dur=mv.duration(cfg),t0=.0031,mx=.04*cam.aw,my=.025*cam.aw;
   let errs=[],first=null,last=null,nearEdge=false,anyOut=false,standHip=[],trueStand=[],fMax=-1e9,tMax=-1e9,vmax=0;
   for(let t=t0;t<dur;t+=dt){
     const P=mv.pose(t,cfg),pts={},pr={};let inF=true,hz=true;
     for(const n of SIDE_PTS){pts[n]=P[n+S];const q=proj(cam,pts[n]);pr[n]=q;
       if(!inPic(cam,q))inF=false; else if(!inPic(cam,q,mx,my))nearEdge=true;
-      if(!q||q[0]<0||q[0]>IMG_W)hz=false;}
+      if(!q||Math.abs(q[0]-IMG_W/2)>cam.aw/2)hz=false;}
     if(move==="cmj"||hz){ // whole body must fit vertically while the athlete is in view
       for(const n of ["head","toeN","heelN","toeF",...(move==="cmj"?["wrN","wrF"]:[])]){const q=proj(cam,P[n]);
-        if(!q)continue; if(move==="sprint"&&(q[0]<0||q[0]>IMG_W))continue;
+        if(!q)continue; if(move==="sprint"&&Math.abs(q[0]-IMG_W/2)>cam.aw/2)continue;
         if(!inPic(cam,q))anyOut=true; else if(!inPic(cam,q,move==="cmj"?mx:0,my*.6))nearEdge=true;}
     }
     if(inF){
@@ -617,7 +645,7 @@ function analyse(move,cfg){
   const res={cam,mpp,frames:errs.length,nearEdge,anyOut,E,blurCm,vmax,dt,B:brightness(cfg)};
   res.rms=errs.length?Math.sqrt(errs.reduce((s,e)=>s+e*e,0)/errs.length):NaN;
   res.maxErr=errs.length?Math.max(...errs.map(Math.abs)):NaN;
-  res.visW=2*cfg.dist*cam.tH; res.visH=res.visW*cam.rows/IMG_W; res.mmpp=res.visW/IMG_W*1000;
+  res.visW=cfg.dist*cam.aw*PITCH/+cfg.lens; res.visH=cfg.dist*cam.ah*PITCH/+cfg.lens; res.mmpp=cfg.dist*PITCH/+cfg.lens*1000;
   if(move==="sprint"){
     if(first&&last&&last.t>first.t){res.vMeas=(last.m[0]-first.m[0])/(last.t-first.t);res.vTrue=(last.w[0]-first.w[0])/(last.t-first.t);res.vErr=(res.vMeas/res.vTrue-1)*100;}
     res.ctTrue=mv.contact*1000;
@@ -646,18 +674,19 @@ function buildChecks(move,cfg,r){
   add("dist","Distance",dg?"good":dw?"warn":"bad",`${fmt(D,1)} m away`,
     D<(sp?6:4)?"Close up, body parts that are nearer the camera look bigger than parts that are further away. That bends your angles and distances.":"Far away, the athlete is small on screen, so each click you make covers more of the body.",
     sp?"Aim for 6 to 13 m from the lane, then pick the lens that fills the screen.":"Aim for 4 to 8 m from the athlete, then pick the lens that fills the screen.");
-  add("lens","Lens",cfg.lens==="4"?"bad":"good",`${cfg.lens} mm lens`,
-    "Very wide lenses (like 4 mm) bend straight lines, especially near the edges of the picture, which creates movement that isn't really there.",
-    "Use a longer lens (6, 8 or 12 mm) and move the camera back to fit the movement in.");
+  const lw=lensWord(cfg.lens);
+  add("lens","Lens",lw==="very wide"?"bad":lw==="wide"?"warn":"good",`${cfg.lens} mm lens (${lw} on this camera)`,
+    "Wide-angle lenses bend straight lines, especially near the edges of the picture, which creates movement that isn't really there.",
+    "Use a longer lens and move the camera back to fit the movement in.");
   if(sp){
     const s=r.anyOut?"bad":r.visW>=4&&r.visW<=8?"good":r.visW>=3?"warn":"bad";
     add("frame","What's in shot",r.frames<3?"bad":s,r.anyOut?`Athlete cut off at ${cfg.fps} fps`:`${fmt(r.visW,1)} m of the lane in view`,
-      r.anyOut?`At ${cfg.fps} fps the camera only records ${ROWS[cfg.fps]} of its 1080 rows, so the picture is a thin strip and the head or feet are cut off.`:r.visW<4?"You need to see at least one full stride (two steps), with room either side, or you can't measure step length or speed.":r.visW>8?"So much lane is in view that the athlete is small on screen.":"Enough of the run is in view to see a full stride.",
-      r.anyOut?"Drop the frame rate to 220 fps (full picture), or move further back.":"Change the lens or the distance until about 4 to 8 m of the lane is in view.");
+      r.anyOut?`At ${cfg.fps} fps the camera only records a ${r.cam.aw} × ${r.cam.ah} pixel image, so the picture is a thin strip and the head or feet are cut off.`:r.visW<4?"You need to see at least one full stride (two steps), with room either side, or you can't measure step length or speed.":r.visW>8?"So much lane is in view that the athlete is small on screen.":"Enough of the run is in view to see a full stride.",
+      r.anyOut?"Drop the frame rate to one that records a taller image, or move further back.":"Change the lens or the distance until about 4 to 8 m of the lane is in view.");
   }else{
-    add("frame","What's in shot",r.anyOut?"bad":r.nearEdge?"warn":"good",r.anyOut?(ROWS[cfg.fps]<1080?`Cut off at ${cfg.fps} fps`:"Part of the body leaves the shot"):r.nearEdge?"Body gets close to the edge":"Whole jump in shot",
-      ROWS[cfg.fps]<1080?`At ${cfg.fps} fps the camera only records ${ROWS[cfg.fps]} of its 1080 rows, so the picture is much shorter. The head and hands leave the top at the peak of the jump.`:"The head, hands and feet all need to stay in shot for the whole jump, and away from the edges where the picture is least accurate.",
-      ROWS[cfg.fps]<1080?"Use 220 fps, which records the full picture.":"Move back, use a wider lens (but not 4 mm), or raise the camera slightly so there's space above the head.");
+    add("frame","What's in shot",r.anyOut?"bad":r.nearEdge?"warn":"good",r.anyOut?(r.cam.ah<IMG_H?`Cut off at ${cfg.fps} fps`:"Part of the body leaves the shot"):r.nearEdge?"Body gets close to the edge":"Whole jump in shot",
+      r.anyOut&&r.cam.ah<IMG_H?`At ${cfg.fps} fps the camera only records a ${r.cam.aw} × ${r.cam.ah} pixel image, so the picture is much shorter. The head and hands leave the top at the peak of the jump.`:"The head, hands and feet all need to stay in shot for the whole jump, and away from the edges where the picture is least accurate.",
+      r.anyOut&&r.cam.ah<IMG_H?"Use a frame rate that records the full image height.":"Move back, use a slightly wider lens (not a very wide one), or raise the camera slightly so there's space above the head.");
   }
   add("res","Detail",r.mmpp<=6?"good":r.mmpp<=9?"warn":"bad",`1 pixel ≈ ${fmt(r.mmpp,1)} mm`,
     "The smaller the athlete is on screen, the more of the body each pixel covers, so small clicking errors become bigger errors in metres.",
@@ -667,18 +696,18 @@ function buildChecks(move,cfg,r){
     "If the camera is high or low it has to tilt to see the athlete, which stretches the top or bottom of the picture.",
     sp?"Set the tripod so the lens is at about hip height, and keep it level.":"Set the tripod so the lens is at about waist height, and keep it level.");
   const ms=1000/cfg.fps;
-  add("fps","Frame rate",cfg.fps>=200?"good":"warn",`${cfg.fps} fps (1 frame = ${fmt(ms,1)} ms)`,
+  add("fps","Frame rate",(sp?cfg.fps>=200:cfg.fps>=100)?"good":(sp?cfg.fps>=100:cfg.fps>=60)?"warn":"bad",`${cfg.fps} fps (1 frame = ${fmt(ms,1)} ms)`,
     sp?`Foot contact in sprinting lasts only about ${Math.round(r.ctTrue)} ms. At ${cfg.fps} fps you could miss touchdown or toe-off by up to ${fmt(ms,0)} ms.`:"Take-off and landing happen fast. Too few frames and you miss the exact moment, which changes flight time and jump height.",
-    "Use 220 fps. It is the fastest rate that still records the full picture.");
-  const capped=1/cfg.shutter>1/cfg.fps;
-  add("blur","Shutter speed",r.blurCm<=2.5?"good":r.blurCm<=5?"warn":"bad",`1/${Math.round(1/r.E)} s · markers smear ${fmt(r.blurCm,1)} cm${capped?" (capped by frame rate)":""}`,
-    "The shutter speed is how long each frame is exposed for. If a marker moves a lot in that time, it smears into a streak instead of a dot.",
-    "Use 1/1000 s or faster. Then fix the brightness with the iris or more light.");
+    sp?"Use 200 fps or more, as long as the whole athlete still fits in the image.":"Use 100 fps or more, as long as the whole jump still fits in the image.");
+  const capped=cfg.exp/1000>1/cfg.fps;
+  add("blur","Exposure time",r.blurCm<=2.5?"good":r.blurCm<=5?"warn":"bad",`${fmt(r.E*1000,2).replace(/\.?0+$/,"")} ms · markers smear ${fmt(r.blurCm,1)} cm${capped?" (capped by frame rate)":""}`,
+    "The exposure time is how long each frame is exposed for. If a marker moves a lot in that time, it smears into a streak instead of a dot.",
+    "Use 1 ms (1/1000 s) or shorter. Then fix the brightness with the iris, gain boost or more light.");
   const B=r.B,bs=B<.25||B>5?"bad":B<.5||B>2.5?"warn":"good";
   const iris14=cfg.iris===1.4&&bs==="good";
-  add("bright","Brightness",iris14?"warn":bs,B<.5?"Picture too dark":B>2.5?"Picture too bright":iris14?"OK, but very little is in focus":"Markers bright and clear",
-    B<.5?"A fast shutter lets in very little light. In a dark picture the markers are grey and grainy, and tracking fails.":B>2.5?"Too much light washes the picture out, and markers that are close together merge into one blob.":iris14?"With the iris wide open, only a thin slice of the scene is sharp. If the focus is slightly off, the markers blur.":"Markers stand out clearly against the background.",
-    B<.5?"Open the iris (lower f-number), add light, or use a slightly slower shutter (no slower than 1/1000 s if you can).":B>2.5?"Close the iris (higher f-number) until the markers are bright white dots, not blobs.":"Close the iris a little and add light, or focus very carefully on the athlete's line.");
+  add("bright","Brightness",iris14?"warn":bs,(B<.5?"Picture too dark":B>2.5?"Picture too bright":iris14?"OK, but very little is in focus":"Markers bright and clear")+(cfg.gain==="on"?" · gain boost on":""),
+    B<.5?"A short exposure lets in very little light. In a dark picture the markers are grey and grainy, and tracking fails.":B>2.5?"Too much light washes the picture out, and markers that are close together merge into one blob.":iris14?"With the iris wide open, only a thin slice of the scene is sharp. If the focus is slightly off, the markers blur.":"Markers stand out clearly against the background.",
+    B<.5?"Open the iris (lower f-number), add light, or turn on gain boost. Only lengthen the exposure as a last resort.":B>2.5?"Close the iris (higher f-number) until the markers are bright white dots, not blobs.":"Close the iris a little and add light, or focus very carefully on the athlete's line.");
   add("scale","Scale position",cfg.scale==="line"?"good":"bad",cfg.scale==="line"?"Scale in the athlete's line":`Distances ${fmt(Math.abs(r.scaleErr),0)}% too ${r.scaleErr>0?"big":"small"}`,
     "The 1 m scale tells the software how many pixels make a metre. Anything nearer the camera looks bigger, so the scale has to be exactly where the athlete moves.",
     sp?"Hold the scale level along the middle of the lane, where the athlete will run.":"Put the scale on the floor where the athlete's feet are, pointing front to back.");
@@ -701,6 +730,7 @@ function strokePoly(ctx,pts,sc,oy){let on=false;ctx.beginPath();for(const q of p
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 
 function drawScene(ctx,W,H,move,cfg,t){
+  const sw=W/1440;
   const mv=MOVES[move],cam=makeCam(cfg,mv),sc=W/IMG_W,oy=0,th=THEMES[cfg.light];
   ctx.clearRect(0,0,W,H);
   const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,th.wall2);g.addColorStop(1,th.wall);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
@@ -710,9 +740,9 @@ function drawScene(ctx,W,H,move,cfg,t){
     ctx.lineTo(W+10,back[back.length-1][1]*sc);ctx.lineTo(W+10,H+10);ctx.lineTo(-10,H+10);ctx.closePath();ctx.fillStyle=th.floor;ctx.fill();
     if(th.grass){const gr=[];for(let x=-80;x<=80;x+=.5){const q=proj(cam,[x,0,-3]);if(q&&q[0]>-IMG_W&&q[0]<2*IMG_W)gr.push(q);}
       if(gr.length>1){ctx.beginPath();ctx.moveTo(-10,back[0][1]*sc);for(const q of back)ctx.lineTo(q[0]*sc,q[1]*sc);ctx.lineTo(W+10,gr[gr.length-1][1]*sc);for(let i=gr.length-1;i>=0;i--)ctx.lineTo(gr[i][0]*sc,gr[i][1]*sc);ctx.closePath();ctx.fillStyle=th.grass;ctx.fill();}}
-    else{ctx.strokeStyle=th.sk;ctx.lineWidth=Math.max(2,10*sc);ctx.beginPath();back.forEach((q,i)=>i?ctx.lineTo(q[0]*sc,q[1]*sc-4*sc):ctx.moveTo(q[0]*sc,q[1]*sc-4*sc));ctx.stroke();}
+    else{ctx.strokeStyle=th.sk;ctx.lineWidth=Math.max(2,10*sw);ctx.beginPath();back.forEach((q,i)=>i?ctx.lineTo(q[0]*sc,q[1]*sc-4*sw):ctx.moveTo(q[0]*sc,q[1]*sc-4*sw));ctx.stroke();}
   }
-  ctx.lineCap="round";ctx.strokeStyle=th.line;ctx.globalAlpha=.85;ctx.lineWidth=Math.max(1,5*sc);
+  ctx.lineCap="round";ctx.strokeStyle=th.line;ctx.globalAlpha=.85;ctx.lineWidth=Math.max(1,5*sw);
   if(move==="sprint"){
     for(const z of [-1.83,-.61,.61,1.83]) strokePoly(ctx,polyPts(cam,[-60,0,z],[60,0,z],120),sc,oy);
     ctx.globalAlpha=.35;for(let x=-30;x<=30;x+=2) strokePoly(ctx,polyPts(cam,[x,0,.55],[x,0,.67],2),sc,oy);
@@ -721,21 +751,23 @@ function drawScene(ctx,W,H,move,cfg,t){
     if(m.every(Boolean)){ctx.globalAlpha=.9;ctx.fillStyle="#2d4d5a";ctx.beginPath();m.forEach((q,i)=>i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc));ctx.closePath();ctx.fill();}
   }
   ctx.globalAlpha=1;
-  const [a]=scaleEnds(cfg);ctx.lineWidth=Math.max(2,14*sc);ctx.lineCap="butt";
+  const [a]=scaleEnds(cfg);ctx.lineWidth=Math.max(2,14*sw);ctx.lineCap="butt";
   for(let i=0;i<10;i++){const q0=proj(cam,[a[0]+i/10,a[1],a[2]]),q1=proj(cam,[a[0]+(i+1)/10,a[1],a[2]]);if(!q0||!q1)continue;
     ctx.strokeStyle=i%2?"#111":"#f4f4f4";ctx.beginPath();ctx.moveTo(q0[0]*sc,q0[1]*sc);ctx.lineTo(q1[0]*sc,q1[1]*sc);ctx.stroke();}
-  const E=exposure(cfg),n=E>1/1500?Math.min(14,Math.ceil(E*4000)+2):1,B=brightness(cfg);
+  const E=exposure(cfg),n=E>1/1500?Math.min(14,Math.ceil(E*4000)+2):1,B=brightness(cfg),grain=cfg.gain==="on";
   for(let i=0;i<n;i++){const tt=n===1?t:t+(i/(n-1)-.5)*E;drawAthlete(ctx,cam,mv.pose(tt,cfg),sc,cfg,n===1?1:Math.min(1,2.4/n),B);}
   // exposure: dark & grainy or washed out
-  if(B<1){const dark=clamp(.82*(1-B),0,.82);ctx.fillStyle=`rgba(0,0,0,${dark})`;ctx.fillRect(0,0,W,H);
-    if(B<.7){const N=Math.round(W*H/180*(1-B));let seed=Math.floor(t*cfg.fps)*9301+49297;
+  if(B<.85){const dark=clamp(.9*(.85-B)/.85,0,.82);ctx.fillStyle=`rgba(0,0,0,${dark})`;ctx.fillRect(0,0,W,H);
+    if(B<.5||grain){const N=Math.round(W*H/180*Math.max(1-B,grain?.35:0));let seed=Math.floor(t*cfg.fps)*9301+49297;
       for(let i=0;i<N;i++){seed=(seed*9301+49297)%233280;const x=seed/233280*W;seed=(seed*9301+49297)%233280;const y=seed/233280*H;ctx.fillStyle=i%2?"rgba(255,255,255,.16)":"rgba(0,0,0,.22)";ctx.fillRect(x,y,1.6,1.6);}}}
-  else if(B>1.6){ctx.fillStyle=`rgba(255,255,255,${clamp(.2*Math.log2(B/1.6)+.08,0,.75)})`;ctx.fillRect(0,0,W,H);}
+  if(B>=1&&grain){let seed=Math.floor(t*cfg.fps)*7919+17;for(let i=0;i<Math.round(W*H/520);i++){seed=(seed*9301+49297)%233280;const x=seed/233280*W;seed=(seed*9301+49297)%233280;const y=seed/233280*H;ctx.fillStyle=i%2?"rgba(255,255,255,.14)":"rgba(0,0,0,.16)";ctx.fillRect(x,y,1.6,1.6);}}
+  if(B>1.6){ctx.fillStyle=`rgba(255,255,255,${clamp(.2*Math.log2(B/1.6)+.08,0,.75)})`;ctx.fillRect(0,0,W,H);}
   return cam;
 }
 function drawAthlete(ctx,cam,P,sc,cfg,alpha,B){
+  const sb=sc*(+cfg.lens/(PITCH*cfg.dist))/290;   // body size follows real distance and lens
   const pr={};for(const k in P)pr[k]=proj(cam,P[k]);
-  const seg=(a,b,w,col)=>{const p=pr[a],q=pr[b];if(!p||!q)return;ctx.strokeStyle=col;ctx.lineWidth=Math.max(2,w*sc);ctx.beginPath();ctx.moveTo(p[0]*sc,p[1]*sc);ctx.lineTo(q[0]*sc,q[1]*sc);ctx.stroke();};
+  const seg=(a,b,w,col)=>{const p=pr[a],q=pr[b];if(!p||!q)return;ctx.strokeStyle=col;ctx.lineWidth=Math.max(2,w*sb);ctx.beginPath();ctx.moveTo(p[0]*sc,p[1]*sc);ctx.lineTo(q[0]*sc,q[1]*sc);ctx.stroke();};
   ctx.globalAlpha=alpha;ctx.lineCap="round";ctx.lineJoin="round";
   const far="#5d7480",body="#203842",near="#0e2229";
   seg("shF","elF",30,far);seg("elF","wrF",26,far);
@@ -753,50 +785,52 @@ function drawAthlete(ctx,cam,P,sc,cfg,alpha,B){
   ctx.globalAlpha=1;
 }
 function drawOverlay(ctx,W,H,move,cfg,t,opt={}){
+  const sw=W/1440;
   const mv=MOVES[move],cam=makeCam(cfg,mv),sc=W/IMG_W,S=cfg.side==="near"?"N":"F";
   ctx.clearRect(0,0,W,H);
   // analysed-side marker rings (in colour)
   const P=mv.pose(t,cfg);
-  ctx.strokeStyle="#00c2b5";ctx.lineWidth=Math.max(1.5,4*sc);
-  for(const n of SIDE_PTS){const q=proj(cam,P[n+S]);if(!q)continue;ctx.beginPath();ctx.arc(q[0]*sc,q[1]*sc,Math.max(4.5,15*sc),0,7);ctx.stroke();}
+  ctx.strokeStyle="#00c2b5";ctx.lineWidth=Math.max(1.5,4*sw);
+  for(const n of SIDE_PTS){const q=proj(cam,P[n+S]);if(!q)continue;ctx.beginPath();ctx.arc(q[0]*sc,q[1]*sc,Math.max(4.5,15*sc*(+cfg.lens/(PITCH*cfg.dist))/290),0,7);ctx.stroke();}
   if(opt.strobe){
     const dt=1/cfg.fps,dur=mv.duration(cfg);ctx.fillStyle="rgba(0,194,181,.8)";let c=0;
     for(let tt=.0031;tt<dur&&c<900;tt+=dt,c++){const Q=mv.pose(tt,cfg);
-      for(const n of ["ankle","toe","knee","hip"]){const q=proj(cam,Q[n+S]);if(!q)continue;ctx.beginPath();ctx.arc(q[0]*sc,q[1]*sc,Math.max(1.6,5*sc),0,7);ctx.fill();}}
+      for(const n of ["ankle","toe","knee","hip"]){const q=proj(cam,Q[n+S]);if(!q)continue;ctx.beginPath();ctx.arc(q[0]*sc,q[1]*sc,Math.max(1.6,5*sw),0,7);ctx.fill();}}
   }
   if(opt.angle){
     const h=proj(cam,P["hip"+S]),k=proj(cam,P["knee"+S]),an=proj(cam,P["ankle"+S]);
     if(h&&k&&an){
       const a1=Math.atan2(h[1]-k[1],h[0]-k[0]),a2=Math.atan2(an[1]-k[1],an[0]-k[0]);
       let d=a2-a1;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;
-      const R=Math.max(16,60*sc);
-      ctx.strokeStyle="#f2b632";ctx.lineWidth=Math.max(2,6*sc);ctx.beginPath();ctx.arc(k[0]*sc,k[1]*sc,R,a1,a1+d,d<0);ctx.stroke();
+      const R=Math.max(16,60*sw);
+      ctx.strokeStyle="#f2b632";ctx.lineWidth=Math.max(2,6*sw);ctx.beginPath();ctx.arc(k[0]*sc,k[1]*sc,R,a1,a1+d,d<0);ctx.stroke();
       const ang=Math.abs(d)/DEG,mid=a1+d/2,lx=k[0]*sc-Math.cos(mid)*R*1.9,ly=k[1]*sc-Math.sin(mid)*R*1.9;
-      ctx.font=`700 ${Math.max(12,34*sc)}px "Atkinson Hyperlegible",sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";
+      ctx.font=`700 ${Math.max(12,34*sw)}px "Atkinson Hyperlegible",sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";
       const txt=`${ang.toFixed(0)}°`,tw=ctx.measureText(txt).width+14;
-      ctx.fillStyle="rgba(12,18,21,.8)";roundRect(ctx,lx-tw/2,ly-Math.max(10,24*sc),tw,Math.max(20,48*sc),8);ctx.fill();
+      ctx.fillStyle="rgba(12,18,21,.8)";roundRect(ctx,lx-tw/2,ly-Math.max(10,24*sw),tw,Math.max(20,48*sw),8);ctx.fill();
       ctx.fillStyle="#f2b632";ctx.fillText(txt,lx,ly+1);
       opt.out&&(opt.out.angle=ang);
     }
   }
   // rows not recorded at high frame rates
-  const rows=ROWS[cfg.fps];
-  if(rows<IMG_H){
-    const bar=(IMG_H-rows)/2*sc;ctx.fillStyle="rgba(5,8,10,.93)";ctx.fillRect(0,0,W,bar);ctx.fillRect(0,H-bar,W,bar);
-    ctx.strokeStyle="rgba(242,182,50,.9)";ctx.setLineDash([8,6]);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,bar);ctx.lineTo(W,bar);ctx.moveTo(0,H-bar);ctx.lineTo(W,H-bar);ctx.stroke();ctx.setLineDash([]);
-    if(bar>26){ctx.fillStyle="#f2b632";ctx.font=`700 ${Math.max(12,30*sc)}px "Atkinson Hyperlegible",sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";
-      ctx.fillText(`Not recorded at ${cfg.fps} fps`,W/2,H-bar/2);}
+  const {w:aw,h:ah}=aoi(cfg),rows=ah;
+  if(ah<IMG_H||aw<IMG_W){
+    const by=(IMG_H-ah)/2*sw,bx=(IMG_W-aw)/2*sw;ctx.fillStyle="rgba(5,8,10,.93)";
+    ctx.fillRect(0,0,W,by);ctx.fillRect(0,H-by,W,by);ctx.fillRect(0,by,bx,H-2*by);ctx.fillRect(W-bx,by,bx,H-2*by);
+    ctx.strokeStyle="rgba(242,182,50,.9)";ctx.setLineDash([8,6]);ctx.lineWidth=2;ctx.strokeRect(bx,by,W-2*bx,H-2*by);ctx.setLineDash([]);
+    if(by>26){ctx.fillStyle="#f2b632";ctx.font=`700 ${Math.max(12,30*sw)}px "Atkinson Hyperlegible",sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";
+      ctx.fillText(`Not recorded at ${cfg.fps} fps`,W/2,H-by/2);}
   }
   // HUD
-  const s=Math.max(.6,W/800),pad=12*s,top=(IMG_H-rows)/2*sc;
+  const s=Math.max(.6,W/800),pad=12*s+(IMG_W-aw)/2*sw,top=(IMG_H-rows)/2*sw;
   ctx.font=`700 ${13*s}px "Atkinson Hyperlegible",sans-serif`;ctx.textBaseline="middle";ctx.textAlign="left";
-  const label=`${cfg.fps} fps · ${cfg.lens} mm · 1/${Math.round(1/exposure(cfg))} s · f/${cfg.iris}`;const tw=ctx.measureText(label).width;
-  ctx.fillStyle="rgba(12,18,21,.72)";roundRect(ctx,pad,top+pad,tw+40*s,26*s,13*s);ctx.fill();
-  ctx.fillStyle="#ff3b30";ctx.beginPath();ctx.arc(pad+14*s,top+pad+13*s,5*s,0,7);ctx.fill();
-  ctx.fillStyle="#fff";ctx.fillText(label,pad+25*s,top+pad+13.5*s);
+  const label=`${cfg.fps} fps · ${cfg.lens} mm · ${+(exposure(cfg)*1000).toFixed(2)} ms · f/${cfg.iris}${cfg.gain==="on"?" · gain":""}`;const tw=ctx.measureText(label).width;
+  ctx.fillStyle="rgba(12,18,21,.72)";roundRect(ctx,pad,top+12*s,tw+40*s,26*s,13*s);ctx.fill();
+  ctx.fillStyle="#ff3b30";ctx.beginPath();ctx.arc(pad+14*s,top+12*s+13*s,5*s,0,7);ctx.fill();
+  ctx.fillStyle="#fff";ctx.fillText(label,pad+25*s,top+12*s+13.5*s);
   const fr=`Frame ${Math.floor(t*cfg.fps)}`;ctx.textAlign="right";const fw=ctx.measureText(fr).width;
-  ctx.fillStyle="rgba(12,18,21,.72)";roundRect(ctx,W-pad-fw-20*s,top+pad,fw+20*s,26*s,13*s);ctx.fill();
-  ctx.fillStyle="#fff";ctx.fillText(fr,W-pad-10*s,top+pad+13.5*s);
+  ctx.fillStyle="rgba(12,18,21,.72)";roundRect(ctx,W-pad-fw-20*s,top+12*s,fw+20*s,26*s,13*s);ctx.fill();
+  ctx.fillStyle="#fff";ctx.fillText(fr,W-pad-10*s,top+12*s+13.5*s);
 }
 
 /* ============================================================
@@ -816,7 +850,7 @@ function drawPlan(cv,move,cfg,t){
   ctx.strokeStyle="rgba(0,61,80,.06)";ctx.lineWidth=1;
   for(let x=Math.ceil(x0-8);x<=x1+8;x++){ctx.beginPath();ctx.moveTo(X(x),0);ctx.lineTo(X(x),H);ctx.stroke();}
   for(let z=Math.ceil(z0-8);z<=z1+8;z++){ctx.beginPath();ctx.moveTo(0,Z(z));ctx.lineTo(W,Z(z));ctx.stroke();}
-  const yaw=Math.atan2(cam.f[0],cam.f[2]),hf=Math.atan(cam.tH),Lr=60;
+  const yaw=Math.atan2(cam.f[0],cam.f[2]),hf=Math.atan(cam.aw*PITCH/2/+cfg.lens),Lr=60;
   ctx.fillStyle="rgba(0,113,188,.12)";ctx.strokeStyle="rgba(0,113,188,.45)";ctx.lineWidth=1.5;
   ctx.beginPath();ctx.moveTo(X(cx),Z(cz));for(const a of[yaw-hf,yaw+hf])ctx.lineTo(X(cx+Math.sin(a)*Lr),Z(cz+Math.cos(a)*Lr));ctx.closePath();ctx.fill();
   for(const a of[yaw-hf,yaw+hf]){ctx.beginPath();ctx.moveTo(X(cx),Z(cz));ctx.lineTo(X(cx+Math.sin(a)*Lr),Z(cz+Math.cos(a)*Lr));ctx.stroke();}
@@ -850,10 +884,17 @@ function arrowH(ctx,xa,xb,y,col){ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineW
    State and UI
    ============================================================ */
 const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-const state={move:"sprint",cfg:{sprint:{...MOVES.sprint.ideal},cmj:{...MOVES.cmj.ideal}},t:0,playing:!matchMedia("(prefers-reduced-motion: reduce)").matches,speed:.25,strobe:false,showAngle:true,an:null,tab:"explore"};
+/* a good set-up for the chosen camera: model presets plus the iris that gives the best brightness */
+function idealCfg(move){
+  const c={...MOVES[move].ideal,...CAMERAS[MODEL].ideal[move]};let best=null;
+  for(const n of [1.4,2.8,4,5.6,8]){const B=brightness({...c,iris:n});const d=Math.abs(Math.log(B));if(n!==1.4&&(!best||d<best.d))best={n,d};}
+  c.iris=best.n;return c;
+}
+applyModel(store.get("sesc02-camera","1.6mp") in CAMERAS?store.get("sesc02-camera","1.6mp"):"1.6mp");
+const state={move:"sprint",cfg:{sprint:idealCfg("sprint"),cmj:idealCfg("cmj")},t:0,playing:!matchMedia("(prefers-reduced-motion: reduce)").matches,speed:.25,strobe:false,showAngle:true,an:null,tab:"explore"};
 const $=s=>document.querySelector(s);
 const cfg=()=>state.cfg[state.move];
-const NUMKEYS={fps:parseInt,shutter:parseInt,iris:parseFloat};
+const NUMKEYS={fps:parseInt,exp:parseFloat,iris:parseFloat};
 
 function syncControls(){
   const c=cfg();
@@ -861,11 +902,14 @@ function syncControls(){
   $("#o-dist").textContent=`${c.dist.toFixed(1)} m`;
   $("#o-angle").textContent=c.angle===0?"0° (side-on)":`${Math.abs(c.angle)}°`;
   $("#o-height").textContent=`${c.height.toFixed(1)} m`;
+  $("#lensSeg").innerHTML=LENSES.map(l=>`<button role="radio" data-v="${l}">${l} mm<small>${lensWord(l)}</small></button>`).join("");
+  $("#fpsSeg").innerHTML=CAMERAS[MODEL].presets.map(p=>`<button role="radio" data-v="${p[0]}">${p[0]} fps<small>${p[1]} × ${p[2]}</small></button>`).join("");
   document.querySelectorAll(".seg").forEach(g=>{const k=g.dataset.key;g.querySelectorAll("button").forEach(b=>b.setAttribute("aria-checked",String(String(c[k])===b.dataset.v)));});
-  const vw=2*c.dist*SENSOR_W/2/+c.lens;
+  const a=aoi(c),vw=c.dist*a.w*PITCH/+c.lens;
   $("#n-lens").textContent=`${vw.toFixed(1)} m wide at the athlete`;
-  $("#n-fps").textContent=`${IMG_W} × ${ROWS[c.fps]} pixels`;
-  $("#resInfo").textContent=`${IMG_W} × ${ROWS[c.fps]} · ${c.fps} fps`;
+  $("#resInfo").textContent=`${a.w} × ${a.h} · ${c.fps} fps`;
+  $("#model").value=MODEL;
+  document.querySelectorAll(".screen").forEach(el=>el.style.aspectRatio=`${IMG_W}/${IMG_H}`);
 }
 function update(){syncControls();state.an=analyse(state.move,cfg());renderReport();}
 for(const id of["dist","angle","height"]) $("#"+id).addEventListener("input",e=>{cfg()[id]=parseFloat(e.target.value);update();});
@@ -905,13 +949,16 @@ speedGroup.addEventListener("keydown",radioKeys);
 $("#strobe").addEventListener("change",e=>state.strobe=e.target.checked);
 $("#showAngle").addEventListener("change",e=>state.showAngle=e.target.checked);
 
+const fpsMax=()=>{const P=CAMERAS[MODEL].presets;return P[P.length-1][0];};
 const MISTAKES={
-  sprint:[{angle:28},{dist:3,lens:"4"},{shutter:250},{scale:"near"},{height:2.1},{fps:500},{light:"dim",shutter:2000},{side:"far"},{light:"outdoor"}],
-  cmj:[{angle:-25},{dist:2.5,lens:"4"},{shutter:250},{scale:"far"},{height:2.0},{fps:300},{light:"dim"},{side:"far"},{dist:4,lens:"12"}]
+  sprint:[()=>({angle:28}),()=>({dist:3,lens:"4"}),()=>({exp:4}),()=>({scale:"near"}),()=>({height:2.1}),()=>({fps:fpsMax(),exp:.5}),()=>({light:"dim",exp:.25}),()=>({side:"far"}),()=>({light:"outdoor",iris:1.4})],
+  cmj:[()=>({angle:-25}),()=>({dist:2.5,lens:"4"}),()=>({exp:4}),()=>({scale:"far"}),()=>({height:2.0}),()=>({fps:fpsMax(),exp:.5}),()=>({light:"dim",exp:.25}),()=>({side:"far"}),()=>({dist:3.5,lens:"25"})]
 };
 let mistakeIdx=0;
-$("#ideal").addEventListener("click",()=>{state.cfg[state.move]={...MOVES[state.move].ideal};update();});
-$("#mistake").addEventListener("click",()=>{const L2=MISTAKES[state.move];state.cfg[state.move]={...MOVES[state.move].ideal,...L2[mistakeIdx%L2.length]};mistakeIdx++;update();});
+$("#ideal").addEventListener("click",()=>{state.cfg[state.move]=idealCfg(state.move);update();});
+$("#mistake").addEventListener("click",()=>{const L2=MISTAKES[state.move];state.cfg[state.move]={...idealCfg(state.move),...L2[mistakeIdx%L2.length]()};validExp(cfg());mistakeIdx++;update();});
+$("#model").innerHTML=Object.entries(CAMERAS).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join("");
+$("#model").addEventListener("change",e=>{applyModel(e.target.value);store.set("sesc02-camera",MODEL);state.cfg={sprint:idealCfg("sprint"),cmj:idealCfg("cmj")};update();renderChecklist();});
 
 const plan=$("#plan");let dragging=false;
 function planWorld(e){const r=plan.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;return[(x-planXf.ox)/planXf.s,(y-planXf.oz)/planXf.s,x,y];}
@@ -947,14 +994,14 @@ function renderReport(){
   }
   html+=`<div class="num ${cls(r.blurCm,2.5,5)}"><div class="k">Marker blur</div><div class="n">${fmt(r.blurCm,1)} cm</div><div class="d">Shutter open for 1/${Math.round(1/r.E)} s</div></div>`;
   $("#numbers").innerHTML=html;
-  // shutter speeds slower than the frame interval are not possible
-  document.querySelectorAll('[data-key="shutter"] button').forEach(b=>{b.disabled=+b.dataset.v<c.fps;b.title=b.disabled?`Not possible at ${c.fps} fps`:"";});
+  // exposures longer than the time between frames are not possible
+  document.querySelectorAll('[data-key="exp"] button').forEach(b=>{b.disabled=+b.dataset.v/1000>1/c.fps;b.title=b.disabled?`Not possible at ${c.fps} fps`:"";});
 }
 $("#checks").addEventListener("click",e=>{const b=e.target.closest("button[data-id]");if(!b)return;const id=b.dataset.id;
   if(openChecks.has(id))openChecks.delete(id);else openChecks.add(id);
   const open=openChecks.has(id);b.setAttribute("aria-expanded",String(open));b.nextElementSibling.hidden=!open;});
-// keep shutter valid when frame rate goes up
-function validShutter(c){if(c.shutter<c.fps){const opts=[250,500,1000,2000,4000];c.shutter=opts.find(v=>v>=c.fps);}}
+// exposure can't be longer than the time between frames
+function validExp(c){if(c.exp/1000>1/c.fps){c.exp=[4,2,1,.5,.25].find(v=>v/1000<=1/c.fps);}}
 
 /* ============================================================
    Animation loop
@@ -987,60 +1034,40 @@ function frame(ts){
 /* ============================================================
    Practical checklist
    ============================================================ */
-const CHECK={
-  sprint:{
-    card:[["Distance","6 to 13 m from the lane (about 8 m with an 8 mm lens)","dist"],["Angle","Side-on: pointing straight across the lane","angle"],["Height","Lens at hip height, camera level","height"],["Lens","Not very wide (avoid 4 mm). About 4 to 8 m of lane in view","lens"],["Frame rate","220 fps (full picture)","fps"],["Shutter","1/1000 s, then set brightness with the iris","shutter"],["Scale","1 m scale along the middle of the lane","scale"]],
+function checkData(move){
+  const g=idealCfg(move),a=aoi(g),sp=move==="sprint",cam=CAMERAS[MODEL].name;
+  const fpsTxt=`${g.fps} fps (${a.w} × ${a.h})`;
+  const dist=sp?"6 to 13 m from the lane":"4 to 8 m from the athlete";
+  return{
+    card:[["Camera",cam,"fps"],["Distance",`${dist} (about ${g.dist} m with a ${g.lens} mm lens)`,"dist"],["Angle",sp?"Side-on: pointing straight across the lane":"Side-on: pointing straight at the athlete's side","angle"],
+      ["Height",sp?"Lens at hip height, camera level":"Lens at about waist height, camera level","height"],["Lens",`${g.lens} mm, or whatever fills the picture without a very wide lens`,"lens"],
+      ["Frame rate",fpsTxt,"fps"],["Exposure","1 ms (1/1000 s), then set brightness with the iris","shutter"],["Scale",sp?"1 m scale along the middle of the lane":"1 m scale on the floor where the feet are","scale"]],
     stages:[
       ["Set up the camera",[
-        ["High-speed camera on a tripod, plugged into the capture laptop","The camera records straight to the laptop. The tripod keeps it perfectly still."],
-        ["Camera side-on to the lane","Look at the live picture. The lane lines should run straight across the screen, not slope."],
-        ["6 to 13 m from the lane, with a lens that isn't very wide","Further back keeps the picture flat. Very wide lenses (e.g. 4 mm) bend the picture."],
-        ["Lens at hip height and the camera level","A high or low camera has to tilt, which stretches the picture."],
-        ["About 4 to 8 m of the lane in view, with the part you want in the middle","Leave room either side. The edges of the picture are the least accurate."]
+        ["Camera on a tripod, plugged into the capture laptop, and the Quintic Image Recording Platform open","The camera records straight to the laptop. The tripod keeps it perfectly still."],
+        [sp?"Camera side-on to the lane":"Camera side-on to the athlete",sp?"Look at the live view. The lane lines should run straight across the screen, not slope.":"The camera should point straight at the athlete's side, not from the front or back."],
+        [`${dist}, with a lens that isn't very wide (about ${g.dist} m with a ${g.lens} mm lens)`,"Further back keeps the picture flat. Very wide lenses bend the picture."],
+        [sp?"Lens at hip height and the camera level":"Lens at about waist height and the camera level","A high or low camera has to tilt, which stretches the picture."],
+        [sp?"About 4 to 8 m of the lane in view, with the part you want in the middle":"Space above the head for the arm swing and jump, and feet in shot",sp?"Leave room either side. The edges of the picture are the least accurate.":"Ask the athlete to reach up tall on their toes, and check their hands stay in the picture."]
       ]],
-      ["Camera settings, markers and scale",[
-        ["Frame rate set to 220 fps. Write it down","220 fps records the full picture. Higher rates cut off the top and bottom, so check the athlete still fits if you go higher."],
-        ["Shutter speed set to 1/1000 s","A fast shutter freezes the markers. Slower than about 1/500 s and they smear."],
-        ["Brightness set with the iris ring on the lens","Markers should be bright white dots: not grey (too dark) and not merged blobs (too bright). Add light if the iris is fully open and it's still dark."],
-        ["Focus ring set on the athlete's line, then left alone","Hold the scale in the middle of the lane and turn the focus ring until its edges are sharp."],
+      ["Capture settings, markers and scale",[
+        [`Frame rate ${g.fps} fps on the right-hand panel, with image size ${a.w} × ${a.h} in Camera Settings. Write the frame rate down`,`A smaller image size (area of interest) allows a higher frame rate, but crops the picture. Check the ${sp?"whole athlete":"whole jump"} still fits if you change it.`],
+        ["Exposure time 1 ms in Camera Settings","A short exposure freezes the markers. Longer than about 2 ms and they smear."],
+        ["Brightness set with the iris ring on the lens (gain boost only if needed)","Markers should be bright white dots: not grey (too dark) and not merged blobs (too bright). Add light before turning on gain boost, as gain makes the picture grainy."],
+        [sp?"Focus ring set on the athlete's line, then left alone":"Focus ring set where the athlete stands, then left alone",sp?"Hold the scale in the middle of the lane and turn the focus ring until its edges are sharp.":"Stand the scale up where the athlete will jump and turn the focus ring until its edges are sharp."],
+        ["Pre-trigger and post-trigger set (e.g. 2 s before and 2 s after you press Record)",sp?"Press Record as the athlete passes. The buffer keeps the frames before you pressed it, so the whole run through the picture is caught.":"Press Record just after landing. The buffer keeps the frames before you pressed it, so the whole jump is caught."],
         ["Markers on the side facing the camera: shoulder, hip, knee, ankle, toe","Two markers per segment are needed to measure its angle."],
-        ["Record a clip of the 1 m scale held level along the middle of the lane","It must be exactly where the athlete runs. Nearer the camera makes everything look bigger."]
+        [sp?"Record a clip of the 1 m scale held level along the middle of the lane":"Record a clip of the 1 m scale on the floor where the feet are, pointing front to back","It must be in the same line as the athlete. Nearer the camera makes everything look bigger."]
       ]],
       ["Record and check",[
-        ["Athlete is already at speed before entering the shot, and keeps going after","Starting or stopping in shot changes the speed you measure."],
+        [sp?"Athlete is already at speed before entering the shot, and keeps going after":"Athlete stands still for 2 seconds, jumps, lands and stands still again",sp?"Starting or stopping in shot changes the speed you measure.":"The still parts give you a start and end point to measure from."],
         ["Nobody has touched the camera, tripod or lens rings since recording the scale","If anything moves, record the scale again."],
-        ["Play the trial back and pause: are the markers sharp?","Smeared markers mean a faster shutter. Grey markers mean more light or a more open iris."],
-        ["Are all markers visible for at least one full stride?","You need one touchdown, toe-off and the next touchdown on the near leg."],
-        ["Export the trial as an MP4, named with the trial and frame rate (e.g. Sprint_T1_220fps)","The Kinematic Analysis tool needs the frame rate you recorded at, which may not be the rate the MP4 plays at."]
+        ["Play the trial back, step frame by frame: are the markers sharp?","Smeared markers mean a shorter exposure. Grey markers mean more light or a more open iris."],
+        [sp?"Are all markers visible for at least one full stride?":"Head, hands and feet stay in shot for the whole jump",sp?"You need one touchdown, toe-off and the next touchdown on the near leg.":"If anything leaves the shot, move the camera back or use a frame rate with a taller image."],
+        ["Trim the trial, press Live to save it, then get it as an MP4 named with the trial and frame rate (e.g. "+(sp?"Sprint":"CMJ")+`_T1_${g.fps}fps)`,"The Kinematic Analysis tool needs the frame rate you recorded at, which may not be the rate the video plays at."]
       ]]
-    ]},
-  cmj:{
-    card:[["Distance","4 to 8 m from the athlete (about 5 m with a 6 mm lens)","dist"],["Angle","Side-on: pointing straight at the athlete's side","angle"],["Height","Lens at about waist height, camera level","height"],["Lens","Not very wide (avoid 4 mm). Whole jump in shot with space above","lens"],["Frame rate","220 fps (full picture)","fps"],["Shutter","1/1000 s, then set brightness with the iris","shutter"],["Scale","1 m scale on the floor where the feet are","scale"]],
-    stages:[
-      ["Set up the camera",[
-        ["High-speed camera on a tripod, plugged into the capture laptop","The camera records straight to the laptop. The tripod keeps it perfectly still."],
-        ["Camera side-on to the athlete","The camera should point straight at the athlete's side, not from the front or back."],
-        ["4 to 8 m away, with a lens that isn't very wide","Further back keeps the picture flat. Very wide lenses (e.g. 4 mm) bend the picture."],
-        ["Lens at about waist height and the camera level","A tilted camera stretches the top or bottom of the picture."],
-        ["Space above the head for the arm swing and jump, and feet in shot","Ask the athlete to reach up tall on their toes, and check their hands stay in the picture."]
-      ]],
-      ["Camera settings, markers and scale",[
-        ["Frame rate set to 220 fps. Write it down","At 300 fps and above the camera records a shorter picture, and the head and hands leave the top at the peak of the jump."],
-        ["Shutter speed set to 1/1000 s","A fast shutter freezes the markers. Slower than about 1/500 s and they smear."],
-        ["Brightness set with the iris ring on the lens","Markers should be bright white dots: not grey (too dark) and not merged blobs (too bright). Add light if the iris is fully open and it's still dark."],
-        ["Focus ring set where the athlete stands, then left alone","Stand the scale up where the athlete will jump and turn the focus ring until its edges are sharp."],
-        ["Markers on the side facing the camera: shoulder, hip, knee, ankle, toe","Two markers per segment are needed to measure its angle."],
-        ["Record a clip of the 1 m scale on the floor where the feet are, pointing front to back","It must be in the same line as the athlete. Nearer the camera makes everything look bigger."]
-      ]],
-      ["Record and check",[
-        ["Athlete stands still for 2 seconds, jumps, lands and stands still again","The still parts give you a start and end point to measure from."],
-        ["Nobody has touched the camera, tripod or lens rings since recording the scale","If anything moves, record the scale again."],
-        ["Play the trial back and pause: are the markers sharp?","Smeared markers mean a faster shutter. Grey markers mean more light or a more open iris."],
-        ["Head, hands and feet stay in shot for the whole jump","If anything leaves the shot, move the camera back or check the frame rate is 220 fps."],
-        ["Export the trial as an MP4, named with the trial and frame rate (e.g. CMJ_T1_220fps)","The Kinematic Analysis tool needs the frame rate you recorded at, which may not be the rate the MP4 plays at."]
-      ]]
-    ]}
-};
+    ]};
+}
 const ICONS={
   dist:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg>',
   angle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20h16M4 20V4"/><path d="M4 14a6 6 0 0 1 6 6"/></svg>',
@@ -1051,46 +1078,46 @@ const ICONS={
   scale:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="9" width="20" height="6" rx="1"/><path d="M6 9v3M10 9v3M14 9v3M18 9v3"/></svg>'
 };
 function renderChecklist(){
-  const move=state.move,d=CHECK[move],key="sesc02-check2-"+move,ticks=store.get(key,{});
+  const move=state.move,d=checkData(move),key="sesc02-check3-"+move,ticks=store.get(key,{});
   let total=0,done=0;d.stages.forEach((s,i)=>s[1].forEach((it,j)=>{total++;if(ticks[i+"-"+j])done++;}));
   $("#stages").innerHTML=`<div class="stage" style="padding-bottom:6px"><h2 style="font-size:28px">Your ${move==="sprint"?"sprint":"jump"} filming checklist</h2><p class="hint" style="margin-top:4px">Work through it with your partner. Tick each step once it's done. Each step says why it matters.</p><div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${done}" aria-label="Checklist progress"><span style="width:${done/total*100}%"></span></div><p class="hint">${done} of ${total} done</p></div>`+
     d.stages.map((s,i)=>{const n=s[1].filter((it,j)=>ticks[i+"-"+j]).length;
       return`<div class="stage ${n===s[1].length?"done":""}"><div class="stage-h"><span class="stage-num">${i+1}</span><h2>${s[0]}</h2><span class="count">${n}/${s[1].length}</span></div><ul class="items">${
       s[1].map((it,j)=>{const id=`ck-${i}-${j}`,on=!!ticks[i+"-"+j];return`<li class="item ${on?"on":""}"><label for="${id}"><input type="checkbox" id="${id}" data-k="${i}-${j}" ${on?"checked":""}><span class="txt"><b>${it[0]}</b><span class="why">${it[1]}</span></span></label></li>`}).join("")}</ul></div>`}).join("");
-  $("#setcard").innerHTML=`<h2>Set-up card</h2><p class="hint">The numbers to aim for. Keep this open while you set up.</p><ul class="spec">${d.card.map(c=>`<li><span class="ico" aria-hidden="true">${ICONS[c[2]]}</span><span><span class="lab">${c[0]}</span><br><span class="val">${c[1]}</span></span></li>`).join("")}</ul>${done===total?`<div class="ready-banner"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>All done. Your clip is ready for the Kinematic Analysis tool.</div>`:""}<div class="preset-row"><button class="btn btn-ghost" id="resetTicks">Clear my ticks</button><button class="btn btn-ghost" id="toSim">Try this set-up in the simulator</button></div>`;
+  $("#setcard").innerHTML=`<h2>Set-up card</h2><p class="hint">The numbers to aim for with your camera. Keep this open while you set up. Wrong camera? Change it at the top of Try set-ups.</p><ul class="spec">${d.card.map(c=>`<li><span class="ico" aria-hidden="true">${ICONS[c[2]]}</span><span><span class="lab">${c[0]}</span><br><span class="val">${c[1]}</span></span></li>`).join("")}</ul>${done===total?`<div class="ready-banner"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>All done. Your clip is ready for the Kinematic Analysis tool.</div>`:""}<div class="preset-row"><button class="btn btn-ghost" id="resetTicks">Clear my ticks</button><button class="btn btn-ghost" id="toSim">Try this set-up in the simulator</button></div>`;
 }
-document.addEventListener("change",e=>{if(e.target.matches("#stages input[type=checkbox]")){const key="sesc02-check2-"+state.move,t=store.get(key,{});t[e.target.dataset.k]=e.target.checked;store.set(key,t);
+document.addEventListener("change",e=>{if(e.target.matches("#stages input[type=checkbox]")){const key="sesc02-check3-"+state.move,t=store.get(key,{});t[e.target.dataset.k]=e.target.checked;store.set(key,t);
   const y=window.scrollY,k=e.target.dataset.k;renderChecklist();window.scrollTo(0,y);const el=document.querySelector(`[data-k="${k}"]`);el&&el.focus();}});
 document.addEventListener("click",e=>{
-  if(e.target.closest("#resetTicks")){store.set("sesc02-check2-"+state.move,{});renderChecklist();}
-  if(e.target.closest("#toSim")){state.cfg[state.move]={...MOVES[state.move].ideal};update();showTab("tab-explore");$("#tab-explore").focus();}
+  if(e.target.closest("#resetTicks")){store.set("sesc02-check3-"+state.move,{});renderChecklist();}
+  if(e.target.closest("#toSim")){state.cfg[state.move]=idealCfg(state.move);update();showTab("tab-explore");$("#tab-explore").focus();}
 });
 
 /* ============================================================
    Spot the mistake
    ============================================================ */
-const OPTS=["The camera isn't side-on","The camera is too close, with a very wide lens","The shutter speed is too slow","The scale is in the wrong place","The camera is too high","Part of the movement is cut off","The picture is too dark or too bright","Nothing. This set-up is good"];
+const OPTS=["The camera isn't side-on","The camera is too close, with a very wide lens","The exposure time is too long","The scale is in the wrong place","The camera is too high","Part of the movement is cut off","The picture is too dark or too bright","Nothing. This set-up is good"];
 const QUIZ=[
-  {move:"sprint",d:{angle:30},a:0,why:"The camera is filming the lane from an angle, so the lane lines slope across the picture. Distances along the lane look shorter than they are, and knee angles are wrong.",fix:"Move the tripod until the lane lines run straight across the screen."},
-  {move:"cmj",d:{dist:2.5,lens:"4"},a:1,why:"Up close with the 4 mm lens, the picture bends (look at the floor lines curving) and the near leg looks bigger than the far leg.",fix:"Use a 6 or 8 mm lens and move back to about 5 m."},
-  {move:"sprint",d:{shutter:250},a:2,why:"At 1/250 s each frame is exposed for 4 ms. The foot travels several centimetres in that time, so markers smear into streaks.",fix:"Use 1/1000 s, then open the iris or add light to keep the picture bright."},
-  {move:"sprint",d:{scale:"near"},a:3,why:"The black and white scale is nearer the camera than the athlete, so it looks too long. The software then thinks the athlete covered less ground, so speed comes out too low.",fix:"Hold the scale along the middle of the lane, exactly where the athlete runs."},
-  {move:"cmj",d:{height:2.2,dist:4.5},a:4,why:"The camera is high and tilted down at the athlete, which stretches the bottom of the picture and changes joint angles.",fix:"Lower the tripod so the lens is at about waist height, and keep it level."},
-  {move:"cmj",d:{fps:500,shutter:1000},a:5,why:"At 500 fps the camera only records 462 of its 1080 rows, so the picture is a thin strip. The head, hands and feet are cut off.",fix:"Use 220 fps, which records the full picture."},
-  {move:"sprint",d:{light:"dim",shutter:2000},a:6,why:"A 1/2000 s shutter in a dim hall lets in very little light. The picture is dark and grainy, so markers are hard to see and track.",fix:"Open the iris (lower f-number), add light, and use 1/1000 s."},
-  {move:"sprint",d:{},a:7,why:"Side-on, 8 m away with an 8 mm lens, lens at hip height, 220 fps, 1/1000 s, good brightness, and the scale in the athlete's line. This is what you're aiming for.",fix:""},
-  {move:"cmj",d:{scale:"far"},a:3,why:"The scale is behind the athlete's line, so it looks too short. Every distance, including jump height, comes out too big.",fix:"Put the scale on the floor where the feet are."},
-  {move:"sprint",d:{light:"outdoor",iris:1.4},a:6,why:"Outdoors with the iris wide open, far too much light gets in. The picture is washed out and markers that are close together merge.",fix:"Close the iris (try f/8) until the markers are bright dots, not blobs."}
+  {move:"sprint",d:()=>({angle:30}),a:0,why:()=>"The camera is filming the lane from an angle, so the lane lines slope across the picture. Distances along the lane look shorter than they are, and knee angles are wrong.",fix:"Move the tripod until the lane lines run straight across the screen."},
+  {move:"cmj",d:()=>({dist:2.5,lens:"4"}),a:1,why:()=>"Up close with a very wide lens, the picture bends (look at the floor lines curving) and the near leg looks bigger than the far leg.",fix:"Use a longer lens and move back to about 5 m."},
+  {move:"sprint",d:()=>({exp:4}),a:2,why:()=>"With a 4 ms exposure, the foot travels several centimetres while each frame is being exposed, so markers smear into streaks.",fix:"Set the exposure time to 1 ms, then open the iris or add light to keep the picture bright."},
+  {move:"sprint",d:()=>({scale:"near"}),a:3,why:()=>"The black and white scale is nearer the camera than the athlete, so it looks too long. The software then thinks the athlete covered less ground, so speed comes out too low.",fix:"Hold the scale along the middle of the lane, exactly where the athlete runs."},
+  {move:"cmj",d:()=>({height:2.2}),a:4,why:()=>"The camera is high and tilted down at the athlete, which stretches the bottom of the picture and changes joint angles.",fix:"Lower the tripod so the lens is at about waist height, and keep it level."},
+  {move:"cmj",d:()=>({fps:fpsMax(),exp:.5}),a:5,why:c=>{const a=aoi(c);return`At ${c.fps} fps the camera only records a ${a.w} × ${a.h} pixel image (area of interest), so the picture is a thin strip. The head, hands or feet are cut off.`;},fix:"Use a frame rate that records a taller image."},
+  {move:"sprint",d:()=>({light:"dim",exp:.25}),a:6,why:()=>"A 0.25 ms exposure in a dim hall lets in very little light. The picture is dark and grainy, so markers are hard to see and track.",fix:"Open the iris (lower f-number), add light, and use 1 ms."},
+  {move:"sprint",d:()=>({}),a:7,why:c=>`Side-on, ${c.dist} m away with a ${c.lens} mm lens, lens at hip height, ${c.fps} fps, 1 ms exposure, good brightness, and the scale in the athlete's line. This is what you're aiming for${c.fps<200?". It's the best this camera can do for sprinting, even though its frame rate is lower than ideal":""}.`,fix:""},
+  {move:"cmj",d:()=>({scale:"far"}),a:3,why:()=>"The scale is behind the athlete's line, so it looks too short. Every distance, including jump height, comes out too big.",fix:"Put the scale on the floor where the feet are."},
+  {move:"sprint",d:()=>({light:"outdoor",iris:1.4}),a:6,why:()=>"Outdoors with the iris wide open, far too much light gets in. The picture is washed out and markers that are close together merge.",fix:"Close the iris (try f/8) until the markers are bright dots, not blobs."}
 ];
 const quiz={i:0,res:[],cur:null,t:0,answered:false};
 const dotsHTML=()=>QUIZ.map((_,i)=>`<i class="${i===quiz.i?"cur":quiz.res[i]===true?"ok":quiz.res[i]===false?"no":""}"></i>`).join("");
 function renderQuiz(){
-  const q=QUIZ[quiz.i];quiz.cur={...q,cfg:{...MOVES[q.move].ideal,...q.d}};quiz.answered=false;
+  const q=QUIZ[quiz.i];quiz.cur={...q,cfg:{...idealCfg(q.move),...q.d()}};validExp(quiz.cur.cfg);quiz.answered=false;
   $("#qcount").textContent=`Question ${quiz.i+1} of ${QUIZ.length}`;$("#qdots").innerHTML=dotsHTML();
   $("#qtitle").textContent=q.move==="sprint"?"A sprint set-up":"A jump set-up";
   $("#qtext").textContent="Watch the camera view. What's the main problem with this set-up?";
   const c=quiz.cur.cfg,lt={dim:"Dim hall",bright:"Bright lab",outdoor:"Outdoors"}[c.light];
-  $("#qtags").innerHTML=`<span>${c.dist} m away</span><span>${c.lens} mm lens</span><span>${c.fps} fps</span><span>1/${c.shutter} s</span><span>f/${c.iris}</span><span>${lt}</span>`;
+  $("#qtags").innerHTML=`<span>${c.dist} m away</span><span>${c.lens} mm lens</span><span>${c.fps} fps</span><span>${c.exp} ms exposure</span><span>f/${c.iris}</span>${c.gain==="on"?"<span>Gain boost</span>":""}<span>${lt}</span>`;
   $("#qopts").innerHTML=OPTS.map((o,i)=>`<button class="opt" data-i="${i}">${o}</button>`).join("");
   $("#qfb").hidden=true;$("#qact").innerHTML="";
 }
@@ -1099,7 +1126,7 @@ $("#qopts").addEventListener("click",e=>{
   const q=QUIZ[quiz.i],ok=+b.dataset.i===q.a;quiz.res[quiz.i]=ok;
   document.querySelectorAll(".opt").forEach(x=>{x.disabled=true;if(+x.dataset.i===q.a)x.classList.add("right");});
   if(!ok)b.classList.add("wrong");
-  $("#qfb").hidden=false;$("#qfb").innerHTML=`<p><b>${ok?"Spot on.":"Not quite."}</b> ${q.why}</p>${q.fix?`<p><b>Fix:</b> ${q.fix}</p>`:""}`;
+  $("#qfb").hidden=false;$("#qfb").innerHTML=`<p><b>${ok?"Spot on.":"Not quite."}</b> ${q.why(quiz.cur.cfg)}</p>${q.fix?`<p><b>Fix:</b> ${q.fix}</p>`:""}`;
   const last=quiz.i===QUIZ.length-1,score=quiz.res.filter(Boolean).length;
   $("#qact").innerHTML=`${last?`<p style="width:100%;font-weight:700">You got ${score} out of ${QUIZ.length}.</p><button class="btn btn-primary" id="qagain">Start again</button>`:`<button class="btn btn-primary" id="qnext">Next question</button>`}<button class="btn btn-ghost" id="qopen">Open this set-up in the simulator</button>`;
   $("#qdots").innerHTML=dotsHTML();($("#qnext")||$("#qagain")).focus();
@@ -1115,8 +1142,8 @@ $("#qact").addEventListener("click",e=>{
 /* ============================================================
    Start
    ============================================================ */
-// raising the frame rate above the shutter speed bumps the shutter to the slowest speed that's possible
-document.querySelector('[data-key="fps"]').addEventListener("click",()=>{validShutter(cfg());update();});
+// raising the frame rate shortens the exposure if it no longer fits between frames
+document.querySelector('[data-key="fps"]').addEventListener("click",()=>{validExp(cfg());update();});
 setPlaying(state.playing);
 update();
 const h=location.hash.replace("#","");if(["check","quiz","explore"].includes(h))showTab("tab-"+h);
