@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Presenter view · SESD55</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #111314; --panel: #1c1f21; --line: #33393d; --cyan: #38c8f0; --yellow: #f0c85a; --muted: #a7b1b7; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: #eef2f4; font-family: "Open Sans", Arial, sans-serif; height: 100vh; display: grid; grid-template-rows: auto 1fr; }
+  header { display: flex; align-items: center; gap: 18px; padding: 10px 18px; border-bottom: 1px solid var(--line); background: #0b0c0d; }
+  header .clock { font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  header .elapsed { font-size: 28px; font-weight: 800; color: var(--cyan); font-variant-numeric: tabular-nums; }
+  header .lbl { font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); display: block; font-weight: 700; }
+  header button, .nav button { font: 700 15px "Open Sans", Arial, sans-serif; color: #fff; background: #2a3034; border: 1px solid #454c51; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+  header button:hover, .nav button:hover { border-color: var(--cyan); }
+  .status { margin-left: auto; font-size: 14px; color: var(--muted); }
+  main { display: grid; grid-template-columns: minmax(420px, 44%) 1fr; gap: 16px; padding: 16px; min-height: 0; }
+  .left { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+  .cur { position: relative; aspect-ratio: 16/9; background: #191919; border: 2px solid var(--cyan); border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; text-align: center; }
+  .cur img { width: 100%; height: 100%; object-fit: cover; }
+  .cur .ttl { font-size: 26px; font-weight: 800; padding: 20px; }
+  .cur .badge { position: absolute; left: 10px; top: 10px; background: #3b2f12; color: var(--yellow); font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 999px; text-transform: uppercase; }
+  .nextbox { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+  .nextbox .lbl { font-size: 12px; color: var(--muted); text-transform: uppercase; font-weight: 700; letter-spacing: .6px; }
+  .nextbox .t { font-size: 19px; font-weight: 700; margin-top: 2px; }
+  .nav { display: flex; gap: 10px; align-items: center; }
+  .nav .big { font-size: 20px; padding: 12px 26px; }
+  .count { font-size: 22px; font-weight: 800; }
+  .steps { color: var(--yellow); font-weight: 700; font-size: 16px; }
+  .notes { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 18px 22px; overflow: auto; font-size: 21px; line-height: 1.55; min-height: 0; }
+  .notes h2 { margin: 0 0 4px; font-size: 24px; }
+  .notes .meta { color: var(--muted); font-size: 15px; margin-bottom: 12px; }
+  .notes p { margin: 0 0 12px; }
+  .notes strong { color: var(--cyan); }
+  .notes .tiny { font-size: 15px; color: var(--muted); }
+  .warn { color: var(--yellow); font-size: 14px; }
+</style>
+</head>
+<body>
+<header>
+  <div><span class="lbl">Clock</span><span class="clock" id="clock">--:--</span></div>
+  <div><span class="lbl">Elapsed</span><span class="elapsed" id="elapsed">0:00</span></div>
+  <button type="button" id="resetT">Reset timer</button>
+  <button type="button" id="black">Black screen</button>
+  <span class="status" id="status">Connecting to the slides…</span>
+</header>
+<main>
+  <div class="left">
+    <div class="cur" id="cur"></div>
+    <div class="nav"><button type="button" class="big" id="prev">‹ Back</button><button type="button" class="big" id="next">Next ›</button><span class="count" id="count"></span><span class="steps" id="steps"></span></div>
+    <div class="nextbox"><div class="lbl">Up next</div><div class="t" id="nextT">–</div></div>
+    <p class="warn">Keep this window on your laptop and the slides window on the projector. Keys here (→ ← Space, PgUp/PgDn) control the slides.</p>
+  </div>
+  <section class="notes" id="notes" aria-live="polite"></section>
+</main>
+<script>
+(function () {
+  'use strict';
+  var chan = 'BroadcastChannel' in window ? new BroadcastChannel('sesd55-deck') : null;
+  var slides = [], state = { i: 0, steps: 0, shown: 0 }, t0 = Date.now(), connected = false;
+  function $(id) { return document.getElementById(id); }
+  function send(cmd, i) { if (chan) chan.postMessage({ t: 'cmd', cmd: cmd, i: i }); }
+  fetch('index.html').then(function (r) { return r.text(); }).then(function (html) {
+    var doc = new DOMParser().parseFromString(html, 'text/html');
+    slides = Array.prototype.map.call(doc.querySelectorAll('.slide'), function (s, k) {
+      var img = s.querySelector('img.bg'), notes = s.querySelector('aside.notes');
+      return { n: k + 1, title: s.dataset.title || ('Slide ' + (k + 1)), time: s.dataset.time, img: img ? img.getAttribute('data-src') : null, added: s.classList.contains('added'), notes: notes ? notes.innerHTML : '<p>No notes.</p>' };
+    });
+    var h = parseInt(location.hash.slice(1), 10); if (h) state.i = h - 1;
+    render();
+    if (chan) chan.postMessage({ t: 'hello' });
+  });
+  function render() {
+    var s = slides[state.i]; if (!s) return;
+    var cur = $('cur');
+    cur.innerHTML = (s.img ? '<img alt="" src="' + s.img + '">' : '<div class="ttl">' + s.title + '<div style="font-size:16px;color:#a7b1b7;font-weight:600;margin-top:8px">Interactive slide: see the projector</div></div>') + (s.added ? '<span class="badge">new slide</span>' : '');
+    $('count').textContent = s.n + ' / ' + slides.length;
+    $('steps').textContent = state.steps ? (state.steps - state.shown) + ' reveal(s) left' : '';
+    var nx = slides[state.i + 1];
+    $('nextT').textContent = nx ? nx.n + '. ' + nx.title : 'End of deck';
+    $('notes').innerHTML = '<h2>' + s.n + '. ' + s.title + '</h2><div class="meta">' + (s.time && s.time !== '0' ? 'Suggested time: about ' + s.time + ' min' : '') + '</div>' + s.notes;
+  }
+  if (chan) chan.onmessage = function (ev) {
+    var m = ev.data || {};
+    if (m.t === 'state') { state = m; connected = true; $('status').textContent = 'Connected to the slides'; render(); }
+  };
+  setTimeout(function () { if (!connected) $('status').textContent = 'Not connected: open the slides in this browser, then press S there.'; }, 2500);
+  $('next').addEventListener('click', function () { send('next'); });
+  $('prev').addEventListener('click', function () { send('prev'); });
+  $('black').addEventListener('click', function () { send('black'); });
+  $('resetT').addEventListener('click', function () { t0 = Date.now(); tick(); });
+  document.addEventListener('keydown', function (e) {
+    if (['ArrowRight', 'ArrowDown', ' ', 'PageDown', 'n'].indexOf(e.key) > -1) { e.preventDefault(); send('next'); }
+    if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace', 'p'].indexOf(e.key) > -1) { e.preventDefault(); send('prev'); }
+    if (e.key === 'b' || e.key === '.') send('black');
+  });
+  function tick() {
+    var d = new Date(); $('clock').textContent = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    var s = Math.floor((Date.now() - t0) / 1000); $('elapsed').textContent = Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2);
+  }
+  setInterval(tick, 1000); tick();
+})();
+</script>
+</body>
+</html>
