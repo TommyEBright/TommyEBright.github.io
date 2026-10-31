@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2D Camera Set-up · SESC02</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#10262e; --muted:#4d6670; --navy:#003d50; --navy-2:#002c3a; --teal:#00857e; --blue:#0071bc; --plum:#8b3556;
+  --paper:#f4f8fa; --card:#ffffff; --line:#d6e2e7; --soft:#eaf3f5; --court:#f2b632;
+  --good:#00796f; --warn:#a96400; --bad:#b42318;
+  --good-bg:#e3f4f1; --warn-bg:#fff3dc; --bad-bg:#fde8e6;
+  --body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --display:"Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:var(--body);font-size:16px;line-height:1.5;color:var(--ink);background:var(--paper)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:6px}
+h1,h2,h3{font-family:var(--display);font-weight:700;letter-spacing:.01em;line-height:1.05;margin:0;color:var(--navy)}
+p{margin:0}
+
+/* ---------- Top bar ---------- */
+.top{background:var(--navy);color:#fff;border-bottom:5px solid var(--teal)}
+.top-inner{max-width:1280px;margin:0 auto;padding:18px 22px 0;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 28px}
+.title-block{flex:1 1 320px;padding-bottom:16px}
+.title-block h1{color:#fff;font-size:clamp(30px,4vw,44px)}
+.title-block p{color:#cfe5ea;margin-top:4px;max-width:62ch}
+.move-switch{display:flex;background:var(--navy-2);border-radius:999px;padding:4px;margin-bottom:16px}
+.move-switch button{border:0;background:transparent;color:#cfe5ea;padding:9px 18px;border-radius:999px;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:8px;min-height:44px}
+.move-switch button[aria-checked="true"]{background:#fff;color:var(--navy)}
+.move-switch svg{width:22px;height:22px}
+.tabs{max-width:1280px;margin:0 auto;padding:0 22px;display:flex;gap:6px;overflow-x:auto}
+.tabs button{border:0;background:rgba(255,255,255,.08);color:#e3f0f3;padding:12px 18px;border-radius:12px 12px 0 0;cursor:pointer;font-weight:700;white-space:nowrap;min-height:48px;display:flex;align-items:center;gap:10px}
+.tabs button .step{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.18);font-size:13px}
+.tabs .short{display:none}
+.tabs button[aria-selected="true"]{background:var(--paper);color:var(--navy)}
+.tabs button[aria-selected="true"] .step{background:var(--teal);color:#fff}
+
+main{max-width:1280px;margin:0 auto;padding:22px}
+[hidden]{display:none!important}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px}
+.card-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:16px 18px 0}
+.card-h h2{font-size:24px}
+.hint{color:var(--muted);font-size:14px}
+
+/* ---------- Explore layout ---------- */
+.explore{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(310px,1fr);gap:20px;align-items:start}
+.left-col,.right-col{display:grid;gap:20px}
+
+/* Capture window */
+.capture{background:#0c1215;border-radius:16px;overflow:hidden}
+.capture-bar{display:flex;align-items:center;gap:10px;padding:9px 14px;background:#172227;color:#b9cdd3;font-size:14px}
+.capture-bar .lights{display:flex;gap:6px}
+.capture-bar .lights i{width:11px;height:11px;border-radius:50%;background:#3a4a51;display:block}
+.capture-bar b{color:#fff}
+.capture-bar .right{margin-left:auto;font-variant-numeric:tabular-nums}
+.screen{position:relative;aspect-ratio:4/3;background:#000;margin:0 10px;border-radius:6px;overflow:hidden}
+.screen canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.screen canvas.scene{filter:grayscale(1) contrast(1.05)}
+.transport{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px 14px;color:#dce9ed}
+.icon-btn{border:0;background:#22323a;color:#fff;border-radius:999px;min-width:44px;height:44px;display:inline-grid;place-items:center;cursor:pointer;padding:0 14px;font-weight:700}
+.icon-btn:hover{background:#2e434c}
+.icon-btn svg{width:20px;height:20px}
+.chip-group{display:flex;background:#1b282e;border-radius:999px;padding:3px}
+.chip-group button{border:0;background:transparent;color:#b9cdd3;border-radius:999px;padding:6px 12px;cursor:pointer;min-height:38px;font-size:14px;font-weight:700}
+.chip-group button[aria-checked="true"]{background:#fff;color:#0c1215}
+.toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:#dce9ed;min-height:44px;padding:0 6px}
+.toggle input{width:20px;height:20px;accent-color:var(--teal)}
+.transport .spacer{flex:1}
+.readout{font-size:14px;color:#9fb7be}
+.readout b{color:#fff;font-variant-numeric:tabular-nums}
+
+/* Plan */
+.plan-wrap{padding:10px 14px 14px}
+.plan-wrap canvas{width:100%;height:300px;display:block;border-radius:12px;touch-action:none}
+
+/* Controls */
+.controls{padding:6px 18px 18px}
+.group{padding:14px 0;border-bottom:1px solid var(--line)}
+.group:last-of-type{border-bottom:0}
+.group h3{font-size:20px;margin-bottom:10px}
+.ctl{margin:14px 0 0}
+.ctl:first-of-type{margin-top:0}
+.ctl-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}
+.ctl-top label,.ctl-top .lbl{font-weight:700}
+.ctl-top output,.ctl-top .note{font-variant-numeric:tabular-nums;color:var(--navy);font-weight:700;background:var(--soft);padding:1px 8px;border-radius:6px;font-size:14px}
+input[type=range]{width:100%;accent-color:var(--teal);height:28px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{flex:1 1 auto;border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:8px 10px;min-height:42px;cursor:pointer;font-weight:700;font-size:14px;color:var(--ink)}
+.seg button:hover:not(:disabled){border-color:#9fc3cc}
+.seg button[aria-checked="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.seg button:disabled{opacity:.4;cursor:not-allowed;text-decoration:line-through}
+.seg button small{display:block;font-weight:400;font-size:12px;opacity:.8}
+.preset-row{display:flex;flex-wrap:wrap;gap:8px;padding-top:14px}
+.btn{border:0;border-radius:12px;padding:11px 16px;min-height:44px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+.btn-primary{background:var(--teal);color:#fff}
+.btn-primary:hover{background:#006f69}
+.btn-ghost{background:var(--soft);color:var(--navy)}
+.btn-ghost:hover{background:#dcecef}
+
+/* Report */
+.report{padding:16px 18px 18px}
+.verdict{display:flex;align-items:center;gap:16px;padding:14px;border-radius:14px;background:var(--soft);margin-bottom:14px}
+.dial{width:78px;height:78px;flex:none}
+.verdict h3{font-size:28px}
+.verdict p{color:var(--muted);font-size:15px}
+.checks{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.check{border:1px solid var(--line);border-radius:12px;background:#fff}
+.check > button{width:100%;border:0;background:transparent;display:grid;grid-template-columns:30px 1fr auto;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;text-align:left;min-height:48px}
+.badge{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:15px}
+.s-good .badge{background:var(--good-bg);color:var(--good)}
+.s-warn .badge{background:var(--warn-bg);color:var(--warn)}
+.s-bad .badge{background:var(--bad-bg);color:var(--bad)}
+.check .t{font-weight:700;display:block}
+.check .v{font-size:14px;color:var(--muted);display:block}
+.check .chev{transition:transform .2s;color:var(--muted)}
+.check > button[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.check .more{padding:0 14px 12px 52px;font-size:15px;display:grid;gap:6px}
+.check .more b{color:var(--navy)}
+.s-bad{border-color:#f3c4be}
+.s-warn{border-color:#f0d9a8}
+.numbers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+.num{background:var(--paper);border-radius:12px;padding:12px}
+.num .k{font-size:14px;color:var(--muted)}
+.num .n{font-family:var(--display);font-size:30px;color:var(--navy);line-height:1.1;font-variant-numeric:tabular-nums}
+.num .d{font-size:13.5px;color:var(--muted);margin-top:2px}
+.num.bad .n{color:var(--bad)} .num.warn .n{color:var(--warn)} .num.good .n{color:var(--good)}
+
+/* ---------- Checklist ---------- */
+.checklist-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr);gap:20px;align-items:start}
+.progress{height:12px;background:var(--soft);border-radius:999px;overflow:hidden;margin:12px 0 4px}
+.progress span{display:block;height:100%;background:var(--teal);width:0;transition:width .3s}
+.stage{padding:18px}
+.stage + .stage{border-top:1px solid var(--line)}
+.stage-h{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.stage-num{width:40px;height:40px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-family:var(--display);font-size:24px;flex:none}
+.stage-h h2{font-size:26px}
+.stage-h .count{margin-left:auto;font-weight:700;color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+.stage.done .stage-num{background:var(--teal)}
+.items{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.item{border:1.5px solid var(--line);border-radius:14px;background:#fff}
+.item label{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:14px;cursor:pointer;align-items:start}
+.item input{appearance:none;-webkit-appearance:none;width:30px;height:30px;border:2px solid #9fb7be;border-radius:9px;margin:0;display:grid;place-items:center;cursor:pointer;background:#fff}
+.item input:checked{background:var(--teal);border-color:var(--teal)}
+.item input:checked::after{content:"";width:9px;height:16px;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg) translate(-1px,-2px)}
+.item .txt{font-size:17px}
+.item .txt b{display:block}
+.item .why{display:block;color:var(--muted);font-size:15px;margin-top:3px}
+.item.on{background:var(--good-bg);border-color:#9fd6cf}
+.item.on .txt b{color:var(--good)}
+.setcard{position:sticky;top:16px;padding:18px}
+.setcard h2{font-size:26px;margin-bottom:4px}
+.spec{list-style:none;padding:0;margin:14px 0 0}
+.spec li{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.spec li:first-child{border-top:0}
+.spec .ico{width:44px;height:44px;border-radius:12px;background:var(--soft);display:grid;place-items:center;color:var(--navy)}
+.spec .ico svg{width:24px;height:24px}
+.spec .lab{font-size:14px;color:var(--muted)}
+.spec .val{font-weight:700;font-size:17px}
+.ready-banner{margin-top:14px;padding:14px;border-radius:14px;background:var(--good-bg);color:var(--good);font-weight:700;display:flex;gap:10px;align-items:center}
+
+/* ---------- Quiz ---------- */
+.quiz-layout{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(310px,1fr);gap:20px;align-items:start}
+.quiz-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap}
+.dots{display:flex;gap:6px;flex-wrap:wrap}
+.dots i{width:12px;height:12px;border-radius:50%;background:var(--line);display:block}
+.dots i.cur{background:var(--navy)} .dots i.ok{background:var(--good)} .dots i.no{background:var(--bad)}
+.quiz-panel{padding:18px}
+.quiz-panel h2{font-size:28px;margin-bottom:6px}
+.opts{display:grid;gap:8px;margin-top:14px}
+.opt{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:12px 14px;text-align:left;cursor:pointer;font-weight:700;min-height:46px}
+.opt:hover:not(:disabled){border-color:var(--blue)}
+.opt.right{background:var(--good-bg);border-color:var(--good);color:var(--good)}
+.opt.wrong{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
+.opt:disabled{cursor:default}
+.feedback{margin-top:14px;padding:14px;border-radius:12px;background:var(--soft)}
+.feedback p + p{margin-top:6px}
+.quiz-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.quiz-tags{display:flex;gap:8px;flex-wrap:wrap;padding:12px 14px 14px;color:#dce9ed;font-size:14px}
+.quiz-tags span{background:#1b282e;padding:5px 10px;border-radius:999px}
+
+.foot{max-width:1280px;margin:0 auto;padding:0 22px 30px;color:var(--muted);font-size:14px}
+
+@media (max-width:980px){
+  .explore,.checklist-layout,.quiz-layout{grid-template-columns:1fr}
+  .setcard{position:static}
+}
+@media (max-width:560px){
+  main{padding:14px}
+  .top-inner{padding:14px 14px 0}
+  .tabs{padding:0 14px}
+  .tabs button{font-size:15px;gap:6px;padding:10px}
+  .tabs button .step{display:none}
+  .tabs .long{display:none} .tabs .short{display:inline}
+  .numbers{grid-template-columns:1fr}
+  .item .txt{font-size:16px}
+  .move-switch button{padding:8px 12px}
+  .screen{margin:0 6px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="title-block">
+      <h1>2D camera set-up</h1>
+      <p>See how camera position and settings change your data, then set up the high-speed camera and film your own trial.</p>
+    </div>
+    <div class="move-switch" role="radiogroup" aria-label="Movement">
+      <button role="radio" aria-checked="true" data-move="sprint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="15" cy="4" r="2"/><path d="M13 8l-3 4 3 3-1 6M10 12l-5 1M13 8l4 3 3-1M13 15l5 1"/></svg>Sprint
+      </button>
+      <button role="radio" aria-checked="false" data-move="cmj">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="3.5" r="2"/><path d="M12 7v7M12 9l-4-3M12 9l4-3M12 14l-3 4 1 3M12 14l3 4-1 3"/></svg>Countermovement jump
+      </button>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="tab-explore" aria-controls="panel-explore" aria-selected="true"><span class="step">1</span>Try set-ups</button>
+    <button role="tab" id="tab-check" aria-controls="panel-check" aria-selected="false" tabindex="-1"><span class="step">2</span><span class="long">Practical checklist</span><span class="short">Checklist</span></button>
+    <button role="tab" id="tab-quiz" aria-controls="panel-quiz" aria-selected="false" tabindex="-1"><span class="step">3</span><span class="long">Spot the mistake</span><span class="short">Quiz</span></button>
+  </nav>
+</header>
+
+<main>
+<!-- ================= EXPLORE ================= -->
+<section id="panel-explore" role="tabpanel" aria-labelledby="tab-explore">
+  <div class="explore">
+    <div class="left-col">
+      <div class="capture">
+        <div class="capture-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><b>High-speed camera</b><span>live view</span><span class="right" id="resInfo"></span></div>
+        <div class="screen"><canvas class="scene" id="cam" aria-label="What the camera sees"></canvas><canvas id="camO" aria-hidden="true"></canvas></div>
+        <div class="transport">
+          <button class="icon-btn" id="play" aria-label="Pause">
+            <svg id="ico-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+            <svg id="ico-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" hidden><path d="M7 5l12 7-12 7z"/></svg>
+          </button>
+          <button class="icon-btn" id="stepf" aria-label="Next frame"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 5l9 7-9 7zM16 5h3v14h-3z"/></svg></button>
+          <div class="chip-group" role="radiogroup" aria-label="Playback speed">
+            <button role="radio" aria-checked="false" data-speed="1">Real time</button>
+            <button role="radio" aria-checked="true" data-speed="0.25">Slow</button>
+            <button role="radio" aria-checked="false" data-speed="0.06">Very slow</button>
+          </div>
+          <label class="toggle"><input type="checkbox" id="strobe">Show every frame</label>
+          <label class="toggle"><input type="checkbox" id="showAngle" checked>Knee angle</label>
+          <span class="spacer"></span>
+          <span class="readout" id="liveAngle"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><h2>From above</h2><span class="hint">Drag the camera to move it</span></div>
+        <div class="plan-wrap"><canvas id="plan" aria-label="Top-down view of the set-up. Drag the camera to move it."></canvas></div>
+      </div>
+    </div>
+
+    <div class="right-col">
+      <div class="card">
+        <div class="card-h"><h2>Camera set-up</h2></div>
+        <div class="controls">
+          <div class="group">
+            <h3>Where the camera goes</h3>
+            <div class="ctl">
+              <div class="ctl-top"><label for="dist">Distance from the athlete</label><output id="o-dist"></output></div>
+              <input type="range" id="dist" min="1.5" max="16" step="0.5">
+            </div>
+            <div class="ctl">
+              <div class="ctl-top"><label for="angle">Angle away from side-on</label><output id="o-angle"></output></div>
+              <input type="range" id="angle" min="-40" max="40" step="1">
+            </div>
+            <div class="ctl">
+              <div class="ctl-top"><label for="height">Lens height</label><output id="o-height"></output></div>
+              <input type="range" id="height" min="0.3" max="2.2" step="0.1">
+            </div>
+          </div>
+          <div class="group">
+            <h3>Lens and camera settings</h3>
+            <div class="ctl">
+              <div class="ctl-top"><span class="lbl" id="l-lens">Lens</span><span class="note" id="n-lens"></span></div>
+              <div class="seg" role="radiogroup" aria-labelledby="l-lens" data-key="lens">
+                <button role="radio" data-v="4">4 mm<small>very wide</small></button><button role="radio" data-v="6">6 mm<small>wide</small></button><button role="radio" data-v="8">8 mm<small>normal</small></button><button role="radio" data-v="12">12 mm<small>narrow</small></button>
+              </div>
+            </div>
+            <div class="ctl">
+              <div class="ctl-top"><span class="lbl" id="l-fps">Frame rate</span><span class="note" id="n-fps"></span></div>
+              <div class="seg" role="radiogroup" aria-labelledby="l-fps" data-key="fps">
+                <button role="radio" data-v="100">100</button><button role="radio" data-v="220">220</button><button role="radio" data-v="300">300</button><button role="radio" data-v="500">500</button><button role="radio" data-v="750">750</button>
+              </div>
+            </div>
+            <div class="ctl">
+              <div class="ctl-top"><span class="lbl" id="l-shutter">Shutter speed</span></div>
+              <div class="seg" role="radiogroup" aria-labelledby="l-shutter" data-key="shutter">
+                <button role="radio" data-v="250">1/250</button><button role="radio" data-v="500">1/500</button><button role="radio" data-v="1000">1/1000</button><button role="radio" data-v="2000">1/2000</button><button role="radio" data-v="4000">1/4000</button>
+              </div>
+            </div>
+            <div class="ctl">
+              <div class="ctl-top"><span class="lbl" id="l-iris">Iris (aperture ring on the lens)</span></div>
+              <div class="seg" role="radiogroup" aria-labelledby="l-iris" data-key="iris">
+                <button role="radio" data-v="1.4">f/1.4<small>wide open</small></button><button role="radio" data-v="2.8">f/2.8</button><button role="radio" data-v="5.6">f/5.6</button><button role="radio" data-v="8">f/8<small>nearly shut</small></button>
+              </div>
+            </div>
+            <div class="ctl">
+              <div class="ctl-top"><span class="lbl" id="l-light">Light</span></div>
+              <div class="seg" role="radiogroup" aria-labelledby="l-light" data-key="light">
+                <button role="radio" data-v="dim">Dim hall</button><button role="radio" data-v="bright">Bright lab</button><button role="radio" data-v="outdoor">Outdoors</button>
+              </div>
+            </div>
+          </div>
+          <div class="group">
+            <h3>Scale and markers</h3>
+            <div class="ctl">
+              <div class="ctl-top"><span class="lbl" id="l-scale">Where the 1 m scale is</span></div>
+              <div class="seg" role="radiogroup" aria-labelledby="l-scale" data-key="scale">
+                <button role="radio" data-v="near">Nearer the camera</button><button role="radio" data-v="line">In the athlete's line</button><button role="radio" data-v="far">Further away</button>
+              </div>
+            </div>
+            <div class="ctl">
+              <div class="ctl-top"><span class="lbl" id="l-side">Markers you analyse</span></div>
+              <div class="seg" role="radiogroup" aria-labelledby="l-side" data-key="side">
+                <button role="radio" data-v="near">Side facing the camera</button><button role="radio" data-v="far">Far side</button>
+              </div>
+            </div>
+          </div>
+          <div class="preset-row">
+            <button class="btn btn-primary" id="ideal">Show a good set-up</button>
+            <button class="btn btn-ghost" id="mistake">Show a common mistake</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><h2>Will your data be good?</h2></div>
+        <div class="report">
+          <div class="verdict" id="verdict"></div>
+          <ul class="checks" id="checks"></ul>
+          <div class="numbers" id="numbers"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CHECKLIST ================= -->
+<section id="panel-check" role="tabpanel" aria-labelledby="tab-check" hidden>
+  <div class="checklist-layout">
+    <div class="card" id="stages"></div>
+    <aside class="card setcard" id="setcard"></aside>
+  </div>
+</section>
+
+<!-- ================= QUIZ ================= -->
+<section id="panel-quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden>
+  <div class="quiz-layout">
+    <div class="capture">
+      <div class="capture-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><b>High-speed camera</b><span>live view</span></div>
+      <div class="screen"><canvas class="scene" id="qcam" aria-label="Camera view for this question"></canvas><canvas id="qcamO" aria-hidden="true"></canvas></div>
+      <div class="quiz-tags" id="qtags"></div>
+    </div>
+    <div class="card quiz-panel">
+      <div class="quiz-meta"><span class="hint" id="qcount"></span><div class="dots" id="qdots"></div></div>
+      <h2 id="qtitle"></h2>
+      <p id="qtext"></p>
+      <div class="opts" id="qopts"></div>
+      <div class="feedback" id="qfb" hidden></div>
+      <div class="quiz-actions" id="qact"></div>
+    </div>
+  </div>
+</section>
+</main>
+<p class="foot">Simulated athlete and high-speed camera (monochrome, global shutter, 1440 × 1080 pixels at up to 220 fps; higher frame rates record fewer rows). Errors are worked out by filming the simulated athlete through the camera you set up, then measuring from that picture as you would in the Kinematic Analysis tool. Based on Robertson et al. (2014) <i>Research Methods in Biomechanics</i>, chapters 1 and 12.</p>
+
+<script>
+"use strict";
+/* ============================================================
+   Maths helpers
+   ============================================================ */
+const DEG=Math.PI/180, G=9.81;
+const IMG_W=1440, IMG_H=1080, SENSOR_W=4.97;            // Sony IMX273: 1440 x 1080, 3.45 µm pixels
+const ROWS={100:1080,220:1080,300:800,500:462,750:292};   // area of interest at each frame rate
+const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const norm=a=>{const l=Math.hypot(a[0],a[1],a[2]);return[a[0]/l,a[1]/l,a[2]/l]};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const dirv=a=>[Math.sin(a*DEG),-Math.cos(a*DEG)]; // 0 = down, 90 = forward, 180 = up
+const fmt=(v,d=1)=>Number.isFinite(v)?v.toFixed(d):"–";
+
+/* Periodic keyframes -> smooth curve (low-pass Fourier series). No kinks, no overshoot spikes. */
+function linPer(keys,p){
+  p=((p%1)+1)%1;const n=keys.length;
+  for(let i=0;i<n;i++){const[a,va]=keys[i];const[b0,vb]=keys[(i+1)%n];const b=i===n-1?b0+1:b0;
+    if(p>=a&&p<b)return va+(vb-va)*(p-a)/(b-a);}
+  return keys[0][1];
+}
+function fourier(keys,H){
+  const N=360,s=[];for(let i=0;i<N;i++)s.push(linPer(keys,i/N));
+  const a0=s.reduce((x,y)=>x+y,0)/N,A=[],B=[];
+  for(let k=1;k<=H;k++){let a=0,b=0;for(let i=0;i<N;i++){const w=2*Math.PI*k*i/N;a+=s[i]*Math.cos(w);b+=s[i]*Math.sin(w);}A.push(2*a/N);B.push(2*b/N);}
+  return p=>{let v=a0;for(let k=1;k<=H;k++){const w=2*Math.PI*k*p;v+=A[k-1]*Math.cos(w)+B[k-1]*Math.sin(w);}return v;};
+}
+function fourierArr(s,H){ // smooth a sampled periodic array
+  const N=s.length,a0=s.reduce((x,y)=>x+y,0)/N,A=[],B=[];
+  for(let k=1;k<=H;k++){let a=0,b=0;for(let i=0;i<N;i++){const w=2*Math.PI*k*i/N;a+=s[i]*Math.cos(w);b+=s[i]*Math.sin(w);}A.push(2*a/N);B.push(2*b/N);}
+  return p=>{let v=a0;for(let k=1;k<=H;k++){const w=2*Math.PI*k*p;v+=A[k-1]*Math.cos(w)+B[k-1]*Math.sin(w);}return v;};
+}
+/* Monotone cubic (PCHIP): smooth through keyframes without stopping at each one */
+function pchip(keys){
+  const n=keys.length,x=keys.map(k=>k[0]),y=keys.map(k=>k[1]),h=[],d=[];
+  for(let i=0;i<n-1;i++){h.push(x[i+1]-x[i]);d.push((y[i+1]-y[i])/h[i]);}
+  const m=new Array(n).fill(0);
+  for(let i=1;i<n-1;i++){if(d[i-1]*d[i]>0){const w1=2*h[i]+h[i-1],w2=h[i]+2*h[i-1];m[i]=(w1+w2)/(w1/d[i-1]+w2/d[i]);}}
+  return t=>{if(t<=x[0])return y[0];if(t>=x[n-1])return y[n-1];let i=0;while(t>x[i+1])i++;
+    const hh=h[i],s=(t-x[i])/hh,s2=s*s,s3=s2*s;
+    return(2*s3-3*s2+1)*y[i]+(s3-2*s2+s)*hh*m[i]+(-2*s3+3*s2)*y[i+1]+(s3-s2)*hh*m[i+1];};
+}
+/* Cubic Hermite through [t, value, slope] knots */
+function hermite(knots,t){
+  if(t<=knots[0][0])return knots[0][1];
+  for(let i=0;i<knots.length-1;i++){const[t0,y0,v0]=knots[i],[t1,y1,v1]=knots[i+1];
+    if(t<=t1){const h=t1-t0,s=(t-t0)/h,s2=s*s,s3=s2*s;return(2*s3-3*s2+1)*y0+(s3-2*s2+s)*h*v0+(-2*s3+3*s2)*y1+(s3-s2)*h*v1;}}
+  return knots[knots.length-1][1];
+}
+
+/* ============================================================
+   Athlete models (sagittal plane = world X–Y, camera on +Z side)
+   ============================================================ */
+const L={thigh:.44,shank:.43,foot:.19,trunk:.52,head:.24,uarm:.30,farm:.28};
+const FAR_Z_SPRINT=-.26, FAR_Z_CMJ=-.24;
+
+function leg(hip,aT,kf,pf){
+  const kd=dirv(aT),knee=[hip[0]+L.thigh*kd[0],hip[1]+L.thigh*kd[1]];
+  const aS=aT-kf,sd=dirv(aS),ankle=[knee[0]+L.shank*sd[0],knee[1]+L.shank*sd[1]];
+  const aF=aS+90-pf,fd=dirv(aF),toe=[ankle[0]+L.foot*fd[0],ankle[1]+L.foot*fd[1]];
+  const hd=dirv(aF-150),heel=[ankle[0]+.065*hd[0],ankle[1]+.065*hd[1]];
+  return{knee,ankle,toe,heel};
+}
+function arm(sh,aU,ef){
+  const u=dirv(aU),el=[sh[0]+L.uarm*u[0],sh[1]+L.uarm*u[1]];
+  const f=dirv(aU+ef),wr=[el[0]+L.farm*f[0],el[1]+L.farm*f[1]];
+  return{el,wr};
+}
+
+/* ---- Sprint (maximum-velocity running, near leg touchdown at phase 0, contact 22% of stride) ---- */
+const SPR=(()=>{
+  const v=7.0,sf=2.2,contact=.22,N=400;
+  const thigh=fourier([[0,26],[.1,8],[.22,-18],[.29,-24],[.4,-2],[.55,40],[.68,60],[.82,52],[.94,34]],4);
+  const knee=fourier([[0,24],[.09,44],[.22,30],[.34,82],[.46,120],[.53,124],[.66,96],[.79,50],[.9,24]],5);
+  const pf=fourier([[0,6],[.08,-6],[.2,22],[.27,34],[.42,14],[.62,2],[.85,-4]],4);
+  const L0=ph=>leg([0,0],thigh(ph),knee(ph),pf(ph));
+  const low=ph=>{const l=L0(ph);return Math.min(l.ankle[1],l.toe[1],l.heel[1]);};
+  const own=ph=>ph<.5?ph:ph-.5;
+  // vertical: stance foot on the ground, ballistic flight between steps, then low-pass
+  const need=[];
+  for(let i=0;i<N;i++){const ph=i/N,q=ph%.5;
+    if(q<contact) need.push(-low(own(ph)));
+    else{const a=-low(contact),b=-low(0),T=(.5-contact)/sf,tau=(q-contact)/sf;need.push(a+(b-a)*(tau/T)+.5*G*tau*(T-tau));}}
+  const hy0=fourierArr(need,6);
+  let pen=0;for(let i=0;i<N;i++){const ph=i/N;if(ph%.5<contact)pen=Math.min(pen,hy0(ph)+low(own(ph)));}
+  // horizontal: hip speed during stance keeps the toe planted; constant speed in flight; low-pass, then integrate
+  const e=.002,u=[];let ust=0,ns=0;
+  for(let i=0;i<N;i++){const ph=i/N,q=ph%.5;if(q<contact){const o=own(ph),du=-(L0(o+e).toe[0]-L0(o-e).toe[0])/(2*e)*sf;u.push(du);ust+=du;ns++;}else u.push(null);}
+  const fr=ns/N,uf=(v-fr*(ust/ns))/(1-fr);
+  const uS=fourierArr(u.map(x=>x==null?uf:x),6);
+  const per=[];let acc=0;for(let i=0;i<N;i++){per.push(acc);acc+=(uS(i/N)-v)/sf/N;}
+  const mean=per.reduce((x,y)=>x+y,0)/N,px=fourierArr(per.map(x=>x-mean),6);
+  return{v,sf,contact,thigh,knee,pf,hip:ph=>hy0(ph)-pen,px};
+})();
+
+const MOVES={
+  sprint:{
+    targetY:1.0,
+    ideal:{dist:8,angle:0,height:1.0,lens:"8",fps:220,shutter:1000,iris:2.8,light:"bright",scale:"line",side:"near"},
+    range(cfg){const tH=SENSOR_W/2/+cfg.lens;return clamp(cfg.dist*tH+3,5,30);},
+    duration(cfg){return 2*this.range(cfg)/SPR.v;},
+    pose(t,cfg){
+      const R=this.range(cfg),ph=((t*SPR.sf+.37)%1+1)%1,p2=(ph+.5)%1,hx=-R+SPR.v*t+SPR.px(ph);
+      const tN=SPR.thigh(ph),tF=SPR.thigh(p2);
+      const n=leg([0,0],tN,SPR.knee(ph),SPR.pf(ph)),f=leg([0,0],tF,SPR.knee(p2),SPR.pf(p2));
+      const hy=SPR.hip(ph);
+      const P=(p,z)=>[hx+p[0],hy+p[1],z];
+      const lean=9+1.5*Math.sin(4*Math.PI*ph);
+      const sh=[L.trunk*Math.sin(lean*DEG),L.trunk*Math.cos(lean*DEG)];
+      const head=[sh[0]+L.head*Math.sin((lean+4)*DEG),sh[1]+L.head*Math.cos((lean+4)*DEG)];
+      const aUn=12-1.05*(tN-18),aUf=12-1.05*(tF-18);         // arms swing opposite to the same-side leg
+      const aN=arm(sh,aUn,88+.25*aUn),aF=arm(sh,aUf,88+.25*aUf);
+      const wob=Math.sin(2*Math.PI*ph);
+      return{
+        hipN:P([0,0],0), kneeN:P(n.knee,.03*wob), ankleN:P(n.ankle,.025*wob), toeN:P(n.toe,.025*wob), heelN:P(n.heel,.025*wob),
+        shN:P(sh,0), elN:P(aN.el,.03), wrN:P(aN.wr,.05),
+        hipF:P([0,0],FAR_Z_SPRINT), kneeF:P(f.knee,FAR_Z_SPRINT), ankleF:P(f.ankle,FAR_Z_SPRINT), toeF:P(f.toe,FAR_Z_SPRINT), heelF:P(f.heel,FAR_Z_SPRINT),
+        shF:P(sh,FAR_Z_SPRINT), elF:P(aF.el,FAR_Z_SPRINT-.03), wrF:P(aF.wr,FAR_Z_SPRINT-.05),
+        head:P(head,FAR_Z_SPRINT/2)
+      };
+    },
+    contact:SPR.contact/SPR.sf
+  },
+  cmj:(()=>{
+    const T=3.2,tTO=1.30,tf=.5,tLand=tTO+tf,v0=G*tf/2;
+    const reach=th=>Math.sqrt(L.thigh**2+L.shank**2+2*L.thigh*L.shank*Math.cos(th*DEG));
+    const H0=.08+Math.sqrt(reach(5)**2-.02**2);
+    const pf=pchip([[0,0],[1.08,0],[tTO,30],[tLand,30],[tLand+.1,0],[T,0]]);
+    const footAt=p=>{const toe=[.15,0],c=Math.cos(-p*DEG),s=Math.sin(-p*DEG),rot=v=>[toe[0]+v[0]*c-v[1]*s,toe[1]+v[0]*s+v[1]*c];return{toe,ankle:rot([-.15,.08]),heel:rot([-.20,0])};};
+    // take-off height set so the knee still has ~15° of bend at take-off (avoids a straight-leg snap)
+    const fTO=footAt(30),hipTOx=-.02,dyTO=fTO.ankle[1]+Math.sqrt(reach(15)**2-(hipTOx-fTO.ankle[0])**2)-H0;
+    const pre=[[0,0,0],[.45,0,0],[1.0,-.30,0],[tTO,dyTO,v0]];
+    const post=[[tLand,dyTO,-v0],[tLand+.26,-.20,0],[2.7,-.01,0],[T,0,0]];
+    const dy=t=>t<=tTO?hermite(pre,t):t>=tLand?hermite(post,t):dyTO+v0*(t-tTO)-G*(t-tTO)**2/2;
+    const armA=pchip([[0,4],[.45,4],[1.0,-55],[tTO,150],[tLand-.05,160],[tLand+.3,35],[2.75,4],[T,4]]);
+    function ik(hip,ankle){
+      const dx=ankle[0]-hip[0],dz=ankle[1]-hip[1],dd=Math.hypot(dx,dz),D=clamp(dd,.35,reach(1)),u=[dx/dd,dz/dd];
+      const al=Math.acos(clamp((L.thigh**2+D*D-L.shank**2)/(2*L.thigh*D),-1,1));
+      const r=a=>[u[0]*Math.cos(a)-u[1]*Math.sin(a),u[0]*Math.sin(a)+u[1]*Math.cos(a)];
+      const k1=r(al),k2=r(-al),kd=k1[0]>k2[0]?k1:k2;return[hip[0]+L.thigh*kd[0],hip[1]+L.thigh*kd[1]];
+    }
+    function ground(t){
+      const d=dy(t),f=footAt(pf(t)),neg=(Math.hypot(d,.04)-d)/2-.02,hip=[-.02-.40*neg,H0+d];
+      return{hip,ankle:f.ankle,toe:f.toe,heel:f.heel,knee:ik(hip,f.ankle),lean:6+95*neg};
+    }
+    // leg keeps extending smoothly just after take-off (and mirrors before landing)
+    const gTO=ground(tTO),gPre=ground(tTO-.001);
+    const dist=g=>Math.hypot(g.ankle[0]-g.hip[0],g.ankle[1]-g.hip[1]);
+    const dTO=dist(gTO),vR=(dTO-dist(gPre))/.001,dMax=reach(4),tau0=(dMax-dTO)/Math.max(vR,.01);
+    const uTO=[(gTO.ankle[0]-gTO.hip[0])/dTO,(gTO.ankle[1]-gTO.hip[1])/dTO];
+    function air(t){
+      const tau=t-tTO,sMin=Math.min(tau,tf-tau),rel=dTO+(dMax-dTO)*(1-Math.exp(-sMin/tau0));
+      const lift=dy(t)-dyTO,hip=[gTO.hip[0],gTO.hip[1]+lift],ankle=[hip[0]+uTO[0]*rel,hip[1]+uTO[1]*rel];
+      const sh=[ankle[0]-gTO.ankle[0],ankle[1]-gTO.ankle[1]],mv=p=>[p[0]+sh[0],p[1]+sh[1]];
+      return{hip,ankle,toe:mv(gTO.toe),heel:mv(gTO.heel),knee:ik(hip,ankle),lean:gTO.lean};
+    }
+    return{
+      targetY:1.2, T, tTO, tLand,
+      ideal:{dist:5,angle:0,height:1.1,lens:"6",fps:220,shutter:1000,iris:2.8,light:"bright",scale:"line",side:"near"},
+      duration(){return T},
+      pose(t){
+        const g=(t>tTO&&t<tLand)?air(t):ground(t);
+        const sh=[g.hip[0]+L.trunk*Math.sin(g.lean*DEG),g.hip[1]+L.trunk*Math.cos(g.lean*DEG)];
+        const head=[sh[0]+L.head*Math.sin(g.lean*.55*DEG),sh[1]+L.head*Math.cos(g.lean*.55*DEG)];
+        const a=arm(sh,armA(t),14),P=(p,z)=>[p[0],p[1],z];
+        const kw=.025*clamp((H0-g.hip[1])*4,0,1);
+        return{
+          hipN:P(g.hip,0), kneeN:P(g.knee,kw), ankleN:P(g.ankle,0), toeN:P(g.toe,0), heelN:P(g.heel,0), shN:P(sh,0), elN:P(a.el,.04), wrN:P(a.wr,.06),
+          hipF:P(g.hip,FAR_Z_CMJ), kneeF:P(g.knee,FAR_Z_CMJ-kw), ankleF:P(g.ankle,FAR_Z_CMJ), toeF:P(g.toe,FAR_Z_CMJ), heelF:P(g.heel,FAR_Z_CMJ), shF:P(sh,FAR_Z_CMJ),
+          elF:P(a.el,FAR_Z_CMJ-.04), wrF:P(a.wr,FAR_Z_CMJ-.06), head:P(head,FAR_Z_CMJ/2)
+        };
+      }
+    };
+  })()
+};
+
+/* ============================================================
+   Camera
+   ============================================================ */
+const LENS_K={"4":-.08,"6":-.02,"8":-.008,"12":0};
+function makeCam(cfg,mv){
+  const a=cfg.angle*DEG,D=cfg.dist,C=[D*Math.sin(a),cfg.height,D*Math.cos(a)];
+  const f=norm(sub([0,mv.targetY,0],C)),r=norm(cross(f,[0,1,0])),u=cross(r,f);
+  return{C,f,r,u,tH:SENSOR_W/2/+cfg.lens,k:LENS_K[cfg.lens],pitch:Math.asin(f[1])/DEG,rows:ROWS[cfg.fps]};
+}
+function proj(cam,P){
+  const d=sub(P,cam.C),zc=dot(d,cam.f); if(zc<.05)return null;
+  let x=dot(d,cam.r)/zc/cam.tH,y=dot(d,cam.u)/zc/cam.tH; const s=1+cam.k*Math.min(x*x+y*y,2.4); x*=s;y*=s;
+  return[IMG_W/2*(1+x),IMG_H/2-y*IMG_W/2];
+}
+const inPic=(cam,q,mx=0,my=0)=>q&&q[0]>=mx&&q[0]<=IMG_W-mx&&Math.abs(q[1]-IMG_H/2)<=cam.rows/2-my;
+const exposure=cfg=>Math.min(1/cfg.shutter,1/cfg.fps);
+const LUX={dim:.3,bright:1,outdoor:10};
+const brightness=cfg=>LUX[cfg.light]*(exposure(cfg)/.001)*(2.8/cfg.iris)**2;   // 1 = well exposed
+function scaleZ(cfg){return cfg.scale==="line"?0:cfg.scale==="near"?.8:-.8}
+function scaleEnds(cfg){const z=scaleZ(cfg);return[[-.5,.012,z],[.5,.012,z]]}
+
+/* ============================================================
+   Analysis: what would the student measure?
+   ============================================================ */
+const SIDE_PTS=["sh","hip","knee","ankle","toe"];
+function kneeAngle2(h,k,a){
+  const v1=[h[0]-k[0],h[1]-k[1]],v2=[a[0]-k[0],a[1]-k[1]];
+  return Math.acos(clamp((v1[0]*v2[0]+v1[1]*v2[1])/(Math.hypot(...v1)*Math.hypot(...v2)),-1,1))/DEG;
+}
+function analyse(move,cfg){
+  const mv=MOVES[move],cam=makeCam(cfg,mv),S=cfg.side==="near"?"N":"F";
+  const [e1,e2]=scaleEnds(cfg),p1=proj(cam,e1),p2=proj(cam,e2);
+  const mpp=(p1&&p2)?1/Math.hypot(p1[0]-p2[0],p1[1]-p2[1]):NaN;
+  const toM=p=>[(p[0]-IMG_W/2)*mpp,(IMG_H/2-p[1])*mpp];
+  const dt=1/cfg.fps,dur=mv.duration(cfg),t0=.0031,mx=.04*IMG_W,my=.025*IMG_W;
+  let errs=[],first=null,last=null,nearEdge=false,anyOut=false,standHip=[],trueStand=[],fMax=-1e9,tMax=-1e9,vmax=0;
+  for(let t=t0;t<dur;t+=dt){
+    const P=mv.pose(t,cfg),pts={},pr={};let inF=true,hz=true;
+    for(const n of SIDE_PTS){pts[n]=P[n+S];const q=proj(cam,pts[n]);pr[n]=q;
+      if(!inPic(cam,q))inF=false; else if(!inPic(cam,q,mx,my))nearEdge=true;
+      if(!q||q[0]<0||q[0]>IMG_W)hz=false;}
+    if(move==="cmj"||hz){ // whole body must fit vertically while the athlete is in view
+      for(const n of ["head","toeN","heelN","toeF",...(move==="cmj"?["wrN","wrF"]:[])]){const q=proj(cam,P[n]);
+        if(!q)continue; if(move==="sprint"&&(q[0]<0||q[0]>IMG_W))continue;
+        if(!inPic(cam,q))anyOut=true; else if(!inPic(cam,q,move==="cmj"?mx:0,my*.6))nearEdge=true;}
+    }
+    if(inF){
+      errs.push(kneeAngle2(toM(pr.hip),toM(pr.knee),toM(pr.ankle))-kneeAngle2(pts.hip,pts.knee,pts.ankle));
+      const rec={t,m:toM(pr.hip),w:pts.hip};if(!first)first=rec;last=rec;
+      if(move==="cmj"){
+        if(t<.4){standHip.push(rec.m[1]);trueStand.push(pts.hip[1]);}
+        if(t>mv.tTO&&t<mv.tLand){fMax=Math.max(fMax,rec.m[1]);tMax=Math.max(tMax,pts.hip[1]);}
+      }
+    }
+  }
+  for(let t=.01;t<dur-.01;t+=.004){
+    const a=mv.pose(t,cfg),b=mv.pose(t+.001,cfg);
+    for(const n of ["ankle","toe","knee"]){const p=a[n+S],q=b[n+S];vmax=Math.max(vmax,Math.hypot(q[0]-p[0],q[1]-p[1])/.001);}
+  }
+  const E=exposure(cfg),blurCm=vmax*E*100;
+  const res={cam,mpp,frames:errs.length,nearEdge,anyOut,E,blurCm,vmax,dt,B:brightness(cfg)};
+  res.rms=errs.length?Math.sqrt(errs.reduce((s,e)=>s+e*e,0)/errs.length):NaN;
+  res.maxErr=errs.length?Math.max(...errs.map(Math.abs)):NaN;
+  res.visW=2*cfg.dist*cam.tH; res.visH=res.visW*cam.rows/IMG_W; res.mmpp=res.visW/IMG_W*1000;
+  if(move==="sprint"){
+    if(first&&last&&last.t>first.t){res.vMeas=(last.m[0]-first.m[0])/(last.t-first.t);res.vTrue=(last.w[0]-first.w[0])/(last.t-first.t);res.vErr=(res.vMeas/res.vTrue-1)*100;}
+    res.ctTrue=mv.contact*1000;
+  }else{
+    if(standHip.length&&fMax>-1e8){
+      const ms=standHip.reduce((a,b)=>a+b,0)/standHip.length,ts=trueStand.reduce((a,b)=>a+b,0)/trueStand.length;
+      res.hMeas=(fMax-ms)*100;res.hTrue=(tMax-ts)*100;res.hErr=(res.hMeas/res.hTrue-1)*100;
+    }
+    const tf=mv.tLand-mv.tTO;res.hFlightErr=G*(tf+dt)**2/8*100-G*tf*tf/8*100;
+  }
+  const z0=[[-.5,.012,0],[.5,.012,0]].map(p=>proj(cam,p));
+  res.scaleErr=(p1&&p2&&z0[0]&&z0[1])?(Math.hypot(p1[0]-p2[0],p1[1]-p2[1])/Math.hypot(z0[0][0]-z0[1][0],z0[0][1]-z0[1][1])-1)*-100:0;
+  res.checks=buildChecks(move,cfg,res);
+  res.nb=res.checks.filter(c=>c.s==="bad").length;res.nw=res.checks.filter(c=>c.s==="warn").length;
+  res.score=clamp(100-8*res.nw-25*res.nb,0,100);
+  return res;
+}
+
+function buildChecks(move,cfg,r){
+  const sp=move==="sprint",C=[],add=(id,t,s,v,why,fix)=>C.push({id,t,s,v,why,fix});
+  const ang=Math.abs(cfg.angle);
+  add("side","Side-on",ang<=5?"good":ang<=12?"warn":"bad",ang<1?"Pointing straight across":`${ang}° away from side-on`,
+    "If the camera films from an angle, the movement looks squashed, so angles and distances come out wrong.",
+    sp?"Move the tripod so the camera points straight across the lane, at 90° to the running direction.":"Move the tripod so the camera points straight at the athlete's side.");
+  const D=cfg.dist,dg=sp?(D>=6&&D<=13):(D>=4&&D<=8),dw=sp?(D>=4&&D<=15):(D>=3&&D<=10);
+  add("dist","Distance",dg?"good":dw?"warn":"bad",`${fmt(D,1)} m away`,
+    D<(sp?6:4)?"Close up, body parts that are nearer the camera look bigger than parts that are further away. That bends your angles and distances.":"Far away, the athlete is small on screen, so each click you make covers more of the body.",
+    sp?"Aim for 6 to 13 m from the lane, then pick the lens that fills the screen.":"Aim for 4 to 8 m from the athlete, then pick the lens that fills the screen.");
+  add("lens","Lens",cfg.lens==="4"?"bad":"good",`${cfg.lens} mm lens`,
+    "Very wide lenses (like 4 mm) bend straight lines, especially near the edges of the picture, which creates movement that isn't really there.",
+    "Use a longer lens (6, 8 or 12 mm) and move the camera back to fit the movement in.");
+  if(sp){
+    const s=r.anyOut?"bad":r.visW>=4&&r.visW<=8?"good":r.visW>=3?"warn":"bad";
+    add("frame","What's in shot",r.frames<3?"bad":s,r.anyOut?`Athlete cut off at ${cfg.fps} fps`:`${fmt(r.visW,1)} m of the lane in view`,
+      r.anyOut?`At ${cfg.fps} fps the camera only records ${ROWS[cfg.fps]} of its 1080 rows, so the picture is a thin strip and the head or feet are cut off.`:r.visW<4?"You need to see at least one full stride (two steps), with room either side, or you can't measure step length or speed.":r.visW>8?"So much lane is in view that the athlete is small on screen.":"Enough of the run is in view to see a full stride.",
+      r.anyOut?"Drop the frame rate to 220 fps (full picture), or move further back.":"Change the lens or the distance until about 4 to 8 m of the lane is in view.");
+  }else{
+    add("frame","What's in shot",r.anyOut?"bad":r.nearEdge?"warn":"good",r.anyOut?(ROWS[cfg.fps]<1080?`Cut off at ${cfg.fps} fps`:"Part of the body leaves the shot"):r.nearEdge?"Body gets close to the edge":"Whole jump in shot",
+      ROWS[cfg.fps]<1080?`At ${cfg.fps} fps the camera only records ${ROWS[cfg.fps]} of its 1080 rows, so the picture is much shorter. The head and hands leave the top at the peak of the jump.`:"The head, hands and feet all need to stay in shot for the whole jump, and away from the edges where the picture is least accurate.",
+      ROWS[cfg.fps]<1080?"Use 220 fps, which records the full picture.":"Move back, use a wider lens (but not 4 mm), or raise the camera slightly so there's space above the head.");
+  }
+  add("res","Detail",r.mmpp<=6?"good":r.mmpp<=9?"warn":"bad",`1 pixel ≈ ${fmt(r.mmpp,1)} mm`,
+    "The smaller the athlete is on screen, the more of the body each pixel covers, so small clicking errors become bigger errors in metres.",
+    "Fill more of the screen with the movement (longer lens or move closer), without cutting any of it off.");
+  const pt=Math.abs(r.cam.pitch);
+  add("height","Camera height",pt<=3?"good":pt<=8?"warn":"bad",`Lens ${fmt(cfg.height,1)} m high, tilted ${fmt(pt,0)}°`,
+    "If the camera is high or low it has to tilt to see the athlete, which stretches the top or bottom of the picture.",
+    sp?"Set the tripod so the lens is at about hip height, and keep it level.":"Set the tripod so the lens is at about waist height, and keep it level.");
+  const ms=1000/cfg.fps;
+  add("fps","Frame rate",cfg.fps>=200?"good":"warn",`${cfg.fps} fps (1 frame = ${fmt(ms,1)} ms)`,
+    sp?`Foot contact in sprinting lasts only about ${Math.round(r.ctTrue)} ms. At ${cfg.fps} fps you could miss touchdown or toe-off by up to ${fmt(ms,0)} ms.`:"Take-off and landing happen fast. Too few frames and you miss the exact moment, which changes flight time and jump height.",
+    "Use 220 fps. It is the fastest rate that still records the full picture.");
+  const capped=1/cfg.shutter>1/cfg.fps;
+  add("blur","Shutter speed",r.blurCm<=2.5?"good":r.blurCm<=5?"warn":"bad",`1/${Math.round(1/r.E)} s · markers smear ${fmt(r.blurCm,1)} cm${capped?" (capped by frame rate)":""}`,
+    "The shutter speed is how long each frame is exposed for. If a marker moves a lot in that time, it smears into a streak instead of a dot.",
+    "Use 1/1000 s or faster. Then fix the brightness with the iris or more light.");
+  const B=r.B,bs=B<.25||B>5?"bad":B<.5||B>2.5?"warn":"good";
+  const iris14=cfg.iris===1.4&&bs==="good";
+  add("bright","Brightness",iris14?"warn":bs,B<.5?"Picture too dark":B>2.5?"Picture too bright":iris14?"OK, but very little is in focus":"Markers bright and clear",
+    B<.5?"A fast shutter lets in very little light. In a dark picture the markers are grey and grainy, and tracking fails.":B>2.5?"Too much light washes the picture out, and markers that are close together merge into one blob.":iris14?"With the iris wide open, only a thin slice of the scene is sharp. If the focus is slightly off, the markers blur.":"Markers stand out clearly against the background.",
+    B<.5?"Open the iris (lower f-number), add light, or use a slightly slower shutter (no slower than 1/1000 s if you can).":B>2.5?"Close the iris (higher f-number) until the markers are bright white dots, not blobs.":"Close the iris a little and add light, or focus very carefully on the athlete's line.");
+  add("scale","Scale position",cfg.scale==="line"?"good":"bad",cfg.scale==="line"?"Scale in the athlete's line":`Distances ${fmt(Math.abs(r.scaleErr),0)}% too ${r.scaleErr>0?"big":"small"}`,
+    "The 1 m scale tells the software how many pixels make a metre. Anything nearer the camera looks bigger, so the scale has to be exactly where the athlete moves.",
+    sp?"Hold the scale level along the middle of the lane, where the athlete will run.":"Put the scale on the floor where the athlete's feet are, pointing front to back.");
+  add("side2","Markers analysed",cfg.side==="near"?"good":"bad",cfg.side==="near"?"Side facing the camera":"Far side of the body",
+    "Markers on the far side are further from the camera than the scale, so their distances come out too small, and they get hidden behind the near leg.",
+    "Put markers on the side facing the camera and analyse that side.");
+  return C;
+}
+
+/* ============================================================
+   Drawing: camera view (scene layer is shown in greyscale, overlay in colour)
+   ============================================================ */
+const THEMES={
+  dim:{wall:"#5a666c",wall2:"#48545a",floor:"#8a7056",line:"#d9c48f",sk:"#3b464c"},
+  bright:{wall:"#dfe7ea",wall2:"#f1f5f6",floor:"#8fa9b0",line:"#ffffff",sk:"#b8c7cc"},
+  outdoor:{wall:"#a9d3ea",wall2:"#d9eef7",floor:"#b65a40",line:"#ffffff",grass:"#6aa35b"}
+};
+function polyPts(cam,a,b,n=24){const out=[];for(let i=0;i<=n;i++){const s=i/n;out.push(proj(cam,[a[0]+(b[0]-a[0])*s,a[1]+(b[1]-a[1])*s,a[2]+(b[2]-a[2])*s]));}return out;}
+function strokePoly(ctx,pts,sc,oy){let on=false;ctx.beginPath();for(const q of pts){if(!q){on=false;continue;}if(!on){ctx.moveTo(q[0]*sc,q[1]*sc+oy);on=true;}else ctx.lineTo(q[0]*sc,q[1]*sc+oy);}ctx.stroke();}
+function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+
+function drawScene(ctx,W,H,move,cfg,t){
+  const mv=MOVES[move],cam=makeCam(cfg,mv),sc=W/IMG_W,oy=0,th=THEMES[cfg.light];
+  ctx.clearRect(0,0,W,H);
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,th.wall2);g.addColorStop(1,th.wall);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  const back=[];for(let x=-80;x<=80;x+=.5){const q=proj(cam,[x,0,-6]);if(q&&q[0]>-IMG_W&&q[0]<2*IMG_W)back.push(q);}
+  if(back.length>1){
+    ctx.beginPath();ctx.moveTo(-10,back[0][1]*sc);for(const q of back)ctx.lineTo(q[0]*sc,q[1]*sc);
+    ctx.lineTo(W+10,back[back.length-1][1]*sc);ctx.lineTo(W+10,H+10);ctx.lineTo(-10,H+10);ctx.closePath();ctx.fillStyle=th.floor;ctx.fill();
+    if(th.grass){const gr=[];for(let x=-80;x<=80;x+=.5){const q=proj(cam,[x,0,-3]);if(q&&q[0]>-IMG_W&&q[0]<2*IMG_W)gr.push(q);}
+      if(gr.length>1){ctx.beginPath();ctx.moveTo(-10,back[0][1]*sc);for(const q of back)ctx.lineTo(q[0]*sc,q[1]*sc);ctx.lineTo(W+10,gr[gr.length-1][1]*sc);for(let i=gr.length-1;i>=0;i--)ctx.lineTo(gr[i][0]*sc,gr[i][1]*sc);ctx.closePath();ctx.fillStyle=th.grass;ctx.fill();}}
+    else{ctx.strokeStyle=th.sk;ctx.lineWidth=Math.max(2,10*sc);ctx.beginPath();back.forEach((q,i)=>i?ctx.lineTo(q[0]*sc,q[1]*sc-4*sc):ctx.moveTo(q[0]*sc,q[1]*sc-4*sc));ctx.stroke();}
+  }
+  ctx.lineCap="round";ctx.strokeStyle=th.line;ctx.globalAlpha=.85;ctx.lineWidth=Math.max(1,5*sc);
+  if(move==="sprint"){
+    for(const z of [-1.83,-.61,.61,1.83]) strokePoly(ctx,polyPts(cam,[-60,0,z],[60,0,z],120),sc,oy);
+    ctx.globalAlpha=.35;for(let x=-30;x<=30;x+=2) strokePoly(ctx,polyPts(cam,[x,0,.55],[x,0,.67],2),sc,oy);
+  }else{
+    const m=[[-.55,0,-.5],[.65,0,-.5],[.65,0,.45],[-.55,0,.45]].map(p=>proj(cam,p));
+    if(m.every(Boolean)){ctx.globalAlpha=.9;ctx.fillStyle="#2d4d5a";ctx.beginPath();m.forEach((q,i)=>i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc));ctx.closePath();ctx.fill();}
+  }
+  ctx.globalAlpha=1;
+  const [a]=scaleEnds(cfg);ctx.lineWidth=Math.max(2,14*sc);ctx.lineCap="butt";
+  for(let i=0;i<10;i++){const q0=proj(cam,[a[0]+i/10,a[1],a[2]]),q1=proj(cam,[a[0]+(i+1)/10,a[1],a[2]]);if(!q0||!q1)continue;
+    ctx.strokeStyle=i%2?"#111":"#f4f4f4";ctx.beginPath();ctx.moveTo(q0[0]*sc,q0[1]*sc);ctx.lineTo(q1[0]*sc,q1[1]*sc);ctx.stroke();}
+  const E=exposure(cfg),n=E>1/1500?Math.min(14,Math.ceil(E*4000)+2):1,B=brightness(cfg);
+  for(let i=0;i<n;i++){const tt=n===1?t:t+(i/(n-1)-.5)*E;drawAthlete(ctx,cam,mv.pose(tt,cfg),sc,cfg,n===1?1:Math.min(1,2.4/n),B);}
+  // exposure: dark & grainy or washed out
+  if(B<1){const dark=clamp(.82*(1-B),0,.82);ctx.fillStyle=`rgba(0,0,0,${dark})`;ctx.fillRect(0,0,W,H);
+    if(B<.7){const N=Math.round(W*H/180*(1-B));let seed=Math.floor(t*cfg.fps)*9301+49297;
+      for(let i=0;i<N;i++){seed=(seed*9301+49297)%233280;const x=seed/233280*W;seed=(seed*9301+49297)%233280;const y=seed/233280*H;ctx.fillStyle=i%2?"rgba(255,255,255,.16)":"rgba(0,0,0,.22)";ctx.fillRect(x,y,1.6,1.6);}}}
+  else if(B>1.6){ctx.fillStyle=`rgba(255,255,255,${clamp(.2*Math.log2(B/1.6)+.08,0,.75)})`;ctx.fillRect(0,0,W,H);}
+  return cam;
+}
+function drawAthlete(ctx,cam,P,sc,cfg,alpha,B){
+  const pr={};for(const k in P)pr[k]=proj(cam,P[k]);
+  const seg=(a,b,w,col)=>{const p=pr[a],q=pr[b];if(!p||!q)return;ctx.strokeStyle=col;ctx.lineWidth=Math.max(2,w*sc);ctx.beginPath();ctx.moveTo(p[0]*sc,p[1]*sc);ctx.lineTo(q[0]*sc,q[1]*sc);ctx.stroke();};
+  ctx.globalAlpha=alpha;ctx.lineCap="round";ctx.lineJoin="round";
+  const far="#5d7480",body="#203842",near="#0e2229";
+  seg("shF","elF",30,far);seg("elF","wrF",26,far);
+  seg("hipF","kneeF",42,far);seg("kneeF","ankleF",34,far);seg("ankleF","heelF",22,far);seg("heelF","toeF",22,far);
+  seg("hipN","shN",60,body);
+  const hd=pr.head,shp=pr.shN;
+  if(hd&&shp){const r=Math.hypot(hd[0]-shp[0],hd[1]-shp[1])*.42;ctx.fillStyle=body;ctx.beginPath();ctx.arc(hd[0]*sc,hd[1]*sc,Math.max(3,r*sc),0,7);ctx.fill();}
+  seg("hipN","kneeN",44,near);seg("kneeN","ankleN",36,near);seg("ankleN","heelN",24,near);seg("heelN","toeN",24,near);
+  seg("shN","elN",32,near);seg("elN","wrN",28,near);
+  const bloom=B>2.5?clamp(1+.35*Math.log2(B/2.5),1,2.6):1;
+  for(const s of ["N","F"])for(const nme of SIDE_PTS){
+    const q=pr[nme+s];if(!q)continue;const r=Math.max(s==="N"?3:2.2,(s==="N"?12:9)*sc)*bloom;
+    ctx.fillStyle=s==="N"?"#ffffff":"rgba(255,255,255,.6)";ctx.beginPath();ctx.arc(q[0]*sc,q[1]*sc,r,0,7);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+function drawOverlay(ctx,W,H,move,cfg,t,opt={}){
+  const mv=MOVES[move],cam=makeCam(cfg,mv),sc=W/IMG_W,S=cfg.side==="near"?"N":"F";
+  ctx.clearRect(0,0,W,H);
+  // analysed-side marker rings (in colour)
+  const P=mv.pose(t,cfg);
+  ctx.strokeStyle="#00c2b5";ctx.lineWidth=Math.max(1.5,4*sc);
+  for(const n of SIDE_PTS){const q=proj(cam,P[n+S]);if(!q)continue;ctx.beginPath();ctx.arc(q[0]*sc,q[1]*sc,Math.max(4.5,15*sc),0,7);ctx.stroke();}
+  if(opt.strobe){
+    const dt=1/cfg.fps,dur=mv.duration(cfg);ctx.fillStyle="rgba(0,194,181,.8)";let c=0;
+    for(let tt=.0031;tt<dur&&c<900;tt+=dt,c++){const Q=mv.pose(tt,cfg);
+      for(const n of ["ankle","toe","knee","hip"]){const q=proj(cam,Q[n+S]);if(!q)continue;ctx.beginPath();ctx.arc(q[0]*sc,q[1]*sc,Math.max(1.6,5*sc),0,7);ctx.fill();}}
+  }
+  if(opt.angle){
+    const h=proj(cam,P["hip"+S]),k=proj(cam,P["knee"+S]),an=proj(cam,P["ankle"+S]);
+    if(h&&k&&an){
+      const a1=Math.atan2(h[1]-k[1],h[0]-k[0]),a2=Math.atan2(an[1]-k[1],an[0]-k[0]);
+      let d=a2-a1;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;
+      const R=Math.max(16,60*sc);
+      ctx.strokeStyle="#f2b632";ctx.lineWidth=Math.max(2,6*sc);ctx.beginPath();ctx.arc(k[0]*sc,k[1]*sc,R,a1,a1+d,d<0);ctx.stroke();
+      const ang=Math.abs(d)/DEG,mid=a1+d/2,lx=k[0]*sc-Math.cos(mid)*R*1.9,ly=k[1]*sc-Math.sin(mid)*R*1.9;
+      ctx.font=`700 ${Math.max(12,34*sc)}px "Atkinson Hyperlegible",sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";
+      const txt=`${ang.toFixed(0)}°`,tw=ctx.measureText(txt).width+14;
+      ctx.fillStyle="rgba(12,18,21,.8)";roundRect(ctx,lx-tw/2,ly-Math.max(10,24*sc),tw,Math.max(20,48*sc),8);ctx.fill();
+      ctx.fillStyle="#f2b632";ctx.fillText(txt,lx,ly+1);
+      opt.out&&(opt.out.angle=ang);
+    }
+  }
+  // rows not recorded at high frame rates
+  const rows=ROWS[cfg.fps];
+  if(rows<IMG_H){
+    const bar=(IMG_H-rows)/2*sc;ctx.fillStyle="rgba(5,8,10,.93)";ctx.fillRect(0,0,W,bar);ctx.fillRect(0,H-bar,W,bar);
+    ctx.strokeStyle="rgba(242,182,50,.9)";ctx.setLineDash([8,6]);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,bar);ctx.lineTo(W,bar);ctx.moveTo(0,H-bar);ctx.lineTo(W,H-bar);ctx.stroke();ctx.setLineDash([]);
+    if(bar>26){ctx.fillStyle="#f2b632";ctx.font=`700 ${Math.max(12,30*sc)}px "Atkinson Hyperlegible",sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";
+      ctx.fillText(`Not recorded at ${cfg.fps} fps`,W/2,H-bar/2);}
+  }
+  // HUD
+  const s=Math.max(.6,W/800),pad=12*s,top=(IMG_H-rows)/2*sc;
+  ctx.font=`700 ${13*s}px "Atkinson Hyperlegible",sans-serif`;ctx.textBaseline="middle";ctx.textAlign="left";
+  const label=`${cfg.fps} fps · ${cfg.lens} mm · 1/${Math.round(1/exposure(cfg))} s · f/${cfg.iris}`;const tw=ctx.measureText(label).width;
+  ctx.fillStyle="rgba(12,18,21,.72)";roundRect(ctx,pad,top+pad,tw+40*s,26*s,13*s);ctx.fill();
+  ctx.fillStyle="#ff3b30";ctx.beginPath();ctx.arc(pad+14*s,top+pad+13*s,5*s,0,7);ctx.fill();
+  ctx.fillStyle="#fff";ctx.fillText(label,pad+25*s,top+pad+13.5*s);
+  const fr=`Frame ${Math.floor(t*cfg.fps)}`;ctx.textAlign="right";const fw=ctx.measureText(fr).width;
+  ctx.fillStyle="rgba(12,18,21,.72)";roundRect(ctx,W-pad-fw-20*s,top+pad,fw+20*s,26*s,13*s);ctx.fill();
+  ctx.fillStyle="#fff";ctx.fillText(fr,W-pad-10*s,top+pad+13.5*s);
+}
+
+/* ============================================================
+   Drawing: plan view
+   ============================================================ */
+let planXf=null;
+function drawPlan(cv,move,cfg,t){
+  const dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;
+  if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(H*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);}
+  const ctx=cv.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);
+  const mv=MOVES[move],cam=makeCam(cfg,mv),cx=cam.C[0],cz=cam.C[2];
+  const xs=move==="sprint"?[-9,9]:[-3.5,3.5];
+  let x0=Math.min(xs[0],cx-1.2),x1=Math.max(xs[1],cx+1.2),z0=-2.6,z1=Math.max(cz+1.4,move==="sprint"?6:5);
+  const pad=26,s=Math.min((W-2*pad)/(x1-x0),(H-2*pad)/(z1-z0));
+  const ox=W/2-(x0+x1)/2*s,oz=H/2-(z0+z1)/2*s,X=x=>ox+x*s,Z=z=>oz+z*s;planXf={ox,oz,s};
+  ctx.fillStyle=cfg.light==="outdoor"?"#e9f1e6":"#eef3f5";ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle="rgba(0,61,80,.06)";ctx.lineWidth=1;
+  for(let x=Math.ceil(x0-8);x<=x1+8;x++){ctx.beginPath();ctx.moveTo(X(x),0);ctx.lineTo(X(x),H);ctx.stroke();}
+  for(let z=Math.ceil(z0-8);z<=z1+8;z++){ctx.beginPath();ctx.moveTo(0,Z(z));ctx.lineTo(W,Z(z));ctx.stroke();}
+  const yaw=Math.atan2(cam.f[0],cam.f[2]),hf=Math.atan(cam.tH),Lr=60;
+  ctx.fillStyle="rgba(0,113,188,.12)";ctx.strokeStyle="rgba(0,113,188,.45)";ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(X(cx),Z(cz));for(const a of[yaw-hf,yaw+hf])ctx.lineTo(X(cx+Math.sin(a)*Lr),Z(cz+Math.cos(a)*Lr));ctx.closePath();ctx.fill();
+  for(const a of[yaw-hf,yaw+hf]){ctx.beginPath();ctx.moveTo(X(cx),Z(cz));ctx.lineTo(X(cx+Math.sin(a)*Lr),Z(cz+Math.cos(a)*Lr));ctx.stroke();}
+  if(move==="sprint"){
+    ctx.fillStyle=cfg.light==="outdoor"?"rgba(182,90,64,.25)":"rgba(0,61,80,.06)";ctx.fillRect(0,Z(-1.83),W,Z(1.83)-Z(-1.83));
+    ctx.strokeStyle="#9fb3ba";ctx.lineWidth=1.5;for(const z of[-1.83,-.61,.61,1.83]){ctx.beginPath();ctx.moveTo(0,Z(z));ctx.lineTo(W,Z(z));ctx.stroke();}
+    arrowH(ctx,X(xs[0]+.6),X(xs[0]+2.6),Z(-1.2),"#003d50");
+  }else{ctx.fillStyle="#2d4d5a";ctx.fillRect(X(-.55),Z(-.5),1.2*s,.95*s);}
+  ctx.setLineDash([6,6]);ctx.strokeStyle="#00857e";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,Z(0));ctx.lineTo(W,Z(0));ctx.stroke();ctx.setLineDash([]);
+  ctx.font='700 13px "Atkinson Hyperlegible",sans-serif';ctx.fillStyle="#00857e";ctx.textAlign="left";ctx.textBaseline="bottom";ctx.fillText("Athlete's line",8,Z(0)-4);
+  const P=mv.pose(t,cfg),hx=P.hipN[0];
+  ctx.fillStyle="#0b2b36";ctx.beginPath();ctx.ellipse(X(hx),Z(-.13),.16*s,.28*s,0,0,7);ctx.fill();
+  ctx.beginPath();ctx.arc(X(hx+.05),Z(-.13),.11*s,0,7);ctx.fillStyle="#3c6370";ctx.fill();
+  const zs=scaleZ(cfg);ctx.lineWidth=Math.max(4,.07*s);
+  for(let i=0;i<10;i++){ctx.strokeStyle=i%2?"#1b1b1b":"#f2b632";ctx.beginPath();ctx.moveTo(X(-.5+i/10),Z(zs));ctx.lineTo(X(-.5+(i+1)/10),Z(zs));ctx.stroke();}
+  ctx.strokeStyle="#003d50";ctx.lineWidth=1.2;ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(X(cx),Z(cz));ctx.lineTo(X(0),Z(0));ctx.stroke();ctx.setLineDash([]);
+  const mx=(X(cx)+X(0))/2,mz=(Z(cz)+Z(0))/2,lab=`${cfg.dist.toFixed(1)} m`;
+  ctx.font='700 14px "Atkinson Hyperlegible",sans-serif';const lw=ctx.measureText(lab).width+14;
+  ctx.fillStyle="#fff";roundRect(ctx,mx-lw/2,mz-12,lw,24,12);ctx.fill();ctx.strokeStyle="#003d50";ctx.stroke();
+  ctx.fillStyle="#003d50";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(lab,mx,mz+1);
+  ctx.save();ctx.translate(X(cx),Z(cz));ctx.rotate(-yaw+Math.PI);
+  ctx.fillStyle="#9aa7ac";roundRect(ctx,-9,-10,18,16,3);ctx.fill();               // camera body
+  ctx.fillStyle="#0c1215";roundRect(ctx,-6,6,12,14,3);ctx.fill();                 // lens
+  ctx.restore();
+  ctx.beginPath();ctx.arc(X(cx),Z(cz),24,0,7);ctx.strokeStyle="rgba(0,133,126,.35)";ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);
+  if(Math.abs(cfg.angle)>0){ctx.fillStyle="#8b3556";ctx.font='700 13px "Atkinson Hyperlegible",sans-serif';ctx.textAlign="left";ctx.fillText(`${Math.abs(cfg.angle)}° off`,X(cx)+28,Z(cz));}
+}
+function arrowH(ctx,xa,xb,y,col){ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(xa,y);ctx.lineTo(xb,y);ctx.stroke();ctx.beginPath();ctx.moveTo(xb,y);ctx.lineTo(xb-8,y-5);ctx.lineTo(xb-8,y+5);ctx.closePath();ctx.fill();}
+
+/* ============================================================
+   State and UI
+   ============================================================ */
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const state={move:"sprint",cfg:{sprint:{...MOVES.sprint.ideal},cmj:{...MOVES.cmj.ideal}},t:0,playing:!matchMedia("(prefers-reduced-motion: reduce)").matches,speed:.25,strobe:false,showAngle:true,an:null,tab:"explore"};
+const $=s=>document.querySelector(s);
+const cfg=()=>state.cfg[state.move];
+const NUMKEYS={fps:parseInt,shutter:parseInt,iris:parseFloat};
+
+function syncControls(){
+  const c=cfg();
+  for(const id of["dist","angle","height"]) $("#"+id).value=c[id];
+  $("#o-dist").textContent=`${c.dist.toFixed(1)} m`;
+  $("#o-angle").textContent=c.angle===0?"0° (side-on)":`${Math.abs(c.angle)}°`;
+  $("#o-height").textContent=`${c.height.toFixed(1)} m`;
+  document.querySelectorAll(".seg").forEach(g=>{const k=g.dataset.key;g.querySelectorAll("button").forEach(b=>b.setAttribute("aria-checked",String(String(c[k])===b.dataset.v)));});
+  const vw=2*c.dist*SENSOR_W/2/+c.lens;
+  $("#n-lens").textContent=`${vw.toFixed(1)} m wide at the athlete`;
+  $("#n-fps").textContent=`${IMG_W} × ${ROWS[c.fps]} pixels`;
+  $("#resInfo").textContent=`${IMG_W} × ${ROWS[c.fps]} · ${c.fps} fps`;
+}
+function update(){syncControls();state.an=analyse(state.move,cfg());renderReport();}
+for(const id of["dist","angle","height"]) $("#"+id).addEventListener("input",e=>{cfg()[id]=parseFloat(e.target.value);update();});
+document.querySelectorAll(".seg").forEach(g=>{
+  g.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.disabled)return;const k=g.dataset.key;cfg()[k]=NUMKEYS[k]?NUMKEYS[k](b.dataset.v):b.dataset.v;update();});
+  g.addEventListener("keydown",radioKeys);
+});
+function radioKeys(e){
+  if(!["ArrowRight","ArrowLeft","ArrowDown","ArrowUp"].includes(e.key))return;
+  const bs=[...e.currentTarget.querySelectorAll("[role=radio]")],i=bs.indexOf(document.activeElement);if(i<0)return;
+  const n=bs[(i+(e.key==="ArrowRight"||e.key==="ArrowDown"?1:bs.length-1))%bs.length];n.focus();n.click();e.preventDefault();
+}
+document.querySelectorAll(".move-switch button").forEach(b=>b.addEventListener("click",()=>{
+  state.move=b.dataset.move;state.t=0;
+  document.querySelectorAll(".move-switch button").forEach(x=>x.setAttribute("aria-checked",String(x===b)));
+  update();renderChecklist();
+}));
+document.querySelector(".move-switch").addEventListener("keydown",radioKeys);
+
+const tabs=[...document.querySelectorAll("[role=tab]")];
+function showTab(id){
+  tabs.forEach(t=>{const on=t.id===id;t.setAttribute("aria-selected",String(on));t.tabIndex=on?0:-1;document.getElementById(t.getAttribute("aria-controls")).hidden=!on;});
+  state.tab=id.replace("tab-","");
+  if(state.tab==="check")renderChecklist();
+  if(state.tab==="quiz")renderQuiz();
+  try{history.replaceState(null,"","#"+state.tab)}catch(e){}
+}
+tabs.forEach((t,i)=>{t.addEventListener("click",()=>showTab(t.id));t.addEventListener("keydown",e=>{
+  if(e.key==="ArrowRight"||e.key==="ArrowLeft"){const n=tabs[(i+(e.key==="ArrowRight"?1:tabs.length-1))%tabs.length];n.focus();showTab(n.id);}});});
+
+function setPlaying(p){state.playing=p;$("#ico-pause").hidden=!p;$("#ico-play").hidden=p;$("#play").setAttribute("aria-label",p?"Pause":"Play");}
+$("#play").addEventListener("click",()=>setPlaying(!state.playing));
+$("#stepf").addEventListener("click",()=>{setPlaying(false);state.t+=1/cfg().fps;});
+const speedGroup=document.querySelector(".transport .chip-group");
+speedGroup.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;state.speed=parseFloat(b.dataset.speed);speedGroup.querySelectorAll("button").forEach(x=>x.setAttribute("aria-checked",String(x===b)));});
+speedGroup.addEventListener("keydown",radioKeys);
+$("#strobe").addEventListener("change",e=>state.strobe=e.target.checked);
+$("#showAngle").addEventListener("change",e=>state.showAngle=e.target.checked);
+
+const MISTAKES={
+  sprint:[{angle:28},{dist:3,lens:"4"},{shutter:250},{scale:"near"},{height:2.1},{fps:500},{light:"dim",shutter:2000},{side:"far"},{light:"outdoor"}],
+  cmj:[{angle:-25},{dist:2.5,lens:"4"},{shutter:250},{scale:"far"},{height:2.0},{fps:300},{light:"dim"},{side:"far"},{dist:4,lens:"12"}]
+};
+let mistakeIdx=0;
+$("#ideal").addEventListener("click",()=>{state.cfg[state.move]={...MOVES[state.move].ideal};update();});
+$("#mistake").addEventListener("click",()=>{const L2=MISTAKES[state.move];state.cfg[state.move]={...MOVES[state.move].ideal,...L2[mistakeIdx%L2.length]};mistakeIdx++;update();});
+
+const plan=$("#plan");let dragging=false;
+function planWorld(e){const r=plan.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;return[(x-planXf.ox)/planXf.s,(y-planXf.oz)/planXf.s,x,y];}
+function overCam(px,py){const c=makeCam(cfg(),MOVES[state.move]);return Math.hypot(px-(planXf.ox+c.C[0]*planXf.s),py-(planXf.oz+c.C[2]*planXf.s))<36;}
+plan.addEventListener("pointerdown",e=>{if(!planXf)return;const[, ,px,py]=planWorld(e);if(overCam(px,py)){dragging=true;plan.setPointerCapture(e.pointerId);e.preventDefault();}});
+plan.addEventListener("pointermove",e=>{if(!planXf)return;const[wx,wz,px,py]=planWorld(e);
+  if(!dragging){plan.style.cursor=overCam(px,py)?"grab":"default";return;}
+  plan.style.cursor="grabbing";const c=cfg();
+  c.dist=clamp(Math.round(Math.hypot(wx,Math.max(wz,.3))*2)/2,1.5,16);c.angle=clamp(Math.round(Math.atan2(wx,Math.max(wz,.3))/DEG),-40,40);update();});
+plan.addEventListener("pointerup",()=>{dragging=false;plan.style.cursor="grab";});
+plan.addEventListener("pointercancel",()=>dragging=false);
+
+const ICON={good:"✓",warn:"!",bad:"✕"},WORD={good:"Good",warn:"Check",bad:"Fix"};
+const openChecks=new Set();
+function renderReport(){
+  const r=state.an,move=state.move,c=cfg();
+  const ok=r.nb===0&&r.nw<=1,mid=r.nb===0;
+  const lab=ok?"Ready to film":mid?"Nearly there":"Fix before filming",col=ok?"var(--good)":mid?"var(--warn)":"var(--bad)";
+  const sub=ok?"This set-up will give you trustworthy data.":mid?`${r.nw} thing${r.nw>1?"s":""} could be better. Tap them below.`:`${r.nb} problem${r.nb>1?"s":""} will make your data wrong. Tap them below.`;
+  const C=2*Math.PI*32,off=C*(1-r.score/100);
+  $("#verdict").innerHTML=`<svg class="dial" viewBox="0 0 78 78" aria-hidden="true"><circle cx="39" cy="39" r="32" fill="none" stroke="#d6e2e7" stroke-width="8"/><circle cx="39" cy="39" r="32" fill="none" stroke="${col}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${off}" transform="rotate(-90 39 39)"/><text x="39" y="45" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-weight="700" font-size="22" fill="#003d50">${r.score}</text></svg><div><h3 style="color:${col}">${lab}</h3><p>${sub}</p></div>`;
+  const order={bad:0,warn:1,good:2},list=[...r.checks].sort((a,b)=>order[a.s]-order[b.s]);
+  $("#checks").innerHTML=list.map(ch=>{const open=openChecks.has(ch.id);return`<li class="check s-${ch.s}"><button aria-expanded="${open}" data-id="${ch.id}"><span class="badge" aria-label="${WORD[ch.s]}">${ICON[ch.s]}</span><span><span class="t">${ch.t}</span><span class="v">${ch.v}</span></span><svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="more" ${open?"":"hidden"}><p><b>Why it matters:</b> ${ch.why}</p>${ch.s!=="good"?`<p><b>How to fix it:</b> ${ch.fix}</p>`:""}</div></li>`}).join("");
+  const cls=(v,g,w)=>!Number.isFinite(v)?"bad":Math.abs(v)<=g?"good":Math.abs(v)<=w?"warn":"bad";
+  let html=`<div class="num ${cls(r.rms,1.5,3)}"><div class="k">Knee angle error</div><div class="n">±${fmt(r.rms,1)}°</div><div class="d">${Number.isFinite(r.maxErr)?`Worst frame ${fmt(r.maxErr,1)}° out`:"Knee not fully in shot"}</div></div>`;
+  if(move==="sprint"){
+    html+=`<div class="num ${cls(r.vErr,1.5,4)}"><div class="k">Running speed</div><div class="n">${fmt(r.vMeas,2)} m/s</div><div class="d">True speed ${fmt(r.vTrue,2)} m/s${Number.isFinite(r.vErr)?` (${r.vErr>=0?"+":""}${fmt(r.vErr,1)}%)`:""}</div></div>`;
+    const ms=1000/c.fps;
+    html+=`<div class="num ${cls(ms,5,10.5)}"><div class="k">Contact time precision</div><div class="n">±${fmt(ms,1)} ms</div><div class="d">A ${Math.round(r.ctTrue)} ms contact could read ${Math.round(r.ctTrue-ms)} to ${Math.round(r.ctTrue+ms)} ms</div></div>`;
+  }else{
+    html+=`<div class="num ${cls(r.hErr,2,5)}"><div class="k">Jump height (hip rise)</div><div class="n">${fmt(r.hMeas,1)} cm</div><div class="d">True ${fmt(r.hTrue,1)} cm${Number.isFinite(r.hErr)?` (${r.hErr>=0?"+":""}${fmt(r.hErr,1)}%)`:""}</div></div>`;
+    html+=`<div class="num ${cls(r.hFlightErr,1,2.5)}"><div class="k">Flight time precision</div><div class="n">±${fmt(1000/c.fps,1)} ms</div><div class="d">Jump height from flight time could be out by ${fmt(r.hFlightErr,1)} cm</div></div>`;
+  }
+  html+=`<div class="num ${cls(r.blurCm,2.5,5)}"><div class="k">Marker blur</div><div class="n">${fmt(r.blurCm,1)} cm</div><div class="d">Shutter open for 1/${Math.round(1/r.E)} s</div></div>`;
+  $("#numbers").innerHTML=html;
+  // shutter speeds slower than the frame interval are not possible
+  document.querySelectorAll('[data-key="shutter"] button').forEach(b=>{b.disabled=+b.dataset.v<c.fps;b.title=b.disabled?`Not possible at ${c.fps} fps`:"";});
+}
+$("#checks").addEventListener("click",e=>{const b=e.target.closest("button[data-id]");if(!b)return;const id=b.dataset.id;
+  if(openChecks.has(id))openChecks.delete(id);else openChecks.add(id);
+  const open=openChecks.has(id);b.setAttribute("aria-expanded",String(open));b.nextElementSibling.hidden=!open;});
+// keep shutter valid when frame rate goes up
+function validShutter(c){if(c.shutter<c.fps){const opts=[250,500,1000,2000,4000];c.shutter=opts.find(v=>v>=c.fps);}}
+
+/* ============================================================
+   Animation loop
+   ============================================================ */
+function fit(cv){const dpr=Math.min(window.devicePixelRatio||1,2),W=cv.clientWidth,H=cv.clientHeight;if(!W)return null;
+  if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(H*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);}
+  const ctx=cv.getContext("2d");ctx.setTransform(1,0,0,1,0,0);return{ctx,W:cv.width,H:cv.height};}
+let lastTS=null;
+const cam=$("#cam"),camO=$("#camO"),qcam=$("#qcam"),qcamO=$("#qcamO");
+function frame(ts){
+  const dtR=lastTS==null?0:Math.min(.05,(ts-lastTS)/1000);lastTS=ts;
+  if(state.tab==="explore"){
+    const c=cfg(),mv=MOVES[state.move],dur=mv.duration(c);
+    if(state.playing)state.t+=dtR*state.speed;
+    state.t=((state.t%dur)+dur)%dur;
+    const tf=Math.floor(state.t*c.fps)/c.fps+.0001;
+    const f=fit(cam),o=fit(camO);
+    if(f&&o){drawScene(f.ctx,f.W,f.H,state.move,c,tf);const out={};drawOverlay(o.ctx,o.W,o.H,state.move,c,tf,{strobe:state.strobe,angle:state.showAngle,out});
+      const P=mv.pose(tf,c),S=c.side==="near"?"N":"F",tru=kneeAngle2(P["hip"+S],P["knee"+S],P["ankle"+S]);
+      $("#liveAngle").innerHTML=state.showAngle&&out.angle!=null?`Measured <b>${out.angle.toFixed(0)}°</b> · true <b>${tru.toFixed(0)}°</b>`:"";}
+    drawPlan(plan,state.move,c,tf);
+  }else if(state.tab==="quiz"&&quiz.cur){
+    const q=quiz.cur,mv=MOVES[q.move],dur=mv.duration(q.cfg);
+    quiz.t=(quiz.t+dtR*.25)%dur;const tf=Math.floor(quiz.t*q.cfg.fps)/q.cfg.fps+.0001;
+    const f=fit(qcam),o=fit(qcamO);if(f&&o){drawScene(f.ctx,f.W,f.H,q.move,q.cfg,tf);drawOverlay(o.ctx,o.W,o.H,q.move,q.cfg,tf,{});}
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ============================================================
+   Practical checklist
+   ============================================================ */
+const CHECK={
+  sprint:{
+    card:[["Distance","6 to 13 m from the lane (about 8 m with an 8 mm lens)","dist"],["Angle","Side-on: pointing straight across the lane","angle"],["Height","Lens at hip height, camera level","height"],["Lens","Not very wide (avoid 4 mm). About 4 to 8 m of lane in view","lens"],["Frame rate","220 fps (full picture)","fps"],["Shutter","1/1000 s, then set brightness with the iris","shutter"],["Scale","1 m scale along the middle of the lane","scale"]],
+    stages:[
+      ["Set up the camera",[
+        ["High-speed camera on a tripod, plugged into the capture laptop","The camera records straight to the laptop. The tripod keeps it perfectly still."],
+        ["Camera side-on to the lane","Look at the live picture. The lane lines should run straight across the screen, not slope."],
+        ["6 to 13 m from the lane, with a lens that isn't very wide","Further back keeps the picture flat. Very wide lenses (e.g. 4 mm) bend the picture."],
+        ["Lens at hip height and the camera level","A high or low camera has to tilt, which stretches the picture."],
+        ["About 4 to 8 m of the lane in view, with the part you want in the middle","Leave room either side. The edges of the picture are the least accurate."]
+      ]],
+      ["Camera settings, markers and scale",[
+        ["Frame rate set to 220 fps. Write it down","220 fps records the full picture. Higher rates cut off the top and bottom, so check the athlete still fits if you go higher."],
+        ["Shutter speed set to 1/1000 s","A fast shutter freezes the markers. Slower than about 1/500 s and they smear."],
+        ["Brightness set with the iris ring on the lens","Markers should be bright white dots: not grey (too dark) and not merged blobs (too bright). Add light if the iris is fully open and it's still dark."],
+        ["Focus ring set on the athlete's line, then left alone","Hold the scale in the middle of the lane and turn the focus ring until its edges are sharp."],
+        ["Markers on the side facing the camera: shoulder, hip, knee, ankle, toe","Two markers per segment are needed to measure its angle."],
+        ["Record a clip of the 1 m scale held level along the middle of the lane","It must be exactly where the athlete runs. Nearer the camera makes everything look bigger."]
+      ]],
+      ["Record and check",[
+        ["Athlete is already at speed before entering the shot, and keeps going after","Starting or stopping in shot changes the speed you measure."],
+        ["Nobody has touched the camera, tripod or lens rings since recording the scale","If anything moves, record the scale again."],
+        ["Play the trial back and pause: are the markers sharp?","Smeared markers mean a faster shutter. Grey markers mean more light or a more open iris."],
+        ["Are all markers visible for at least one full stride?","You need one touchdown, toe-off and the next touchdown on the near leg."],
+        ["Export the trial as an MP4, named with the trial and frame rate (e.g. Sprint_T1_220fps)","The Kinematic Analysis tool needs the frame rate you recorded at, which may not be the rate the MP4 plays at."]
+      ]]
+    ]},
+  cmj:{
+    card:[["Distance","4 to 8 m from the athlete (about 5 m with a 6 mm lens)","dist"],["Angle","Side-on: pointing straight at the athlete's side","angle"],["Height","Lens at about waist height, camera level","height"],["Lens","Not very wide (avoid 4 mm). Whole jump in shot with space above","lens"],["Frame rate","220 fps (full picture)","fps"],["Shutter","1/1000 s, then set brightness with the iris","shutter"],["Scale","1 m scale on the floor where the feet are","scale"]],
+    stages:[
+      ["Set up the camera",[
+        ["High-speed camera on a tripod, plugged into the capture laptop","The camera records straight to the laptop. The tripod keeps it perfectly still."],
+        ["Camera side-on to the athlete","The camera should point straight at the athlete's side, not from the front or back."],
+        ["4 to 8 m away, with a lens that isn't very wide","Further back keeps the picture flat. Very wide lenses (e.g. 4 mm) bend the picture."],
+        ["Lens at about waist height and the camera level","A tilted camera stretches the top or bottom of the picture."],
+        ["Space above the head for the arm swing and jump, and feet in shot","Ask the athlete to reach up tall on their toes, and check their hands stay in the picture."]
+      ]],
+      ["Camera settings, markers and scale",[
+        ["Frame rate set to 220 fps. Write it down","At 300 fps and above the camera records a shorter picture, and the head and hands leave the top at the peak of the jump."],
+        ["Shutter speed set to 1/1000 s","A fast shutter freezes the markers. Slower than about 1/500 s and they smear."],
+        ["Brightness set with the iris ring on the lens","Markers should be bright white dots: not grey (too dark) and not merged blobs (too bright). Add light if the iris is fully open and it's still dark."],
+        ["Focus ring set where the athlete stands, then left alone","Stand the scale up where the athlete will jump and turn the focus ring until its edges are sharp."],
+        ["Markers on the side facing the camera: shoulder, hip, knee, ankle, toe","Two markers per segment are needed to measure its angle."],
+        ["Record a clip of the 1 m scale on the floor where the feet are, pointing front to back","It must be in the same line as the athlete. Nearer the camera makes everything look bigger."]
+      ]],
+      ["Record and check",[
+        ["Athlete stands still for 2 seconds, jumps, lands and stands still again","The still parts give you a start and end point to measure from."],
+        ["Nobody has touched the camera, tripod or lens rings since recording the scale","If anything moves, record the scale again."],
+        ["Play the trial back and pause: are the markers sharp?","Smeared markers mean a faster shutter. Grey markers mean more light or a more open iris."],
+        ["Head, hands and feet stay in shot for the whole jump","If anything leaves the shot, move the camera back or check the frame rate is 220 fps."],
+        ["Export the trial as an MP4, named with the trial and frame rate (e.g. CMJ_T1_220fps)","The Kinematic Analysis tool needs the frame rate you recorded at, which may not be the rate the MP4 plays at."]
+      ]]
+    ]}
+};
+const ICONS={
+  dist:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg>',
+  angle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20h16M4 20V4"/><path d="M4 14a6 6 0 0 1 6 6"/></svg>',
+  height:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M9 6l3-3 3 3M9 18l3 3 3-3"/></svg>',
+  lens:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>',
+  fps:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 5v14M16 5v14"/></svg>',
+  shutter:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 13V9M9 2h6"/></svg>',
+  scale:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="9" width="20" height="6" rx="1"/><path d="M6 9v3M10 9v3M14 9v3M18 9v3"/></svg>'
+};
+function renderChecklist(){
+  const move=state.move,d=CHECK[move],key="sesc02-check2-"+move,ticks=store.get(key,{});
+  let total=0,done=0;d.stages.forEach((s,i)=>s[1].forEach((it,j)=>{total++;if(ticks[i+"-"+j])done++;}));
+  $("#stages").innerHTML=`<div class="stage" style="padding-bottom:6px"><h2 style="font-size:28px">Your ${move==="sprint"?"sprint":"jump"} filming checklist</h2><p class="hint" style="margin-top:4px">Work through it with your partner. Tick each step once it's done. Each step says why it matters.</p><div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${done}" aria-label="Checklist progress"><span style="width:${done/total*100}%"></span></div><p class="hint">${done} of ${total} done</p></div>`+
+    d.stages.map((s,i)=>{const n=s[1].filter((it,j)=>ticks[i+"-"+j]).length;
+      return`<div class="stage ${n===s[1].length?"done":""}"><div class="stage-h"><span class="stage-num">${i+1}</span><h2>${s[0]}</h2><span class="count">${n}/${s[1].length}</span></div><ul class="items">${
+      s[1].map((it,j)=>{const id=`ck-${i}-${j}`,on=!!ticks[i+"-"+j];return`<li class="item ${on?"on":""}"><label for="${id}"><input type="checkbox" id="${id}" data-k="${i}-${j}" ${on?"checked":""}><span class="txt"><b>${it[0]}</b><span class="why">${it[1]}</span></span></label></li>`}).join("")}</ul></div>`}).join("");
+  $("#setcard").innerHTML=`<h2>Set-up card</h2><p class="hint">The numbers to aim for. Keep this open while you set up.</p><ul class="spec">${d.card.map(c=>`<li><span class="ico" aria-hidden="true">${ICONS[c[2]]}</span><span><span class="lab">${c[0]}</span><br><span class="val">${c[1]}</span></span></li>`).join("")}</ul>${done===total?`<div class="ready-banner"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>All done. Your clip is ready for the Kinematic Analysis tool.</div>`:""}<div class="preset-row"><button class="btn btn-ghost" id="resetTicks">Clear my ticks</button><button class="btn btn-ghost" id="toSim">Try this set-up in the simulator</button></div>`;
+}
+document.addEventListener("change",e=>{if(e.target.matches("#stages input[type=checkbox]")){const key="sesc02-check2-"+state.move,t=store.get(key,{});t[e.target.dataset.k]=e.target.checked;store.set(key,t);
+  const y=window.scrollY,k=e.target.dataset.k;renderChecklist();window.scrollTo(0,y);const el=document.querySelector(`[data-k="${k}"]`);el&&el.focus();}});
+document.addEventListener("click",e=>{
+  if(e.target.closest("#resetTicks")){store.set("sesc02-check2-"+state.move,{});renderChecklist();}
+  if(e.target.closest("#toSim")){state.cfg[state.move]={...MOVES[state.move].ideal};update();showTab("tab-explore");$("#tab-explore").focus();}
+});
+
+/* ============================================================
+   Spot the mistake
+   ============================================================ */
+const OPTS=["The camera isn't side-on","The camera is too close, with a very wide lens","The shutter speed is too slow","The scale is in the wrong place","The camera is too high","Part of the movement is cut off","The picture is too dark or too bright","Nothing. This set-up is good"];
+const QUIZ=[
+  {move:"sprint",d:{angle:30},a:0,why:"The camera is filming the lane from an angle, so the lane lines slope across the picture. Distances along the lane look shorter than they are, and knee angles are wrong.",fix:"Move the tripod until the lane lines run straight across the screen."},
+  {move:"cmj",d:{dist:2.5,lens:"4"},a:1,why:"Up close with the 4 mm lens, the picture bends (look at the floor lines curving) and the near leg looks bigger than the far leg.",fix:"Use a 6 or 8 mm lens and move back to about 5 m."},
+  {move:"sprint",d:{shutter:250},a:2,why:"At 1/250 s each frame is exposed for 4 ms. The foot travels several centimetres in that time, so markers smear into streaks.",fix:"Use 1/1000 s, then open the iris or add light to keep the picture bright."},
+  {move:"sprint",d:{scale:"near"},a:3,why:"The black and white scale is nearer the camera than the athlete, so it looks too long. The software then thinks the athlete covered less ground, so speed comes out too low.",fix:"Hold the scale along the middle of the lane, exactly where the athlete runs."},
+  {move:"cmj",d:{height:2.2,dist:4.5},a:4,why:"The camera is high and tilted down at the athlete, which stretches the bottom of the picture and changes joint angles.",fix:"Lower the tripod so the lens is at about waist height, and keep it level."},
+  {move:"cmj",d:{fps:500,shutter:1000},a:5,why:"At 500 fps the camera only records 462 of its 1080 rows, so the picture is a thin strip. The head, hands and feet are cut off.",fix:"Use 220 fps, which records the full picture."},
+  {move:"sprint",d:{light:"dim",shutter:2000},a:6,why:"A 1/2000 s shutter in a dim hall lets in very little light. The picture is dark and grainy, so markers are hard to see and track.",fix:"Open the iris (lower f-number), add light, and use 1/1000 s."},
+  {move:"sprint",d:{},a:7,why:"Side-on, 8 m away with an 8 mm lens, lens at hip height, 220 fps, 1/1000 s, good brightness, and the scale in the athlete's line. This is what you're aiming for.",fix:""},
+  {move:"cmj",d:{scale:"far"},a:3,why:"The scale is behind the athlete's line, so it looks too short. Every distance, including jump height, comes out too big.",fix:"Put the scale on the floor where the feet are."},
+  {move:"sprint",d:{light:"outdoor",iris:1.4},a:6,why:"Outdoors with the iris wide open, far too much light gets in. The picture is washed out and markers that are close together merge.",fix:"Close the iris (try f/8) until the markers are bright dots, not blobs."}
+];
+const quiz={i:0,res:[],cur:null,t:0,answered:false};
+const dotsHTML=()=>QUIZ.map((_,i)=>`<i class="${i===quiz.i?"cur":quiz.res[i]===true?"ok":quiz.res[i]===false?"no":""}"></i>`).join("");
+function renderQuiz(){
+  const q=QUIZ[quiz.i];quiz.cur={...q,cfg:{...MOVES[q.move].ideal,...q.d}};quiz.answered=false;
+  $("#qcount").textContent=`Question ${quiz.i+1} of ${QUIZ.length}`;$("#qdots").innerHTML=dotsHTML();
+  $("#qtitle").textContent=q.move==="sprint"?"A sprint set-up":"A jump set-up";
+  $("#qtext").textContent="Watch the camera view. What's the main problem with this set-up?";
+  const c=quiz.cur.cfg,lt={dim:"Dim hall",bright:"Bright lab",outdoor:"Outdoors"}[c.light];
+  $("#qtags").innerHTML=`<span>${c.dist} m away</span><span>${c.lens} mm lens</span><span>${c.fps} fps</span><span>1/${c.shutter} s</span><span>f/${c.iris}</span><span>${lt}</span>`;
+  $("#qopts").innerHTML=OPTS.map((o,i)=>`<button class="opt" data-i="${i}">${o}</button>`).join("");
+  $("#qfb").hidden=true;$("#qact").innerHTML="";
+}
+$("#qopts").addEventListener("click",e=>{
+  const b=e.target.closest(".opt");if(!b||quiz.answered)return;quiz.answered=true;
+  const q=QUIZ[quiz.i],ok=+b.dataset.i===q.a;quiz.res[quiz.i]=ok;
+  document.querySelectorAll(".opt").forEach(x=>{x.disabled=true;if(+x.dataset.i===q.a)x.classList.add("right");});
+  if(!ok)b.classList.add("wrong");
+  $("#qfb").hidden=false;$("#qfb").innerHTML=`<p><b>${ok?"Spot on.":"Not quite."}</b> ${q.why}</p>${q.fix?`<p><b>Fix:</b> ${q.fix}</p>`:""}`;
+  const last=quiz.i===QUIZ.length-1,score=quiz.res.filter(Boolean).length;
+  $("#qact").innerHTML=`${last?`<p style="width:100%;font-weight:700">You got ${score} out of ${QUIZ.length}.</p><button class="btn btn-primary" id="qagain">Start again</button>`:`<button class="btn btn-primary" id="qnext">Next question</button>`}<button class="btn btn-ghost" id="qopen">Open this set-up in the simulator</button>`;
+  $("#qdots").innerHTML=dotsHTML();($("#qnext")||$("#qagain")).focus();
+});
+$("#qact").addEventListener("click",e=>{
+  if(e.target.closest("#qnext")){quiz.i++;quiz.t=0;renderQuiz();}
+  if(e.target.closest("#qagain")){quiz.i=0;quiz.res=[];quiz.t=0;renderQuiz();}
+  if(e.target.closest("#qopen")){const q=quiz.cur;state.move=q.move;state.cfg[q.move]={...q.cfg};
+    document.querySelectorAll(".move-switch button").forEach(x=>x.setAttribute("aria-checked",String(x.dataset.move===q.move)));
+    update();showTab("tab-explore");window.scrollTo({top:0});}
+});
+
+/* ============================================================
+   Start
+   ============================================================ */
+// raising the frame rate above the shutter speed bumps the shutter to the slowest speed that's possible
+document.querySelector('[data-key="fps"]').addEventListener("click",()=>{validShutter(cfg());update();});
+setPlaying(state.playing);
+update();
+const h=location.hash.replace("#","");if(["check","quiz","explore"].includes(h))showTab("tab-"+h);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
