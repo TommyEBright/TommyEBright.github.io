@@ -5,6 +5,7 @@ Edit SECTIONS below, then run:  python3 scripts/build_site_map.py
 Safe to re-run: the injected block is wrapped in markers and replaced each time.
 """
 import os, re, html
+from urllib.parse import quote
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 START, END = "<!-- SITE-NAV:START -->", "<!-- SITE-NAV:END -->"
@@ -21,12 +22,16 @@ GROUPS = [
   ("SESD52 / SESH52 · Kinetics & kinematics", ["sesd52-kinematics-kinetics.html","kinetics-kinematics-sort.html","mechanism-to-measurement.html"]),
   ("SESD56 · Force, power & training", ["developing-power.html","imtp-analyser.html","vbt.html","coaching-cards.html",
      "force-analyser/index.html","CASES_Jump_Lab.html","screening-protocol-builder.html"]),
+  ("Field testing & jump analysis", ["Matt Examples/CMJIMTP.html","Matt Examples/sport-science-reports.html"]),
   ("Tools & activities", ["tools/biomechanics/projectile.html","tools/projectile.html","paper-ball-challenge.html"]),
  ]),
  ("Physiology", "teaching.html#physiology", [
   ("SESH58 · Nutrition Lab", [f"sesh58-nutrition-lab/{n}.html" for n in
     ["index","fuel-calculator","diet-analyser","feedback-builder","portfolio-checker","quiz","reflection"]]),
   ("SESH54 · Needs analysis", ["sesh54-needs-analysis/index.html"]),
+  ("Exercise physiology & cardiac", ["Matt Examples/SESH54_endurance_lab.html","Matt Examples/anaerobic-adaptations.html",
+     "Matt Examples/blood-lactate-analysis.html","Matt Examples/trimp.html","Matt Examples/ecg-learning.html",
+     "Matt Examples/ecg-interactive.html","Matt Examples/label-the-heart.html","Matt Examples/physiology-box-preview.html"]),
   ("Physiology pages & tools", ["pages/physiology/index.html","tools/physiology/placeholder.html"]),
  ]),
  ("Research, statistics & teaching", "research-projects.html", [
@@ -34,6 +39,9 @@ GROUPS = [
   ("MRes Stats Lab", [f"mres-stats-lab/{n}.html" for n in
     ["index","p-values","power","ci-dance","bayes-rule","bayes-factor","priors","mcmc","loo","residuals",
      "equivalence","show-the-data","two-lenses","fix-the-results"]]),
+  ("Statistics & research design (Matt Examples)", ["Matt Examples/Confidence intervals.html","Matt Examples/vra-lab.html",
+     "Matt Examples/outbreak_lab.html","Matt Examples/stats_escape_room_v2.html","Matt Examples/research design studio.html",
+     "Matt Examples/collaborative_research_page.html","Matt Examples/HTML storage.html"]),
   ("SESD55 · Quantitative deck", ["sesd55-quant-deck/index.html","sesd55-quant-deck/presenter.html"]),
  ]),
 ]
@@ -45,7 +53,7 @@ def title(path):
     return re.sub(r"\s*[—·|]\s*(Dr\. Tommy Bright|SESD56|SESC02|SESD55|SESH58.*|MRes Stats Lab)\s*$", "", s)
 
 def rel(src, dst):
-    return os.path.relpath(dst.split("#")[0], os.path.dirname(src) or ".") + ("#" + dst.split("#")[1] if "#" in dst else "")
+    return quote(os.path.relpath(dst.split("#")[0], os.path.dirname(src) or ".")) + ("#" + dst.split("#")[1] if "#" in dst else "")
 
 def nav_block(page, group, hub, sec, pages):
     i = pages.index(page)
@@ -69,14 +77,24 @@ def inject(page, block):
         t += "\n" + block + "\n"
     open(p, "w", encoding="utf-8").write(t)
 
+DOWNLOADS = [("Matt Examples/UKSCA_TSA.pdf","UKSCA TSA (PDF)"),("Matt Examples/threshold analysis.docx","Threshold analysis (Word)"),
+ ("Matt Examples/Copy_of_hrv_thresholds.ipynb","HRV thresholds (notebook)"),("Matt Examples/Testing.zip","Testing (zip)"),
+ ("Matt Examples/README.md","HTML Gallery deployment guide"),("Matt Examples/supabase-setup.sql","Supabase setup (SQL)"),
+ ("Matt Examples/test-stats.js","Stats test script (JS)"),("README.md","Repository README"),
+ ("force-analyser/README.md","Force analyser README"),("video-analyser/README.md","Video analyser README"),
+ ("mres-stats-lab/README.md","MRes Stats Lab README"),("mres-stats-lab/r/stage7-jasp-to-r.R","Stage 7: JASP to R"),
+ ("mres-stats-lab/r/stage8-brms.R","Stage 8: brms"),("sesd55-quant-deck/README.md","SESD55 deck README"),
+ ("sesh54-needs-analysis/README.md","SESH54 needs analysis README")]
+
 def main():
+    DL = "".join(f'<li><a href="{quote(p)}">{html.escape(n)}</a></li>' for p, n in DOWNLOADS)
     seen, out = {}, []
     for group, hub, sections in GROUPS:
-        out.append(f'<section><h2><a href="{hub}">{html.escape(group)}</a></h2>')
+        out.append(f'<section><h2><a href="{quote(hub, safe="/#")}">{html.escape(group)}</a></h2>')
         for sec, pages in sections:
             out.append(f"<h3>{html.escape(sec)}</h3><ul>")
             for pg in pages:
-                out.append(f'<li><a href="{pg}">{html.escape(title(pg))}</a></li>')
+                out.append(f'<li><a href="{quote(pg)}">{html.escape(title(pg))}</a></li>')
                 if pg != "index.html": inject(pg, nav_block(pg, group, hub, sec, pages)); seen[pg] = 1
             out.append("</ul>")
         out.append("</section>")
@@ -88,6 +106,7 @@ h2{{margin-top:2em;border-bottom:2px solid #8886}}h3{{margin-bottom:.2em}}ul{{co
 </head><body><p><a href="index.html">← Home</a></p><h1>Site map</h1>
 <p>Every page, grouped by topic. The same links appear at the bottom of each page.</p>
 {chr(10).join(out)}
+<section><h2>Downloads &amp; resources</h2><ul>{DL}</ul></section>
 </body></html>"""
     open(os.path.join(ROOT, "site-map.html"), "w", encoding="utf-8").write(page)
     # homepage link to the map
