@@ -30,7 +30,7 @@ GROUPS = [
     ["index","fuel-calculator","diet-analyser","feedback-builder","portfolio-checker","quiz","reflection"]]),
   ("SESH54 · Needs analysis", ["sesh54-needs-analysis/index.html"]),
   ("Exercise physiology & cardiac", ["Matt Examples/SESH54_endurance_lab.html","Matt Examples/anaerobic-adaptations.html",
-     "Matt Examples/blood-lactate-analysis 2 (1).html","Matt Examples/trimp.html","Matt Examples/ecg-learning.html",
+     "Matt Examples/blood-lactate-analysis.html","Matt Examples/trimp.html","Matt Examples/ecg-learning.html",
      "Matt Examples/ecg-interactive.html","Matt Examples/label-the-heart.html","Matt Examples/physiology-box-preview.html"]),
   ("Physiology pages & tools", ["pages/physiology/index.html","tools/physiology/placeholder.html"]),
  ]),
