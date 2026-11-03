@@ -1,0 +1,1168 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Position, Velocity and Acceleration | SESC02</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --navy:#003d50; --navy-dark:#002c3a; --teal:#00857e; --blue:#0071bc;
+    --plum:#8b3556; --plum-dark:#682840; --bg:#f7fbfd; --soft:#f8fcfe; --tealsoft:#f2faf9;
+    --line:#d9e2e7; --edge:#abd6d9; --ink:#1d1d1b; --muted:#46535a; --amber:#b86e00;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#fff;color:var(--ink);font-family:Arial,Helvetica,sans-serif;line-height:1.58}
+  main{max-width:1220px;margin:0 auto;padding:1.4rem;background:var(--bg);border:2px solid var(--edge);border-radius:1rem}
+  header{background:var(--navy);color:#fff;padding:2.2rem 2rem;border-radius:.9rem .9rem 0 0;border-bottom:.4rem solid var(--teal)}
+  .badge{display:inline-block;background:#fff;color:var(--navy);padding:.35rem .85rem;margin:0 0 .8rem;font-size:.88em;border-left:.35rem solid var(--blue);border-radius:.65rem;font-weight:bold}
+  h1{margin:0 0 .4rem;font-size:2.1em;line-height:1.18}
+  header p{margin:0;font-size:1.05em}
+  .bar{background:#fff;padding:1.1rem;margin-bottom:1.5rem;border:1px solid var(--line);border-top:0;border-radius:0 0 .9rem .9rem}
+  .row{display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end}
+  .field{flex:1 1 220px}
+  label,.lab{font-weight:bold;color:var(--navy);font-size:.92em;display:block;margin-bottom:.25rem}
+  input[type=text],textarea,select{width:100%;font:inherit;font-size:.95em;padding:.5rem .6rem;border:1px solid #b9c7cf;border-radius:.5rem;background:#fff;color:var(--ink)}
+  textarea{min-height:5rem;resize:vertical}
+  input:focus,textarea:focus,select:focus,button:focus-visible{outline:3px solid var(--edge);border-color:var(--teal)}
+  .btn{font:inherit;font-weight:bold;cursor:pointer;border:0;color:#fff;padding:.6rem 1rem;border-radius:.75rem;min-height:2.6rem}
+  .btn.navy{background:var(--navy);border-bottom:.22rem solid var(--navy-dark)}
+  .btn.teal{background:var(--teal);border-bottom:.22rem solid #00655f}
+  .btn.plum{background:var(--plum);border-bottom:.22rem solid var(--plum-dark)}
+  .btn.blue{background:var(--blue);border-bottom:.22rem solid #00568f}
+  .btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+  .btn.sm{padding:.35rem .7rem;min-height:2.1rem;font-size:.9em}
+  .tabs{display:flex;gap:.6rem;flex-wrap:wrap;margin:0 0 1rem}
+  .tab{flex:1 1 150px;background:#fff;color:var(--navy);border:2px solid var(--line);border-bottom:.25rem solid var(--line)}
+  .tab[aria-selected=true]{background:var(--teal);color:#fff;border-color:var(--teal);border-bottom-color:#00655f}
+  section.panel{background:#fff;border:1px solid var(--line);border-radius:1rem;overflow:hidden;margin-bottom:1.5rem}
+  .panel-head{color:#fff;padding:1.2rem 1.6rem}
+  .panel-head h2{margin:0;font-size:1.45em}
+  .panel-head .badge{font-size:.82em;margin-bottom:.45rem}
+  .panel-body{padding:1.5rem}
+  .intro{margin-top:0}
+  .tip{background:var(--tealsoft);border-left:.4rem solid var(--teal);padding:.9rem 1rem;border-radius:.75rem;margin:0 0 1.2rem}
+  .warn{background:#fbf4f7;border-left:.4rem solid var(--plum);padding:.9rem 1rem;border-radius:.75rem;margin:0 0 1.2rem}
+  .tip p,.warn p{margin:0 0 .4rem}.tip p:last-child,.warn p:last-child{margin:0}
+  .card{border:1px solid var(--line);border-left:.45rem solid var(--blue);border-radius:.75rem;padding:1rem 1.1rem;margin-bottom:1.1rem;background:#fff}
+  .card h3{margin:0 0 .5rem;color:var(--navy);font-size:1.12em}
+  .card.t{border-left-color:var(--teal)} .card.p{border-left-color:var(--plum)} .card.n{border-left-color:var(--navy)}
+  .card p:last-child{margin-bottom:0}
+  .formula{display:inline-block;background:var(--soft);border:1px solid var(--line);border-radius:.5rem;padding:.3rem .7rem;font-weight:bold;color:var(--navy);margin:.15rem 0}
+  table{width:100%;border-collapse:collapse;margin:.4rem 0 .8rem;font-size:.93em}
+  th,td{border:1px solid var(--line);padding:.4rem .5rem;text-align:left;vertical-align:middle}
+  th{background:var(--soft);color:var(--navy)}
+  td input{min-width:4.6rem;max-width:7rem;text-align:right}
+  td.given{background:#fbfdfe;font-weight:bold}
+  .tablewrap{overflow-x:auto}
+  .num{white-space:nowrap}
+  .mark{display:inline-block;min-width:1.2rem;margin-left:.3rem;font-weight:bold}
+  .mark.ok{color:var(--teal)} .mark.no{color:var(--plum)}
+  input.ok{border-color:var(--teal);background:#f2faf9} input.no{border-color:var(--plum);background:#fbf4f7}
+  .hide{display:none !important}
+  .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+  .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+  .chart{width:100%;height:auto;display:block;user-select:none;-webkit-user-select:none;background:#fff;border:1px solid var(--line);border-radius:.6rem;touch-action:none}
+  .chart.click{cursor:crosshair}
+  .legend{display:flex;gap:1.2rem;flex-wrap:wrap;font-size:.9em;margin:.3rem 0 .6rem}
+  .key{display:inline-block;width:1.6rem;height:0;border-top:3px solid;vertical-align:middle;margin-right:.35rem}
+  details.worked{border:1px solid var(--line);border-left:.45rem solid var(--navy);border-radius:.75rem;margin:0 0 1rem;background:#fff}
+  details.worked summary{cursor:pointer;padding:.8rem 1.1rem;color:var(--navy);font-weight:bold;background:var(--soft);border-radius:.75rem}
+  details.worked .wbody{padding:.9rem 1.1rem}
+  details.worked .wbody p:first-child{margin-top:0} details.worked .wbody p:last-child{margin-bottom:0}
+  .ladder{display:flex;align-items:stretch;gap:.4rem;flex-wrap:wrap;margin:.6rem 0 1.2rem}
+  .rung{flex:1 1 180px;border-radius:.75rem;padding:.8rem 1rem;color:#fff}
+  .rung strong{display:block;font-size:1.1em}
+  .rung span{font-size:.9em}
+  .arrow{flex:0 0 auto;display:flex;flex-direction:column;justify-content:center;align-items:center;color:var(--navy);font-weight:bold;font-size:.82em;text-align:center;min-width:6.5rem}
+  .arrow b{font-size:1.6em;line-height:1}
+  .readout{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem;margin:.6rem 0}
+  .ro{border:1px solid var(--line);border-radius:.75rem;padding:.6rem .8rem;background:#fff}
+  .ro .lab{margin:0}
+  .ro .val{font-size:1.5em;font-weight:bold;color:var(--navy)}
+  .ro .meter{height:.55rem;background:#edf2f5;border-radius:.4rem;position:relative;margin-top:.35rem;overflow:hidden}
+  .ro .meter i{position:absolute;top:0;bottom:0;border-radius:.4rem}
+  .controls{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:.5rem 0}
+  .controls input[type=range]{flex:1 1 260px}
+  .seg{display:flex;gap:.5rem;flex-wrap:wrap;margin:.3rem 0 .8rem}
+  .seg .btn{background:#fff;color:var(--navy);border:2px solid var(--line);border-bottom:.22rem solid var(--line)}
+  .seg .btn[aria-pressed=true]{background:var(--navy);color:#fff;border-color:var(--navy);border-bottom-color:var(--navy-dark)}
+  .qa{border:1px solid var(--line);border-left:.45rem solid var(--navy);border-radius:.75rem;padding:.9rem 1rem;margin-bottom:.9rem;background:#fff}
+  .qa .q{font-weight:bold;color:var(--navy);margin:0 0 .5rem}
+  .opts{display:flex;flex-direction:column;gap:.45rem}
+  .opt{text-align:left;background:#fff;color:var(--ink);border:2px solid var(--line);font-weight:normal}
+  .opt.right{border-color:var(--teal);background:var(--tealsoft)} .opt.wrong{border-color:var(--plum);background:#fbf4f7}
+  .fb{margin:.5rem 0 0;font-size:.95em}
+  .score{font-weight:bold;color:var(--navy)}
+  .explain{background:var(--soft);border:1px solid var(--line);border-radius:.75rem;padding:.8rem 1rem;margin:.6rem 0}
+  .explain p{margin:.2rem 0}
+  .explain .big{font-size:1.05em}
+  .pill{display:inline-block;font-size:.8em;font-weight:bold;padding:.1rem .5rem;border-radius:.4rem;color:#fff;margin-right:.3rem;vertical-align:middle}
+  .rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+  .rules .card{margin:0}
+  .grid2.split{grid-template-columns:3fr 2fr}
+  .sentence{background:var(--tealsoft);border:1px solid var(--edge);border-radius:.75rem;padding:.9rem 1rem;font-size:1.02em;margin:.6rem 0}
+  .inline-sel{display:inline-block;width:auto;padding:.2rem .4rem;margin:.1rem .1rem}
+  .status{font-size:.9em;color:var(--muted);margin:.4rem 0 0}
+  .actions{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.5rem}
+  footer{text-align:center;padding:1rem;color:var(--muted);font-size:.88em}
+  @media (max-width:860px){
+    .rules,.grid3{grid-template-columns:1fr}
+  }
+  @media (max-width:760px){
+    main{padding:.75rem;border-radius:.6rem}
+    header{padding:1.5rem 1.1rem}
+    h1{font-size:1.6em}
+    .panel-body{padding:1rem}
+    .grid2,.grid2.split,.readout{grid-template-columns:1fr}
+    .arrow{min-width:100%;flex-direction:row;gap:.5rem}
+    .arrow b{transform:rotate(90deg)}
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="badge">SESC02 &middot; Follow-up activity</p>
+    <h1>Position, Velocity and Acceleration</h1>
+    <p>How we get from where something is, to how fast it is moving, to how quickly that speed is changing. Then how to read all three on a graph.</p>
+  </header>
+
+  <div class="bar">
+    <div class="row">
+      <div class="field">
+        <label for="names">Your name(s)</label>
+        <input type="text" id="names" placeholder="e.g. Sam Jones and Alex Patel">
+      </div>
+      <div class="field" style="flex:2 1 380px">
+        <span class="lab">How to use this</span>
+        <p style="margin:0">Work through the tabs in order (about 60 minutes in total). Your answers save in this browser as you go. At the end, download a Word copy to use when you prepare your presentation.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="Activity sections">
+    <button type="button" class="btn tab" role="tab" id="tab-1" aria-controls="p-1" aria-selected="true">1. The big idea</button>
+    <button type="button" class="btn tab" role="tab" id="tab-2" aria-controls="p-2" aria-selected="false">2. A 100 m sprint</button>
+    <button type="button" class="btn tab" role="tab" id="tab-3" aria-controls="p-3" aria-selected="false">3. A knee angle</button>
+    <button type="button" class="btn tab" role="tab" id="tab-4" aria-controls="p-4" aria-selected="false">4. Reading the graphs</button>
+    <button type="button" class="btn tab" role="tab" id="tab-5" aria-controls="p-5" aria-selected="false">5. Practise</button>
+    <button type="button" class="btn tab" role="tab" id="tab-6" aria-controls="p-6" aria-selected="false">6. Your presentation</button>
+  </div>
+
+  <!-- ================= TAB 1 ================= -->
+  <section class="panel" id="p-1" role="tabpanel" aria-labelledby="tab-1">
+    <div class="panel-head" style="background:var(--navy)">
+      <p class="badge">Start here</p>
+      <h2>Three quantities, one chain</h2>
+    </div>
+    <div class="panel-body">
+      <p class="intro">Everything in this activity comes from one simple idea. Each quantity tells you <strong>how quickly the one before it is changing</strong>.</p>
+
+      <div class="ladder" aria-label="Position to velocity to acceleration">
+        <div class="rung" style="background:var(--navy)"><strong>Position</strong><span>Where is it?<br>Units: m (or &deg; for angles)</span></div>
+        <div class="arrow"><b>&rarr;</b>change &divide; time</div>
+        <div class="rung" style="background:var(--teal)"><strong>Velocity</strong><span>How fast is position changing, and which way?<br>Units: m/s (or &deg;/s)</span></div>
+        <div class="arrow"><b>&rarr;</b>change &divide; time</div>
+        <div class="rung" style="background:var(--plum)"><strong>Acceleration</strong><span>How fast is velocity changing?<br>Units: m/s&sup2; (or &deg;/s&sup2;)</span></div>
+      </div>
+
+      <div class="grid3">
+        <div class="card n"><h3>Position and displacement</h3><p>Position is where something is (e.g. 40 m along the track). Displacement is the <strong>change</strong> in position (e.g. from 40 m to 50 m is a displacement of 10 m).</p></div>
+        <div class="card t"><h3>Velocity</h3><p><span class="formula">velocity = change in position &divide; change in time</span></p><p>Velocity has a direction. Forwards (or upwards) is positive and backwards (or downwards) is negative. Speed is just the size, with no direction.</p></div>
+        <div class="card p"><h3>Acceleration</h3><p><span class="formula">acceleration = change in velocity &divide; change in time</span></p><p>Positive acceleration pushes velocity up. Negative acceleration pulls it down. Zero acceleration means the velocity is not changing.</p></div>
+      </div>
+
+      <h3 style="color:var(--navy);margin:1.2rem 0 .3rem">Watch it happen</h3>
+      <p style="margin-top:0">Press play and watch the three numbers as the sprinter runs 100 m. Then drag the slider to stop at any moment.</p>
+      <svg class="chart" id="track" viewBox="0 0 640 120" role="img" aria-label="A runner moving along a 100 metre track"></svg>
+      <div class="controls">
+        <button type="button" class="btn teal" id="play1">&#9654; Play</button>
+        <label for="slide1" class="hide">Time</label>
+        <input type="range" id="slide1" min="0" max="10.52" step="0.01" value="0" aria-label="Race time">
+        <span class="num" id="t1">0.00 s</span>
+      </div>
+      <div class="readout">
+        <div class="ro"><p class="lab">Position</p><div class="val" id="ro1p">0.0 m</div><div class="meter"><i id="m1p" style="background:var(--navy);left:0;width:0"></i></div></div>
+        <div class="ro"><p class="lab">Velocity</p><div class="val" id="ro1v">0.00 m/s</div><div class="meter"><i id="m1v" style="background:var(--teal);left:0;width:0"></i></div></div>
+        <div class="ro"><p class="lab">Acceleration</p><div class="val" id="ro1a">0.00 m/s&sup2;</div><div class="meter"><i id="m1a" style="background:var(--plum);left:50%;width:0"></i></div></div>
+      </div>
+      <p class="explain" id="say1" style="margin-top:.4rem">Press play.</p>
+
+      <div class="tip">
+        <p><strong>Notice:</strong> acceleration is biggest right at the start, drops to about zero once the sprinter reaches top speed, and goes slightly negative near the finish as they slow down.</p>
+      </div>
+
+      <details class="worked">
+        <summary>Quick check: at top speed acceleration is about zero. Has the sprinter stopped?</summary>
+        <div class="wbody"><p>No. Zero acceleration means the <strong>velocity is not changing</strong>, so the sprinter is running at a steady (and very fast) speed. Zero velocity would mean stopped.</p></div>
+      </details>
+
+      <div class="card n">
+        <h3>Two ways to get from position to velocity and acceleration</h3>
+        <p><strong>Calculate it</strong> from numbers (tabs 2 and 3). This is the Measure part of your presentation.</p>
+        <p><strong>Read it</strong> from the shape of a graph (tabs 4 and 5). This is the Interpret part of your presentation.</p>
+      </div>
+      <div class="actions"><button type="button" class="btn navy" data-go="2">Next: a 100 m sprint &rarr;</button></div>
+    </div>
+  </section>
+
+  <!-- ================= TAB 2 ================= -->
+  <section class="panel hide" id="p-2" role="tabpanel" aria-labelledby="tab-2">
+    <div class="panel-head" style="background:var(--blue)">
+      <p class="badge">Linear kinematics</p>
+      <h2>From split times to velocity and acceleration</h2>
+    </div>
+    <div class="panel-body">
+      <p class="intro">A sprinter runs 100 m with timing gates every 10 m. The gates give the <strong>time at each 10 m mark</strong>, measured from first movement. That is all we need.</p>
+
+      <h3 style="color:var(--navy);margin:0 0 .4rem">The four steps</h3>
+      <div class="grid2">
+        <div class="card n"><h3>Step 1: section time</h3><p>How long did each 10 m section take?</p><p><span class="formula">section time = time at end &minus; time at start</span></p><p>0&ndash;10 m: 1.89 &minus; 0 = <strong>1.89 s</strong></p></div>
+        <div class="card t"><h3>Step 2: velocity</h3><p>Distance &divide; time for that section.</p><p><span class="formula">v = 10 m &divide; section time</span></p><p>0&ndash;10 m: 10 &divide; 1.89 = <strong>5.29 m/s</strong></p></div>
+        <div class="card"><h3>Step 3: when does it belong?</h3><p>This is the <strong>average</strong> velocity for the section, so we plot it halfway through the section&rsquo;s time.</p><p>0&ndash;10 m: halfway between 0 and 1.89 s = <strong>0.945 s</strong></p></div>
+        <div class="card p"><h3>Step 4: acceleration</h3><p>Change in velocity &divide; time between the middles of two sections.</p><p><span class="formula">a = (v<sub>2</sub> &minus; v<sub>1</sub>) &divide; (t<sub>mid 2</sub> &minus; t<sub>mid 1</sub>)</span></p><p>(9.26 &minus; 5.29) &divide; (2.43 &minus; 0.945) = <strong>2.67 m/s&sup2;</strong></p></div>
+      </div>
+      <div class="tip"><p><strong>Why the middle?</strong> An average velocity over a section is the best guess for the velocity halfway through that section (Winter, 2009, pp. 77&ndash;78). It also means velocity and acceleration line up with the right moment on the graph.</p></div>
+
+      <h3 style="color:var(--navy);margin:1rem 0 .3rem">Your turn</h3>
+      <p style="margin-top:0">Fill in the white boxes. Do at least the first three rows by hand on your notepad, then click <strong>Check my answers</strong>. Round velocities to 2 decimal places and use your rounded velocities for acceleration.</p>
+      <div class="tablewrap">
+        <table id="sTable">
+          <thead><tr><th>Section</th><th>Time at end (s)</th><th>Step 1<br>Section time (s)</th><th>Step 2<br>Velocity (m/s)</th><th>Step 3<br>Plotted at (s)</th><th>Step 4<br>Acceleration (m/s&sup2;)</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn teal" id="sCheck">Check my answers</button>
+        <button type="button" class="btn ghost" id="sHint">Give me a hint</button>
+        <button type="button" class="btn ghost" id="sFill">Fill in the rest for me</button>
+      </div>
+      <p class="status" id="sStatus"></p>
+
+      <h3 style="color:var(--navy);margin:1.3rem 0 .3rem">Your graphs</h3>
+      <p style="margin-top:0">Points appear on the velocity and acceleration graphs as you get each value right.</p>
+      <div class="grid3">
+        <div><span class="lab">Position&ndash;time</span><svg class="chart" id="sP" viewBox="0 0 640 360" role="img" aria-label="Position against time for the 100 metre sprint"></svg></div>
+        <div><span class="lab">Velocity&ndash;time</span><svg class="chart" id="sV" viewBox="0 0 640 360" role="img" aria-label="Velocity against time"></svg></div>
+        <div><span class="lab">Acceleration&ndash;time</span><svg class="chart" id="sA" viewBox="0 0 640 360" role="img" aria-label="Acceleration against time"></svg></div>
+      </div>
+
+      <h3 style="color:var(--navy);margin:1.3rem 0 .3rem">What do the numbers tell us?</h3>
+      <p style="margin-top:0">Answer on your notepad first, then open each one to check.</p>
+      <details class="worked"><summary>1. Where does the sprinter reach top speed, and what is it?</summary><div class="wbody"><p>10.87 m/s, held from 50 to 70 m (about 5.8 to 7.7 s). This is where acceleration is about zero.</p></div></details>
+      <details class="worked"><summary>2. Where is acceleration biggest, and why?</summary><div class="wbody"><p>In the first 20 m (2.67 m/s&sup2; between the first two sections). Velocity rises from zero very quickly, so the change in velocity per second is large. After that, each section adds less speed than the one before.</p></div></details>
+      <details class="worked"><summary>3. What happens over the last 30 m?</summary><div class="wbody"><p>Velocity drops a little (10.87 to 10.42 m/s), so acceleration is negative. The sprinter is still running forwards, but slowing down. Bartlett (2007, p. 91) notes that good sprinters hold close to constant speed for much of the race before slowing slightly at the end.</p></div></details>
+      <details class="worked"><summary>4. Why does the position&ndash;time graph look almost straight after about 5 s?</summary><div class="wbody"><p>A straight line has a constant slope, and slope is velocity. Once velocity stops changing much, position goes up by about the same amount every second.</p></div></details>
+      <div class="actions"><button type="button" class="btn navy" data-go="3">Next: a knee angle &rarr;</button></div>
+    </div>
+  </section>
+
+  <!-- ================= TAB 3 ================= -->
+  <section class="panel hide" id="p-3" role="tabpanel" aria-labelledby="tab-3">
+    <div class="panel-head" style="background:var(--teal)">
+      <p class="badge">Angular kinematics</p>
+      <h2>The same steps, with a knee angle</h2>
+    </div>
+    <div class="panel-body">
+      <p class="intro">A footballer kicks a ball. We measure the <strong>knee angle</strong> on slow-motion video every <strong>0.04 s</strong>. 180&deg; is a straight leg. A smaller angle means a more bent knee.</p>
+      <div class="grid2">
+        <div>
+          <svg class="chart" id="leg" viewBox="0 0 640 330" role="img" aria-label="A kicking leg showing the knee angle"></svg>
+          <div class="controls">
+            <button type="button" class="btn teal" id="play3">&#9654; Play</button>
+            <input type="range" id="slide3" min="0" max="0.36" step="0.002" value="0" aria-label="Kick time">
+            <span class="num" id="t3">0.000 s</span>
+          </div>
+        </div>
+        <div>
+          <div class="card t" style="margin-bottom:.8rem"><h3>Directions for angles</h3><p><strong>Angle getting bigger</strong> = knee straightening (extending) = <strong>positive</strong> angular velocity.</p><p><strong>Angle getting smaller</strong> = knee bending (flexing) = <strong>negative</strong> angular velocity.</p></div>
+          <div class="readout" style="grid-template-columns:1fr">
+            <div class="ro"><p class="lab">Knee angle</p><div class="val" id="ro3p">165&deg;</div></div>
+            <div class="ro"><p class="lab">Angular velocity</p><div class="val" id="ro3v">0 &deg;/s</div></div>
+          </div>
+          <p class="explain" id="say3">Press play.</p>
+        </div>
+      </div>
+
+      <h3 style="color:var(--navy);margin:1rem 0 .3rem">Linear and angular side by side</h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th></th><th>Linear (the sprint)</th><th>Angular (the knee)</th></tr></thead>
+          <tbody>
+            <tr><th>Position</th><td>Position, m</td><td>Angle, &deg;</td></tr>
+            <tr><th>Velocity</th><td>Velocity = change in position &divide; time, m/s</td><td>Angular velocity = change in angle &divide; time, &deg;/s</td></tr>
+            <tr><th>Acceleration</th><td>Acceleration = change in velocity &divide; time, m/s&sup2;</td><td>Angular acceleration = change in angular velocity &divide; time, &deg;/s&sup2;</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tip"><p><strong>Degrees or radians?</strong> The official unit is radians per second (Bartlett, 2007). Degrees per second are fine in your presentation as long as you state the unit. To convert, divide by 57.3 (e.g. 800 &deg;/s &asymp; 14 rad/s).</p></div>
+
+      <h3 style="color:var(--navy);margin:1rem 0 .3rem">Your turn</h3>
+      <p style="margin-top:0">Same steps as the sprint, but every gap is 0.04 s, so the &ldquo;plotted at&rdquo; times are simply halfway between frames. Do at least the first three rows by hand.</p>
+      <div class="card n" style="margin-bottom:.8rem"><p style="margin:0"><strong>Worked example:</strong> 165&deg; to 157&deg; is a change of &minus;8&deg;. Angular velocity = &minus;8 &divide; 0.04 = <strong>&minus;200 &deg;/s</strong> (bending). Next, &minus;21 &divide; 0.04 = &minus;525 &deg;/s, so angular acceleration = (&minus;525 &minus; &minus;200) &divide; 0.04 = <strong>&minus;8125 &deg;/s&sup2;</strong>.</p></div>
+      <div class="tablewrap">
+        <table id="kTable">
+          <thead><tr><th>Time (s)</th><th>Knee angle (&deg;)</th><th>Change in angle (&deg;)</th><th>Angular velocity (&deg;/s)</th><th>Plotted at (s)</th><th>Angular acceleration (&deg;/s&sup2;)</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn teal" id="kCheck">Check my answers</button>
+        <button type="button" class="btn ghost" id="kHint">Give me a hint</button>
+        <button type="button" class="btn ghost" id="kFill">Fill in the rest for me</button>
+      </div>
+      <p class="status" id="kStatus"></p>
+
+      <h3 style="color:var(--navy);margin:1.3rem 0 .3rem">Your graphs</h3>
+      <div class="grid3">
+        <div><span class="lab">Angle&ndash;time</span><svg class="chart" id="kP" viewBox="0 0 640 360" role="img" aria-label="Knee angle against time"></svg></div>
+        <div><span class="lab">Angular velocity&ndash;time</span><svg class="chart" id="kV" viewBox="0 0 640 360" role="img" aria-label="Knee angular velocity against time"></svg></div>
+        <div><span class="lab">Angular acceleration&ndash;time</span><svg class="chart" id="kA" viewBox="0 0 640 360" role="img" aria-label="Knee angular acceleration against time"></svg></div>
+      </div>
+
+      <h3 style="color:var(--navy);margin:1.3rem 0 .3rem">What do the numbers tell us?</h3>
+      <details class="worked"><summary>1. At 0.20 s the knee is most bent (80&deg;). What is the angular velocity there?</summary><div class="wbody"><p>Zero. The knee has stopped bending and is about to start straightening, so angular velocity changes from negative to positive. A lowest or highest point on an angle graph always lines up with zero angular velocity.</p></div></details>
+      <details class="worked"><summary>2. When is the knee straightening fastest?</summary><div class="wbody"><p>Between about 0.24 and 0.32 s (800 &deg;/s), close to ball contact at about 0.30 s. That is the steepest part of the angle&ndash;time graph.</p></div></details>
+      <details class="worked"><summary>3. Why is angular acceleration negative after about 0.30 s?</summary><div class="wbody"><p>The knee is still straightening (positive velocity) but more slowly, so angular velocity is falling. Something must slow the lower leg before the knee locks out. In your phase analysis this links to the hamstrings working eccentrically in late swing.</p></div></details>
+      <div class="actions"><button type="button" class="btn navy" data-go="4">Next: reading the graphs &rarr;</button></div>
+    </div>
+  </section>
+
+  <!-- ================= TAB 4 ================= -->
+  <section class="panel hide" id="p-4" role="tabpanel" aria-labelledby="tab-4">
+    <div class="panel-head" style="background:var(--navy)">
+      <p class="badge">Interpret</p>
+      <h2>Reading position, velocity and acceleration graphs</h2>
+    </div>
+    <div class="panel-body">
+      <p class="intro">You do not always need numbers. The <strong>shape</strong> of a position&ndash;time graph tells you the shape of the velocity&ndash;time graph, and that tells you the shape of the acceleration&ndash;time graph. Three rules do almost all of the work (Harry et al., 2025).</p>
+
+      <div class="rules">
+        <div class="card t"><h3><span class="pill" style="background:var(--teal)">Rule 1</span>Slope is velocity</h3><p>Walk along the graph from left to right. <strong>Uphill</strong> = positive velocity. <strong>Downhill</strong> = negative. <strong>Flat</strong> = zero. The <strong>steeper</strong> the hill, the bigger the velocity.</p></div>
+        <div class="card n"><h3><span class="pill" style="background:var(--navy)">Rule 2</span>Peaks and valleys = zero</h3><p>At the top of a hill or the bottom of a valley the graph is flat for an instant, so the velocity is <strong>zero</strong>. This is where the movement changes direction.</p></div>
+        <div class="card p"><h3><span class="pill" style="background:var(--plum)">Rule 3</span>Steepest point = peak</h3><p>Where the graph is <strong>steepest</strong>, velocity reaches its peak (or its lowest value if going downhill). At that moment acceleration is <strong>zero</strong>.</p></div>
+      </div>
+      <p style="margin:.9rem 0 .3rem">Then use the same three rules again on the velocity graph to get acceleration. One more trick from Bartlett (2007) helps here.</p>
+      <div class="grid2">
+        <div class="card t"><h3>Curving up like a valley &#9697;</h3><p>The slope is getting steeper, so velocity is going up. <strong>Acceleration is positive.</strong></p></div>
+        <div class="card p"><h3>Curving down like a hill &#9696;</h3><p>The slope is getting flatter, so velocity is going down. <strong>Acceleration is negative.</strong></p></div>
+      </div>
+
+      <h3 style="color:var(--navy);margin:1rem 0 .3rem">Explore it</h3>
+      <p style="margin-top:0">Pick an example, then drag the slider (or click on any graph). The <strong>dashed line</strong> on each graph shows its slope at that moment. The slope of the top graph is the value on the middle graph. The slope of the middle graph is the value on the bottom graph.</p>
+      <div class="seg" role="group" aria-label="Choose an example" id="exSeg">
+        <button type="button" class="btn" data-ex="sprint" aria-pressed="true">100 m sprint</button>
+        <button type="button" class="btn" data-ex="knee" aria-pressed="false">Knee in a kick</button>
+        <button type="button" class="btn" data-ex="cmj" aria-pressed="false">Countermovement jump</button>
+      </div>
+      <p id="exIntro" style="margin:.2rem 0 .6rem"></p>
+      <div class="controls">
+        <button type="button" class="btn teal" id="play4">&#9654; Play</button>
+        <input type="range" id="slide4" min="0" max="1" step="0.001" value="0" aria-label="Time">
+        <span class="num" id="t4"></span>
+      </div>
+      <div class="seg" role="group" aria-label="Show on the graphs">
+        <button type="button" class="btn sm" id="tgTurn" aria-pressed="false">Show Rule 2 moments</button>
+        <button type="button" class="btn sm" id="tgSteep" aria-pressed="false">Show Rule 3 moments</button>
+        <button type="button" class="btn sm" id="tgCurve" aria-pressed="false">Colour valleys and hills</button>
+      </div>
+      <div class="grid2 split" style="align-items:start">
+        <div>
+          <svg class="chart click" id="eP" viewBox="0 0 640 220" role="img" aria-label="Position against time"></svg>
+          <svg class="chart click" id="eV" viewBox="0 0 640 220" role="img" aria-label="Velocity against time" style="margin-top:.5rem"></svg>
+          <svg class="chart click" id="eA" viewBox="0 0 640 220" role="img" aria-label="Acceleration against time" style="margin-top:.5rem"></svg>
+          <div class="legend" id="eLegend"></div>
+        </div>
+        <div>
+          <div class="explain" id="eRead" aria-live="polite"></div>
+          <div class="card n" style="margin-top:.8rem">
+            <h3>Three questions to ask at any moment</h3>
+            <p><strong>1. Which way is it moving?</strong> Look at the sign of velocity (or the slope of position).</p>
+            <p><strong>2. Is it speeding up or slowing down?</strong> Velocity moving <em>away from</em> zero = speeding up. Moving <em>towards</em> zero = slowing down.</p>
+            <p><strong>3. What is causing that?</strong> Look at the sign of acceleration (or the slope of velocity). How steep is it?</p>
+            <p style="font-size:.9em;color:var(--muted)">Adapted from Harry et al. (2025).</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="warn">
+        <p><strong>The trap most people fall into:</strong> negative acceleration does <em>not</em> always mean slowing down. In the countermovement jump, the jumper starts moving down. Velocity is negative and getting further from zero, so they are <strong>speeding up downwards</strong>, and acceleration is negative. Slowing down only happens when velocity and acceleration have <strong>opposite</strong> signs.</p>
+      </div>
+      <details class="worked"><summary>Why is acceleration &minus;9.81 m/s&sup2; at the top of the jump when velocity is zero?</summary><div class="wbody"><p>Once the feet leave the ground, the only thing acting on the jumper is gravity, so acceleration is &minus;9.81 m/s&sup2; for the whole flight. At the very top, velocity passes through zero on its way from positive (up) to negative (down). Zero velocity does not mean zero acceleration.</p></div></details>
+      <div class="actions"><button type="button" class="btn navy" data-go="5">Next: practise &rarr;</button></div>
+    </div>
+  </section>
+
+  <!-- ================= TAB 5 ================= -->
+  <section class="panel hide" id="p-5" role="tabpanel" aria-labelledby="tab-5">
+    <div class="panel-head" style="background:var(--plum)">
+      <p class="badge">Check yourself</p>
+      <h2>Practise reading and sketching</h2>
+    </div>
+    <div class="panel-body">
+      <h3 style="color:var(--navy);margin:0 0 .3rem">Part A: sketch it</h3>
+      <p style="margin-top:0">Look at the top graph. Use the three rules to <strong>draw</strong> what the graph underneath should look like (click and drag, or use your finger). You only need the right shape, not exact numbers. Then press <strong>Reveal</strong>.</p>
+      <div class="row" style="margin-bottom:.6rem">
+        <div class="field"><label for="skTask">Movement</label>
+          <select id="skTask">
+            <option value="walk">1. Walking at a steady pace</option>
+            <option value="sprint">2. 100 m sprint</option>
+            <option value="ball">3. Ball thrown straight up and caught</option>
+            <option value="cmj">4. Countermovement jump (centre of mass)</option>
+            <option value="knee">5. Knee angle in a kick</option>
+          </select></div>
+        <div class="field"><label for="skMode">What to sketch</label>
+          <select id="skMode">
+            <option value="v">Velocity, from the position graph</option>
+            <option value="a">Acceleration, from the velocity graph</option>
+          </select></div>
+      </div>
+      <p id="skPrompt" class="explain" style="margin:.2rem 0 .6rem"></p>
+      <span class="lab" id="skTopLab"></span>
+      <svg class="chart" id="skTop" viewBox="0 0 640 220" role="img" aria-label="The graph to read"></svg>
+      <span class="lab" id="skBotLab" style="margin-top:.6rem"></span>
+      <svg class="chart click" id="skBot" viewBox="0 0 640 240" role="img" aria-label="Draw your sketch here"></svg>
+      <div class="actions">
+        <button type="button" class="btn ghost" id="skClear">Clear my sketch</button>
+        <button type="button" class="btn teal" id="skReveal">Reveal</button>
+        <button type="button" class="btn navy" id="skNext">Next sketch &rarr;</button>
+      </div>
+      <div class="explain hide" id="skFb" aria-live="polite"></div>
+
+      <h3 style="color:var(--navy);margin:1.6rem 0 .3rem">Part B: quick quiz</h3>
+      <p style="margin-top:0">Each question shows a graph with a marked moment. Pick one answer. <span class="score" id="qScore"></span></p>
+      <div id="quiz"></div>
+      <div class="actions"><button type="button" class="btn ghost" id="qReset">Reset the quiz</button><button type="button" class="btn navy" data-go="6">Next: your presentation &rarr;</button></div>
+    </div>
+  </section>
+
+  <!-- ================= TAB 6 ================= -->
+  <section class="panel hide" id="p-6" role="tabpanel" aria-labelledby="tab-6">
+    <div class="panel-head" style="background:var(--navy)">
+      <p class="badge">Assessment link</p>
+      <h2>Using this in your presentation</h2>
+    </div>
+    <div class="panel-body">
+      <p class="intro">Your Practical Assessment asks you to <strong>Observe, Measure, Interpret and Apply</strong>. This activity covers the middle two.</p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Part</th><th>What it looks like for position, velocity and acceleration</th></tr></thead>
+          <tbody>
+            <tr><th>Observe</th><td>Your phase analysis. Which phase are you interested in (e.g. the first 10 m, or late swing)?</td></tr>
+            <tr><th>Measure</th><td>Calculate velocity and acceleration from your split times (or angles), with units. Be ready to show one calculation.</td></tr>
+            <tr><th>Interpret</th><td>Say what the shape of the graph means. Where is the athlete speeding up, at top speed, or slowing down? Use the three rules.</td></tr>
+            <tr><th>Apply</th><td>Turn it into a coaching point (e.g. velocity rises slowly in the first 10 m, so work on pushing back into the ground in the first few steps).</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="color:var(--navy);margin:1.2rem 0 .3rem">Build an interpretation sentence</h3>
+      <p style="margin-top:0">Choose from the boxes to build a sentence about your own graph, then edit it in the box below so it fits your data.</p>
+      <div class="sentence" id="sbOut">
+        Between <input type="text" class="inline-sel" id="sb1" style="width:4.5rem" placeholder="0"> and <input type="text" class="inline-sel" id="sb2" style="width:4.5rem" placeholder="1.9"> s, velocity
+        <select class="inline-sel" id="sb3"><option>rises steeply</option><option>rises gradually</option><option>stays about the same</option><option>falls gradually</option><option>falls steeply</option></select>,
+        so acceleration is <select class="inline-sel" id="sb4"><option>large and positive</option><option>small and positive</option><option>about zero</option><option>negative</option></select>.
+        This shows the athlete is <select class="inline-sel" id="sb5"><option>speeding up quickly</option><option>still speeding up, but less each second</option><option>holding top speed</option><option>slowing down</option></select>.
+      </div>
+      <label for="sbEdit">Your sentence (edit it to fit your data, then add what it means for coaching)</label>
+      <textarea id="sbEdit"></textarea>
+      <div class="actions"><button type="button" class="btn teal sm" id="sbCopy">Copy the sentence above into the box</button></div>
+
+      <h3 style="color:var(--navy);margin:1.2rem 0 .3rem">Questions you might be asked</h3>
+      <p style="margin-top:0">Practise saying your answer out loud before you open each one.</p>
+      <details class="worked"><summary>&ldquo;How did you calculate velocity?&rdquo;</summary><div class="wbody"><p>&ldquo;I divided the distance of each section by the time it took. For 0&ndash;10 m that was 10 m &divide; 1.89 s = 5.29 m/s. It is an average for the section, so I plotted it halfway through the section time.&rdquo;</p></div></details>
+      <details class="worked"><summary>&ldquo;How did you get acceleration?&rdquo;</summary><div class="wbody"><p>&ldquo;I took the change in velocity between two sections and divided it by the time between the middles of those sections.&rdquo; Then give one example with units (m/s&sup2;).</p></div></details>
+      <details class="worked"><summary>&ldquo;What is the difference between speed and velocity?&rdquo;</summary><div class="wbody"><p>Speed is how fast. Velocity is how fast <em>and</em> in which direction, so it can be negative.</p></div></details>
+      <details class="worked"><summary>&ldquo;Your acceleration is near zero here. Does that mean the athlete is not working?&rdquo;</summary><div class="wbody"><p>No. They are still producing a lot of force to hold a very high speed. Zero acceleration just means velocity is not changing.</p></div></details>
+      <details class="worked"><summary>&ldquo;Why might your numbers be a bit off?&rdquo;</summary><div class="wbody"><p>Split times from video depend on the frame rate and on judging exactly when the hip passes each marker. A small timing error over a short section makes a big difference to velocity, and an even bigger one to acceleration.</p></div></details>
+
+      <h3 style="color:var(--navy);margin:1.2rem 0 .3rem">Common mistakes to avoid</h3>
+      <ul>
+        <li>Missing or wrong units (m/s for velocity, m/s&sup2; for acceleration, &deg;/s and &deg;/s&sup2; for angles).</li>
+        <li>Thinking zero acceleration means stopped.</li>
+        <li>Thinking negative acceleration always means slowing down (check the sign of velocity too).</li>
+        <li>Listing numbers without saying what they mean for technique.</li>
+        <li>Plotting an average velocity at the end of a section instead of the middle.</li>
+      </ul>
+
+      <label for="notes">Anything else you want to remember for your presentation</label>
+      <textarea id="notes" placeholder="e.g. Our athlete's velocity levels off early, by 20 m. Link this to the upright trunk we saw in the phase analysis."></textarea>
+
+      <h3 style="color:var(--navy);margin:1.2rem 0 .3rem">Reading</h3>
+      <ul>
+        <li>Bartlett, R. (2007). <em>Introduction to Sports Biomechanics</em> (2nd ed.). Routledge. pp. 89&ndash;92 (displacement, velocity and acceleration graphs for a sprint) and pp. 112&ndash;114 (reading angle&ndash;time graphs).</li>
+        <li>Harry, J. R., et al. (2025). Using position, velocity, and acceleration relationships to assess exercise specificity. <em>Strength and Conditioning Journal, 47</em>(4), 414&ndash;424.</li>
+        <li>Winter, D. A. (2009). <em>Biomechanics and Motor Control of Human Movement</em> (4th ed.). Wiley. pp. 77&ndash;78 (calculating velocity and acceleration from position data).</li>
+      </ul>
+
+      <div class="actions">
+        <button type="button" class="btn plum" id="dl">Download my work (Word)</button>
+        <button type="button" class="btn ghost" id="clearAll">Clear everything and start again</button>
+      </div>
+      <p class="status" id="dlStatus"></p>
+    </div>
+  </section>
+
+  <footer>SESC02 | Plymouth Marjon University</footer>
+</main>
+
+<script>
+(function(){
+  "use strict";
+  var KEY = 'sesc02-pva-explorer-v1';
+  var S = {};
+  try{ S = JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ S = {}; }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+  function $(id){ return document.getElementById(id); }
+  var C = {navy:'#003d50', teal:'#00857e', blue:'#0071bc', plum:'#8b3556', grey:'#9aa9b1', muted:'#46535a', amber:'#b86e00'};
+  function fx(x,n){ if (Math.abs(x) < 0.5*Math.pow(10,-n)) x = 0; return x.toFixed(n); }
+  function num(v){ v = String(v==null?'':v).trim().replace(',', '.').replace('−','-'); if(!v) return null; var n = Number(v); return isNaN(n) ? NaN : n; }
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  /* ================= continuous models ================= */
+  function sampleModel(t0, t1, n, fp, fv, fa){
+    var t=[],p=[],v=[],a=[];
+    for (var i=0;i<=n;i++){ var tt=t0+(t1-t0)*i/n; t.push(tt); p.push(fp(tt)); v.push(fv(tt)); a.push(fa(tt)); }
+    return {t:t,p:p,v:v,a:a};
+  }
+  function integrateModel(t1, n, fa, fv0){
+    // numerically integrate a(t) for v and p (dt fine), then sample
+    var dt = t1/n/20, t=0, v=0, p=0, out={t:[],p:[],v:[],a:[]}, k=0;
+    for (var i=0;i<=n*20;i++){
+      if (i%20===0){ out.t.push(t); out.p.push(p); out.v.push(v); out.a.push(fa(t)); }
+      var a1=fa(t), a2=fa(t+dt/2), a3=fa(t+dt);
+      var vn = v + dt*(a1+4*a2+a3)/6;
+      p += dt*(v + 2*(v+dt/2*a1) + 2*(v+dt/2*a2) + (v+dt*a3))/6;
+      v = vn; t += dt;
+    }
+    return out;
+  }
+  // 100 m sprint: v(t) = 10.9(1 - e^(-t/1.25)) - 0.03(t-6)^2 after 6 s
+  function sprintV(t){ return 10.9*(1-Math.exp(-t/1.25)) - 0.03*Math.pow(Math.max(0,t-6),2); }
+  function sprintA(t){ return 10.9/1.25*Math.exp(-t/1.25) - 0.06*Math.max(0,t-6); }
+  var SPR = integrateModel(10.5, 525, sprintA);
+  // knee angle in a kick: cosine bend then cosine straighten
+  function kneeP(t){ if (t<=0.2) return 165 - 85*(1-Math.cos(Math.PI*t/0.2))/2; var u=(t-0.2)/0.16; return 80 + 90*(1-Math.cos(Math.PI*Math.min(u,1)))/2; }
+  function kneeV(t){ if (t<=0.2) return -42.5*(Math.PI/0.2)*Math.sin(Math.PI*t/0.2); var u=(t-0.2)/0.16; return u>=1?0:45*(Math.PI/0.16)*Math.sin(Math.PI*u); }
+  function kneeA(t){ if (t<0.2) return -42.5*Math.pow(Math.PI/0.2,2)*Math.cos(Math.PI*t/0.2); var u=(t-0.2)/0.16; return u>=1?0:45*Math.pow(Math.PI/0.16,2)*Math.cos(Math.PI*u); }
+  var KNEE = sampleModel(0, 0.36, 360, kneeP, kneeV, kneeA);
+  // CMJ centre of mass: force/mass profile minus gravity, then flight
+  var G = 9.81;
+  function ci(a,b,s){ return a+(b-a)*(1-Math.cos(Math.PI*s))/2; }
+  function cmjF(t){
+    if (t<0.4) return G;
+    if (t<0.75) return G - 6*Math.pow(Math.sin(Math.PI*(t-0.4)/0.35),2);
+    if (t<1.05) return ci(G, 28, (t-0.75)/0.3);
+    if (t<1.2) return ci(28, 0, (t-1.05)/0.15);
+    return 0;
+  }
+  var CMJ = integrateModel(1.5, 600, function(t){ return cmjF(t) - G; });
+  (function(){ var k=0; CMJ.p.forEach(function(v,i){ if(v>CMJ.p[k]) k=i; }); ['t','p','v','a'].forEach(function(n){ CMJ[n]=CMJ[n].slice(0,k+1); }); })();
+  // ball thrown up
+  var BALL = sampleModel(0, 1.22, 244, function(t){ return 6*t-4.905*t*t; }, function(t){ return 6-9.81*t; }, function(){ return -9.81; });
+  var WALK = sampleModel(0, 5, 100, function(t){ return 1.4*t; }, function(){ return 1.4; }, function(){ return 0; });
+
+  function at(M, t){ // linear interpolation
+    var n=M.t.length-1, t0=M.t[0], t1=M.t[n];
+    var f=(t-t0)/(t1-t0)*n; if (f<=0) return {p:M.p[0],v:M.v[0],a:M.a[0]}; if (f>=n) return {p:M.p[n],v:M.v[n],a:M.a[n]};
+    var i=Math.floor(f), r=f-i;
+    return {p:M.p[i]+(M.p[i+1]-M.p[i])*r, v:M.v[i]+(M.v[i+1]-M.v[i])*r, a:M.a[i]+(M.a[i+1]-M.a[i])*r};
+  }
+  function crossings(t, y, skipEnds){
+    var mx=0; y.forEach(function(v){ mx=Math.max(mx,Math.abs(v)); });
+    var eps=0.02*mx, out=[], last=0, lastT=null;
+    for (var i=0;i<y.length;i++){
+      var s = y[i]>eps?1:(y[i]<-eps?-1:0);
+      if (s!==0){
+        if (last!==0 && s!==last){
+          // find zero between lastT index and i
+          var j=lastT; while (j<i && Math.sign(y[j])===last) j++;
+          out.push(t[Math.max(0,j-1)] + (t[j]-t[Math.max(0,j-1)])*0.5);
+        }
+        last=s; lastT=i;
+      }
+    }
+    return out;
+  }
+
+  /* ================= chart ================= */
+  function niceStep(range, target){ var raw = range/(target||5), p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw/p; return (m<1.5?1:m<3?2:m<7?5:10)*p; }
+  function plot(svg, o){
+    if (typeof svg==='string') svg=$(svg); if(!svg) return null;
+    var vb = svg.viewBox.baseVal, W=vb.width, H=vb.height;
+    var fs=o.fs||15, L=o.L||70, R=16, T=14, B=o.B||(fs*2+22), w=W-L-R, h=H-T-B;
+    var x0=o.x0||0, x1=o.x1, y0=o.y0, y1=o.y1;
+    function X(x){ return L+(x-x0)/(x1-x0)*w; } function Y(y){ return T+h-(y-y0)/(y1-y0)*h; }
+    var id = svg.id+'clip', s = '<defs><clipPath id="'+id+'"><rect x="'+L+'" y="'+T+'" width="'+w+'" height="'+h+'"/></clipPath></defs>';
+    (o.bands||[]).forEach(function(b){ s+='<rect x="'+X(b.a)+'" y="'+T+'" width="'+(X(b.b)-X(b.a))+'" height="'+h+'" fill="'+b.col+'" opacity="'+(b.op||0.12)+'"/>'; if(b.label) s+='<text x="'+((X(b.a)+X(b.b))/2)+'" y="'+(T+fs+2)+'" text-anchor="middle" font-size="'+(fs-2)+'" fill="'+C.muted+'">'+b.label+'</text>'; });
+    var ys = niceStep(y1-y0, o.yt||5), xs = niceStep(x1-x0, o.xt||6);
+    for (var y=Math.ceil(y0/ys-1e-9)*ys; y<=y1+1e-9; y+=ys){
+      s += '<line x1="'+L+'" x2="'+(L+w)+'" y1="'+Y(y)+'" y2="'+Y(y)+'" stroke="#e6edf1"/>';
+      if (!o.noYnums) s += '<text x="'+(L-7)+'" y="'+(Y(y)+5)+'" text-anchor="end" font-size="'+fs+'" fill="'+C.muted+'">'+(+y.toFixed(3))+'</text>';
+    }
+    for (var x=Math.ceil(x0/xs-1e-9)*xs; x<=x1+1e-9; x+=xs){
+      s += '<text x="'+X(x)+'" y="'+(T+h+fs+6)+'" text-anchor="middle" font-size="'+fs+'" fill="'+C.muted+'">'+(+x.toFixed(3))+'</text>';
+    }
+    if (y0<0 && y1>0) s += '<line x1="'+L+'" x2="'+(L+w)+'" y1="'+Y(0)+'" y2="'+Y(0)+'" stroke="#5f6f77" stroke-width="1.5"/>';
+    s += '<line x1="'+L+'" x2="'+L+'" y1="'+T+'" y2="'+(T+h)+'" stroke="#1d1d1b"/>';
+    s += '<line x1="'+L+'" x2="'+(L+w)+'" y1="'+(T+h)+'" y2="'+(T+h)+'" stroke="#1d1d1b"/>';
+    s += '<text x="'+(L+w/2)+'" y="'+(H-6)+'" text-anchor="middle" font-size="'+(fs+1)+'" fill="'+C.navy+'" font-weight="bold">'+(o.xlab||'Time (s)')+'</text>';
+    s += '<text transform="translate('+(fs+3)+','+(T+h/2)+') rotate(-90)" text-anchor="middle" font-size="'+(fs+1)+'" fill="'+C.navy+'" font-weight="bold">'+o.ylab+'</text>';
+    s += '<g clip-path="url(#'+id+')">';
+    (o.vlines||[]).forEach(function(v){ s+='<line x1="'+X(v.x)+'" x2="'+X(v.x)+'" y1="'+T+'" y2="'+(T+h)+'" stroke="'+v.col+'" stroke-width="'+(v.sw||2)+'" stroke-dasharray="'+(v.dash||'6 4')+'"/>'; if(v.label) s+='<text x="'+(X(v.x)+4)+'" y="'+(T+fs+(v.dy||0))+'" font-size="'+(fs-2)+'" fill="'+v.col+'" font-weight="bold">'+v.label+'</text>'; });
+    (o.series||[]).forEach(function(se){
+      if (se.colours){ // segment colours
+        for (var i=1;i<se.x.length;i++) s += '<line x1="'+X(se.x[i-1])+'" y1="'+Y(se.y[i-1])+'" x2="'+X(se.x[i])+'" y2="'+Y(se.y[i])+'" stroke="'+se.colours[i]+'" stroke-width="'+(se.sw||3.5)+'" stroke-linecap="round"/>';
+      } else if (se.x.length>1 && !se.dotsOnly){
+        var pts = se.x.map(function(xx,i){ return se.y[i]==null?null:X(xx).toFixed(1)+','+Y(se.y[i]).toFixed(1); });
+        // split on nulls
+        var seg=[]; pts.forEach(function(p){ if(p===null){ if(seg.length>1) s+='<polyline points="'+seg.join(' ')+'" fill="none" stroke="'+se.col+'" stroke-width="'+(se.sw||3)+'" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="'+(se.dash||'')+'" opacity="'+(se.op||1)+'"/>'; seg=[]; } else seg.push(p); });
+        if (seg.length>1) s+='<polyline points="'+seg.join(' ')+'" fill="none" stroke="'+se.col+'" stroke-width="'+(se.sw||3)+'" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="'+(se.dash||'')+'" opacity="'+(se.op||1)+'"/>';
+      }
+      if (se.dots) se.x.forEach(function(xx,i){ if(se.y[i]!=null) s+='<circle cx="'+X(xx)+'" cy="'+Y(se.y[i])+'" r="'+(se.r||5.5)+'" fill="'+se.col+'" stroke="#fff" stroke-width="1.5"/>'; });
+    });
+    if (o.tangent){ var tg=o.tangent, d=(x1-x0)*0.13;
+      s += '<line x1="'+X(tg.x-d)+'" y1="'+Y(tg.y-tg.m*d)+'" x2="'+X(tg.x+d)+'" y2="'+Y(tg.y+tg.m*d)+'" stroke="'+tg.col+'" stroke-width="2.5" stroke-dasharray="7 5"/>'; }
+    if (o.cursor!=null) s += '<line x1="'+X(o.cursor)+'" x2="'+X(o.cursor)+'" y1="'+T+'" y2="'+(T+h)+'" stroke="'+C.navy+'" stroke-width="1.5" opacity=".55"/>';
+    (o.points||[]).forEach(function(p){ s+='<circle cx="'+X(p.x)+'" cy="'+Y(p.y)+'" r="'+(p.r||7)+'" fill="'+p.col+'" stroke="#fff" stroke-width="2"/>'; });
+    s += '</g>';
+    if (o.note) s += '<text x="'+(L+w/2)+'" y="'+(T+h/2)+'" text-anchor="middle" font-size="'+Math.min(fs+1,18)+'" fill="'+C.muted+'">'+o.note+'</text>';
+    svg.innerHTML = s;
+    var geo = {L:L,T:T,w:w,h:h,W:W,H:H,x0:x0,x1:x1,y0:y0,y1:y1,X:X,Y:Y};
+    svg._geo = geo; return geo;
+  }
+  function svgPoint(svg, ev){
+    var r = svg.getBoundingClientRect(), g = svg._geo;
+    var sx = (ev.clientX - r.left)/r.width*g.W, sy = (ev.clientY - r.top)/r.height*g.H;
+    return {t: g.x0 + (sx-g.L)/g.w*(g.x1-g.x0), y: g.y0 + (g.T+g.h-sy)/g.h*(g.y1-g.y0)};
+  }
+  function range(arr, pad, incZero){
+    var lo=Infinity, hi=-Infinity; arr.forEach(function(v){ if(v==null) return; lo=Math.min(lo,v); hi=Math.max(hi,v); });
+    if (incZero){ lo=Math.min(lo,0); hi=Math.max(hi,0); }
+    if (hi-lo<1e-9){ hi+=1; lo-=1; }
+    var p=(hi-lo)*(pad||0.08); lo = lo>=0 ? Math.max(0,lo-p) : lo-p; hi+=p;
+    var st=niceStep(hi-lo,5); return [Math.floor(lo/st)*st, Math.ceil(hi/st)*st];
+  }
+
+  /* ================= tabs ================= */
+  var tabs=[1,2,3,4,5,6];
+  function showTab(n){
+    tabs.forEach(function(i){ $('tab-'+i).setAttribute('aria-selected', i===n?'true':'false'); $('p-'+i).classList.toggle('hide', i!==n); });
+    S.tab=n; save();
+    if (n===4) drawExplorer();
+    if (n===5) drawSketch();
+    stopAll();
+  }
+  tabs.forEach(function(i){ $('tab-'+i).addEventListener('click', function(){ showTab(i); }); });
+  document.querySelectorAll('[data-go]').forEach(function(b){ b.addEventListener('click', function(){ showTab(+b.getAttribute('data-go')); window.scrollTo({top:0, behavior:'smooth'}); }); });
+
+  /* ================= players ================= */
+  var players=[];
+  function makePlayer(btn, slider, rate, onTick){
+    var P={raf:null, last:0, playing:false};
+    function frame(ts){
+      if (!P.playing) return;
+      var dt=(ts-P.last)/1000; P.last=ts;
+      var v=+slider.value + dt*rate(), mx=+slider.max;
+      if (v>=mx){ v=mx; stop(); }
+      slider.value=v; onTick(v);
+      if (P.playing) P.raf=requestAnimationFrame(frame);
+    }
+    function stop(){ P.playing=false; btn.innerHTML='&#9654; Play'; if(P.raf) cancelAnimationFrame(P.raf); }
+    P.stop=stop;
+    btn.addEventListener('click', function(){
+      if (P.playing){ stop(); return; }
+      if (+slider.value>=+slider.max-1e-6) slider.value=slider.min;
+      P.playing=true; btn.innerHTML='&#10074;&#10074; Pause'; P.last=performance.now(); P.raf=requestAnimationFrame(frame);
+    });
+    slider.addEventListener('input', function(){ stop(); onTick(+slider.value); });
+    players.push(P); return P;
+  }
+  function stopAll(){ players.forEach(function(p){ p.stop(); }); }
+
+  /* ================= TAB 1: track ================= */
+  function drawTrack(t){
+    var st=at(SPR,t), x=Math.min(st.p,100);
+    var L=30, w=580, s='';
+    s+='<rect x="'+L+'" y="40" width="'+w+'" height="46" fill="#c95b45" opacity=".85" rx="6"/>';
+    for (var m=0;m<=100;m+=10){ var X=L+m/100*w; s+='<line x1="'+X+'" x2="'+X+'" y1="40" y2="86" stroke="#fff" stroke-width="'+(m%50===0?3:1.5)+'"/>'; s+='<text x="'+X+'" y="106" text-anchor="middle" font-size="11" fill="'+C.muted+'">'+m+' m</text>'; }
+    var rx=L+x/100*w;
+    // trail showing equal time steps (every 0.5 s)
+    for (var tt=0; tt<=t; tt+=0.5){ var px=L+Math.min(at(SPR,tt).p,100)/100*w; s+='<circle cx="'+px+'" cy="63" r="3.5" fill="#fff" opacity=".9"/>'; }
+    s+='<circle cx="'+rx+'" cy="63" r="13" fill="'+C.navy+'" stroke="#fff" stroke-width="3"/>';
+    s+='<text x="'+L+'" y="26" font-size="11" fill="'+C.muted+'">White dots = where the sprinter was every 0.5 s. Wider gaps = faster.</text>';
+    $('track').innerHTML=s;
+    $('t1').textContent=t.toFixed(2)+' s';
+    $('ro1p').textContent=fx(x,1)+' m'; $('ro1v').textContent=fx(st.v,2)+' m/s'; $('ro1a').innerHTML=fx(st.a,2)+' m/s&sup2;';
+    $('m1p').style.width=(x)+'%';
+    $('m1v').style.width=(st.v/11*100)+'%';
+    var aw=Math.min(50,Math.abs(st.a)/9*50); $('m1a').style.left=(st.a>=0?50:50-aw)+'%'; $('m1a').style.width=aw+'%';
+    var msg;
+    if (t<0.01) msg='On the start line. Position 0, velocity 0, but acceleration is already large as the sprinter pushes off.';
+    else if (st.a>2) msg='Velocity is climbing fast, so acceleration is large and positive.';
+    else if (st.a>0.25) msg='Still speeding up, but each second adds less speed than before. Acceleration is small and positive.';
+    else if (st.a>-0.25) msg='At (or very near) top speed. Velocity is hardly changing, so acceleration is about zero.';
+    else msg='Still running forwards fast, but velocity is dropping a little. Acceleration is negative, so the sprinter is slowing down.';
+    if (st.p>=99.5) msg='Finished. Notice the slight slowing over the last part of the race.';
+    $('say1').textContent=msg;
+  }
+  makePlayer($('play1'), $('slide1'), function(){ return 1; }, drawTrack);
+
+  /* ================= TAB 2: sprint table ================= */
+  var ST=[1.89,2.97,3.95,4.90,5.83,6.75,7.67,8.60,9.54,10.50];
+  var sDt=[], sV=[], sMid=[], sA=[], sAmid=[];
+  ST.forEach(function(tt,i){ var p=i?ST[i-1]:0; var d=Math.round((tt-p)*100)/100; sDt.push(d); sV.push(Math.round(10/d*100)/100); sMid.push((tt+p)/2); });
+  for (var i=1;i<10;i++){ sA.push(Math.round((sV[i]-sV[i-1])/(sMid[i]-sMid[i-1])*100)/100); sAmid.push((sMid[i]+sMid[i-1])/2); }
+  S.s = S.s || {dt:[],v:[],a:[]};
+  function buildSprintTable(){
+    var b='';
+    for (var i=0;i<10;i++){
+      b+='<tr><td class="given num">'+(i*10)+'&ndash;'+((i+1)*10)+' m</td><td class="given num">'+ST[i].toFixed(2)+'</td>'+
+        '<td class="num"><input type="text" inputmode="decimal" data-s="dt" data-i="'+i+'" aria-label="Section time '+(i*10)+' to '+((i+1)*10)+' m"><span class="mark"></span></td>'+
+        '<td class="num"><input type="text" inputmode="decimal" data-s="v" data-i="'+i+'" aria-label="Velocity '+(i*10)+' to '+((i+1)*10)+' m"><span class="mark"></span></td>'+
+        '<td class="num">'+fx(sMid[i],3)+'</td>'+
+        '<td class="num">'+(i===0?'<span style="color:var(--muted)">needs two velocities</span>':'<input type="text" inputmode="decimal" data-s="a" data-i="'+(i-1)+'" aria-label="Acceleration between section '+i+' and '+(i+1)+'"><span class="mark"></span>')+'</td></tr>';
+    }
+    $('sTable').querySelector('tbody').innerHTML=b;
+    $('sTable').querySelectorAll('input').forEach(function(inp){
+      var k=inp.getAttribute('data-s'), i=+inp.getAttribute('data-i');
+      if (S.s[k][i]!=null) inp.value=S.s[k][i];
+      inp.addEventListener('input', function(){ S.s[k][i]=inp.value; save(); inp.classList.remove('ok','no'); inp.nextElementSibling.textContent=''; });
+      inp.addEventListener('change', function(){ markOne(inp, sprintOK(k,i,inp.value)); drawSprint(); });
+    });
+  }
+  function sprintOK(k,i,val){
+    var n=num(val); if (n===null) return null; if (isNaN(n)) return false;
+    if (k==='dt') return Math.abs(n-sDt[i])<0.006;
+    if (k==='v') return Math.abs(n-sV[i])<0.021;
+    return Math.abs(n-sA[i])<=Math.max(0.03, Math.abs(sA[i])*0.03);
+  }
+  function markOne(inp, ok){
+    inp.classList.remove('ok','no'); var m=inp.nextElementSibling;
+    if (ok===null){ m.textContent=''; m.className='mark'; return; }
+    inp.classList.add(ok?'ok':'no'); m.textContent=ok?'✓':'✗'; m.className='mark '+(ok?'ok':'no');
+  }
+  function checkTable(tbl, fn, statusEl){
+    var right=0, wrong=0, empty=0;
+    $(tbl).querySelectorAll('input').forEach(function(inp){
+      var k=inp.getAttribute('data-s')||inp.getAttribute('data-k'), i=+inp.getAttribute('data-i'), ok=fn(k,i,inp.value);
+      markOne(inp, ok); if (ok===true) right++; else if (ok===false) wrong++; else empty++;
+    });
+    $(statusEl).textContent = right+' right, '+wrong+' to fix, '+empty+' still empty.' + (wrong?' Use "Give me a hint" if you are stuck.':'') + (!wrong&&!empty?' All correct, well done.':'');
+  }
+  $('sCheck').addEventListener('click', function(){ checkTable('sTable', sprintOK, 'sStatus'); drawSprint(); });
+  $('sFill').addEventListener('click', function(){
+    $('sTable').querySelectorAll('input').forEach(function(inp){
+      var k=inp.getAttribute('data-s'), i=+inp.getAttribute('data-i');
+      if (sprintOK(k,i,inp.value)!==true){ inp.value = (k==='dt'?sDt[i].toFixed(2):k==='v'?sV[i].toFixed(2):sA[i].toFixed(2)); S.s[k][i]=inp.value; }
+      markOne(inp, true);
+    });
+    save(); drawSprint(); $('sStatus').textContent='Filled in. Check any rows you did not work out yourself against your own calculation.';
+  });
+  $('sHint').addEventListener('click', function(){
+    var inputs=$('sTable').querySelectorAll('input'), target=null;
+    for (var j=0;j<inputs.length;j++){ var inp=inputs[j], k=inp.getAttribute('data-s'), i=+inp.getAttribute('data-i'); if (sprintOK(k,i,inp.value)!==true){ target={k:k,i:i,inp:inp}; break; } }
+    if (!target){ $('sStatus').textContent='Nothing left to hint, everything is correct.'; return; }
+    var i=target.i, msg;
+    if (target.k==='dt') msg='Section '+(i*10)+'–'+((i+1)*10)+' m: take the time at '+((i+1)*10)+' m ('+ST[i].toFixed(2)+' s) and subtract the time at '+(i*10)+' m ('+(i?ST[i-1].toFixed(2):'0')+' s).';
+    else if (target.k==='v') msg='Section '+(i*10)+'–'+((i+1)*10)+' m: velocity = 10 ÷ section time = 10 ÷ '+sDt[i].toFixed(2)+'. Round to 2 decimal places.';
+    else msg='Acceleration between sections '+(i+1)+' and '+(i+2)+': ('+sV[i+1].toFixed(2)+' − '+sV[i].toFixed(2)+') ÷ ('+fx(sMid[i+1],3)+' − '+fx(sMid[i],3)+').';
+    $('sStatus').textContent='Hint: '+msg; target.inp.focus();
+  });
+  function drawSprint(){
+    var vx=[],vy=[],ax=[],ay=[];
+    for (var i=0;i<10;i++) if (sprintOK('v',i,S.s.v[i])===true){ vx.push(sMid[i]); vy.push(sV[i]); }
+    for (var j=0;j<9;j++) if (sprintOK('a',j,S.s.a[j])===true){ ax.push(sAmid[j]); ay.push(sA[j]); }
+    plot('sP',{fs:24,L:104,x1:11, y0:0, y1:100, ylab:'Position (m)', series:[{x:[0].concat(ST), y:[0,10,20,30,40,50,60,70,80,90,100], col:C.navy, dots:true}]});
+    plot('sV',{fs:24,L:104,x1:11, y0:0, y1:12, ylab:'Velocity (m/s)', series:[{x:vx,y:vy,col:C.teal,dots:true}], note: vx.length?'':'Your velocities appear here'});
+    plot('sA',{fs:24,L:104,x1:11, y0:-1, y1:3, ylab:'Acceleration (m/s²)', series:[{x:ax,y:ay,col:C.plum,dots:true}], note: ax.length?'':'Your accelerations appear here'});
+  }
+
+  /* ================= TAB 3: knee ================= */
+  var KT=[0,0.04,0.08,0.12,0.16,0.20,0.24,0.28,0.32,0.36], KA=[165,157,136,109,88,80,93,125,157,170];
+  var kD=[],kW=[],kMid=[],kAl=[],kAmid=[];
+  for (var q=1;q<10;q++){ kD.push(KA[q]-KA[q-1]); kW.push((KA[q]-KA[q-1])/0.04); kMid.push((KT[q]+KT[q-1])/2); }
+  for (var r=1;r<9;r++){ kAl.push((kW[r]-kW[r-1])/0.04); kAmid.push((kMid[r]+kMid[r-1])/2); }
+  S.k = S.k || {d:[],w:[],a:[]};
+  function buildKneeTable(){
+    var b='';
+    for (var i=0;i<10;i++){
+      var mid = i? fx(kMid[i-1],2):'';
+      b+='<tr><td class="given num">'+KT[i].toFixed(2)+(i===8?'<br><span style="color:var(--plum);font-weight:normal;font-size:.88em">ball contact at 0.30 s, just before this frame</span>':'')+'</td><td class="given num">'+KA[i]+'</td>'+
+        (i===0?'<td colspan="4" style="color:var(--muted)">Start: changes are worked out from the next row onwards.</td>':
+        '<td class="num"><input type="text" inputmode="decimal" data-k="d" data-i="'+(i-1)+'" aria-label="Change in angle to '+KT[i].toFixed(2)+' s"><span class="mark"></span></td>'+
+        '<td class="num"><input type="text" inputmode="decimal" data-k="w" data-i="'+(i-1)+'" aria-label="Angular velocity '+KT[i-1].toFixed(2)+' to '+KT[i].toFixed(2)+' s"><span class="mark"></span></td>'+
+        '<td class="num">'+mid+'</td>'+
+        '<td class="num">'+(i===1?'<span style="color:var(--muted)">needs two velocities</span>':'<input type="text" inputmode="decimal" data-k="a" data-i="'+(i-2)+'" aria-label="Angular acceleration"><span class="mark"></span>')+'</td>')+'</tr>';
+    }
+    $('kTable').querySelector('tbody').innerHTML=b;
+    $('kTable').querySelectorAll('input').forEach(function(inp){
+      var k=inp.getAttribute('data-k'), i=+inp.getAttribute('data-i');
+      if (S.k[k][i]!=null) inp.value=S.k[k][i];
+      inp.addEventListener('input', function(){ S.k[k][i]=inp.value; save(); inp.classList.remove('ok','no'); inp.nextElementSibling.textContent=''; });
+      inp.addEventListener('change', function(){ markOne(inp, kneeOK(k,i,inp.value)); drawKnee(); });
+    });
+  }
+  function kneeOK(k,i,val){
+    var n=num(val); if (n===null) return null; if (isNaN(n)) return false;
+    if (k==='d') return Math.abs(n-kD[i])<0.51;
+    if (k==='w') return Math.abs(n-kW[i])<1.01;
+    return Math.abs(n-kAl[i])<=Math.max(10, Math.abs(kAl[i])*0.01);
+  }
+  $('kCheck').addEventListener('click', function(){ checkTable('kTable', kneeOK, 'kStatus'); drawKnee(); });
+  $('kFill').addEventListener('click', function(){
+    $('kTable').querySelectorAll('input').forEach(function(inp){
+      var k=inp.getAttribute('data-k'), i=+inp.getAttribute('data-i');
+      if (kneeOK(k,i,inp.value)!==true){ inp.value = String(k==='d'?kD[i]:k==='w'?kW[i]:kAl[i]); S.k[k][i]=inp.value; }
+      markOne(inp,true);
+    });
+    save(); drawKnee(); $('kStatus').textContent='Filled in. Look for the pattern in the signs (+ and −) down each column.';
+  });
+  $('kHint').addEventListener('click', function(){
+    var inputs=$('kTable').querySelectorAll('input'), target=null;
+    for (var j=0;j<inputs.length;j++){ var inp=inputs[j], k=inp.getAttribute('data-k'), i=+inp.getAttribute('data-i'); if (kneeOK(k,i,inp.value)!==true){ target={k:k,i:i,inp:inp}; break; } }
+    if (!target){ $('kStatus').textContent='Nothing left to hint, everything is correct.'; return; }
+    var i=target.i, msg;
+    if (target.k==='d') msg='Angle at '+KT[i+1].toFixed(2)+' s ('+KA[i+1]+'°) minus angle at '+KT[i].toFixed(2)+' s ('+KA[i]+'°). Keep the minus sign if the angle got smaller.';
+    else if (target.k==='w') msg='Angular velocity = change in angle ÷ 0.04 = '+kD[i]+' ÷ 0.04.';
+    else msg='Angular acceleration = (next angular velocity − this one) ÷ 0.04 = ('+kW[i+1]+' − '+(kW[i]<0?'('+kW[i]+')':kW[i])+') ÷ 0.04.';
+    $('kStatus').textContent='Hint: '+msg; target.inp.focus();
+  });
+  function drawKnee(){
+    var wx=[],wy=[],ax=[],ay=[];
+    for (var i=0;i<9;i++) if (kneeOK('w',i,S.k.w[i])===true){ wx.push(kMid[i]); wy.push(kW[i]); }
+    for (var j=0;j<8;j++) if (kneeOK('a',j,S.k.a[j])===true){ ax.push(kAmid[j]); ay.push(kAl[j]); }
+    var contact=[{x:0.30,col:C.plum,label:'ball contact'}];
+    plot('kP',{fs:24,L:104,x1:0.4, y0:60, y1:180, ylab:'Knee angle (°)', vlines:contact, series:[{x:KT,y:KA,col:C.navy,dots:true}]});
+    plot('kV',{x1:0.4, y0:-800, y1:1000, ylab:'Ang. vel. (°/s)', fs:24, L:118, vlines:contact, series:[{x:wx,y:wy,col:C.teal,dots:true}], note: wx.length?'':'Your angular velocities appear here'});
+    plot('kA',{x1:0.4, y0:-15000, y1:15000, ylab:'Ang. acc. (°/s²)', fs:24, L:134, vlines:contact, series:[{x:ax,y:ay,col:C.plum,dots:true}], note: ax.length?'':'Your angular accelerations appear here'});
+  }
+  function drawLeg(t){
+    var st=at(KNEE,t), ang=st.p;
+    var hip={x:250,y:60}, thighLen=120, shankLen=120;
+    var thighDir=(100)*Math.PI/180; // thigh pointing down and slightly forward
+    var thighAng = 75*Math.PI/180 + (t>0.2? -(t-0.2)*0.9 : 0); // thigh swings forward slightly during the kick
+    var knee={x:hip.x+thighLen*Math.cos(thighAng), y:hip.y+thighLen*Math.sin(thighAng)};
+    // shank direction: rotate thigh direction by (180 - ang) backwards
+    var shankAng = thighAng + (180-ang)*Math.PI/180;
+    var ankle={x:knee.x+shankLen*Math.cos(shankAng), y:knee.y+shankLen*Math.sin(shankAng)};
+    var foot={x:ankle.x+38*Math.cos(shankAng-Math.PI/2), y:ankle.y+38*Math.sin(shankAng-Math.PI/2)};
+    var s='<rect x="0" y="290" width="640" height="40" fill="#e9f4ea"/>';
+    s+='<circle cx="430" cy="270" r="20" fill="#fff" stroke="'+C.navy+'" stroke-width="3"/>';
+    // angle arc
+    var a1=Math.atan2(hip.y-knee.y, hip.x-knee.x), a2=Math.atan2(ankle.y-knee.y, ankle.x-knee.x), rr=34;
+    var sweep = ((a2-a1+2*Math.PI)%(2*Math.PI))>Math.PI?0:1;
+    s+='<path d="M'+(knee.x+rr*Math.cos(a1))+','+(knee.y+rr*Math.sin(a1))+' A'+rr+','+rr+' 0 0 '+sweep+' '+(knee.x+rr*Math.cos(a2))+','+(knee.y+rr*Math.sin(a2))+'" fill="none" stroke="'+C.amber+'" stroke-width="4"/>';
+    s+='<line x1="'+hip.x+'" y1="'+hip.y+'" x2="'+knee.x+'" y2="'+knee.y+'" stroke="'+C.navy+'" stroke-width="16" stroke-linecap="round"/>';
+    s+='<line x1="'+knee.x+'" y1="'+knee.y+'" x2="'+ankle.x+'" y2="'+ankle.y+'" stroke="'+C.teal+'" stroke-width="14" stroke-linecap="round"/>';
+    s+='<line x1="'+ankle.x+'" y1="'+ankle.y+'" x2="'+foot.x+'" y2="'+foot.y+'" stroke="'+C.teal+'" stroke-width="10" stroke-linecap="round"/>';
+    [hip,knee,ankle].forEach(function(p){ s+='<circle cx="'+p.x+'" cy="'+p.y+'" r="7" fill="#fff" stroke="'+C.navy+'" stroke-width="3"/>'; });
+    s+='<text x="'+(knee.x-70)+'" y="'+(knee.y+5)+'" font-size="20" font-weight="bold" fill="'+C.amber+'">'+Math.round(ang)+'°</text>';
+    s+='<text x="20" y="28" font-size="15" fill="'+C.muted+'">Side view. The orange arc is the knee angle (180° = straight).</text>';
+    $('leg').innerHTML=s;
+    $('t3').textContent=t.toFixed(3)+' s';
+    $('ro3p').innerHTML=Math.round(ang)+'&deg;';
+    $('ro3v').innerHTML=Math.round(st.v)+' &deg;/s'+(Math.abs(st.v)<15?' (turning point)':st.v<0?' (bending)':' (straightening)');
+    var msg;
+    if (t<0.005) msg='The knee starts to bend as the leg swings back.';
+    else if (t<0.19) msg='Angle getting smaller, so angular velocity is negative (the knee is bending).';
+    else if (t<0.21) msg='Most bent (80°). The knee stops bending and starts straightening, so angular velocity is zero here.';
+    else if (t<0.28) msg='Angle getting bigger, faster and faster. Angular velocity is positive and rising, so angular acceleration is positive.';
+    else if (t<0.355) msg='Still straightening fast through ball contact, but slowing down. Angular acceleration is now negative.';
+    else msg='Nearly straight and the knee has slowed right down.';
+    $('say3').textContent=msg;
+  }
+  makePlayer($('play3'), $('slide3'), function(){ return 0.06; }, drawLeg);
+
+  /* ================= TAB 4: explorer ================= */
+  var EX = {
+    sprint:{M:SPR, intro:'A 100 m sprint. Position is distance along the track. Forwards is positive.', pl:'Position (m)', vl:'Velocity (m/s)', al:'Accel. (m/s²)', pu:'m', vu:'m/s', au:'m/s²', pd:1, vd:2, ad:2, pos:'forwards', neg:'backwards', tScale:1},
+    knee:{M:KNEE, intro:'Knee angle during a kick (180° = straight). Straightening (extending) is positive, bending (flexing) is negative.', pl:'Knee angle (°)', vl:'Ang. vel. (°/s)', al:'Ang. acc. (°/s²)', pu:'°', vu:'°/s', au:'°/s²', pd:0, vd:0, ad:0, pos:'straightening (extending)', neg:'bending (flexing)', tScale:0.06, contact:0.30},
+    cmj:{M:CMJ, intro:'Centre of mass height in a countermovement jump, from standing still to the top of the jump. Up is positive. Take-off is at 1.20 s.', pl:'Height change (m)', vl:'Velocity (m/s)', al:'Accel. (m/s²)', pu:'m', vu:'m/s', au:'m/s²', pd:2, vd:2, ad:1, pos:'upwards', neg:'downwards', tScale:0.25, takeoff:1.2}
+  };
+  S.ex = S.ex || 'sprint'; S.tg = S.tg || {};
+  var exT = 0;
+  function exInfo(){ return EX[S.ex]; }
+  function setEx(k){
+    S.ex=k; save();
+    document.querySelectorAll('#exSeg .btn').forEach(function(b){ b.setAttribute('aria-pressed', b.getAttribute('data-ex')===k?'true':'false'); });
+    var M=EX[k].M, sl=$('slide4'); sl.min=M.t[0]; sl.max=M.t[M.t.length-1]; sl.step=(sl.max-sl.min)/600;
+    exT = k==='sprint'?3:k==='knee'?0.1:0.6; sl.value=exT;
+    $('exIntro').textContent=EX[k].intro;
+    drawExplorer();
+  }
+  document.querySelectorAll('#exSeg .btn').forEach(function(b){ b.addEventListener('click', function(){ stopAll(); setEx(b.getAttribute('data-ex')); }); });
+  ['tgTurn','tgSteep','tgCurve'].forEach(function(id){
+    $(id).setAttribute('aria-pressed', S.tg[id]?'true':'false');
+    $(id).addEventListener('click', function(){ S.tg[id]=!S.tg[id]; save(); $(id).setAttribute('aria-pressed', S.tg[id]?'true':'false'); drawExplorer(); });
+  });
+  var explorerPlayer = makePlayer($('play4'), $('slide4'), function(){ return exInfo().tScale; }, function(v){ exT=v; drawExplorer(); });
+  function drawExplorer(){
+    var E=exInfo(), M=E.M, t1=M.t[M.t.length-1], st=at(M,exT);
+    var rp=range(M.p,0.08,false), rv=range(M.v,0.1,true), ra=range(M.a,0.1,true);
+    var vl=[], vlV=[], vlA=[];
+    if (S.tg.tgTurn){ crossings(M.t,M.v).forEach(function(x){ var l={x:x,col:C.navy,dash:'3 4',sw:2.5}; vl.push(l); vlV.push(l); vlA.push(l); }); }
+    if (S.tg.tgSteep){ crossings(M.t,M.a).forEach(function(x){ var l={x:x,col:C.amber,dash:'3 4',sw:2.5}; vl.push(l); vlV.push(l); vlA.push(l); }); }
+    if (E.contact){ var c={x:E.contact,col:C.plum,label:'ball contact',dash:'2 3',sw:1.5}; vl.push(c); vlV.push(c); vlA.push(c); }
+    if (E.takeoff){ var c2={x:E.takeoff,col:C.plum,label:'take-off',dash:'2 3',sw:1.5}; vl.push(c2); vlV.push(c2); vlA.push(c2); }
+    var pSeries={x:M.t,y:M.p,col:C.navy,sw:3.5};
+    var bands=[];
+    if (S.tg.tgCurve){
+      var amax=0; M.a.forEach(function(a){ amax=Math.max(amax,Math.abs(a)); });
+      pSeries.colours=M.a.map(function(a){ return Math.abs(a)<0.03*amax?C.grey:(a>0?C.teal:C.plum); });
+      // bands on velocity graph too
+    }
+    plot('eP',{x0:M.t[0],x1:t1,y0:rp[0],y1:rp[1],ylab:E.pl,fs:14,L:74,series:[pSeries],vlines:vl,cursor:exT,tangent:{x:exT,y:st.p,m:st.v,col:C.teal},points:[{x:exT,y:st.p,col:C.navy}]});
+    plot('eV',{x0:M.t[0],x1:t1,y0:rv[0],y1:rv[1],ylab:E.vl,fs:14,L:74,series:[{x:M.t,y:M.v,col:C.teal,sw:3.5}],vlines:vlV,cursor:exT,tangent:{x:exT,y:st.v,m:st.a,col:C.plum},points:[{x:exT,y:st.v,col:C.teal}]});
+    plot('eA',{x0:M.t[0],x1:t1,y0:ra[0],y1:ra[1],ylab:E.al,fs:14,L:74,series:[{x:M.t,y:M.a,col:C.plum,sw:3.5}],vlines:vlA,cursor:exT,points:[{x:exT,y:st.a,col:C.plum}]});
+    $('t4').textContent=(S.ex==='knee'?exT.toFixed(3):exT.toFixed(2))+' s';
+    var leg='<span><span class="key" style="border-color:'+C.teal+';border-top-style:dashed"></span>slope of position = velocity</span><span><span class="key" style="border-color:'+C.plum+';border-top-style:dashed"></span>slope of velocity = acceleration</span>';
+    if (S.tg.tgTurn) leg+='<span><span class="key" style="border-color:'+C.navy+';border-top-style:dotted"></span>Rule 2: peak or valley, velocity = 0</span>';
+    if (S.tg.tgSteep) leg+='<span><span class="key" style="border-color:'+C.amber+';border-top-style:dotted"></span>Rule 3: steepest point, acceleration = 0</span>';
+    if (S.tg.tgCurve) leg+='<span><span class="key" style="border-color:'+C.teal+'"></span>curving up (valley), acceleration +</span><span><span class="key" style="border-color:'+C.plum+'"></span>curving down (hill), acceleration &minus;</span>';
+    $('eLegend').innerHTML=leg;
+    // read-out
+    var vmax=0, amax2=0; M.v.forEach(function(v){ vmax=Math.max(vmax,Math.abs(v)); }); M.a.forEach(function(a){ amax2=Math.max(amax2,Math.abs(a)); });
+    var vz=Math.abs(st.v)<0.03*vmax, az=Math.abs(st.a)<0.03*amax2;
+    var q1 = vz ? 'Not moving at this instant (velocity ≈ 0). The position graph is flat here.' : 'Moving <strong>'+(st.v>0?E.pos:E.neg)+'</strong>. Velocity is '+(st.v>0?'positive':'negative')+' because the position graph slopes '+(st.v>0?'up':'down')+'.';
+    var q2;
+    var strength = Math.abs(st.a)/amax2>0.55?'hard':Math.abs(st.a)/amax2>0.2?'steadily':'gently';
+    if (vz && az) q2='Neither. Nothing is changing.';
+    else if (vz) q2='Changing direction. Velocity is passing through zero.';
+    else if (az) q2='Neither. Velocity is at a peak (or holding steady), so for this instant it is not changing.';
+    else if ((st.v>0)===(st.a>0)) q2='<strong>Speeding up</strong> '+strength+'. Velocity is moving away from zero.';
+    else q2='<strong>Slowing down</strong> '+strength+'. Velocity is moving towards zero.';
+    var q3 = az ? 'Acceleration is about zero (the velocity graph is flat here).' : 'Acceleration is <strong>'+(st.a>0?'positive':'negative')+'</strong> because the velocity graph slopes '+(st.a>0?'up':'down')+(st.a>0?'. Velocity is being pushed up.':'. Velocity is being pulled down.');
+    if (S.ex==='cmj' && exT>E.takeoff+0.005) q3='In the air. The only thing acting is gravity, so acceleration is −9.81 m/s².';
+    $('eRead').innerHTML='<p class="big"><strong>At '+(S.ex==='knee'?exT.toFixed(3):exT.toFixed(2))+' s</strong></p>'+
+      '<p>Position: <strong>'+fx(st.p,E.pd)+' '+E.pu+'</strong><br>Velocity: <strong>'+fx(st.v,E.vd)+' '+E.vu+'</strong><br>Acceleration: <strong>'+fx(st.a,E.ad)+' '+E.au+'</strong></p>'+
+      '<p><strong>1. Which way?</strong> '+q1+'</p><p><strong>2. Speeding up or slowing down?</strong> '+q2+'</p><p><strong>3. Why?</strong> '+q3+'</p>';
+  }
+  ['eP','eV','eA'].forEach(function(id){
+    var svg=$(id), down=false;
+    function go(ev){ if(!svg._geo) return; var M=exInfo().M, p=svgPoint(svg,ev); exT=Math.max(M.t[0],Math.min(M.t[M.t.length-1],p.t)); $('slide4').value=exT; drawExplorer(); }
+    svg.addEventListener('pointerdown', function(ev){ down=true; explorerPlayer.stop(); try{ svg.setPointerCapture(ev.pointerId); }catch(e){} go(ev); });
+    svg.addEventListener('pointermove', function(ev){ if(down) go(ev); });
+    svg.addEventListener('pointerup', function(){ down=false; });
+    svg.addEventListener('pointercancel', function(){ down=false; });
+  });
+
+  /* ================= TAB 5: sketch ================= */
+  var SK = {
+    walk:{M:WALK, name:'walking at a steady pace', pl:'Position (m)', vl:'Velocity (m/s)', al:'Acceleration (m/s²)',
+      hintV:'The line is straight, so its slope never changes.', hintA:'Velocity is flat, so how much is it changing?'},
+    sprint:{M:SPR, name:'a 100 m sprint', pl:'Position (m)', vl:'Velocity (m/s)', al:'Acceleration (m/s²)',
+      hintV:'Steepening early on, then nearly straight. Where is it steepest?', hintA:'Velocity shoots up early, then levels off, then dips slightly.'},
+    ball:{M:BALL, name:'a ball thrown straight up and caught', pl:'Height (m)', vl:'Velocity (m/s)', al:'Acceleration (m/s²)',
+      hintV:'Uphill, then a peak (Rule 2), then downhill.', hintA:'The velocity line is straight. What does a constant slope give you?'},
+    cmj:{M:CMJ, name:'a countermovement jump', pl:'Height change (m)', vl:'Velocity (m/s)', al:'Acceleration (m/s²)',
+      hintV:'Flat, then down into a valley, then up to a peak. Two moments where velocity is zero.', hintA:'Find the bottom of the velocity dip and the top of the velocity peak (Rule 3: acceleration = 0 there).'},
+    knee:{M:KNEE, name:'the knee angle in a kick', pl:'Knee angle (°)', vl:'Ang. velocity (°/s)', al:'Ang. accel. (°/s²)',
+      hintV:'Downhill to a valley, then a steep uphill.', hintA:'Where is the velocity graph steepest? Where is it flat?'}
+  };
+  var NB=120;
+  S.sk = S.sk || {};
+  var skUser = new Array(NB).fill(null), skRevealed=false, skLast=null;
+  function skKey(){ return $('skTask').value+'-'+$('skMode').value; }
+  function skTarget(){
+    var T=SK[$('skTask').value], M=T.M, mode=$('skMode').value, src= mode==='v'?M.p:M.v, tgt= mode==='v'?M.v:M.a;
+    var bins=[], t0=M.t[0], t1=M.t[M.t.length-1];
+    for (var i=0;i<NB;i++){ var tt=t0+(t1-t0)*(i+0.5)/NB, st=at(M,tt); bins.push(mode==='v'?st.v:st.a); }
+    var mx=0; bins.forEach(function(b){ mx=Math.max(mx,Math.abs(b)); });
+    return {T:T,M:M,mode:mode,src:src,tgt:tgt,bins:bins,mx:mx,t0:t0,t1:t1};
+  }
+  function drawSketch(){
+    var g=skTarget(), T=g.T, M=g.M;
+    var srcLab= g.mode==='v'?T.pl:T.vl, tgtLab= g.mode==='v'?T.vl:T.al;
+    $('skPrompt').innerHTML='<strong>Your task:</strong> this is the '+(g.mode==='v'?'position':'velocity')+'–time graph for '+T.name+'. Sketch the '+(g.mode==='v'?'velocity':'acceleration')+'–time graph underneath. <em>Hint: '+(g.mode==='v'?T.hintV:T.hintA)+'</em>';
+    $('skTopLab').textContent=srcLab.replace(/\s*\(.*\)/,'')+'–time (given)';
+    $('skBotLab').textContent=tgtLab.replace(/\s*\(.*\)/,'')+'–time (your sketch)';
+    var rs=range(g.src,0.08,g.mode!=='v');
+    plot('skTop',{x0:g.t0,x1:g.t1,y0:rs[0],y1:rs[1],ylab:srcLab,fs:14,L:74,series:[{x:M.t,y:g.src,col:g.mode==='v'?C.navy:C.teal,sw:3.5}]});
+    // bottom: normalised scale -1..1, no numbers
+    var ux=[],uy=[];
+    for (var i=0;i<NB;i++){ ux.push(g.t0+(g.t1-g.t0)*(i+0.5)/NB); uy.push(skUser[i]); }
+    var series=[{x:ux,y:uy,col:C.amber,sw:4}];
+    if (skRevealed){ var sc=g.mx>1e-9?0.85/g.mx:1; series.unshift({x:M.t,y:g.tgt.map(function(v){return v*sc;}),col:g.mode==='v'?C.teal:C.plum,sw:4,op:.9}); }
+    plot('skBot',{x0:g.t0,x1:g.t1,y0:-1,y1:1,ylab:'− 0 +',fs:14,L:74,noYnums:true,series:series,
+      note: skUser.some(function(v){return v!=null;})?'':'Draw here: above the line = positive, below = negative'});
+    var b=$('skBot'); var s=b.innerHTML; // label zero line
+  }
+  (function(){
+    var svg=$('skBot'), down=false;
+    function put(ev){
+      var g=skTarget(), p=svgPoint(svg,ev);
+      var i=Math.round((p.t-g.t0)/(g.t1-g.t0)*NB-0.5); i=Math.max(0,Math.min(NB-1,i));
+      var y=Math.max(-1,Math.min(1,p.y));
+      if (skLast){ var a=skLast.i, b=i, ya=skLast.y; var n=Math.abs(b-a); for (var k=0;k<=n;k++){ var j=a+(b>a?k:-k); skUser[j]= n?ya+(y-ya)*k/n:y; } }
+      else skUser[i]=y;
+      skLast={i:i,y:y}; drawSketch();
+    }
+    svg.addEventListener('pointerdown', function(ev){ down=true; skLast=null; try{ svg.setPointerCapture(ev.pointerId); }catch(e){} put(ev); ev.preventDefault(); });
+    svg.addEventListener('pointermove', function(ev){ if(down){ put(ev); ev.preventDefault(); } });
+    svg.addEventListener('pointerup', function(){ down=false; skLast=null; });
+    svg.addEventListener('pointercancel', function(){ down=false; skLast=null; });
+  })();
+  function skReset(){ skUser=new Array(NB).fill(null); skRevealed=false; $('skFb').classList.add('hide'); drawSketch(); }
+  $('skTask').addEventListener('change', skReset);
+  $('skMode').addEventListener('change', skReset);
+  $('skClear').addEventListener('click', skReset);
+  $('skNext').addEventListener('click', function(){
+    var t=$('skTask'), m=$('skMode');
+    if (m.value==='v'){ m.value='a'; } else { m.value='v'; t.selectedIndex=(t.selectedIndex+1)%t.options.length; }
+    skReset();
+  });
+  $('skReveal').addEventListener('click', function(){
+    var g=skTarget(), drawn=0, match=0, n=0;
+    skRevealed=true; drawSketch();
+    var flat = g.mx<1e-6;
+    for (var i=0;i<NB;i++){
+      if (skUser[i]==null) continue; drawn++;
+      var tv= flat?0:g.bins[i]/g.mx, u=skUser[i];
+      var ts= Math.abs(tv)<0.12?0:Math.sign(tv), us= Math.abs(u)<0.12?0:Math.sign(u);
+      n++; if (ts===us) match++;
+    }
+    var fb='';
+    if (drawn<NB*0.5) fb+='<p>You only sketched part of the graph. Try to draw across the whole time.</p>';
+    if (n){ var pc=Math.round(match/n*100); fb+='<p><strong>'+pc+'%</strong> of your sketch is on the right side of zero (positive, zero or negative).</p>'; }
+    var bmin=Math.min.apply(null,g.bins), bmax=Math.max.apply(null,g.bins), steady=!flat && (bmax-bmin)<0.05*g.mx;
+    if (steady) fb+='<p>The real answer is a flat line '+(bmax>0?'above':'below')+' zero: a constant value that never changes.</p>';
+    else if (!flat){
+      var bi=0; for (var j=1;j<NB;j++) if (Math.abs(g.bins[j])>Math.abs(g.bins[bi])) bi=j;
+      var ui=-1; for (var k=0;k<NB;k++) if (skUser[k]!=null && (ui<0 || Math.abs(skUser[k])>Math.abs(skUser[ui]))) ui=k;
+      var tb=g.t0+(g.t1-g.t0)*(bi+0.5)/NB;
+      fb+='<p>The real graph is furthest from zero at about <strong>'+tb.toFixed(2)+' s</strong>'+(ui>=0?'; yours is at about <strong>'+(g.t0+(g.t1-g.t0)*(ui+0.5)/NB).toFixed(2)+' s</strong>.':'.')+'</p>';
+    } else fb+='<p>The real answer is a flat line on zero: nothing is changing.</p>';
+    var key=skKey(); S.sk[key]= n?Math.round(match/n*100):0; save();
+    fb+='<p style="color:var(--muted);font-size:.92em">The coloured line is the real answer, scaled to fit. Only the shape matters here. Press <strong>Next sketch</strong> to carry on.</p>';
+    $('skFb').innerHTML=fb; $('skFb').classList.remove('hide');
+  });
+
+  /* ================= TAB 5: quiz ================= */
+  var cmjBottom = crossings(CMJ.t, CMJ.v)[0] || 0.9;
+  var cmjPeak = CMJ.t[CMJ.t.length-1]; // series ends at the highest point
+  var QUIZ = [
+    {M:SPR, g:'p', t:1.4, q:'The position–time graph is getting steeper here. What is velocity doing?',
+      o:['Increasing','Staying the same','Decreasing','It is zero'], c:0, e:'Steeper slope = bigger velocity (Rule 1). The slope is getting steeper, so velocity is going up.'},
+    {M:CMJ, g:'p', t:cmjBottom, q:'This is the lowest point of the countermovement. What is the velocity here?',
+      o:['Zero','At its most negative','At its most positive'], c:0, e:'A valley on a position graph is flat for an instant, so velocity is zero (Rule 2). The jumper is changing from moving down to moving up.'},
+    {M:SPR, g:'v', t:9.6, q:'Velocity is positive but falling here. What is the sprinter doing?',
+      o:['Running forwards but slowing down','Running backwards','Stopped'], c:0, e:'Positive velocity = still moving forwards. Velocity heading towards zero = slowing down, so acceleration is negative.'},
+    {M:CMJ, g:'v', t:0.55, q:'Velocity is negative and getting further from zero. What is happening?',
+      o:['Speeding up downwards (acceleration is negative)','Slowing down','Moving upwards'], c:0, e:'Velocity moving away from zero = speeding up. It is negative, so the jumper is moving down. Velocity and acceleration have the same sign, so this is speeding up, not slowing down.'},
+    {M:SPR, g:'a', t:6.3, q:'Acceleration is about zero here. What does that mean?',
+      o:['The sprinter is holding top speed','The sprinter has stopped','The sprinter is slowing down'], c:0, e:'Zero acceleration = velocity is not changing. At this point the sprinter is at top speed.'},
+    {M:KNEE, g:'p', t:0.1, q:'The knee angle is getting smaller here. What is the angular velocity?',
+      o:['Negative (the knee is bending)','Positive (the knee is straightening)','Zero'], c:0, e:'Downhill on the angle graph = negative angular velocity. A smaller angle means more bend, so the knee is flexing.'},
+    {M:CMJ, g:'a', t:1.12, q:'Acceleration is above zero but falling. Velocity is positive. What is the jumper doing?',
+      o:['Still speeding up, just less hard','Slowing down','At peak velocity'], c:0, e:'Positive acceleration with positive velocity = still speeding up. It is just happening less aggressively as acceleration falls (Harry et al., 2025).'},
+    {M:CMJ, g:'p', t:cmjPeak, q:'This is the very top of the jump. Which is true?',
+      o:['Velocity is zero, acceleration is −9.81 m/s²','Velocity and acceleration are both zero','Velocity is −9.81 m/s'], c:0, e:'At the top, velocity is zero (Rule 2). But the jumper is in the air, so gravity still acts and acceleration is −9.81 m/s². Zero velocity does not mean zero acceleration.'},
+    {M:KNEE, g:'v', t:0.28, q:'You worked out how quickly the knee angle changes. Which unit should you use?',
+      o:['°/s','°','°/s²','m/s'], c:0, e:'Change in angle (°) divided by time (s) gives °/s. Units matter in your presentation.'}
+  ];
+  S.quiz = S.quiz || {};
+  function quizScore(){ var r=0, a=0; QUIZ.forEach(function(q,i){ if(S.quiz[i]!=null){ a++; if(S.quiz[i]===q.c) r++; } }); return {r:r,a:a}; }
+  function buildQuiz(){
+    var h='';
+    QUIZ.forEach(function(q,i){
+      h+='<div class="qa"><p class="q">'+(i+1)+'. '+esc(q.q)+'</p><div class="grid2 split" style="align-items:center"><svg class="chart" id="qg'+i+'" viewBox="0 0 640 220" role="img" aria-label="Graph for question '+(i+1)+'"></svg><div class="opts">';
+      q.o.forEach(function(o,j){ h+='<button type="button" class="btn opt" data-q="'+i+'" data-o="'+j+'">'+esc(o)+'</button>'; });
+      h+='</div></div><p class="fb" id="qf'+i+'"></p></div>';
+    });
+    $('quiz').innerHTML=h;
+    QUIZ.forEach(function(q,i){
+      var M=q.M, key=q.g, arr=M[key==='p'?'p':key==='v'?'v':'a'], st=at(M,q.t), val=key==='p'?st.p:key==='v'?st.v:st.a;
+      var lab = M===KNEE ? {p:'Knee angle (°)',v:'Ang. vel. (°/s)',a:'Ang. acc. (°/s²)'}[key] : M===CMJ ? {p:'Height (m)',v:'Velocity (m/s)',a:'Accel. (m/s²)'}[key] : {p:'Position (m)',v:'Velocity (m/s)',a:'Accel. (m/s²)'}[key];
+      var rr=range(arr,0.1,key!=='p');
+      plot('qg'+i,{x0:M.t[0],x1:M.t[M.t.length-1],y0:rr[0],y1:rr[1],ylab:lab,fs:14,L:74,series:[{x:M.t,y:arr,col:key==='p'?C.navy:key==='v'?C.teal:C.plum,sw:3.5}],points:[{x:q.t,y:val,col:C.amber,r:9}],cursor:q.t});
+    });
+    $('quiz').querySelectorAll('.opt').forEach(function(b){ b.addEventListener('click', function(){ var i=+b.getAttribute('data-q'); S.quiz[i]=+b.getAttribute('data-o'); save(); paintQuiz(); }); });
+    paintQuiz();
+  }
+  function paintQuiz(){
+    QUIZ.forEach(function(q,i){
+      var ans=S.quiz[i];
+      $('quiz').querySelectorAll('.opt[data-q="'+i+'"]').forEach(function(b){ var j=+b.getAttribute('data-o'); b.classList.remove('right','wrong'); if(ans!=null){ if(j===q.c) b.classList.add('right'); else if(j===ans) b.classList.add('wrong'); } });
+      $('qf'+i).innerHTML = ans==null?'':(ans===q.c?'<strong style="color:var(--teal)">Correct.</strong> ':'<strong style="color:var(--plum)">Not quite.</strong> ')+esc(q.e);
+    });
+    var sc=quizScore(); $('qScore').textContent= sc.a? 'Score: '+sc.r+' / '+QUIZ.length+(sc.a<QUIZ.length?' ('+(QUIZ.length-sc.a)+' to go)':''):'';
+  }
+  $('qReset').addEventListener('click', function(){ S.quiz={}; save(); paintQuiz(); });
+
+  /* ================= TAB 6 ================= */
+  S.sb = S.sb || {};
+  ['sb1','sb2','sb3','sb4','sb5'].forEach(function(id){ if (S.sb[id]!=null) $(id).value=S.sb[id]; $(id).addEventListener('change', function(){ S.sb[id]=$(id).value; save(); }); $(id).addEventListener('input', function(){ S.sb[id]=$(id).value; save(); }); });
+  function sbText(){ return 'Between '+($('sb1').value||'…')+' and '+($('sb2').value||'…')+' s, velocity '+$('sb3').value+', so acceleration is '+$('sb4').value+'. This shows the athlete is '+$('sb5').value+'.'; }
+  $('sbCopy').addEventListener('click', function(){ var ta=$('sbEdit'); ta.value = (ta.value? ta.value.trim()+'\n':'') + sbText(); S.sbEdit=ta.value; save(); });
+  [['names','names'],['sbEdit','sbEdit'],['notes','notes']].forEach(function(p){ var el=$(p[0]); if (S[p[1]]) el.value=S[p[1]]; el.addEventListener('input', function(){ S[p[1]]=el.value; save(); }); });
+  $('clearAll').addEventListener('click', function(){
+    if (!confirm('Clear all your answers and start again?')) return;
+    try{ localStorage.removeItem(KEY); }catch(e){}
+    location.reload();
+  });
+
+  /* ================= Word export ================= */
+  function xesc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function wP(text, o){ o=o||{}; var rp='<w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/>'+(o.b?'<w:b/>':'')+(o.i?'<w:i/>':'')+(o.color?'<w:color w:val="'+o.color+'"/>':'')+'<w:sz w:val="'+(o.sz||20)+'"/></w:rPr>';
+    var lines=String(text).split('\n').map(function(l,i){ return (i?'<w:r>'+rp+'<w:br/></w:r>':'')+'<w:r>'+rp+'<w:t xml:space="preserve">'+xesc(l)+'</w:t></w:r>'; }).join('');
+    return '<w:p><w:pPr><w:spacing w:before="'+(o.before||0)+'" w:after="'+(o.after==null?80:o.after)+'"/></w:pPr>'+lines+'</w:p>'; }
+  function wTable(head, rows, widths){
+    var b='<w:tblBorders>'+['top','left','bottom','right','insideH','insideV'].map(function(k){ return '<w:'+k+' w:val="single" w:sz="4" w:color="D9E2E7"/>'; }).join('')+'</w:tblBorders>';
+    var x='<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/>'+b+'</w:tblPr><w:tblGrid>'+widths.map(function(w){ return '<w:gridCol w:w="'+w+'"/>'; }).join('')+'</w:tblGrid>';
+    function row(cells, hd){ return '<w:tr>'+cells.map(function(c,i){ return '<w:tc><w:tcPr><w:tcW w:w="'+widths[i]+'" w:type="dxa"/>'+(hd?'<w:shd w:val="clear" w:color="auto" w:fill="F8FCFE"/>':'')+'</w:tcPr>'+wP(c,{sz:18,b:hd,color:hd?'003D50':null,after:0})+'</w:tc>'; }).join('')+'</w:tr>'; }
+    x+=row(head,true); rows.forEach(function(r){ x+=row(r,false); }); return x+'</w:tbl>'+wP('',{after:60});
+  }
+  function mine(v, ok){ if (v==null || String(v).trim()==='') return '–'; return String(v).trim()+(ok===true?' ✓':ok===false?' ✗':''); }
+  function download(blob, name){ var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000); }
+  $('dl').addEventListener('click', function(){
+    if (typeof JSZip==='undefined'){ $('dlStatus').textContent='The download library did not load. Check your internet connection and refresh the page.'; return; }
+    var b='';
+    b+=wP('Position, Velocity and Acceleration – SESC02 follow-up activity',{sz:32,b:true,color:'003D50',after:60});
+    b+=wP((S.names?S.names+' · ':'')+new Date().toLocaleDateString('en-GB'),{sz:20,color:'46535A',after:200});
+    b+=wP('1. 100 m sprint: from split times to velocity and acceleration',{sz:24,b:true,color:'003D50',before:120});
+    var rows=[];
+    for (var i=0;i<10;i++) rows.push([(i*10)+'–'+((i+1)*10)+' m', ST[i].toFixed(2), mine(S.s.dt[i],sprintOK('dt',i,S.s.dt[i]))+' (answer '+sDt[i].toFixed(2)+')', mine(S.s.v[i],sprintOK('v',i,S.s.v[i]))+' (answer '+sV[i].toFixed(2)+')', fx(sMid[i],3), i?mine(S.s.a[i-1],sprintOK('a',i-1,S.s.a[i-1]))+' (answer '+sA[i-1].toFixed(2)+')':'–']);
+    b+=wTable(['Section','Time at end (s)','Section time (s)','Velocity (m/s)','Plotted at (s)','Acceleration (m/s²)'], rows, [1200,1300,1900,1900,1300,1900]);
+    b+=wP('Velocity = 10 m ÷ section time, plotted halfway through the section. Acceleration = change in velocity ÷ time between the middles of two sections.',{sz:17,i:true,color:'56636B'});
+    b+=wP('2. Knee angle in a kick: angular velocity and angular acceleration',{sz:24,b:true,color:'003D50',before:200});
+    var kr=[];
+    for (var j=0;j<10;j++) kr.push([KT[j].toFixed(2), String(KA[j]), j?mine(S.k.d[j-1],kneeOK('d',j-1,S.k.d[j-1]))+' ('+kD[j-1]+')':'–', j?mine(S.k.w[j-1],kneeOK('w',j-1,S.k.w[j-1]))+' ('+kW[j-1]+')':'–', j?fx(kMid[j-1],2):'–', j>1?mine(S.k.a[j-2],kneeOK('a',j-2,S.k.a[j-2]))+' ('+kAl[j-2]+')':'–']);
+    b+=wTable(['Time (s)','Angle (°)','Change (°)','Ang. velocity (°/s)','Plotted at (s)','Ang. accel. (°/s²)'], kr, [1100,1100,1700,2100,1300,2200]);
+    b+=wP('Answers in brackets. Positive angular velocity = knee straightening (extending); negative = bending (flexing).',{sz:17,i:true,color:'56636B'});
+    b+=wP('3. Reading the graphs: the three rules',{sz:24,b:true,color:'003D50',before:200});
+    ['Rule 1, slope is velocity: uphill = positive, downhill = negative, flat = zero, steeper = bigger.','Rule 2, peaks and valleys on a position graph line up with zero velocity.','Rule 3, the steepest point on a position graph lines up with peak velocity and zero acceleration.','Curving up (valley) = positive acceleration. Curving down (hill) = negative acceleration.','Speeding up = velocity moving away from zero (velocity and acceleration have the same sign). Slowing down = velocity moving towards zero (opposite signs).'].forEach(function(l){ b+=wP('• '+l,{sz:19}); });
+    var sc=quizScore();
+    b+=wP('4. Practice',{sz:24,b:true,color:'003D50',before:200});
+    b+=wP('Quiz score: '+sc.r+' / '+QUIZ.length+(sc.a<QUIZ.length?' ('+sc.a+' answered)':''),{sz:20});
+    var sk=Object.keys(S.sk||{});
+    if (sk.length){ b+=wP('Sketches revealed (percentage on the right side of zero):',{sz:20}); sk.forEach(function(k){ var p=k.split('-'); b+=wP('• '+SK[p[0]].name+', '+(p[1]==='v'?'velocity':'acceleration')+': '+S.sk[k]+'%',{sz:19}); }); }
+    b+=wP('5. For my presentation',{sz:24,b:true,color:'003D50',before:200});
+    if (S.sbEdit && S.sbEdit.trim()) b+=wP('Interpretation: '+S.sbEdit.trim(),{sz:20});
+    if (S.notes && S.notes.trim()) b+=wP('Notes: '+S.notes.trim(),{sz:20});
+    if (!(S.sbEdit||'').trim() && !(S.notes||'').trim()) b+=wP('(Nothing written yet.)',{sz:19,i:true,color:'56636B'});
+    b+=wP('Reading',{sz:22,b:true,color:'003D50',before:200});
+    ['Bartlett, R. (2007). Introduction to Sports Biomechanics (2nd ed.). Routledge. pp. 89–92 and 112–114.','Harry, J. R., et al. (2025). Using position, velocity, and acceleration relationships to assess exercise specificity. Strength and Conditioning Journal, 47(4), 414–424.','Winter, D. A. (2009). Biomechanics and Motor Control of Human Movement (4th ed.). Wiley. pp. 77–78.'].forEach(function(l){ b+=wP('• '+l,{sz:18}); });
+    var doc='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>'+b+'<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>';
+    var z=new JSZip();
+    z.file('[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
+    z.file('_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
+    z.file('word/document.xml', doc);
+    z.generateAsync({type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}).then(function(blob){ download(blob, 'PVA follow-up - SESC02.docx'); $('dlStatus').textContent='Downloaded. Check your Downloads folder.'; });
+  });
+
+  /* ================= init ================= */
+  buildSprintTable(); drawSprint();
+  buildKneeTable(); drawKnee();
+  drawTrack(0); drawLeg(0);
+  $('slide3').value=0;
+  setEx(S.ex);
+  buildQuiz();
+  drawSketch();
+  showTab(S.tab||1);
+  window.__pva = {SPR:SPR, CMJ:CMJ, KNEE:KNEE, sA:sA, sV:sV, kAl:kAl};
+})();
+</script>
+</body>
+</html>
