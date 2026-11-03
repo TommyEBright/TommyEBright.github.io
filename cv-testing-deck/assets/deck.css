@@ -122,7 +122,8 @@ input[type=number]:focus { outline: 3px solid var(--amber); }
 .readout .k { font-size: 15px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 700; }
 .readout .v { font-size: 32px; font-weight: 800; line-height: 1.15; }
 svg { display: block; overflow: visible; }
-svg text { font-family: var(--font); fill: var(--ink); }
+svg text { font-family: var(--font); }
+svg text:not([fill]) { fill: var(--ink); }
 .note-box { font-size: 20px; line-height: 1.42; color: #33444c; background: var(--panel); border-radius: 12px; padding: 12px 16px; min-height: 60px; }
 .note-box b { color: var(--ink); }
 

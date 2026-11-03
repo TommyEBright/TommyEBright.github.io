@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/deck.css?v=2">
+<link rel="stylesheet" href="assets/deck.css?v=7">
 </head>
 <body>
 <div id="announce" class="sr-only" aria-live="polite"></div>
@@ -32,8 +32,8 @@
           <li>Describe the <b>structure</b> of the heart and the <b>route</b> blood takes through it.</li>
           <li>Explain how the heart's <b>conduction system</b> and the <b>nervous system</b> control each beat.</li>
           <li>Link the waves of an <b>ECG</b> to what the heart is doing.</li>
-          <li>Use <b>Q = SV × HR</b> and the <b>Fick principle</b> to explain how oxygen delivery rises in exercise.</li>
-          <li>Measure <b>blood pressure</b> (manual and automatic) and <b>resting heart rate</b> accurately, then <b>interpret</b> and feed back the results.</li>
+          <li>Use <b>Q = SV × HR</b> and the <b>Fick principle</b> to explain how the CV system <b>responds to exercise</b> and adapts to training.</li>
+          <li><b>Screen</b> a participant, measure <b>blood pressure</b> (manual and automatic) and <b>resting heart rate</b> accurately, then <b>interpret</b> and feed back the results.</li>
         </ol>
       </div>
       <div class="col">
@@ -54,70 +54,136 @@
   <aside class="notes"><p>Read the outcomes. Outcomes 1 to 4 are the theory; outcome 5 is today's practical.</p><p>Before revealing the functions on the right, ask the room to list as many as they can in 30 seconds, then press → to reveal each one.</p></aside>
 </section>
 
-<!-- ===================== 3 blood flow ===================== -->
+<!-- ===================== 3 label the heart ===================== -->
+<section class="slide" data-title="Name the areas of the heart" data-time="5">
+  <header class="head"><h2>Name the areas of the heart</h2><div class="kicker">Click a numbered pin, then click its name. What can you remember from Task 1?</div></header>
+  <div class="body tall" style="top:150px"><div data-widget="label"></div></div>
+  <aside class="notes"><p>Quick recall task before the route slide. Let pairs try it on their devices, or take answers from the room for each number.</p><p>Points to draw out: the septum separates the oxygen-poor right side from the oxygen-rich left side; the myocardium is thickest around the left ventricle; valves only let blood go one way.</p></aside>
+</section>
+
+<!-- ===================== 4 blood flow ===================== -->
 <section class="slide" data-title="Blood flow through the heart" data-time="6">
   <header class="head"><h2>The route blood takes</h2><div class="kicker">Click the structures <b>in the order blood passes through them</b>, starting from the body. Blue = oxygen-poor, red = oxygen-rich.</div></header>
   <div class="body tall" style="top:150px"><div data-widget="flow"></div></div>
   <aside class="notes"><p>Remind students the diagram is drawn as if you are looking at someone facing you, so the right side of the heart is on the left of the screen.</p><p>Let a volunteer click through, or have pairs race on their own devices. Wrong clicks flash red and give a hint. When the route is complete, press Play to watch blood circulate.</p><p>Point out the left ventricle wall is thickest: it pumps blood all round the body against much higher resistance than the right ventricle, which only pumps to the lungs.</p></aside>
 </section>
 
-<!-- ===================== 4 conduction + cardiac cycle ===================== -->
+<!-- ===================== 5 vessels + venous return ===================== -->
+<section class="slide" data-title="Blood vessels and venous return" data-time="6">
+  <header class="head"><h2>Blood vessels and venous return</h2><div class="kicker">Arteries carry blood away from the heart, capillaries exchange, veins bring it back. How does blood get back <b>uphill</b> from your legs?</div></header>
+  <div class="body tall" style="top:150px"><div data-widget="vessels"></div></div>
+  <aside class="notes"><p>Arteries: thick, elastic, muscular walls to cope with high pressure; arterioles control where blood goes by constricting or dilating. Capillaries: one cell thick, so oxygen, nutrients and waste can pass across. Veins: thin walls, wide lumen, low pressure, and one-way valves.</p><p>Venous return relies on the <strong>muscle pump</strong> (contracting muscles squeeze veins, valves stop backflow), the <strong>respiratory pump</strong> (pressure changes in the chest when breathing) and <strong>venoconstriction</strong>. Venous return sets how full the heart gets (EDV), which links straight to Frank–Starling.</p><p>Run the animation, then break the valves: blood pools. This is why standing still for a long time, or stopping suddenly after hard exercise, can make people feel faint. Always cool down actively.</p></aside>
+</section>
+
+<!-- ===================== 6 conduction + cardiac cycle ===================== -->
 <section class="slide" data-title="Conduction and the cardiac cycle" data-time="8">
   <header class="head"><h2>One heartbeat: electrics, then mechanics</h2><div class="kicker">The heart sets its own rhythm. Step through one beat, or press Play and slow it down.</div></header>
   <div class="body tall" style="top:150px"><div data-widget="cycle"></div></div>
   <aside class="notes"><p>The conduction system has four parts: SA node, AV node, AV bundle (bundle of His) with its branches, and the Purkinje fibres.</p><p>Key teaching point: the AV node delays the impulse by about a tenth of a second, so the atria finish emptying into the ventricles before the ventricles contract. The Purkinje fibres conduct very fast, so the ventricles contract together from the apex upwards, squeezing blood up and out.</p><p>Link each electrical event to the mechanical one shown underneath: electrical activity always comes first, contraction follows. Systole = contraction, diastole = relaxation and filling.</p></aside>
 </section>
 
-<!-- ===================== 5 ECG ===================== -->
+<!-- ===================== 7 ECG ===================== -->
 <section class="slide" data-title="Reading an ECG" data-time="6">
   <header class="head"><h2>Reading an ECG</h2><div class="kicker">An ECG records the heart's <b>electrical</b> activity. Answer each prompt by <b>clicking the right part of the trace</b>.</div></header>
   <div class="body tall" style="top:150px"><div data-widget="ecgquiz"></div></div>
   <aside class="notes"><p>P wave: atrial depolarisation. PR interval: mostly the AV node delay. QRS complex: ventricular depolarisation (atrial repolarisation is hidden inside it). ST segment: ventricles fully depolarised. T wave: ventricular repolarisation.</p><p>Common error to correct: the waves are electrical, not the contraction itself. Contraction follows depolarisation.</p><p>On standard ECG paper one small square is 0.04 s, so you can count squares between R waves to get heart rate: 1500 ÷ small squares between two R waves.</p></aside>
 </section>
 
-<!-- ===================== 6 HR control ===================== -->
+<!-- ===================== 8 HR control ===================== -->
 <section class="slide" data-title="Controlling heart rate" data-time="6">
   <header class="head"><h2>Controlling heart rate</h2><div class="kicker">On its own the SA node fires about <b>100 times a minute</b>. Two sets of nerves turn it up or down.</div></header>
   <div class="body tall" style="top:150px"><div data-widget="hrcontrol"></div></div>
   <aside class="notes"><p>Parasympathetic (vagus nerve, acetylcholine) slows the SA node. At rest this "vagal tone" dominates, which is why resting HR is below the intrinsic rate of about 100.</p><p>Sympathetic nerves and adrenaline/noradrenaline speed up the SA node and increase the force of contraction (a positive inotropic effect), so stroke volume rises too.</p><p>Try the presets: rest, anticipation before a race (heart rate rises before exercise starts), hard exercise, and a trained athlete at rest with high vagal tone.</p><p>Max HR: 220 − age is easy but has a large error (often ±10 to 12 bpm). Tanaka's 208 − 0.7 × age is a little better for adults.</p></aside>
 </section>
 
-<!-- ===================== 7 SV, Q, Frank–Starling ===================== -->
+<!-- ===================== 9 SV, Q, Frank–Starling ===================== -->
 <section class="slide" data-title="Cardiac output and Frank–Starling" data-time="7">
   <header class="head"><h2>Stroke volume, cardiac output and Frank–Starling</h2><div class="kicker"><b>Q = SV × HR</b>. A fuller ventricle stretches more and contracts harder, so more filling gives a bigger stroke volume.</div></header>
   <div class="body tall" style="top:150px"><div data-widget="starling"></div></div>
   <aside class="notes"><p>Definitions: stroke volume (SV) = blood ejected per beat. End-diastolic volume (EDV) = volume in the ventricle just before it contracts (preload). Ejection fraction (EF) = SV ÷ EDV × 100, normally about 55 to 70 %. Cardiac output (Q) = SV × HR, about 5 L/min at rest.</p><p>Frank–Starling: more venous return gives more stretch, better overlap of actin and myosin, and a stronger contraction. This makes the heart pump out what it receives, keeping left and right sides matched.</p><p>Drag the filling slider, then turn on sympathetic drive: the whole curve moves up (more contractility), so the same filling gives a bigger SV.</p></aside>
 </section>
 
-<!-- ===================== 8 Fick ===================== -->
+<!-- ===================== 10 acute exercise response ===================== -->
+<section class="slide" data-title="The CV response to exercise" data-time="7">
+  <header class="head"><h2>What happens during exercise?</h2><div class="kicker">Drag from rest to maximum. Watch HR, stroke volume, blood pressure and <b>where the blood goes</b>.</div></header>
+  <div class="body tall" style="top:150px"><div data-widget="exercise"></div></div>
+  <aside class="notes"><p>Dynamic exercise (running, cycling): heart rate rises roughly in line with intensity; stroke volume rises then plateaus at around 40 to 60 % of maximum in most people; so cardiac output rises from about 5 to 20–25 L/min.</p><p>Systolic pressure rises steadily with intensity (to about 180–200 mmHg at max); diastolic stays about the same or falls slightly, because arterioles in working muscle dilate and resistance falls. A fall in systolic as intensity rises, or a diastolic above about 115 mmHg, are reasons to stop a test.</p><p>Blood is redistributed: muscle gets about 20 % of cardiac output at rest but over 80 % at max; gut and kidneys get less; brain flow stays about the same in absolute terms.</p><p>Switch to isometric (a heavy hold or handgrip): both systolic and diastolic rise sharply because the contracted muscle squeezes its own arteries. After exercise, blood pressure can drop below the resting value for several hours (post-exercise hypotension).</p></aside>
+</section>
+
+<!-- ===================== 11 Fick ===================== -->
 <section class="slide" data-title="Fick principle and a-vO₂ difference" data-time="6">
   <header class="head"><h2>The Fick principle: delivery × extraction</h2><div class="kicker">Oxygen use = how much blood the heart pumps × how much oxygen the tissues take out of each litre.</div></header>
   <div class="body tall" style="top:150px"><div data-widget="fick"></div></div>
   <aside class="notes"><p>VO₂ = Q × (a−v)O₂ difference. The (a−v)O₂ difference is the oxygen content of arterial blood minus that of venous blood: what the tissues extracted.</p><p>Arterial blood carries about 20 mL O₂ per 100 mL (each gram of haemoglobin binds 1.34 mL O₂, with roughly 15 g Hb per 100 mL). At rest tissues take about 5 mL of it; in maximal exercise muscles can take 15 or more.</p><p>Use the presets to show that VO₂max rises with training mainly because maximal cardiac output (stroke volume) rises, with a smaller rise in extraction.</p></aside>
 </section>
 
-<!-- ===================== 9 adaptations ===================== -->
+<!-- ===================== 12 adaptations ===================== -->
 <section class="slide" data-title="CV adaptations to training" data-time="5">
   <header class="head"><h2>How endurance training changes the CV system</h2><div class="kicker">Switch between an untrained person and a trained endurance athlete. Values are typical, not exact.</div></header>
   <div class="body tall" style="top:150px"><div data-widget="adapt"></div></div>
   <aside class="notes"><p>The big one is stroke volume: a larger, more compliant left ventricle (eccentric hypertrophy) and more blood volume give more filling, and Frank–Starling does the rest.</p><p>Resting cardiac output barely changes, so a bigger SV means a lower resting HR (training bradycardia). Maximum HR does not rise with training.</p><p>Plasma volume rises within weeks; red cells rise more slowly, so haematocrit can fall slightly, which thins the blood. New capillaries (angiogenesis) give more time and area for extraction.</p><p>Aerobic training lowers resting blood pressure by a few mmHg, more in people with hypertension. Link to today's measurements.</p><p class="tiny">Source summary: Ben Jane Fitness, CV adaptations; Hellsten &amp; Nyberg (2015).</p></aside>
 </section>
 
-<!-- ===================== 10 blood pressure ===================== -->
+<!-- ===================== 13 blood pressure ===================== -->
 <section class="slide" data-title="What is blood pressure?" data-time="5">
   <header class="head"><h2>What is blood pressure?</h2><div class="kicker">The force of blood against the artery walls. It rises with each contraction and falls as the heart relaxes.</div></header>
   <div class="body tall" style="top:150px"><div data-widget="bpwave"></div></div>
   <aside class="notes"><p>Systolic = the highest pressure, when the ventricles contract. Diastolic = the lowest pressure, while the heart relaxes and refills. Written as systolic over diastolic, for example 118/76 mmHg.</p><p>Mean arterial pressure (MAP) is the average pressure driving blood to the tissues. Because the heart spends about two thirds of each beat in diastole at rest, MAP ≈ DBP + ⅓(SBP − DBP), not the simple midpoint.</p><p>Manual (sphygmomanometer and stethoscope) vs automatic (Omron): ask the group for pros and cons. Automatic: quick, consistent, no hearing skill needed, but can be thrown by movement or an irregular pulse. Manual: the reference method, works with irregular rhythms, but needs skill and practice.</p></aside>
 </section>
 
-<!-- ===================== 11 Korotkoff simulator ===================== -->
+<!-- ===================== 14 when BP goes wrong ===================== -->
+<section class="slide" data-title="When blood pressure goes wrong" data-time="6">
+  <header class="head"><h2>When blood pressure goes wrong</h2><div class="kicker">The <b>baroreceptor reflex</b> normally keeps blood pressure steady. Stand the participant up and see what happens.</div></header>
+  <div class="body tall" style="top:150px"><div data-widget="standup"></div></div>
+  <aside class="notes"><p>Baroreceptors in the aortic arch and carotid arteries sense stretch. When pressure falls (for example on standing, as blood pools in the legs), they signal the brain to raise heart rate and constrict blood vessels within seconds.</p><p><strong>Orthostatic hypotension</strong>: a drop of at least 20 mmHg systolic or 10 mmHg diastolic within 3 minutes of standing. Causes include dehydration, some medications, older age and prolonged bed rest. Symptoms: dizziness, blurred vision, fainting.</p><p><strong>Vasovagal syncope</strong>: a faint caused by a sudden surge in vagal (parasympathetic) activity and loss of sympathetic tone, so heart rate and blood pressure both drop. Triggers: pain, seeing blood or needles, standing for a long time, heat. Lie the person down and raise their legs.</p><p><strong>Hypertension</strong> medication: ACE inhibitors and calcium channel blockers relax and widen blood vessels; diuretics reduce fluid volume; beta blockers lower heart rate and the force of contraction. Beta blockers matter in testing: heart rate stays low, so HR-based zones and 220 − age predictions do not apply.</p></aside>
+</section>
+
+<!-- ===================== 15 screening before testing ===================== -->
+<section class="slide" data-title="Before you test: screening" data-time="6">
+  <header class="head"><h2>Before you test: screen, consent, then measure</h2><div class="kicker">Health screening checks it is safe and fair to test someone today. Decide what to do in each case.</div></header>
+  <div class="body tall" style="top:140px">
+    <div class="row" style="gap:26px">
+      <div style="flex:0 0 380px;display:flex;flex-direction:column;gap:14px">
+        <div class="card t-teal" style="padding:14px 18px">
+          <h3 style="font-size:23px">Screening checklist</h3>
+          <ul style="font-size:18px;line-height:1.4">
+            <li>Health questionnaire (e.g. <b>PAR-Q+</b>): heart conditions, chest pain, dizziness</li>
+            <li><b>Medication</b>, especially for blood pressure or the heart</li>
+            <li>In the last 30 min: <b>caffeine, smoking, food, exercise</b>?</li>
+            <li>Explain the test, the right to <b>withdraw</b>, and get <b>consent</b></li>
+            <li>Keep the data <b>confidential</b></li>
+          </ul>
+        </div>
+        <div class="card t-amber" style="padding:14px 18px">
+          <h3 style="font-size:23px">Taking a pulse</h3>
+          <ul style="font-size:18px;line-height:1.4">
+            <li><b>Radial</b>: thumb side of the wrist, two fingers (not your thumb)</li>
+            <li>Count for <b>60 s</b> (or 30 s × 2)</li>
+            <li><b>Carotid</b>: press gently, one side only</li>
+          </ul>
+        </div>
+      </div>
+      <div class="col"><div data-widget="quiz" data-cols="3"><script type="application/json">[
+        {"q":"Your participant has just had a double espresso.","options":["Go ahead","Wait","Don't test, refer"],"answer":1,"why":"Caffeine can raise blood pressure for an hour or more. Ideally wait at least 30 minutes, and note it on the record sheet."},
+        {"q":"They have just run up three flights of stairs to the lab.","options":["Go ahead","Wait","Don't test, refer"],"answer":1,"why":"Seat them and rest for at least 5 minutes (longer if still breathless) before measuring."},
+        {"q":"They take beta blockers for high blood pressure.","options":["Go ahead","Wait","Don't test, refer"],"answer":0,"why":"Fine to measure resting BP and HR, but record the medication: resting HR will be low and HR-based exercise zones will not apply."},
+        {"q":"They mention chest pain on the walk over.","options":["Go ahead","Wait","Don't test, refer"],"answer":2,"why":"Chest pain is a red flag. Do not test; tell a member of staff and advise them to seek medical advice."},
+        {"q":"They have had lymph nodes removed from their left armpit.","options":["Go ahead","Wait","Don't test, refer"],"answer":0,"why":"Go ahead, but use the other arm. Avoid cuffs on an arm after lymph node removal, or with a fistula, drip or injury."},
+        {"q":"They feel faint and look pale before you start.","options":["Go ahead","Wait","Don't test, refer"],"answer":2,"why":"Do not test. Lie them down with legs raised, tell a member of staff, and only reschedule once they are well."}
+      ]</script></div></div>
+    </div>
+  </div>
+  <aside class="notes"><p>Screening is not about catching people out: it protects the participant and makes the data meaningful. The health check booklet is clear that this is a screening tool, not a diagnosis.</p><p>Things that raise resting BP and HR: caffeine, nicotine, a recent meal, recent exercise, a full bladder, cold, stress and talking. Ask about them and record them.</p><p>Remind students that participants can withdraw at any time without giving a reason.</p></aside>
+</section>
+
+<!-- ===================== 16 Korotkoff simulator ===================== -->
 <section class="slide" data-title="Manual BP: Korotkoff simulator" data-time="8">
   <header class="head"><h2>Manual blood pressure: listen for Korotkoff sounds</h2><div class="kicker">Inflate the cuff, let it down slowly, and press the buttons when the tapping <b>starts</b> (systolic) and when it <b>disappears</b> (diastolic). Turn your sound on.</div></header>
   <div class="body tall" style="top:150px"><div data-widget="korot"></div></div>
   <aside class="notes"><p>Method: cuff inflated to about 180 mmHg (or 20 to 30 mmHg above where the radial pulse disappears), then deflated at 2 to 3 mmHg per second.</p><p>No sound above systolic: the cuff squashes the artery shut. Between systolic and diastolic, blood spurts through with each beat and the turbulence makes the tapping (Korotkoff) sounds. Below diastolic the artery stays open, flow is smooth again, and the sound disappears.</p><p>We record diastolic when the sound <strong>disappears</strong> (phase V), as current UK guidance recommends. Phase IV (muffling) is only used if the sound carries on to near zero.</p><p>Get students to try the fast deflation setting: with only one beat every 0.8 s, deflating at 10 mmHg/s means the reading can be out by 8 mmHg or more.</p></aside>
 </section>
 
-<!-- ===================== 12 errors ===================== -->
+<!-- ===================== 17 errors ===================== -->
 <section class="slide" data-title="Getting an accurate reading" data-time="6">
   <header class="head"><h2>Getting an accurate reading</h2><div class="kicker">What does each mistake do to the reading? Choose an answer for each.</div></header>
   <div class="body tall" style="top:140px">
@@ -149,14 +215,14 @@
   <aside class="notes"><p>Common errors from the slides: anxious participant, talking, not seated for 5 minutes, a single reading, wrong cuff size, cuff placed wrongly, failing to hear the sounds, and deflating too fast.</p><p>Ask: what can you do to improve the accuracy of your measurements? Expected answers are in the procedure box on the left.</p><p>Also mention white-coat effect: some people's BP rises just because they are being measured. Repeated readings and a calm manner help.</p></aside>
 </section>
 
-<!-- ===================== 13 classify + feedback ===================== -->
+<!-- ===================== 18 classify + feedback ===================== -->
 <section class="slide" data-title="Interpret and feed back" data-time="6">
   <header class="head"><h2>Interpret the results and feed them back</h2><div class="kicker">Enter a participant's readings to classify them, then use the script to explain the result in plain language.</div></header>
   <div class="body tall" style="top:150px"><div data-widget="classify"></div></div>
   <aside class="notes"><p>Categories follow the European Society of Hypertension (ESH) grades. If systolic and diastolic fall into different categories, use the higher one. Isolated systolic hypertension is systolic 140 or more with diastolic below 90.</p><p>The health check is a screening tool, not a diagnosis. A single high reading does not mean someone has hypertension: diagnosis needs repeated readings, usually with home or ambulatory monitoring. If results are high, advise the participant to see their GP; if very high (180/120 or above) or they have symptoms, they should seek medical advice promptly.</p><p>Resting HR: 60 to 100 bpm is typical. Below 60 is common and healthy in trained people; it matters only with symptoms such as dizziness or fainting.</p><p>Get pairs to practise the feedback script out loud: what the test showed, what it means, and what they can do next.</p></aside>
 </section>
 
-<!-- ===================== 14 practical stations ===================== -->
+<!-- ===================== 19 practical stations ===================== -->
 <section class="slide task" data-title="Practical: your stations" data-time="45">
   <div class="badge">PRACTICAL</div><div class="who" style="left:290px">Groups of 3 · about 45 minutes</div>
   <div class="prompt" style="font-size:30px">Rotate roles: <b>participant</b>, <b>tester</b>, <b>recorder</b>.
@@ -171,7 +237,7 @@
   <aside class="notes"><p>Before starting: each tester explains what the test will show and how it is done, and gets the participant's consent. Remind them the data are confidential and should not be shared outside the group.</p><p>Walk round and check cuff position, arm height, deflation rate and that participants are not talking.</p><p>If anyone has a very high reading (180/120 or above) or feels unwell, stop and follow the lab's procedure.</p></aside>
 </section>
 
-<!-- ===================== 15 check + after the lab ===================== -->
+<!-- ===================== 20 check + after the lab ===================== -->
 <section class="slide" data-title="Check your understanding" data-time="5">
   <header class="head"><h2>Check your understanding</h2><div class="kicker">Answer on your own first, then click.</div></header>
   <div class="body tall" style="top:140px">
@@ -230,9 +296,10 @@
     b.innerHTML = 'Plymouth Marjon University <span>Cardiovascular Function and Testing</span>'; s.appendChild(b);
   });
 </script>
-<script src="assets/viz-core.js?v=2"></script>
-<script src="assets/w-heart.js?v=2"></script>
-<script src="assets/w-bp.js?v=2"></script>
-<script src="assets/deck.js?v=2"></script>
+<script src="assets/viz-core.js?v=7"></script>
+<script src="assets/w-heart.js?v=7"></script>
+<script src="assets/w-bp.js?v=7"></script>
+<script src="assets/w-extra.js?v=7"></script>
+<script src="assets/deck.js?v=7"></script>
 </body>
 </html>
