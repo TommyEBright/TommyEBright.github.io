@@ -1,6 +1,6 @@
-# Cardiovascular Function and Testing (SESC53)
+# Cardiovascular Function and Testing (RSEC01)
 
-Interactive 15-slide deck for the SESC53 cardiovascular practical: structure and blood flow, conduction and the cardiac cycle, ECG, control of heart rate, Q = SV × HR and Frank–Starling, the Fick principle, training adaptations, blood pressure, a Korotkoff sound simulator, measurement errors, and BP / resting HR classification with a feedback script.
+Interactive 15-slide deck for the RSEC01 cardiovascular health and functional testing practical: structure and blood flow, conduction and the cardiac cycle, ECG, control of heart rate, Q = SV × HR and Frank–Starling, the Fick principle, training adaptations, blood pressure, a Korotkoff sound simulator, measurement errors, and BP / resting HR classification with a feedback script.
 
 - Keys: → / Space next, ← back, S presenter view, O overview, F full screen, B black screen.
 - `?handout` shows every slide with its speaker notes for printing or saving as PDF.
