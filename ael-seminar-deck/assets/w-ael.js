@@ -83,49 +83,76 @@
     if (t < 2.9) return sstep(after * 1.25, after * 0.9, (t - 2.62) / 0.28);
     return sstep(after * 0.9, after, (t - 2.9) / 0.3);
   }
-  // crouch (0 standing, 1 lowest) and lift (flight height, px)
+  // joint angles (radians from vertical) through the jump: hips lead the extension, heels lift last
   function pose(t) {
-    var c = 0, lift = 0, toe = 0;
-    if (t < 1.0) c = 0;
-    else if (t < 1.4) c = sstep(0, 0.55, (t - 1.0) / 0.4);
-    else if (t < REL) c = sstep(0.55, 1, (t - 1.4) / 0.22);
-    else if (t < TO) { c = sstep(1, 0, (t - REL) / 0.26); toe = sstep(0, 1, (t - 1.8) / 0.1); }
-    else if (t < TD) { var u = (t - TO) / (TD - TO); lift = 4 * 95 * u * (1 - u); toe = u < 0.8 ? 1 : sstep(1, 0, (u - 0.8) / 0.2); }
-    else if (t < 2.62) c = sstep(0, 0.5, (t - TD) / 0.22);
-    else c = sstep(0.5, 0, (t - 2.62) / 0.6);
-    return { c: c, lift: lift, toe: toe };
+    var aS, aT, aTr, pf = 0, lift = 0;
+    function crouch(c) { aS = 0.05 + 0.7 * c; aT = -0.02 - 1.33 * c; aTr = 0.05 + 0.7 * c; }
+    if (t < 1.0) crouch(0);
+    else if (t < 1.4) crouch(sstep(0, 0.55, (t - 1.0) / 0.4));
+    else if (t < REL) crouch(sstep(0.55, 1, (t - 1.4) / 0.22));
+    else if (t < TO) {
+      var u = (t - REL) / (TO - REL);
+      aTr = sstep(0.75, 0.05, u / 0.75); aT = sstep(-1.35, -0.02, u / 0.85);
+      aS = sstep(0.75, 0.0, (u - 0.1) / 0.9); pf = sstep(0, 0.6, (u - 0.55) / 0.45);
+    } else if (t < TD) {
+      var f = (t - TO) / (TD - TO); lift = 4 * 95 * f * (1 - f);
+      crouch(f < 0.75 ? 0 : sstep(0, 0.08, (f - 0.75) / 0.25)); aS = Math.max(aS, 0.02);
+      pf = f < 0.7 ? 0.6 : sstep(0.6, 0.25, (f - 0.7) / 0.3);
+    } else if (t < 2.62) { crouch(sstep(0.08, 0.5, (t - TD) / 0.22)); pf = sstep(0.25, 0, (t - TD) / 0.05); }
+    else crouch(sstep(0.5, 0, (t - 2.62) / 0.6));
+    return { aS: aS, aT: aT, aTr: aTr, pf: pf, lift: lift };
   }
   W.aeljump = function (el) {
     var cond = 'AEL', L = 0.3, t = 0, playing = false, speed = 0.3, raf = null, last = 0;
     var row = hx('div', 'row', null, el); row.style.gap = '24px';
     var left = hx('div', null, null, row); left.style.flex = '0 0 470px';
     var right = hx('div', 'col', null, row);
-    var s = D.svgRoot(left, 470, 600, 'Animated participant performing the jump on a force plate');
+    var s = D.svgRoot(left, 470, 600, 'Animated Santa performing the jump on a force plate');
     var PY = 520, FX = 215;
     sv('rect', { x: 0, y: PY + 22, width: 470, height: 26, fill: '#e3e8ea' }, s);
     var dbG = sv('g', {}, s);            // dumbbells, drawn behind the plate once dropped
     sv('rect', { x: 95, y: PY, width: 280, height: 26, rx: 4, fill: '#5a6b72', stroke: '#33444c', 'stroke-width': 2 }, s);
     txt(s, 235, PY + 18, 'FORCE PLATE', { 'text-anchor': 'middle', 'font-size': 14, 'font-weight': 800, fill: '#ffffff', 'letter-spacing': 2 });
+    var shadow = sv('g', {}, s);
     var fig = sv('g', {}, s);
     var plateDb = sv('g', {}, s);        // dumbbells while held, drawn in front of the body
     var tag = txt(s, 235, 594, '', { 'text-anchor': 'middle', 'font-size': 22, 'font-weight': 800, fill: C.ink });
     var sub = txt(s, 235, 40, '', { 'text-anchor': 'middle', 'font-size': 18, 'font-weight': 700, fill: C.muted });
-    function seg(a, b, w, col) { return sv('line', { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: col || '#24343b', 'stroke-width': w, 'stroke-linecap': 'round' }, fig); }
+    var SUIT = '#c8102e', SUIT_D = '#8f0b20', FUR = '#ffffff', BOOT = '#1b1b1b', SKIN = '#f3c9a8';
     function at(p, len, ang) { return [p[0] + len * Math.sin(ang), p[1] - len * Math.cos(ang)]; }
     function lerpP(a, b, u) { return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u]; }
+    function rot(v, a) { return [v[0] * Math.cos(a) - v[1] * Math.sin(a), v[0] * Math.sin(a) + v[1] * Math.cos(a)]; }
+    function add(a, b) { return [a[0] + b[0], a[1] + b[1]]; }
+    // a tapered body part from joint a (width wa) to joint b (width wb), with rounded ends
+    function limb(g, a, b, wa, wb, fill) {
+      var dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len;
+      var pts = [[a[0] + nx * wa / 2, a[1] + ny * wa / 2], [b[0] + nx * wb / 2, b[1] + ny * wb / 2], [b[0] - nx * wb / 2, b[1] - ny * wb / 2], [a[0] - nx * wa / 2, a[1] - ny * wa / 2]];
+      sv('path', { d: 'M' + pts.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join('L') + 'Z', fill: fill }, g);
+      sv('circle', { cx: a[0], cy: a[1], r: wa / 2, fill: fill }, g);
+      sv('circle', { cx: b[0], cy: b[1], r: wb / 2, fill: fill }, g);
+    }
     function dumbbell(g, p, scale) {
       var w = 30 + 22 * scale, hgt = 18 + 10 * scale;
-      sv('rect', { x: p[0] - w / 2, y: p[1] - hgt / 2, width: w, height: hgt, rx: 5, fill: '#3b4a52', stroke: '#1d2b33', 'stroke-width': 2 }, g);
-      sv('rect', { x: p[0] - w / 2 - 4, y: p[1] - hgt / 2 - 4, width: 8, height: hgt + 8, rx: 3, fill: '#1d2b33' }, g);
-      sv('rect', { x: p[0] + w / 2 - 4, y: p[1] - hgt / 2 - 4, width: 8, height: hgt + 8, rx: 3, fill: '#1d2b33' }, g);
+      sv('rect', { x: p[0] - w / 2, y: p[1] - 4, width: w, height: 8, rx: 3, fill: '#8a979c' }, g);
+      [-1, 1].forEach(function (sgn) {
+        var cx = p[0] + sgn * (w / 2 - 6), r = hgt / 2 + 2;
+        var hex = [0, 1, 2, 3, 4, 5].map(function (k) { var a = Math.PI / 3 * k + Math.PI / 6; return (cx + r * 0.62 * Math.cos(a)).toFixed(1) + ',' + (p[1] + r * Math.sin(a)).toFixed(1); });
+        sv('polygon', { points: hex.join(' '), fill: '#1d2b33', stroke: '#0e1519', 'stroke-width': 1.5 }, g);
+      });
     }
-    function armPose(sh, hip, lean, mode, tt) {
+    function skel(tt) {
+      var p = pose(tt), toeTip = [FX + 34, PY - p.lift];
+      var ankle = add(toeTip, rot([-34, -12], p.pf)), heel = add(toeTip, rot([-50, 0], p.pf));
+      var knee = at(ankle, 82, p.aS), hip = at(knee, 86, p.aT), sh = at(hip, 102, p.aTr);
+      return { toe: toeTip, heel: heel, ankle: ankle, knee: knee, hip: hip, sh: sh, head: at(sh, 32, p.aTr * 0.5), aTr: p.aTr, pf: p.pf, lift: p.lift };
+    }
+    function armPose(k, mode, tt) {
+      var sh = k.sh, hip = k.hip;
       if (mode === 'hips') {
-        var hand = [hip[0] + 4, hip[1] - 6];
-        var elbow = [(sh[0] + hip[0]) / 2 - 30, (sh[1] + hip[1]) / 2];
-        return { elbow: elbow, hand: hand };
+        var mid = lerpP(sh, hip, 0.5);
+        return { elbow: [mid[0] - 30, mid[1] + 4], hand: add(hip, [6, -14]) };
       }
-      var th = 0;   // arm angle from hanging straight down; positive = forward and up
+      var th = 0;   // upper-arm angle from hanging straight down; positive = forward and up
       if (mode === 'swing') {
         if (tt < 1.0) th = 0;
         else if (tt < REL) th = sstep(0, -1.0, (tt - 1.0) / (REL - 1.0));
@@ -133,41 +160,84 @@
         else if (tt < TD) th = 2.9;
         else th = sstep(2.9, 0, (tt - TD) / 0.5);
       }
-      var d = [Math.sin(th), Math.cos(th)];
-      return { elbow: [sh[0] + 58 * d[0], sh[1] + 58 * d[1]], hand: [sh[0] + 110 * d[0], sh[1] + 110 * d[1]] };
+      var d = [Math.sin(th), Math.cos(th)], bend = mode === 'swing' ? 0.3 : 0.08;
+      var elbow = add(sh, [56 * d[0], 56 * d[1]]), d2 = [Math.sin(th + bend), Math.cos(th + bend)];
+      return { elbow: elbow, hand: add(elbow, [50 * d2[0], 50 * d2[1]]) };
     }
-    function skel(tt) {
-      var p = pose(tt), c = p.c, ankle = [FX, PY - 10 - p.lift];
-      var aS = 0.62 * c, aT = -1.45 * c, aTr = 0.72 * c;
-      var knee = at(ankle, 82, aS), hip = at(knee, 86, aT), sh = at(hip, 102, aTr);
-      return { ankle: ankle, toe: p.toe, knee: knee, hip: hip, sh: sh, head: at(sh, 30, aTr), aTr: aTr };
+    function leg(g, k, off, near) {
+      var o = function (p) { return add(p, off); };
+      var col = near ? SUIT : SUIT_D;
+      limb(g, o(k.hip), o(k.knee), 38, 28, col);                       // thigh
+      limb(g, o(k.knee), o(lerpP(k.knee, k.ankle, 0.45)), 26, 22, col);  // upper shin (trouser)
+      limb(g, o(lerpP(k.knee, k.ankle, 0.4)), o(k.ankle), 24, 20, BOOT); // boot
+      var dir = [k.toe[0] - k.heel[0], k.toe[1] - k.heel[1]], n = Math.hypot(dir[0], dir[1]), up = [dir[1] / n * -12, -dir[0] / n * -12];
+      var heel = o(k.heel), toe = o(k.toe);
+      sv('path', { d: 'M' + heel[0] + ',' + heel[1] + 'L' + toe[0] + ',' + toe[1] + 'Q' + (toe[0] + up[0] * 0.2 + 4) + ',' + (toe[1] + up[1]) + ' ' + (toe[0] + up[0] - 10) + ',' + (toe[1] + up[1] - 2) + 'L' + o(k.ankle)[0] + ',' + (o(k.ankle)[1] - 4) + 'L' + (heel[0] + up[0]) + ',' + (heel[1] + up[1]) + 'Z', fill: BOOT }, g);
+    }
+    function arm(g, k, a, off, near, gloveOn) {
+      var o = function (p) { return add(p, off); }, col = near ? SUIT : SUIT_D;
+      limb(g, o(k.sh), o(a.elbow), 20, 17, col);
+      limb(g, o(a.elbow), o(lerpP(a.elbow, a.hand, 0.82)), 17, 15, col);
+      limb(g, o(lerpP(a.elbow, a.hand, 0.78)), o(lerpP(a.elbow, a.hand, 0.9)), 18, 18, FUR);    // cuff
+      if (gloveOn) sv('circle', { cx: o(a.hand)[0], cy: o(a.hand)[1], r: 8.5, fill: near ? '#f4f4f4' : '#d9d9d9', stroke: '#b9b9b9', 'stroke-width': 1 }, g);
+    }
+    function torso(g, k) {
+      var hip = k.hip, sh = k.sh, a = k.aTr, fwd = [Math.cos(a), Math.sin(a)];
+      limb(g, hip, sh, 54, 50, SUIT);
+      // Santa's belly sits forward of the trunk, a third of the way up
+      var bc = add(lerpP(hip, sh, 0.4), [fwd[0] * 16, fwd[1] * 16]);
+      sv('ellipse', { cx: bc[0], cy: bc[1], rx: 36, ry: 42, fill: SUIT, transform: 'rotate(' + (a * 180 / Math.PI) + ' ' + bc[0] + ' ' + bc[1] + ')' }, g);
+      // fur hem, belt and buckle
+      limb(g, add(lerpP(hip, sh, 0.02), [-fwd[0] * 4, -fwd[1] * 4]), add(lerpP(hip, sh, 0.02), [fwd[0] * 40, fwd[1] * 40]), 13, 13, FUR);
+      var bl = lerpP(hip, sh, 0.2);
+      limb(g, add(bl, [-fwd[0] * 26, -fwd[1] * 26]), add(bl, [fwd[0] * 50, fwd[1] * 50]), 11, 11, BOOT);
+      var bk = add(bl, [fwd[0] * 44, fwd[1] * 44]);
+      sv('rect', { x: bk[0] - 7, y: bk[1] - 7, width: 14, height: 14, rx: 2, fill: 'none', stroke: '#f2c230', 'stroke-width': 3, transform: 'rotate(' + (a * 180 / Math.PI) + ' ' + bk[0] + ' ' + bk[1] + ')' }, g);
+      // fur strip down the front of the jacket
+      limb(g, add(lerpP(hip, sh, 0.32), [fwd[0] * 50, fwd[1] * 50]), add(lerpP(hip, sh, 0.92), [fwd[0] * 24, fwd[1] * 24]), 7, 7, FUR);
+    }
+    function head(g, k) {
+      var h = k.head, ang = k.aTr * 0.5, deg = ang * 180 / Math.PI, gg = sv('g', { transform: 'rotate(' + deg + ' ' + h[0] + ' ' + h[1] + ')' }, g);
+      limb(gg, [h[0] - 2, h[1] + 30], [h[0], h[1] + 12], 14, 14, SKIN);          // neck
+      sv('circle', { cx: h[0], cy: h[1], r: 20, fill: SKIN }, gg);
+      sv('circle', { cx: h[0] - 15, cy: h[1] + 2, r: 6, fill: '#e3ad8c' }, gg);   // ear
+      sv('path', { d: 'M' + (h[0] - 8) + ',' + (h[1] + 2) + 'Q' + (h[0] - 10) + ',' + (h[1] + 34) + ' ' + (h[0] + 10) + ',' + (h[1] + 40) + 'Q' + (h[0] + 30) + ',' + (h[1] + 30) + ' ' + (h[0] + 24) + ',' + (h[1] + 4) + 'Z', fill: FUR, stroke: '#e6e6e6', 'stroke-width': 1 }, gg);   // beard
+      sv('ellipse', { cx: h[0] + 15, cy: h[1] + 6, rx: 11, ry: 5, fill: FUR, stroke: '#e6e6e6', 'stroke-width': 1 }, gg);   // moustache
+      sv('circle', { cx: h[0] + 21, cy: h[1] + 1, r: 4, fill: '#e58a7c' }, gg);   // nose
+      sv('circle', { cx: h[0] + 11, cy: h[1] - 6, r: 2.4, fill: '#1d2b33' }, gg);  // eye
+      sv('path', { d: 'M' + (h[0] + 6) + ',' + (h[1] - 12) + 'Q' + (h[0] + 12) + ',' + (h[1] - 15) + ' ' + (h[0] + 17) + ',' + (h[1] - 11), fill: 'none', stroke: FUR, 'stroke-width': 3, 'stroke-linecap': 'round' }, gg);  // eyebrow
+      // hat flopping backwards, with a fur brim and bobble
+      sv('path', { d: 'M' + (h[0] - 20) + ',' + (h[1] - 10) + 'Q' + (h[0] - 2) + ',' + (h[1] - 52) + ' ' + (h[0] - 40) + ',' + (h[1] - 30) + 'Q' + (h[0] - 48) + ',' + (h[1] - 22) + ' ' + (h[0] - 46) + ',' + (h[1] - 10) + 'L' + (h[0] - 34) + ',' + (h[1] - 22) + 'Q' + (h[0] - 26) + ',' + (h[1] - 26) + ' ' + (h[0] - 22) + ',' + (h[1] - 12) + 'Z', fill: SUIT }, gg);
+      sv('path', { d: 'M' + (h[0] - 20) + ',' + (h[1] - 10) + 'Q' + (h[0] - 4) + ',' + (h[1] - 40) + ' ' + (h[0] + 20) + ',' + (h[1] - 12) + 'Z', fill: SUIT }, gg);
+      limb(gg, [h[0] - 22, h[1] - 9], [h[0] + 21, h[1] - 12], 11, 11, FUR);
+      sv('circle', { cx: h[0] - 46, cy: h[1] - 8, r: 8, fill: FUR, stroke: '#e6e6e6', 'stroke-width': 1 }, gg);
     }
     function draw() {
-      D.clear(fig); D.clear(plateDb); D.clear(dbG);
-      var k = skel(t), ankle = k.ankle, knee = k.knee, hip = k.hip, sh = k.sh, head = k.head, aTr = k.aTr;
-      var heel = [ankle[0] - 14, ankle[1] + 8], toeP = [ankle[0] + 34, ankle[1] + 8 + k.toe * 14];
-      // arms: which pose
-      var held = cond === 'AEL' || cond === 'LOADED';
-      var released = cond === 'AEL' && t >= REL;
-      var arm;
-      if (cond === 'NAS') arm = armPose(sh, hip, aTr, 'hips', t);
-      else if (cond === 'AS') arm = armPose(sh, hip, aTr, 'swing', t);
-      else if (cond === 'LOADED') arm = armPose(sh, hip, aTr, 'down', t);
+      D.clear(fig); D.clear(plateDb); D.clear(dbG); D.clear(shadow);
+      var k = skel(t);
+      var held = cond === 'AEL' || cond === 'LOADED', released = cond === 'AEL' && t >= REL, a;
+      if (cond === 'NAS') a = armPose(k, 'hips', t);
+      else if (cond === 'AS') a = armPose(k, 'swing', t);
+      else if (cond === 'LOADED') a = armPose(k, 'down', t);
       else {
-        var down = armPose(sh, hip, aTr, 'down', t), hips = armPose(sh, hip, aTr, 'hips', t);
-        var u = released ? D.clamp((t - REL) / 0.14, 0, 1) : 0;
-        arm = { elbow: lerpP(down.elbow, hips.elbow, u), hand: lerpP(down.hand, hips.hand, u) };
+        var down = armPose(k, 'down', t), hips = armPose(k, 'hips', t), u = released ? D.clamp((t - REL) / 0.14, 0, 1) : 0;
+        a = { elbow: lerpP(down.elbow, hips.elbow, u), hand: lerpP(down.hand, hips.hand, u) };
       }
-      seg(heel, toeP, 9); seg(ankle, knee, 14); seg(knee, hip, 16);
-      seg(hip, sh, 20, '#2f5d74');
-      seg(sh, arm.elbow, 10); seg(arm.elbow, arm.hand, 9);
-      sv('circle', { cx: head[0], cy: head[1], r: 21, fill: '#f2d2b6', stroke: '#24343b', 'stroke-width': 4 }, fig);
+      var sc = Math.max(0.35, 1 - k.lift / 140);
+      sv('ellipse', { cx: FX + 8, cy: PY + 2, rx: 48 * sc, ry: 6 * sc, fill: 'rgba(0,0,0,0.25)' }, shadow);
+      var far = [-7, -2];
+      arm(fig, k, a, far, false, true);
+      leg(fig, k, far, false);
+      torso(fig, k);
+      leg(fig, k, [0, 0], true);
+      head(fig, k);
+      arm(fig, k, a, [0, 0], true, true);
       var scale = (L - 0.2) / 0.2;
-      if (held && !released) dumbbell(plateDb, [arm.hand[0], arm.hand[1] + 8], scale);
+      if (held && !released) { dumbbell(plateDb, [a.hand[0], a.hand[1] + 6], scale); }
       if (released) {
-        // the dumbbells drop beside the plate (to the participant's sides), not onto it
-        var k0 = skel(REL), from = armPose(k0.sh, k0.hip, k0.aTr, 'down', REL).hand, fall = t - REL;
-        var hy = Math.min(PY + 36, from[1] + 8 + 0.5 * 2600 * fall * fall);
+        // the dumbbells drop beside the plate (to Santa's sides), not onto it
+        var k0 = skel(REL), from = armPose(k0, 'down', REL).hand, fall = t - REL;
+        var hy = Math.min(PY + 36, from[1] + 6 + 0.5 * 2600 * fall * fall);
         dumbbell(dbG, [from[0], hy], scale);
         if (hy >= PY + 36) txt(dbG, 384, PY + 40, 'dropped to the side', { 'font-size': 14, 'font-weight': 700, fill: COL.AEL, 'text-anchor': 'middle' });
       }
