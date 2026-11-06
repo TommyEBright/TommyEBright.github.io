@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The AEL Study</title>
+<meta name="description" content="Three interactive slides introducing accentuated eccentric loading (AEL) and the AEL jump study for the SESD55 data analysis seminar.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/deck.css?v=2">
+</head>
+<body>
+<div id="announce" class="sr-only" aria-live="polite"></div>
+<main class="stage" aria-label="Seminar slides">
+
+<!-- ===================== 1 what is AEL ===================== -->
+<section class="slide" data-title="What is accentuated eccentric loading?" data-time="5">
+  <header class="head"><h2>What is accentuated eccentric loading (AEL)?</h2><div class="kicker">Extra load on the way <b>down</b> (eccentric), removed before the way <b>up</b> (concentric).</div></header>
+  <div class="body tall" style="top:150px">
+    <div class="row" style="gap:34px">
+      <div style="flex:0 0 560px;display:flex;flex-direction:column;gap:10px">
+        <div class="card t-teal">
+          <h3>The idea</h3>
+          <p>In a countermovement jump, muscles first lengthen under load to stop the drop (<b>eccentric</b>), then shorten to drive the body up (<b>concentric</b>).</p>
+          <p>Muscles are stronger eccentrically, so a normal jump never fully loads the lowering phase. AEL adds load just for that phase.</p>
+        </div>
+        <div class="card t-amber step">
+          <h3>Why it might help</h3>
+          <ul>
+            <li>A bigger, faster stretch in the lowering phase</li>
+            <li>More force and stored elastic energy at the bottom of the jump (the stretch-shortening cycle)</li>
+            <li>A lighter body to push up once the load is dropped</li>
+          </ul>
+          <p class="tiny" style="margin:8px 0 0">Review: Wagle et al. (2017), <i>Sports Medicine</i>, 47, 2473–2495.</p>
+        </div>
+      </div>
+      <div class="col"><div data-widget="loadprofile"></div>
+        <div class="card t-aer step" style="margin-top:12px;padding:12px 18px">
+          <h3>How it is used</h3>
+          <ul>
+            <li><b>Acutely:</b> to try to boost jump performance in that session</li>
+            <li><b>As training:</b> to develop eccentric strength and power over weeks</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><p>Eccentric = muscle lengthening under load (the lowering or braking phase); concentric = muscle shortening (the pushing up phase). Muscles are stronger eccentrically, so in a normal jump the lowering phase is under-loaded relative to what the muscle could tolerate.</p><p>AEL loads the eccentric phase more heavily than the concentric phase: here, by holding dumbbells on the way down and releasing them at the lowest point. Proposed benefits include greater eccentric force, a stronger stretch-shortening cycle and enhanced concentric output. The evidence is mixed and depends on the load and the person, which is exactly why we test it.</p><p>Use the chart: compare the load on the body in each phase for a normal jump, a jump holding the dumbbells throughout (LOADED) and an AEL jump. Ask: which condition should jump highest, and why?</p><p class="tiny">Wagle, J. P., et al. (2017). Accentuated eccentric loading for training and performance: a review. Sports Medicine, 47(12), 2473–2495.</p></aside>
+</section>
+
+<!-- ===================== 2 the AEL jump ===================== -->
+<section class="slide" data-title="The AEL jump on a force plate" data-time="6">
+  <header class="head"><h2>The jump, phase by phase</h2><div class="kicker">Pick a condition, then press <b>Play</b> or <b>Step</b>. Watch what the force plate records.</div></header>
+  <div class="body tall" style="top:140px"><div data-widget="aeljump"></div></div>
+  <aside class="notes"><p>The force plate measures the force between the feet and the ground, sampled 1000 times a second. While the participant stands still it reads their weight (plus the dumbbells if held).</p><p>Unweighting: the participant starts to drop and the force falls below body weight. Braking: they slow the drop and the force rises above body weight. In AEL the dumbbells are released at the lowest point, so the plate force drops by the dumbbells' weight and the participant pushes up with only their own body mass. Hands go to the hips for take-off and landing. Flight: the plate reads zero. Jump height can be calculated from the flight time, or from take-off velocity found by integrating force.</p><p>The heights in this animation are the same in every condition on purpose: working out what really happens is the students' job.</p></aside>
+</section>
+
+<!-- ===================== 3 the study and your task ===================== -->
+<section class="slide" data-title="The study and your task" data-time="6">
+  <header class="head"><h2>Our AEL study, and your task</h2><div class="kicker">Explore the design, then <b>predict</b> the results before you work them out in Excel.</div></header>
+  <div class="body tall" style="top:140px"><div data-widget="design"></div></div>
+  <aside class="notes"><p>Design: 39 adults (27 men, 12 women) tested in two university labs. Every participant completed every condition (a within-participant, repeated-measures design), with three trials per condition. The no arm swing and arm swing jumps were recorded in two separate sessions, so we can also ask how repeatable they are.</p><p>Conditions: NAS = no arm swing, hands on hips; AS = arm swing; AEL_20/30/40 = dumbbells of about 20, 30 or 40% of body weight released at the bottom of the countermovement; LOADED_20/30/40 = the same dumbbells held throughout.</p><p>Ask students to set their predictions on the sliders now. They come back to this slide at the end of the seminar to compare their predictions with the results they calculate.</p></aside>
+</section>
+
+</main>
+
+<div class="progress" aria-hidden="true"></div>
+<nav class="hud" aria-label="Slide controls">
+  <button type="button" data-act="prev" aria-label="Previous">‹ Prev</button>
+  <span class="count" aria-live="off"></span>
+  <button type="button" data-act="next" aria-label="Next">Next ›</button>
+  <button type="button" data-act="overview">Overview</button>
+  <button type="button" data-act="presenter">Presenter view</button>
+  <button type="button" data-act="full">Full screen</button>
+  <button type="button" data-act="help" aria-label="Help">?</button>
+</nav>
+<div class="blackout" aria-hidden="true"></div>
+
+<div class="overlay" id="overview" role="dialog" aria-label="All slides">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h2>All slides</h2><button type="button" class="btn sm" data-close>Close (Esc)</button></div>
+  <div class="ov-grid"></div>
+</div>
+
+<div class="overlay" id="help" role="dialog" aria-label="Help">
+  <div class="help-box">
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2>Presenting this deck</h2><button type="button" class="btn sm" data-close>Close (Esc)</button></div>
+    <table>
+      <tr><td><kbd>→</kbd> <kbd>Space</kbd> <kbd>PgDn</kbd></td><td>Next reveal or next slide (clickers work)</td></tr>
+      <tr><td><kbd>←</kbd> <kbd>PgUp</kbd></td><td>Back</td></tr>
+      <tr><td><kbd>S</kbd></td><td>Presenter view: notes, timer, next slide (opens a second window; drag it to your laptop screen)</td></tr>
+      <tr><td><kbd>O</kbd></td><td>Overview of all slides</td></tr>
+      <tr><td><kbd>F</kbd></td><td>Full screen</td></tr>
+      <tr><td><kbd>B</kbd> or <kbd>.</kbd></td><td>Black screen</td></tr>
+      <tr><td>Type a number, then <kbd>Enter</kbd></td><td>Jump to that slide</td></tr>
+    </table>
+    <p><a href="?handout" target="_blank" rel="noopener">Open the handout with speaker notes</a> (print or save it as a PDF).</p>
+  </div>
+</div>
+
+
+<script>
+  document.querySelectorAll('.slide:not(.divider)').forEach(function (s) {
+    var b = document.createElement('div'); b.className = 'brand'; b.setAttribute('aria-hidden', 'true');
+    b.innerHTML = 'Plymouth Marjon University <span>SESD55 · The AEL study</span>'; s.appendChild(b);
+  });
+</script>
+<script src="assets/viz-core.js?v=2"></script>
+<script src="assets/w-ael.js?v=2"></script>
+<script src="assets/deck.js?v=2"></script>
+</body>
+</html>
