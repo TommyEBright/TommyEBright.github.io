@@ -1,635 +1,556 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Developing Power | SESD56</title>
-<meta name="description" content="Place exercises on the load–velocity curve, see why fast squats feel different, and plan a power-focused training week. SESD56, Plymouth Marjon University.">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-:root{
-  --navy:#003d50; --navy-d:#002c3a; --teal:#00857e; --teal-d:#00625d; --blue:#0071bc; --blue-d:#00568f; --plum:#8b3556; --plum-d:#682840;
-  --bg:#f7fbfd; --card:#ffffff; --soft:#f2faf9; --soft2:#f8fcfe; --line:#d9e2e7; --edge:#abd6d9;
-  --ink:#1d1d1b; --ink2:#3d4a52; --muted:#5b6770;
-  --good:#1b7a45; --good-bg:#eaf6ef; --warn:#8a5a00; --warn-bg:#fff5e0; --bad:#b42318; --bad-bg:#fdecea;
-  --z1:#e8f1f8; --z2:#e3f3f2; --z3:#eef0f8; --z4:#f6ecf0; --z5:#f3f3ee;
-}
-*{box-sizing:border-box}
-html,body{margin:0}
-body{font-family:Arial,Helvetica,sans-serif;background:#eaf3f7;color:var(--ink);line-height:1.5;font-size:16px}
-.wrap{max-width:1120px;margin:.8rem auto;padding:1rem;background:var(--bg);border:2px solid var(--edge);border-radius:1rem}
-header.hero{background:var(--navy);color:#fff;padding:1.6rem 1.5rem;border-radius:.9rem .9rem 0 0;border-bottom:.4rem solid var(--teal)}
-.badge{display:inline-block;background:#fff;color:var(--navy);padding:.3rem .8rem;margin:0 0 .7rem;font-size:.86em;border-left:.35rem solid var(--blue);border-radius:.65rem;font-weight:bold}
-header.hero h1{margin:0 0 .35rem;font-size:1.9em;line-height:1.2}
-header.hero p{margin:0;max-width:60rem}
-nav.tabs{background:#fff;padding:.8rem;margin-bottom:1.2rem;border:1px solid var(--line);border-top:0;border-radius:0 0 .9rem .9rem;display:flex;gap:.6rem;flex-wrap:wrap}
-nav.tabs button{flex:1 1 200px;min-height:2.9rem;border:0;border-radius:.75rem;color:#fff;font:bold 1em Arial,Helvetica,sans-serif;cursor:pointer;padding:.6rem .8rem;opacity:.72}
-nav.tabs button[aria-selected="true"]{opacity:1;outline:3px solid #fff;box-shadow:0 0 0 3px var(--ink)}
-#tab-curve{background:var(--navy);border-bottom:.25rem solid var(--navy-d)}
-#tab-squat{background:var(--teal);border-bottom:.25rem solid var(--teal-d)}
-#tab-plan{background:var(--plum);border-bottom:.25rem solid var(--plum-d)}
-.panel{display:none}.panel.active{display:block}
-section.card{background:var(--card);border:1px solid var(--line);border-radius:1rem;margin-bottom:1.2rem;overflow:hidden}
-.card-head{color:#fff;padding:1rem 1.3rem}
-.card-head .chip{display:inline-block;background:#fff;padding:.2rem .65rem;font-size:.8em;margin:0 0 .35rem;border-left:.3rem solid var(--navy);border-radius:.55rem;font-weight:bold}
-.card-head h2{margin:0;font-size:1.3em}
-.card-body{padding:1.1rem 1.3rem}
-.h-navy{background:var(--navy)}.h-navy .chip{color:var(--navy);border-left-color:var(--blue)}
-.h-blue{background:var(--blue)}.h-blue .chip{color:var(--blue)}
-.h-teal{background:var(--teal)}.h-teal .chip{color:var(--teal)}
-.h-plum{background:var(--plum)}.h-plum .chip{color:var(--plum)}
-.box{background:#fff;border:1px solid var(--line);border-left:.4rem solid var(--blue);border-radius:.75rem;padding:.85rem 1rem;margin-top:.9rem}
-.box.teal{border-left-color:var(--teal)}.box.plum{border-left-color:var(--plum)}.box.navy{border-left-color:var(--navy)}
-.box h3{margin:0 0 .4rem;color:var(--navy);font-size:1.05em}
-.box ul,.box ol{margin:.2rem 0 0;padding-left:1.25rem}
-.ref{color:var(--muted);font-size:.84em;margin:.7rem 0 0}
-.btn{display:inline-block;border:0;border-radius:.75rem;padding:.6rem 1rem;font:bold .95em Arial,Helvetica,sans-serif;cursor:pointer;color:#fff;background:var(--navy);border-bottom:.2rem solid var(--navy-d);min-height:2.6rem}
-.btn.teal{background:var(--teal);border-bottom-color:var(--teal-d)}.btn.plum{background:var(--plum);border-bottom-color:var(--plum-d)}.btn.blue{background:var(--blue);border-bottom-color:var(--blue-d)}
-.btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy)}
-.btn.small{padding:.35rem .7rem;min-height:2.1rem;font-size:.86em}
-.btn:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
-.btn-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.9rem}
-.msg{margin:.7rem 0 0;padding:.6rem .8rem;border-radius:.6rem;font-weight:bold;display:none}
-.msg.ok{background:var(--good-bg);color:var(--good)}.msg.no{background:var(--bad-bg);color:var(--bad)}.msg.info{background:var(--warn-bg);color:var(--warn)}
-
-/* Curve */
-.tray{display:flex;flex-wrap:wrap;gap:.5rem;min-height:3.4rem;padding:.6rem;border:2px dashed var(--edge);border-radius:.8rem;background:var(--soft2)}
-.ex{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;border:2px solid var(--navy);background:#fff;color:var(--navy);border-radius:.7rem;padding:.5rem .75rem;font-weight:bold;font-size:.95em}
-.ex.sel{background:var(--navy);color:#fff}
-.ex.placed{cursor:pointer;border-color:var(--good);color:var(--good);font-size:.85em;padding:.35rem .55rem;width:100%;text-align:center}
-.ex.shake{animation:shake .35s}
-@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-.ghostdrag{position:fixed;pointer-events:none;z-index:50;opacity:.9;transform:translate(-50%,-50%);box-shadow:0 6px 18px rgba(0,0,0,.2)}
-.chart{position:relative;margin-top:1rem}
-.chart .ylab{position:absolute;left:-.2rem;top:50%;transform:rotate(-90deg) translateX(50%);transform-origin:left top;font-size:.82em;color:var(--muted);white-space:nowrap}
-.plot{position:relative;margin-left:1.6rem;border-left:2px solid var(--ink2);border-bottom:2px solid var(--ink2);height:420px}
-.zones{position:absolute;inset:0;display:grid;grid-template-columns:repeat(5,1fr)}
-.zone{position:relative;border-right:1px dashed #c6d3da;padding:.35rem .3rem;display:flex;flex-direction:column;gap:.3rem;justify-content:flex-end}
-.zone:nth-child(1){background:var(--z1)}.zone:nth-child(2){background:var(--z2)}.zone:nth-child(3){background:var(--z3)}.zone:nth-child(4){background:var(--z4)}.zone:nth-child(5){background:var(--z5);border-right:0}
-.zone.hover{outline:3px solid var(--teal);outline-offset:-3px}
-.zone .zt{position:absolute;top:.35rem;left:.3rem;right:.3rem;font-size:.78em;line-height:1.25;color:var(--navy);font-weight:bold;pointer-events:none;z-index:2;background:rgba(255,255,255,.75);border-radius:.35rem;padding:.15rem .25rem;overflow-wrap:anywhere;hyphens:auto}
-.zone .zt span{display:block;font-weight:normal;color:var(--ink2)}
-.zone .drops{display:flex;flex-direction:column;gap:.3rem;position:relative;z-index:2}
-.plot svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
-.xaxis{display:grid;grid-template-columns:repeat(5,1fr);margin-left:1.6rem;font-size:.8em;color:var(--muted)}
-.xaxis div{text-align:center;padding-top:.25rem}
-.xt{text-align:center;font-size:.85em;color:var(--muted);margin-left:1.6rem}
-.rx{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:.8rem;margin-top:.6rem}
-.rx .box{margin-top:0}
-.rx .box p{margin:.25rem 0;font-size:.93em}
-.rx .zone-tag{display:inline-block;font-size:.78em;font-weight:bold;background:var(--soft);color:var(--teal-d);border-radius:.4rem;padding:.1rem .45rem}
-@media (max-width:700px){.plot{height:520px}.zone .zt{font-size:.6em;padding:.1rem}.ex.placed{font-size:.72em}}
-
-/* Squat explainer */
-.steps3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem}
-@media (max-width:760px){.steps3{grid-template-columns:1fr}}
-.step{border:1px solid var(--line);border-radius:.8rem;padding:.9rem;background:#fff;text-align:center}
-.step .n{display:inline-flex;align-items:center;justify-content:center;width:2.2rem;height:2.2rem;border-radius:50%;background:var(--teal);color:#fff;font-weight:bold;margin-bottom:.4rem}
-.step h3{margin:.1rem 0 .3rem;color:var(--navy);font-size:1.05em}
-.step p{margin:0;font-size:.95em}
-.reveal{display:none}
-.reveal.show{display:block}
-.bars{margin-top:.6rem}
-.bar{display:grid;grid-template-columns:7.5rem 1fr 3.2rem;align-items:center;gap:.5rem;margin:.35rem 0;font-size:.92em}
-.bar .track{background:#edf2f5;border-radius:.4rem;height:1.3rem;overflow:hidden}
-.bar .fill{height:100%;background:var(--teal);border-radius:.4rem}
-.bar .fill.lost{background:var(--plum)}
-
-.eqs{display:grid;gap:.5rem;margin-top:.4rem}
-.eq{display:grid;grid-template-columns:9rem 1fr;gap:.8rem;align-items:center;background:var(--soft2);border:1px solid var(--line);border-radius:.6rem;padding:.55rem .8rem}
-.eq .f{font:bold 1.25em Georgia,"Times New Roman",serif;color:var(--navy)}
-@media (max-width:560px){.eq{grid-template-columns:1fr;gap:.2rem}}
-.calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.6rem;margin-top:.5rem}
-input[type=number]{font:1em Arial,Helvetica,sans-serif;padding:.45rem .5rem;border:1px solid #b9c7cf;border-radius:.5rem;background:#fff;color:var(--ink);width:100%}
-.pres{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.6rem;margin-top:.8rem}
-.pres div{background:var(--soft2);border:1px solid var(--line);border-radius:.6rem;padding:.6rem .75rem}
-.pres b{display:block;font-size:1.35em;color:var(--navy)}
-.pres span{font-size:.82em;color:var(--muted)}
-.pres .hi{background:var(--soft);border-color:var(--teal)}
-/* Planner */
-.profile{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.4rem 1rem;font-size:.95em}
-.profile p{margin:.15rem 0}
-.names{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.6rem}
-label.fld{display:block;font-weight:bold;color:var(--navy);font-size:.9em;margin:.2rem 0 .2rem}
-input[type=text],input[type=file],select,textarea{font:1em Arial,Helvetica,sans-serif;padding:.45rem .5rem;border:1px solid #b9c7cf;border-radius:.5rem;background:#fff;color:var(--ink);width:100%}
-textarea{min-height:4rem;resize:vertical}
-.day{border:1px solid var(--line);border-radius:.8rem;margin-top:.8rem;overflow:hidden;background:#fff}
-.day-head{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;padding:.6rem .8rem;background:var(--soft2);border-bottom:1px solid var(--line)}
-.day-head strong{color:var(--navy);min-width:6.5rem}
-.day-head select{width:auto;min-width:12rem}
-.day-body{padding:.5rem .8rem .8rem}
-table.rows{width:100%;border-collapse:collapse;font-size:.92em}
-table.rows th{text-align:left;color:var(--navy);font-size:.82em;padding:.3rem .25rem;border-bottom:1px solid var(--line)}
-table.rows td{padding:.25rem;vertical-align:top}
-table.rows td input{padding:.35rem .4rem;font-size:.95em}
-table.rows .del{border:0;background:none;color:var(--bad);cursor:pointer;font-size:1.1em;padding:.3rem}
-.c-ex{width:28%}.c-s{width:7%}.c-r{width:8%}.c-l{width:14%}.c-rest{width:10%}.c-n{width:30%}
-@media (max-width:760px){
-  table.rows thead{display:none}
-  table.rows tr{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.3rem;border:1px solid var(--line);border-radius:.6rem;padding:.4rem;margin-top:.4rem}
-  table.rows td{padding:0}
-  table.rows td.ex-cell,table.rows td.n-cell{grid-column:1/-1}
-  table.rows td::before{content:attr(data-l);display:block;font-size:.72em;color:var(--muted);font-weight:bold}
-}
-.empty{color:var(--muted);font-style:italic;font-size:.92em;margin:.3rem 0}
-.checks label{display:flex;gap:.55rem;align-items:flex-start;padding:.4rem 0;border-bottom:1px solid var(--line);cursor:pointer}
-.checks label:last-child{border-bottom:0}
-.checks input{width:1.2rem;height:1.2rem;margin:.1rem 0 0;flex:none;accent-color:var(--teal)}
-.peer table{width:100%;border-collapse:collapse;font-size:.9em;margin-top:.5rem}
-.peer th,.peer td{border:1px solid var(--line);padding:.35rem .45rem;text-align:left;vertical-align:top}
-.peer th{background:var(--soft2);color:var(--navy)}
-footer{text-align:center;padding:1rem;border:2px solid var(--navy);border-top-width:6px;border-radius:10px;background:#fff;margin-top:1rem;font-size:.9em}
-footer p{margin:.2rem 0}
+  :root{--navy:#003d50;--teal:#00857e;--plum:#8b3556;--blue:#0071bc;--amber:#e8a33d;--ink:#1d1d1b;--muted:#5e7c88;--line:#d9e2e7;--tint:#f2faf9;--bg:#f7fbfd}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5}
+  header{background:var(--navy);color:#fff;padding:1.2rem 1.5rem;border-bottom:.35rem solid var(--teal)}
+  header h1{margin:0;font-family:Cambria,Georgia,serif;font-size:1.8rem}
+  header p{margin:.2rem 0 0;opacity:.85}
+  nav.tabs{display:flex;gap:.5rem;padding:.8rem 1.5rem;background:#fff;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  nav.tabs button{flex:1 1 220px;padding:.75rem 1rem;border:0;border-radius:.7rem;background:#e8eff2;color:var(--navy);font-weight:bold;font-size:1rem;cursor:pointer}
+  nav.tabs button.active{background:var(--navy);color:#fff}
+  main{max-width:1200px;margin:0 auto;padding:1.2rem}
+  section.tab{display:none}
+  section.tab.active{display:block}
+  .card{background:#fff;border:1px solid var(--line);border-radius:.9rem;padding:1.1rem 1.2rem;margin-bottom:1rem}
+  h2{font-family:Cambria,Georgia,serif;color:var(--navy);margin:.2rem 0 .6rem;font-size:1.45rem}
+  h3{color:var(--navy);margin:.2rem 0 .5rem;font-size:1.1rem}
+  .intro{background:var(--tint);border-left:.35rem solid var(--teal);border-radius:.7rem;padding:.8rem 1rem;margin-bottom:1rem}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  @media(max-width:800px){.grid2{grid-template-columns:1fr}}
+  .jump{border-radius:.8rem;padding:.9rem 1rem;border:2px solid}
+  .jump.a{border-color:var(--teal)} .jump.b{border-color:var(--plum)}
+  .jump h3{margin-top:0} .jump.a h3{color:var(--teal)} .jump.b h3{color:var(--plum)}
+  label.sl{display:block;margin:.55rem 0 .1rem;font-size:.95rem}
+  label.sl b{float:right}
+  input[type=range]{width:100%}
+  table{border-collapse:collapse;width:100%}
+  th,td{padding:.45rem .6rem;border-bottom:1px solid var(--line);text-align:left;font-size:.95rem}
+  th{background:var(--navy);color:#fff}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  tr.key td{font-weight:bold;background:#fbf3f6}
+  .up{color:var(--teal);font-weight:bold} .down{color:var(--plum);font-weight:bold}
+  .btn{display:inline-block;padding:.55rem .9rem;border-radius:.6rem;border:0;background:var(--navy);color:#fff;font-weight:bold;cursor:pointer;font-size:.95rem;margin:.2rem .3rem .2rem 0}
+  .btn.teal{background:var(--teal)} .btn.plum{background:var(--plum)} .btn.light{background:#e8eff2;color:var(--navy)}
+  .challenges{list-style:none;padding:0;margin:0}
+  .challenges li{display:flex;gap:.7rem;align-items:flex-start;padding:.6rem .7rem;border-radius:.6rem;margin-bottom:.4rem;background:#f5f8fa}
+  .challenges li .tick{flex:0 0 1.8rem;height:1.8rem;border-radius:50%;background:#d9e2e7;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:bold}
+  .challenges li.done{background:#e6f4f2}
+  .challenges li.done .tick{background:var(--teal)}
+  .challenges details{margin-top:.25rem;font-size:.9rem;color:var(--muted)}
+  canvas{width:100%;display:block;background:#fff;border:1px solid var(--line);border-radius:.6rem}
+  .note{font-size:.88rem;color:var(--muted)}
+  .stat{display:flex;gap:.8rem;flex-wrap:wrap;margin:.6rem 0}
+  .stat div{flex:1 1 150px;background:var(--tint);border-radius:.6rem;padding:.6rem .8rem}
+  .stat b{display:block;font-size:1.5rem;color:var(--navy);font-family:Cambria,Georgia,serif}
+  textarea,input[type=text],input[type=number],select{width:100%;padding:.5rem;border:1px solid #b9c7cf;border-radius:.45rem;font:inherit;background:#fff}
+  textarea{min-height:4.2rem;resize:vertical}
+  .field{margin-bottom:.7rem}
+  .field label{display:block;font-weight:bold;font-size:.92rem;color:var(--navy);margin-bottom:.2rem}
+  .formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.2rem 1rem}
+  .day{border:1px solid var(--line);border-radius:.7rem;margin-bottom:.7rem;overflow:hidden}
+  .dayhead{display:flex;gap:.7rem;align-items:center;background:var(--tint);padding:.5rem .8rem;flex-wrap:wrap}
+  .dayhead strong{min-width:3rem;color:var(--navy)}
+  .dayhead select{width:auto;min-width:200px}
+  .daybody{padding:.5rem .8rem;overflow-x:auto}
+  .daybody table input{min-width:90px}
+  .daybody th{font-size:.82rem;white-space:nowrap}
+  .daybody td{padding:.25rem .3rem}
+  .x{background:none;border:0;color:var(--plum);font-size:1.2rem;cursor:pointer}
+  .warn{background:#fdf3e2;border-left:.3rem solid var(--amber);padding:.5rem .8rem;border-radius:.5rem;margin:.5rem 0;font-size:.93rem}
+  .checks label{display:flex;gap:.6rem;align-items:flex-start;margin:.35rem 0}
+  .checks input{margin-top:.25rem}
+  .ro{background:#f5f8fa;border-radius:.6rem;padding:.7rem .9rem;margin:.5rem 0}
+  .status{font-size:.9rem;color:var(--teal);font-weight:bold}
+  details.how summary{cursor:pointer;color:var(--navy);font-weight:bold}
 </style>
 </head>
 <body>
-<div class="wrap">
-<header class="hero">
-  <span class="badge">SESD56 &middot; Developing Power</span>
+<header>
   <h1>Developing Power</h1>
-  <p>Place exercises on the load&ndash;velocity curve, work out why a fast squat feels so different from a slow one, then plan a week of power training for an athlete.</p>
+  <p>SESD56 · Week 11 · Is power overrated?</p>
 </header>
-<nav class="tabs" role="tablist" aria-label="Tool pages">
-  <button id="tab-curve" role="tab" aria-selected="true" aria-controls="p-curve">1. Place it on the curve</button>
-  <button id="tab-squat" role="tab" aria-selected="false" aria-controls="p-squat">2. Why the fast squat?</button>
-  <button id="tab-plan" role="tab" aria-selected="false" aria-controls="p-plan">3. Plan the week</button>
+<nav class="tabs" aria-label="Tool tabs">
+  <button class="active" data-tab="t1">1 · Break the metric</button>
+  <button data-tab="t2">2 · Plan your client's week</button>
 </nav>
-
 <main>
-<!-- TAB 1 -->
-<div class="panel active" id="p-curve" role="tabpanel" aria-labelledby="tab-curve">
-  <section class="card">
-    <div class="card-head h-navy"><span class="chip">Task 1</span><h2>Where does each exercise sit on the load&ndash;velocity curve?</h2></div>
-    <div class="card-body">
-      <p style="margin-top:0">Drag each exercise into the zone where it is mainly trained. On a phone, tap an exercise and then tap a zone. When you get one right, its prescription appears underneath.</p>
-      <div class="tray" id="tray" aria-label="Exercises to place"></div>
-      <div class="chart">
-        <span class="ylab">Bar velocity (m/s) &uarr;</span>
-        <div class="plot" id="plot">
-          <div class="zones" id="zones"></div>
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            <polyline points="0,6.25 20,18.75 40,37.5 60,53.1 80,68.75 100,81.25" fill="none" stroke="#003d50" stroke-width="0.9" vector-effect="non-scaling-stroke" style="stroke-width:3px"/>
-          </svg>
-        </div>
-        <div class="xaxis"><div>0&ndash;20%</div><div>20&ndash;40%</div><div>40&ndash;60%</div><div>60&ndash;80%</div><div>80&ndash;100%</div></div>
-        <p class="xt">Load (% 1RM) &rarr;</p>
-      </div>
-      <p class="msg" id="curve-msg" role="status"></p>
-      <div class="btn-row"><button class="btn ghost small" id="curve-reset">Start again</button></div>
-      <p class="ref">Zones and velocity ranges for lower body exercises from Table 14.13 in Haff (Ed.), <em>Essentials of Strength Training and Conditioning</em> (5th ed.), reprinted there from Mann (2021). The line is a sketch drawn through those ranges, not one athlete's data. Upper body velocities are lower at the same %1RM.</p>
-    </div>
-  </section>
 
-  <section class="card">
-    <div class="card-head h-teal"><span class="chip">Prescriptions</span><h2>What the book says for each exercise</h2></div>
-    <div class="card-body">
-      <p style="margin-top:0" id="rx-intro">Place an exercise correctly to unlock its prescription.</p>
-      <div class="rx" id="rx"></div>
-      <div class="box plum" id="rx-summary" style="display:none">
-        <h3>The point of this task</h3>
-        <ul>
-          <li>Power isn't one exercise. Good programmes train across the curve, from heavy strength work to fast, light jumps.</li>
-          <li>Notice how the reps drop and the rest gets longer as the work gets heavier or faster. Every rep should be high quality, so power sets stop well before fatigue.</li>
-          <li>Weaker athletes often improve power most by getting stronger first (Chapter 18). Keep that in mind for Task 3.</li>
-        </ul>
+<!-- ================= TAB 1 ================= -->
+<section class="tab active" id="t1">
+  <div class="intro">
+    <strong>Your job:</strong> make power lie to you. Change the two jumps below and watch what happens to power, impulse and jump height. Each challenge ticks itself when you solve it.
+  </div>
+
+  <div class="card">
+    <h2>Two jumps</h2>
+    <div class="grid2">
+      <div class="jump a">
+        <h3>Jump A</h3>
+        <label class="sl">Body mass <b><span id="a_m_v"></span> kg</b></label>
+        <input type="range" id="a_m" min="50" max="120" step="0.5" value="80">
+        <label class="sl">Push distance (countermovement depth) <b><span id="a_d_v"></span> cm</b></label>
+        <input type="range" id="a_d" min="15" max="60" step="1" value="40">
+        <label class="sl">Push time <b><span id="a_t_v"></span> s</b></label>
+        <input type="range" id="a_t" min="0.12" max="0.50" step="0.01" value="0.28">
+      </div>
+      <div class="jump b">
+        <h3>Jump B</h3>
+        <label class="sl">Body mass <b><span id="b_m_v"></span> kg</b></label>
+        <input type="range" id="b_m" min="50" max="120" step="0.5" value="80">
+        <label class="sl">Push distance (countermovement depth) <b><span id="b_d_v"></span> cm</b></label>
+        <input type="range" id="b_d" min="15" max="60" step="1" value="40">
+        <label class="sl">Push time <b><span id="b_t_v"></span> s</b></label>
+        <input type="range" id="b_t" min="0.12" max="0.50" step="0.01" value="0.28">
       </div>
     </div>
-  </section>
-</div>
-
-<!-- TAB 2 -->
-<div class="panel" id="p-squat" role="tabpanel" aria-labelledby="tab-squat">
-  <section class="card">
-    <div class="card-head h-teal"><span class="chip">Task 2</span><h2>Slow squat vs fast squat</h2></div>
-    <div class="card-body">
-      <div class="box navy" style="margin-top:0">
-        <h3>Do it first</h3>
-        <ol>
-          <li>Do 3 bodyweight squats slowly. Pause at the bottom, then stand up.</li>
-          <li>Now do 3 where you <strong>drop fast, slam the handbrake on and drive up as quickly as you can</strong>.</li>
-          <li>With your partner, answer one question: <strong>which one felt more powerful, and why?</strong></li>
-        </ol>
-        <label class="fld" for="sq-guess" style="margin-top:.7rem">Our answer</label>
-        <textarea id="sq-guess" placeholder="e.g. The fast one felt springier because..."></textarea>
-        <div class="btn-row"><button class="btn teal" id="sq-reveal">Show me why</button></div>
+    <p>
+      <button class="btn light" id="presetSame">Make both jumps the same</button>
+      <button class="btn light" id="presetLake">Deep and slow vs short and quick</button>
+    </p>
+    <div class="grid2">
+      <div>
+        <table>
+          <thead><tr><th>Metric</th><th style="text-align:right">A</th><th style="text-align:right">B</th><th style="text-align:right">B vs A</th></tr></thead>
+          <tbody id="cmpBody"></tbody>
+        </table>
       </div>
-
-      <div class="reveal" id="sq-why">
-        <h3 style="color:var(--navy);margin:1.2rem 0 .6rem">What just happened</h3>
-        <div class="steps3">
-          <div class="step"><div class="n">1</div><h3>Drop fast</h3><p>Your muscles and tendons are stretched quickly, a bit like pulling back an elastic band.</p></div>
-          <div class="step"><div class="n">2</div><h3>Handbrake</h3><p>You stop quickly. The shorter this pause, the less of that stored &ldquo;stretch&rdquo; you lose.</p></div>
-          <div class="step"><div class="n">3</div><h3>Drive up</h3><p>The stored energy and a reflex boost from the quick stretch add to your push, so you move faster.</p></div>
-        </div>
-        <div class="box teal">
-          <h3>The one-line version</h3>
-          <p style="margin:0">A fast stretch followed straight away by a fast push is called the <strong>stretch&ndash;shortening cycle</strong>. It lets you produce more force, more quickly, than pushing from a standstill.</p>
-        </div>
-        <div class="box">
-          <h3>Why the pause matters</h3>
-          <p style="margin:.2rem 0 .4rem">In a bench press study reported in Chapter 19, the longer the pause between lowering and pushing, the more stored energy was lost.</p>
-          <div class="bars" id="bars"></div>
-        </div>
-        <div class="box plum">
-          <h3>So what for training?</h3>
-          <ul>
-            <li><strong>Intent matters.</strong> Ask for every rep to be as fast as possible, even with a heavy load.</li>
-            <li><strong>Coach the stop.</strong> &ldquo;Short and stiff&rdquo; contacts make jumps and plyometrics work better.</li>
-            <li><strong>Fast and slow SSC.</strong> Chapter 19 describes drills with contacts under 0.25 s as fast SSC (e.g. depth jumps, hops) and longer ones as slow SSC (e.g. a CMJ). Sports need both.</li>
-          </ul>
-        </div>
-        <div class="box navy">
-          <h3>What is power? The definitions</h3>
-          <div class="eqs">
-            <div class="eq"><span class="f">W = F &times; d</span><span>Work (J) = force (N) &times; distance moved in the direction of the force (m)</span></div>
-            <div class="eq"><span class="f">P = W &divide; t</span><span>Power (W, i.e. J/s) = work (J) &divide; time taken (s)</span></div>
-            <div class="eq"><span class="f">P = F &times; v</span><span>Because distance &divide; time = velocity, power is also force (N) &times; velocity (m/s)</span></div>
-          </div>
-          <p style="margin-top:.6rem">So there are two ways to be more powerful. Do <strong>more work in the same time</strong>, or do <strong>the same work in less time</strong>.</p>
-        </div>
-
-        <div class="box teal">
-          <h3>Back to your squats</h3>
-          <ul>
-            <li>In both versions you lifted the same body the same distance, so you did roughly the <strong>same work</strong>.</li>
-            <li>The fast version did that work in <strong>less time</strong>, so power (P = W &divide; t) was higher.</li>
-            <li>The quick drop and stop also let you push harder at the start of the drive (more <strong>F</strong>) and get moving faster (more <strong>v</strong>). With both higher, P = F &times; v is higher too.</li>
-          </ul>
-        </div>
-
-        <div class="box">
-          <h3>Worked example: try it with your own numbers</h3>
-          <p>Lifting your body weight means pushing with a force of about m &times; g (mass &times; 9.81). Change the numbers to match you and your partner. Time each rep with a phone stopwatch, from the bottom of the squat to standing.</p>
-          <div class="calc">
-            <div><label class="fld" for="pm">Body mass (kg)</label><input type="number" id="pm" value="75" min="1" step="1"></div>
-            <div><label class="fld" for="pd">Distance hips rise (m)</label><input type="number" id="pd" value="0.40" min="0.01" step="0.01"></div>
-            <div><label class="fld" for="ts">Slow rep: time up (s)</label><input type="number" id="ts" value="1.2" min="0.05" step="0.05"></div>
-            <div><label class="fld" for="tf">Fast rep: time up (s)</label><input type="number" id="tf" value="0.4" min="0.05" step="0.05"></div>
-          </div>
-          <div id="pout"></div>
-          <div class="box plum" style="margin-top:.8rem">
-            <h3>Question for your pair</h3>
-            <p>The work was the same for both squats, so why was the power so different? And if a heavy back squat moves a big force slowly and a jump moves a small force quickly, where would you expect power to be highest on the curve from Task 1?</p>
-            <div class="btn-row"><button class="btn small ghost" id="pq">Show the answer</button></div>
-            <div class="reveal" id="pq-a">
-              <p><strong>Same work, less time, so more power.</strong> Power is the <em>rate</em> of doing work.</p>
-              <p>Because P = F &times; v, power is low at both ends of the curve. With very heavy loads velocity is close to zero, and with no load the force is small. It peaks somewhere in between, and where exactly depends on the exercise (Chapter 18 lists body weight to 30% 1RM for jump squats, and 60&ndash;80% 1RM for the hang power clean). That's why power programmes train across the whole curve.</p>
-            </div>
-          </div>
-          <p class="ref">This is a simplified calculation. It uses an average force equal to body weight and ignores the extra force needed to speed up and slow down, so real fast-squat forces are higher. A force plate measures F directly, so it gives a more accurate power.</p>
-        </div>
-        <p class="ref">Source: Haff (Ed.), <em>Essentials of Strength Training and Conditioning</em> (5th ed.), Chapter 2 (work and power) and Chapter 19 (Plyometric Mechanics and Physiology).</p>
+      <div>
+        <canvas id="ftCanvas" width="560" height="300" aria-label="Net force above body weight against time for both jumps"></canvas>
+        <p class="note">Net force above body weight during the push. The shaded area is net impulse, and net impulse decides jump height.</p>
       </div>
     </div>
-  </section>
-</div>
+    <details class="how"><summary>How this model works</summary>
+      <p class="note">A simplified jump: the push starts from a standstill at the bottom of the countermovement and the force stays the same all the way up. So acceleration = 2 × distance ÷ time², take-off velocity = 2 × distance ÷ time, mean force = mass × (9.81 + acceleration), work = mean force × distance, mean power = work ÷ time, net impulse = mass × take-off velocity, and jump height = take-off velocity² ÷ (2 × 9.81). Real force–time curves aren't flat, so real numbers differ, but the relationships are the same.</p>
+    </details>
+  </div>
 
-<!-- TAB 3 -->
-<div class="panel" id="p-plan" role="tabpanel" aria-labelledby="tab-plan">
-  <section class="card">
-    <div class="card-head h-plum"><span class="chip">Task 3 &middot; in pairs</span><h2>Your athlete</h2></div>
-    <div class="card-body">
-      <p style="margin-top:0">Every pair plans for the same athlete. Design one training week however you think is best, then download it and swap with another pair.</p>
-      <div class="box navy" style="margin-top:0">
-        <h3>Jordan, university volleyball outside hitter</h3>
-        <div class="profile">
-          <p><strong>Age:</strong> 21</p>
-          <p><strong>Body mass:</strong> 75 kg</p>
-          <p><strong>Back squat 1RM:</strong> 110 kg (about 1.5 &times; body mass)</p>
-          <p><strong>Hang power clean 1RM:</strong> 70 kg</p>
-          <p><strong>CMJ height:</strong> 41 cm</p>
-          <p><strong>Training history:</strong> 3 years of gym work, good squat and clean technique, has done basic plyometrics</p>
-          <p><strong>Time of year:</strong> pre-season, 4 weeks before the first match</p>
-          <p><strong>Fixed commitments:</strong> team practice Tuesday, Thursday and Saturday evenings</p>
-          <p><strong>Gym access:</strong> up to 3 sessions a week, about 60 minutes each</p>
-          <p><strong>Goal:</strong> jump higher and be quicker off the floor</p>
-          <p><strong>Injuries:</strong> none at the moment</p>
-        </div>
-      </div>
-      <div class="names" style="margin-top:.9rem">
-        <div><label class="fld" for="pair">Pair names</label><input type="text" id="pair" placeholder="e.g. Alex and Sam"></div>
-      </div>
-    </div>
-  </section>
+  <div class="card">
+    <h2>Challenges</h2>
+    <ul class="challenges">
+      <li id="c1"><span class="tick">1</span><div><strong>Make Jump B more powerful than Jump A, but lower.</strong>
+        <details><summary>Hint</summary>Give Jump B a shorter push distance and a much shorter push time.</details></div></li>
+      <li id="c2"><span class="tick">2</span><div><strong>Make the two jumps the same height (within 1 cm), with power at least 15% apart.</strong>
+        <details><summary>Hint</summary>Height depends on push distance ÷ push time. Keep that ratio the same and make both numbers smaller.</details></div></li>
+      <li id="c3"><span class="tick">3</span><div><strong>Make Jump B heavier and better on W/kg, but still lower.</strong> (B at least 10 kg heavier.)
+        <details><summary>Hint</summary>Dividing by body mass doesn't fix the problem. Use the trick from challenge 1 on a heavier Jump B.</details></div></li>
+      <li id="c4"><span class="tick">4</span><div><strong>Loaded jumps (below): find the load where mean power peaks, for at least two athletes.</strong> What happens to jump height at that load?
+        <details><summary>Hint</summary>Move the load slider until the marker sits on the top of the power curve, then switch athlete.</details></div></li>
+    </ul>
+  </div>
 
-  <section class="card">
-    <div class="card-head h-blue"><span class="chip">Build it</span><h2>Jordan's week</h2></div>
-    <div class="card-body">
-      <p style="margin-top:0">Choose what each day is for, then add exercises. Pick from the suggestions or type your own. Load can be a %1RM, kg or &ldquo;BW&rdquo; (body weight).</p>
-      <div id="days"></div>
-      <div class="box teal">
-        <h3>Check your plan before you download it</h3>
-        <div class="checks">
-          <label><input type="checkbox"> <span>Is there a reason for every exercise, linked to jumping higher or being quicker off the floor?</span></label>
-          <label><input type="checkbox"> <span>Do the loads and reps match the zones from Task 1 (e.g. power sets of 5 reps or fewer)?</span></label>
-          <label><input type="checkbox"> <span>Are there 48&ndash;72 hours between plyometric sessions, and between hard lower body days?</span></label>
-          <label><input type="checkbox"> <span>Have you thought about the team practices (jumping volume on Tuesday, Thursday and Saturday)?</span></label>
-          <label><input type="checkbox"> <span>Are plyometric contacts and rest periods realistic for Jordan's experience?</span></label>
-        </div>
-      </div>
-      <div class="btn-row">
-        <button class="btn plum" id="dl">Download our plan (Excel)</button>
-        <button class="btn ghost" id="clear-plan">Clear the plan</button>
-      </div>
-      <p class="msg" id="plan-msg" role="status"></p>
+  <div class="card">
+    <h2>Loaded jumps: when power is useful</h2>
+    <p>Same athlete, same exercise, same depth (40 cm). Only the added load changes. Here power answers a fair question: <em>which load sits at the top of this athlete's curve?</em></p>
+    <div class="formgrid">
+      <div class="field"><label for="prof">Athlete (80 kg)</label>
+        <select id="prof">
+          <option value="strong">Strong but slow</option>
+          <option value="bal" selected>Balanced</option>
+          <option value="fast">Fast but less strong</option>
+        </select></div>
+      <div class="field"><label class="sl" for="load" style="margin:0">Added load <b><span id="load_v"></span> kg</b></label>
+        <input type="range" id="load" min="0" max="100" step="5" value="0"></div>
     </div>
-  </section>
+    <div class="stat">
+      <div>Jump height<b id="l_h"></b></div>
+      <div>Mean power<b id="l_p"></b></div>
+      <div>Mean power peaks at<b id="l_peak"></b></div>
+    </div>
+    <canvas id="loadCanvas" width="900" height="320" aria-label="Mean power and jump height against added load"></canvas>
+    <p class="note">Plum line: mean power. Teal line: jump height. Height falls with every kilo, but power peaks at a different load for each athlete. Model: a straight-line force–velocity profile for each athlete (strong but slow: 4000 N, 1.8 m/s; balanced: 3200 N, 2.2 m/s; fast: 2400 N, 3.0 m/s).</p>
+  </div>
 
-  <section class="card peer">
-    <div class="card-head h-teal"><span class="chip">Swap</span><h2>Review another pair's plan</h2></div>
-    <div class="card-body">
-      <p style="margin-top:0">Open the Excel file another pair has shared with you.</p>
-      <input type="file" id="peer-file" accept=".xlsx,.xls">
-      <p class="msg" id="peer-msg" role="status"></p>
-      <div id="peer-view"></div>
-      <div id="peer-review" style="display:none">
-        <div class="box">
-          <h3>Your feedback</h3>
-          <label class="fld" for="r1">One thing they did well, and why</label><textarea id="r1"></textarea>
-          <label class="fld" for="r2">One thing you would change, and why</label><textarea id="r2"></textarea>
-          <label class="fld" for="r3">One question you would ask them</label><textarea id="r3"></textarea>
-          <div class="btn-row"><button class="btn teal" id="dl-review">Download plan with our feedback</button></div>
-        </div>
-      </div>
+  <div class="card">
+    <h2>Squat demo calculator</h2>
+    <p>Put in your own numbers from the slow and fast squats.</p>
+    <div class="formgrid">
+      <div class="field"><label for="sq_m">Body mass (kg)</label><input type="number" id="sq_m" value="75" min="30" max="200" step="0.5"></div>
+      <div class="field"><label for="sq_d">Distance the hips rise (m)</label><input type="number" id="sq_d" value="0.40" min="0.1" max="1" step="0.01"></div>
+      <div class="field"><label for="sq_ts">Slow rep time (s)</label><input type="number" id="sq_ts" value="1.2" min="0.1" max="5" step="0.05"></div>
+      <div class="field"><label for="sq_tf">Fast rep time (s)</label><input type="number" id="sq_tf" value="0.4" min="0.1" max="5" step="0.05"></div>
     </div>
-  </section>
-  <p class="ref">Planning guidance: Haff (Ed.), <em>Essentials of Strength Training and Conditioning</em> (5th ed.), Chapter 18 (Program Design for Resistance Training) and Chapter 19 (Plyometric Training). Your plan stays on this device until you download it.</p>
-</div>
+    <div class="stat">
+      <div>Work (both reps)<b id="sq_w"></b></div>
+      <div>Slow rep power<b id="sq_ps"></b></div>
+      <div>Fast rep power<b id="sq_pf"></b></div>
+    </div>
+    <p class="note">Simplified: force is taken as body weight (mass × 9.81). Real fast-squat forces are higher.</p>
+  </div>
+
+  <div class="card">
+    <h2>Your answer</h2>
+    <div class="field"><label for="q_trust">When would you trust power?</label><textarea id="q_trust" data-save></textarea></div>
+    <div class="field"><label for="q_not">When wouldn't you, and what would you look at instead?</label><textarea id="q_not" data-save></textarea></div>
+    <p class="note">Saved on this device.</p>
+  </div>
+</section>
+
+<!-- ================= TAB 2 ================= -->
+<section class="tab" id="t2">
+  <div class="intro">
+    <strong>Plan one week for a real client</strong>, ideally your assessment client. The focus is your choice: strength, power, hypertrophy, return to play, health... whatever fits them. It saves on this device as you go, but <strong>download it before you leave</strong>.
+  </div>
+
+  <div class="card">
+    <h2>1 · Your client</h2>
+    <div class="formgrid">
+      <div class="field"><label for="p_pair">Your names</label><input type="text" id="p_pair"></div>
+      <div class="field"><label for="c_name">Client (first name or a label)</label><input type="text" id="c_name"></div>
+      <div class="field"><label for="c_sport">Sport or activity</label><input type="text" id="c_sport" placeholder="e.g. Sunday league football, gym-goer, netball"></div>
+      <div class="field"><label for="c_age">Age</label><input type="text" id="c_age"></div>
+      <div class="field"><label for="c_tage">Training experience</label>
+        <select id="c_tage"><option value="">Choose...</option><option>Beginner (under 6 months)</option><option>Intermediate (6 months to 2 years)</option><option>Advanced (over 2 years)</option></select></div>
+      <div class="field"><label for="c_sessions">Gym sessions available per week</label><input type="number" id="c_sessions" min="1" max="7"></div>
+    </div>
+    <div class="field"><label for="c_other">Other training or matches in the week (which days?)</label><input type="text" id="c_other" placeholder="e.g. training Tue and Thu, match Sat"></div>
+    <div class="field"><label for="c_notes">Anything else that matters (injuries, equipment, time, preferences)</label><textarea id="c_notes"></textarea></div>
+  </div>
+
+  <div class="card">
+    <h2>2 · This week's focus</h2>
+    <div class="formgrid">
+      <div class="field"><label for="f_focus">Main focus</label>
+        <select id="f_focus"><option value="">Choose...</option><option>Maximal strength</option><option>Power / rapid force production</option><option>Hypertrophy</option><option>Return to play / rehab</option><option>General health and fitness</option><option>Sport conditioning</option><option>Other</option></select></div>
+      <div class="field"><label for="f_other">If other, what?</label><input type="text" id="f_other"></div>
+    </div>
+    <div class="field"><label for="f_why">Why is this the right focus for this client?</label><textarea id="f_why"></textarea></div>
+  </div>
+
+  <div class="card">
+    <h2>3 · The week</h2>
+    <p class="note">Set each day's type, then add exercises. Load can be %1RM, RPE, RIR or kg. Give a reason for every exercise.</p>
+    <div id="days"></div>
+    <div id="plyoWarn"></div>
+  </div>
+
+  <div class="card">
+    <h2>4 · How will you know it's working?</h2>
+    <div class="field"><label for="m_metric">What will you measure?</label><input type="text" id="m_metric" placeholder="e.g. CMJ height and propulsion time, 3RM back squat"></div>
+    <div class="field"><label for="m_why">Why that metric? If you chose power, what will you report alongside it?</label><textarea id="m_why"></textarea></div>
+  </div>
+
+  <div class="card checks">
+    <h2>5 · Check before you download</h2>
+    <label><input type="checkbox" id="k1"> The focus fits the client, and we've said why</label>
+    <label><input type="checkbox" id="k2"> Every exercise has a reason</label>
+    <label><input type="checkbox" id="k3"> Loads, sets, reps and rest match the focus (see the planning reference slides)</label>
+    <label><input type="checkbox" id="k4"> Their sport or other training is counted in the week</label>
+    <label><input type="checkbox" id="k5"> 48–72 h between plyometric days</label>
+    <label><input type="checkbox" id="k6"> We've chosen a metric, and if it's power, what goes alongside it</label>
+    <p>
+      <button class="btn teal" id="dl">Download plan (Excel)</button>
+      <button class="btn light" id="clearBtn">Start a new plan</button>
+      <span class="status" id="saveStatus"></span>
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>6 · Review another pair's plan</h2>
+    <p>Upload the other pair's Excel file, read their plan, then leave one strength, one change and one question. Download it and give it back to them. If you get your own file back, upload it here to read their feedback.</p>
+    <input type="file" id="up" accept=".xlsx">
+    <div id="reviewArea"></div>
+  </div>
+</section>
 </main>
-
-<footer>
-  <p><strong style="color:var(--navy)">SESD56 | Applied Strength and Conditioning for Sport and Exercise</strong></p>
-  <p>Plymouth Marjon University &middot; For teaching use.</p>
-</footer>
-</div>
-
-<datalist id="exlist">
-  <option value="Back squat"><option value="Front squat"><option value="Speed back squat (max intent)"><option value="Trap bar deadlift">
-  <option value="Romanian deadlift"><option value="Hang power clean"><option value="Power clean"><option value="Hang pull">
-  <option value="Mid-thigh pull"><option value="Jump shrug"><option value="Push press"><option value="Loaded jump squat">
-  <option value="Trap bar jump"><option value="Countermovement jump"><option value="Squat jump"><option value="Box jump">
-  <option value="Depth jump"><option value="Drop landing"><option value="Pogo hops"><option value="Hurdle hops">
-  <option value="Single-leg hop and stick"><option value="Bounds"><option value="Med ball overhead throw"><option value="Med ball chest pass">
-  <option value="Bench press"><option value="Pull-up"><option value="Nordic hamstring curl"><option value="Split squat">
-  <option value="Calf raise"><option value="Plank"><option value="Warm-up (RAMP)"><option value="Mobility">
-</datalist>
 
 <script>
 (function(){
 "use strict";
-var $ = function(id){return document.getElementById(id);};
-var esc = function(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});};
+const g = 9.81;
+const $ = (id) => document.getElementById(id);
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+function esc(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
-/* ---------- Tabs ---------- */
-var tabs=[["tab-curve","p-curve"],["tab-squat","p-squat"],["tab-plan","p-plan"]];
-tabs.forEach(function(t){$(t[0]).addEventListener("click",function(){
-  tabs.forEach(function(u){$(u[0]).setAttribute("aria-selected",u[0]===t[0]);$(u[1]).classList.toggle("active",u[0]===t[0]);});
-});});
+// ---------- tabs ----------
+document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll("nav.tabs button").forEach(x => x.classList.toggle("active", x === b));
+  document.querySelectorAll("section.tab").forEach(s => s.classList.toggle("active", s.id === b.dataset.tab));
+  window.scrollTo(0,0);
+  if (b.dataset.tab === "t1") { drawFT(); drawLoad(); }
+}));
 
-/* ---------- Task 1: curve ---------- */
-var ZONES=[
- {id:"ss", name:"Starting strength", v:"> 1.3 m/s"},
- {id:"sps",name:"Speed&ndash;strength", v:"1.0&ndash;1.3 m/s"},
- {id:"stsp",name:"Strength&ndash;speed", v:"0.75&ndash;1.0 m/s"},
- {id:"acc",name:"Accelerative strength", v:"0.50&ndash;0.75 m/s"},
- {id:"abs",name:"Absolute strength", v:"< 0.50 m/s"}
+// ---------- jump model ----------
+function jump(m, dcm, t){
+  const d = dcm/100, a = 2*d/(t*t), v = a*t, F = m*(g+a), W = F*d, P = W/t;
+  return { h: v*v/(2*g)*100, v, J: m*v, F, W, P, rel: P/m, netF: m*a, t };
+}
+const ids = ["m","d","t"];
+function readJ(k){ return jump(+$(k+"_m").value, +$(k+"_d").value, +$(k+"_t").value); }
+const rows = [
+  ["Jump height (cm)", "h", 1, true],
+  ["Take-off velocity (m/s)", "v", 2],
+  ["Net impulse (N·s)", "J", 0],
+  ["Mean force (N)", "F", 0],
+  ["Work (J)", "W", 0],
+  ["Mean power (W)", "P", 0, true],
+  ["Relative power (W/kg)", "rel", 1, true],
 ];
-var EXS=[
- {id:"cmj",name:"Countermovement jump (body weight)",zone:"ss",
-  rx:["Count foot contacts, not sets and reps.","Low-intensity drills, beginners 80&ndash;100 contacts a session. Intermediate 100&ndash;120.","Leave 48&ndash;72 h between plyometric sessions."],src:"Chapter 19, Table 19.6"},
- {id:"dj",name:"Depth jump",zone:"ss",
-  rx:["High-intensity plyometric (fast SSC).","Not recommended for beginners. Intermediate up to 20 contacts, advanced 20&ndash;40 a session.","5&ndash;10 s between reps, 2&ndash;5 min between sets."],src:"Chapter 19, Table 19.6 and Recovery"},
- {id:"js",name:"Loaded jump squat",zone:"sps",
-  rx:["Peak power in jump squats comes with loads from body weight to about 30% 1RM.","Keep sets short, e.g. 4 &times; 3.","Rest 2&ndash;5 min so every rep is fast."],src:"Chapter 18, Assigning loads for power; Table 18.15"},
- {id:"spsq",name:"Speed back squat (max intent)",zone:"stsp",
-  rx:["Moderate loads (40&ndash;70% 1RM) were the most appropriate for power development in a meta-analysis reported in Chapter 18.","5 reps or fewer per set, every rep as fast as possible.","Rest 2&ndash;5 min."],src:"Chapter 18, Swinton et al. findings; Table 18.15"},
- {id:"hpc",name:"Hang power clean",zone:"acc",
-  rx:["Catching variations (hang power clean, power clean) produced their highest power at 60&ndash;80% 1RM.","Multiple-effort sports: 3&ndash;5 reps at 75&ndash;85% 1RM.","Rest 2&ndash;5 min."],src:"Chapter 18, Tables 18.11 and 18.15"},
- {id:"bs",name:"Heavy back squat",zone:"abs",
-  rx:["Strength: &ge; 85% 1RM for &le; 6 reps.","Intermediate and advanced lifters: 3 or more sets.","Rest 2&ndash;5 min."],src:"Chapter 18, Tables 18.11, 18.13 and 18.15"}
-];
-var placed={}, selected=null;
-function zoneName(id){return ZONES.filter(function(z){return z.id===id;})[0].name;}
-function drawZones(){
-  $("zones").innerHTML=ZONES.map(function(z){
-    return '<div class="zone" data-z="'+z.id+'" tabindex="0" role="button" aria-label="'+z.name.replace(/&ndash;/g,"-")+' zone"><div class="zt">'+z.name+'<span>'+z.v+'</span></div><div class="drops"></div></div>';
-  }).join("");
+const done = store.get("dp_challenges") || {};
+function mark(id, ok){
+  if (ok) done[id] = true;
+  $(id).classList.toggle("done", !!done[id]);
+  $(id).querySelector(".tick").textContent = done[id] ? "✓" : id.slice(1);
+  store.set("dp_challenges", done);
 }
-function drawCurve(){
-  var ORDER=["hpc","cmj","bs","js","dj","spsq"]; var shuffled=ORDER.map(function(id){return EXS.filter(function(e){return e.id===id;})[0];});
-  $("tray").innerHTML=shuffled.filter(function(e){return !placed[e.id];}).map(function(e){
-    return '<button type="button" class="ex'+(selected===e.id?' sel':'')+'" data-e="'+e.id+'">'+esc(e.name)+'</button>';
-  }).join("") || '<p class="empty" style="margin:.4rem">All placed. Well done.</p>';
-  Array.prototype.forEach.call(document.querySelectorAll(".zone"),function(z){
-    var d=z.querySelector(".drops");
-    d.innerHTML=EXS.filter(function(e){return placed[e.id]&&e.zone===z.dataset.z;}).map(function(e){
-      return '<span class="ex placed" data-e="'+e.id+'">'+esc(e.name)+'</span>';
-    }).join("");
+let A, B;
+function updateJumps(){
+  ["a","b"].forEach(k => ids.forEach(p => {
+    const v = +$(k+"_"+p).value;
+    $(k+"_"+p+"_v").textContent = p === "t" ? v.toFixed(2) : (p === "m" ? v.toFixed(1) : v.toFixed(0));
+  }));
+  A = readJ("a"); B = readJ("b");
+  $("cmpBody").innerHTML = rows.map(([lab,key,dp,keyRow]) => {
+    const pc = (B[key]/A[key]-1)*100;
+    const cls = Math.abs(pc) < 0.5 ? "" : (pc > 0 ? "up" : "down");
+    const pcs = Math.abs(pc) < 0.5 ? "same" : (pc > 0 ? "+" : "") + pc.toFixed(0) + "%";
+    return `<tr class="${keyRow ? "key" : ""}"><td>${lab}</td><td class="num">${A[key].toFixed(dp)}</td><td class="num">${B[key].toFixed(dp)}</td><td class="num ${cls}">${pcs}</td></tr>`;
+  }).join("");
+  mark("c1", B.P > A.P && B.h < A.h - 0.5);
+  mark("c2", Math.abs(A.h - B.h) < 1 && Math.abs(B.P/A.P - 1) >= 0.15);
+  mark("c3", (+$("b_m").value) - (+$("a_m").value) >= 10 && B.rel > A.rel && B.h < A.h - 0.5);
+  drawFT();
+}
+["a","b"].forEach(k => ids.forEach(p => $(k+"_"+p).addEventListener("input", updateJumps)));
+function setJ(k, m, d, t){ $(k+"_m").value = m; $(k+"_d").value = d; $(k+"_t").value = t; }
+$("presetSame").addEventListener("click", () => { setJ("a",80,40,0.28); setJ("b",80,40,0.28); updateJumps(); });
+$("presetLake").addEventListener("click", () => { setJ("a",80,45,0.30); setJ("b",80,25,0.18); updateJumps(); });
+
+function prepCanvas(c){
+  const r = c.getBoundingClientRect(); if (!r.width) return null;
+  const dpr = window.devicePixelRatio || 1, w = r.width, h = w * c.height / c.width;
+  c.style.height = h + "px"; c.width = Math.round(w*dpr); c.height = Math.round(h*dpr);
+  const x = c.getContext("2d"); x.setTransform(dpr,0,0,dpr,0,0); return {x, w, h};
+}
+function drawFT(){
+  const ftc = $("ftCanvas");
+  ftc.width = 560; ftc.height = 300;
+  const p = prepCanvas(ftc); if (!p || !A) return;
+  const {x, w, h} = p, L = 62, R = 14, T = 16, Bm = 40;
+  const tMax = 0.5, fMax = Math.max(3000, Math.ceil(Math.max(A.netF, B.netF)/500)*500);
+  const sx = t => L + t/tMax*(w-L-R), sy = f => h-Bm - f/fMax*(h-T-Bm);
+  x.clearRect(0,0,w,h); x.font = "12px Arial"; x.fillStyle = "#5e7c88"; x.strokeStyle = "#e3eaee";
+  for (let f=0; f<=fMax; f+=fMax/5){ x.beginPath(); x.moveTo(L,sy(f)); x.lineTo(w-R,sy(f)); x.stroke(); x.textAlign="right"; x.fillText(Math.round(f), L-6, sy(f)+4); }
+  for (let t=0; t<=tMax+1e-9; t+=0.1){ x.textAlign="center"; x.fillText(t.toFixed(1), sx(t), h-Bm+16); }
+  x.fillText("Time (s)", L+(w-L-R)/2, h-6);
+  x.save(); x.translate(14, T+(h-T-Bm)/2); x.rotate(-Math.PI/2); x.fillText("Net force (N)", 0, 0); x.restore();
+  [[A,"0,133,126","A"],[B,"139,53,86","B"]].forEach(([j,rgb,lab]) => {
+    x.fillStyle = `rgba(${rgb},0.28)`; x.strokeStyle = `rgb(${rgb})`; x.lineWidth = 2.5;
+    x.fillRect(sx(0), sy(j.netF), sx(j.t)-sx(0), sy(0)-sy(j.netF));
+    x.strokeRect(sx(0), sy(j.netF), sx(j.t)-sx(0), sy(0)-sy(j.netF));
+    x.fillStyle = `rgb(${rgb})`; x.font = "bold 13px Arial"; x.textAlign = "left";
+    x.fillText(`${lab}: ${Math.round(j.J)} N·s`, sx(j.t)+6, sy(j.netF)+ (lab==="A" ? 14 : -4));
+    x.font = "12px Arial";
   });
-  var done=EXS.filter(function(e){return placed[e.id];});
-  $("rx").innerHTML=done.map(function(e){
-    return '<div class="box teal"><h3>'+esc(e.name)+'</h3><span class="zone-tag">'+zoneName(e.zone)+'</span>'+
-      e.rx.map(function(r){return '<p>'+r+'</p>';}).join("")+'<p class="ref" style="margin-top:.35rem">'+e.src+'</p></div>';
-  }).join("");
-  $("rx-intro").style.display=done.length?"none":"block";
-  $("rx-summary").style.display=done.length===EXS.length?"block":"none";
+  x.lineWidth = 1;
 }
-function msg(el,text,kind){var m=$(el);m.textContent=text;m.className="msg "+kind;m.style.display="block";clearTimeout(m._t);m._t=setTimeout(function(){m.style.display="none";},3500);}
-function tryPlace(eid,zid){
-  var e=EXS.filter(function(x){return x.id===eid;})[0]; if(!e||placed[eid]) return;
-  if(e.zone===zid){ placed[eid]=true; selected=null; drawCurve(); msg("curve-msg","Correct! "+e.name+" sits in "+zoneName(zid).replace(/&ndash;/g,"-")+". Its prescription is now unlocked below.","ok"); }
-  else{
-    selected=eid; drawCurve();
-    var b=document.querySelector('.ex[data-e="'+eid+'"]'); if(b){b.classList.add("shake");}
-    var dir = ZONES.findIndex(function(z){return z.id===e.zone;}) > ZONES.findIndex(function(z){return z.id===zid;}) ? "heavier and slower" : "lighter and faster";
-    msg("curve-msg","Not quite. Think about the load used. This one is trained "+dir+" than that.","no");
-  }
-}
-/* Pointer drag + tap */
-var drag=null;
-$("tray").addEventListener("pointerdown",function(ev){
-  var b=ev.target.closest(".ex"); if(!b) return;
-  drag={id:b.dataset.e,x:ev.clientX,y:ev.clientY,moved:false,el:null,src:b};
-  b.setPointerCapture(ev.pointerId);
-});
-$("tray").addEventListener("pointermove",function(ev){
-  if(!drag) return;
-  if(!drag.moved && Math.hypot(ev.clientX-drag.x,ev.clientY-drag.y)>6){
-    drag.moved=true; var g=drag.src.cloneNode(true); g.classList.add("ghostdrag"); document.body.appendChild(g); drag.el=g;
-  }
-  if(drag.moved){
-    drag.el.style.left=ev.clientX+"px"; drag.el.style.top=ev.clientY+"px";
-    Array.prototype.forEach.call(document.querySelectorAll(".zone"),function(z){z.classList.remove("hover");});
-    drag.el.style.display="none"; var under=document.elementFromPoint(ev.clientX,ev.clientY); drag.el.style.display="";
-    var z=under&&under.closest&&under.closest(".zone"); if(z) z.classList.add("hover");
-  }
-});
-function endDrag(ev){
-  if(!drag) return;
-  Array.prototype.forEach.call(document.querySelectorAll(".zone"),function(z){z.classList.remove("hover");});
-  if(drag.moved){
-    drag.el.style.display="none"; var under=document.elementFromPoint(ev.clientX,ev.clientY); drag.el.remove();
-    var z=under&&under.closest&&under.closest(".zone"); var id=drag.id; drag=null;
-    if(z) tryPlace(id,z.dataset.z);
-  }else{
-    var id2=drag.id; drag=null; selected = selected===id2?null:id2; drawCurve();
-    if(selected) msg("curve-msg","Now tap the zone where it belongs.","info");
-  }
-}
-$("tray").addEventListener("pointerup",endDrag);
-$("tray").addEventListener("pointercancel",function(){ if(drag&&drag.el) drag.el.remove(); drag=null; });
-$("zones").addEventListener("click",function(ev){
-  var z=ev.target.closest(".zone"); if(!z||!selected) return; tryPlace(selected,z.dataset.z);
-});
-$("zones").addEventListener("keydown",function(ev){
-  if((ev.key==="Enter"||ev.key===" ")&&selected){ev.preventDefault(); tryPlace(selected,ev.target.closest(".zone").dataset.z);}
-});
-$("curve-reset").addEventListener("click",function(){placed={};selected=null;drawCurve();});
-drawZones(); drawCurve();
 
-/* ---------- Task 2 ---------- */
-var LOSS=[["No pause",null],["0.35 s pause",25],["0.9 s pause",52],["1 s pause",55],["1.5 s pause",70]];
-$("bars").innerHTML=LOSS.slice(1).map(function(l){
-  return '<div class="bar"><span>'+l[0]+'</span><div class="track"><div class="fill lost" style="width:'+l[1]+'%"></div></div><span><strong>'+l[1]+'%</strong></span></div>';
-}).join("")+'<p class="ref" style="margin-top:.3rem">Bars show the percentage of stored elastic energy lost.</p>';
-$("sq-reveal").addEventListener("click",function(){ $("sq-why").classList.add("show"); $("sq-why").scrollIntoView({behavior:"smooth",block:"start"}); });
-
-
-function powerCalc(){
-  var m=parseFloat($("pm").value),d=parseFloat($("pd").value),ts=parseFloat($("ts").value),tf=parseFloat($("tf").value);
-  if(!(m>0&&d>0&&ts>0&&tf>0)){$("pout").innerHTML='<p class="msg no" style="display:block">Enter positive numbers in every box.</p>';return;}
-  var F=m*9.81,W=F*d,ps=W/ts,pf=W/tf,vs=d/ts,vf=d/tf;
-  $("pout").innerHTML='<div class="pres">'+
-    '<div><b>'+Math.round(F)+' N</b><span>Force: '+m+' kg &times; 9.81</span></div>'+
-    '<div><b>'+Math.round(W)+' J</b><span>Work: '+Math.round(F)+' N &times; '+d+' m (same for both reps)</span></div>'+
-    '<div><b>'+Math.round(ps)+' W</b><span>Slow: '+Math.round(W)+' J &divide; '+ts+' s (or '+Math.round(F)+' N &times; '+vs.toFixed(2)+' m/s)</span></div>'+
-    '<div class="hi"><b>'+Math.round(pf)+' W</b><span>Fast: '+Math.round(W)+' J &divide; '+tf+' s (or '+Math.round(F)+' N &times; '+vf.toFixed(2)+' m/s)</span></div>'+
-    '</div><p style="margin:.6rem 0 0"><strong>The fast rep produced '+(pf/ps).toFixed(1)+' times the power</strong>, for the same work.</p>';
-}
-["pm","pd","ts","tf"].forEach(function(id){$(id).addEventListener("input",powerCalc);});
-powerCalc();
-$("pq").addEventListener("click",function(){$("pq-a").classList.add("show");});
-
-/* ---------- Task 3: planner ---------- */
-var DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
-var TYPES=["Choose...","Gym: strength and power","Gym: power","Gym: strength","Plyometrics","Team practice","Team practice + short gym session","Recovery / mobility","Rest"];
-var KEY="sesd56-power-plan";
-var mem=null;
-function blank(){
-  return {pair:"",days:DAYS.map(function(d){
-    var t = (d==="Tuesday"||d==="Thursday"||d==="Saturday") ? "Team practice" : "Choose...";
-    return {day:d,type:t,rows:[]};
-  })};
-}
-function load(){try{var r=localStorage.getItem(KEY);if(r) return JSON.parse(r);}catch(e){} return mem||blank();}
-function save(){mem=plan;try{localStorage.setItem(KEY,JSON.stringify(plan));}catch(e){}}
-var plan=load();
-function rowHtml(r,di,ri){
-  var f=function(k,l,cls,ph,list){return '<td class="'+cls+'" data-l="'+l+'"><input type="text" data-d="'+di+'" data-r="'+ri+'" data-k="'+k+'" value="'+esc(r[k])+'" placeholder="'+ph+'"'+(list?' list="exlist"':'')+' aria-label="'+l+'"></td>';};
-  return '<tr>'+f("ex","Exercise","ex-cell","Exercise",true)+f("sets","Sets","","e.g. 3")+f("reps","Reps","","e.g. 3")+f("load","Load","","e.g. 80% / BW")+f("rest","Rest","","e.g. 3 min")+f("notes","Notes / cues","n-cell","Why? Key cue?")+
-    '<td><button class="del" data-d="'+di+'" data-r="'+ri+'" aria-label="Remove row">&times;</button></td></tr>';
-}
-function drawPlan(){
-  $("pair").value=plan.pair||"";
-  $("days").innerHTML=plan.days.map(function(d,di){
-    var opts=TYPES.map(function(t){return '<option'+(t===d.type?' selected':'')+'>'+t+'</option>';}).join("");
-    var body = d.rows.length ? '<table class="rows"><thead><tr><th class="c-ex">Exercise</th><th class="c-s">Sets</th><th class="c-r">Reps</th><th class="c-l">Load</th><th class="c-rest">Rest</th><th class="c-n">Notes / cues</th><th></th></tr></thead><tbody>'+
-      d.rows.map(function(r,ri){return rowHtml(r,di,ri);}).join("")+'</tbody></table>' : '<p class="empty">No exercises yet.</p>';
-    return '<div class="day"><div class="day-head"><strong>'+d.day+'</strong><select data-type="'+di+'" aria-label="'+d.day+' session type">'+opts+'</select>'+
-      '<button class="btn small blue" data-add="'+di+'">+ Add exercise</button></div><div class="day-body">'+body+'</div></div>';
-  }).join("");
-}
-$("days").addEventListener("input",function(ev){
-  var t=ev.target;
-  if(t.dataset.k){ plan.days[+t.dataset.d].rows[+t.dataset.r][t.dataset.k]=t.value; save(); }
-});
-$("days").addEventListener("change",function(ev){
-  var t=ev.target; if(t.dataset.type!==undefined){ plan.days[+t.dataset.type].type=t.value; save(); }
-});
-$("days").addEventListener("click",function(ev){
-  var a=ev.target.closest("[data-add]"), d=ev.target.closest(".del");
-  if(a){ var di=+a.dataset.add; plan.days[di].rows.push({ex:"",sets:"",reps:"",load:"",rest:"",notes:""}); save(); drawPlan();
-    var inputs=document.querySelectorAll('input[data-d="'+di+'"][data-k="ex"]'); if(inputs.length) inputs[inputs.length-1].focus(); }
-  if(d){ plan.days[+d.dataset.d].rows.splice(+d.dataset.r,1); save(); drawPlan(); }
-});
-$("pair").addEventListener("input",function(){plan.pair=this.value;save();});
-$("clear-plan").addEventListener("click",function(){ plan=blank(); save(); drawPlan(); });
-drawPlan();
-
-var PROFILE=[["Athlete","Jordan, 21, university volleyball outside hitter"],["Body mass","75 kg"],["Back squat 1RM","110 kg"],["Hang power clean 1RM","70 kg"],["CMJ height","41 cm"],["Time of year","Pre-season, 4 weeks before the first match"],["Fixed commitments","Team practice Tue, Thu, Sat"],["Goal","Jump higher and be quicker off the floor"]];
-function planRows(p){
-  var out=[["Day","Session","Exercise","Sets","Reps","Load","Rest","Notes / cues"]];
-  p.days.forEach(function(d){
-    if(!d.rows.length) out.push([d.day,d.type==="Choose..."?"":d.type,"","","","","",""]);
-    d.rows.forEach(function(r,i){ out.push([i?"":d.day,i?"":(d.type==="Choose..."?"":d.type),r.ex,r.sets,r.reps,r.load,r.rest,r.notes]); });
-  });
-  return out;
-}
-function buildBook(p,review){
-  var wb=XLSX.utils.book_new();
-  var head=[["SESD56 Developing Power: training week"],["Pair",p.pair||""],[]].concat(PROFILE).concat([[]]);
-  var ws=XLSX.utils.aoa_to_sheet(head.concat(planRows(p)));
-  ws["!cols"]=[{wch:14},{wch:30},{wch:30},{wch:7},{wch:7},{wch:14},{wch:10},{wch:40}];
-  XLSX.utils.book_append_sheet(wb,ws,"Plan");
-  if(review){
-    var rs=XLSX.utils.aoa_to_sheet([["Peer review"],["Reviewed by",review.by||""],[],["One thing they did well",review.r1],["One thing we would change",review.r2],["Our question",review.r3]]);
-    rs["!cols"]=[{wch:28},{wch:90}];
-    XLSX.utils.book_append_sheet(wb,rs,"Peer review");
+// ---------- loaded jumps ----------
+const profiles = { strong: {F0:4000, v0:1.8, name:"Strong but slow"}, bal: {F0:3200, v0:2.2, name:"Balanced"}, fast: {F0:2400, v0:3.0, name:"Fast but less strong"} };
+const MB = 80, DEPTH = 0.40;
+function loaded(pr, load){
+  const m = MB + load; let lo = 0, hi = pr.v0, vb = 0;
+  for (let i=0; i<80; i++){
+    vb = (lo+hi)/2; const F = pr.F0*(1-vb/pr.v0), a = F/m - g;
+    if (a <= 0) { hi = vb; continue; }
+    if (Math.sqrt(a*DEPTH/2) > vb) lo = vb; else hi = vb;
   }
-  var ds=XLSX.utils.aoa_to_sheet([[JSON.stringify(p)],["This sheet lets the Developing Power tool reopen the plan. Please don't edit it."]]);
-  XLSX.utils.book_append_sheet(wb,ds,"tool_data");
+  const F = pr.F0*(1-vb/pr.v0), vto = 2*vb;
+  return { h: vto*vto/(2*g)*100, P: F*vb };
+}
+const found = new Set(store.get("dp_found") || []);
+function peakLoad(pr){ let best = 0, bp = -1; for (let L=0; L<=100; L+=5){ const r = loaded(pr,L); if (r.P > bp){ bp = r.P; best = L; } } return best; }
+function updateLoad(){
+  const pr = profiles[$("prof").value], L = +$("load").value, r = loaded(pr, L), pk = peakLoad(pr);
+  $("load_v").textContent = L;
+  $("l_h").textContent = r.h.toFixed(1) + " cm";
+  $("l_p").textContent = Math.round(r.P) + " W";
+  $("l_peak").textContent = pk === 0 ? "body weight" : `+${pk} kg`;
+  if (L === pk) { found.add($("prof").value); store.set("dp_found", [...found]); }
+  mark("c4", found.size >= 2);
+  drawLoad();
+}
+function drawLoad(){
+  const c = $("loadCanvas"); c.width = 900; c.height = 320;
+  const p = prepCanvas(c); if (!p) return;
+  const {x, w, h} = p, L = 62, R = 62, T = 18, Bm = 42;
+  const pr = profiles[$("prof").value], cur = +$("load").value, pk = peakLoad(pr);
+  const pts = []; for (let l=0; l<=100; l+=1) pts.push([l, loaded(pr,l)]);
+  const pMin = 1000, pMax = 2000, hMax = 40;
+  const sx = l => L + l/100*(w-L-R), sp = P => h-Bm - (P-pMin)/(pMax-pMin)*(h-T-Bm), sh = H => h-Bm - H/hMax*(h-T-Bm);
+  x.clearRect(0,0,w,h); x.font = "12px Arial"; x.strokeStyle = "#e3eaee";
+  for (let i=0;i<=4;i++){ const P = pMin + i*(pMax-pMin)/4; x.beginPath(); x.moveTo(L,sp(P)); x.lineTo(w-R,sp(P)); x.stroke();
+    x.fillStyle="#8b3556"; x.textAlign="right"; x.fillText(Math.round(P), L-6, sp(P)+4);
+    x.fillStyle="#00857e"; x.textAlign="left"; x.fillText((i*hMax/4).toFixed(0), w-R+6, sp(P)+4); }
+  x.fillStyle = "#5e7c88"; x.textAlign = "center";
+  for (let l=0;l<=100;l+=20) x.fillText(l, sx(l), h-Bm+16);
+  x.fillText("Added load (kg)", L+(w-L-R)/2, h-6);
+  x.save(); x.translate(14, T+(h-T-Bm)/2); x.rotate(-Math.PI/2); x.fillStyle="#8b3556"; x.fillText("Mean power (W)",0,0); x.restore();
+  x.save(); x.translate(w-12, T+(h-T-Bm)/2); x.rotate(Math.PI/2); x.fillStyle="#00857e"; x.fillText("Jump height (cm)",0,0); x.restore();
+  const line = (fy, col) => { x.strokeStyle = col; x.lineWidth = 3; x.beginPath(); pts.forEach(([l,r],i) => { const yy = fy(r); i ? x.lineTo(sx(l),yy) : x.moveTo(sx(l),yy); }); x.stroke(); };
+  line(r => sp(Math.max(pMin, Math.min(pMax, r.P))), "#8b3556");
+  line(r => sh(r.h), "#00857e");
+  x.lineWidth = 1;
+  const rp = loaded(pr, pk); x.fillStyle = "#8b3556"; x.beginPath(); x.arc(sx(pk), sp(rp.P), 6, 0, 2*Math.PI); x.fill();
+  x.textAlign = pk > 80 ? "right" : "left"; x.font = "bold 12px Arial"; x.fillText("peak power", sx(pk) + (pk > 80 ? -10 : 10), sp(rp.P) - 8);
+  x.strokeStyle = "#003d50"; x.setLineDash([5,4]); x.lineWidth = 1.5; x.beginPath(); x.moveTo(sx(cur), T); x.lineTo(sx(cur), h-Bm); x.stroke(); x.setLineDash([]); x.lineWidth = 1;
+}
+$("prof").addEventListener("change", updateLoad);
+$("load").addEventListener("input", updateLoad);
+
+// ---------- squat calc ----------
+function updateSq(){
+  const m = +$("sq_m").value, d = +$("sq_d").value, ts = +$("sq_ts").value, tf = +$("sq_tf").value;
+  const W = m*g*d;
+  $("sq_w").textContent = W > 0 ? Math.round(W) + " J" : "–";
+  $("sq_ps").textContent = ts > 0 ? Math.round(W/ts) + " W" : "–";
+  $("sq_pf").textContent = tf > 0 ? Math.round(W/tf) + " W" : "–";
+}
+["sq_m","sq_d","sq_ts","sq_tf"].forEach(i => $(i).addEventListener("input", updateSq));
+
+// saved answers
+document.querySelectorAll("[data-save]").forEach(el => {
+  const v = store.get("dp_"+el.id); if (v) el.value = v;
+  el.addEventListener("input", () => store.set("dp_"+el.id, el.value));
+});
+
+// ---------- planner ----------
+const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const TYPES = ["Rest","Gym","Plyometrics","Gym + plyometrics","Sport / match","Conditioning","Other"];
+const COLS = [["ex","Exercise"],["sets","Sets"],["reps","Reps / contacts"],["load","Load / intensity"],["rest","Rest"],["cue","Cue or intent"],["reason","Reason"]];
+const FIELDS = ["p_pair","c_name","c_sport","c_age","c_tage","c_sessions","c_other","c_notes","f_focus","f_other","f_why","m_metric","m_why"];
+const LABELS = {p_pair:"Planned by",c_name:"Client",c_sport:"Sport or activity",c_age:"Age",c_tage:"Training experience",c_sessions:"Gym sessions per week",c_other:"Other training or matches",c_notes:"Other notes",f_focus:"Main focus",f_other:"Focus (other)",f_why:"Why this focus",m_metric:"Metric to track",m_why:"Why this metric"};
+function blankPlan(){ return { fields:{}, days: DAYS.map(d => ({day:d, type:"Rest", items:[]})), checks:{} }; }
+let plan = store.get("dp_plan") || blankPlan();
+
+function renderDays(){
+  $("days").innerHTML = plan.days.map((d,di) => `
+    <div class="day">
+      <div class="dayhead"><strong>${d.day}</strong>
+        <select data-di="${di}" class="dtype" aria-label="${d.day} day type">${TYPES.map(t => `<option${t===d.type?" selected":""}>${t}</option>`).join("")}</select>
+        <button class="btn light addEx" data-di="${di}">+ Add exercise</button>
+      </div>
+      ${d.items.length ? `<div class="daybody"><table><thead><tr>${COLS.map(c=>`<th>${c[1]}</th>`).join("")}<th></th></tr></thead><tbody>
+        ${d.items.map((it,ii) => `<tr>${COLS.map(([k,lab]) => `<td><input type="text" aria-label="${d.day} ${lab}" data-di="${di}" data-ii="${ii}" data-k="${k}" value="${esc(it[k])}"></td>`).join("")}
+          <td><button class="x delEx" data-di="${di}" data-ii="${ii}" aria-label="Remove exercise">×</button></td></tr>`).join("")}
+      </tbody></table></div>` : ""}
+    </div>`).join("");
+  checkPlyo();
+}
+function checkPlyo(){
+  const isP = t => t === "Plyometrics" || t === "Gym + plyometrics";
+  const clash = [];
+  for (let i=0;i<7;i++){ const j = (i+1)%7; if (isP(plan.days[i].type) && isP(plan.days[j].type)) clash.push(`${plan.days[i].day} and ${plan.days[j].day}`); }
+  $("plyoWarn").innerHTML = clash.length ? `<div class="warn">Plyometric days back to back: ${clash.join(", ")}. Chapter 19 recommends 48–72 h between plyometric sessions.</div>` : "";
+}
+let saveTimer;
+function save(){ store.set("dp_plan", plan); $("saveStatus").textContent = "Saved on this device"; clearTimeout(saveTimer); saveTimer = setTimeout(()=>{$("saveStatus").textContent="";}, 1500); }
+$("days").addEventListener("change", e => {
+  if (e.target.classList.contains("dtype")){ plan.days[+e.target.dataset.di].type = e.target.value; checkPlyo(); save(); }
+});
+$("days").addEventListener("input", e => {
+  const t = e.target; if (t.dataset.k){ plan.days[+t.dataset.di].items[+t.dataset.ii][t.dataset.k] = t.value; save(); }
+});
+$("days").addEventListener("click", e => {
+  const t = e.target;
+  if (t.classList.contains("addEx")){ plan.days[+t.dataset.di].items.push({}); renderDays(); save(); }
+  if (t.classList.contains("delEx")){ plan.days[+t.dataset.di].items.splice(+t.dataset.ii,1); renderDays(); save(); }
+});
+function loadFields(){
+  FIELDS.forEach(f => { $(f).value = plan.fields[f] ?? ""; });
+  for (let i=1;i<=6;i++) $("k"+i).checked = !!plan.checks["k"+i];
+}
+FIELDS.forEach(f => $(f).addEventListener("input", () => { plan.fields[f] = $(f).value; save(); }));
+for (let i=1;i<=6;i++) $("k"+i).addEventListener("change", () => { plan.checks["k"+i] = $("k"+i).checked; save(); });
+let clearArmed = false;
+$("clearBtn").addEventListener("click", () => {
+  if (!clearArmed){ clearArmed = true; $("clearBtn").textContent = "Click again to clear your plan"; setTimeout(()=>{clearArmed=false;$("clearBtn").textContent="Start a new plan";}, 4000); return; }
+  plan = blankPlan(); loadFields(); renderDays(); save(); clearArmed = false; $("clearBtn").textContent = "Start a new plan";
+});
+
+// ---------- Excel ----------
+const REVIEW_KEYS = [["by","Reviewed by"],["fit","Does the plan fit the client?"],["strength","One strength"],["change","One change"],["question","One question"]];
+function workbook(p, review){
+  const wb = XLSX.utils.book_new();
+  const client = [["Field","Answer"]].concat(FIELDS.map(f => [LABELS[f], p.fields[f] ?? ""]));
+  const ws1 = XLSX.utils.aoa_to_sheet(client); ws1["!cols"] = [{wch:28},{wch:80}];
+  XLSX.utils.book_append_sheet(wb, ws1, "Client and focus");
+  const week = [["Day","Day type", ...COLS.map(c=>c[1])]];
+  p.days.forEach(d => { if (!d.items.length) week.push([d.day, d.type]); else d.items.forEach((it,i) => week.push([i?"":d.day, i?"":d.type, ...COLS.map(([k])=>it[k]??"")])); });
+  const ws2 = XLSX.utils.aoa_to_sheet(week); ws2["!cols"] = [{wch:6},{wch:18},{wch:24},{wch:6},{wch:14},{wch:16},{wch:10},{wch:26},{wch:40}];
+  XLSX.utils.book_append_sheet(wb, ws2, "Week");
+  const rv = [["Review","Answer"]].concat(REVIEW_KEYS.map(([k,l]) => [l, (review||{})[k] ?? ""]));
+  const ws3 = XLSX.utils.aoa_to_sheet(rv); ws3["!cols"] = [{wch:30},{wch:80}];
+  XLSX.utils.book_append_sheet(wb, ws3, "Review");
+  const ws4 = XLSX.utils.aoa_to_sheet([[JSON.stringify({plan:p, review:review||null})]]);
+  XLSX.utils.book_append_sheet(wb, ws4, "_data");
+  wb.Workbook = { Sheets: [{},{},{},{Hidden:1}] };
   return wb;
 }
-function fileName(p,suffix){
-  var n=(p.pair||"our_pair").replace(/[^A-Za-z0-9]+/g,"_").replace(/^_|_$/g,"")||"our_pair";
-  return "SESD56_Power_Week_"+n+(suffix||"")+".xlsx";
-}
-function csvFallback(rows,name){
-  var csv=rows.map(function(r){return r.map(function(c){c=String(c==null?"":c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(",");}).join("\n");
-  var url=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); var a=document.createElement("a"); a.href=url; a.download=name.replace(/\.xlsx$/,".csv");
-  document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(url);},1000);
-}
-$("dl").addEventListener("click",function(){
-  var filled=plan.days.some(function(d){return d.rows.some(function(r){return r.ex.trim();});});
-  if(!filled){ msg("plan-msg","Add at least one exercise before downloading.","no"); return; }
-  if(typeof XLSX==="undefined"){ csvFallback(planRows(plan),fileName(plan)); msg("plan-msg","Excel isn't available offline, so a CSV was downloaded instead (it opens in Excel).","info"); return; }
-  XLSX.writeFile(buildBook(plan),fileName(plan));
-  msg("plan-msg","Downloaded. Share the file with another pair.","ok");
+function fname(p, suffix){ const n = (p.fields.c_name || "client").replace(/[^\w-]+/g,"_"); return `SESD56_week_plan_${n}${suffix||""}.xlsx`; }
+$("dl").addEventListener("click", () => {
+  if (typeof XLSX === "undefined"){ $("saveStatus").textContent = "Excel library didn't load. Check your connection and refresh."; return; }
+  XLSX.writeFile(workbook(plan, null), fname(plan));
 });
 
-/* Peer review */
-var peer=null;
-$("peer-file").addEventListener("change",function(){
-  var f=this.files[0]; if(!f) return;
-  if(typeof XLSX==="undefined"){ msg("peer-msg","Can't open Excel files without an internet connection.","no"); return; }
-  var rd=new FileReader();
-  rd.onload=function(e){
-    try{
-      var wb=XLSX.read(new Uint8Array(e.target.result),{type:"array"});
-      var p=null;
-      if(wb.Sheets.tool_data){ var a1=wb.Sheets.tool_data.A1; if(a1) p=JSON.parse(a1.v); }
-      if(!p||!p.days) throw new Error("no data");
-      peer=p; showPeer(); msg("peer-msg","Plan opened.","ok");
-    }catch(err){ peer=null; $("peer-view").innerHTML=""; $("peer-review").style.display="none"; msg("peer-msg","That file wasn't made with this tool, so it can't be opened here. Open it in Excel instead.","no"); }
+let reviewing = null;
+$("up").addEventListener("change", e => {
+  const f = e.target.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = ev => {
+    try {
+      const wb = XLSX.read(new Uint8Array(ev.target.result), {type:"array"});
+      const raw = wb.Sheets["_data"] && wb.Sheets["_data"]["A1"] && wb.Sheets["_data"]["A1"].v;
+      if (!raw) throw new Error("not a plan");
+      const obj = JSON.parse(raw);
+      reviewing = { plan: obj.plan, review: obj.review || {} };
+      renderReview();
+    } catch(err){
+      $("reviewArea").innerHTML = `<div class="warn">That file couldn't be read. Make sure it's a plan downloaded from this tool.</div>`;
+    }
   };
   rd.readAsArrayBuffer(f);
 });
-function showPeer(){
-  var rows=planRows(peer);
-  $("peer-view").innerHTML='<h3 style="color:var(--navy);margin:.8rem 0 .2rem">Plan by '+esc(peer.pair||"another pair")+'</h3><div style="overflow-x:auto"><table><thead><tr>'+
-    rows[0].map(function(h){return '<th>'+h+'</th>';}).join("")+'</tr></thead><tbody>'+
-    rows.slice(1).map(function(r){return '<tr>'+r.map(function(c){return '<td>'+esc(c)+'</td>';}).join("")+'</tr>';}).join("")+'</tbody></table></div>';
-  $("peer-review").style.display="block";
+function renderReview(){
+  const p = reviewing.plan, r = reviewing.review;
+  const fl = FIELDS.filter(f => p.fields[f]).map(f => `<div><strong>${esc(LABELS[f])}:</strong> ${esc(p.fields[f])}</div>`).join("");
+  const wk = p.days.map(d => `<tr><td><strong>${esc(d.day)}</strong></td><td>${esc(d.type)}</td><td>${d.items.map(it => `${esc(it.ex)}${it.sets||it.reps?` · ${esc(it.sets)} × ${esc(it.reps)}`:""}${it.load?` · ${esc(it.load)}`:""}${it.rest?` · rest ${esc(it.rest)}`:""}${it.reason?`<br><span class="note">Reason: ${esc(it.reason)}</span>`:""}`).join("<hr style='border:0;border-top:1px solid #d9e2e7'>")}</td></tr>`).join("");
+  $("reviewArea").innerHTML = `
+    <div class="ro">${fl || "<em>No client details filled in.</em>"}</div>
+    <table><thead><tr><th>Day</th><th>Type</th><th>Exercises</th></tr></thead><tbody>${wk}</tbody></table>
+    <h3 style="margin-top:1rem">Your feedback</h3>
+    <div class="field"><label for="r_by">Reviewed by</label><input type="text" id="r_by" value="${esc(r.by)}"></div>
+    <div class="field"><label for="r_fit">Does the plan fit the client?</label><select id="r_fit">${["","Yes","Partly","Not yet"].map(o=>`<option${o===(r.fit||"")?" selected":""}>${o}</option>`).join("")}</select></div>
+    <div class="field"><label for="r_strength">One strength</label><textarea id="r_strength">${esc(r.strength)}</textarea></div>
+    <div class="field"><label for="r_change">One change (and why)</label><textarea id="r_change">${esc(r.change)}</textarea></div>
+    <div class="field"><label for="r_question">One question</label><textarea id="r_question">${esc(r.question)}</textarea></div>
+    <button class="btn plum" id="dlReview">Download plan with feedback</button>
+    <button class="btn light" id="useIt">Load this plan into my planner</button>`;
+  REVIEW_KEYS.forEach(([k]) => $("r_"+k).addEventListener("input", () => { reviewing.review[k] = $("r_"+k).value; }));
+  $("r_fit").addEventListener("change", () => { reviewing.review.fit = $("r_fit").value; });
+  $("dlReview").addEventListener("click", () => XLSX.writeFile(workbook(reviewing.plan, reviewing.review), fname(reviewing.plan, "_reviewed")));
+  let armed = false;
+  $("useIt").addEventListener("click", () => {
+    if (!armed){ armed = true; $("useIt").textContent = "Click again to replace your current plan"; return; }
+    plan = JSON.parse(JSON.stringify(reviewing.plan)); loadFields(); renderDays(); save();
+    $("useIt").textContent = "Loaded into section 1–5";
+  });
 }
-$("dl-review").addEventListener("click",function(){
-  if(!peer) return;
-  var rv={by:plan.pair||"",r1:$("r1").value,r2:$("r2").value,r3:$("r3").value};
-  XLSX.writeFile(buildBook(peer,rv),fileName(peer,"_reviewed"));
-});
+
+// ---------- init ----------
+loadFields(); renderDays();
+updateJumps(); updateLoad(); updateSq();
+let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { drawFT(); drawLoad(); }, 150); });
 })();
 </script>
-<!-- SITE-NAV:START -->
-<nav aria-label="Site navigation" style="font:14px/1.6 system-ui,sans-serif;padding:14px 20px;margin-top:32px;border-top:1px solid #8884;text-align:center;opacity:.85"><a href="index.html" style="color:inherit">Home</a> · <a href="site-map.html" style="color:inherit">Site map</a> · <a href="pages/biomechanics-hub.html" style="color:inherit">Biomechanics</a> · <a href="imtp-analyser.html" style="color:inherit">Isometric Force–Time Analyser →</a></nav>
-<!-- SITE-NAV:END -->
 </body>
 </html>
