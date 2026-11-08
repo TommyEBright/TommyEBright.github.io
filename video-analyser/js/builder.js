@@ -1,11 +1,11 @@
 // Export builder: the user picks the variables (markers, angles, linear and angular kinematics) and
 // whether they want them as continuous data (over time and/or time-normalised) and/or discrete values
 // (maximum, minimum, time of each, range, mean, values at events). Names follow Robertson et al. (2014).
-import { A, $, esc, fx, status, persist, tReal, download, baseName, defaultExp, APP, VERSION, withState, points, angleDefs, eventTypes } from './state.js?v=2.1.1';
-import { LIN, ANG, allVariables } from './vars.js?v=2.1.1';
-import { normalise, eventNames } from './normalise.js?v=2.1.1';
-import { eventStats, intervalRows } from './events.js?v=2.1.1';
-import { meta } from './export.js?v=2.1.1';
+import { A, $, esc, fx, status, persist, tReal, download, baseName, defaultExp, APP, VERSION, withState, points, angleDefs, eventTypes } from './state.js?v=2.2.0';
+import { LIN, ANG, allVariables } from './vars.js?v=2.2.0';
+import { normalise, eventNames } from './normalise.js?v=2.2.0';
+import { eventStats, intervalRows } from './events.js?v=2.2.0';
+import { meta } from './export.js?v=2.2.0';
 
 export const STATS = [
   { k: 'max', name: 'maximum' }, { k: 'min', name: 'minimum' },
@@ -18,7 +18,7 @@ const ANG_LAB = { th: 'angular position (the angle)', w: 'angular velocity', al:
 const q = (s) => { s = String(s === null || s === undefined ? '' : s); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
 const slug = (s) => String(s).trim().replace(/°/g, 'deg').replace(/²/g, '2').replace(/[^\w]+/g, '_').replace(/^_|_$/g, '');
 const csv = (lines) => new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
-const dp = (unit) => (unit === 's' ? 4 : /rad/.test(unit) ? 4 : /°/.test(unit) ? 2 : unit === 'px' || unit === 'px/s' ? 2 : 5);
+const dp = (unit) => (unit === 's' ? 4 : unit === 'N' ? 2 : /rad/.test(unit) ? 4 : /°/.test(unit) ? 2 : unit === 'px' || unit === 'px/s' ? 2 : 5);
 
 function E() { const S = A.S; S.exp = Object.assign(defaultExp(), S.exp || {}); return S.exp; }
 // The selection as options for allVariables (null = every marker / angle).

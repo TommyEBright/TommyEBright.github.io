@@ -150,3 +150,25 @@ label.filebtn { display: inline-flex; align-items: center; margin: 0; }
 .chks { display: flex; flex-wrap: wrap; gap: .1rem .9rem; margin: .15rem 0 .5rem; }
 .chks label.inline { margin: .1rem 0; }
 select.mini { font-size: .82rem; padding: .15rem .3rem; width: auto; margin-top: .2rem; }
+
+/* manual or automatic digitising */
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid #b6c2cf; border-radius: .5rem; overflow: hidden; margin: .2rem 0; }
+.segbtn { font: inherit; font-size: .88rem; font-weight: 600; padding: .4rem .8rem; border: 0; background: #fff; color: var(--ink); cursor: pointer; }
+.segbtn + .segbtn { border-left: 1px solid #b6c2cf; }
+.segbtn.on { background: var(--brand-dark); color: #fff; }
+.segbtn:focus-visible { outline: 3px solid #93c5fd; outline-offset: -3px; }
+.good { color: #15803d; }
+
+/* sync video and force */
+.fsgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: .8rem; }
+.fspanel { border: 2px solid var(--line); border-radius: .5rem; padding: .4rem; outline: none; }
+.fspanel.active { border-color: #93c5fd; }
+.fsbox { position: relative; height: 52vh; min-height: 260px; }
+.fsbox canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; border-radius: .35rem; touch-action: none; }
+#fsVid { cursor: grab; background: #111; }
+#fsFor { cursor: crosshair; }
+.fspanel .ctrls { margin-top: .4rem; }
+.fssync { margin-top: .6rem; }
+#fsCard.isfull { position: fixed; inset: 0; z-index: 1000; border-radius: 0; overflow: auto; background: var(--card); }
+#fsCard.isfull .fsbox { height: calc(100vh - 290px); }
+@media (max-width: 900px) { .fsgrid { grid-template-columns: 1fr; } .fsbox { height: 42vh; } #fsCard.isfull .fsbox { height: 38vh; } }

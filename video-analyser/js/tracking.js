@@ -1,7 +1,7 @@
 // Automatic digitising: marker tracking by template matching.
-import { A, $, esc, status, persist, points, fpsReal } from './state.js?v=2.1.1';
-import { seekAsync, grab, seek } from './video.js?v=2.1.1';
-import { draw, rad, markerHalf, renderChips, updateDigiCount, findCentre } from './overlay.js?v=2.1.1';
+import { A, $, esc, status, persist, points, fpsReal, isObject } from './state.js?v=2.2.0';
+import { seekAsync, grab, seek } from './video.js?v=2.2.0';
+import { draw, rad, markerHalf, renderChips, updateDigiCount, findCentre } from './overlay.js?v=2.2.0';
 
 // ---------- flags (points the student should check) ----------
 export function clearFlag(f, m) {
@@ -202,7 +202,7 @@ export async function runTrack(dir, opts) {
       }
       if (r.score < thr || r.edge) { lostHere.push(m); why[m] = 'the picture of the marker no longer matches (blurred, hidden or changed shape)'; return; }
       // auto-centre: pull the match onto the middle of the marker blob, if there is a clear one close by
-      if (refine) { const c = findCentre(r.p, img, { reach: 0.6 * h }); if (c) r.p = c; }
+      if (refine && !isObject(m)) { const c = findCentre(r.p, img, { reach: 0.6 * h }); if (c) r.p = c; }
       found[m] = r; err[m] = Math.hypot(r.p[0] - pred[0], r.p[1] - pred[1]);
     });
     // Does any marker look like it has jumped to the wrong place?

@@ -1,7 +1,7 @@
 // Drawing on top of the video, the magnifier, mouse/touch input, digitising and quick measurements.
-import { A, $, esc, status, persist, points, colourOf, angleDefs, tReal } from './state.js?v=2.1.1';
-import { toWorld, toPixel, jointAngle, segFromVertical, segFromHorizontal, angleValue, anglePoints, units } from './maths.js?v=2.1.1';
-import { seek, viewCanvas } from './video.js?v=2.1.1';
+import { A, $, esc, status, persist, points, colourOf, angleDefs, tReal, isObject, clickSet } from './state.js?v=2.2.0';
+import { toWorld, toPixel, jointAngle, segFromVertical, segFromHorizontal, angleValue, anglePoints, units } from './maths.js?v=2.2.0';
+import { seek, viewCanvas } from './video.js?v=2.2.0';
 
 const ov = () => $('ov');
 let ctx = null;
@@ -66,14 +66,85 @@ export function draw(target, frame) {
     const v = angleValue(d, W), at = fr[d.type === 'joint' ? d.b : d.a];
     label(g, Math.round(v) + '°', at[0] + r * 2.2, at[1] - r * 1.2, '#fff', fsz);
   });
+  // reference lines (on every frame)
+  if (A.S.refShow !== false) (S.refLines || []).forEach((l, i) => drawRef(g, l, r, lw, fsz, !target && A.tab === 'measure' && A.refDrag && A.refDrag.i === i));
+  if (A.pending.length && !target && REF[A.mode]) drawRef(g, { type: REF[A.mode].type, pts: A.pending }, r, lw, fsz, true);
   // measurements on this frame
   S.measures.forEach((m) => { if (m.frame === f) drawMeasure(g, m.pts, m.type, m.text, r, lw, fsz); });
-  if (A.pending.length && !target) drawMeasure(g, A.pending, A.mode, '', r, lw, fsz);
+  if (A.pending.length && !target && MEASURE[A.mode]) drawMeasure(g, A.pending, A.mode, '', r, lw, fsz);
   // event label
   const evs = S.events.filter((e) => e.frame === f).map((e) => e.name);
   if (evs.length) label(g, evs.join(' + '), r * 2, fsz * 1.6, '#facc15', fsz * 1.1, 'left');
   if (!target && A.fn.live) A.fn.live();
+  if (!target && A.fn.fsMirror) A.fn.fsMirror();
 }
+// ---------- reference lines ----------
+const REF_COL = '#22d3ee';
+function frameBox() {
+  const S = A.S, cs = [[0, 0], [S.vw, 0], [0, S.vh], [S.vw, S.vh]].map(toWorld);
+  const xs = cs.map((c) => c[0]), ys = cs.map((c) => c[1]);
+  return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
+}
+// The two pixel ends of a reference line, drawn right across the picture.
+export function refEnds(l) {
+  const b = frameBox();
+  if (l.type === 'h') { const y = toWorld(l.pts[0])[1]; return [toPixel([b.x0, y]), toPixel([b.x1, y])]; }
+  if (l.type === 'v') { const x = toWorld(l.pts[0])[0]; return [toPixel([x, b.y0]), toPixel([x, b.y1])]; }
+  const [a, c] = l.pts, dx = c[0] - a[0], dy = c[1] - a[1], L = Math.hypot(dx, dy) || 1, k = (A.S.vw + A.S.vh) * 2 / L;
+  return [[a[0] - dx * k, a[1] - dy * k], [c[0] + dx * k, c[1] + dy * k]];
+}
+export function refValue(l) {
+  const u = units(), d = A.S.calib ? 3 : 0;
+  if (l.type === 'h') return 'y = ' + toWorld(l.pts[0])[1].toFixed(d) + ' ' + u;
+  if (l.type === 'v') return 'x = ' + toWorld(l.pts[0])[0].toFixed(d) + ' ' + u;
+  if (l.pts.length < 2) return '';
+  const W = l.pts.map(toWorld), len = Math.hypot(W[1][0] - W[0][0], W[1][1] - W[0][1]);
+  return len.toFixed(d) + ' ' + u + ', ' + segFromHorizontal(W[0], W[1]).toFixed(1) + '° from horizontal';
+}
+function drawRef(g, l, r, lw, fsz, hot) {
+  if (!l.pts.length) return;
+  g.save(); g.strokeStyle = REF_COL; g.fillStyle = REF_COL;
+  if (l.type === 'f' && l.pts.length < 2) { g.beginPath(); g.arc(l.pts[0][0], l.pts[0][1], r * 0.7, 0, 7); g.fill(); g.restore(); return; }
+  const [e1, e2] = refEnds(l);
+  g.lineWidth = hot ? lw * 1.6 : lw; g.setLineDash(l.type === 'f' ? [r, r * 0.8] : []); g.globalAlpha = l.type === 'f' ? 0.55 : 0.9;
+  g.beginPath(); g.moveTo(e1[0], e1[1]); g.lineTo(e2[0], e2[1]); g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
+  if (l.type === 'f') {
+    g.lineWidth = hot ? lw * 1.6 : lw; g.beginPath(); g.moveTo(l.pts[0][0], l.pts[0][1]); g.lineTo(l.pts[1][0], l.pts[1][1]); g.stroke();
+    l.pts.forEach((p) => { g.beginPath(); g.arc(p[0], p[1], r * 0.8, 0, 7); g.fill(); });
+  } else { const p = l.pts[0]; g.beginPath(); g.arc(p[0], p[1], r * 0.6, 0, 7); g.fill(); }
+  const q = l.type === 'f' ? l.pts[1] : l.pts[0];
+  label(g, (l.name ? l.name + ': ' : '') + refValue(l), q[0] + r * 2, q[1] - r * 2, REF_COL, fsz * 0.9);
+  g.restore();
+}
+// Which reference line (and which part) is under a click, for dragging.
+function refHit(p) {
+  if (A.S.refShow === false) return null;
+  const L = A.S.refLines || [], tol = rad() * 2;
+  const dSeg = (p, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy || 1))); return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy); };
+  for (let i = L.length - 1; i >= 0; i--) {
+    const l = L[i];
+    if (l.type === 'f') {
+      for (let k = 0; k < 2; k++) if (Math.hypot(p[0] - l.pts[k][0], p[1] - l.pts[k][1]) < tol * 1.3) return { i, part: k };
+      if (dSeg(p, l.pts[0], l.pts[1]) < tol) return { i, part: 'all' };
+    } else { const [a, b] = refEnds(l); if (dSeg(p, a, b) < tol) return { i, part: 'all' }; }
+  }
+  return null;
+}
+const REF = {
+  r_h: { n: 1, type: 'h', name: 'Horizontal', help: 'Click where the horizontal line should go (e.g. the top of the head at the start).' },
+  r_v: { n: 1, type: 'v', name: 'Vertical', help: 'Click where the vertical line should go (e.g. the knee or the toe at the start).' },
+  r_f: { n: 2, type: 'f', name: 'Any direction', help: 'Click the two ends of the line.' }
+};
+export function renderRefs() {
+  const S = A.S, L = S.refLines || [];
+  $('refShow').checked = S.refShow !== false;
+  if (!L.length) { $('refTab').innerHTML = '<tr><td class="muted">No reference lines yet.</td></tr>'; return; }
+  $('refTab').innerHTML = '<tr><th>Name</th><th>Line</th><th>Where</th><th></th></tr>' + L.map((l, i) =>
+    '<tr><td><input type="text" class="mini" data-rn="' + i + '" value="' + esc(l.name || '') + '" placeholder="e.g. Knee at start" aria-label="Name"></td><td>' + REF['r_' + l.type].name + '</td><td class="num">' + esc(refValue(l)) + '</td><td><button type="button" class="btn ghost small" data-rdel="' + i + '">Delete</button></td></tr>').join('');
+  $('refTab').querySelectorAll('[data-rdel]').forEach((b) => b.addEventListener('click', () => { L.splice(+b.getAttribute('data-rdel'), 1); persist(); renderRefs(); draw(); }));
+  $('refTab').querySelectorAll('[data-rn]').forEach((inp) => inp.addEventListener('change', () => { L[+inp.getAttribute('data-rn')].name = inp.value.trim(); persist(); draw(); }));
+}
+
 function drawGrid(g, lw, fsz) {
   const S = A.S, sp = S.grid;
   const cs = [[0, 0], [S.vw, 0], [0, S.vh], [S.vw, S.vh]].map(toWorld);
@@ -160,15 +231,16 @@ export function snapPoint(p, img) { const c = findCentre(p, img); return c || p;
 
 // ---------- input ----------
 function evPt(e) { const r = ov().getBoundingClientRect(); return [(e.clientX - r.left) / r.width * ov().width, (e.clientY - r.top) / r.height * ov().height]; }
-export function nextMarker() { const fr = A.S.frames[A.cur] || {}; return points().find((m) => !fr[m]) || null; }
+export function nextMarker() { const fr = A.S.frames[A.cur] || {}; return clickSet().find((m) => !fr[m]) || null; }
 export function placePoint(p, m) {
   const S = A.S; m = m || A.activeMarker || nextMarker();
   if (!points().length) { status('Add your markers in the <strong>Markers</strong> tab first.'); return; }
   if (!m) { status('All markers are placed on this frame. Move to another frame, or drag a marker to adjust it.'); return; }
+  const snapOn = S.snap && !isObject(m);
   let centred = false;
-  if (S.snap) { const c = findCentre(p); if (c) { centred = Math.hypot(c[0] - p[0], c[1] - p[1]) > 0.5; p = c; } }
+  if (snapOn) { const c = findCentre(p); if (c) { centred = Math.hypot(c[0] - p[0], c[1] - p[1]) > 0.5; p = c; } }
   if (!S.frames[A.cur]) S.frames[A.cur] = {};
-  $('coords').textContent = S.snap ? (centred ? m + ' centred on the marker.' : m + ' placed where you clicked (no clear marker there to centre on).') : '';
+  $('coords').textContent = snapOn ? (centred ? m + ' centred on the marker.' : m + ' placed where you clicked (no clear marker there to centre on).') : '';
   S.frames[A.cur][m] = [p[0], p[1]];
   A.fn.clearFlag(A.cur, m);
   A.lastAdded.push([A.cur, m]);
@@ -245,6 +317,19 @@ export function initOverlay() {
     const S = A.S; if (!S.vw || A.busy) return;
     e.preventDefault();
     const p = evPt(e), r = rad();
+    if (A.mode === 'digi' && A.tab === 'measure') {
+      const h = refHit(p);
+      if (h) { A.refDrag = { i: h.i, part: h.part, start: p, orig: S.refLines[h.i].pts.map((q) => q.slice()) }; o.setPointerCapture(e.pointerId); draw(); return; }
+    }
+    if (REF[A.mode]) {
+      A.pending.push(p);
+      if (A.pending.length === REF[A.mode].n) {
+        S.refLines.push({ type: REF[A.mode].type, pts: A.pending.slice(), name: '' });
+        A.pending = []; A.mode = 'digi'; persist(); renderRefs();
+        status('Reference line added. It shows on every frame; drag it to move it while the Measure tab is open.');
+      }
+      draw(); return;
+    }
     if (A.mode === 'digi') {
       const fr = S.frames[A.cur] || {}; let hit = null;
       points().forEach((m) => { if (fr[m] && Math.hypot(fr[m][0] - p[0], fr[m][1] - p[1]) < r * 2) hit = m; });
@@ -268,10 +353,22 @@ export function initOverlay() {
       draw();
     }
   });
-  o.addEventListener('pointermove', (e) => { const p = evPt(e); if (A.drag) { A.S.frames[A.cur][A.drag] = p; draw(); } drawLoupe(p); });
-  o.addEventListener('pointerup', () => { if (A.drag) { if (A.S.snap) A.S.frames[A.cur][A.drag] = snapPoint(A.S.frames[A.cur][A.drag]); A.fn.clearFlag(A.cur, A.drag); A.drag = null; persist(); A.fn.renderFlags(); draw(); } });
+  o.addEventListener('pointermove', (e) => {
+    const p = evPt(e);
+    if (A.drag) { A.S.frames[A.cur][A.drag] = p; draw(); }
+    else if (A.refDrag) {
+      const D = A.refDrag, l = A.S.refLines[D.i], dx = p[0] - D.start[0], dy = p[1] - D.start[1];
+      l.pts = D.orig.map((q, k) => (D.part === 'all' || D.part === k ? [q[0] + dx, q[1] + dy] : q.slice())); draw();
+    }
+    drawLoupe(p);
+  });
+  o.addEventListener('pointerup', () => {
+    if (A.refDrag) { A.refDrag = null; persist(); renderRefs(); draw(); return; }
+    if (A.drag) { if (A.S.snap && !isObject(A.drag)) A.S.frames[A.cur][A.drag] = snapPoint(A.S.frames[A.cur][A.drag]); A.fn.clearFlag(A.cur, A.drag); A.drag = null; persist(); A.fn.renderFlags(); draw(); } });
   o.addEventListener('pointerleave', () => { $('loupe').style.display = 'none'; });
   Object.keys(MEASURE).forEach((k) => { const b = $('m_' + k); if (b) b.addEventListener('click', () => startMeasure(k)); });
+  Object.keys(REF).forEach((k) => $(k).addEventListener('click', () => { if (!A.S.vw) return; A.mode = k; A.pending = []; $('mHelp').textContent = REF[k].help; status(REF[k].help); }));
+  $('refShow').addEventListener('change', function () { A.S.refShow = this.checked; persist(); draw(); });
   $('undo').addEventListener('click', undo);
   $('clearFrame').addEventListener('click', () => { delete A.S.frames[A.cur]; A.activeMarker = null; persist(); renderChips(); updateDigiCount(); draw(); });
   $('clearAll').addEventListener('click', () => { if (!confirm('Remove all markers from every frame of this video?')) return; A.S.frames = {}; A.S.conf = {}; A.S.flags = {}; A.lastAdded = []; A.activeMarker = null; persist(); renderChips(); updateDigiCount(); A.fn.renderFlags(); draw(); });

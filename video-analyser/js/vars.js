@@ -2,8 +2,8 @@
 // Linear kinematics of a marker: position, velocity and acceleration (x, y and resultant).
 // Angular kinematics of an angle: angular position, angular velocity and angular acceleration.
 // x is horizontal (+ forwards, or + to the right with no fixed direction) and y is vertical (+ up).
-import { DEG } from './state.js?v=2.1.1';
-import { units } from './maths.js?v=2.1.1';
+import { DEG } from './state.js?v=2.2.0';
+import { units } from './maths.js?v=2.2.0';
 
 export const LIN = [
   { k: 'x', key: 'x', name: 'x position', short: 'x', kind: 'position', get: (s) => s.x },
@@ -46,5 +46,6 @@ export function allVariables(R, opts) {
       out.push({ key: d.key + '|' + a.key, label: d.k === 'th' ? a.key + ' (angular position)' : a.key + ' ' + d.name, unit: angUnit(d.kind, rad), ang: a, def: d, get: () => [a.T, a.F, conv(d.get(a), ak)] });
     });
   });
+  if (R.force && (!opts.markers || opts.force)) out.push({ key: 'force|Fz', label: 'Vertical ground reaction force', unit: 'N', force: true, get: () => [R.force.T, R.force.F, R.force.V] });
   return out;
 }

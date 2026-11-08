@@ -1,10 +1,11 @@
 // Results: filtering, derivatives, angles, graphs, time normalisation, the filter check, quality checks and live data.
-import { A, $, esc, fx, status, persist, points, colourOf, angleDefs, tReal, fpsReal, PALETTE, G, fwd, hipMarker, download, baseName } from './state.js?v=2.1.1';
-import { toWorld, units, butter, residualCurve, centralDiff, secondDiff, series, angleValue, anglePoints, canWrap, unwrap, mean, sd } from './maths.js?v=2.1.1';
-import { chart, legend } from './charts.js?v=2.1.1';
-import { seek } from './video.js?v=2.1.1';
-import { eventStats, statsHTML } from './events.js?v=2.1.1';
-import { normalise, variableList, eventNames } from './normalise.js?v=2.1.1';
+import { A, $, esc, fx, status, persist, points, colourOf, angleDefs, tReal, fpsReal, PALETTE, G, fwd, hipMarker, download, baseName } from './state.js?v=2.2.0';
+import { toWorld, units, butter, residualCurve, centralDiff, secondDiff, series, angleValue, anglePoints, canWrap, unwrap, mean, sd } from './maths.js?v=2.2.0';
+import { chart, legend } from './charts.js?v=2.2.0';
+import { seek } from './video.js?v=2.2.0';
+import { eventStats, statsHTML } from './events.js?v=2.2.0';
+import { normalise, variableList, eventNames } from './normalise.js?v=2.2.0';
+import { isSynced, forceSignal, forceAtVideo } from './force.js?v=2.2.0';
 
 const angCol = (i) => PALETTE[(i + 3) % PALETTE.length];
 
@@ -45,7 +46,16 @@ export function computeData() {
   let fs0 = null;
   Object.keys(sers).forEach((m) => { const s = filtSeries(sers[m], msgs, m); fs0 = s.fs; if (s.longGap) msgs.push(m + ': there is a long gap in the data, filled with a smooth curve. Check it, or digitise those frames.'); });
   const ang = angleSeries(angleDefs().filter((d) => d.on), sers);
-  return { sers, ang, fs: fs0, msgs: [...new Set(msgs)] };
+  return { sers, ang, fs: fs0, msgs: [...new Set(msgs)], force: forceData(S, sers) };
+}
+// Synced force: at each digitised frame (for exports and event values) and at its own sample rate (for the graph).
+function forceData(S, sers) {
+  const fo = S.force; if (!isSynced(fo)) return null;
+  const sig = forceSignal(fo), allF = new Set(); Object.values(sers).forEach((s) => s.F.forEach((f) => allF.add(f)));
+  const F = [...allF].sort((a, b) => a - b), T = F.map(tReal), V = T.map((t) => forceAtVideo(fo, t, sig));
+  const end = S.duration / (S.slow || 1), Tfull = [], Vfull = [];
+  sig.forEach((v, i) => { const t = i / fo.fs + fo.offset; if (t >= 0 && t <= end) { Tfull.push(t); Vfull.push(v); } });
+  return { F, T, V, Tfull, Vfull };
 }
 export function compute() {
   const S = A.S;
@@ -115,6 +125,10 @@ export function drawResults() {
     chart($('cAngVel'), R.ang.map((a) => ({ x: a.T.map((t) => t - off), y: a.W, col: a.col })), o('Angular velocity (°/s)', true));
     chart($('cAngAcc'), R.ang.map((a) => ({ x: a.T.map((t) => t - off), y: a.AA, col: a.col })), o('Angular acceleration (°/s²)', true));
   }
+  const need = { jump: ['Take-off', 'Landing'], sprint: ['Touchdown', 'Toe-off'] }[S.activity];
+  $('resHint').innerHTML = need && !need.every((n) => S.events.some((e) => e.name === n)) ? '<div class="tip"><p>For the ' + (S.activity === 'jump' ? 'flight time and jump height' : 'contact, flight and step times') + ', mark <strong>' + need.join('</strong> and <strong>') + '</strong> in <strong>Events</strong> (or use <strong>Suggest events</strong> there).</p></div>' : '';
+  $('fChartWrap').classList.toggle('hide', !R.force);
+  if (R.force) chart($('cForce'), [{ x: R.force.Tfull.map((t) => t - off), y: R.force.Vfull, col: '#0f172a', width: 1.8 }], o('Vertical force (N)', true));
   let lg = legend(leg);
   if (hasAng) lg += legend(R.ang.map((a) => ({ name: a.key, col: a.col })));
   const fcs = g.points.map((m) => R.sers[m] && R.sers[m].fc).filter(Boolean);
@@ -282,8 +296,9 @@ export function live() {
   });
   const angs = [];
   angleDefs().filter((d) => d.on).forEach((d) => { const ps = anglePoints(d); if (!ps.every((n) => fr[n])) return; const P = {}; ps.forEach((n) => { P[n] = toWorld(fr[n]); }); angs.push(esc(d.name) + ' <strong>' + angleValue(d, P).toFixed(1) + '&deg;</strong>'); });
-  if (!rows.length) { el.innerHTML = '<p class="muted">' + (points().length ? 'No markers on this frame.' : 'No markers yet. Add them in the Markers tab.') + '</p>'; return; }
-  el.innerHTML = '<table><tr><th>Marker</th><th>x (' + u + ')</th><th>y (' + u + ')</th><th>v<sub>x</sub> / v<sub>y</sub> (' + u + '/s, filtered)</th><th>Source</th></tr>' + rows.join('') + '</table>' + (angs.length ? '<p class="angs">' + angs.join(' &nbsp;&middot;&nbsp; ') + ' <span class="muted">(raw, this frame)</span></p>' : '');
+  const fv = forceAtVideo(S.force, tReal(A.cur)), fl = fv === null ? '' : '<p class="angs">Vertical force <strong>' + fv.toFixed(1) + ' N</strong> (synced force data)</p>';
+  if (!rows.length) { el.innerHTML = fl + '<p class="muted">' + (points().length ? 'No markers on this frame.' : 'No markers yet. Add them in the Markers tab.') + '</p>'; return; }
+  el.innerHTML = '<table><tr><th>Marker</th><th>x (' + u + ')</th><th>y (' + u + ')</th><th>v<sub>x</sub> / v<sub>y</sub> (' + u + '/s, filtered)</th><th>Source</th></tr>' + rows.join('') + '</table>' + fl + (angs.length ? '<p class="angs">' + angs.join(' &nbsp;&middot;&nbsp; ') + ' <span class="muted">(raw, this frame)</span></p>' : '');
 }
 
 

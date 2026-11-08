@@ -1,11 +1,11 @@
 // Saving and exporting: project files, three kinds of CSV, images, graphs and the photo sequence.
-import { A, $, esc, status, persist, migrate, points, tReal, fpsReal, download, baseName, VERSION, APP, currentTrial } from './state.js?v=2.1.1';
-import { toWorld, units, scale } from './maths.js?v=2.1.1';
-import { seekAsync, seek, viewCanvas } from './video.js?v=2.1.1';
-import { draw } from './overlay.js?v=2.1.1';
-import { svgToPng } from './charts.js?v=2.1.1';
-import { summaryRows, xOffset } from './results.js?v=2.1.1';
-import { intervalRows } from './events.js?v=2.1.1';
+import { A, $, esc, status, persist, migrate, points, tReal, fpsReal, download, baseName, VERSION, APP, currentTrial } from './state.js?v=2.2.0';
+import { toWorld, units, scale } from './maths.js?v=2.2.0';
+import { seekAsync, seek, viewCanvas } from './video.js?v=2.2.0';
+import { draw } from './overlay.js?v=2.2.0';
+import { svgToPng } from './charts.js?v=2.2.0';
+import { summaryRows, xOffset } from './results.js?v=2.2.0';
+import { intervalRows } from './events.js?v=2.2.0';
 
 const n = (v, d) => (v === null || v === undefined || Number.isNaN(v) ? '' : (+v).toFixed(d));
 const q = (s) => { s = String(s); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
@@ -23,6 +23,7 @@ export function meta() {
     ['Activity', S.activity], ['Participant facing', S.dir === 'right' ? 'right of screen' : S.dir === 'left' ? 'left of screen' : 'no fixed direction'], ['Axes', S.dir === 'none' ? 'x + to the right of the screen, y up +' : 'x forwards +, y up +'],
     ['Filter', S.filt ? 'Butterworth low-pass, 2nd order run forwards and backwards (zero lag), cut-off ' + S.cutoff + ' Hz' : 'none'],
     ['Derivatives', 'central (finite) differences of the filtered data'],
+    ['Force data', S.force ? S.force.name + ' (' + S.force.fs + ' Hz)' + (S.force.offset !== null && S.force.offset !== undefined ? ', synced at ' + S.force.sync.name + ': video time = force time ' + (S.force.offset < 0 ? '- ' : '+ ') + Math.abs(S.force.offset).toFixed(5) + ' s' + (S.force.check ? '; checked at ' + S.force.check.name + ', difference ' + (S.force.check.diff * 1000).toFixed(1) + ' ms' : '') : ', not synced') : 'none'],
     ['Exported', new Date().toISOString()]
   ];
 }

@@ -1,23 +1,24 @@
 // Start-up: wires the page together. Setup, calibration, the marker and angle builders, demos and the app install.
-import { A, $, esc, clone, status, persist, points, colourOf, angleDefs, eventTypes, VERSION, APP, download, fwd } from './state.js?v=2.1.1';
-import { tiltAngle } from './maths.js?v=2.1.1';
-import { initVideo, seek, recount, render, viewDims, play, pause, isPlaying, detectFps } from './video.js?v=2.1.1';
-import { initOverlay, draw, renderChips, updateDigiCount, renderMeasures, undo } from './overlay.js?v=2.1.1';
-import { initTracking, clearFlag, renderFlags } from './tracking.js?v=2.1.1';
-import { initEvents, renderEventBtns, renderEvents } from './events.js?v=2.1.1';
-import { initResults, compute, drawResults, live, renderNorm } from './results.js?v=2.1.1';
-import { initExport, renderExportPoints, renderPhotoOpts } from './export.js?v=2.1.1';
-import { initSession, addFiles, renderSession } from './session.js?v=2.1.1';
-import { initCompare, renderCompare } from './compare.js?v=2.1.1';
-import { initBuilder, renderBuilder } from './builder.js?v=2.1.1';
-import { initConvert } from './convert.js?v=2.1.1';
+import { A, $, esc, clone, status, persist, points, colourOf, angleDefs, eventTypes, VERSION, APP, download, fwd, ACTIVITY_OPTS, EVENT_DEFAULTS, isObject } from './state.js?v=2.2.0';
+import { tiltAngle } from './maths.js?v=2.2.0';
+import { initVideo, seek, recount, render, viewDims, play, pause, isPlaying, detectFps } from './video.js?v=2.2.0';
+import { initOverlay, draw, renderChips, updateDigiCount, renderMeasures, renderRefs, undo } from './overlay.js?v=2.2.0';
+import { initTracking, clearFlag, renderFlags } from './tracking.js?v=2.2.0';
+import { initEvents, renderEventBtns, renderEvents } from './events.js?v=2.2.0';
+import { initResults, compute, drawResults, live, renderNorm } from './results.js?v=2.2.0';
+import { initExport, renderExportPoints, renderPhotoOpts } from './export.js?v=2.2.0';
+import { initSession, addFiles, renderSession } from './session.js?v=2.2.0';
+import { initCompare, renderCompare } from './compare.js?v=2.2.0';
+import { initBuilder, renderBuilder } from './builder.js?v=2.2.0';
+import { initConvert } from './convert.js?v=2.2.0';
+import { initForce, renderForce, forceKey } from './force.js?v=2.2.0';
 
-Object.assign(A.fn, { draw, syncInputs, showCalib, compute, drawResults, clearFlag, renderFlags, live, renderPhotoOpts, renderNorm });
+Object.assign(A.fn, { draw, syncInputs, showCalib, compute, drawResults, clearFlag, renderFlags, live, renderPhotoOpts, renderNorm, renderDigiMode });
 
 // ---------- setup ----------
 function syncInputs() {
   const S = A.S;
-  $('fps').value = S.fps; $('slow').value = S.slow; $('activity').value = S.activity; $('dir').value = S.dir;
+  $('fps').value = S.fps; $('slow').value = S.slow; document.querySelectorAll('.actSel').forEach((el) => { el.value = S.activity; }); $('dir').value = S.dir;
   $('rot').value = String(S.rot); $('flip').checked = !!S.flip;
   $('every').value = String(S.every); $('advance').value = String(S.advance); $('snap').checked = !!S.snap; $('trkChecks').checked = S.checks !== false;
   $('calShow').checked = S.showCal !== false; activityHelp();
@@ -25,8 +26,8 @@ function syncInputs() {
   if (S.calib) $('calLen').value = S.calib.len;
   $('vertCheck').checked = !!S.tilt; $('grid').value = String(S.grid || 0);
   if (A.nFrames) $('trkTo').value = Math.max(0, A.nFrames - 1);
-  showCalib(); renderChips(); renderEventBtns(); renderEvents(); renderMeasures(); updateDigiCount(); renderFlags();
-  renderTemplateEditor(); renderAngles(); renderExportPoints(); renderBuilder(); renderPhotoOpts(); live();
+  showCalib(); renderChips(); renderEventBtns(); renderEvents(); renderMeasures(); renderRefs(); updateDigiCount(); renderFlags();
+  renderTemplateEditor(); renderAngles(); renderExportPoints(); renderBuilder(); renderPhotoOpts(); renderDigiMode(); renderForce(); live();
   if (A.results) compute(); else { $('resBody').classList.add('hide'); $('resMsg').innerHTML = 'Digitise some frames, then press <strong>Update results</strong>.'; }
 }
 function initSetup() {
@@ -40,7 +41,10 @@ function initSetup() {
     });
   });
   $('detect').addEventListener('click', () => detectFps(false));
-  $('activity').addEventListener('change', function () { A.S.activity = this.value; eventTypes(); persist(); activityHelp(); renderEventBtns(); renderEvents(); renderBuilder(); if (A.results) compute(); });
+  document.querySelectorAll('.actSel').forEach((el) => {
+    el.innerHTML = ACTIVITY_OPTS.map(([v, t]) => '<option value="' + v + '">' + t + '</option>').join('');
+    el.addEventListener('change', function () { setActivity(this.value); });
+  });
   $('dir').addEventListener('change', function () { A.S.dir = this.value; persist(); draw(); if (A.results) compute(); });
   $('snap').addEventListener('change', function () { A.S.snap = this.checked; persist(); });
   $('rot').addEventListener('change', function () { reorient(parseInt(this.value, 10), A.S.flip); });
@@ -54,6 +58,31 @@ const ACT_HELP = {
   jump: 'Adds flight time, jump height and the phases of a vertical jump from its events, and can suggest take-off and landing from a foot marker.'
 };
 function activityHelp() { $('actHelp').textContent = ACT_HELP[A.S.activity] || ''; }
+// One movement setting, picked in Events or in Results. Event buttons you added yourself stay.
+function setActivity(v) {
+  const S = A.S, old = S.activity; if (v === old || !EVENT_DEFAULTS[v]) return;
+  const own = eventTypes().filter((n) => !EVENT_DEFAULTS[old].includes(n));
+  S.activity = v; const list = eventTypes(); own.forEach((n) => { if (!list.includes(n)) list.push(n); });
+  document.querySelectorAll('.actSel').forEach((el) => { el.value = v; });
+  persist(); activityHelp(); renderEventBtns(); renderEvents(); renderBuilder(); if (A.results) compute();
+}
+
+// ---------- manual or automatic digitising ----------
+function renderDigiMode() {
+  const S = A.S, man = S.digiMode === 'manual', pts = points();
+  document.querySelectorAll('[data-dm]').forEach((b) => { const on = b.getAttribute('data-dm') === S.digiMode; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
+  $('manOnly').classList.toggle('hide', !man); $('manOpts').classList.toggle('hide', !man); $('autoOnly').classList.toggle('hide', man);
+  if (S.manSet && !pts.includes(S.manSet)) S.manSet = '';
+  $('manSet').innerHTML = '<option value="">Every marker, in order</option>' + pts.map((m) => '<option value="' + esc(m) + '">Only ' + esc(m) + (isObject(m) ? ' (object)' : '') + '</option>').join('');
+  $('manSet').value = S.manSet || '';
+  $('dmHelp').innerHTML = man
+    ? 'Click the marker on each frame and the tool moves on by itself (e.g. to follow a ball for its velocity, choose <strong>Only Ball</strong> and click it on every frame it is in the air). Set how many frames to move on below.'
+    : 'Click every marker once on a clear frame, then press <strong>Track forwards</strong>. The tool follows them and pauses if it loses one.';
+}
+function initDigiMode() {
+  document.querySelectorAll('[data-dm]').forEach((b) => b.addEventListener('click', () => { A.S.digiMode = b.getAttribute('data-dm'); A.activeMarker = null; persist(); renderDigiMode(); renderChips(); draw(); }));
+  $('manSet').addEventListener('change', function () { A.S.manSet = this.value; A.activeMarker = null; persist(); renderChips(); draw(); });
+}
 
 // Rotating or flipping the picture moves every stored coordinate with it.
 function toSrc(p, rot, flip, W, H) {
@@ -73,6 +102,7 @@ function reorient(rot, flip) {
   if (S.calib) { S.calib.p1 = map(S.calib.p1); S.calib.p2 = map(S.calib.p2); }
   if (S.origin) S.origin = map(S.origin);
   S.measures.forEach((m) => { m.pts = m.pts.map(map); });
+  (S.refLines || []).forEach((l) => { l.pts = l.pts.map(map); });
   S.rot = rot; S.flip = flip; S.vw = W1; S.vh = H1;
   $('ov').width = W1; $('ov').height = H1;
   persist(); render(); draw(); showCalib(); if (A.results) compute();
@@ -104,6 +134,7 @@ function renameEverywhere(oldN, newN) {
   if (S.footMarker === oldN) S.footMarker = newN; if (S.hipMarker === oldN) S.hipMarker = newN;
   Object.values(S.flags).forEach((arr) => arr.forEach((x) => { if (x.m === oldN) x.m = newN; }));
   S.template.links.forEach((l) => { if (l[0] === oldN) l[0] = newN; if (l[1] === oldN) l[1] = newN; });
+  S.template.objects = (S.template.objects || []).map((p) => (p === oldN ? newN : p)); if (S.manSet === oldN) S.manSet = newN;
   (S.angles || []).forEach((d) => ['a', 'b', 'c'].forEach((k) => { if (d[k] === oldN) d[k] = newN; }));
   S.graph.points = S.graph.points.map((p) => (p === oldN ? newN : p));
   if (S.exp && S.exp.markers) S.exp.markers = S.exp.markers.map((p) => (p === oldN ? newN : p));
@@ -112,18 +143,24 @@ function removeEverywhere(n) {
   const S = A.S;
   [S.frames, S.conf].forEach((L) => Object.keys(L).forEach((f) => { if (L[f]) { delete L[f][n]; if (!Object.keys(L[f]).length) delete L[f]; } }));
   S.template.links = S.template.links.filter((l) => l[0] !== n && l[1] !== n);
+  S.template.objects = (S.template.objects || []).filter((p) => p !== n); if (S.manSet === n) S.manSet = '';
   if (S.angles) S.angles = S.angles.filter((d) => ![d.a, d.b, d.c].includes(n));
 }
 function afterTemplateChange() { A.activeMarker = null; A.results = null; persist(); syncInputs(); draw(); }
 function renderTemplateEditor() {
   const S = A.S, pts = points();
   if (!pts.length) $('ptList').innerHTML = '<li class="muted">No markers yet. Type a name below (e.g. Hip) and press Add, in the order you will click them.</li>';
-  else $('ptList').innerHTML = pts.map((m, i) => '<li><span class="dot" style="background:' + colourOf(m) + '"></span><input type="text" class="mini" value="' + esc(m) + '" data-ren="' + i + '" aria-label="Marker name"><button type="button" class="btn ghost small" data-up="' + i + '" title="Move up"' + (i ? '' : ' disabled') + '>&uarr;</button><button type="button" class="btn ghost small" data-rm="' + i + '">Remove</button></li>').join('');
+  else $('ptList').innerHTML = pts.map((m, i) => '<li><span class="dot" style="background:' + colourOf(m) + '"></span><input type="text" class="mini" value="' + esc(m) + '" data-ren="' + i + '" aria-label="Marker name"><select class="mini" data-kind="' + i + '" aria-label="Marker or object" style="width:auto"><option value="body">Body marker</option><option value="obj"' + (isObject(m) ? ' selected' : '') + '>Object (e.g. ball)</option></select><button type="button" class="btn ghost small" data-up="' + i + '" title="Move up"' + (i ? '' : ' disabled') + '>&uarr;</button><button type="button" class="btn ghost small" data-rm="' + i + '">Remove</button></li>').join('');
   $('ptList').querySelectorAll('[data-ren]').forEach((inp) => inp.addEventListener('change', () => {
     const i = +inp.getAttribute('data-ren'), oldN = pts[i], newN = inp.value.trim();
     if (!newN || newN === oldN) { inp.value = oldN; return; }
     if (pts.includes(newN)) { status('There is already a marker called ' + esc(newN) + '.'); inp.value = oldN; return; }
     renameEverywhere(oldN, newN); pts[i] = newN; afterTemplateChange();
+  }));
+  $('ptList').querySelectorAll('[data-kind]').forEach((sel) => sel.addEventListener('change', () => {
+    const n = pts[+sel.getAttribute('data-kind')], ob = S.template.objects || (S.template.objects = []);
+    const i = ob.indexOf(n); if (sel.value === 'obj' && i < 0) ob.push(n); if (sel.value !== 'obj' && i >= 0) ob.splice(i, 1);
+    persist(); renderDigiMode(); status(esc(n) + (sel.value === 'obj' ? ' is an object: clicks stay where you click.' : ' is a body marker: clicks auto-centre on it (if auto-centre is on).'));
   }));
   $('ptList').querySelectorAll('[data-up]').forEach((b) => b.addEventListener('click', () => { const i = +b.getAttribute('data-up'); [pts[i - 1], pts[i]] = [pts[i], pts[i - 1]]; afterTemplateChange(); }));
   $('ptList').querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => {
@@ -140,7 +177,7 @@ function renderTemplateEditor() {
 // ---------- marker sets (save and reuse) ----------
 function saveSet() {
   const S = A.S; if (!points().length) { status('Add some markers first.'); return; }
-  const j = { kind: 'kinematic-analysis-marker-set', markers: S.template.points, segments: S.template.links, angles: S.angles, foot: S.footMarker, hip: S.hipMarker };
+  const j = { kind: 'kinematic-analysis-marker-set', markers: S.template.points, segments: S.template.links, objects: S.template.objects || [], angles: S.angles, foot: S.footMarker, hip: S.hipMarker };
   const nm = ($('setName').value.trim() || 'marker_set').replace(/[^\w\-]+/g, '_');
   download(nm + '.json', new Blob([JSON.stringify(j, null, 1)], { type: 'application/json' }));
   status('Marker set saved. Load it at the start of any analysis to skip setting the markers up again.');
@@ -153,7 +190,7 @@ function loadSet(file) {
       const S = A.S, had = Object.keys(S.frames).length;
       if (had && !confirm('Replace this video\u2019s markers with the saved set? Markers that are not in the set will be removed with their positions.')) return;
       points().filter((m) => !j.markers.includes(m)).forEach(removeEverywhere);
-      S.template = { points: j.markers.slice(), links: (j.segments || []).filter((l) => j.markers.includes(l[0]) && j.markers.includes(l[1])) };
+      S.template = { points: j.markers.slice(), links: (j.segments || []).filter((l) => j.markers.includes(l[0]) && j.markers.includes(l[1])), objects: (j.objects || []).filter((m) => j.markers.includes(m)) };
       S.angles = (j.angles || []).filter((d) => [d.a, d.b, d.c].filter(Boolean).every((m) => j.markers.includes(m)));
       if (j.foot) S.footMarker = j.foot; if (j.hip) S.hipMarker = j.hip;
       afterTemplateChange(); status('Marker set loaded: ' + esc(j.markers.join(', ')) + '.');
@@ -236,6 +273,7 @@ function initControls() {
   $('bPlay').addEventListener('click', togglePlay);
   document.addEventListener('keydown', (e) => {
     if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    if (forceKey(e)) return;
     if (e.key === 'ArrowRight') { e.preventDefault(); if (isPlaying()) pause(); seek(A.cur + (e.shiftKey ? 10 : 1)); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); if (isPlaying()) pause(); seek(A.cur - (e.shiftKey ? 10 : 1)); }
     else if (e.key === ' ') { e.preventDefault(); togglePlay(); }
@@ -246,7 +284,10 @@ function initControls() {
   document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach((x) => x.setAttribute('aria-selected', String(x === t)));
     document.querySelectorAll('.pane').forEach((p) => p.classList.toggle('hide', p.getAttribute('data-p') !== t.getAttribute('data-t')));
-    if (t.getAttribute('data-t') === 'digi') { A.mode = 'digi'; A.pending = []; }
+    A.tab = t.getAttribute('data-t');
+    if (A.tab === 'digi') { A.mode = 'digi'; A.pending = []; }
+    if (A.tab === 'force') renderForce();
+    draw();
     if (t.getAttribute('data-t') === 'files') { renderExportPoints(); renderBuilder(); renderPhotoOpts(); }
   }));
   $('trail').addEventListener('change', draw);
@@ -257,7 +298,7 @@ const DEMOS = {
   cmj: {
     file: 'demo/demo-cmj-2026-120fps', name: 'demo-cmj-120fps',
     preset: { state: { fps: 120, fpsSet: true, slow: 1, activity: 'jump', dir: 'right', every: 1 }, labels: { athlete: 'Demo', condition: 'CMJ', trial: '1' },
-      msg: 'Demo loaded: a computer-made countermovement jump (hands on hips) filmed at <strong>120 fps</strong>, with a 1 m pole on the left for calibration and five markers on the body (shoulder, hip, knee, ankle, toe). Add those markers in the <strong>Markers</strong> tab, calibrate on the pole, click the markers on one frame, then <strong>Track forwards</strong>.' }
+      msg: 'Demo loaded: a computer-made countermovement jump (hands on hips) filmed at <strong>120 fps</strong>, with a 1 m pole on the left for calibration and five markers on the body (shoulder, hip, knee, ankle, toe). Add those markers in the <strong>Markers</strong> tab, calibrate on the pole, click the markers on one frame, then <strong>Track forwards</strong>. To practise syncing with force data from the same jump, open <strong>6. Force</strong> and press <strong>Demo CMJ force data</strong>.' }
   },
   sprint: {
     file: 'demo/demo-sprint-240fps-slowed8x', name: 'demo-sprint-240fps-slowed8x',
@@ -287,7 +328,7 @@ function initPWA() {
 
 function start() {
   initVideo(); initOverlay(); initTracking(); initEvents(); initResults(); initExport(); initBuilder(); initCompare();
-  initSetup(); initCalib(); initTemplates(); initAngles(); initControls(); initPWA(); initSession(); initConvert();
+  initSetup(); initCalib(); initTemplates(); initAngles(); initControls(); initPWA(); initSession(); initConvert(); initDigiMode(); initForce();
   $('demoCmj').addEventListener('click', () => loadDemo('cmj'));
   $('demoSprint').addEventListener('click', () => loadDemo('sprint'));
   $('ver').textContent = 'v' + VERSION; document.title = APP;

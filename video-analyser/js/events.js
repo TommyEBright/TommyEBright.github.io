@@ -1,8 +1,8 @@
 // Key events, the stopwatch (intervals between events), looping and event-based summary values.
-import { A, $, esc, fx, status, persist, eventTypes, tReal, fpsReal, G, points, footMarker, hipMarker } from './state.js?v=2.1.1';
-import { toWorld, butter, centralDiff, series, mean } from './maths.js?v=2.1.1';
-import { seek, play, pause } from './video.js?v=2.1.1';
-import { draw } from './overlay.js?v=2.1.1';
+import { A, $, esc, fx, status, persist, eventTypes, tReal, fpsReal, G, points, footMarker, hipMarker } from './state.js?v=2.2.0';
+import { toWorld, butter, centralDiff, series, mean } from './maths.js?v=2.2.0';
+import { seek, play, pause } from './video.js?v=2.2.0';
+import { draw } from './overlay.js?v=2.2.0';
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 export function ensureIds() { A.S.events.forEach((e) => { if (!e.id) e.id = uid(); }); }
@@ -144,7 +144,7 @@ export function suggestEvents() {
   const S = A.S, note = $('suggestNote');
   const mkr = footMarker(), hip = hipMarker();
   const s = mkr && series(mkr);
-  if (S.activity === 'general') { note.innerHTML = 'Suggestions work for running, jumping and repeating movements (choose one in <strong>Setup</strong>). For anything else, mark events by hand.'; return; }
+  if (S.activity === 'general') { note.innerHTML = 'Suggestions work for running, jumping and repeating movements (choose one in <strong>Movement</strong> at the top of this tab). For anything else, mark events by hand.'; return; }
   if (!mkr) { note.textContent = 'Choose the marker to use above first.'; return; }
   if (!s || s.X.length < 8) { note.textContent = 'Digitise or track the ' + mkr + ' first, on at least 8 frames, then try again.'; return; }
   // the size of the person, so this works without calibration: hip-to-foot distance is roughly 0.9 m

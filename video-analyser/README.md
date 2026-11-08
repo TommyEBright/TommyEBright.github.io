@@ -10,7 +10,6 @@ It works for any movement filmed side-on (e.g. a squat, throw, kick, lift, gait,
 
 - **Session:** add one video or several (e.g. one participant's trials, or one trial from each participant) and label each with participant, condition and trial number. Work through them one at a time with **Next trial**. Markers, angles and settings carry over, and calibration can carry over after the user confirms the camera has not moved.
 - **Setup:**
-  - what is being analysed: any movement (the default), a repeating movement (cycles, e.g. cycling or rowing), running, or a vertical jump;
   - frame-rate detection, and a "slowed down by" setting for slow-motion clips saved at 30 fps;
   - which way the participant faces (left, right, or no fixed direction);
   - rotate and mirror the picture.
@@ -19,15 +18,19 @@ It works for any movement filmed side-on (e.g. a squat, throw, kick, lift, gait,
   - starts blank; users name their own markers, optional segments between them, and their own angles;
   - joint (relative) angles: 0–180° (180° = straight), flexion (0° = straight), or 0–360° anticlockwise, which can show hyperextension;
   - segment (absolute) angles from horizontal (anticlockwise +, −180° to 180° or 0° to 360°) or from vertical;
+  - each marker is a body marker or an **object** (e.g. a ball, bat or implement); clicks on an object stay exactly where you click;
   - marker sets can be saved as a file and loaded again.
 - **Digitise:**
+  - **Manual** (click every frame) or **Automatic** (click once, the tool tracks). In manual mode you can click every marker on each frame or just one (e.g. only the ball, to get its velocity), and the tool moves on by a set number of frames after each click;
   - clicks auto-centre on the nearest marker (reflective, coloured or dark), like Quintic; it can be turned off;
   - automatic marker tracking, with tracked positions also pulled onto each marker's centre;
   - tracking pauses and asks for a click when a marker is lost, or when a position looks wrong: a marker jumping away from its path, a segment suddenly stretching or shrinking, or two markers landing on the same spot. The user can click the right place, or press **It was right, carry on**. A "Marker hidden" button leaves a gap when a marker cannot be seen. Uncertain frames are listed for checking.
-- **Events:** named event buttons (including your own), nudging a frame at a time, suggested events (running contacts, jump take-off and landing, or the highest and lowest point of a marker in each cycle), a stopwatch for the time between any two events, and looping a phase.
+- **Events:** the movement (any movement, vertical jump, running, or repeating) is chosen here or in Results, and sets the event buttons and suggestions. Named event buttons (including your own), nudging a frame at a time, suggested events (running contacts, jump take-off and landing, or the highest and lowest point of a marker in each cycle), a stopwatch for the time between any two events, and looping a phase.
 - **Video formats:** MP4 and MOV open directly. Files the browser cannot play (e.g. AVI from Quintic or lab high-speed cameras) can be converted to MP4 inside the tool with **Convert to MP4**. Every frame is kept, the frame rate is read from the original file, and the result can be saved.
-- **Measure:** distance, joint angle, segment vs vertical or horizontal, and the angle between two lines on a single frame.
+- **Measure:** distance, joint angle, segment vs vertical or horizontal, and the angle between two lines on a single frame. **Reference lines** (horizontal, vertical, or in any direction) stay on the video on every frame and can be dragged; they follow the calibration (and tilt correction), and the line in any direction shows its length and angle from horizontal.
+- **Force (sync with force platform data):** load a force file (BioWare export or any text/CSV file with time and force columns), then open the sync view: the video and a zoomable force–time graph side by side (full screen if wanted), each stepped a frame or a sample at a time. Pick one moment seen in both (e.g. take-off), press **Sync**, then check a second moment (e.g. landing, the next foot contact); the tool reports how far apart the video and force are there, in ms and frames. Once synced, vertical force appears in Results (graph and live data) and in every export, plus a full-rate synced force CSV.
 - **Results (per trial):**
+  - **Results for** a chosen movement (any movement for generic results, vertical jump, running, or repeating), changed at any time;
   - key numbers for the activity (e.g. peak resultant velocity, ranges and distance travelled; cycle time and cadence; contact and step times; flight time and jump height), an angular kinematics table and values at each event;
   - graphs of linear position, velocity and acceleration (x, y or resultant), the trajectory (path) of each marker, and angular position, velocity and acceleration, with max and min marked and time measured from an event if wanted;
   - a filter check with residual analysis, quality checks, and a live data panel under the video.
@@ -44,6 +47,7 @@ Variable names follow Robertson et al. (2014) *Research Methods in Biomechanics*
 ## Demo clips
 
 - **Demo: CMJ** is a computer-generated countermovement jump with hands on hips, at 120 fps, with a 1 m pole for calibration and five markers (shoulder, hip, knee, ankle, toe), built from a real force platform recording of a CMJ. Take-off is frame 176 and landing frame 221 (flight 0.375 s, jump height about 17.2 cm by flight time). The hip drops 25.9 cm in the countermovement, and the knee is flexed about 86° at the lowest point (frame 139), so students can check their answers.
+- **Demo CMJ force data** (Force tab) is the force platform recording of the same jump (BioWare export, 250 Hz), for practising the sync.
 - **Demo: sprint** is a real sprint filmed at 240 fps but saved as a 30 fps file (slowed 8×). It shows why the slow-down setting matters. There are no markers or calibration object, so it is for event timing and clicking joints by hand.
 
 ## Putting it online (GitHub Pages)
@@ -108,6 +112,8 @@ js/events.js           events, stopwatch, loop, suggested events, event-based va
 js/results.js          results, graphs, time normalisation view, filter check, quality checks, live data
 js/normalise.js        time normalisation maths
 js/compare.js          comparing trials and whole-session exports
+js/force.js            force data: loading, the sync view, syncing and the check
+js/forceparse.js       reading force platform text files (same reader as Force Analysis)
 js/vars.js             the kinematic variables and their names (Robertson et al., 2014)
 js/builder.js          the export builder (choose continuous and discrete variables)
 js/charts.js           SVG charts
@@ -116,7 +122,7 @@ js/ffmpeg/             ffmpeg.wasm loader (MIT licence); the converter core is d
 js/export.js           per-trial CSV exports, images, photo sequence, project files
 sw.js                  offline support
 manifest.webmanifest   app install details
-demo/                  demo clips (MP4 and WebM)
+demo/                  demo clips (MP4 and WebM) and the demo CMJ force file
 icons/                 app icons
 ```
 

@@ -1,7 +1,7 @@
 // Shared state and small helpers.
 // A.S is the trial being worked on. A.session holds every trial in the session.
 export const G = 9.81;
-export const VERSION = '2.1.1';
+export const VERSION = '2.2.0';
 export const APP = 'Kinematic Analysis';
 
 export const PALETTE = ['#2563eb', '#be185d', '#0f766e', '#d97706', '#7c3aed', '#0891b2', '#65a30d', '#dc2626', '#475569', '#c026d3', '#0d9488', '#ea580c'];
@@ -13,9 +13,16 @@ export const EVENT_DEFAULTS = {
   jump: ['Start of movement', 'Lowest point', 'Take-off', 'Landing']
 };
 export const ACTIVITY_NAMES = { general: 'Any movement', cycle: 'Repeating movement (e.g. cycling, rowing, gait)', sprint: 'Running or sprinting', jump: 'Vertical jump' };
+// The options of the movement pickers (Events and Results share one setting).
+export const ACTIVITY_OPTS = [
+  ['general', 'Any movement (generic results)'],
+  ['jump', 'Vertical jump (flight time, jump height)'],
+  ['sprint', 'Running or sprinting (contact and step times)'],
+  ['cycle', 'Repeating movement (e.g. cycling, rowing, walking)']
+];
 
 // Settings that carry over from one trial to the next.
-export const SHARED = ['template', 'angles', 'eventTypes', 'activity', 'dir', 'fps', 'slow', 'every', 'advance', 'snap',
+export const SHARED = ['template', 'angles', 'eventTypes', 'activity', 'dir', 'fps', 'slow', 'every', 'advance', 'snap', 'digiMode', 'manSet',
   'cutoff', 'filt', 'graph', 'norm', 'footMarker', 'hipMarker', 'rot', 'flip', 'showCal', 'checks', 'exp'];
 
 // What the export builder ticks by default.
@@ -29,7 +36,8 @@ export function freshState() {
     v: 3, name: '', duration: 0, srcW: 0, srcH: 0, vw: 0, vh: 0,
     rot: 0, flip: false,
     fps: 30, slow: 1, fpsSet: false, activity: 'general', dir: 'right',
-    template: { points: [], links: [] },
+    template: { points: [], links: [], objects: [] },
+    digiMode: 'auto', manSet: '', refLines: [], force: null,
     every: 4, advance: 1, snap: true, checks: true,
     calib: null, origin: null, tilt: false, grid: 0, showCal: true,
     frames: {}, conf: {}, flags: {},
@@ -50,6 +58,9 @@ export function migrate(st) {
   if (!EVENT_DEFAULTS[st.activity]) st.activity = 'general';
   st.exp = Object.assign(defaultExp(), st.exp || {});
   if (!Array.isArray(st.angles)) st.angles = [];
+  if (!Array.isArray(st.template.objects)) st.template.objects = [];
+  if (!Array.isArray(st.refLines)) st.refLines = [];
+  if (st.digiMode !== 'manual') st.digiMode = 'auto';
   return st;
 }
 
@@ -57,7 +68,7 @@ export const A = {
   S: freshState(),
   session: { trials: [], cur: -1 },
   files: {}, // trial id -> File or Blob (videos are never saved)
-  cur: 0, nFrames: 0, activeMarker: null, mode: 'digi', pending: [], lastAdded: [], drag: null,
+  cur: 0, nFrames: 0, activeMarker: null, mode: 'digi', tab: 'setup', refDrag: null, pending: [], lastAdded: [], drag: null,
   results: null, busy: false, stopReq: false, pauseAdvance: false, trackDir: 1, lastMaxFrame: -1, trackResume: null,
   fn: {} // cross-module functions registered at start-up
 };
@@ -71,6 +82,10 @@ export function status(msg) { const el = $('status'); if (el) el.innerHTML = msg
 export function fpsReal() { return A.S.fps * A.S.slow; }
 export function tReal(f) { return f / fpsReal(); }
 export function points() { return A.S.template.points; }
+// Objects (e.g. a ball) are digitised where clicked: no auto-centre.
+export function isObject(m) { return (A.S.template.objects || []).includes(m); }
+// The markers clicked on each frame in manual digitising (all of them, or just one).
+export function clickSet() { const S = A.S; return S.digiMode === 'manual' && S.manSet && points().includes(S.manSet) ? [S.manSet] : points(); }
 export function colourOf(name) {
   const i = points().indexOf(name);
   return PALETTE[(i < 0 ? 0 : i) % PALETTE.length];

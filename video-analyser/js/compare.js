@@ -1,13 +1,13 @@
 // Compare trials: key numbers for every trial side by side, group means, overlaid time-normalised curves
 // and combined exports for the whole session.
-import { A, $, esc, fx, status, persist, withState, PALETTE, download, VERSION, APP } from './state.js?v=2.1.1';
-import { computeData, summaryRows } from './results.js?v=2.1.1';
-import { normalise, meanSd } from './normalise.js?v=2.1.1';
-import { mean, sd } from './maths.js?v=2.1.1';
-import { chart, legend } from './charts.js?v=2.1.1';
-import { label } from './session.js?v=2.1.1';
-import { sessionDiscreteCSV, selection } from './builder.js?v=2.1.1';
-import { allVariables } from './vars.js?v=2.1.1';
+import { A, $, esc, fx, status, persist, withState, PALETTE, download, VERSION, APP } from './state.js?v=2.2.0';
+import { computeData, summaryRows } from './results.js?v=2.2.0';
+import { normalise, meanSd } from './normalise.js?v=2.2.0';
+import { mean, sd } from './maths.js?v=2.2.0';
+import { chart, legend } from './charts.js?v=2.2.0';
+import { label } from './session.js?v=2.2.0';
+import { sessionDiscreteCSV, selection } from './builder.js?v=2.2.0';
+import { allVariables } from './vars.js?v=2.2.0';
 
 let cache = null;
 const groupOf = (t, g) => (g === 'athlete' ? t.labels.athlete || '(no participant)' : g === 'condition' ? t.labels.condition || '(no condition)' : g === 'both' ? (t.labels.athlete || '?') + ' / ' + (t.labels.condition || '?') : 'All trials');

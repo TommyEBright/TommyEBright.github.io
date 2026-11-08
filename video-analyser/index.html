@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css?v=2.1.1">
+<link rel="stylesheet" href="css/style.css?v=2.2.0">
 </head>
 <body>
 <header class="top">
@@ -111,21 +111,14 @@
         <button class="tab" role="tab" type="button" data-t="points" aria-selected="false">3. Markers</button>
         <button class="tab" role="tab" type="button" data-t="digi" aria-selected="false">4. Digitise</button>
         <button class="tab" role="tab" type="button" data-t="events" aria-selected="false">5. Events</button>
+        <button class="tab" role="tab" type="button" data-t="force" aria-selected="false">6. Force</button>
         <button class="tab" role="tab" type="button" data-t="measure" aria-selected="false">Measure</button>
         <button class="tab" role="tab" type="button" data-t="files" aria-selected="false">Export</button>
       </div>
 
       <!-- SETUP -->
       <div class="pane" data-p="setup">
-        <p class="lead">Tell the tool about the video: what the movement is, which way the participant faces, and the frame rate.</p>
-        <label for="activity">What are you analysing?</label>
-        <select id="activity">
-          <option value="general">Any movement (e.g. squat, throw, kick, lift, gait)</option>
-          <option value="cycle">A repeating movement (e.g. cycling, rowing, walking)</option>
-          <option value="sprint">Running or sprinting (adds contact and step times)</option>
-          <option value="jump">Vertical jump (adds flight time and jump height)</option>
-        </select>
-        <p class="muted" id="actHelp" style="margin:.2rem 0 0"></p>
+        <p class="lead">Tell the tool about the video: which way the participant faces and the frame rate. You choose the movement later, in <strong>Events</strong> or <strong>Results</strong>.</p>
         <label for="dir">Which way is the participant facing (or moving)?</label>
         <select id="dir">
           <option value="right">Towards the right of the screen</option>
@@ -183,6 +176,7 @@
         <p class="lead">Name the markers you will digitise, in the order you will click them (e.g. Shoulder, Hip, Knee, Ankle, Toe, or a bat, ball or pedal). Then build any angles you want from them.</p>
         <h3>Markers</h3>
         <ul class="plain" id="ptList"></ul>
+        <p class="muted" style="margin:.2rem 0 .3rem">Set anything that is not a marker stuck on the body (e.g. a ball, bat or implement) to <strong>Object</strong>. Clicks on an object stay exactly where you click (no auto-centre).</p>
         <div class="row tight"><input type="text" id="ptNew" placeholder="Marker name (e.g. Knee)" style="flex:1 1 10rem"><button class="btn small" id="ptAdd" type="button">Add marker</button></div>
         <h3>Segments <span class="muted">(optional)</span></h3>
         <p class="muted" style="margin:0">Lines drawn between two markers on the video (e.g. Hip to Knee for the thigh). They are also used to check the tracking.</p>
@@ -208,12 +202,21 @@
 
       <!-- DIGITISE -->
       <div class="pane hide" data-p="digi">
-        <p class="lead">Click each marker on the video, or click them once and let the tool track them.</p>
+        <p class="lead">Click each marker on the video yourself (manual), or click them once and let the tool track them (automatic).</p>
+        <div class="seg" role="radiogroup" aria-label="How to digitise">
+          <button type="button" class="segbtn" data-dm="manual" role="radio">Manual: I click every frame</button>
+          <button type="button" class="segbtn" data-dm="auto" role="radio">Automatic: the tool tracks</button>
+        </div>
+        <p class="muted" id="dmHelp" style="margin:.3rem 0 .5rem"></p>
+        <div id="manOnly">
+          <label for="manSet">Click on each frame</label>
+          <select id="manSet"></select>
+        </div>
         <span class="lab">Next marker to click</span>
         <div class="chips" id="markerChips"></div>
         <p class="muted" style="margin:.2rem 0 .4rem">Click the video to place the highlighted marker. Drag a marker to move it. Click a chip to choose a marker yourself.</p>
         <label class="inline"><input type="checkbox" id="snap" checked> Auto-centre on markers: a click near a marker moves to its centre (turn off if there are no markers on the body)</label>
-        <div class="row">
+        <div class="row" id="manOpts">
           <div><label for="every">Digitise every</label>
             <select id="every"><option value="1">1 frame</option><option value="2">2 frames</option><option value="3">3 frames</option><option value="4" selected>4 frames</option><option value="6">6 frames</option><option value="8">8 frames</option></select></div>
           <div><label for="advance">After the last marker</label>
@@ -226,7 +229,7 @@
           <button class="btn ghost small" id="clearAll" type="button">Clear all markers</button>
         </div>
         <p class="readout" id="digiCount"></p>
-
+        <div id="autoOnly">
         <h3>Automatic tracking</h3>
         <ol class="muted" style="padding-left:1.2rem;margin:.2rem 0">
           <li>On a clear frame, click every marker once.</li>
@@ -261,10 +264,14 @@
             <div class="tablewrap" style="max-height:220px"><table id="flagTab"></table></div>
           </div>
         </details>
+        </div>
       </div>
 
       <!-- EVENTS -->
       <div class="pane hide" data-p="events">
+        <label for="evAct">Movement</label>
+        <select id="evAct" class="actSel"></select>
+        <p class="muted" id="actHelp" style="margin:.2rem 0 .6rem"></p>
         <p class="lead">Go to the frame where something happens, then click the event. Events give you times (e.g. movement time, contact time or cycle time), show as lines on every graph, give values at that instant, and mark the start and end of phases for time normalisation.</p>
         <div class="chips" id="eventBtns"></div>
         <div class="row tight"><input type="text" id="evNewType" placeholder="Add your own event (e.g. Ball release, Foot strike)" style="flex:1 1 12rem"><button class="btn ghost small" id="evAddType" type="button">Add event button</button></div>
@@ -297,6 +304,34 @@
         <div class="row tight" style="margin-top:.4rem"><button class="btn accent small" id="loopGo" type="button">Loop</button><button class="btn ghost small" id="loopStop" type="button">Stop</button></div>
       </div>
 
+      <!-- FORCE -->
+      <div class="pane hide" data-p="force">
+        <p class="lead">Line up force platform data with this video (e.g. a CMJ filmed while the force was recorded on another laptop). You find the same moment in both and the tool does the rest.</p>
+        <div class="row tight">
+          <label class="btn small filebtn">Load force file (.txt)<input type="file" id="fFile" accept=".txt,.csv,.tsv,.dat,text/plain,text/csv" aria-label="Load force file"></label>
+          <button class="btn ghost small" id="fDemo" type="button">Demo CMJ force data</button>
+        </div>
+        <p class="readout" id="fInfo">No force data for this trial yet.</p>
+        <div id="fOpts" class="hide">
+          <div class="row">
+            <div><label for="fUse">Force to use</label><select id="fUse"></select></div>
+            <div class="auto"><button class="btn accent small" id="fOpen" type="button">Open the sync view</button></div>
+            <div class="auto"><button class="btn ghost small" id="fRemove" type="button">Remove force data</button></div>
+          </div>
+          <p id="fSyncInfo"></p>
+        </div>
+        <details class="more">
+          <summary>How syncing works</summary>
+          <ol class="muted" style="padding-left:1.2rem;margin:.3rem 0">
+            <li>The two recordings start at slightly different times, so you pick one moment you can see in both. For a jump this is usually take-off (the last frame the feet touch the platform, and the instant force drops to zero) or landing.</li>
+            <li>In the sync view, move the video to that frame and the force cursor to that instant (zoom in to see every sample), then press <strong>Sync at these two points</strong>.</li>
+            <li>Then check a <strong>second moment</strong> (e.g. landing after a jump, the next foot contact in walking or running). If the video and force agree there to within about a frame, the sync and the frame rate are right.</li>
+            <li>Once synced, force appears in <strong>Results</strong> and in every export. It is shown as recorded (not filtered).</li>
+          </ol>
+          <p class="muted">The video limits how precise the sync can be: at 120 fps one frame is 8.3 ms, so the sync is good to about &plusmn;4 ms. The force file can be a BioWare (Kistler) export or any text or CSV file with a time column and force columns.</p>
+        </details>
+      </div>
+
       <!-- MEASURE -->
       <div class="pane hide" data-p="measure">
         <p class="lead">Quick measurements on the frame you are looking at, with no digitising (e.g. one angle at touchdown, or a step length).</p>
@@ -308,12 +343,23 @@
           <button class="btn small" id="m_inter" type="button">Angle between two lines</button>
         </div>
         <p class="muted" id="mHelp" style="margin:.4rem 0"></p>
+        <h3>Reference lines</h3>
+        <p class="muted" style="margin:0">Lines that stay on the video on every frame (e.g. a vertical line through the knee at the start, to see how far it travels forwards). Drag a line to move it while this tab is open.</p>
+        <div class="row tight">
+          <button class="btn small" id="r_h" type="button">Horizontal line</button>
+          <button class="btn small" id="r_v" type="button">Vertical line</button>
+          <button class="btn small" id="r_f" type="button">Line in any direction</button>
+          <label class="inline" style="margin:0"><input type="checkbox" id="refShow" checked> Show</label>
+        </div>
+        <div class="tablewrap" style="max-height:200px"><table id="refTab"></table></div>
+        <h3>Measurements</h3>
         <div class="tablewrap" style="max-height:280px"><table id="mTab"></table></div>
         <div class="tip">
           <p><strong>Joint angle:</strong> click three points with the joint in the middle (e.g. hip, knee, ankle). 180&deg; is straight.</p>
           <p><strong>Segment vs vertical:</strong> lower end then upper end (e.g. ankle then knee for the shin).</p>
           <p><strong>Segment vs horizontal:</strong> first end then second end (e.g. heel then toe).</p>
           <p><strong>Angle between two lines:</strong> two clicks for each line. The lines do not need to touch (e.g. trunk and thigh).</p>
+          <p><strong>Horizontal and vertical lines:</strong> one click where you want the line. They follow the calibration, so with tilt correction on they are truly level and upright. <strong>Line in any direction:</strong> click both ends; it shows its length and its angle from horizontal.</p>
         </div>
       </div>
 
@@ -370,11 +416,66 @@
     </section>
   </div>
 
+  <!-- FORCE SYNC -->
+  <section class="card full hide" id="fsCard">
+    <div class="card-head">
+      <h2>Sync video and force</h2>
+      <div class="row tight">
+        <button class="btn ghost small" id="fsFull" type="button">Full screen</button>
+        <button class="btn ghost small" id="fsClose" type="button">Close</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="muted" style="margin:0 0 .5rem">Click a side to use the arrow keys on it (<kbd>&larr;</kbd> <kbd>&rarr;</kbd> one frame or sample, <kbd>Shift</kbd> ten). Scroll on either side to zoom and drag to move around. Click the force graph to put the cursor there.</p>
+      <div class="fsgrid">
+        <div class="fspanel" id="fsVidPanel" tabindex="0">
+          <div class="fsbox"><canvas id="fsVid"></canvas></div>
+          <div class="ctrls">
+            <button class="btn ghost small" data-fv="-10" type="button">&laquo; 10</button>
+            <button class="btn ghost small" data-fv="-1" type="button">&lsaquo; 1</button>
+            <button class="btn ghost small" data-fv="1" type="button">1 &rsaquo;</button>
+            <button class="btn ghost small" data-fv="10" type="button">10 &raquo;</button>
+            <button class="btn ghost small" id="fsVidIn" type="button">Zoom in</button>
+            <button class="btn ghost small" id="fsVidOut" type="button">Zoom out</button>
+            <button class="btn ghost small" id="fsVidFit" type="button">Fit</button>
+          </div>
+          <p class="readout" id="fsVidRead"></p>
+        </div>
+        <div class="fspanel" id="fsForPanel" tabindex="0">
+          <div class="fsbox"><canvas id="fsFor"></canvas></div>
+          <div class="ctrls">
+            <button class="btn ghost small" data-ff="-10" type="button">&laquo; 10</button>
+            <button class="btn ghost small" data-ff="-1" type="button">&lsaquo; 1</button>
+            <button class="btn ghost small" data-ff="1" type="button">1 &rsaquo;</button>
+            <button class="btn ghost small" data-ff="10" type="button">10 &raquo;</button>
+            <button class="btn ghost small" id="fsZin" type="button">Zoom in</button>
+            <button class="btn ghost small" id="fsZout" type="button">Zoom out</button>
+            <button class="btn ghost small" id="fsFit" type="button">Show all</button>
+          </div>
+          <p class="readout" id="fsForRead"></p>
+        </div>
+      </div>
+      <div class="fssync">
+        <div class="row tight" style="align-items:center">
+          <label class="inline" for="fsName" style="margin:0">This moment is</label>
+          <select id="fsName" style="width:auto"><option>Take-off</option><option>Landing</option><option>Foot contact</option><option>Toe-off</option><option>Start of movement</option><option>Other</option></select>
+          <button class="btn accent small" id="fsSync" type="button">Sync at these two points</button>
+          <label class="inline" style="margin:0"><input type="checkbox" id="fsLink" disabled> Move together</label>
+          <button class="btn small" id="fsCheck" type="button" disabled>Check a second moment</button>
+          <button class="btn ghost small" id="fsUnsync" type="button" disabled>Remove sync</button>
+        </div>
+        <p id="fsMsg" class="status"></p>
+      </div>
+    </div>
+  </section>
+
   <!-- RESULTS -->
   <section class="card full" id="results">
     <div class="card-head">
       <h2>Results <span class="muted">(this trial)</span></h2>
       <div class="row tight">
+        <label class="inline" for="activity" style="margin:0">Results for</label>
+        <select id="activity" class="actSel" style="width:auto"></select>
         <label class="inline" style="margin:0"><input type="checkbox" id="filtOn" checked> Filter</label>
         <label class="inline" for="cutoff" style="margin:0">Cut-off (Hz)</label>
         <input type="number" id="cutoff" value="8" min="0.5" step="0.5" style="width:5.2rem">
@@ -385,6 +486,7 @@
     <div class="card-body">
       <div id="resMsg" class="muted">Digitise some frames, then press <strong>Update results</strong>.</div>
       <div id="resBody" class="hide">
+        <div id="resHint"></div>
         <div class="stats" id="keyStats"></div>
         <div id="keyTables"></div>
         <div class="row" style="align-items:flex-end">
@@ -404,6 +506,7 @@
           <div id="angWrap"><span class="lab">Angular position (angles)</span><svg class="chart" id="cAng" viewBox="0 0 640 300"></svg></div>
           <div id="angVelWrap"><span class="lab">Angular velocity</span><svg class="chart" id="cAngVel" viewBox="0 0 640 300"></svg></div>
           <div id="angAccWrap"><span class="lab">Angular acceleration</span><svg class="chart" id="cAngAcc" viewBox="0 0 640 300"></svg></div>
+          <div id="fChartWrap" class="hide"><span class="lab">Vertical ground reaction force</span><svg class="chart" id="cForce" viewBox="0 0 640 300"></svg></div>
           <div><span class="lab">What the lines mean</span><div id="legendBox" class="muted"></div></div>
         </div>
 
@@ -499,6 +602,8 @@
             <li><strong>Suggested events.</strong> Running: when the foot marker is near its lowest height and almost still (contact). Jumps: when the foot leaves and returns to the ground. Repeating movements: the highest and lowest point of a chosen marker in each cycle (turning points that stand out by at least a third of its up-and-down range). Always check each one frame by frame.</li>
             <li><strong>Marker tracking</strong> takes a small square of picture around each marker and finds the best match in the next frame (zero-mean normalised cross-correlation on colour, with sub-pixel refinement). It predicts where the marker will be from its last movement, compares against both the first and the latest appearance of the marker, and (with auto-centre on) pulls each match onto the marker&rsquo;s centre. It pauses for you to click a marker if the match drops below the strictness level, or if the position looks implausible: much further from where the marker was heading than on the frames before, a segment suddenly more than about 20% longer or shorter (or 35% different from the start), or two markers that were apart landing on the same spot.</li>
             <li><strong>Quality checks.</strong> In a side-on 2D view segment lengths (e.g. thigh) should stay about the same; a coefficient of variation over about 3 to 6% suggests out-of-plane movement or wrong positions. In a jump the hip should accelerate at about &minus;9.81 m/s&sup2; in the air; if not, check the calibration and the frame rate.</li>
+            <li><strong>Syncing force data.</strong> The video and the force platform start recording at slightly different times, so one moment seen in both (e.g. take-off) is lined up by hand: <span class="formula">offset = t<sub>video</sub> &minus; t<sub>force</sub></span> at that moment, and every force sample then has a video time of <span class="formula">t<sub>force</sub> + offset</span>. Force at a video frame is linearly interpolated between the two nearest samples. The check at a second moment compares the time between the two moments in the video with the time in the force data; if they differ by more than a frame or two, the frame rate, the slow-down setting or one of the moments is wrong. Force is shown and exported as recorded (not filtered). The sync can be no more precise than about half a frame (e.g. &plusmn;4 ms at 120 fps).</li>
+            <li><strong>Reference lines</strong> are drawn from the calibration, so horizontal and vertical lines are level and upright in the calibrated frame (and corrected for camera tilt if that is ticked). Their positions are given in the same x and y coordinates as the markers.</li>
             <li><strong>Comparing trials.</strong> Each trial is worked out on its own with its own calibration and events, using the same filter and normalisation settings. Group values are the mean &plusmn; SD of the trial values. Group curves are the mean &plusmn; SD of every normalised phase in that group.</li>
             <li><strong>2D limits.</strong> This is planar (2D) kinematics: movement towards or away from the camera is not measured and makes lengths and angles out of the plane wrong. A hip marker is a handy stand-in for the centre of mass, but arm and trunk movements shift the real centre of mass.</li>
           </ol>
@@ -510,9 +615,6 @@
   <footer>Kinematic Analysis. Works offline once loaded. Nothing is uploaded. Built by Dr Tommy Bright.</footer>
 </main>
 <script>window.addEventListener('error',function(e){var s=document.getElementById('status');if(s)s.innerHTML='<span class="bad"><strong>Something went wrong loading the tool.</strong> Try a hard refresh (Ctrl + Shift + R, or Cmd + Shift + R on a Mac). If it keeps happening, tell your tutor: '+(e.message||'')+'</span>';});</script>
-<script type="module" src="js/app.js?v=2.1.1"></script>
-<!-- SITE-NAV:START -->
-<nav aria-label="Site navigation" style="font:14px/1.6 system-ui,sans-serif;padding:14px 20px;margin-top:32px;border-top:1px solid #8884;text-align:center;opacity:.85"><a href="../index.html" style="color:inherit">Home</a> · <a href="../site-map.html" style="color:inherit">Site map</a> · <a href="../pages/biomechanics-hub.html" style="color:inherit">Biomechanics</a> · <a href="../sesc02-video-analysis.html" style="color:inherit">← Kinematic Video Analyser</a></nav>
-<!-- SITE-NAV:END -->
+<script type="module" src="js/app.js?v=2.2.0"></script>
 </body>
 </html>
