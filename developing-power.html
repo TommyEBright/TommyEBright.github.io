@@ -69,15 +69,29 @@
   .ro{background:#f5f8fa;border-radius:.6rem;padding:.7rem .9rem;margin:.5rem 0}
   .status{font-size:.9rem;color:var(--teal);font-weight:bold}
   details.how summary{cursor:pointer;color:var(--navy);font-weight:bold}
+
+  .zone{display:inline-block;padding:.15rem .6rem;border-radius:.5rem;color:#fff;font-weight:bold;font-size:1rem;font-family:Arial,sans-serif}
+  .z-strength{background:#003d50} .z-ss{background:#00857e} .z-sps{background:#0071bc} .z-speed{background:#e8a33d;color:#1d1d1b}
+  .zonebox{border-radius:.8rem;padding:.9rem 1rem;background:var(--tint);margin-top:.6rem}
+  .zonebox ul{margin:.3rem 0 0;padding-left:1.2rem}
+  .rec{border-radius:.7rem;padding:.8rem 1rem;margin:.6rem 0;background:#e6f4f2;border-left:.35rem solid var(--teal)}
+  .rec.plum{background:#f7ecf0;border-left-color:var(--plum)}
+  .rec.grey{background:#f5f8fa;border-left-color:#b9c7cf}
+  .rec b{color:var(--navy)}
+  .legend{display:flex;gap:1rem;flex-wrap:wrap;font-size:.88rem;color:var(--muted);margin:.4rem 0}
+  .legend span::before{content:"";display:inline-block;width:.9rem;height:.9rem;border-radius:.2rem;margin-right:.35rem;vertical-align:-.15rem;background:var(--c)}
+  .daybody select{min-width:150px}
+  .daywarn{margin:.3rem .8rem .6rem}
+  .daywarn .warn{margin:.3rem 0}
 </style>
 </head>
 <body>
 <header>
   <h1>Developing Power</h1>
-  <p>SESD56 · Week 11 · Is power overrated?</p>
+  <p>SESD56 · Week 11 · Get strong, move fast, train the weakest link, measure the outcome</p>
 </header>
 <nav class="tabs" aria-label="Tool tabs">
-  <button class="active" data-tab="t1">1 · Break the metric</button>
+  <button class="active" data-tab="t1">1 · The power map</button>
   <button data-tab="t2">2 · Plan your client's week</button>
 </nav>
 <main>
@@ -85,11 +99,57 @@
 <!-- ================= TAB 1 ================= -->
 <section class="tab active" id="t1">
   <div class="intro">
-    <strong>Your job:</strong> make power lie to you. Change the two jumps below and watch what happens to power, impulse and jump height. Each challenge ticks itself when you solve it.
+    <strong>Your job:</strong> find your way around the force–velocity curve. Pick an athlete, change the load on a jump squat, and see which training zone you're in and what happens to jump height and power. Then try to make power lie to you. The challenges tick themselves.
   </div>
 
   <div class="card">
-    <h2>Two jumps</h2>
+    <h2>The map: one exercise, any load</h2>
+    <p>An 80 kg athlete doing loaded jump squats from the same 40 cm depth. Only the added load changes.</p>
+    <div class="formgrid">
+      <div class="field"><label for="prof">Athlete (80 kg)</label>
+        <select id="prof">
+          <option value="strong">Strong but slow</option>
+          <option value="bal" selected>Balanced</option>
+          <option value="fast">Fast but less strong</option>
+        </select></div>
+      <div class="field"><label class="sl" for="load" style="margin:0">Added load <b><span id="load_v"></span> kg (<span id="load_pc"></span>% body mass)</b></label>
+        <input type="range" id="load" min="0" max="100" step="1" value="0"></div>
+    </div>
+    <div class="stat">
+      <div>Training zone<b id="l_zone"></b></div>
+      <div>Mean push velocity<b id="l_v"></b></div>
+      <div>Jump height<b id="l_h"></b></div>
+      <div>Mean power<b id="l_p"></b></div>
+      <div>Power peaks at<b id="l_peak"></b></div>
+    </div>
+    <canvas id="loadCanvas" width="900" height="330" aria-label="Mean power and jump height against added load, with training zones shaded"></canvas>
+    <div class="legend">
+      <span style="--c:#003d50">Strength end</span><span style="--c:#00857e">Strength-speed</span><span style="--c:#0071bc">Speed-strength</span><span style="--c:#e8a33d">Speed</span>
+      <span style="--c:#8b3556">Plum line: mean power</span><span style="--c:#00a29a">Teal line: jump height</span>
+    </div>
+    <div class="zonebox" id="zoneBox"></div>
+    <details class="how"><summary>How this model works</summary>
+      <p class="note">Each athlete has a straight-line force–velocity profile (strong but slow: 4000 N at zero velocity, 1.8 m/s at zero force; balanced: 3200 N, 2.2 m/s; fast: 2400 N, 3.0 m/s). For each load the model finds the push velocity the athlete can reach over a 40 cm push, then works out jump height and mean power. Zone bands follow the loaded jump examples in Turner et al. (Part 2, Table 2): body weight is speed, about 20% body mass is speed-strength, about 40% is strength-speed. Above about 75% body mass you're better off training strength with squats.</p>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2>Challenges</h2>
+    <ul class="challenges">
+      <li id="c1"><span class="tick">1</span><div><strong>Visit all four zones.</strong> For each one, name an exercise from the box under the chart that you'd give your client.
+        <details><summary>Hint</summary>Drag the load slider from 0 kg to 100 kg slowly.</details></div></li>
+      <li id="c2"><span class="tick">2</span><div><strong>Find the load where power peaks for all three athletes.</strong> Why does the strong athlete peak at a heavier load than the fast one?
+        <details><summary>Hint</summary>Move the slider until the marker sits on top of the plum curve, then switch athlete. Think about where each athlete is weakest.</details></div></li>
+      <li id="c3"><span class="tick">3</span><div><strong>Break the metric:</strong> make Jump B more powerful than Jump A, but lower.
+        <details><summary>Hint</summary>Give Jump B a shorter push distance and a much shorter push time.</details></div></li>
+      <li id="c4"><span class="tick">4</span><div><strong>Make the two jumps the same height (within 1 cm), with power at least 15% apart.</strong>
+        <details><summary>Hint</summary>Height depends on push distance ÷ push time. Keep that ratio the same and make both numbers smaller.</details></div></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Break the metric: two jumps</h2>
+    <p>Power is useful on the map above because the depth of the jump stays the same. Change the depth and time of a jump and power can mislead you. Try challenges 3 and 4.</p>
     <div class="grid2">
       <div class="jump a">
         <h3>Jump A</h3>
@@ -131,41 +191,6 @@
     </details>
   </div>
 
-  <div class="card">
-    <h2>Challenges</h2>
-    <ul class="challenges">
-      <li id="c1"><span class="tick">1</span><div><strong>Make Jump B more powerful than Jump A, but lower.</strong>
-        <details><summary>Hint</summary>Give Jump B a shorter push distance and a much shorter push time.</details></div></li>
-      <li id="c2"><span class="tick">2</span><div><strong>Make the two jumps the same height (within 1 cm), with power at least 15% apart.</strong>
-        <details><summary>Hint</summary>Height depends on push distance ÷ push time. Keep that ratio the same and make both numbers smaller.</details></div></li>
-      <li id="c3"><span class="tick">3</span><div><strong>Make Jump B heavier and better on W/kg, but still lower.</strong> (B at least 10 kg heavier.)
-        <details><summary>Hint</summary>Dividing by body mass doesn't fix the problem. Use the trick from challenge 1 on a heavier Jump B.</details></div></li>
-      <li id="c4"><span class="tick">4</span><div><strong>Loaded jumps (below): find the load where mean power peaks, for at least two athletes.</strong> What happens to jump height at that load?
-        <details><summary>Hint</summary>Move the load slider until the marker sits on the top of the power curve, then switch athlete.</details></div></li>
-    </ul>
-  </div>
-
-  <div class="card">
-    <h2>Loaded jumps: when power is useful</h2>
-    <p>Same athlete, same exercise, same depth (40 cm). Only the added load changes. Here power answers a fair question: <em>which load sits at the top of this athlete's curve?</em></p>
-    <div class="formgrid">
-      <div class="field"><label for="prof">Athlete (80 kg)</label>
-        <select id="prof">
-          <option value="strong">Strong but slow</option>
-          <option value="bal" selected>Balanced</option>
-          <option value="fast">Fast but less strong</option>
-        </select></div>
-      <div class="field"><label class="sl" for="load" style="margin:0">Added load <b><span id="load_v"></span> kg</b></label>
-        <input type="range" id="load" min="0" max="100" step="5" value="0"></div>
-    </div>
-    <div class="stat">
-      <div>Jump height<b id="l_h"></b></div>
-      <div>Mean power<b id="l_p"></b></div>
-      <div>Mean power peaks at<b id="l_peak"></b></div>
-    </div>
-    <canvas id="loadCanvas" width="900" height="320" aria-label="Mean power and jump height against added load"></canvas>
-    <p class="note">Plum line: mean power. Teal line: jump height. Height falls with every kilo, but power peaks at a different load for each athlete. Model: a straight-line force–velocity profile for each athlete (strong but slow: 4000 N, 1.8 m/s; balanced: 3200 N, 2.2 m/s; fast: 2400 N, 3.0 m/s).</p>
-  </div>
 
   <div class="card">
     <h2>Squat demo calculator</h2>
@@ -184,10 +209,11 @@
     <p class="note">Simplified: force is taken as body weight (mass × 9.81). Real fast-squat forces are higher.</p>
   </div>
 
+
   <div class="card">
-    <h2>Your answer</h2>
-    <div class="field"><label for="q_trust">When would you trust power?</label><textarea id="q_trust" data-save></textarea></div>
-    <div class="field"><label for="q_not">When wouldn't you, and what would you look at instead?</label><textarea id="q_not" data-save></textarea></div>
+    <h2>Your answers</h2>
+    <div class="field"><label for="q_zone">Which zone would you start your client in, and why?</label><textarea id="q_zone" data-save></textarea></div>
+    <div class="field"><label for="q_trust">When would you trust power, and what would you report alongside it?</label><textarea id="q_trust" data-save></textarea></div>
     <p class="note">Saved on this device.</p>
   </div>
 </section>
@@ -195,7 +221,7 @@
 <!-- ================= TAB 2 ================= -->
 <section class="tab" id="t2">
   <div class="intro">
-    <strong>Plan one week for a real client</strong>, ideally your assessment client. The focus is your choice: strength, power, hypertrophy, return to play, health... whatever fits them. It saves on this device as you go, but <strong>download it before you leave</strong>.
+    <strong>Plan one week for a real client</strong>, ideally your assessment client. Work through the sections in order: who they are, which emphasis they need, then the week. The tool flags anything that doesn't match the planning reference slide. It saves on this device as you go, but <strong>download it before you leave</strong>.
   </div>
 
   <div class="card">
@@ -214,36 +240,47 @@
   </div>
 
   <div class="card">
-    <h2>2 · This week's focus</h2>
+    <h2>2 · Which emphasis do they need?</h2>
+    <p class="note">Rule 5: train the weakest link. If you can't test a 1RM, use an estimate (e.g. from a 3–5RM) and say so.</p>
     <div class="formgrid">
-      <div class="field"><label for="f_focus">Main focus</label>
-        <select id="f_focus"><option value="">Choose...</option><option>Maximal strength</option><option>Power / rapid force production</option><option>Hypertrophy</option><option>Return to play / rehab</option><option>General health and fitness</option><option>Sport conditioning</option><option>Other</option></select></div>
+      <div class="field"><label for="c_bm">Body mass (kg)</label><input type="number" id="c_bm" min="30" max="200" step="0.5"></div>
+      <div class="field"><label for="c_1rm">Back squat 1RM, tested or estimated (kg)</label><input type="number" id="c_1rm" min="0" max="400" step="0.5"></div>
+      <div class="field"><label for="c_prof">How do they jump?</label>
+        <select id="c_prof"><option value="">Not tested yet</option><option value="A">Slow and grindy: high peak force, slow to get there (athlete A)</option><option value="B">Quick but low: fast rise, low peak force (athlete B)</option><option value="even">No obvious weakness</option></select></div>
+    </div>
+    <div id="recBox"></div>
+    <div class="formgrid">
+      <div class="field"><label for="f_focus">Main emphasis this week</label>
+        <select id="f_focus"><option value="">Choose...</option><option>Strength emphasis (power kept in)</option><option>Power emphasis (strength kept in)</option><option>Mixed strength and power</option><option>Hypertrophy</option><option>Return to play / rehab</option><option>General health and fitness</option><option>Other</option></select></div>
       <div class="field"><label for="f_other">If other, what?</label><input type="text" id="f_other"></div>
     </div>
-    <div class="field"><label for="f_why">Why is this the right focus for this client?</label><textarea id="f_why"></textarea></div>
+    <div class="field"><label for="f_why">Why is this the right emphasis for this client? Use the reading.</label><textarea id="f_why"></textarea></div>
   </div>
 
   <div class="card">
     <h2>3 · The week</h2>
-    <p class="note">Set each day's type, then add exercises. Load can be %1RM, RPE, RIR or kg. Give a reason for every exercise.</p>
+    <p class="note">Set each day's type, then add exercises in the order they'll be done. Pick a zone for every exercise (see tab 1 and the slides). Load can be %1RM, %BM, RPE or kg. Give a reason for every exercise.</p>
     <div id="days"></div>
-    <div id="plyoWarn"></div>
+    <div id="weekWarn"></div>
   </div>
 
   <div class="card">
     <h2>4 · How will you know it's working?</h2>
-    <div class="field"><label for="m_metric">What will you measure?</label><input type="text" id="m_metric" placeholder="e.g. CMJ height and propulsion time, 3RM back squat"></div>
-    <div class="field"><label for="m_why">Why that metric? If you chose power, what will you report alongside it?</label><textarea id="m_why"></textarea></div>
+    <div class="formgrid">
+      <div class="field"><label for="m_metric">Outcome measure</label><input type="text" id="m_metric" placeholder="e.g. CMJ height, 10 m sprint time"></div>
+      <div class="field"><label for="m_strat">Strategy measure</label><input type="text" id="m_strat" placeholder="e.g. time to take-off, RSI-modified"></div>
+    </div>
+    <div class="field"><label for="m_why">Why these? If you report power, why, and what goes alongside it?</label><textarea id="m_why"></textarea></div>
   </div>
 
   <div class="card checks">
     <h2>5 · Check before you download</h2>
-    <label><input type="checkbox" id="k1"> The focus fits the client, and we've said why</label>
-    <label><input type="checkbox" id="k2"> Every exercise has a reason</label>
-    <label><input type="checkbox" id="k3"> Loads, sets, reps and rest match the focus (see the planning reference slides)</label>
-    <label><input type="checkbox" id="k4"> Their sport or other training is counted in the week</label>
-    <label><input type="checkbox" id="k5"> 48–72 h between plyometric days</label>
-    <label><input type="checkbox" id="k6"> We've chosen a metric, and if it's power, what goes alongside it</label>
+    <label><input type="checkbox" id="k1"> The emphasis fits the client's strength and jump profile, and we've said why</label>
+    <label><input type="checkbox" id="k2"> Every exercise has a zone and a reason</label>
+    <label><input type="checkbox" id="k3"> Power exercises come first in the session, with low reps and 2–5 min rest</label>
+    <label><input type="checkbox" id="k4"> Strength is still in the week, even with a power emphasis</label>
+    <label><input type="checkbox" id="k5"> Their sport or other training is counted, and plyometric days are 48–72 h apart</label>
+    <label><input type="checkbox" id="k6"> We have an outcome and a strategy measure</label>
     <p>
       <button class="btn teal" id="dl">Download plan (Excel)</button>
       <button class="btn light" id="clearBtn">Start a new plan</button>
@@ -252,7 +289,23 @@
   </div>
 
   <div class="card">
-    <h2>6 · Review another pair's plan</h2>
+    <h2>6 · Planning reference</h2>
+    <table>
+      <thead><tr><th>Goal</th><th>Load</th><th>Reps</th><th>Sets</th><th>Rest</th></tr></thead>
+      <tbody>
+        <tr><td>Strength</td><td>≥85% 1RM</td><td>≤6</td><td>2–6</td><td>2–5 min</td></tr>
+        <tr><td>Power: single effort</td><td>80–90% 1RM</td><td>1–2</td><td>3–5</td><td>2–5 min</td></tr>
+        <tr><td>Power: multiple effort</td><td>75–85% 1RM</td><td>3–5</td><td>3–5</td><td>2–5 min</td></tr>
+        <tr><td>Weightlifting derivatives (Cormie)</td><td>50–90% 1RM</td><td>1–5</td><td>3–5</td><td>2–5 min</td></tr>
+        <tr><td>Ballistic lifts (Cormie)</td><td>0–50% 1RM</td><td>1–6</td><td>3–5</td><td>2–5 min</td></tr>
+        <tr><td>Hypertrophy</td><td>67–85% 1RM</td><td>6–12</td><td>3–6</td><td>30–90 s</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Plyometric foot contacts per session: beginner 80–100, intermediate 100–120, advanced 120–140, with 48–72 h between sessions. Sources: Haff (Ed.), Essentials, Table 18.11 and Ch. 19; Cormie et al. (2011).</p>
+  </div>
+
+  <div class="card">
+    <h2>7 · Review another pair's plan</h2>
     <p>Upload the other pair's Excel file, read their plan, then leave one strength, one change and one question. Download it and give it back to them. If you get your own file back, upload it here to read their feedback.</p>
     <input type="file" id="up" accept=".xlsx">
     <div id="reviewArea"></div>
@@ -279,7 +332,92 @@ document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("cl
   if (b.dataset.tab === "t1") { drawFT(); drawLoad(); }
 }));
 
-// ---------- jump model ----------
+const done = store.get("dp2_challenges") || {};
+function mark(id, ok){
+  if (ok) done[id] = true;
+  $(id).classList.toggle("done", !!done[id]);
+  $(id).querySelector(".tick").textContent = done[id] ? "✓" : id.slice(1);
+  store.set("dp2_challenges", done);
+}
+
+// ---------- the map ----------
+const profiles = { strong: {F0:4000, v0:1.8}, bal: {F0:3200, v0:2.2}, fast: {F0:2400, v0:3.0} };
+const MB = 80, DEPTH = 0.40;
+const ZONES = [
+  {key:"speed", max:10, name:"Speed", cls:"z-speed", col:"#e8a33d", use:"Fast, light work at the high-velocity end of the curve.", ex:["Body-weight jump squats and box jumps","Medicine ball throws","Seated medicine ball chest pass"]},
+  {key:"sps", max:30, name:"Speed-strength", cls:"z-sps", col:"#0071bc", use:"Light loads moved fast. Power usually peaks around here for most people.", ex:["Jump squat at about 20% body mass","Power snatch","Box jump","Plyometric push-up"]},
+  {key:"ss", max:75, name:"Strength-speed", cls:"z-ss", col:"#00857e", use:"Heavier loads moved as fast as possible.", ex:["Jump squat at about 40% body mass","Jump shrug from the hang","Power clean and mid-thigh pull","Bench press throw"]},
+  {key:"strength", max:999, name:"Strength end", cls:"z-strength", col:"#003d50", use:"Jumps get slow and heavy here. Train this end with heavy strength lifts instead.", ex:["Back squat, deadlift, bench press (≥85% 1RM, ≤6 reps)","Heavy pulls from the knee or mid-thigh"]},
+];
+function zoneOf(pcBM){ return ZONES.find(z => pcBM <= z.max); }
+function loaded(pr, load){
+  const m = MB + load; let lo = 0, hi = pr.v0, vb = 0;
+  for (let i=0; i<80; i++){
+    vb = (lo+hi)/2; const F = pr.F0*(1-vb/pr.v0), a = F/m - g;
+    if (a <= 0) { hi = vb; continue; }
+    if (Math.sqrt(a*DEPTH/2) > vb) lo = vb; else hi = vb;
+  }
+  const F = pr.F0*(1-vb/pr.v0), vto = 2*vb;
+  return { h: vto*vto/(2*g)*100, P: F*vb, v: vb };
+}
+function peakLoad(pr){ let best = 0, bp = -1; for (let L=0; L<=100; L+=1){ const r = loaded(pr,L); if (r.P > bp){ bp = r.P; best = L; } } return best; }
+const found = new Set(store.get("dp2_found") || []);
+const zonesSeen = new Set(store.get("dp2_zones") || []);
+function updateLoad(){
+  const pk_ = $("prof").value, pr = profiles[pk_], L = +$("load").value, r = loaded(pr, L), pk = peakLoad(pr);
+  const pc = L/MB*100, z = zoneOf(pc);
+  $("load_v").textContent = L; $("load_pc").textContent = Math.round(pc);
+  $("l_zone").innerHTML = `<span class="zone ${z.cls}">${z.name}</span>`;
+  $("l_v").textContent = r.v.toFixed(2) + " m/s";
+  $("l_h").textContent = r.h.toFixed(1) + " cm";
+  $("l_p").textContent = Math.round(r.P) + " W";
+  $("l_peak").textContent = pk === 0 ? "body weight" : `+${pk} kg (${Math.round(pk/MB*100)}% BM)`;
+  $("zoneBox").innerHTML = `<strong>${z.name}:</strong> ${z.use}<ul>${z.ex.map(e=>`<li>${e}</li>`).join("")}</ul>`;
+  zonesSeen.add(z.key); store.set("dp2_zones", [...zonesSeen]);
+  if (Math.abs(L - pk) <= 1) { found.add(pk_); store.set("dp2_found", [...found]); }
+  mark("c1", zonesSeen.size >= 4);
+  mark("c2", found.size >= 3);
+  drawLoad();
+}
+function prepCanvas(c){
+  const r = c.getBoundingClientRect(); if (!r.width) return null;
+  const dpr = window.devicePixelRatio || 1, w = r.width, h = w * c.height / c.width;
+  c.style.height = h + "px"; c.width = Math.round(w*dpr); c.height = Math.round(h*dpr);
+  const x = c.getContext("2d"); x.setTransform(dpr,0,0,dpr,0,0); return {x, w, h};
+}
+function drawLoad(){
+  const c = $("loadCanvas"); c.width = 900; c.height = 330;
+  const p = prepCanvas(c); if (!p) return;
+  const {x, w, h} = p, L = 62, R = 62, T = 18, Bm = 42;
+  const pr = profiles[$("prof").value], cur = +$("load").value, pk = peakLoad(pr);
+  const pts = []; for (let l=0; l<=100; l+=1) pts.push([l, loaded(pr,l)]);
+  const pMin = 1000, pMax = 2000, hMax = 40;
+  const sx = l => L + l/100*(w-L-R), sp = P => h-Bm - (P-pMin)/(pMax-pMin)*(h-T-Bm), sh = H => h-Bm - H/hMax*(h-T-Bm);
+  x.clearRect(0,0,w,h);
+  let prev = 0;
+  ZONES.forEach(z => { const hiKg = Math.min(100, z.max*MB/100); x.globalAlpha = 0.10; x.fillStyle = z.col; x.fillRect(sx(prev), T, sx(hiKg)-sx(prev), h-T-Bm); x.globalAlpha = 1;
+    x.fillStyle = z.col; x.font = "bold 12px Arial"; x.textAlign = "center"; if (sx(hiKg)-sx(prev) > 60) x.fillText(z.name, (sx(prev)+sx(hiKg))/2, T+14); prev = hiKg; });
+  x.font = "12px Arial"; x.strokeStyle = "#e3eaee";
+  for (let i=0;i<=4;i++){ const P = pMin + i*(pMax-pMin)/4; x.beginPath(); x.moveTo(L,sp(P)); x.lineTo(w-R,sp(P)); x.stroke();
+    x.fillStyle="#8b3556"; x.textAlign="right"; x.fillText(Math.round(P), L-6, sp(P)+4);
+    x.fillStyle="#00857e"; x.textAlign="left"; x.fillText((i*hMax/4).toFixed(0), w-R+6, sp(P)+4); }
+  x.fillStyle = "#5e7c88"; x.textAlign = "center";
+  for (let l=0;l<=100;l+=20) x.fillText(l, sx(l), h-Bm+16);
+  x.fillText("Added load (kg) on an 80 kg athlete", L+(w-L-R)/2, h-6);
+  x.save(); x.translate(14, T+(h-T-Bm)/2); x.rotate(-Math.PI/2); x.fillStyle="#8b3556"; x.fillText("Mean power (W)",0,0); x.restore();
+  x.save(); x.translate(w-12, T+(h-T-Bm)/2); x.rotate(Math.PI/2); x.fillStyle="#00857e"; x.fillText("Jump height (cm)",0,0); x.restore();
+  const line = (fy, col) => { x.strokeStyle = col; x.lineWidth = 3; x.beginPath(); pts.forEach(([l,r],i) => { const yy = fy(r); i ? x.lineTo(sx(l),yy) : x.moveTo(sx(l),yy); }); x.stroke(); };
+  line(r => sp(Math.max(pMin, Math.min(pMax, r.P))), "#8b3556");
+  line(r => sh(r.h), "#00a29a");
+  x.lineWidth = 1;
+  const rp = loaded(pr, pk); x.fillStyle = "#8b3556"; x.beginPath(); x.arc(sx(pk), sp(rp.P), 6, 0, 2*Math.PI); x.fill();
+  x.textAlign = pk > 80 ? "right" : "left"; x.font = "bold 12px Arial"; x.fillText("peak power", sx(pk) + (pk > 80 ? -10 : 10), sp(rp.P) - 8);
+  x.strokeStyle = "#003d50"; x.setLineDash([5,4]); x.lineWidth = 1.5; x.beginPath(); x.moveTo(sx(cur), T); x.lineTo(sx(cur), h-Bm); x.stroke(); x.setLineDash([]); x.lineWidth = 1;
+}
+$("prof").addEventListener("change", updateLoad);
+$("load").addEventListener("input", updateLoad);
+
+// ---------- two jumps ----------
 function jump(m, dcm, t){
   const d = dcm/100, a = 2*d/(t*t), v = a*t, F = m*(g+a), W = F*d, P = W/t;
   return { h: v*v/(2*g)*100, v, J: m*v, F, W, P, rel: P/m, netF: m*a, t };
@@ -295,13 +433,6 @@ const rows = [
   ["Mean power (W)", "P", 0, true],
   ["Relative power (W/kg)", "rel", 1, true],
 ];
-const done = store.get("dp_challenges") || {};
-function mark(id, ok){
-  if (ok) done[id] = true;
-  $(id).classList.toggle("done", !!done[id]);
-  $(id).querySelector(".tick").textContent = done[id] ? "✓" : id.slice(1);
-  store.set("dp_challenges", done);
-}
 let A, B;
 function updateJumps(){
   ["a","b"].forEach(k => ids.forEach(p => {
@@ -315,22 +446,14 @@ function updateJumps(){
     const pcs = Math.abs(pc) < 0.5 ? "same" : (pc > 0 ? "+" : "") + pc.toFixed(0) + "%";
     return `<tr class="${keyRow ? "key" : ""}"><td>${lab}</td><td class="num">${A[key].toFixed(dp)}</td><td class="num">${B[key].toFixed(dp)}</td><td class="num ${cls}">${pcs}</td></tr>`;
   }).join("");
-  mark("c1", B.P > A.P && B.h < A.h - 0.5);
-  mark("c2", Math.abs(A.h - B.h) < 1 && Math.abs(B.P/A.P - 1) >= 0.15);
-  mark("c3", (+$("b_m").value) - (+$("a_m").value) >= 10 && B.rel > A.rel && B.h < A.h - 0.5);
+  mark("c3", B.P > A.P && B.h < A.h - 0.5);
+  mark("c4", Math.abs(A.h - B.h) < 1 && Math.abs(B.P/A.P - 1) >= 0.15);
   drawFT();
 }
 ["a","b"].forEach(k => ids.forEach(p => $(k+"_"+p).addEventListener("input", updateJumps)));
 function setJ(k, m, d, t){ $(k+"_m").value = m; $(k+"_d").value = d; $(k+"_t").value = t; }
 $("presetSame").addEventListener("click", () => { setJ("a",80,40,0.28); setJ("b",80,40,0.28); updateJumps(); });
 $("presetLake").addEventListener("click", () => { setJ("a",80,45,0.30); setJ("b",80,25,0.18); updateJumps(); });
-
-function prepCanvas(c){
-  const r = c.getBoundingClientRect(); if (!r.width) return null;
-  const dpr = window.devicePixelRatio || 1, w = r.width, h = w * c.height / c.width;
-  c.style.height = h + "px"; c.width = Math.round(w*dpr); c.height = Math.round(h*dpr);
-  const x = c.getContext("2d"); x.setTransform(dpr,0,0,dpr,0,0); return {x, w, h};
-}
 function drawFT(){
   const ftc = $("ftCanvas");
   ftc.width = 560; ftc.height = 300;
@@ -354,59 +477,6 @@ function drawFT(){
   x.lineWidth = 1;
 }
 
-// ---------- loaded jumps ----------
-const profiles = { strong: {F0:4000, v0:1.8, name:"Strong but slow"}, bal: {F0:3200, v0:2.2, name:"Balanced"}, fast: {F0:2400, v0:3.0, name:"Fast but less strong"} };
-const MB = 80, DEPTH = 0.40;
-function loaded(pr, load){
-  const m = MB + load; let lo = 0, hi = pr.v0, vb = 0;
-  for (let i=0; i<80; i++){
-    vb = (lo+hi)/2; const F = pr.F0*(1-vb/pr.v0), a = F/m - g;
-    if (a <= 0) { hi = vb; continue; }
-    if (Math.sqrt(a*DEPTH/2) > vb) lo = vb; else hi = vb;
-  }
-  const F = pr.F0*(1-vb/pr.v0), vto = 2*vb;
-  return { h: vto*vto/(2*g)*100, P: F*vb };
-}
-const found = new Set(store.get("dp_found") || []);
-function peakLoad(pr){ let best = 0, bp = -1; for (let L=0; L<=100; L+=5){ const r = loaded(pr,L); if (r.P > bp){ bp = r.P; best = L; } } return best; }
-function updateLoad(){
-  const pr = profiles[$("prof").value], L = +$("load").value, r = loaded(pr, L), pk = peakLoad(pr);
-  $("load_v").textContent = L;
-  $("l_h").textContent = r.h.toFixed(1) + " cm";
-  $("l_p").textContent = Math.round(r.P) + " W";
-  $("l_peak").textContent = pk === 0 ? "body weight" : `+${pk} kg`;
-  if (L === pk) { found.add($("prof").value); store.set("dp_found", [...found]); }
-  mark("c4", found.size >= 2);
-  drawLoad();
-}
-function drawLoad(){
-  const c = $("loadCanvas"); c.width = 900; c.height = 320;
-  const p = prepCanvas(c); if (!p) return;
-  const {x, w, h} = p, L = 62, R = 62, T = 18, Bm = 42;
-  const pr = profiles[$("prof").value], cur = +$("load").value, pk = peakLoad(pr);
-  const pts = []; for (let l=0; l<=100; l+=1) pts.push([l, loaded(pr,l)]);
-  const pMin = 1000, pMax = 2000, hMax = 40;
-  const sx = l => L + l/100*(w-L-R), sp = P => h-Bm - (P-pMin)/(pMax-pMin)*(h-T-Bm), sh = H => h-Bm - H/hMax*(h-T-Bm);
-  x.clearRect(0,0,w,h); x.font = "12px Arial"; x.strokeStyle = "#e3eaee";
-  for (let i=0;i<=4;i++){ const P = pMin + i*(pMax-pMin)/4; x.beginPath(); x.moveTo(L,sp(P)); x.lineTo(w-R,sp(P)); x.stroke();
-    x.fillStyle="#8b3556"; x.textAlign="right"; x.fillText(Math.round(P), L-6, sp(P)+4);
-    x.fillStyle="#00857e"; x.textAlign="left"; x.fillText((i*hMax/4).toFixed(0), w-R+6, sp(P)+4); }
-  x.fillStyle = "#5e7c88"; x.textAlign = "center";
-  for (let l=0;l<=100;l+=20) x.fillText(l, sx(l), h-Bm+16);
-  x.fillText("Added load (kg)", L+(w-L-R)/2, h-6);
-  x.save(); x.translate(14, T+(h-T-Bm)/2); x.rotate(-Math.PI/2); x.fillStyle="#8b3556"; x.fillText("Mean power (W)",0,0); x.restore();
-  x.save(); x.translate(w-12, T+(h-T-Bm)/2); x.rotate(Math.PI/2); x.fillStyle="#00857e"; x.fillText("Jump height (cm)",0,0); x.restore();
-  const line = (fy, col) => { x.strokeStyle = col; x.lineWidth = 3; x.beginPath(); pts.forEach(([l,r],i) => { const yy = fy(r); i ? x.lineTo(sx(l),yy) : x.moveTo(sx(l),yy); }); x.stroke(); };
-  line(r => sp(Math.max(pMin, Math.min(pMax, r.P))), "#8b3556");
-  line(r => sh(r.h), "#00857e");
-  x.lineWidth = 1;
-  const rp = loaded(pr, pk); x.fillStyle = "#8b3556"; x.beginPath(); x.arc(sx(pk), sp(rp.P), 6, 0, 2*Math.PI); x.fill();
-  x.textAlign = pk > 80 ? "right" : "left"; x.font = "bold 12px Arial"; x.fillText("peak power", sx(pk) + (pk > 80 ? -10 : 10), sp(rp.P) - 8);
-  x.strokeStyle = "#003d50"; x.setLineDash([5,4]); x.lineWidth = 1.5; x.beginPath(); x.moveTo(sx(cur), T); x.lineTo(sx(cur), h-Bm); x.stroke(); x.setLineDash([]); x.lineWidth = 1;
-}
-$("prof").addEventListener("change", updateLoad);
-$("load").addEventListener("input", updateLoad);
-
 // ---------- squat calc ----------
 function updateSq(){
   const m = +$("sq_m").value, d = +$("sq_d").value, ts = +$("sq_ts").value, tf = +$("sq_tf").value;
@@ -416,22 +486,57 @@ function updateSq(){
   $("sq_pf").textContent = tf > 0 ? Math.round(W/tf) + " W" : "–";
 }
 ["sq_m","sq_d","sq_ts","sq_tf"].forEach(i => $(i).addEventListener("input", updateSq));
-
-// saved answers
 document.querySelectorAll("[data-save]").forEach(el => {
-  const v = store.get("dp_"+el.id); if (v) el.value = v;
-  el.addEventListener("input", () => store.set("dp_"+el.id, el.value));
+  const v = store.get("dp2_"+el.id); if (v) el.value = v;
+  el.addEventListener("input", () => store.set("dp2_"+el.id, el.value));
 });
 
 // ---------- planner ----------
 const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 const TYPES = ["Rest","Gym","Plyometrics","Gym + plyometrics","Sport / match","Conditioning","Other"];
-const COLS = [["ex","Exercise"],["sets","Sets"],["reps","Reps / contacts"],["load","Load / intensity"],["rest","Rest"],["cue","Cue or intent"],["reason","Reason"]];
-const FIELDS = ["p_pair","c_name","c_sport","c_age","c_tage","c_sessions","c_other","c_notes","f_focus","f_other","f_why","m_metric","m_why"];
-const LABELS = {p_pair:"Planned by",c_name:"Client",c_sport:"Sport or activity",c_age:"Age",c_tage:"Training experience",c_sessions:"Gym sessions per week",c_other:"Other training or matches",c_notes:"Other notes",f_focus:"Main focus",f_other:"Focus (other)",f_why:"Why this focus",m_metric:"Metric to track",m_why:"Why this metric"};
+const ZONE_OPTS = ["","Strength","Strength-speed","Speed-strength","Speed","Plyometric","Other / accessory"];
+const POWERZ = ["Strength-speed","Speed-strength","Speed"];
+const COLS = [["ex","Exercise"],["zone","Zone"],["sets","Sets"],["reps","Reps / contacts"],["load","Load / intensity"],["rest","Rest"],["cue","Cue or intent"],["reason","Reason"]];
+const FIELDS = ["p_pair","c_name","c_sport","c_age","c_tage","c_sessions","c_other","c_notes","c_bm","c_1rm","c_prof","f_focus","f_other","f_why","m_metric","m_strat","m_why"];
+const LABELS = {p_pair:"Planned by",c_name:"Client",c_sport:"Sport or activity",c_age:"Age",c_tage:"Training experience",c_sessions:"Gym sessions per week",c_other:"Other training or matches",c_notes:"Other notes",c_bm:"Body mass (kg)",c_1rm:"Back squat 1RM (kg)",c_prof:"Jump profile",f_focus:"Main emphasis",f_other:"Emphasis (other)",f_why:"Why this emphasis",m_metric:"Outcome measure",m_strat:"Strategy measure",m_why:"Why these measures"};
+const PROF_TXT = {"":"Not tested yet", A:"Slow and grindy (athlete A)", B:"Quick but low (athlete B)", even:"No obvious weakness"};
 function blankPlan(){ return { fields:{}, days: DAYS.map(d => ({day:d, type:"Rest", items:[]})), checks:{} }; }
-let plan = store.get("dp_plan") || blankPlan();
+let plan = store.get("dp2_plan") || blankPlan();
 
+function recommend(){
+  const bm = +plan.fields.c_bm, rm = +plan.fields.c_1rm, prof = plan.fields.c_prof || "";
+  if (!bm || !rm){ $("recBox").innerHTML = `<div class="rec grey">Enter body mass and back squat to get a suggested emphasis.</div>`; return; }
+  const r = rm/bm, rs = r.toFixed(2) + "× body mass";
+  let html;
+  if (r < 1.6) html = `<div class="rec plum"><b>${rs}: strength emphasis.</b> Under about 1.6× body mass, getting stronger is the quickest way to more power (Cormie et al., 2010; Turner et al., Part 2). Keep some low-level plyometrics, landing skills or medicine ball work in, done fast.</div>`;
+  else if (prof === "A") html = `<div class="rec"><b>${rs}, slow and grindy: power emphasis.</b> Strong enough, but slow to produce force. Emphasise ballistic lifts, weightlifting derivatives and plyometrics, and keep one heavy strength day in. Swap the emphasis after re-testing.</div>`;
+  else if (prof === "B") html = `<div class="rec plum"><b>${rs}, quick but low: strength emphasis.</b> Fast, but a low peak force. Emphasise heavy strength work and keep some power work in so it doesn't fade. Swap the emphasis after re-testing.</div>`;
+  else html = `<div class="rec grey"><b>${rs}: strong enough for mixed strength and power work.</b> Test their jump (or look at their force–time curve) to decide which to emphasise. With no obvious weakness, mix both.</div>`;
+  $("recBox").innerHTML = html;
+}
+function num(s){ const m = String(s||"").match(/\d+(\.\d+)?/); return m ? +m[0] : NaN; }
+function rowWarnings(it){
+  const w = [], ex = (it.ex||"").toLowerCase(), load = String(it.load||""), pc = /%/.test(load) && /1\s*rm|%\s*$|rm/i.test(load) && !/bm|body/i.test(load) ? num(load) : NaN;
+  const name = it.ex ? `<b>${esc(it.ex)}</b>: ` : "";
+  if (!it.zone && it.ex) w.push(`${name}pick a zone.`);
+  if (it.zone === "Strength" && !isNaN(pc) && pc < 80) w.push(`${name}strength work is usually ≥85% 1RM for ≤6 reps.`);
+  if (/clean|snatch|pull|shrug/.test(ex) && !isNaN(pc) && (pc < 50 || pc > 90) && !/pull[- ]?up/.test(ex)) w.push(`${name}weightlifting derivatives are usually 50–90% 1RM (Cormie et al., 2011).`);
+  if (/jump squat|hex bar jump|trap bar jump|throw/.test(ex) && !isNaN(pc) && pc > 50) w.push(`${name}ballistic lifts are usually 0–50% 1RM (Cormie et al., 2011).`);
+  if (POWERZ.includes(it.zone) && num(it.reps) > 6) w.push(`${name}keep power sets short (1–5 reps) so every rep stays fast.`);
+  if (POWERZ.includes(it.zone) && it.rest){ const r = String(it.rest).toLowerCase(), n = num(r); if (!isNaN(n) && ((/s(ec)?\b/.test(r) && !/min/.test(r) && n < 120) || (/min/.test(r) && n < 2))) w.push(`${name}power work needs 2–5 min rest.`); }
+  return w;
+}
+function dayWarnings(d){
+  const w = [];
+  d.items.forEach(it => w.push(...rowWarnings(it)));
+  const firstStrength = d.items.findIndex(it => it.zone === "Strength");
+  const lastPower = d.items.map(it => POWERZ.includes(it.zone) || it.zone === "Plyometric").lastIndexOf(true);
+  if (firstStrength > -1 && lastPower > firstStrength) w.push("Power or plyometric work comes after heavy strength work. Move it earlier, while they're fresh.");
+  const contacts = d.items.filter(it => it.zone === "Plyometric").reduce((s,it) => s + ((num(it.sets)||1) * (num(it.reps)||0)), 0);
+  const tage = plan.fields.c_tage || "", lim = /Advanced/.test(tage) ? 140 : /Intermediate/.test(tage) ? 120 : 100;
+  if (contacts > lim) w.push(`${contacts} plyometric foot contacts. Chapter 19 suggests up to about ${lim} for this training age.`);
+  return w;
+}
 function renderDays(){
   $("days").innerHTML = plan.days.map((d,di) => `
     <div class="day">
@@ -440,26 +545,38 @@ function renderDays(){
         <button class="btn light addEx" data-di="${di}">+ Add exercise</button>
       </div>
       ${d.items.length ? `<div class="daybody"><table><thead><tr>${COLS.map(c=>`<th>${c[1]}</th>`).join("")}<th></th></tr></thead><tbody>
-        ${d.items.map((it,ii) => `<tr>${COLS.map(([k,lab]) => `<td><input type="text" aria-label="${d.day} ${lab}" data-di="${di}" data-ii="${ii}" data-k="${k}" value="${esc(it[k])}"></td>`).join("")}
+        ${d.items.map((it,ii) => `<tr>${COLS.map(([k,lab]) => k === "zone"
+            ? `<td><select aria-label="${d.day} zone" data-di="${di}" data-ii="${ii}" data-k="zone">${ZONE_OPTS.map(z=>`<option value="${z}"${z===(it.zone||"")?" selected":""}>${z||"Choose..."}</option>`).join("")}</select></td>`
+            : `<td><input type="text" aria-label="${d.day} ${lab}" data-di="${di}" data-ii="${ii}" data-k="${k}" value="${esc(it[k])}"></td>`).join("")}
           <td><button class="x delEx" data-di="${di}" data-ii="${ii}" aria-label="Remove exercise">×</button></td></tr>`).join("")}
       </tbody></table></div>` : ""}
+      <div class="daywarn" id="dw${di}"></div>
     </div>`).join("");
-  checkPlyo();
+  checkWeek();
 }
-function checkPlyo(){
+function checkWeek(){
+  plan.days.forEach((d,di) => { const w = dayWarnings(d); const el = $("dw"+di); if (el) el.innerHTML = w.map(t => `<div class="warn">${t}</div>`).join(""); });
   const isP = t => t === "Plyometrics" || t === "Gym + plyometrics";
-  const clash = [];
-  for (let i=0;i<7;i++){ const j = (i+1)%7; if (isP(plan.days[i].type) && isP(plan.days[j].type)) clash.push(`${plan.days[i].day} and ${plan.days[j].day}`); }
-  $("plyoWarn").innerHTML = clash.length ? `<div class="warn">Plyometric days back to back: ${clash.join(", ")}. Chapter 19 recommends 48–72 h between plyometric sessions.</div>` : "";
+  const hasP = d => isP(d.type) || d.items.some(it => it.zone === "Plyometric");
+  const msgs = [];
+  for (let i=0;i<6;i++){ if (hasP(plan.days[i]) && hasP(plan.days[i+1])) msgs.push(`Plyometric work on ${plan.days[i].day} and ${plan.days[i+1].day}. Chapter 19 recommends 48–72 h between plyometric sessions.`); }
+  const all = plan.days.flatMap(d => d.items);
+  const strength = all.some(it => it.zone === "Strength"), power = all.some(it => POWERZ.includes(it.zone) || it.zone === "Plyometric");
+  if (all.length && !strength) msgs.push("No strength work this week. Strength fades within a few weeks without it, so keep at least a little in (Rule 4).");
+  if (all.length && !power && /Power/.test(plan.fields.f_focus||"")) msgs.push("You've chosen a power emphasis but there's no power or plyometric work in the week.");
+  $("weekWarn").innerHTML = msgs.map(t => `<div class="warn">${t}</div>`).join("");
 }
 let saveTimer;
-function save(){ store.set("dp_plan", plan); $("saveStatus").textContent = "Saved on this device"; clearTimeout(saveTimer); saveTimer = setTimeout(()=>{$("saveStatus").textContent="";}, 1500); }
+function save(){ store.set("dp2_plan", plan); $("saveStatus").textContent = "Saved on this device"; clearTimeout(saveTimer); saveTimer = setTimeout(()=>{$("saveStatus").textContent="";}, 1500); }
 $("days").addEventListener("change", e => {
-  if (e.target.classList.contains("dtype")){ plan.days[+e.target.dataset.di].type = e.target.value; checkPlyo(); save(); }
+  const t = e.target;
+  if (t.classList.contains("dtype")){ plan.days[+t.dataset.di].type = t.value; checkWeek(); save(); }
+  else if (t.dataset.k === "zone"){ plan.days[+t.dataset.di].items[+t.dataset.ii].zone = t.value; checkWeek(); save(); }
 });
 $("days").addEventListener("input", e => {
-  const t = e.target; if (t.dataset.k){ plan.days[+t.dataset.di].items[+t.dataset.ii][t.dataset.k] = t.value; save(); }
+  const t = e.target; if (t.dataset.k && t.dataset.k !== "zone"){ plan.days[+t.dataset.di].items[+t.dataset.ii][t.dataset.k] = t.value; save(); clearTimeout(warnTimer); warnTimer = setTimeout(checkWeek, 500); }
 });
+let warnTimer;
 $("days").addEventListener("click", e => {
   const t = e.target;
   if (t.classList.contains("addEx")){ plan.days[+t.dataset.di].items.push({}); renderDays(); save(); }
@@ -468,8 +585,9 @@ $("days").addEventListener("click", e => {
 function loadFields(){
   FIELDS.forEach(f => { $(f).value = plan.fields[f] ?? ""; });
   for (let i=1;i<=6;i++) $("k"+i).checked = !!plan.checks["k"+i];
+  recommend();
 }
-FIELDS.forEach(f => $(f).addEventListener("input", () => { plan.fields[f] = $(f).value; save(); }));
+FIELDS.forEach(f => { const ev = $(f).tagName === "SELECT" ? "change" : "input"; $(f).addEventListener(ev, () => { plan.fields[f] = $(f).value; if (["c_bm","c_1rm","c_prof"].includes(f)) recommend(); if (f === "c_tage" || f === "f_focus") checkWeek(); save(); }); });
 for (let i=1;i<=6;i++) $("k"+i).addEventListener("change", () => { plan.checks["k"+i] = $("k"+i).checked; save(); });
 let clearArmed = false;
 $("clearBtn").addEventListener("click", () => {
@@ -479,14 +597,16 @@ $("clearBtn").addEventListener("click", () => {
 
 // ---------- Excel ----------
 const REVIEW_KEYS = [["by","Reviewed by"],["fit","Does the plan fit the client?"],["strength","One strength"],["change","One change"],["question","One question"]];
+function fieldVal(p, f){ const v = p.fields[f] ?? ""; return f === "c_prof" ? PROF_TXT[v] ?? v : v; }
 function workbook(p, review){
   const wb = XLSX.utils.book_new();
-  const client = [["Field","Answer"]].concat(FIELDS.map(f => [LABELS[f], p.fields[f] ?? ""]));
+  const client = [["Field","Answer"]].concat(FIELDS.map(f => [LABELS[f], fieldVal(p,f)]));
+  const bm = +p.fields.c_bm, rm = +p.fields.c_1rm; if (bm && rm) client.push(["Squat ÷ body mass", +(rm/bm).toFixed(2)]);
   const ws1 = XLSX.utils.aoa_to_sheet(client); ws1["!cols"] = [{wch:28},{wch:80}];
-  XLSX.utils.book_append_sheet(wb, ws1, "Client and focus");
+  XLSX.utils.book_append_sheet(wb, ws1, "Client and emphasis");
   const week = [["Day","Day type", ...COLS.map(c=>c[1])]];
   p.days.forEach(d => { if (!d.items.length) week.push([d.day, d.type]); else d.items.forEach((it,i) => week.push([i?"":d.day, i?"":d.type, ...COLS.map(([k])=>it[k]??"")])); });
-  const ws2 = XLSX.utils.aoa_to_sheet(week); ws2["!cols"] = [{wch:6},{wch:18},{wch:24},{wch:6},{wch:14},{wch:16},{wch:10},{wch:26},{wch:40}];
+  const ws2 = XLSX.utils.aoa_to_sheet(week); ws2["!cols"] = [{wch:6},{wch:18},{wch:24},{wch:16},{wch:6},{wch:14},{wch:16},{wch:10},{wch:26},{wch:40}];
   XLSX.utils.book_append_sheet(wb, ws2, "Week");
   const rv = [["Review","Answer"]].concat(REVIEW_KEYS.map(([k,l]) => [l, (review||{})[k] ?? ""]));
   const ws3 = XLSX.utils.aoa_to_sheet(rv); ws3["!cols"] = [{wch:30},{wch:80}];
@@ -522,16 +642,16 @@ $("up").addEventListener("change", e => {
 });
 function renderReview(){
   const p = reviewing.plan, r = reviewing.review;
-  const fl = FIELDS.filter(f => p.fields[f]).map(f => `<div><strong>${esc(LABELS[f])}:</strong> ${esc(p.fields[f])}</div>`).join("");
-  const wk = p.days.map(d => `<tr><td><strong>${esc(d.day)}</strong></td><td>${esc(d.type)}</td><td>${d.items.map(it => `${esc(it.ex)}${it.sets||it.reps?` · ${esc(it.sets)} × ${esc(it.reps)}`:""}${it.load?` · ${esc(it.load)}`:""}${it.rest?` · rest ${esc(it.rest)}`:""}${it.reason?`<br><span class="note">Reason: ${esc(it.reason)}</span>`:""}`).join("<hr style='border:0;border-top:1px solid #d9e2e7'>")}</td></tr>`).join("");
+  const fl = FIELDS.filter(f => p.fields[f]).map(f => `<div><strong>${esc(LABELS[f])}:</strong> ${esc(fieldVal(p,f))}</div>`).join("");
+  const wk = p.days.map(d => `<tr><td><strong>${esc(d.day)}</strong></td><td>${esc(d.type)}</td><td>${d.items.map(it => `${esc(it.ex)}${it.zone?` <span class="note">(${esc(it.zone)})</span>`:""}${it.sets||it.reps?` · ${esc(it.sets)} × ${esc(it.reps)}`:""}${it.load?` · ${esc(it.load)}`:""}${it.rest?` · rest ${esc(it.rest)}`:""}${it.reason?`<br><span class="note">Reason: ${esc(it.reason)}</span>`:""}`).join("<hr style='border:0;border-top:1px solid #d9e2e7'>")}</td></tr>`).join("");
   $("reviewArea").innerHTML = `
     <div class="ro">${fl || "<em>No client details filled in.</em>"}</div>
     <table><thead><tr><th>Day</th><th>Type</th><th>Exercises</th></tr></thead><tbody>${wk}</tbody></table>
     <h3 style="margin-top:1rem">Your feedback</h3>
     <div class="field"><label for="r_by">Reviewed by</label><input type="text" id="r_by" value="${esc(r.by)}"></div>
-    <div class="field"><label for="r_fit">Does the plan fit the client?</label><select id="r_fit">${["","Yes","Partly","Not yet"].map(o=>`<option${o===(r.fit||"")?" selected":""}>${o}</option>`).join("")}</select></div>
+    <div class="field"><label for="r_fit">Does the emphasis fit the client?</label><select id="r_fit">${["","Yes","Partly","Not yet"].map(o=>`<option${o===(r.fit||"")?" selected":""}>${o}</option>`).join("")}</select></div>
     <div class="field"><label for="r_strength">One strength</label><textarea id="r_strength">${esc(r.strength)}</textarea></div>
-    <div class="field"><label for="r_change">One change (and why)</label><textarea id="r_change">${esc(r.change)}</textarea></div>
+    <div class="field"><label for="r_change">One change (and why, using the rules or the reading)</label><textarea id="r_change">${esc(r.change)}</textarea></div>
     <div class="field"><label for="r_question">One question</label><textarea id="r_question">${esc(r.question)}</textarea></div>
     <button class="btn plum" id="dlReview">Download plan with feedback</button>
     <button class="btn light" id="useIt">Load this plan into my planner</button>`;
@@ -542,7 +662,7 @@ function renderReview(){
   $("useIt").addEventListener("click", () => {
     if (!armed){ armed = true; $("useIt").textContent = "Click again to replace your current plan"; return; }
     plan = JSON.parse(JSON.stringify(reviewing.plan)); loadFields(); renderDays(); save();
-    $("useIt").textContent = "Loaded into section 1–5";
+    $("useIt").textContent = "Loaded into sections 1–5";
   });
 }
 
