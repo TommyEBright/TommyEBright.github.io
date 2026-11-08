@@ -1,10 +1,10 @@
 // Service worker: keeps the app working offline. Bump VERSION when you change any file.
-const VERSION = 'fa-1.0.0';
+const VERSION = 'fa-2.0.0';
 const CORE = [
   './', 'index.html', 'css/style.css', 'manifest.webmanifest',
   'js/app.js', 'js/state.js', 'js/parse.js', 'js/maths.js', 'js/analyse.js', 'js/vars.js', 'js/plot.js', 'js/trace.js', 'js/figure.js',
-  'js/integ.js', 'js/filterview.js', 'js/results.js', 'js/events.js', 'js/setup.js', 'js/session.js', 'js/compare.js', 'js/export.js', 'js/zip.js',
-  'demo/demo-cmj.txt', 'demo/demo-squat-jump.txt', 'demo/demo-drop-jump.txt',
+  'js/integ.js', 'js/filterview.js', 'js/results.js', 'js/events.js', 'js/setup.js', 'js/session.js', 'js/compare.js', 'js/export.js', 'js/zip.js', 'js/generic.js', 'js/gtrace.js', 'js/gpanel.js',
+  'demo/demo-cmj.txt', 'demo/demo-squat-jump.txt', 'demo/demo-drop-jump.txt', 'demo/demo-walk-two-plates.txt', 'demo/demo-walk-four-trials.txt',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'
 ];
 self.addEventListener('install', (e) => {

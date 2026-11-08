@@ -254,3 +254,16 @@ tr.derived td:first-child::before { content: ''; }
   .steps .arrow { display: none; }
   .lvl { margin: 0; }
 }
+
+/* v2: simpler layout */
+.demosel { width: auto; background: #1e293b; color: #fff; border: 1px solid #475569; border-radius: .45rem; padding: .38rem .6rem; font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer; }
+.tabsep { align-self: center; margin-left: auto; padding: 0 .3rem 0 .6rem; color: var(--muted); font-size: .8rem; }
+.tab.deep { font-weight: 500; }
+ol.steps-how { margin: 0 0 .6rem; padding-left: 1.25rem; color: var(--muted); }
+ol.steps-how li { margin: .1rem 0; }
+.evchips { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; margin: .3rem 0; }
+.evchips .btn { font-size: .95rem; padding: .45rem .9rem; }
+ul.wins { display: block; margin: .2rem 0 .5rem; }
+ul.wins li { margin: .2rem 0; }
+#typeNext { color: var(--accent-dark); }
+select#type { font-size: 1rem; font-weight: 600; }

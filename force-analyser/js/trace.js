@@ -1,9 +1,9 @@
 // The main force-time graph: phases, net impulse shading, events you can drag, hover read-out, zoom and the
 // overview strip underneath. Also the jumper figure and "play the jump".
-import { A, $, esc, COL, PLATE_COLS, persist, iOf } from './state.js?v=1.0.0';
-import { Chart, frame, axes, line, range, band, vline, hline, halo, dot, fillBetween } from './plot.js?v=1.0.0';
-import { phaseAt, explain, PHASES } from './analyse.js?v=1.0.0';
-import { drawFigure } from './figure.js?v=1.0.0';
+import { A, $, esc, COL, PLATE_COLS, persist, iOf } from './state.js?v=2.0.0';
+import { Chart, frame, axes, line, range, band, vline, hline, halo, dot, fillBetween } from './plot.js?v=2.0.0';
+import { phaseAt, explain, PHASES } from './analyse.js?v=2.0.0';
+import { drawFigure } from './figure.js?v=2.0.0';
 
 let main = null, over = null, fig = null;
 let drag = null, hoverEv = null;
@@ -73,8 +73,7 @@ function drawMain(ctx, w, h, exp) {
   }
   // reference lines
   hline(ctx, fr, R.BW / k, COL.bw, [7, 5], 'Bodyweight ' + (A.units === 'N' ? R.BW.toFixed(0) + ' N' : A.units === 'BW' ? '(1)' : (R.BW / R.m).toFixed(2) + ' N/kg'), 1.4);
-  if (A.level >= 2) hline(ctx, fr, A.S.set.thr / k, '#94a3b8', [2, 3], 'Contact threshold ' + A.S.set.thr + ' N', 1);
-  if (A.level >= 3 && R.onsetThr) hline(ctx, fr, R.onsetThr / k, '#64748b', [1, 4], (R.jump === 'cmj' ? 'Bodyweight − ' : 'Bodyweight + ') + A.S.set.onsetK + ' SD (start of movement)', 1, true);
+  hline(ctx, fr, A.S.set.thr / k, '#94a3b8', [2, 3], 'Contact threshold ' + A.S.set.thr + ' N', 1);
   // lines
   ser.forEach((s) => line(ctx, fr, t, scaled(s.y), { col: s.col, width: s.width, dash: s.dash, i0, i1 }));
   // phase labels
@@ -329,7 +328,7 @@ export function initTrace() {
   });
   // keys: arrows move a pinned cursor; space plays
   document.addEventListener('keydown', (e) => {
-    if (!A.R || !A.R.ok) return;
+    if (!A.R || !A.R.ok || A.R.generic) return;
     const tag = (e.target.tagName || '').toLowerCase(); if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
     if (e.key === ' ') { e.preventDefault(); togglePlay(); return; }
     if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
@@ -352,7 +351,6 @@ export function initTrace() {
 }
 export function redraw() {
   if (!main) return;
-  $('traceWrap').classList.toggle('hide', !A.R);
   $('figBox').parentElement.classList.toggle('nofig', !A.show.figure);
   main.resize(); main.render(); over.resize(); over.render(); fig.resize(); fig.render(); readout(); phaseKey();
 }

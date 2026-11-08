@@ -1,7 +1,7 @@
 // Tab 4: force -> net force -> acceleration -> velocity -> displacement, step by step, with the trial's own numbers.
-import { A, $, COL } from './state.js?v=1.0.0';
-import { Chart, frame, axes, line, range, band, vline, halo, dot, fillBetween } from './plot.js?v=1.0.0';
-import { integrateForward, integrateBackward, G } from './maths.js?v=1.0.0';
+import { A, $, COL } from './state.js?v=2.0.0';
+import { Chart, frame, axes, line, range, band, vline, halo, dot, fillBetween } from './plot.js?v=2.0.0';
+import { integrateForward, integrateBackward, G } from './maths.js?v=2.0.0';
 
 let P = [];
 let alt = null; // what-if bodyweight error

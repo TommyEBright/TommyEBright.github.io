@@ -1,7 +1,7 @@
 // The little jumper beside the force-time curve. Its centre of mass (hip) moves with the integrated displacement,
 // so students can link each part of the curve to the movement. Arrows show velocity and net force.
-import { A, COL } from './state.js?v=1.0.0';
-import { phaseAt } from './analyse.js?v=1.0.0';
+import { A, COL } from './state.js?v=2.0.0';
+import { phaseAt } from './analyse.js?v=2.0.0';
 
 const SEG = { ankle: 0.08, shank: 0.43, thigh: 0.44, trunk: 0.5, neck: 0.05, head: 0.1, upper: 0.29, fore: 0.27 };
 const H0 = SEG.ankle + SEG.shank + SEG.thigh; // standing hip height (m)

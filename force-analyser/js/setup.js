@@ -1,5 +1,6 @@
 // Tab 1: jump type, drop jump options, bodyweight, plates and columns, thresholds.
-import { A, $, esc, persist, PLATE_COLS } from './state.js?v=1.0.0';
+import { A, $, esc, persist, PLATE_COLS, savePrefs } from './state.js?v=2.0.0';
+import { TYPE_HELP, GAIT, defaultG } from './generic.js?v=2.0.0';
 
 const JUMP_HELP = {
   cmj: 'Stand still, dip down and jump straight up. Phases: unweighting, braking, propulsion, flight and landing.',
@@ -11,22 +12,38 @@ const ROLES = [['on', 'Use'], ['left', 'Use: left foot'], ['right', 'Use: right 
 export function syncSetup() {
   const S = A.S; if (!S) return;
   const set = S.set;
-  $('jump').value = set.jump; $('jumpHelp').textContent = JUMP_HELP[set.jump];
-  $('djBox').classList.toggle('hide', set.jump !== 'dj');
+  const jump = set.type === 'jump' || !set.type;
+  $('type').value = jump ? set.jump : set.type;
+  $('jumpHelp').textContent = jump ? JUMP_HELP[set.jump] : TYPE_HELP[set.type];
+  $('typeNext').innerHTML = jump ? 'Events are found automatically: check them in <strong>2. Events</strong>, then read <strong>3. Results</strong>.' : 'Next: mark the points by hand in <strong>2. Points</strong>, then read <strong>3. Results</strong>.';
+  $('djBox').classList.toggle('hide', !(jump && set.jump === 'dj'));
+  $('advSetup').classList.toggle('hide', !jump);
+  $('axesBox').classList.toggle('hide', !GAIT[set.type]);
+  if (GAIT[set.type]) {
+    const ax = set.axes || A.axes;
+    $('apAxis').value = ax.ap; $('apFwd').value = String(ax.fwd);
+    const hasX = S.map.some((m) => m.fx >= 0), hasY = S.map.some((m) => m.fy >= 0);
+    $('axesInfo').innerHTML = !(hasX || hasY) ? '<span class="bad">This file has no horizontal forces, so braking and propulsion cannot be worked out.</span>' : (set.axesGuessed ? 'Guessed from the data (the bigger horizontal force, which points backwards early in contact). Check it: braking should come first in each contact.' : 'Front&ndash;back force: ' + ax.ap.toUpperCase() + ', with forwards ' + (ax.fwd > 0 ? 'positive' : 'negative') + '. This is remembered for your next files.');
+  }
+  $('bwAutoOpt').textContent = jump ? 'Still standing in the trial (automatic)' : 'Still standing (points you mark), or the file';
   $('drop').value = set.drop > 0 ? set.drop : '';
   $('djDir').value = set.djDir;
   $('bwMode').value = set.bwMode; $('massWrap').classList.toggle('hide', set.bwMode !== 'mass'); $('mass').value = set.mass > 0 ? set.mass : '';
   $('fsIn').value = S.fs || '';
   $('fsInfo').innerHTML = S.P.fs ? 'From the file' + (S.P.format === 'bioware' ? ' (BioWare)' : '') : '<span class="bad">Not in the file: please enter it.</span>';
   ['thr', 'hold', 'onsetK', 'onsetBack', 'method'].forEach((k) => { $(k).value = set[k]; });
-  $('advSetup').open = A.level >= 3 || $('advSetup').open;
   const R = A.R;
   let b = '';
-  if (R && R.ok) {
+  if (R && R.ok && !R.generic) {
     b = 'Bodyweight ' + R.BW.toFixed(1) + ' N, body mass ' + R.m.toFixed(1) + ' kg (from ' + R.bwSource + ').';
     if (R.headerBW > 0 && R.bwMode !== 'header') b += ' <span class="muted">The file also stores ' + R.headerBW.toFixed(1) + ' N.</span>';
   } else if (R && R.error) b = '<span class="bad">' + R.error + '</span>';
+  else if (R && R.generic) b = R.BW > 0 ? 'Bodyweight ' + R.BW.toFixed(1) + ' N, body mass ' + R.m.toFixed(1) + ' kg (from ' + R.bwSource + ').' : 'No bodyweight yet, so results are in newtons only. Mark <strong>Still start</strong> and <strong>Still end</strong> in <strong>2. Points</strong>, or type a body mass.';
   $('bwInfo').innerHTML = b;
+  const used = S.map.filter((m, k) => (set.roles[k] || 'on') !== 'off').length;
+  $('plateSum').textContent = '(' + used + ' plate' + (used === 1 ? '' : 's') + ', ' + (S.fs || '?') + ' Hz)';
+  if (!S.fs) $('plateDet').open = true;
+  split();
   plates();
 }
 
@@ -61,10 +78,26 @@ function plates() {
     S.map.push({ name: 'Plate ' + (S.map.length + 1), fz: free === undefined ? 1 : free, fx: -1, fy: -1 }); S.set.roles.push('on'); changed(true);
   });
 }
+// A file with several sets of columns from the same plate is usually several trials merged into one file.
+function split() {
+  const S = A.S, el = $('splitBox'), all = S.P.allPlates || S.P.plates;
+  const names = all.map((p) => p.name), dup = all.length > 1 && new Set(names).size < names.length;
+  if (!dup || S.splitFrom) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="tip"><p><strong>' + all.length + ' sets of force columns, all from ' + esc(names[0]) + '.</strong> They are probably separate trials merged into one file' + (S.P.meta && S.P.meta.description ? ' (&ldquo;' + esc(S.P.meta.description) + '&rdquo;)' : '') + ', not different plates.</p><button class="btn small accent" type="button" id="splitGo">Split into ' + all.length + ' trials</button></div>';
+  $('splitGo').addEventListener('click', () => A.fn.splitTrial());
+}
 function changed(rebuild) { persist(); A.fn.refresh({ keepView: true, rebuild: !!rebuild }); }
 
 export function initSetup() {
-  $('jump').addEventListener('change', function () { A.S.set.jump = this.value; A.S.set.ev = {}; A.S.set.weigh = null; changed(); A.fn.zoomJump(); });
+  $('type').addEventListener('change', function () {
+    const v = this.value, set = A.S.set, jump = ['cmj', 'sj', 'dj'].includes(v);
+    set.type = jump ? 'jump' : v; if (jump) { set.jump = v; set.ev = {}; set.weigh = null; }
+    if (!set.g) set.g = defaultG();
+    if (GAIT[set.type] && !set.axes) { set.axes = Object.assign({}, A.axes); }
+    A.view = null; changed(true);
+  });
+  const ax = () => { const set = A.S.set; set.axes = { ap: $('apAxis').value, fwd: +$('apFwd').value }; set.axesGuessed = false; A.axes = Object.assign({}, set.axes); A.axesSet = true; savePrefs(); changed(); };
+  $('apAxis').addEventListener('change', ax); $('apFwd').addEventListener('change', ax);
   $('drop').addEventListener('change', function () { const v = parseFloat(this.value); A.S.set.drop = v > 0 ? (v > 5 ? v / 100 : v) : 0; if (v > 5) this.value = A.S.set.drop; changed(); });
   $('djDir').addEventListener('change', function () { A.S.set.djDir = this.value; changed(); });
   $('bwMode').addEventListener('change', function () { A.S.set.bwMode = this.value; $('massWrap').classList.toggle('hide', this.value !== 'mass'); changed(); });

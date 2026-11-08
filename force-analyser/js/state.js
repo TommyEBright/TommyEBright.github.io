@@ -1,15 +1,14 @@
 // Shared state and small helpers.
 // A.S is the trial being worked on (its file data, plate mapping and settings). A.R is its analysis.
-import { defaultSettings } from './analyse.js?v=1.0.0';
+import { defaultSettings } from './analyse.js?v=2.0.0';
 
-export const VERSION = '1.0.0';
+export const VERSION = '2.0.0';
 export const APP = 'Force Analysis';
-export const LEVELS = { 1: 'Foundation (Year 1)', 2: 'Intermediate (Year 2)', 3: 'Advanced (Year 3 and MSc)' };
 export const PLATE_COLS = ['#0f766e', '#be185d', '#d97706'];
 export const COL = { total: '#1d4ed8', raw: '#94a3b8', bw: '#475569', vel: '#7c3aed', disp: '#0891b2', acc: '#dc2626', net: '#1d4ed8', power: '#ea580c', pos: 'rgba(16,185,129,.28)', neg: 'rgba(59,130,246,.26)' };
 
 // Settings that carry over from one trial to the next.
-export const SHARED = ['jump', 'thr', 'hold', 'onsetK', 'onsetBack', 'method', 'djDir', 'drop', 'bwMode', 'filt', 'roles'];
+export const SHARED = ['type', 'axes', 'jump', 'thr', 'hold', 'onsetK', 'onsetBack', 'method', 'djDir', 'drop', 'bwMode', 'filt', 'roles'];
 
 export const A = {
   session: { trials: [], cur: -1 },
@@ -17,10 +16,12 @@ export const A = {
   D: null,        // current trial's data (built from the file and the plate mapping)
   R: null,        // analysis
   V: [],          // variables
-  level: 2, units: 'N',
+  level: 3, units: 'N', // one version for everyone (the old Year 1/2/3 levels are gone)
+  gshow: { tot: true, totG: false, plates: true, ap: false, ml: false, fx: false, fy: false, wins: true },
+  axes: { ap: 'fy', fwd: 1 }, axesSet: false,
   view: null,     // {x0, x1} seconds shown on the main graph
   cursor: -1, pinned: false,
-  show: { total: true, plates: false, fx: false, fy: false, phases: true, impulse: true, figure: true, raw: true },
+  show: { total: true, plates: false, fx: false, fy: false, phases: true, impulse: false, figure: false, raw: true },
   play: { on: false, speed: 0.25, build: false },
   step: 0,        // integration step being explained (0 = all)
   fn: {}          // cross-module functions registered at start-up
@@ -65,7 +66,7 @@ export function persist() {
       tx.objectStore(STORE).put({ trials: A.session.trials, cur: A.session.cur }, KEY);
       tx.onerror = () => { if (!warned) { warned = true; status('<span class="bad">The browser could not save this session. Use <strong>Export &rarr; Save project file</strong> to keep your work.</span>'); } };
     } catch (e) { /* private mode etc.: carry on without saving */ }
-    try { localStorage.setItem('fa-prefs', JSON.stringify({ level: A.level, units: A.units, show: A.show })); } catch (e) { /* ignore */ }
+    savePrefs();
   }, 400);
 }
 export async function restoreSession() {
@@ -81,8 +82,10 @@ export async function restoreSession() {
 export async function forgetSession() {
   try { const db = await idb(); db.transaction(STORE, 'readwrite').objectStore(STORE).delete(KEY); } catch (e) { /* ignore */ }
 }
+export function savePrefs() { try { localStorage.setItem('fa-prefs2', JSON.stringify({ units: A.units, show: A.show, gshow: A.gshow, axes: A.axes, axesSet: A.axesSet })); } catch (e) { /* ignore */ } }
 export function loadPrefs() {
-  try { const p = JSON.parse(localStorage.getItem('fa-prefs')); if (p) { if (p.level) A.level = p.level; if (p.units) A.units = p.units; if (p.show) Object.assign(A.show, p.show); } } catch (e) { /* ignore */ }
+  try { const p = JSON.parse(localStorage.getItem('fa-prefs2')); if (p) { ['units', 'axesSet'].forEach((k) => { if (p[k] !== undefined) A[k] = p[k]; }); ['show', 'gshow', 'axes'].forEach((k) => { if (p[k]) Object.assign(A[k], p[k]); }); return; } } catch (e) { /* ignore */ }
+  try { const p = JSON.parse(localStorage.getItem('fa-prefs')); if (p && p.units) A.units = p.units; } catch (e) { /* ignore */ }
 }
 
 export function download(name, blob) {

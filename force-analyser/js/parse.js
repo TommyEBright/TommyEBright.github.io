@@ -150,9 +150,11 @@ export function parseText(text, fileName) {
     cand.slice(0, 3).forEach((j, k) => out.plates.push({ name: 'Plate ' + (k + 1), fz: j, fx: -1, fy: -1 }));
     out.warnings.push('No columns called Fz were found, so the tool has guessed which columns are force. Check them in Setup &rarr; Plates and columns.');
   }
+  out.allPlates = out.plates.map((p) => Object.assign({}, p)); // every set of columns, before the three-plate limit
   if (out.plates.length > 3) { out.warnings.push('This file has ' + out.plates.length + ' plates. The first three are used; change them in Setup &rarr; Plates and columns.'); out.plates = out.plates.slice(0, 3); }
   // Tidy plate names (e.g. "Force Plate 2 9286BA" -> "Force Plate 2")
-  out.plates.forEach((p, k) => { p.name = String(p.name || 'Plate ' + (k + 1)).replace(/\s+\d{4}[A-Z]{1,3}$/, '').trim() || 'Plate ' + (k + 1); });
+  out.plates.forEach((p, k) => { p.name = String(p.name || 'Plate ' + (k + 1)).replace(/\s+\d{4}[A-Z][A-Z0-9]{0,4}$/, '').trim() || 'Plate ' + (k + 1); });
+  out.allPlates.forEach((p, k) => { p.name = String(p.name || 'Plate ' + (k + 1)).replace(/\s+\d{4}[A-Z][A-Z0-9]{0,4}$/, '').trim() || 'Plate ' + (k + 1); });
   // BioWare also exports its own centre of mass columns (COM az, vz, sz); these are not used.
   if (cols.some((c) => /^com/i.test(c.name))) out.hasBiowareCOM = true;
   return out;

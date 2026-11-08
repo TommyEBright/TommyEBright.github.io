@@ -6,23 +6,20 @@ It runs entirely in the web browser. Files are opened from the user's own device
 
 ## What it does
 
-- **Jumps:** countermovement jump (CMJ), squat jump (SJ) and drop jump (DJ). The tool guesses which one a file is, and the user can change it.
-- **Files:** BioWare (Kistler) text exports are read with their header (sample rate, device names, stored body weight). Any other text or CSV file with a time column and force columns also works. Up to three plates, with Fx, Fy and Fz for each. The vertical forces of every plate that is switched on are added together. Plates can be marked left and right for asymmetry results, or switched off (e.g. a plate under the box).
-- **Levels:** Foundation (Year 1), Intermediate (Year 2) and Advanced (Year 3 and MSc). The level sets how many results are shown and how much of the maths is visible. The analysis is the same at every level.
-- **The force–time curve:**
-  - shaded phases (weighing, unweighting, braking, propulsion, flight, landing; falling from the box for a drop jump);
-  - net impulse shaded above (green) and below (blue) the bodyweight line;
-  - hover anywhere for time, force, net force, acceleration, velocity, displacement and power, plus a plain-English sentence about what is happening;
-  - a jumper beside the curve whose centre of mass moves with the integrated displacement, with velocity and net force arrows;
-  - **Play the jump** (0.1× to real time), click to pin the cursor, arrow keys to step one sample;
-  - drag across the graph to zoom, an overview strip to move along the trial;
-  - total Fz, each plate's Fz, Fx and Fy can be shown or hidden; force in N, N/kg or bodyweights.
-- **Events:** found automatically. Editable events (start of movement, touchdown, take-off, landing, weighing period) can be dragged on the graph or nudged one sample at a time. Events that come from velocity (peak downward velocity, lowest point, lowest point after landing) follow automatically.
-- **Filter:** the same Butterworth filter as Kinematic Analysis, with residual analysis, raw vs filtered, and what was removed over time. Off by default for jumps.
-- **Force to displacement:** four linked graphs (net force, acceleration, velocity, displacement) with a shared cursor and the trial's own numbers at every step, "things to notice" links (e.g. force crosses bodyweight → acceleration is zero → peak downward velocity), thin integration strips when zoomed right in, and an optional build-up as the jump plays. Advanced: trapezoid vs rectangle integration, and a slider showing what a small bodyweight error does to velocity, displacement and jump height.
-- **Results:** every variable grouped by phase, each with a "how was this worked out" line using the trial's own numbers, plus quality checks.
-- **Compare trials:** a table of chosen results with group mean ± SD (by participant, condition or both), and overlaid curves (force, velocity, displacement or power) lined up at take-off or time-normalised, with group mean ± SD.
-- **Exports:** continuous CSV (every sample), discrete CSV (results), time-normalised CSV, PNG graphs, a Word report (.docx with the graphs and results table), whole-session CSVs, and a project file that saves the whole session.
+- **Any force–time data.** Choose what the trial is: a countermovement, squat or drop jump, walking, running, landing, isometric (e.g. IMTP), or any force–time data. The tool guesses from the file and the student can change it.
+- **Jumps** are analysed automatically as before (events, phases, integration to velocity and displacement, jump height, RSI and so on), with every event editable.
+- **Everything else is worked out from points the student marks by hand** on the graph: click near the moment, zoom to the cursor to see every sample, step with the arrow keys, press the point button (e.g. Foot contact, Toe-off, Touchdown, Onset). Windows are made between the points, and students can add their own between any two points.
+  - **Walking:** per contact and per plate, contact time, first and second peaks, mid-stance minimum, loading rate, vertical impulse, peak braking and propulsive force and impulse; double support.
+  - **Running:** contact time, impact and active peaks, loading rate (20–80%), vertical, braking and propulsive impulses; flight and step time.
+  - **Landing:** peak landing force, time to peak, loading rate, impulse in the first 100 ms, time to stabilise, net impulse.
+  - **Isometric:** baseline, peak and net peak force, time to peak, net force and RFD at 50–250 ms, peak RFD (20 ms), net impulse at 100–300 ms.
+  - **Any:** for each window and any force (total, each plate, Fx, Fy), duration, peak, time of peak, minimum, mean, impulse, net impulse and mean RFD.
+- **Horizontal forces:** for walking and running the student says which force is front–back and which way is forwards (guessed from the data, then remembered).
+- **Merged files:** a file with several sets of columns from the same plate (e.g. BioWare "several files merged into one") can be split into separate trials in one click, then compared.
+- **One version for everyone:** the Year 1/2/3 levels are gone. Every result has a "how was this worked out" line with the trial's own numbers.
+- **Simpler layout,** matching Kinematic Analysis: 1. Setup, 2. Points (or Events for jumps), 3. Results, Compare trials, Export, with Filter and Force to displacement under "Go deeper".
+- **Compare trials** compares trials of the same type: a table with group mean ± SD and overlaid curves (time-normalised or lined up).
+- **Exports:** continuous CSV, results CSV, points CSV, time-normalised windows, PNG graph, Word report, whole-session CSVs and a project file.
 
 ## Results by jump
 
@@ -38,6 +35,10 @@ It runs entirely in the web browser. Files are opened from the user's own device
 - **Demo: CMJ** is the BioWare sample countermovement jump (one plate, 250 Hz). The Kinematic Analysis demo CMJ is built from this jump, so students can measure the same jump with both tools.
 - **Demo: drop jump** is a real drop jump from two plates at 1000 Hz, with still standing after landing, so backward integration works.
 - **Demo: squat jump** is computer-generated (one plate, 1000 Hz, body mass 72 kg). The push starts at 1.50 s from a still squat. Take-off velocity at the true take-off (1.80 s) is 2.29 m/s (26.7 cm), and the flight time is 0.475 s (27.7 cm by flight time, because it lands 2 cm lower than it took off). The tool gives about 1 cm more from take-off velocity (27.8 cm), because take-off is found where force drops below the 20 N threshold, a few milliseconds before the true take-off, when the body is still slightly faster. That makes a useful discussion point.
+- **Demo: walking (two plates)** is the BioWare sample walking trial: two footsteps on two plates at 250 Hz, with Fx, Fy and Fz.
+- **Demo: walking (four trials in one file)** is the BioWare sample with four right-foot trials merged into one file at 125 Hz, to practise splitting a file and comparing trials.
+
+Demos are chosen from **Try a demo** in the header. Personal details in the sample files were removed.
 
 ## Putting it online (GitHub Pages)
 
@@ -104,6 +105,9 @@ js/results.js          key numbers, results table, quality checks
 js/events.js           the events tab
 js/setup.js            the setup tab (jump type, bodyweight, plates and columns)
 js/session.js          sessions: adding files, labels
+js/generic.js           analysis of any force–time data from points marked by hand (walking, running, landing, isometric, any)
+js/gtrace.js            the graph for those trials (points, windows, cursor, zoom)
+js/gpanel.js            the Points tab, windows and their exports
 js/compare.js          comparing trials and whole-session exports
 js/export.js           CSV, PNG, Word report, project files
 js/zip.js              a tiny zip writer for the Word report

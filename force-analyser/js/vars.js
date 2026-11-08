@@ -1,6 +1,6 @@
 // Every variable the tool reports: name, phase, level, units, how it is worked out (with the trial's own numbers).
 // Levels: 1 Foundation (Level 4), 2 Intermediate (Level 5), 3 Advanced (Level 6 and MSc).
-import { G, area, mean, argmax, argmin } from './maths.js?v=1.0.0';
+import { G, area, mean, argmax, argmin } from './maths.js?v=2.0.0';
 
 const f = (x, d) => (x === null || x === undefined || !Number.isFinite(x) ? '&ndash;' : x.toFixed(d));
 const fs3 = (x) => f(x, 3);

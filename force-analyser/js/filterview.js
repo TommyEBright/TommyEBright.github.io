@@ -1,7 +1,7 @@
 // Tab 3: what a low-pass filter does to the force signal, with residual analysis to suggest a cut-off.
-import { A, $, persist } from './state.js?v=1.0.0';
-import { Chart, frame, axes, line, range, hline } from './plot.js?v=1.0.0';
-import { butter, residualCurve } from './maths.js?v=1.0.0';
+import { A, $, persist } from './state.js?v=2.0.0';
+import { Chart, frame, axes, line, range, hline } from './plot.js?v=2.0.0';
+import { butter, residualCurve } from './maths.js?v=2.0.0';
 
 let cF, cR, cT, resid = null, filt = null, filtKey = '';
 
@@ -73,8 +73,10 @@ export function initFilter() {
     if (!A.R || !A.R.ok) return;
     $('fcInfo').textContent = 'Working out the residual at each cut-off…';
     setTimeout(() => {
-      // residual analysis over the jump itself (not the long still periods, which are mostly noise)
-      const R = A.R, a = R.jump === 'dj' ? R.TD : R.onset, b = R.landEndI > 0 ? R.landEndI : Math.min(A.D.n - 1, R.TO + Math.round(0.3 * A.D.fs));
+      // residual analysis over the jump (or the windows you marked), not the long still periods, which are mostly noise
+      const R = A.R, W = R.generic ? R.windows : null;
+      const a = W ? (W.length ? Math.min(...W.map((w) => w.i0)) : 0) : R.jump === 'dj' ? R.TD : R.onset;
+      const b = W ? (W.length ? Math.max(...W.map((w) => w.i1)) : A.D.n - 1) : R.landEndI > 0 ? R.landEndI : Math.min(A.D.n - 1, R.TO + Math.round(0.3 * A.D.fs));
       resid = residualCurve(R.Fraw.slice(Math.max(0, a - 50), Math.min(A.D.n, b + 50)), A.D.fs);
       if (resid && resid.fc) { A.S.set.filt.fc = resid.fc; $('cutoff').value = resid.fc; persist(); if (A.S.set.filt.on) A.fn.refresh({ keepView: true }); }
       renderFilter();

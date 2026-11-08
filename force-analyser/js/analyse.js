@@ -1,13 +1,16 @@
 // The analysis of one trial: bodyweight, events, integration (force -> acceleration -> velocity ->
 // displacement), phases and power. No page code here, so it can be tested on its own.
-import { G, butter, integrateForward, integrateBackward, mean, sd, argmax, argmin, quietestWindow } from './maths.js?v=1.0.0';
+import { G, butter, integrateForward, integrateBackward, mean, sd, argmax, argmin, quietestWindow } from './maths.js?v=2.0.0';
 
 export const JUMPS = { cmj: 'Countermovement jump (CMJ)', sj: 'Squat jump (SJ)', dj: 'Drop jump (DJ)' };
 export const JUMP_SHORT = { cmj: 'CMJ', sj: 'SJ', dj: 'Drop jump' };
 
 export function defaultSettings() {
   return {
+    type: 'jump',     // 'jump', or 'any', 'walk', 'run', 'land', 'iso' (see generic.js)
     jump: 'cmj',
+    g: { points: [], windows: [] }, // points and windows marked by hand (any force-time data)
+    axes: null,       // walking and running: which horizontal force is front-back, and which way is forwards
     thr: 20,          // contact threshold (N)
     hold: 10,         // ms the force must stay above/below the threshold
     onsetK: 5,        // start of movement: bodyweight +/- k SD (Owen et al., 2014)
