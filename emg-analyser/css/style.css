@@ -287,3 +287,15 @@ tr.mvrow.current td { background: #eff6ff; }
 #showChips select { width: auto; font-size: .82rem; padding: .15rem .3rem; }
 #showChips { align-items: center; }
 @media (max-width: 1050px) { .stepsgrid { grid-template-columns: 1fr; } }
+
+/* session checklist */
+.guide { list-style: none; margin: .2rem 0 .7rem; padding: 0; display: grid; gap: .35rem; }
+.guide li { display: grid; grid-template-columns: 1.7rem 1fr; gap: .55rem; align-items: start; background: var(--soft); border: 1px solid var(--line); border-radius: .55rem; padding: .5rem .65rem; }
+.guide li.ok { background: #f0fdfa; border-color: #99f6e4; }
+.guide .gn { display: inline-flex; align-items: center; justify-content: center; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: #cbd5e1; color: #fff; font-weight: 700; font-size: .85rem; }
+.guide li.ok .gn { background: var(--accent); }
+.guide li.now .gn { background: var(--brand); }
+.guide .gt { font-weight: 700; margin: 0 0 .25rem; }
+.guide .gb { display: flex; flex-wrap: wrap; gap: .35rem .7rem; align-items: center; font-size: .9rem; }
+.guide .gb select, .guide .gb input { width: auto; min-width: 0; }
+.guide .gb input.cond { width: 8.5rem; }

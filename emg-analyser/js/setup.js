@@ -1,6 +1,7 @@
 // Tab 1: what the file is (an MVIC or a task trial), the muscles, normalisation and the processing settings.
-import { A, $, esc, persist, status, muscle, muscleKeys, SET, defaultSet, MUSCLE_COLS, W } from './state.js?v=1.1.0';
-import { references, refPeaks, forget, trialFs } from './emg.js?v=1.1.0';
+import { A, $, esc, persist, status, muscle, muscleKeys, SET, defaultSet, MUSCLE_COLS, W } from './state.js?v=1.2.0';
+import { references, refPeaks, forget, trialFs } from './emg.js?v=1.2.0';
+import { findAll } from './session.js?v=1.2.0';
 
 export function renderSetup() {
   const el = $('setupBox'); const t = A.S;
@@ -59,7 +60,8 @@ export function renderSetup() {
     if ((set.activity === 'gait' || set.activity === 'cycling') && set.norm === 'mvic' && !anyMvic) set.norm = 'ref';
     const PH = { gait: ['Stance', 'Swing'], cycling: ['Downstroke', 'Upstroke'] }, dflt = defaultSet().phaseNames;
     if (set.phaseNames.slice(0, 2).every((n, j) => n === dflt[j] || Object.values(PH).some((p) => p[j] === n))) set.phaseNames = (PH[set.activity] || dflt.slice(0, 2)).concat(dflt.slice(2));
-    after('Set up for ' + ACTS.find((a) => a[0] === set.activity)[1].split(' (')[0].toLowerCase() + '.');
+    let n = 0; if (set.activity === 'gait' || set.activity === 'cycling') n = findAll(A.session.trials);
+    forget(); after('Set up for ' + ACTS.find((a) => a[0] === set.activity)[1].split(' (')[0].toLowerCase() + '.' + (n ? ' Found the ' + W().many + ' in ' + n + ' file' + (n > 1 ? 's' : '') + ': check them on the graph.' : ''));
   });
   $('role').addEventListener('change', function () {
     t.role = this.value;

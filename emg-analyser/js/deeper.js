@@ -1,11 +1,11 @@
 // Go deeper: (1) the processing steps, one at a time; (2) median frequency over time (fatigue);
 // (3) the rate of rise of the EMG after onset.
-import { A, $, esc, persist, muscle, SET, W } from './state.js?v=1.1.0';
-import { Chart, frame, axes, line, band, range } from './plot.js?v=1.1.0';
-import { butterSos, sosfiltfilt, welch, specStats, linreg } from './dsp.js?v=1.1.0';
-import { fatigue, rateOfRise } from './emg.js?v=1.1.0';
-import { mean, sd, compute } from './results.js?v=1.1.0';
-import { burstTxt } from './emg.js?v=1.1.0';
+import { A, $, esc, persist, muscle, SET, W } from './state.js?v=1.2.0';
+import { Chart, frame, axes, line, band, range } from './plot.js?v=1.2.0';
+import { butterSos, sosfiltfilt, welch, specStats, linreg } from './dsp.js?v=1.2.0';
+import { fatigue, rateOfRise } from './emg.js?v=1.2.0';
+import { mean, sd, compute } from './results.js?v=1.2.0';
+import { burstTxt } from './emg.js?v=1.2.0';
 
 const f = (v, n) => (Number.isFinite(v) ? v.toFixed(n) : '&ndash;');
 function chSel(id, k) { const R = A.R; return '<select id="' + id + '" class="mini" style="width:auto">' + R.pr.ch.map((c, j) => '<option value="' + j + '"' + (j === k ? ' selected' : '') + '>' + esc(muscle(c.key).short) + '</option>').join('') + '</select>'; }

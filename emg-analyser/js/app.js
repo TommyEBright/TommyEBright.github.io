@@ -1,14 +1,14 @@
 // Start-up: wires the page together.
-import { A, $, esc, status, persist, restoreSession, loadPrefs, savePrefs, VERSION, trialLabel, muscle, defaultSet, W } from './state.js?v=1.1.0';
-import { analyse, references, forget } from './emg.js?v=1.1.0';
-import { initTrace, redraw, wholeRange } from './trace.js?v=1.1.0';
-import { renderPoints } from './points.js?v=1.1.0';
-import { renderResults } from './results.js?v=1.1.0';
-import { renderSetup } from './setup.js?v=1.1.0';
-import { initSession, renderSession, addText } from './session.js?v=1.1.0';
-import { renderCompare } from './compare.js?v=1.1.0';
-import { initExport } from './export.js?v=1.1.0';
-import { renderSteps, stepsView, renderFatigue, renderRor, renderOnOff } from './deeper.js?v=1.1.0';
+import { A, $, esc, status, persist, restoreSession, loadPrefs, savePrefs, VERSION, trialLabel, muscle, defaultSet, W } from './state.js?v=1.2.0';
+import { analyse, references, forget } from './emg.js?v=1.2.0';
+import { initTrace, redraw, wholeRange } from './trace.js?v=1.2.0';
+import { renderPoints } from './points.js?v=1.2.0';
+import { renderResults } from './results.js?v=1.2.0';
+import { renderSetup } from './setup.js?v=1.2.0';
+import { initSession, renderSession, addText } from './session.js?v=1.2.0';
+import { renderCompare } from './compare.js?v=1.2.0';
+import { initExport } from './export.js?v=1.2.0';
+import { renderSteps, stepsView, renderFatigue, renderRor, renderOnOff } from './deeper.js?v=1.2.0';
 
 const curTab = () => { const b = $('panel').querySelector('.tab[aria-selected=true]'); return b ? b.getAttribute('data-t') : 'setup'; };
 

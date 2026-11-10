@@ -1,9 +1,9 @@
 // Compare trials: every task trial in the session, grouped by exercise (or participant), as a table,
 // a bar chart (like the lab MATLAB figure) and the average waveforms on top of each other.
-import { A, $, esc, muscle, muscleKeys, toCsv, download, trialLabel, SET, W } from './state.js?v=1.1.0';
-import { Chart, frame, axes, line } from './plot.js?v=1.1.0';
-import { analyse, curveBursts, burstTxt } from './emg.js?v=1.1.0';
-import { compute, resultRows, mean, sd, bothOn } from './results.js?v=1.1.0';
+import { A, $, esc, muscle, muscleKeys, toCsv, download, trialLabel, SET, W } from './state.js?v=1.2.0';
+import { Chart, frame, axes, line } from './plot.js?v=1.2.0';
+import { analyse, curveBursts, burstTxt } from './emg.js?v=1.2.0';
+import { compute, resultRows, mean, sd, bothOn } from './results.js?v=1.2.0';
 
 let barChart = null, wfChart = null;
 const f = (v, n) => (Number.isFinite(v) ? v.toFixed(n) : '&ndash;');

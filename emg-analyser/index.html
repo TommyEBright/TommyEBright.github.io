@@ -4,18 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>EMG Analysis</title>
-<meta name="description" content="Surface EMG analysis from your own Delsys EMGworks (or any text) files: %MVIC, onsets, order of activation, co-contraction, ratios, average waveforms and iEMG. Runs in the browser; your data never leave your device.">
+<meta name="description" content="Surface EMG analysis from your own Delsys EMGworks (or any text) files, for gym exercises, running, walking, cycling or anything else: %MVIC or a reference trial, automatic or hand-marked on/off, order of activation, co-contraction, ratios, average waveforms and iEMG. Runs in the browser; your data never leave your device.">
 <meta name="theme-color" content="#0f172a">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css?v=1.0.0">
+<link rel="stylesheet" href="css/style.css?v=1.2.0">
 </head>
 <body>
 <header class="top">
   <div>
     <h1><img src="icons/icon-192.png" alt="">EMG Analysis <span class="muted" id="ver" style="color:#94a3b8;font-weight:400"></span></h1>
-    <p>Surface EMG from your own files (Delsys EMGworks or any text file): %MVIC, timing, coordination and more. Everything runs in your browser and nothing is uploaded.</p>
+    <p>Surface EMG from your own files (Delsys EMGworks or any text file), for gym exercises, running, walking, cycling or anything else: normalising, on/off timing, co-contraction and more. Everything runs in your browser and nothing is uploaded.</p>
   </div>
   <div class="actions">
     <label class="btn light filebtn">Add files<input type="file" id="file" accept=".txt,.csv,.tsv,.dat,.asc,text/plain,text/csv" multiple aria-label="Add EMG files"></label>
@@ -37,6 +37,7 @@
         <li><strong>Place each sensor on the belly of the muscle</strong>, half-way between the innervation zone and the tendon, with the bars (or arrow) <strong>along the muscle fibres</strong> (SENIAM; Hermens et al., 2000). Keep away from the edge of the muscle to limit crosstalk from its neighbours. Tape the sensor and cable down so they cannot move.</li>
         <li><strong>Check the signal</strong> before you start: ask for a contraction, then complete relaxation. The resting signal should be flat and small (a few µV), with no regular spikes (heartbeat) or hum.</li>
         <li><strong>Record a rest period</strong> (1&ndash;2 s fully relaxed) at the start of each trial. It shows the noise level and helps you judge onsets.</li>
+        <li><strong>Running, walking or cycling?</strong> You don&rsquo;t need MVICs. Record a <strong>reference trial</strong> (e.g. preferred speed) in the same session without moving the sensors, then normalise every trial to it. Record at least 10 to 15 steady strides (or pedal cycles) per trial, and keep the cables taped so they don&rsquo;t swing.</li>
         <li><strong>MVICs:</strong> for each muscle, 2&ndash;3 maximal isometric efforts of 3&ndash;5 s in a standard position, with strong encouragement and 1&ndash;2 min rest between. Do them in the same session, without moving the sensors. Keep each MVIC in its own file, or note which muscle each one is for.</li>
         <li><strong>Mark the movement:</strong> the Trigno accelerometers (shown on the graph) or a video help you find the start and end of each rep later.</li>
         <li><strong>Export from EMGworks Analysis as a text file</strong> with the <strong>raw</strong> EMG (the tool does its own filtering; any RMS or filtered channels in the file are ignored). Open the MVIC files and the task trials together with <strong>Add files</strong>.</li>
@@ -48,7 +49,8 @@
   <details class="help session" open>
     <summary>Session: your files <span id="sesCount" class="muted"></span></summary>
     <div class="hb">
-      <p class="muted">Add the <strong>MVIC</strong> files and the <strong>task</strong> trials together. Set each file&rsquo;s <strong>Type</strong>, give it a participant (MVICs only normalise trials of the same participant) and, for task trials, the exercise. Then compare them in <strong>Compare trials</strong>.</p>
+      <p class="muted">Add every file from the session together (one muscle per file is fine), then work down the steps below. The table underneath lets you change any file by hand.</p>
+      <div id="sesGuide"></div>
       <div class="tablewrap" style="max-height:300px"><table id="sesTab"></table></div>
       <div class="row tight">
         <label class="btn small filebtn">Add files<input type="file" id="file2" accept=".txt,.csv,.tsv,.dat,.asc,text/plain,text/csv" multiple aria-label="Add EMG files"></label>
@@ -98,6 +100,7 @@
       <span class="tabsep">Go deeper:</span>
       <button class="tab deep" role="tab" type="button" data-t="steps" aria-selected="false">Processing steps</button>
       <button class="tab deep" role="tab" type="button" data-t="fatigue" aria-selected="false">Fatigue (frequency)</button>
+      <button class="tab deep" role="tab" type="button" data-t="onoff" aria-selected="false">On/off</button>
       <button class="tab deep" role="tab" type="button" data-t="ror" aria-selected="false">Rate of rise</button>
     </div>
     <div class="pane" data-p="setup"><div id="setupBox"></div></div>
@@ -107,6 +110,7 @@
     <div class="pane hide" data-p="steps"><div id="stepsBox"></div></div>
     <div class="pane hide" data-p="fatigue"><div id="fatBox"></div></div>
     <div class="pane hide" data-p="ror"><div id="rorBox"></div></div>
+    <div class="pane hide" data-p="onoff"><div id="onBox"></div></div>
     <div class="pane hide" data-p="files">
       <p class="lead">Downloads for <strong>this file</strong>. For every trial together, use <strong>Compare trials</strong>.</p>
       <h3>Data (CSV, opens in Excel)</h3>
@@ -116,7 +120,7 @@
         <button class="btn small" id="xPts" type="button">Points</button>
         <button class="btn small" id="xCont" type="button">Continuous (every sample)</button>
       </div>
-      <p class="muted"><strong>Results</strong> has every result in <strong>3. Results</strong>, one per row. <strong>Average waveforms</strong> has each rep stretched to 101 points, plus the mean and SD. <strong>Points</strong> has the time and sample of every point you marked. <strong>Continuous</strong> has every sample: raw, band-passed, envelope and normalised EMG for each muscle (a big file).</p>
+      <p class="muted"><strong>Results</strong> has every result in <strong>3. Results</strong>, one per row. <strong>Average waveforms</strong> has each rep (or stride, or cycle) stretched to 101 points, plus the mean and SD. <strong>Points</strong> has the time and sample of every point you marked. <strong>Continuous</strong> has every sample: raw, band-passed, envelope and normalised EMG for each muscle (a big file).</p>
       <h3>Images</h3>
       <div class="row tight">
         <button class="btn small accent" id="xPng" type="button">EMG graph (PNG)</button>
@@ -143,19 +147,19 @@
             <li><strong>Band-pass filter</strong> (20&ndash;450 Hz unless changed): a 4th-order Butterworth band-pass, run forwards and backwards (zero lag), exactly as MATLAB&rsquo;s <code>butter(4, [20 450]/(fs/2), 'bandpass')</code> with <code>filtfilt</code>. It removes movement artefact and drift below 20 Hz and noise above 450 Hz (ISEK standards; Merletti, 1999; Kamen and Gabriel, 2010). No notch filter is used at 50 Hz, because it also removes real EMG.</li>
             <li><strong>Full-wave rectification:</strong> the absolute value of every sample.</li>
             <li><strong>Linear envelope:</strong> a 4th-order Butterworth low-pass (6 Hz unless changed), zero lag, with any value below zero set to zero. A lower cut-off gives a smoother envelope with lower peaks, and makes a zero-lag envelope start rising slightly <em>before</em> the real onset (Kamen and Gabriel, 2010; Robertson et al., 2014).</li>
-            <li><strong>Normalisation.</strong> %MVIC = envelope &divide; MVIC reference &times; 100. The reference is the highest value of the envelope (or the highest mean over a window, if chosen) across all the MVIC files for that muscle and participant. Without MVICs, each muscle can be scaled to its highest value in the session&rsquo;s task trials.</li>
-            <li><strong>Points and windows.</strong> You mark every point by hand. A rep runs from <em>Rep start</em> to the next <em>Rep end</em> (or, with no Rep ends, to the next Rep start, for cycles). Phase changes split a rep into phases.</li>
+            <li><strong>Normalisation.</strong> %MVIC = envelope &divide; MVIC reference &times; 100. The reference is the highest value of the envelope (or the highest mean over a window, if chosen) across all the MVIC files for that muscle and participant. <strong>Reference trial</strong> (for running, walking and cycling): 100% = the peak of the muscle&rsquo;s average stride or cycle in the trial(s) set as Reference for that participant, pooling every stride; another trial above 100% is more active than the reference (Burden, 2010). Without either, each muscle can be scaled to its highest value in the session&rsquo;s task trials.</li>
+            <li><strong>Points and windows.</strong> A rep runs from <em>Rep start</em> to the next <em>Rep end</em> (or, with no Rep ends, to the next Rep start, for cycles). Phase changes split a rep into phases. For running and walking, foot strikes can be found from a leg sensor&rsquo;s accelerometer: each is a sharp spike in the resultant acceleration (the tallest within the minimum gap, above half the 99th percentile), and a stride runs from one to the next on the same leg. For cycling and other rhythmic tasks, cycles start at each peak of the sensor&rsquo;s most-moving axis, low-passed at 3 Hz. A gap between cycle starts more than 1.6 &times; the usual is treated as a missed one and left out. Every point found can be checked and moved by hand.</li>
             <li><strong>Amplitude.</strong> Peak = the highest envelope value in the window; mean = the average of every sample; iEMG = the area under the envelope (trapezoid rule).</li>
-            <li><strong>Timing.</strong> Onset and offset are marked by eye for each muscle; times are from the start of the rep (s and % of the rep). Burst duration = offset &minus; onset. The optional onset guide line is the rest mean + 3 SD of a 50 Hz envelope (Hodges and Bui, 1996).</li>
+            <li><strong>Timing.</strong> With no onsets marked by hand, a muscle is <strong>on</strong> while its envelope is above 25% of the peak of its average rep, stride or cycle (or, if chosen in Go deeper &rarr; On/off, the rest mean + 3 SD of a 50 Hz envelope; Hodges and Bui, 1996), for at least 30 ms: shorter dips are bridged and shorter blips ignored. In cycles, a burst already on at the start is followed back into the cycle before (a negative onset) and one still on at the end is left for the next cycle; on the average cycle, a burst across the end joins the one at the start. Marked by hand, onset and offset replace these. Times are from the start of the rep (s and % of the rep). Burst duration = offset &minus; onset.</li>
             <li><strong>Order of activation:</strong> muscles sorted by onset in each rep, with each delay from the first.</li>
-            <li><strong>Co-contraction index</strong> = 2 &times; the common area of the two normalised envelopes &divide; the sum of their areas &times; 100 (Falconer and Winter, 1985). Burst overlap = the time both muscles are between onset and offset.</li>
+            <li><strong>Co-contraction index</strong> = 2 &times; the common area of the two normalised envelopes &divide; the sum of their areas &times; 100 (Falconer and Winter, 1985). Burst overlap = the time both muscles are between onset and offset; <em>both on</em> = the % of the average cycle where both are above their thresholds. In Compare trials, both are worked out from each group&rsquo;s average cycle, so muscles recorded in separate files can be paired.</li>
             <li><strong>Ratios</strong> = mean (or peak) normalised EMG of muscle A &divide; muscle B in the same window. Only normalised values are compared.</li>
             <li><strong>Average waveform.</strong> Each rep is resampled to 101 points (0&ndash;100%) by linear interpolation, then mean &plusmn; SD at each point. Variance ratio (VR) = within-point variance &divide; total variance (Hershler and Milner, 1978).</li>
             <li><strong>Median frequency</strong> (Go deeper): Welch power spectrum (256-sample Hann windows, half overlapping) of the band-passed EMG; MDF splits the power between the band-pass limits into equal halves.</li>
             <li><strong>Quality checks:</strong> exact zeros at the start or end, DC offset, clipping and very large spikes, the share of power below 20 Hz (movement artefact), a peak at the mains frequency, a baseline that never goes quiet, and values above 100% MVIC (Robertson et al., 2014, Fig. 8.4).</li>
             <li><strong>Limits.</strong> Surface EMG shows when and roughly how much a muscle is activated, not how much force it makes; the link between EMG and force is only close in slow, isometric contractions. Neighbouring muscles add crosstalk. %MVIC depends on how maximal the MVIC really was.</li>
           </ol>
-          <p class="muted"><strong>References.</strong> Aagaard, P. et al. (2002) Increased rate of force development and neural drive of human skeletal muscle following resistance training. <em>Journal of Applied Physiology</em>, 93(4), 1318&ndash;1326. Falconer, K. and Winter, D.A. (1985) Quantitative assessment of co-contraction at the ankle joint in walking. <em>Electromyography and Clinical Neurophysiology</em>, 25(2&ndash;3), 135&ndash;149. Hermens, H.J., Freriks, B., Disselhorst-Klug, C. and Rau, G. (2000) Development of recommendations for SEMG sensors and sensor placement procedures. <em>Journal of Electromyography and Kinesiology</em>, 10(5), 361&ndash;374. Hershler, C. and Milner, M. (1978) An optimality criterion for processing electromyographic (EMG) signals relating to human locomotion. <em>IEEE Transactions on Biomedical Engineering</em>, 25(5), 413&ndash;420. Hodges, P.W. and Bui, B.H. (1996) A comparison of computer-based methods for the determination of onset of muscle contraction using electromyography. <em>Electroencephalography and Clinical Neurophysiology</em>, 101(6), 511&ndash;519. Kamen, G. and Gabriel, D.A. (2010) <em>Essentials of Electromyography</em>. Human Kinetics. Merletti, R. (1999) Standards for reporting EMG data. <em>Journal of Electromyography and Kinesiology</em>, 9(1), III&ndash;IV. Robertson, D.G.E., Caldwell, G.E., Hamill, J., Kamen, G. and Whittlesey, S.N. (2014) <em>Research Methods in Biomechanics</em>, 2nd edn. Human Kinetics.</p>
+          <p class="muted"><strong>References.</strong> Aagaard, P. et al. (2002) Increased rate of force development and neural drive of human skeletal muscle following resistance training. <em>Journal of Applied Physiology</em>, 93(4), 1318&ndash;1326. Burden, A. (2010) How should we normalize electromyograms obtained from healthy participants? What we have learned from over 25 years of research. <em>Journal of Electromyography and Kinesiology</em>, 20(6), 1023&ndash;1035. Falconer, K. and Winter, D.A. (1985) Quantitative assessment of co-contraction at the ankle joint in walking. <em>Electromyography and Clinical Neurophysiology</em>, 25(2&ndash;3), 135&ndash;149. Hermens, H.J., Freriks, B., Disselhorst-Klug, C. and Rau, G. (2000) Development of recommendations for SEMG sensors and sensor placement procedures. <em>Journal of Electromyography and Kinesiology</em>, 10(5), 361&ndash;374. Hershler, C. and Milner, M. (1978) An optimality criterion for processing electromyographic (EMG) signals relating to human locomotion. <em>IEEE Transactions on Biomedical Engineering</em>, 25(5), 413&ndash;420. Hodges, P.W. and Bui, B.H. (1996) A comparison of computer-based methods for the determination of onset of muscle contraction using electromyography. <em>Electroencephalography and Clinical Neurophysiology</em>, 101(6), 511&ndash;519. Kamen, G. and Gabriel, D.A. (2010) <em>Essentials of Electromyography</em>. Human Kinetics. Merletti, R. (1999) Standards for reporting EMG data. <em>Journal of Electromyography and Kinesiology</em>, 9(1), III&ndash;IV. Robertson, D.G.E., Caldwell, G.E., Hamill, J., Kamen, G. and Whittlesey, S.N. (2014) <em>Research Methods in Biomechanics</em>, 2nd edn. Human Kinetics.</p>
         </div>
       </details>
     </div>
@@ -163,6 +167,6 @@
   <footer>EMG Analysis. Works offline once loaded. Nothing is uploaded. Built by Dr Tommy Bright.</footer>
 </main>
 <script>window.addEventListener('error',function(e){var s=document.getElementById('status');if(s)s.innerHTML='<span class="bad"><strong>Something went wrong.</strong> Try a hard refresh (Ctrl + Shift + R, or Cmd + Shift + R on a Mac). If it keeps happening, tell your tutor: '+(e.message||'')+'</span>';});</script>
-<script type="module" src="js/app.js?v=1.0.0"></script>
+<script type="module" src="js/app.js?v=1.2.0"></script>
 </body>
 </html>

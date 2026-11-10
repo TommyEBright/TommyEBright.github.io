@@ -1,9 +1,9 @@
 // Tab 3: the seven results, each with what it tells you and how it was worked out.
 //  1 amplitude (peak and mean), 2 onset, offset and burst duration, 3 order of activation,
 //  4 co-contraction, 5 ratios between muscles, 6 average waveform, 7 integrated EMG.
-import { A, $, esc, persist, muscle, SET, toCsv, download, baseName, trialLabel, W } from './state.js?v=1.1.0';
-import { Chart, frame, axes, line, band } from './plot.js?v=1.1.0';
-import { orderOf, coContraction, overlap, waveforms, quality, curveBursts, burstTxt } from './emg.js?v=1.1.0';
+import { A, $, esc, persist, muscle, SET, toCsv, download, baseName, trialLabel, W } from './state.js?v=1.2.0';
+import { Chart, frame, axes, line, band } from './plot.js?v=1.2.0';
+import { orderOf, coContraction, overlap, waveforms, quality, curveBursts, burstTxt } from './emg.js?v=1.2.0';
 
 let wfChart = null, ampChart = null;
 const f = (v, n) => (Number.isFinite(v) ? v.toFixed(n) : '&ndash;');

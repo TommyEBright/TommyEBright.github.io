@@ -2,8 +2,8 @@
 // Every EMG channel: raw -> band-pass (zero lag) -> full-wave rectify -> low-pass (zero lag) = linear envelope.
 // The envelope is then normalised to the muscle's MVIC (or the session's highest task peak, or left in µV).
 // Windows (reps, phases, your own) come from the points marked by hand, and every result is worked out in them.
-import { A, SET, muscle, muscleKeys, W, ptName } from './state.js?v=1.1.0';
-import { processEmg, butterSos, sosfiltfilt, movingMean, welch, specStats, powerBelow, humRatio, normalise } from './dsp.js?v=1.1.0';
+import { A, SET, muscle, muscleKeys, W, ptName } from './state.js?v=1.2.0';
+import { processEmg, butterSos, sosfiltfilt, movingMean, welch, specStats, powerBelow, humRatio, normalise } from './dsp.js?v=1.2.0';
 
 // ---------- processing (cached) ----------
 const cache = new Map();

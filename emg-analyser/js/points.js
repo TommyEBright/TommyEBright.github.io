@@ -1,8 +1,8 @@
 // Tab 2: marking points by hand. Reps (start and end), phase changes, each muscle's onset and offset,
 // a rest period (for the onset guide line), markers, and your own windows between any two points.
-import { A, $, esc, persist, status, uid, muscle, POINT_COL, SET, W, ptName } from './state.js?v=1.1.0';
-import { setView, cursorChanged } from './trace.js?v=1.1.0';
-import { pointLabel, findCycles } from './emg.js?v=1.1.0';
+import { A, $, esc, persist, status, uid, muscle, POINT_COL, SET, W, ptName } from './state.js?v=1.2.0';
+import { setView, cursorChanged } from './trace.js?v=1.2.0';
+import { pointLabel, findCycles } from './emg.js?v=1.2.0';
 
 const HELP = {
   rep0: 'the moment the rep (or cycle) begins, e.g. the start of the lowering',
