@@ -1,14 +1,14 @@
 // Start-up: wires the page together.
-import { A, $, esc, status, persist, restoreSession, loadPrefs, savePrefs, VERSION, trialLabel, muscle, defaultSet } from './state.js?v=1.0.0';
-import { analyse, references, forget } from './emg.js?v=1.0.0';
-import { initTrace, redraw, wholeRange } from './trace.js?v=1.0.0';
-import { renderPoints } from './points.js?v=1.0.0';
-import { renderResults } from './results.js?v=1.0.0';
-import { renderSetup } from './setup.js?v=1.0.0';
-import { initSession, renderSession, addText } from './session.js?v=1.0.0';
-import { renderCompare } from './compare.js?v=1.0.0';
-import { initExport } from './export.js?v=1.0.0';
-import { renderSteps, stepsView, renderFatigue, renderRor } from './deeper.js?v=1.0.0';
+import { A, $, esc, status, persist, restoreSession, loadPrefs, savePrefs, VERSION, trialLabel, muscle, defaultSet, W } from './state.js?v=1.1.0';
+import { analyse, references, forget } from './emg.js?v=1.1.0';
+import { initTrace, redraw, wholeRange } from './trace.js?v=1.1.0';
+import { renderPoints } from './points.js?v=1.1.0';
+import { renderResults } from './results.js?v=1.1.0';
+import { renderSetup } from './setup.js?v=1.1.0';
+import { initSession, renderSession, addText } from './session.js?v=1.1.0';
+import { renderCompare } from './compare.js?v=1.1.0';
+import { initExport } from './export.js?v=1.1.0';
+import { renderSteps, stepsView, renderFatigue, renderRor, renderOnOff } from './deeper.js?v=1.1.0';
 
 const curTab = () => { const b = $('panel').querySelector('.tab[aria-selected=true]'); return b ? b.getAttribute('data-t') : 'setup'; };
 
@@ -34,11 +34,13 @@ function refresh(o) {
 function nextStep() {
   const R = A.R, t = A.S, set = A.session.set;
   if (R.mvic) return (t.mvicFor && t.mvicFor.length) ? 'MVIC file for <strong>' + t.mvicFor.map((k) => esc(muscle(k).short)).join(', ') + '</strong>. Nothing to mark: open a task trial next.' : 'This is an MVIC file. Tick which muscle it is for in <strong>1. Setup</strong>.';
+  const w = W(), cyc = set.activity === 'gait' || set.activity === 'cycling';
   if (set.norm === 'mvic' && R.missing.length) return 'No MVIC yet for <strong>' + R.missing.map((k) => esc(muscle(k).short)).join(', ') + '</strong>: add the MVIC files (and set their Type to MVIC) so the EMG can be shown as %MVIC.';
-  if (!R.reps.length) return 'Next: mark each rep in <strong>2. Points</strong> (click the graph, then <strong>Rep start</strong> and <strong>Rep end</strong>).';
-  return R.reps.length + ' rep' + (R.reps.length > 1 ? 's' : '') + ' marked. Results are in <strong>3. Results</strong>; mark onsets and offsets for timing, order and co-contraction.';
+  if (set.norm === 'ref' && R.missing.length) return 'No reference trial yet for <strong>' + R.missing.map((k) => esc(muscle(k).short)).join(', ') + '</strong>: set the reference trial&rsquo;s <strong>Type</strong> to Reference in the Session table' + (cyc ? ' and find its ' + w.many : '') + '.';
+  if (!R.reps.length) return cyc ? 'Next: find the ' + w.many + ' in <strong>2. Points</strong> (<strong>Find ' + w.many + '</strong>), then check them on the graph.' : 'Next: mark each rep in <strong>2. Points</strong> (click the graph, then <strong>Rep start</strong> and <strong>Rep end</strong>).';
+  return R.reps.length + ' ' + (R.reps.length > 1 ? w.many : w.one) + ' marked. Results are in <strong>3. Results</strong>' + (R.autoOn ? ', with on/off found automatically.' : '.');
 }
-function badge() { const R = A.R; $('tabRes').textContent = '3. Results' + (R && R.ok && !R.mvic && R.reps.length ? ' (' + R.reps.length + ' rep' + (R.reps.length > 1 ? 's' : '') + ')' : ''); }
+function badge() { const R = A.R, w = W(); $('tabRes').textContent = '3. Results' + (R && R.ok && !R.mvic && R.reps.length ? ' (' + R.reps.length + ' ' + (R.reps.length > 1 ? w.many : w.one) + ')' : ''); }
 function showEmpty(on) { $('empty').classList.toggle('hide', !on); if (on) { $('traceWrap').classList.add('hide'); $('readout').innerHTML = ''; $('trialName').textContent = ''; $('showChips').innerHTML = ''; } }
 
 function openTrial(k) {
@@ -58,8 +60,8 @@ function sessionSummaries() {
       if (t.role === 'mvic') {
         const who = (t.labels.athlete || '').trim().toLowerCase(); const r = refs[who] || (refs[who] = references(who));
         s = (t.mvicFor || []).map((m) => { const x = r[m]; const mine = x && x.all.find((q) => q.trial === t.id); return esc(muscle(m).short) + ' ' + (mine ? (mine.v * 1e6).toFixed(0) + ' µV' + (x.trial === t.id ? ' &#10003;' : '') : ''); }).join(', ');
-      } else if (t === A.S && A.R && A.R.ok) s = A.R.reps.length ? A.R.reps.length + ' rep' + (A.R.reps.length > 1 ? 's' : '') : '<span class="muted">no reps yet</span>';
-      else { const n = (t.points || []).filter((p) => p.type === 'rep0').length; s = n ? n + ' rep start' + (n > 1 ? 's' : '') : '<span class="muted">no reps yet</span>'; }
+      } else if (t === A.S && A.R && A.R.ok) s = (t.role === 'ref' ? '<strong>reference</strong>, ' : '') + (A.R.reps.length ? A.R.reps.length + ' ' + (A.R.reps.length > 1 ? W().many : W().one) : '<span class="muted">no ' + W().many + ' yet</span>');
+      else { const n = (t.points || []).filter((p) => p.type === 'rep0').length; s = n ? n + ' ' + W().start.toLowerCase() + (n > 1 ? 's' : '') : '<span class="muted">no ' + W().many + ' yet</span>'; }
     } catch (e) { s = ''; }
     t._sum = s; const el = $('sesRes' + k); if (el) el.innerHTML = s;
   });
@@ -72,7 +74,7 @@ function showChips() {
   const items = [['raw', 'Raw EMG']];
   const sensors = Object.keys(R.pr.acc);
   if (sensors.length) items.push(['acc', 'Accelerometer']);
-  if (!R.mvic) items.push(['reps', 'Reps'], ['guide', 'Onset guide']);
+  if (!R.mvic) items.push(['reps', W().Many], ['guide', 'Onset guide']);
   el.innerHTML = items.map(([k, l]) => '<button type="button" class="chip' + (A.show[k] ? ' active' : '') + '" data-s="' + k + '" aria-pressed="' + !!A.show[k] + '">' + l + '</button>').join('')
     + (sensors.length > 1 && A.show.acc ? '<select id="accSel" class="mini" title="Which sensor&rsquo;s accelerometer">' + sensors.map((s) => '<option value="' + esc(s) + '"' + (A.show.accSensor === s ? ' selected' : '') + '>' + esc(muscle(s).short || s) + ' sensor</option>').join('') + '</select>' : '');
   el.querySelectorAll('[data-s]').forEach((b) => b.addEventListener('click', () => {
@@ -92,6 +94,7 @@ function renderTab() {
   if (t === 'steps') renderSteps();
   if (t === 'fatigue') renderFatigue();
   if (t === 'ror') renderRor();
+  if (t === 'onoff') renderOnOff();
 }
 function showTab(t) {
   document.querySelectorAll('#panel .tab').forEach((b) => b.setAttribute('aria-selected', String(b.getAttribute('data-t') === t)));

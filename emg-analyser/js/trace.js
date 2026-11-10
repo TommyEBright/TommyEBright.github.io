@@ -1,9 +1,9 @@
 // The main graph: one lane per muscle (the normalised linear envelope, with the raw EMG behind it if you
 // want), an accelerometer lane, the reps, the points you marked (drag their labels to move them), a cursor
 // you can step one sample at a time, zoom, and the overview strip underneath.
-import { A, $, esc, persist, muscle, POINT_COL, SET } from './state.js?v=1.0.0';
-import { Chart, frame, axes, line, band, vline, hline, dot, halo, niceStep, numTxt } from './plot.js?v=1.0.0';
-import { pointLabel } from './emg.js?v=1.0.0';
+import { A, $, esc, persist, muscle, POINT_COL, SET } from './state.js?v=1.1.0';
+import { Chart, frame, axes, line, band, vline, hline, dot, halo, niceStep, numTxt } from './plot.js?v=1.1.0';
+import { pointLabel } from './emg.js?v=1.1.0';
 
 let main = null, over = null, drag = null;
 const SHORT = { rep0: 'Start', rep1: 'End', phase: 'Phase', on: 'On', off: 'Off', rest0: 'Rest', rest1: 'Rest end', mark: 'Mark', hold0: 'MVIC start', hold1: 'MVIC end' };

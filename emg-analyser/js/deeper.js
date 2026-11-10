@@ -1,10 +1,11 @@
 // Go deeper: (1) the processing steps, one at a time; (2) median frequency over time (fatigue);
 // (3) the rate of rise of the EMG after onset.
-import { A, $, esc, persist, muscle, SET } from './state.js?v=1.0.0';
-import { Chart, frame, axes, line, band, range } from './plot.js?v=1.0.0';
-import { butterSos, sosfiltfilt, welch, specStats, linreg } from './dsp.js?v=1.0.0';
-import { fatigue, rateOfRise } from './emg.js?v=1.0.0';
-import { mean, sd } from './results.js?v=1.0.0';
+import { A, $, esc, persist, muscle, SET, W } from './state.js?v=1.1.0';
+import { Chart, frame, axes, line, band, range } from './plot.js?v=1.1.0';
+import { butterSos, sosfiltfilt, welch, specStats, linreg } from './dsp.js?v=1.1.0';
+import { fatigue, rateOfRise } from './emg.js?v=1.1.0';
+import { mean, sd, compute } from './results.js?v=1.1.0';
+import { burstTxt } from './emg.js?v=1.1.0';
 
 const f = (v, n) => (Number.isFinite(v) ? v.toFixed(n) : '&ndash;');
 function chSel(id, k) { const R = A.R; return '<select id="' + id + '" class="mini" style="width:auto">' + R.pr.ch.map((c, j) => '<option value="' + j + '"' + (j === k ? ' selected' : '') + '>' + esc(muscle(c.key).short) + '</option>').join('') + '</select>'; }
@@ -123,4 +124,39 @@ export function renderRor() {
   el.innerHTML = h;
   $('rorMs').addEventListener('change', function () { set.rorMs = +this.value; persist(); renderRor(); });
   $('rorFc').addEventListener('change', function () { A.rorFc = +this.value; renderRor(); });
+}
+
+// ---------- 4. automatic on/off settings ----------
+let onChart = null;
+export function renderOnOff() {
+  const el = $('onBox'), R = A.R; if (!R || !R.ok) { el.innerHTML = '<p class="muted">Open a file first.</p>'; return; }
+  const set = SET(), k = curK(), w1 = W().one, C = R.reps.length ? compute(R, 'reps') : null, a = C && C.avgOn ? C.avgOn[k] : null;
+  let h = '<p class="lead">How the tool decides when each muscle is <strong>on</strong>. It is used whenever no onsets are marked by hand.</p>'
+    + '<div class="row"><div><label for="onMethod">Threshold</label><select id="onMethod"><option value="pct"' + (set.onMethod !== 'rest' ? ' selected' : '') + '>A % of the peak of the average ' + w1 + ' (no rest needed)</option><option value="rest"' + (set.onMethod === 'rest' ? ' selected' : '') + '>Rest mean + SD (needs a rest period)</option></select></div>'
+    + (set.onMethod === 'rest' ? '<div><label for="onK">Rest mean + (SD)</label><input type="number" id="onK" min="1" max="10" step="0.5" value="' + set.guideK + '"></div>' : '<div><label for="onPct">On above (% of the peak)</label><input type="number" id="onPct" min="5" max="80" step="1" value="' + set.onPct + '"></div>')
+    + '<div><label for="onMin">Shortest burst or gap (ms)</label><input type="number" id="onMin" min="0" max="500" step="5" value="' + set.onMinMs + '"></div></div>';
+  if (set.onMethod === 'rest' && !R.rest) h += '<div class="warn"><p>No rest period is marked in this file, so the % of the peak is used. Mark <strong>Rest start</strong> and <strong>Rest end</strong> in 2. Points (section 3).</p></div>';
+  if (!R.autoOn) h += '<div class="tip"><p>This file has onsets marked by hand, so these settings are not used for its table. Delete its Onsets and Offsets to use them. The average ' + w1 + ' (and Compare) always uses them.</p></div>';
+  h += '<div class="row tight"><label class="inline" for="onCh" style="margin:0">Muscle</label>' + chSel('onCh', k) + '</div>';
+  h += C && C.wf ? '<div id="cOn" class="chartbox"></div>' + (a ? '<p>On: <strong>' + (a.B.length ? a.B.map(burstTxt).join('; ') : 'never') + '</strong> of the average ' + w1 + ', active for <strong>' + f(a.active, 0) + '%</strong> of it.</p>' : '') : '<p class="muted">Needs ' + W().many + ' marked (2. Points) to show the average ' + w1 + '.</p>';
+  h += '<details class="more" open><summary>Which to use</summary><p><strong>% of the peak</strong> (the default, 25%) is the usual method for running, walking and cycling: there is no rest to measure a baseline from, and the threshold scales with each muscle, so it is repeatable between trials and people. 20&ndash;25% is common; lower picks up more low-level activity, higher keeps only the main bursts. <strong>Rest mean + SD</strong> (Hodges and Bui, 1996) suits tasks that start from rest (e.g. a lift): it uses a fast ' + set.guideFc + ' Hz envelope and the rest period you mark. Either way, the shortest burst rule (about 30 ms) stops brief blips and dips from counting. Check the result against the graph: no automatic method is perfect, and crosstalk or artefact can switch a muscle on.</p></details>';
+  el.innerHTML = h;
+  const re = () => { persist(); A.fn.refresh({ keepView: true, keepStatus: true }); };
+  $('onMethod').addEventListener('change', function () { set.onMethod = this.value; re(); });
+  if ($('onPct')) $('onPct').addEventListener('change', function () { const v = +this.value; if (v > 0 && v < 100) { set.onPct = v; re(); } });
+  if ($('onK')) $('onK').addEventListener('change', function () { const v = +this.value; if (v > 0) { set.guideK = v; re(); } });
+  $('onMin').addEventListener('change', function () { const v = +this.value; if (v >= 0) { set.onMinMs = v; re(); } });
+  $('onCh').addEventListener('change', function () { A.lane = +this.value; A.fn.laneChanged(); renderOnOff(); });
+  onChart = $('cOn') ? new Chart($('cOn'), { height: 240, draw: (ctx, w, hh) => {
+    const wf = C.wf[k]; if (!wf || wf.none || !a) return null;
+    const x = Float64Array.from({ length: 101 }, (_, j) => j), col = muscle(wf.key).col;
+    let mx = 0; for (let j = 0; j < 101; j++) mx = Math.max(mx, wf.mean[j] + wf.sd[j]);
+    const fr = frame(w, hh, 0, 100, 0, mx * 1.08 || 1, { L: 60 });
+    axes(ctx, fr, { ylab: R.ni.lab, xlab: '% of the ' + w1, xGrid: true });
+    a.B.forEach((b) => (b.wrap ? [[b.on, 100], [0, b.off]] : [[b.on, b.off]]).forEach(([p, q]) => band(ctx, fr, p, q, col, 0.12)));
+    line(ctx, fr, x, wf.mean, { col, width: 2.4 });
+    ctx.save(); ctx.strokeStyle = '#1f2a33'; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(fr.L, fr.Y(a.thr)); ctx.lineTo(fr.L + fr.W, fr.Y(a.thr)); ctx.stroke();
+    ctx.fillStyle = '#1f2a33'; ctx.font = '600 11px system-ui'; ctx.fillText('threshold (' + set.onPct + '% of the peak)', fr.L + 6, fr.Y(a.thr) - 4); ctx.restore();
+    return fr;
+  } }) : null;
 }

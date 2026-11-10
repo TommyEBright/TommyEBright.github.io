@@ -1,6 +1,6 @@
 // Shared state and small helpers.
 // The session holds every file: MVIC files (to normalise each muscle) and task trials (the movements).
-export const VERSION = '1.0.0';
+export const VERSION = '1.1.0';
 export const APP = 'EMG Analysis';
 export const MUSCLE_COLS = ['#1d4ed8', '#be185d', '#0f766e', '#d97706', '#7c3aed', '#dc2626', '#0891b2', '#65a30d'];
 export const POINT_COL = { rep0: '#15803d', rep1: '#b91c1c', phase: '#7c3aed', on: '#0f766e', off: '#c2410c', rest0: '#64748b', rest1: '#64748b', mark: '#2563eb', hold0: '#15803d', hold1: '#b91c1c' };
@@ -17,9 +17,21 @@ export function defaultSet() {
     mains: 50,
     pairA: '', pairB: '',  // co-contraction and ratio pair (muscle keys)
     rorMs: 50,             // rate of rise window
-    fatigueWin: 500        // ms, for the sliding median frequency
+    fatigueWin: 500,       // ms, for the sliding median frequency
+    activity: 'reps',      // 'reps' (gym) | 'gait' (running/walking) | 'cycling' | 'open'
+    cycleGap: 0.5,         // s, shortest time between two cycles found from the accelerometer
+    onMethod: 'pct', onPct: 25, onMinMs: 30 // automatic on/off: % of the peak of the average cycle, shortest burst
   };
 }
+
+// The word for one rep, stride or cycle, so the whole tool talks about the task being analysed.
+export function W() {
+  const a = SET().activity;
+  if (a === 'gait') return { one: 'stride', many: 'strides', One: 'Stride', Many: 'Strides', start: 'Foot strike' };
+  if (a === 'cycling') return { one: 'cycle', many: 'cycles', One: 'Cycle', Many: 'Cycles', start: 'Cycle start' };
+  return { one: 'rep', many: 'reps', One: 'Rep', Many: 'Reps', start: 'Rep start' };
+}
+export function ptName(type) { return type === 'rep0' ? W().start : POINT_NAME[type] || type; }
 
 export const A = {
   session: { trials: [], cur: -1, muscles: {}, set: defaultSet() },

@@ -1,9 +1,9 @@
 // Compare trials: every task trial in the session, grouped by exercise (or participant), as a table,
 // a bar chart (like the lab MATLAB figure) and the average waveforms on top of each other.
-import { A, $, esc, muscle, muscleKeys, toCsv, download, trialLabel } from './state.js?v=1.0.0';
-import { Chart, frame, axes, line } from './plot.js?v=1.0.0';
-import { analyse } from './emg.js?v=1.0.0';
-import { compute, resultRows, mean, sd } from './results.js?v=1.0.0';
+import { A, $, esc, muscle, muscleKeys, toCsv, download, trialLabel, SET, W } from './state.js?v=1.1.0';
+import { Chart, frame, axes, line } from './plot.js?v=1.1.0';
+import { analyse, curveBursts, burstTxt } from './emg.js?v=1.1.0';
+import { compute, resultRows, mean, sd, bothOn } from './results.js?v=1.1.0';
 
 let barChart = null, wfChart = null;
 const f = (v, n) => (Number.isFinite(v) ? v.toFixed(n) : '&ndash;');
@@ -26,7 +26,7 @@ export function sessionData() {
     R.pr.ch.forEach((c, k) => {
       per[c.key] = { normed: !!R.N[k], mean: C.st.map((s) => s[k].mean), peak: C.st.map((s) => s[k].peak), iemg: C.st.map((s) => s[k].iemg), wf: C.wf && !C.wf[k].none ? C.wf[k] : null };
     });
-    out.push({ t, R, type, n: C.W.length, per, unit: R.ni.unit, group: groupKey(t) });
+    out.push({ t, R, type, n: C.W.length, per, unit: R.ni.unit, group: groupKey(t), len: R.reps.length ? mean(R.reps.map((r) => (r.i1 - r.i0) / R.fs)) : NaN, cyclic: R.cycles });
   });
   return out;
 }
@@ -37,20 +37,31 @@ export function renderCompare() {
   if (!D.length) { el.innerHTML = '<p class="muted">Add task trials (and their MVICs) to compare them. Label each trial&rsquo;s <strong>Exercise</strong> in the Session table so they can be grouped.</p>'; return; }
   const keys = muscleKeys().filter((k) => D.some((d) => d.per[k])), unit = D[0].unit, metric = A.cmpMetric || 'mean';
   const groups = []; D.forEach((d) => { if (!groups.includes(d.group)) groups.push(d.group); });
-  let h = '<div class="row"><div><label for="cmpGroup">Group by</label><select id="cmpGroup">' + [['condition', 'Exercise'], ['athlete', 'Participant'], ['both', 'Participant and exercise'], ['none', 'No groups']].map(([v, l]) => '<option value="' + v + '"' + ((A.cmpGroup || 'condition') === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></div>'
+  let h = '<div class="row"><div><label for="cmpGroup">Group by</label><select id="cmpGroup">' + [['condition', 'Exercise or condition'], ['athlete', 'Participant'], ['both', 'Participant and condition'], ['none', 'No groups']].map(([v, l]) => '<option value="' + v + '"' + ((A.cmpGroup || 'condition') === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></div>'
     + '<div><label for="cmpMetric">Show</label><select id="cmpMetric">' + Object.entries(METRICS).map(([v, l]) => '<option value="' + v + '"' + (metric === v ? ' selected' : '') + '>' + l + ' ' + (v === 'iemg' ? '(' + unit + '·s)' : unit) + '</option>').join('') + '</select></div></div>';
   if (D.some((d) => d.type === 'whole')) h += '<p class="muted">' + D.filter((d) => d.type === 'whole').map((d) => esc(trialLabel(d.t))).join(', ') + ': no reps marked, so the whole trial is used (it includes any rest, which lowers the mean).</p>';
   // table
-  h += '<div class="tablewrap" style="max-height:440px"><table class="restab"><thead><tr><th>Trial</th><th>Group</th><th>Reps</th>' + keys.map((k) => '<th style="color:' + muscle(k).col + '">' + esc(muscle(k).short) + '</th>').join('') + '</tr></thead><tbody>';
+  h += '<div class="tablewrap" style="max-height:440px"><table class="restab"><thead><tr><th>Trial</th><th>Group</th><th>' + W().Many + '</th>' + keys.map((k) => '<th style="color:' + muscle(k).col + '">' + esc(muscle(k).short) + '</th>').join('') + '</tr></thead><tbody>';
   groups.forEach((g) => {
     const rows = D.filter((d) => d.group === g);
     rows.forEach((d) => { h += '<tr><td>' + esc(trialLabel(d.t)) + '</td><td class="small">' + esc(g) + '</td><td class="num">' + (d.type === 'reps' ? d.n : 'whole') + '</td>' + keys.map((k) => { const p = d.per[k]; if (!p) return '<td></td>'; const v = p[metric]; return '<td class="num">' + f(mean(v), 1) + (v.length > 1 ? ' <span class="muted small">&plusmn; ' + f(sd(v), 1) + '</span>' : '') + (p.normed ? '' : ' <span class="muted small">µV</span>') + '</td>'; }).join('') + '</tr>'; });
-    if (rows.length > 1 || groups.length > 1) h += '<tr class="grp"><td colspan="3">' + esc(g) + ': all reps</td>' + keys.map((k) => { const v = [].concat(...rows.map((d) => (d.per[k] ? d.per[k][metric] : []))); return '<td class="num">' + f(mean(v), 1) + ' &plusmn; ' + f(sd(v), 1) + '</td>'; }).join('') + '</tr>';
+    if (rows.length > 1 || groups.length > 1) h += '<tr class="grp"><td colspan="3">' + esc(g) + ': all ' + W().many + '</td>' + keys.map((k) => { const v = [].concat(...rows.map((d) => (d.per[k] ? d.per[k][metric] : []))); return '<td class="num">' + f(mean(v), 1) + ' &plusmn; ' + f(sd(v), 1) + '</td>'; }).join('') + '</tr>';
   });
-  h += '</tbody></table></div><p class="muted small">Mean &plusmn; SD of the reps. ' + METRICS[metric] + ' in ' + (metric === 'iemg' ? unit + '·s' : unit) + '.</p>';
-  h += '<h3>' + METRICS[metric] + ' for each ' + ((A.cmpGroup || 'condition') === 'athlete' ? 'participant' : 'exercise') + '</h3><div id="cBar" class="chartbox"></div>';
-  h += '<h3>Average waveforms</h3><div class="row tight"><label class="inline" for="cmpWfM" style="margin:0">Muscle</label><select id="cmpWfM" class="mini" style="width:auto">' + keys.map((k) => '<option value="' + esc(k) + '"' + (A.cmpWfM === k ? ' selected' : '') + '>' + esc(muscle(k).short) + '</option>').join('') + '</select><span class="muted small">Every rep in each group, stretched to 0&ndash;100%, mean &plusmn; SD.</span></div><div id="cCmpWf" class="chartbox"></div><div class="legend" id="cmpLeg"></div>';
-  h += '<h3>Download the whole session</h3><div class="row tight"><button class="btn small accent" id="cmpWide" type="button">Summary: one row per trial (CSV)</button><button class="btn small" id="cmpLong" type="button">Every result: one row per value (CSV)</button><button class="btn small" id="cmpWfCsv" type="button">Average waveforms (CSV)</button></div>'
+  h += '</tbody></table></div><p class="muted small">Mean &plusmn; SD of the ' + W().many + '. ' + METRICS[metric] + ' in ' + (metric === 'iemg' ? unit + '·s' : unit) + '.</p>';
+  h += '<h3>' + METRICS[metric] + ' for each ' + ((A.cmpGroup || 'condition') === 'athlete' ? 'participant' : 'exercise or condition') + '</h3><div id="cBar" class="chartbox"></div>';
+  h += '<h3>Average waveforms</h3><div class="row tight"><label class="inline" for="cmpWfM" style="margin:0">Muscle</label><select id="cmpWfM" class="mini" style="width:auto">' + keys.map((k) => '<option value="' + esc(k) + '"' + (A.cmpWfM === k ? ' selected' : '') + '>' + esc(muscle(k).short) + '</option>').join('') + '</select><span class="muted small">Every ' + W().one + ' in each group, stretched to 0&ndash;100%, mean &plusmn; SD.</span></div><div id="cCmpWf" class="chartbox"></div><div class="legend" id="cmpLeg"></div>';
+  if (keys.length >= 2) {
+    const set = SET(), w1 = W().one;
+    if (!keys.includes(set.pairA)) set.pairA = keys[0];
+    if (!keys.includes(set.pairB) || set.pairB === set.pairA) set.pairB = keys.find((k) => k !== set.pairA);
+    const T = timing(D, groups, set.pairA, set.pairB);
+    h += '<h3>Timing and co-contraction for each group</h3><p class="muted" style="margin:.2rem 0">From each group&rsquo;s average ' + w1 + ' (every ' + w1 + ' in the group, 0&ndash;100%), so it works when each muscle is in its own file. On = above ' + set.onPct + '% of the muscle&rsquo;s average peak, for at least ' + set.onMinMs + ' ms. CI = co-contraction index of the two average curves (Falconer and Winter, 1985).</p>'
+      + '<div class="row tight"><label class="inline" for="cpA" style="margin:0">Agonist</label><select id="cpA" class="mini" style="width:auto">' + keys.map((k) => '<option value="' + esc(k) + '"' + (k === set.pairA ? ' selected' : '') + '>' + esc(muscle(k).short) + '</option>').join('') + '</select><label class="inline" for="cpB" style="margin:0">Antagonist</label><select id="cpB" class="mini" style="width:auto">' + keys.map((k) => '<option value="' + esc(k) + '"' + (k === set.pairB ? ' selected' : '') + '>' + esc(muscle(k).short) + '</option>').join('') + '</select></div>'
+      + '<div class="tablewrap" style="max-height:none"><table class="restab"><thead><tr><th>Group</th><th style="color:' + muscle(set.pairA).col + '">' + esc(muscle(set.pairA).short) + ' on (% of the ' + w1 + ')</th><th>active</th><th style="color:' + muscle(set.pairB).col + '">' + esc(muscle(set.pairB).short) + ' on</th><th>active</th><th>Both on</th><th>CI (%)</th></tr></thead><tbody>'
+      + T.map((r) => '<tr><td>' + esc(r.g) + '</td>' + [r.a, r.b].map((x) => (x ? '<td class="small">' + (x.B.length ? x.B.map(burstTxt).join('; ') : '&ndash;') + '</td><td class="num">' + f(x.active, 0) + '%</td>' : '<td class="muted small" colspan="2">no ' + W().many + '</td>')).join('') + '<td class="num"><strong>' + f(r.both, 0) + (Number.isFinite(r.both) ? '%' : '') + '</strong></td><td class="num"><strong>' + f(r.ci, 1) + '</strong></td></tr>').join('')
+      + '</tbody></table></div>';
+  }
+  h += '<h3>Download the whole session</h3><div class="row tight"><button class="btn small accent" id="cmpWide" type="button">Summary: one row per trial (CSV)</button><button class="btn small" id="cmpLong" type="button">Every result: one row per value (CSV)</button><button class="btn small" id="cmpWfCsv" type="button">Average waveforms (CSV)</button>' + (keys.length >= 2 ? '<button class="btn small" id="cmpTimCsv" type="button">Timing and co-contraction (CSV)</button>' : '') + '</div>'
     + '<p class="muted">Every file has participant, exercise and trial columns, so you can filter and group them in Excel, R or SPSS.</p>';
   el.innerHTML = h;
   if (!A.cmpWfM || !keys.includes(A.cmpWfM)) A.cmpWfM = keys[0];
@@ -62,7 +73,37 @@ export function renderCompare() {
   $('cmpLeg').innerHTML = groups.map((g, j) => '<span><i class="key" style="border-color:' + GCOL[j % GCOL.length] + '"></i>' + esc(g) + '</span>').join('');
   $('cmpWide').addEventListener('click', () => download('emg_session_summary.csv', new Blob([toCsv(wideRows(D, keys))], { type: 'text/csv' })));
   $('cmpLong').addEventListener('click', () => { const rows = []; D.forEach((d, j) => { const r = resultRows(d.R, d.type, d.t.labels); rows.push(...(j ? r.slice(1) : r)); }); download('emg_session_results.csv', new Blob([toCsv(rows)], { type: 'text/csv' })); });
+  if ($('cpA')) [['cpA', 'pairA'], ['cpB', 'pairB']].forEach(([id, k]) => $(id).addEventListener('change', function () { SET()[k] = this.value; renderCompare(); }));
+  if ($('cmpTimCsv')) $('cmpTimCsv').addEventListener('click', () => download('emg_session_timing.csv', new Blob([toCsv(timingRows(D, groups))], { type: 'text/csv' })));
   $('cmpWfCsv').addEventListener('click', () => download('emg_session_waveforms.csv', new Blob([toCsv(wfRows(D, keys))], { type: 'text/csv' })));
+}
+
+// Each group's average cycle for a muscle (all its cycles pooled), with on/off from it.
+function groupCurve(D, g, k) {
+  const rows = D.filter((d) => d.group === g && d.per[k] && d.per[k].wf);
+  const curves = [].concat(...rows.map((d) => d.per[k].wf.curves)); if (!curves.length) return null;
+  const m = new Float64Array(101); for (let j = 0; j < 101; j++) m[j] = mean(curves.map((c) => c[j]));
+  let pk = 0; for (let j = 0; j < 101; j++) pk = Math.max(pk, m[j]);
+  const set = SET(), len = mean(rows.map((d) => d.len)), thr = pk * set.onPct / 100;
+  return Object.assign(curveBursts(m, thr, set.onMinMs / 1000 / len * 100, rows.every((d) => d.cyclic)), { m, n: curves.length });
+}
+function timing(D, groups, kA, kB) {
+  return groups.map((g) => {
+    const a = groupCurve(D, g, kA), b = groupCurve(D, g, kB);
+    let ci = NaN;
+    if (a && b) { let c = 0, s2 = 0; for (let j = 0; j < 101; j++) { c += Math.min(a.m[j], b.m[j]); s2 += a.m[j] + b.m[j]; } ci = s2 > 0 ? 2 * c / s2 * 100 : NaN; }
+    return { g, a, b, both: bothOn(a, b), ci };
+  });
+}
+function timingRows(D, groups) {
+  const set = SET(), keys = muscleKeys().filter((k) => D.some((d) => d.per[k]));
+  const rows = [['group', 'muscle', 'cycles', 'active_pct', 'bursts_pct_of_cycle', 'paired_with', 'both_on_pct', 'co-contraction_index']];
+  groups.forEach((g) => keys.forEach((k) => {
+    const a = groupCurve(D, g, k); if (!a) return;
+    const o = k === set.pairA ? set.pairB : k === set.pairB ? set.pairA : '', T = o ? timing(D, [g], set.pairA, set.pairB)[0] : null;
+    rows.push([g, muscle(k).short, a.n, a.active.toFixed(1), a.B.map((b) => b.on + '-' + b.off).join('; '), o ? muscle(o).short : '', T && Number.isFinite(T.both) ? T.both.toFixed(1) : '', T && Number.isFinite(T.ci) ? T.ci.toFixed(2) : '']);
+  }));
+  return rows;
 }
 
 function drawBars(ctx, w, h, D, groups, keys, metric, unit) {
@@ -70,7 +111,7 @@ function drawBars(ctx, w, h, D, groups, keys, metric, unit) {
   let mx = 0; vals.forEach((r) => r.forEach((v) => { if (Number.isFinite(v.m)) mx = Math.max(mx, v.m + (Number.isFinite(v.s) ? v.s : 0)); }));
   const fr = frame(w, h, 0, groups.length, 0, (mx || 1) * 1.12, { L: 60, B: 46, T: 26 });
   axes(ctx, fr, { ylab: metric === 'iemg' ? unit + '·s' : unit, noX: true });
-  if (unit === '%MVIC' && metric !== 'iemg') { const y = fr.Y(100); if (y > fr.T) { ctx.save(); ctx.strokeStyle = '#94a3b8'; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(fr.L, y); ctx.lineTo(fr.L + fr.W, y); ctx.stroke(); ctx.restore(); } }
+  if ((unit === '%MVIC' || unit === '% ref') && metric !== 'iemg') { const y = fr.Y(100); if (y > fr.T) { ctx.save(); ctx.strokeStyle = '#94a3b8'; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(fr.L, y); ctx.lineTo(fr.L + fr.W, y); ctx.stroke(); ctx.restore(); } }
   const gw = fr.W / groups.length, bw = Math.min(40, gw * 0.8 / keys.length);
   ctx.save(); ctx.font = '600 12px system-ui'; ctx.textAlign = 'center';
   groups.forEach((g, gi) => {
@@ -85,7 +126,7 @@ function drawBars(ctx, w, h, D, groups, keys, metric, unit) {
   });
   let lx = fr.L + 6; ctx.textAlign = 'left'; ctx.font = '600 11.5px system-ui';
   keys.forEach((k) => { ctx.fillStyle = muscle(k).col; ctx.fillRect(lx, 8, 12, 10); ctx.fillStyle = '#1f2a33'; ctx.fillText(muscle(k).short, lx + 16, 17); lx += ctx.measureText(muscle(k).short).width + 34; });
-  ctx.fillStyle = '#5b6770'; ctx.font = '11px system-ui'; ctx.textAlign = 'right'; ctx.fillText('mean ± SD of all reps' + (unit === '%MVIC' && metric !== 'iemg' ? '; dashed = 100% MVIC' : ''), fr.L + fr.W, 17);
+  ctx.fillStyle = '#5b6770'; ctx.font = '11px system-ui'; ctx.textAlign = 'right'; ctx.fillText('mean ± SD of all ' + W().many + (metric !== 'iemg' ? (unit === '%MVIC' ? '; dashed = 100% MVIC' : unit === '% ref' ? '; dashed = the reference' : '') : ''), fr.L + fr.W, 17);
   ctx.restore();
   return fr;
 }
@@ -100,7 +141,8 @@ function drawGroupWf(ctx, w, h, D, groups, unit) {
   });
   let mx = 0; G.forEach((g) => { if (g) for (let j = 0; j < 101; j++) mx = Math.max(mx, g.m[j] + g.s[j]); });
   const fr = frame(w, h, 0, 100, 0, (mx || 1) * 1.08, { L: 60 });
-  axes(ctx, fr, { ylab: muscle(k).short + ' (' + unit + ')', xlab: '% of the rep', xGrid: true });
+  axes(ctx, fr, { ylab: muscle(k).short + ' (' + unit + ')', xlab: '% of the ' + W().one, xGrid: true });
+  if (unit === '% ref') { const y = fr.Y(100); if (y > fr.T) { ctx.save(); ctx.strokeStyle = '#94a3b8'; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(fr.L, y); ctx.lineTo(fr.L + fr.W, y); ctx.stroke(); ctx.restore(); } }
   G.forEach((g, j) => {
     if (!g) return; const col = GCOL[j % GCOL.length];
     ctx.save(); ctx.globalAlpha = 0.12; ctx.fillStyle = col; ctx.beginPath();
