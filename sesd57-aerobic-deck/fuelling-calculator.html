@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Endurance Fuelling Calculator</title>
+<meta name="description" content="SESD57 teaching tool for planning carbohydrate before, during and after an endurance event.">
+<style>
+  :root {
+    --ink: #161a1d;
+    --muted: #4a5258;
+    --line: #c9cfd4;
+    --panel: #f4f6f8;
+    --accent: #1d3d5e;
+    --accent-soft: #e3ebf3;
+    --ok: #1b6236;
+    --ok-bg: #e5f2e9;
+    --warn: #7a4b00;
+    --warn-bg: #fdf1dc;
+    --over: #9b1c1c;
+    --over-bg: #fbe5e5;
+    --focus: #f2b600;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: #fff;
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1, h2, h3 { line-height: 1.2; margin: 0 0 8px; }
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.2rem; margin-top: 28px; padding-bottom: 6px; border-bottom: 2px solid var(--ink); }
+  h3 { font-size: 1.05rem; }
+  p { margin: 0 0 10px; }
+  .kicker { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .lede { color: var(--muted); max-width: 62ch; }
+
+  a { color: var(--accent); }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  /* Inputs */
+  form.inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 14px 18px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 16px;
+  }
+  .field label, .field legend { display: block; font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; padding: 0; }
+  .field .hint { display: block; font-size: 0.82rem; color: var(--muted); margin-top: 3px; }
+  fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+  input[type="number"], input[type="text"], select {
+    font: inherit;
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid #6b747b;
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ink);
+  }
+  .duration { display: flex; gap: 8px; }
+  .duration > div { flex: 1; }
+  .duration label { font-weight: 400; font-size: 0.85rem; }
+  .seg { display: flex; border: 1.5px solid #6b747b; border-radius: 6px; overflow: hidden; }
+  .seg label { flex: 1; margin: 0; font-weight: 600; position: relative; }
+  .seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .seg span { display: block; text-align: center; padding: 8px 6px; cursor: pointer; background: #fff; }
+  .seg label + label span { border-left: 1.5px solid #6b747b; }
+  .seg input:checked + span { background: var(--accent); color: #fff; }
+  .seg input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: -3px; }
+  .error { color: var(--over); font-weight: 600; margin-top: 10px; }
+
+  /* Plan */
+  .summary { margin: 18px 0 10px; font-size: 1.05rem; }
+  .plan { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+  .col {
+    border: 1.5px solid var(--line);
+    border-top: 6px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 14px 14px 10px;
+    background: #fff;
+  }
+  .col h3 { font-size: 1.15rem; margin-bottom: 10px; }
+  .item { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; }
+  .item:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+  .item .label { font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  .big { font-size: 1.35rem; font-weight: 800; color: var(--accent); line-height: 1.25; margin: 2px 0 4px; }
+  .small { font-size: 0.88rem; color: var(--muted); }
+  .note { font-size: 0.9rem; background: var(--accent-soft); border-radius: 6px; padding: 8px 10px; margin-top: 8px; }
+  .caution { font-size: 0.9rem; background: var(--warn-bg); color: #4d3000; border-left: 5px solid var(--warn); border-radius: 6px; padding: 8px 10px; margin-top: 8px; }
+  .caution strong { color: var(--warn); }
+
+  /* Food builder */
+  .builder-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .examples { font-size: 0.9rem; background: var(--warn-bg); border-left: 5px solid var(--warn); padding: 8px 10px; border-radius: 6px; margin: 8px 0 12px; }
+  table.foods { width: 100%; border-collapse: collapse; }
+  table.foods th, table.foods td { padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+  table.foods th { font-size: 0.85rem; color: var(--muted); }
+  table.foods td.num, table.foods th.num { text-align: right; }
+  table.foods input[type="number"] { width: 90px; text-align: right; }
+  table.foods input[type="text"] { min-width: 150px; }
+  table.foods .gph { font-weight: 700; white-space: nowrap; }
+  .btn {
+    font: inherit;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1.5px solid var(--accent);
+    background: #fff;
+    color: var(--accent);
+    cursor: pointer;
+  }
+  .btn.primary { background: var(--accent); color: #fff; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .remove { font: inherit; border: 0; background: none; color: var(--over); cursor: pointer; text-decoration: underline; padding: 4px; }
+
+  .result-box { border-radius: var(--radius); padding: 12px 14px; margin-top: 14px; border: 1.5px solid var(--line); }
+  .result-box.ok { background: var(--ok-bg); border-color: var(--ok); }
+  .result-box.under { background: var(--warn-bg); border-color: var(--warn); }
+  .result-box.over { background: var(--over-bg); border-color: var(--over); }
+  .result-box .status { font-weight: 800; font-size: 1.05rem; }
+  .result-box.ok .status { color: var(--ok); }
+  .result-box.under .status { color: var(--warn); }
+  .result-box.over .status { color: var(--over); }
+  .meter { position: relative; height: 16px; background: #e6e9ec; border-radius: 8px; margin: 10px 0 4px; overflow: hidden; }
+  .meter .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); border-radius: 8px; }
+  .meter .target { position: absolute; top: -2px; bottom: -2px; width: 3px; background: var(--ink); }
+  .meter-labels { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--muted); }
+
+  ol.questions li { margin-bottom: 10px; }
+  .refs p { font-size: 0.9rem; padding-left: 1.5em; text-indent: -1.5em; }
+  footer { margin-top: 26px; font-size: 0.85rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+
+  /* Phone layout: stack the food table */
+  @media (max-width: 600px) {
+    h1 { font-size: 1.35rem; }
+    table.foods thead { display: none; }
+    table.foods, table.foods tbody, table.foods tr, table.foods td { display: block; width: 100%; }
+    table.foods tr { border: 1px solid var(--line); border-radius: 8px; padding: 8px; margin-bottom: 10px; }
+    table.foods td { border: 0; padding: 4px 0; display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: right; }
+    table.foods td::before { content: attr(data-label); font-weight: 700; font-size: 0.85rem; color: var(--muted); text-align: left; }
+    table.foods td.name-cell { display: block; text-align: left; }
+    table.foods td.name-cell::before { display: block; margin-bottom: 4px; }
+    table.foods input[type="text"] { width: 100%; }
+  }
+
+  @media print {
+    form.inputs, .btn-row, .remove { display: none; }
+    .col { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">SESD57 Nutrition for aerobic performance &middot; Task 3 &middot; pairs &middot; 15 min</div>
+    <h1>Endurance fuelling calculator</h1>
+    <p class="lede">Enter details for an athlete and event. The plan below updates as you type. Use it to explain and apply the carbohydrate guidelines, then answer the questions at the bottom.</p>
+  </header>
+
+  <form class="inputs" id="inputs" novalidate>
+    <div class="field">
+      <label for="mass">Body mass (kg)</label>
+      <input id="mass" type="number" inputmode="decimal" min="30" max="150" step="0.5" value="70" aria-describedby="mass-hint">
+      <span class="hint" id="mass-hint">Between 30 and 150 kg</span>
+    </div>
+
+    <fieldset class="field">
+      <legend>Event type</legend>
+      <div class="seg">
+        <label><input type="radio" name="event" value="running" checked><span>Running</span></label>
+        <label><input type="radio" name="event" value="cycling"><span>Cycling</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset class="field">
+      <legend>Expected duration</legend>
+      <div class="duration">
+        <div><label for="hours">Hours</label><input id="hours" type="number" inputmode="numeric" min="0" max="24" step="1" value="3"></div>
+        <div><label for="mins">Minutes</label><input id="mins" type="number" inputmode="numeric" min="0" max="59" step="1" value="30"></div>
+      </div>
+    </fieldset>
+
+    <fieldset class="field">
+      <legend>Gut training done?</legend>
+      <div class="seg">
+        <label><input type="radio" name="gut" value="yes"><span>Yes</span></label>
+        <label><input type="radio" name="gut" value="no" checked><span>No</span></label>
+      </div>
+      <span class="hint">Has the athlete practised race fuelling in training?</span>
+    </fieldset>
+
+    <div class="field">
+      <label for="next">Next hard session</label>
+      <select id="next">
+        <option value="24" selected>Within 24 h</option>
+        <option value="later">More than 24 h later</option>
+      </select>
+      <span class="hint">Used for the After column</span>
+    </div>
+  </form>
+  <p class="error" id="error" role="alert" hidden></p>
+
+  <section aria-labelledby="plan-h">
+    <h2 id="plan-h">Fuelling plan</h2>
+    <p class="summary" id="summary" aria-live="polite"></p>
+    <div class="plan" id="plan" aria-live="polite">
+      <article class="col" aria-labelledby="before-h">
+        <h3 id="before-h">Before</h3>
+        <div id="before"></div>
+      </article>
+      <article class="col" aria-labelledby="during-h">
+        <h3 id="during-h">During</h3>
+        <div id="during"></div>
+      </article>
+      <article class="col" aria-labelledby="after-h">
+        <h3 id="after-h">After</h3>
+        <div id="after"></div>
+      </article>
+    </div>
+  </section>
+
+  <section aria-labelledby="food-h">
+    <div class="builder-head">
+      <h2 id="food-h">Build it with real food</h2>
+    </div>
+    <p>Choose how many servings of each item the athlete would take <strong>per hour</strong> during the event. You can change the names and carbohydrate values, or add your own items.</p>
+    <p class="examples"><strong>Typical example values only.</strong> Carbohydrate content varies between brands and portion sizes. Check every value against the product label before using it in a real plan.</p>
+
+    <table class="foods" id="foods">
+      <thead>
+        <tr>
+          <th scope="col">Item</th>
+          <th scope="col" class="num">Carbohydrate per serving (g)</th>
+          <th scope="col" class="num">Servings per hour</th>
+          <th scope="col" class="num">g per hour</th>
+          <th scope="col"><span class="visually-hidden" style="position:absolute;left:-9999px">Remove</span></th>
+        </tr>
+      </thead>
+      <tbody id="food-rows"></tbody>
+    </table>
+    <div class="btn-row">
+      <button type="button" class="btn" id="add-item">Add an item</button>
+      <button type="button" class="btn" id="reset-items">Reset to example list</button>
+    </div>
+
+    <div class="result-box" id="food-result" aria-live="polite"></div>
+  </section>
+
+  <section aria-labelledby="q-h">
+    <h2 id="q-h">Questions to answer in pairs</h2>
+    <ol class="questions">
+      <li>How does the plan change for a 55 kg runner finishing in 4 h 30? Explain which parts change and why.</li>
+      <li>A 75 kg cyclist expects to ride for 1 h 40 and wants to take 90 g per hour because "more must be better". Apply the guidelines to explain what you would advise instead.</li>
+      <li>Use the food builder to reach about 60 g per hour for a runner who has not done any gut training. Describe two practical problems they might have on race day and how they could practise in training.</li>
+    </ol>
+  </section>
+
+  <section class="refs" aria-labelledby="refs-h">
+    <h2 id="refs-h">References</h2>
+    <p>Burke, L.M., Hawley, J.A., Wong, S.H.S. and Jeukendrup, A.E. (2011) 'Carbohydrates for training and competition', <em>Journal of Sports Sciences</em>, 29(Suppl 1), pp. S17-S27.</p>
+    <p>Jeukendrup, A. (2014) 'A step towards personalized sports nutrition: carbohydrate intake during exercise', <em>Sports Medicine</em>, 44(Suppl 1), pp. S25-S33.</p>
+    <p>Jeukendrup, A.E. (2017) 'Training the gut for athletes', <em>Sports Medicine</em>, 47(Suppl 1), pp. 101-110.</p>
+    <p>Thomas, D.T., Erdman, K.A. and Burke, L.M. (2016) 'Position of the Academy of Nutrition and Dietetics, Dietitians of Canada, and the American College of Sports Medicine: nutrition and athletic performance', <em>Journal of the Academy of Nutrition and Dietetics</em>, 116(3), pp. 501-528.</p>
+  </section>
+
+  <footer>
+    A teaching tool for SESD57 at Plymouth Marjon University. It applies general guidelines and is not individual dietary advice.
+  </footer>
+</div>
+
+<script>
+/* ==========================================================
+   EDIT THE FOOD LIST HERE
+   name: what students see
+   carbs: grams of carbohydrate per serving (typical example only)
+   ========================================================== */
+const PRODUCTS = [
+  { name: "Energy gel (1 sachet)",             carbs: 22 },
+  { name: "Sports drink (500 ml bottle)",      carbs: 30 },
+  { name: "Banana (1 medium)",                 carbs: 23 },
+  { name: "Jelly sweets (5 sweets, about 30 g)", carbs: 23 },
+  { name: "Cereal bar (1 bar)",                carbs: 25 },
+  { name: "White bagel (1 plain bagel)",       carbs: 45 }
+];
+
+(function () {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+  const round5 = (n) => Math.round(n / 5) * 5;
+  const fmt = (n) => Math.round(n).toLocaleString("en-GB");
+  const range = (lo, hi, unit) => fmt(round5(lo)) + " to " + fmt(round5(hi)) + " " + unit;
+
+  let foods = [];
+  let currentTarget = null; // g per hour, or null when there is no hourly target
+  let currentHours = 0;
+
+  function resetFoods() {
+    foods = PRODUCTS.map((p) => ({ name: p.name, carbs: p.carbs, qty: 0 }));
+    renderFoods();
+  }
+
+  function readInputs() {
+    const mass = parseFloat($("mass").value);
+    const h = parseInt($("hours").value || "0", 10);
+    const m = parseInt($("mins").value || "0", 10);
+    const event = document.querySelector("input[name=event]:checked").value;
+    const gut = document.querySelector("input[name=gut]:checked").value;
+    const next = $("next").value;
+    return { mass, h, m, minutes: h * 60 + m, event, gut, next };
+  }
+
+  function validate(d) {
+    if (!isFinite(d.mass) || d.mass < 30 || d.mass > 150) return "Enter a body mass between 30 and 150 kg.";
+    if (!(d.h >= 0) || !(d.m >= 0) || d.m > 59) return "Enter the duration as whole hours and 0 to 59 minutes.";
+    if (d.minutes <= 0) return "Enter an expected duration longer than 0 minutes.";
+    if (d.minutes > 24 * 60) return "Enter a duration of 24 hours or less.";
+    return "";
+  }
+
+  function durationText(min) {
+    const h = Math.floor(min / 60), m = min % 60;
+    if (h === 0) return m + " min";
+    return h + " h" + (m ? " " + m + " min" : "");
+  }
+
+  /* During-event bands based on Jeukendrup (2014) */
+  function duringBand(min) {
+    if (min < 45) return { key: "none", rate: 0 };
+    if (min < 75) return { key: "rinse", rate: 0 };
+    if (min <= 120) return { key: "30", rate: 30 };
+    if (min <= 150) return { key: "60", rate: 60 };
+    return { key: "90", rate: 90 };
+  }
+
+  function item(label, big, text) {
+    return '<div class="item"><div class="label">' + label + '</div>' +
+      (big ? '<div class="big">' + big + '</div>' : '') +
+      (text ? '<p class="small">' + text + '</p>' : '') + '</div>';
+  }
+
+  function render() {
+    const d = readInputs();
+    const err = validate(d);
+    $("error").hidden = !err;
+    $("error").textContent = err;
+    if (err) {
+      ["before", "during", "after"].forEach((id) => { $(id).innerHTML = '<p class="small">Waiting for valid inputs.</p>'; });
+      $("summary").textContent = "";
+      currentTarget = null;
+      currentHours = 0;
+      updateFoodResult();
+      return;
+    }
+
+    const hrs = d.minutes / 60;
+    const sport = d.event === "running" ? "runner" : "cyclist";
+    $("summary").innerHTML = "Plan for a <strong>" + d.mass + " kg " + sport + "</strong> with an expected time of <strong>" + durationText(d.minutes) + "</strong>.";
+
+    /* ---------- BEFORE ---------- */
+    let before = "";
+    if (d.minutes > 90) {
+      before += item("Carbohydrate loading",
+        range(d.mass * 10, d.mass * 12, "g per day"),
+        "10 to 12 g/kg per day for the 36 to 48 h before the event, alongside reduced training. Lower fibre choices may help gut comfort.");
+    } else {
+      before += item("General fuelling",
+        range(d.mass * 7, d.mass * 12, "g"),
+        "7 to 12 g/kg over the 24 h before the event. Full carbohydrate loading is unlikely to be needed for events of 90 min or less.");
+    }
+    before += item("Pre-event meal",
+      range(d.mass * 1, d.mass * 4, "g"),
+      "1 to 4 g/kg eaten 1 to 4 h before the start. Smaller amounts suit the shorter end of that window. Choose familiar foods that are low in fat and fibre.");
+    before += '<p class="note">Sources: Burke <em>et al.</em> (2011); Thomas, Erdman and Burke (2016).</p>';
+    $("before").innerHTML = before;
+
+    /* ---------- DURING ---------- */
+    const band = duringBand(d.minutes);
+    let during = "";
+    if (band.key === "none") {
+      during += item("Carbohydrate during", "None needed",
+        "For events under 45 min, carbohydrate during the event is unlikely to add much benefit. Focus on the pre-event meal.");
+      during += item("Total for the event", "0 g", "");
+    } else if (band.key === "rinse") {
+      during += item("Carbohydrate during", "Small amounts or a mouth rinse",
+        "For 45 to 75 min, a few sips of sports drink or rinsing the mouth with a carbohydrate drink may help performance, possibly through effects on the brain rather than as fuel.");
+      during += item("Total for the event", "No set target", "Small amounts only.");
+    } else {
+      const total = band.rate * hrs;
+      const label = band.key === "30" ? "1 to 2 h events" : band.key === "60" ? "2 to 3 h events" : "Events over 2.5 h";
+      during += item("Carbohydrate per hour", "Up to " + band.rate + " g per hour", label + ".");
+      during += item("Total for the event", "Up to " + fmt(round5(total)) + " g",
+        "Up to " + band.rate + " g per hour across " + durationText(d.minutes) + ". Start early and take small amounts regularly.");
+      if (band.key === "90") {
+        during += '<p class="note">Intakes above about 60 g per hour should come from <strong>multiple transportable carbohydrates</strong> (glucose plus fructose), which use different gut transporters and appear to be absorbed and oxidised faster.</p>';
+      }
+      if (band.rate >= 60 && d.gut === "no") {
+        during += '<p class="caution"><strong>Caution.</strong> This athlete has not practised fuelling in training. Intakes at the higher end need practice in training, as the gut appears to adapt with repeated use (Jeukendrup, 2017). Start lower and build up over several weeks of long sessions.</p>';
+      } else if (d.gut === "no") {
+        during += '<p class="caution"><strong>Practise first.</strong> Even this amount should be tried in long training sessions before race day.</p>';
+      }
+    }
+    if (band.key !== "none") {
+      during += '<p class="small">' + (d.event === "running"
+        ? "Gut discomfort tends to be more common in running than cycling, so runners may find the higher intakes harder to tolerate."
+        : "Cyclists can often carry and eat solid foods more easily than runners, which widens the food choices.") + '</p>';
+    }
+    during += '<p class="note">Source: Jeukendrup (2014).</p>';
+    $("during").innerHTML = during;
+
+    /* ---------- AFTER ---------- */
+    let after = "";
+    if (d.next === "24") {
+      after += item("Rapid refuelling",
+        range(d.mass * 1.0, d.mass * 1.2, "g per hour"),
+        "1.0 to 1.2 g/kg per hour for the first 4 h after the event, then return to normal daily intake.");
+      after += item("Total over the first 4 h", range(d.mass * 4.0, d.mass * 4.8, "g"), "");
+      after += '<p class="note">Timing matters less when there are more than about 8 h before the next session. Then the total carbohydrate eaten over the day matters more than exactly when it is eaten.</p>';
+    } else {
+      after += item("Recovery meals", "Normal meals and snacks",
+        "With more than 24 h before the next hard session, rapid refuelling is not needed. Meeting daily carbohydrate needs for the training load will restore glycogen.");
+      after += '<p class="note">If the next session were within 24 h, the target would be 1.0 to 1.2 g/kg per hour for the first 4 h (' + range(d.mass * 1.0, d.mass * 1.2, "g per hour") + ' for this athlete).</p>';
+    }
+    after += '<p class="note">Source: Thomas, Erdman and Burke (2016).</p>';
+    $("after").innerHTML = after;
+
+    currentTarget = band.rate > 0 ? band.rate : null;
+    currentHours = hrs;
+    updateFoodResult();
+  }
+
+  /* ---------- FOOD BUILDER ---------- */
+  function renderFoods() {
+    const body = $("food-rows");
+    body.innerHTML = "";
+    foods.forEach((f, i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td class="name-cell" data-label="Item"><input type="text" aria-label="Item name" value=""></td>' +
+        '<td class="num" data-label="Carbohydrate per serving (g)"><input type="number" min="0" max="200" step="1" inputmode="decimal"></td>' +
+        '<td class="num" data-label="Servings per hour"><input type="number" min="0" max="10" step="0.5" inputmode="decimal"></td>' +
+        '<td class="num gph" data-label="g per hour">0 g</td>' +
+        '<td><button type="button" class="remove">Remove</button></td>';
+      const [nameIn, carbIn, qtyIn] = tr.querySelectorAll("input");
+      nameIn.value = f.name;
+      carbIn.value = f.carbs;
+      qtyIn.value = f.qty;
+      const setLabels = () => {
+        const n = f.name || "this item";
+        carbIn.setAttribute("aria-label", "Carbohydrate per serving in grams for " + n);
+        qtyIn.setAttribute("aria-label", "Servings per hour of " + n);
+        tr.querySelector(".remove").setAttribute("aria-label", "Remove " + n);
+      };
+      setLabels();
+      const gph = tr.querySelector(".gph");
+      const update = () => {
+        f.name = nameIn.value;
+        f.carbs = Math.max(0, parseFloat(carbIn.value) || 0);
+        f.qty = Math.max(0, parseFloat(qtyIn.value) || 0);
+        gph.textContent = fmt(f.carbs * f.qty) + " g";
+        setLabels();
+        updateFoodResult();
+      };
+      nameIn.addEventListener("input", update);
+      carbIn.addEventListener("input", update);
+      qtyIn.addEventListener("input", update);
+      tr.querySelector(".remove").addEventListener("click", () => {
+        foods.splice(i, 1);
+        renderFoods();
+        const btns = document.querySelectorAll("#food-rows .remove");
+        if (btns.length) btns[Math.min(i, btns.length - 1)].focus(); else $("add-item").focus();
+      });
+      gph.textContent = fmt(f.carbs * f.qty) + " g";
+      body.appendChild(tr);
+    });
+    updateFoodResult();
+  }
+
+  function updateFoodResult() {
+    const box = $("food-result");
+    const perHour = foods.reduce((s, f) => s + f.carbs * f.qty, 0);
+    box.className = "result-box";
+
+    if (currentTarget === null) {
+      box.innerHTML = '<div class="status">No hourly target for this event</div>' +
+        '<p>For events under 75 min there is no hourly carbohydrate target. Your choices give <strong>' + fmt(perHour) + ' g per hour</strong>.</p>';
+      return;
+    }
+
+    const target = currentTarget;
+    const total = perHour * currentHours;
+    let cls, status, msg;
+    if (perHour === 0) {
+      cls = "under"; status = "Nothing planned yet";
+      msg = "Add servings above to build a plan.";
+    } else if (perHour < target * 0.8) {
+      cls = "under"; status = "Below the target";
+      msg = "This is below the upper target. That may suit an athlete who is still building gut tolerance, but there is room to add more.";
+    } else if (perHour <= target + 5) {
+      cls = "ok"; status = "On target";
+      msg = "This plan meets the hourly target.";
+    } else {
+      cls = "over"; status = "Above the target";
+      msg = "This is more than the guideline. Extra carbohydrate is unlikely to add benefit and may increase the risk of gut discomfort.";
+    }
+    box.classList.add(cls);
+
+    const scaleMax = Math.max(target * 1.5, perHour, 10);
+    const fillPct = Math.min(100, (perHour / scaleMax) * 100);
+    const targetPct = (target / scaleMax) * 100;
+
+    box.innerHTML =
+      '<div class="status">' + status + '</div>' +
+      '<p>Your plan gives <strong>' + fmt(perHour) + ' g per hour</strong> against a target of <strong>up to ' + target + ' g per hour</strong>. ' + msg + '</p>' +
+      '<div class="meter" role="img" aria-label="' + fmt(perHour) + ' grams per hour compared with a target of up to ' + target + ' grams per hour">' +
+        '<div class="fill" style="width:' + fillPct + '%"></div>' +
+        '<div class="target" style="left:calc(' + targetPct + '% - 1px)"></div>' +
+      '</div>' +
+      '<div class="meter-labels"><span>0 g</span><span>Black line = target (' + target + ' g per hour)</span><span>' + fmt(scaleMax) + ' g</span></div>' +
+      '<p class="small" style="margin-top:8px">Across the whole event this would provide about <strong>' + fmt(round5(total)) + ' g</strong> of carbohydrate.' +
+      (target === 90 ? ' To reach the higher end, include products that combine glucose and fructose.' : '') + '</p>';
+  }
+
+  $("add-item").addEventListener("click", () => {
+    foods.push({ name: "Your own item", carbs: 0, qty: 0 });
+    renderFoods();
+    const names = document.querySelectorAll("#food-rows input[type=text]");
+    const last = names[names.length - 1];
+    last.focus();
+    last.select();
+  });
+  $("reset-items").addEventListener("click", resetFoods);
+
+  $("inputs").addEventListener("input", render);
+  $("inputs").addEventListener("change", render);
+  $("inputs").addEventListener("submit", (e) => e.preventDefault());
+
+  resetFoods();
+  render();
+})();
+</script>
+</body>
+</html>
