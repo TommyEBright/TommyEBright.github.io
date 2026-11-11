@@ -1,7 +1,8 @@
 // Tab 1: what the file is (an MVIC or a task trial), the muscles, normalisation and the processing settings.
-import { A, $, esc, persist, status, muscle, muscleKeys, SET, defaultSet, MUSCLE_COLS, W } from './state.js?v=1.2.0';
-import { references, refPeaks, forget, trialFs } from './emg.js?v=1.2.0';
-import { findAll } from './session.js?v=1.2.0';
+import { A, $, esc, persist, status, muscle, muscleKeys, SET, defaultSet, MUSCLE_COLS, W } from './state.js?v=1.3.0';
+import { references, refPeaks, forget, trialFs } from './emg.js?v=1.3.0';
+import { findAll } from './session.js?v=1.3.0';
+import { activityChanged, presetPhaseNames } from './events.js?v=1.3.0';
 
 export function renderSetup() {
   const el = $('setupBox'); const t = A.S;
@@ -55,11 +56,9 @@ export function renderSetup() {
 
   $('activity').addEventListener('change', function () {
     set.activity = this.value;
-    set.cycleGap = set.activity === 'cycling' ? 0.4 : 0.5;
     const anyMvic = A.session.trials.some((q) => q.role === 'mvic');
     if ((set.activity === 'gait' || set.activity === 'cycling') && set.norm === 'mvic' && !anyMvic) set.norm = 'ref';
-    const PH = { gait: ['Stance', 'Swing'], cycling: ['Downstroke', 'Upstroke'] }, dflt = defaultSet().phaseNames;
-    if (set.phaseNames.slice(0, 2).every((n, j) => n === dflt[j] || Object.values(PH).some((p) => p[j] === n))) set.phaseNames = (PH[set.activity] || dflt.slice(0, 2)).concat(dflt.slice(2));
+    presetPhaseNames(activityChanged().preset);
     let n = 0; if (set.activity === 'gait' || set.activity === 'cycling') n = findAll(A.session.trials);
     forget(); after('Set up for ' + ACTS.find((a) => a[0] === set.activity)[1].split(' (')[0].toLowerCase() + '.' + (n ? ' Found the ' + W().many + ' in ' + n + ' file' + (n > 1 ? 's' : '') + ': check them on the graph.' : ''));
   });
@@ -85,12 +84,14 @@ export function renderSetup() {
   $('fsIn').addEventListener('change', function () { const v = +this.value; t.fsOverride = v > 0 && Math.abs(v - (t.P.emg[0] && t.P.emg[0].fs)) > 1e-9 ? v : 0; forget(t); after(); });
   $('scale').addEventListener('change', function () { t.scale = +this.value; forget(t); after(); });
 }
-const ACTS = [['reps', 'A gym exercise (you mark each rep)'], ['gait', 'Running or walking (strides found from the accelerometer)'], ['cycling', 'Cycling (pedal cycles found from the accelerometer)'], ['open', 'Something else (you choose the windows)']];
+const ACTS = [['reps', 'A gym exercise (reps found from how far the sensor tilts)'], ['gait', 'Running or walking (strides found from foot contacts)'], ['cycling', 'Cycling (pedal cycles found from the accelerometer)'], ['jump', 'Jumping (flight found from the accelerometer)'], ['iso', 'Isometric holds (found from the EMG itself)'], ['open', 'Something else (you choose how reps are found)']];
 const ACT_HELP = {
-  reps: 'Mark each rep by hand in <strong>2. Points</strong>. Normalise to MVICs if you have them.',
-  gait: 'Each stride runs from one foot strike to the next on the same leg. <strong>2. Points</strong> finds the foot strikes from the sensor&rsquo;s accelerometer for you to check. No MVIC needed: normalise to a reference trial.',
-  cycling: 'Each cycle runs from one peak of the thigh sensor&rsquo;s movement to the next. <strong>2. Points</strong> finds them from the accelerometer for you to check, or mark them by hand (e.g. top dead centre from video).',
-  open: 'Any other data. Mark reps or cycles by hand, find cycles from the accelerometer, add your own windows between any two points, or use the whole trial.'
+  jump: 'In flight the body is in free fall, so the accelerometer reads close to 0 g. <strong>2. Reps and phases</strong> finds each flight, and a jump runs from 1 s before take-off to 0.5 s after landing (change these there). Check them on the graph.',
+  iso: 'A hold is each stretch where the EMG is above a level. <strong>2. Reps and phases</strong> finds them for you to check, or mark the start and end of each hold by hand.',
+  reps: 'A rep is found each time the sensor tilts away from its starting position and comes back (e.g. the thigh in a squat). <strong>2. Reps and phases</strong> finds them for you to check, or you can mark them by hand. Normalise to MVICs if you have them.',
+  gait: 'Each stride runs from one foot strike to the next on the same leg. <strong>2. Reps and phases</strong> finds the foot strikes from the sensor&rsquo;s accelerometer for you to check. No MVIC needed: normalise to a reference trial.',
+  cycling: 'Each cycle runs from one peak of the thigh sensor&rsquo;s movement to the next. <strong>2. Reps and phases</strong> finds them from the accelerometer for you to check, or mark them by hand (e.g. top dead centre from video).',
+  open: 'Any other data. In <strong>2. Reps and phases</strong>, choose which signal to look in and what to look for, mark reps or cycles by hand, add your own windows between any two points, or use the whole trial.'
 };
 function after(msg) { persist(); A.fn.refresh({ keepView: true, keepStatus: !!msg }); if (msg) status(msg); }
 

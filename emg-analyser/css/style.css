@@ -299,3 +299,27 @@ tr.mvrow.current td { background: #eff6ff; }
 .guide .gb { display: flex; flex-wrap: wrap; gap: .35rem .7rem; align-items: center; font-size: .9rem; }
 .guide .gb select, .guide .gb input { width: auto; min-width: 0; }
 .guide .gb input.cond { width: 8.5rem; }
+
+/* v1.3: how reps and phases are defined, the finder, the figure builder */
+.defbox { background: #f8fafc; border: 1px solid var(--line); border-left: 5px solid var(--brand); border-radius: .55rem; padding: .6rem .8rem; margin: 0 0 .8rem; }
+.defbox p { margin: .3rem 0; font-size: .92rem; }
+.defbox .dt { font-weight: 700; font-size: 1rem; margin: 0 0 .35rem; }
+.dstrip { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; margin: .35rem 0 .5rem; }
+.dchip { display: inline-flex; align-items: center; color: #fff; font-weight: 700; font-size: .78rem; padding: .2rem .55rem; border-radius: .35rem; white-space: nowrap; z-index: 1; }
+.dseg { display: inline-flex; align-items: center; justify-content: center; flex: 1 1 5rem; min-width: 5rem; border-top: 3px solid; border-bottom: 3px solid; font-size: .84rem; font-weight: 600; padding: .15rem .6rem; margin: 0 -2px; white-space: nowrap; }
+.tag { display: inline-block; font-size: .74rem; font-weight: 700; padding: .05rem .5rem; border-radius: 999px; color: #fff; vertical-align: 1px; }
+.tag.auto { background: var(--accent); } .tag.hand { background: #475569; }
+.dnames { margin-top: .45rem; align-items: center; }
+.dnames input.mini { width: 9rem; min-width: 0; }
+input.num4 { width: 5rem; min-width: 0; }
+.fgrid { display: grid; grid-template-columns: max-content 1fr; gap: .45rem .8rem; align-items: center; margin: .4rem 0; }
+.fgrid > label { margin: 0; font-weight: 600; }
+.figgrid { display: grid; grid-template-columns: minmax(280px, 380px) minmax(0, 1fr); gap: 1rem; align-items: start; }
+.figctl .fl { font-weight: 700; margin: .7rem 0 .2rem; }
+.figctl .fl:first-child { margin-top: 0; }
+.figctl .chks { display: flex; flex-wrap: wrap; gap: .2rem .9rem; margin: .4rem 0; }
+.figprev { position: sticky; top: .5rem; }
+.figprev canvas { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: .4rem; background: #fff; box-shadow: 0 1px 3px rgba(15,23,42,.08); }
+dl.gloss { margin: .2rem 0; display: grid; grid-template-columns: max-content 1fr; gap: .25rem .9rem; }
+dl.gloss dt { font-weight: 700; } dl.gloss dd { margin: 0; }
+@media (max-width: 1050px) { .figgrid { grid-template-columns: 1fr; } .figprev { position: static; order: -1; } dl.gloss { grid-template-columns: 1fr; } dl.gloss dd { margin-bottom: .3rem; } .fgrid { grid-template-columns: 1fr; } }

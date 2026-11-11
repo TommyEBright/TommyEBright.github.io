@@ -1,16 +1,19 @@
 // The main graph: one lane per muscle (the normalised linear envelope, with the raw EMG behind it if you
 // want), an accelerometer lane, the reps, the points you marked (drag their labels to move them), a cursor
 // you can step one sample at a time, zoom, and the overview strip underneath.
-import { A, $, esc, persist, muscle, POINT_COL, SET } from './state.js?v=1.2.0';
-import { Chart, frame, axes, line, band, vline, hline, dot, halo, niceStep, numTxt } from './plot.js?v=1.2.0';
-import { pointLabel } from './emg.js?v=1.2.0';
+import { A, $, esc, persist, muscle, POINT_COL, SET, W, PHASE_COLS } from './state.js?v=1.3.0';
+import { moveSignal, finderLevel } from './events.js?v=1.3.0';
+import { Chart, frame, axes, line, band, vline, hline, dot, halo, niceStep, numTxt } from './plot.js?v=1.3.0';
+import { pointLabel } from './emg.js?v=1.3.0';
 
 let main = null, over = null, drag = null;
 const SHORT = { rep0: 'Start', rep1: 'End', phase: 'Phase', on: 'On', off: 'Off', rest0: 'Rest', rest1: 'Rest end', mark: 'Mark', hold0: 'MVIC start', hold1: 'MVIC end' };
 
 export function wholeRange() { return { x0: 0, x1: (A.R.n - 1) / A.R.fs }; }
 const iOf = (t) => Math.max(0, Math.min(A.R.n - 1, Math.round(t * A.R.fs)));
-function accSensor() { const R = A.R, keys = Object.keys(R.pr.acc); if (!keys.length) return null; return R.pr.acc[A.show.accSensor] || R.pr.acc[keys[0]]; }
+// The movement lane shows the signal the reps are found from (impacts, tilt angle, a dynamometer channel...).
+function accSensor() { try { return moveSignal(A.R.pr); } catch (e) { return null; } }
+function flag(p) { return p.type === 'mark' && p.name ? p.name : p.type === 'rep0' ? W().start : p.type === 'rep1' ? W().end : p.type === 'phase' ? (p.phName ? '\u25B8 ' + p.phName : 'Phase change') : SHORT[p.type]; }
 function lanesShown() { const R = A.R; const L = R.pr.ch.map((c, k) => ({ k, key: c.key })); if (A.show.acc && accSensor()) L.push({ acc: true }); return L; }
 function laneH(w) { const n = lanesShown().length; return Math.max(70, Math.min(130, (w < 700 ? 420 : 560) / Math.max(1, n))); }
 function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
@@ -33,19 +36,22 @@ function drawMain(ctx, w, h, exp) {
     const T = top + j * (LH + gap), B = h - T - LH;
     let fr;
     if (ln.acc) {
-      const s0 = accSensor(); let lo = Infinity, hi = -Infinity;
-      for (let i = 0; i < s0.mag.length; i++) { const tt = s0.t[i]; if (tt < x0 || tt > x1) continue; lo = Math.min(lo, s0.mag[i]); hi = Math.max(hi, s0.mag[i]); }
+      const s0 = accSensor(), lvl = R.mvic ? null : finderLevel(R.pr); let lo = Infinity, hi = -Infinity;
+      for (let i = s0.a; i <= s0.b; i++) { const tt = s0.t[i]; if (tt < x0 || tt > x1) continue; lo = Math.min(lo, s0.y[i]); hi = Math.max(hi, s0.y[i]); }
+      if (lvl !== null && Number.isFinite(lo)) { lo = Math.min(lo, lvl); hi = Math.max(hi, lvl); }
       if (!Number.isFinite(lo)) { lo = 0; hi = 2; } const p = (hi - lo) * 0.1 || 0.1;
       fr = frame(w, h, x0, x1, lo - p, hi + p, { L: 66, R: 14, T, B });
       axes(ctx, fr, { noX: j < lanes.length - 1, xlab: 'Time (s)', yTicks: 2 });
-      line(ctx, fr, s0.t, s0.mag, { col: '#475569', width: 1.4 });
-      laneLabel(ctx, fr, 'Accelerometer (g)', '#475569', false);
+      repBands(ctx, fr, j === lanes.length - 1, false);
+      if (lvl !== null) hline(ctx, fr, lvl, '#b45309', [5, 4], 'level ' + (+lvl.toPrecision(3)) + (s0.unit ? ' ' + s0.unit : ''), 1.3);
+      line(ctx, fr, s0.t, s0.y, { col: '#475569', width: 1.4 });
+      laneLabel(ctx, fr, s0.name + (s0.unit ? ' (' + s0.unit + ')' : ''), '#475569', false);
     } else {
       const c = R.pr.ch[ln.k], y = R.N[ln.k] || c.env, sc = R.N[ln.k] ? 1 : 1e6, col = muscle(c.key).col;
       fr = frame(w, h, x0, x1, raw ? -ymx : 0, ymx, { L: 66, R: 14, T, B });
       if (A.lane === ln.k && !exp) { ctx.save(); ctx.fillStyle = '#eff6ff'; ctx.fillRect(0, T - 3, w, LH + 6); ctx.restore(); }
       axes(ctx, fr, { noX: j < lanes.length - 1, xlab: 'Time (s)', yTicks: raw ? 4 : 3, noBg: A.lane === ln.k && !exp, yfmt: raw ? (v) => (v < 0 ? '' : numTxt(v, niceStep(2 * ymx, 4))) : undefined });
-      repBands(ctx, fr, j === lanes.length - 1);
+      repBands(ctx, fr, j === lanes.length - 1, j === 0);
       if (raw) {
         let m = 0; for (let i = i0; i <= Math.min(i1, c.n - 1); i++) { const a = Math.abs(c.bp[i]); if (a > m) m = a; }
         const k = m > 0 ? ymx / m : 1; const sc2 = c._rawS && c._rawK === k ? c._rawS : (c._rawS = Float64Array.from(c.bp, (v) => v * k), c._rawK = k, c._rawS);
@@ -78,7 +84,7 @@ function drawMain(ctx, w, h, exp) {
     const col = POINT_COL[p.type] || '#2563eb';
     out.lanes.forEach((fr) => vline(ctx, fr, t[p.i], col, p.type === 'phase' ? [2, 3] : [6, 4], 1.6));
     if (exp) return;
-    const lab = p.type === 'mark' && p.name ? p.name : SHORT[p.type];
+    const lab = flag(p);
     const tw = ctx.measureText(lab).width + 12, bx = Math.round(x - tw / 2);
     let row = 0; while (placed.some((q) => q.row === row && !(bx + tw < q.a || bx > q.b))) row++;
     placed.push({ a: bx, b: bx + tw, row });
@@ -97,10 +103,21 @@ function laneLabel(ctx, fr, txt, col, on) {
   ctx.save(); ctx.font = (on ? '700 ' : '600 ') + '12px system-ui, Arial'; ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   halo(ctx, txt + (on ? '  ◀ selected' : ''), fr.L + 6, fr.T + 3); ctx.restore();
 }
-function repBands(ctx, fr, labels) {
+// Shading: each rep (alternating colours), or its phases when it has them (one colour for each phase, the
+// same in every rep). Rep names sit at the bottom of the last lane and phase names at the top of the first.
+function repBands(ctx, fr, labels, phaseNames) {
   const R = A.R; if (!A.show.reps) return;
+  const byRep = {}; R.phases.forEach((p) => { (byRep[p.rep] = byRep[p.rep] || []).push(p); });
   R.reps.forEach((r, j) => {
-    band(ctx, fr, r.i0 / R.fs, r.i1 / R.fs, j % 2 ? '#0ea5e9' : '#22c55e', 0.08);
+    const ps = byRep[r.rep];
+    if (ps) ps.forEach((p) => {
+      band(ctx, fr, p.i0 / R.fs, p.i1 / R.fs, PHASE_COLS[p.phase % PHASE_COLS.length], 0.13);
+      if (!phaseNames) return;
+      const a = Math.max(fr.L, fr.X(p.i0 / R.fs)), b = Math.min(fr.L + fr.W, fr.X(p.i1 / R.fs));
+      ctx.save(); ctx.font = '600 10.5px system-ui, Arial'; ctx.fillStyle = '#475569'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      if (b - a > ctx.measureText(p.phaseName).width + 8) halo(ctx, p.phaseName, (a + b) / 2, fr.T + 18); ctx.restore();
+    });
+    else band(ctx, fr, r.i0 / R.fs, r.i1 / R.fs, j % 2 ? '#0ea5e9' : '#22c55e', 0.08);
     if (labels) {
       const a = Math.max(fr.L, fr.X(r.i0 / R.fs)), b = Math.min(fr.L + fr.W, fr.X(r.i1 / R.fs));
       ctx.save(); ctx.font = '600 11px system-ui, Arial'; ctx.fillStyle = '#0f766e'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
@@ -237,7 +254,7 @@ function overMove(p, fr) {
 export function readout() {
   const el = $('readout'); const R = A.R; if (!el || !R || !R.ok) return;
   const i = A.cursor;
-  if (i < 0) { el.className = 'readout idle'; el.innerHTML = 'Hover over the graph to read the EMG. <strong>Click</strong> a muscle&rsquo;s lane to fix the cursor (and choose that muscle), then step one sample at a time with <kbd>&larr;</kbd> <kbd>&rarr;</kbd> (<kbd>Shift</kbd> for ten) and press a button in <strong>2. Points</strong>.'; return; }
+  if (i < 0) { el.className = 'readout idle'; el.innerHTML = 'Hover over the graph to read the EMG. <strong>Click</strong> a muscle&rsquo;s lane to fix the cursor (and choose that muscle), then step one sample at a time with <kbd>&larr;</kbd> <kbd>&rarr;</kbd> (<kbd>Shift</kbd> for ten) and press a button in <strong>2. Reps and phases</strong>.'; return; }
   el.className = 'readout';
   const cell = (lab, v, col) => '<div><span' + (col ? ' style="color:' + col + '"' : '') + '>' + lab + '</span><b>' + v + '</b></div>';
   let h = '<div class="nums">' + cell('Time', R.pr.t[i].toFixed(3) + ' s') + cell('Sample', String(i));

@@ -2,8 +2,8 @@
 // Every EMG channel: raw -> band-pass (zero lag) -> full-wave rectify -> low-pass (zero lag) = linear envelope.
 // The envelope is then normalised to the muscle's MVIC (or the session's highest task peak, or left in µV).
 // Windows (reps, phases, your own) come from the points marked by hand, and every result is worked out in them.
-import { A, SET, muscle, muscleKeys, W, ptName } from './state.js?v=1.2.0';
-import { processEmg, butterSos, sosfiltfilt, movingMean, welch, specStats, powerBelow, humRatio, normalise } from './dsp.js?v=1.2.0';
+import { A, SET, muscle, muscleKeys, W, ptName } from './state.js?v=1.3.0';
+import { processEmg, butterSos, sosfiltfilt, movingMean, welch, specStats, powerBelow, humRatio, normalise } from './dsp.js?v=1.3.0';
 
 // ---------- processing (cached) ----------
 const cache = new Map();
@@ -35,7 +35,8 @@ export function proc(t) {
     const mag = new Float64Array(m); for (let i = 0; i < m; i++) { let q = 0; axs.forEach((y) => { q += y[i] * y[i]; }); mag[i] = Math.sqrt(q); }
     s0.mag = mag; s0.t = Float64Array.from({ length: m }, (_, i) => i / s0.fs);
   });
-  const out = { ok: true, sig: s, fs, n, t: tt, ch, acc };
+  const aux = (t.P.aux || []).map((x) => ({ name: x.name, fs: x.fs > 0 ? x.fs : fs, unit: x.unit || '', y: x.y }));
+  const out = { ok: true, sig: s, fs, n, t: tt, ch, acc, aux };
   cache.set(key, out);
   return out;
 }
@@ -159,7 +160,8 @@ export function analyse(t) {
   R.reps = reps.map((r, j) => ({ id: 'rep' + (j + 1), name: W().One + ' ' + (j + 1), i0: r.i0, i1: r.i1, rep: j, kind: 'rep' }));
   R.phases = [];
   R.reps.forEach((r) => {
-    const cuts = pts.filter((p) => p.type === 'phase' && p.i > r.i0 && p.i < r.i1).map((p) => p.i);
+    const cp = pts.filter((p) => p.type === 'phase' && p.i > r.i0 && p.i < r.i1), cuts = cp.map((p) => p.i);
+    cp.forEach((p, j) => { p.phName = set.phaseNames[j + 1] || 'Phase ' + (j + 2); }); // a phase change is named after the phase it starts
     if (!cuts.length) return;
     const b = [r.i0].concat(cuts, [r.i1]);
     for (let j = 0; j < b.length - 1; j++) R.phases.push({ id: r.id + 'p' + j, name: r.name + ' · ' + (set.phaseNames[j] || 'Phase ' + (j + 1)), phase: j, phaseName: set.phaseNames[j] || 'Phase ' + (j + 1), i0: b[j], i1: b[j + 1], rep: r.rep, kind: 'phase' });
@@ -224,35 +226,6 @@ function bursts(R) {
     });
     return { w, per };
   });
-}
-
-// ---------- finding cycles from an accelerometer ----------
-// Running and walking: each foot strike is a sharp spike in the resultant acceleration of a leg sensor, so a
-// stride runs from one spike to the next (same leg). Cycling and anything else rhythmic: the peaks of the
-// smoothed axis that moves most. Peaks closer than minGap s are not counted; the tallest wins.
-export function findCycles(pr, sensor, kind, minGap) {
-  const s0 = pr.acc[sensor]; if (!s0) return [];
-  const fs = s0.fs, n = s0.mag.length;
-  // skip the zero padding at the start and end of the recording
-  let a = n, b = 0;
-  pr.ch.forEach((c) => { let i = 0; while (i < c.n && c.raw[i] === 0) i++; let j = c.n - 1; while (j > i && c.raw[j] === 0) j--; a = Math.min(a, Math.ceil(i / pr.fs * fs)); b = Math.max(b, Math.floor(j / pr.fs * fs)); });
-  a = Math.max(a, Math.round(0.05 * fs)); b = Math.min(b, n - 1 - Math.round(0.05 * fs));
-  let y;
-  if (kind === 'impact') y = s0.mag;
-  else {
-    let best = null, bv = -1;
-    Object.values(s0.ax).forEach((ax) => { let m = 0, q = 0, c = 0; for (let i = a; i <= b; i++) { m += ax[i]; q += ax[i] * ax[i]; c++; } const v = q / c - (m / c) ** 2; if (v > bv) { bv = v; best = ax; } });
-    const z = Float64Array.from(best.subarray(0, n)); let m = 0; for (let i = a; i <= b; i++) m += z[i]; m /= (b - a + 1); for (let i = 0; i < n; i++) z[i] -= m;
-    y = sosfiltfilt(butterSos(2, Math.min(3, fs / 4), 'low', fs), z);
-  }
-  const vals = []; for (let i = a; i <= b; i++) vals.push(y[i]); vals.sort((p, q) => p - q);
-  const thr = 0.5 * vals[Math.floor(vals.length * 0.99)];
-  const cand = [];
-  for (let i = Math.max(a, 1); i <= Math.min(b, n - 2); i++) if (y[i] >= thr && y[i] >= y[i - 1] && y[i] > y[i + 1]) cand.push(i);
-  cand.sort((p, q) => y[q] - y[p]);
-  const gap = Math.round(minGap * fs), keep = [];
-  cand.forEach((i) => { if (keep.every((k) => Math.abs(k - i) >= gap)) keep.push(i); });
-  return keep.sort((p, q) => p - q).map((i) => i / fs);
 }
 
 // ---------- automatic on/off ----------
@@ -431,6 +404,7 @@ export function quality(t) {
     const floor = sorted.length ? sorted[Math.floor(sorted.length * 0.05)] * 1e6 : 0;
     if (t.role !== 'mvic' && floor > 15) items.push({ lv: 'warn', txt: 'The envelope never goes quiet (lowest 5% is above ' + floor.toFixed(0) + ' µV). There may be no rest in this recording, or the baseline is noisy. A resting baseline should be only a few µV.' });
     if (set.norm === 'ref' && !(div[c.key] > 0) && t.role !== 'mvic') items.push({ lv: 'bad', txt: 'No reference trial for this muscle. Set a trial&rsquo;s Type to <strong>Reference</strong> in the Session table.' });
+    if (set.norm === 'ref' && div[c.key] > 0 && t.role === 'task') { let pk = 0; for (let i = 0; i < n; i++) if (c.env[i] > pk) pk = c.env[i]; const p = pk / div[c.key] * 100; if (p > 150) items.push({ lv: 'info', txt: 'Peaks at ' + p.toFixed(0) + '% of the reference. 100% is the peak of the muscle&rsquo;s <em>average</em> ' + W().one + ' in the reference trial, so single ' + W().many + ' above it are normal, and a harder trial should be higher. If it is several times higher, check that the reference trial is a sensible one.' }); }
     if (set.norm === 'mvic' && t.role !== 'mvic') {
       if (!(div[c.key] > 0)) items.push({ lv: 'bad', txt: 'No MVIC file for this muscle, so it cannot be shown as %MVIC. Add its MVIC file and tick this muscle in <strong>1. Setup</strong>.' });
       else { let pk = 0; for (let i = 0; i < n; i++) if (c.env[i] > pk) pk = c.env[i]; const p = pk / div[c.key] * 100; if (p > 100) items.push({ lv: 'info', txt: 'Peaks at ' + p.toFixed(0) + '% MVIC. Above 100% is common in fast or eccentric work, but if it is well above, the MVIC may not have been a true maximum.' }); }

@@ -1,14 +1,16 @@
 // Start-up: wires the page together.
-import { A, $, esc, status, persist, restoreSession, loadPrefs, savePrefs, VERSION, trialLabel, muscle, defaultSet, W } from './state.js?v=1.2.0';
-import { analyse, references, forget } from './emg.js?v=1.2.0';
-import { initTrace, redraw, wholeRange } from './trace.js?v=1.2.0';
-import { renderPoints } from './points.js?v=1.2.0';
-import { renderResults } from './results.js?v=1.2.0';
-import { renderSetup } from './setup.js?v=1.2.0';
-import { initSession, renderSession, addText } from './session.js?v=1.2.0';
-import { renderCompare } from './compare.js?v=1.2.0';
-import { initExport } from './export.js?v=1.2.0';
-import { renderSteps, stepsView, renderFatigue, renderRor, renderOnOff } from './deeper.js?v=1.2.0';
+import { A, $, esc, status, persist, restoreSession, loadPrefs, savePrefs, VERSION, trialLabel, muscle, defaultSet, W } from './state.js?v=1.3.0';
+import { findSet, moveSignal } from './events.js?v=1.3.0';
+import { renderFigure, figureViewChanged } from './figure.js?v=1.3.0';
+import { analyse, references, forget } from './emg.js?v=1.3.0';
+import { initTrace, redraw, wholeRange } from './trace.js?v=1.3.0';
+import { renderPoints } from './points.js?v=1.3.0';
+import { renderResults } from './results.js?v=1.3.0';
+import { renderSetup } from './setup.js?v=1.3.0';
+import { initSession, renderSession, addText } from './session.js?v=1.3.0';
+import { renderCompare } from './compare.js?v=1.3.0';
+import { initExport } from './export.js?v=1.3.0';
+import { renderSteps, stepsView, renderFatigue, renderRor, renderOnOff } from './deeper.js?v=1.3.0';
 
 const curTab = () => { const b = $('panel').querySelector('.tab[aria-selected=true]'); return b ? b.getAttribute('data-t') : 'setup'; };
 
@@ -25,7 +27,7 @@ function refresh(o) {
   if (ok && A.lane >= A.R.pr.ch.length) A.lane = -1;
   $('traceWrap').classList.toggle('hide', !ok);
   if (ok) redraw();
-  $('tabPts').textContent = S.role === 'mvic' ? '2. Points (optional)' : '2. Points';
+  $('tabPts').textContent = S.role === 'mvic' ? '2. Reps and phases (optional)' : '2. Reps and phases';
   if (o.quick) { if (curTab() === 'results') renderResults(); if (curTab() === 'events') renderPoints(); return; }
   showChips(); renderSession(); renderTab(); sessionSummaries(); badge();
   if (!o.keepStatus) status(!ok ? '<span class="bad">' + A.R.error + '</span>' : nextStep());
@@ -37,8 +39,8 @@ function nextStep() {
   const w = W(), cyc = set.activity === 'gait' || set.activity === 'cycling';
   if (set.norm === 'mvic' && R.missing.length) return 'No MVIC yet for <strong>' + R.missing.map((k) => esc(muscle(k).short)).join(', ') + '</strong>: add the MVIC files (and set their Type to MVIC) so the EMG can be shown as %MVIC.';
   if (set.norm === 'ref' && R.missing.length) return 'No reference trial yet for <strong>' + R.missing.map((k) => esc(muscle(k).short)).join(', ') + '</strong>: set the reference trial&rsquo;s <strong>Type</strong> to Reference in the Session table' + (cyc ? ' and find its ' + w.many : '') + '.';
-  if (!R.reps.length) return cyc ? 'Next: find the ' + w.many + ' in <strong>2. Points</strong> (<strong>Find ' + w.many + '</strong>), then check them on the graph.' : 'Next: mark each rep in <strong>2. Points</strong> (click the graph, then <strong>Rep start</strong> and <strong>Rep end</strong>).';
-  return R.reps.length + ' ' + (R.reps.length > 1 ? w.many : w.one) + ' marked. Results are in <strong>3. Results</strong>' + (R.autoOn ? ', with on/off found automatically.' : '.');
+  if (!R.reps.length) return 'Next: open <strong>2. Reps and phases</strong> and press <strong>Find ' + w.many + '</strong> (or mark them by hand), then check them on the graph.';
+  return R.reps.length + ' ' + (R.reps.length > 1 ? w.many : w.one) + (R.phases.length ? ', each split into phases' : '') + '. Check them on the graph, then look at <strong>3. Results</strong>' + (R.autoOn ? ' (on/off is found automatically)' : '') + ' and make a figure in <strong>4. Figure</strong>.';
 }
 function badge() { const R = A.R, w = W(); $('tabRes').textContent = '3. Results' + (R && R.ok && !R.mvic && R.reps.length ? ' (' + R.reps.length + ' ' + (R.reps.length > 1 ? w.many : w.one) + ')' : ''); }
 function showEmpty(on) { $('empty').classList.toggle('hide', !on); if (on) { $('traceWrap').classList.add('hide'); $('readout').innerHTML = ''; $('trialName').textContent = ''; $('showChips').innerHTML = ''; } }
@@ -72,16 +74,16 @@ function showChips() {
   const el = $('showChips'); const R = A.R;
   if (!R || !R.ok) { el.innerHTML = ''; return; }
   const items = [['raw', 'Raw EMG']];
-  const sensors = Object.keys(R.pr.acc);
-  if (sensors.length) items.push(['acc', 'Accelerometer']);
+  const sensors = Object.keys(R.pr.acc), sig = moveSignal(R.pr), fnd = findSet();
+  if (sig) items.push(['acc', 'Movement signal']);
   if (!R.mvic) items.push(['reps', W().Many], ['guide', 'Onset guide']);
   el.innerHTML = items.map(([k, l]) => '<button type="button" class="chip' + (A.show[k] ? ' active' : '') + '" data-s="' + k + '" aria-pressed="' + !!A.show[k] + '">' + l + '</button>').join('')
-    + (sensors.length > 1 && A.show.acc ? '<select id="accSel" class="mini" title="Which sensor&rsquo;s accelerometer">' + sensors.map((s) => '<option value="' + esc(s) + '"' + (A.show.accSensor === s ? ' selected' : '') + '>' + esc(muscle(s).short || s) + ' sensor</option>').join('') + '</select>' : '');
+    + (sensors.length > 1 && A.show.acc && sig && sig.sensor ? '<select id="accSel" class="mini" title="Which sensor&rsquo;s accelerometer the movement signal comes from">' + sensors.map((s) => '<option value="' + esc(s) + '"' + (sig.sensor === s ? ' selected' : '') + '>' + esc(muscle(s).short || s) + ' sensor</option>').join('') + '</select>' : '');
   el.querySelectorAll('[data-s]').forEach((b) => b.addEventListener('click', () => {
     const k = b.getAttribute('data-s'); A.show[k] = !A.show[k]; savePrefs(); showChips(); redraw();
-    if (k === 'guide' && A.show.guide && !R.rest) status('The onset guide needs a rest period: mark <strong>Rest start</strong> and <strong>Rest end</strong> in <strong>2. Points</strong> (section 3).');
+    if (k === 'guide' && A.show.guide && !R.rest) status('The onset guide needs a rest period: mark <strong>Rest start</strong> and <strong>Rest end</strong> in <strong>2. Reps and phases</strong> (section 3).');
   }));
-  if ($('accSel')) $('accSel').addEventListener('change', function () { A.show.accSensor = this.value; savePrefs(); redraw(); });
+  if ($('accSel')) $('accSel').addEventListener('change', function () { fnd.sensor = this.value; persist(); redraw(); if (curTab() === 'events') renderPoints(); });
 }
 
 // ---------- tabs ----------
@@ -91,6 +93,7 @@ function renderTab() {
   if (t === 'events') renderPoints();
   if (t === 'results') renderResults();
   if (t === 'compare') renderCompare();
+  if (t === 'figure') renderFigure();
   if (t === 'steps') renderSteps();
   if (t === 'fatigue') renderFatigue();
   if (t === 'ror') renderRor();
@@ -129,7 +132,7 @@ async function demo(marked) {
     }
     persist();
     openTrial(A.session.trials.length - (marked ? 1 : 2));
-    status(marked ? 'Demo loaded with the reps already marked (and, in the Nordic, onsets and offsets for the first two reps). Look through <strong>3. Results</strong>, then try marking the rest yourself.' : 'Demo loaded: 7 MVIC files and two exercises. Start with the <strong>Romanian deadlift</strong>: mark each rep in <strong>2. Points</strong>.');
+    status(marked ? 'Demo loaded with the reps already marked (and, in the Nordic, onsets and offsets for the first two reps). Look through <strong>3. Results</strong>, then try marking the rest yourself.' : 'Demo loaded: 7 MVIC files and two exercises. Start with the <strong>Romanian deadlift</strong>: open <strong>2. Reps and phases</strong> and press <strong>Find reps</strong>.');
   } catch (e) { status('<span class="bad">Could not load the demo (' + esc(e.message) + '). Demos need the tool to be opened from a web address, not straight from a file.</span>'); }
 }
 
@@ -139,7 +142,7 @@ async function start() {
   Object.assign(A.fn, {
     refresh, openTrial, showTab, references,
     laneChanged: () => { redraw(); const t = curTab(); if (t === 'events') renderPoints(); if (t === 'fatigue') renderFatigue(); if (t === 'steps') renderSteps(); },
-    viewChanged: () => { const t = curTab(); if (t === 'steps') stepsView(); if (t === 'fatigue') renderFatigue(); },
+    viewChanged: () => { const t = curTab(); if (t === 'steps') stepsView(); if (t === 'fatigue') renderFatigue(); if (t === 'figure') figureViewChanged(); },
     cursorMoved: () => {}
   });
   initTrace(); initSession(); initExport();

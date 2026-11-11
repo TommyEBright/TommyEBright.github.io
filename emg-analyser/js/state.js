@@ -1,6 +1,6 @@
 // Shared state and small helpers.
 // The session holds every file: MVIC files (to normalise each muscle) and task trials (the movements).
-export const VERSION = '1.2.0';
+export const VERSION = '1.3.0';
 export const APP = 'EMG Analysis';
 export const MUSCLE_COLS = ['#1d4ed8', '#be185d', '#0f766e', '#d97706', '#7c3aed', '#dc2626', '#0891b2', '#65a30d'];
 export const POINT_COL = { rep0: '#15803d', rep1: '#b91c1c', phase: '#7c3aed', on: '#0f766e', off: '#c2410c', rest0: '#64748b', rest1: '#64748b', mark: '#2563eb', hold0: '#15803d', hold1: '#b91c1c' };
@@ -18,20 +18,26 @@ export function defaultSet() {
     pairA: '', pairB: '',  // co-contraction and ratio pair (muscle keys)
     rorMs: 50,             // rate of rise window
     fatigueWin: 500,       // ms, for the sliding median frequency
-    activity: 'reps',      // 'reps' (gym) | 'gait' (running/walking) | 'cycling' | 'open'
+    activity: 'reps',      // 'reps' (gym) | 'gait' (running/walking) | 'cycling' | 'jump' | 'iso' | 'open'
     cycleGap: 0.5,         // s, shortest time between two cycles found from the accelerometer
-    onMethod: 'pct', onPct: 25, onMinMs: 30 // automatic on/off: % of the peak of the average cycle, shortest burst
+    onMethod: 'pct', onPct: 25, onMinMs: 30, // automatic on/off: % of the peak of the average cycle, shortest burst
+    find: null             // how reps are found from a movement signal (see events.js); null = the activity's preset
   };
 }
 
 // The word for one rep, stride or cycle, so the whole tool talks about the task being analysed.
 export function W() {
   const a = SET().activity;
-  if (a === 'gait') return { one: 'stride', many: 'strides', One: 'Stride', Many: 'Strides', start: 'Foot strike' };
-  if (a === 'cycling') return { one: 'cycle', many: 'cycles', One: 'Cycle', Many: 'Cycles', start: 'Cycle start' };
-  return { one: 'rep', many: 'reps', One: 'Rep', Many: 'Reps', start: 'Rep start' };
+  if (a === 'gait') return { one: 'stride', many: 'strides', One: 'Stride', Many: 'Strides', start: 'Foot strike', end: 'Stride end' };
+  if (a === 'cycling') return { one: 'cycle', many: 'cycles', One: 'Cycle', Many: 'Cycles', start: 'Cycle start', end: 'Cycle end' };
+  if (a === 'jump') return { one: 'jump', many: 'jumps', One: 'Jump', Many: 'Jumps', start: 'Jump start', end: 'Jump end' };
+  if (a === 'iso') return { one: 'hold', many: 'holds', One: 'Hold', Many: 'Holds', start: 'Hold start', end: 'Hold end' };
+  return { one: 'rep', many: 'reps', One: 'Rep', Many: 'Reps', start: 'Rep start', end: 'Rep end' };
 }
-export function ptName(type) { return type === 'rep0' ? W().start : POINT_NAME[type] || type; }
+export const isCyclic = () => { const a = SET().activity; return a === 'gait' || a === 'cycling'; };
+export function ptName(type) { return type === 'rep0' ? W().start : type === 'rep1' ? W().end : POINT_NAME[type] || type; }
+// Shading for the phases inside a rep (phase 1, 2, 3, 4), the same on every graph and figure.
+export const PHASE_COLS = ['#f59e0b', '#8b5cf6', '#06b6d4', '#ef4444', '#84cc16', '#ec4899'];
 
 export const A = {
   session: { trials: [], cur: -1, muscles: {}, set: defaultSet() },

@@ -1,9 +1,9 @@
 // Tab 3: the seven results, each with what it tells you and how it was worked out.
 //  1 amplitude (peak and mean), 2 onset, offset and burst duration, 3 order of activation,
 //  4 co-contraction, 5 ratios between muscles, 6 average waveform, 7 integrated EMG.
-import { A, $, esc, persist, muscle, SET, toCsv, download, baseName, trialLabel, W } from './state.js?v=1.2.0';
-import { Chart, frame, axes, line, band } from './plot.js?v=1.2.0';
-import { orderOf, coContraction, overlap, waveforms, quality, curveBursts, burstTxt } from './emg.js?v=1.2.0';
+import { A, $, esc, persist, muscle, SET, toCsv, download, baseName, trialLabel, W } from './state.js?v=1.3.0';
+import { Chart, frame, axes, line, band } from './plot.js?v=1.3.0';
+import { orderOf, coContraction, overlap, waveforms, quality, curveBursts, burstTxt } from './emg.js?v=1.3.0';
 
 let wfChart = null, ampChart = null;
 const f = (v, n) => (Number.isFinite(v) ? v.toFixed(n) : '&ndash;');
@@ -50,7 +50,7 @@ export function renderResults() {
     + '</div><button class="btn small ghost" id="resCsv" type="button">Download results (CSV)</button></div>';
   if (R.missing.length && norm) h += '<div class="warn"><p><strong>Not normalised:</strong> ' + R.missing.map((k) => esc(muscle(k).short)).join(', ') + ' (no MVIC file for ' + (R.missing.length > 1 ? 'these muscles' : 'this muscle') + '). Add the MVIC file and tick the muscle in <strong>1. Setup</strong>. Until then these are in µV and are left out of ratios and co-contraction.</p></div>';
   if (!W.length) {
-    h += '<div class="tip"><p>' + (type === 'reps' ? 'No reps yet. Mark each <strong>Rep start</strong> and <strong>Rep end</strong> in <strong>2. Points</strong>.' : type === 'phases' ? 'No phases yet. Mark a <strong>Phase change</strong> inside each rep in <strong>2. Points</strong>.' : 'No windows of your own yet. Add one in <strong>2. Points</strong>.') + ' Meanwhile, choose <strong>Whole trial</strong> above.</p></div>';
+    h += '<div class="tip"><p>' + (type === 'reps' ? 'No reps yet. Mark each <strong>Rep start</strong> and <strong>Rep end</strong> in <strong>2. Reps and phases</strong>.' : type === 'phases' ? 'No phases yet. Mark a <strong>Phase change</strong> inside each rep in <strong>2. Reps and phases</strong>.' : 'No windows of your own yet. Add one in <strong>2. Reps and phases</strong>.') + ' Meanwhile, choose <strong>Whole trial</strong> above.</p></div>';
   }
   const many = W.length > 1;
   // 1 amplitude
@@ -66,12 +66,12 @@ export function renderResults() {
   // 2 timing
   const BB = R.bursts, anyOn = BB.some((b) => b.per.some((p) => Number.isFinite(p.on)));
   h += sec(2, 'Onset, offset and burst duration', 'When each muscle switches on and off, and for how long it is active. Times are from the start of each ' + (R.reps.length ? w1 : 'trial') + ' (and as % of the ' + w1 + ', so ' + w1 + 's of different speeds can be compared).' + (R.cycles ? ' A negative onset means the muscle switched on before the ' + w1 + ' started (e.g. &minus;12% = in the last 12% of the one before).' : ''),
-    (R.autoOn ? '<strong>Found automatically:</strong> a muscle is on while its envelope is above ' + (R.onThr && R.onThr[0] && R.onThr[0].how === 'rest' ? 'the rest mean + ' + SET().guideK + ' SD of a ' + SET().guideFc + ' Hz envelope (Hodges and Bui, 1996)' : SET().onPct + '% of the peak of its average ' + w1) + ', for at least ' + SET().onMinMs + ' ms (shorter dips are bridged and shorter blips ignored). A percentage of the peak is the usual method for running, walking and cycling, because there is no rest to set a baseline from. If a muscle has more than one burst in a ' + w1 + ', the table shows the biggest; the average ' + w1 + ' below lists them all. Change the settings in Go deeper &rarr; <strong>On/off</strong>, or mark onsets by hand in 2. Points. ' : 'You mark onset and offset by eye on each muscle (2. Points); the tool only does the arithmetic. ') + 'Burst duration = offset &minus; onset. Visual inspection by a trained eye is the reference method for onset (Hodges and Bui, 1996; Kamen and Gabriel, 2010), but note that a heavily smoothed (low cut-off) zero-lag envelope starts rising a little <em>before</em> the real onset, so judge onset on the raw EMG too (switch on <strong>Raw EMG</strong> above the graph).');
+    (R.autoOn ? '<strong>Found automatically:</strong> a muscle is on while its envelope is above ' + (R.onThr && R.onThr[0] && R.onThr[0].how === 'rest' ? 'the rest mean + ' + SET().guideK + ' SD of a ' + SET().guideFc + ' Hz envelope (Hodges and Bui, 1996)' : SET().onPct + '% of the peak of its average ' + w1) + ', for at least ' + SET().onMinMs + ' ms (shorter dips are bridged and shorter blips ignored). A percentage of the peak is the usual method for running, walking and cycling, because there is no rest to set a baseline from. If a muscle has more than one burst in a ' + w1 + ', the table shows the biggest; the average ' + w1 + ' below lists them all. Change the settings in Go deeper &rarr; <strong>On/off</strong>, or mark onsets by hand in 2. Reps and phases. ' : 'You mark onset and offset by eye on each muscle (2. Reps and phases); the tool only does the arithmetic. ') + 'Burst duration = offset &minus; onset. Visual inspection by a trained eye is the reference method for onset (Hodges and Bui, 1996; Kamen and Gabriel, 2010), but note that a heavily smoothed (low cut-off) zero-lag envelope starts rising a little <em>before</em> the real onset, so judge onset on the raw EMG too (switch on <strong>Raw EMG</strong> above the graph).');
   if (C.avgOn) {
     h += '<p style="margin:.4rem 0 .2rem"><strong>Average ' + w1 + '</strong> <span class="muted small">(on above ' + SET().onPct + '% of each muscle&rsquo;s average peak; shown as bars under the average waveform in 6)</span></p><table class="restab"><thead><tr><th>Muscle</th><th>On (% of the ' + w1 + ')</th><th>Active for</th></tr></thead><tbody>'
       + C.avgOn.map((a, k) => (a ? '<tr><td style="color:' + col(k) + ';font-weight:700">' + name(k) + '</td><td>' + (a.B.length ? a.B.map(burstTxt).join('; ') : '<span class="muted">never above the threshold</span>') + '</td><td class="num"><strong>' + f(a.active, 0) + '%</strong> of the ' + w1 + '</td></tr>' : '')).join('') + '</tbody></table>';
   }
-  if (!anyOn) h += '<p class="muted">' + (R.autoOn ? 'No bursts found. Check the ' + w1 + 's are marked, or lower the threshold in Go deeper &rarr; <strong>On/off</strong>.' : 'No onsets yet: mark them in <strong>2. Points</strong> (click a muscle&rsquo;s lane, then <strong>Onset</strong> and <strong>Offset</strong>).') + '</p>';
+  if (!anyOn) h += '<p class="muted">' + (R.autoOn ? 'No bursts found. Check the ' + w1 + 's are marked, or lower the threshold in Go deeper &rarr; <strong>On/off</strong>.' : 'No onsets yet: mark them in <strong>2. Reps and phases</strong> (click a muscle&rsquo;s lane, then <strong>Onset</strong> and <strong>Offset</strong>).') + '</p>';
   else {
     if (C.avgOn) h += '<p style="margin:.6rem 0 .2rem"><strong>Each ' + w1 + '</strong> <span class="muted small">(' + (R.autoOn ? 'the biggest burst' : 'marked by hand') + ')</span></p>';
     h += '<div class="tablewrap" style="max-height:none"><table class="restab"><thead><tr><th rowspan="2">' + (R.reps.length ? WW().One : '') + '</th>' + chs.map((c, k) => '<th colspan="3" style="color:' + col(k) + '">' + name(k) + '</th>').join('') + '</tr><tr>' + chs.map(() => '<th>Onset</th><th>Offset</th><th>Duration</th>').join('') + '</tr></thead><tbody>';
@@ -125,7 +125,7 @@ export function renderResults() {
   // 6 waveform
   h += sec(6, 'Average waveform', 'The typical pattern of each muscle through a rep: every rep is stretched to 0&ndash;100% so reps of different lengths line up, then averaged. The shaded band is &plusmn;1 SD (how much the reps differ).',
     'Each rep is resampled to 101 points (0 to 100%) by linear interpolation, then the mean and SD are worked out at each point. VR (variance ratio) measures how alike the reps are: 0 = identical, 1 = no shared pattern (Hershler and Milner, 1978); below about 0.3 is consistent. Use at least 3 reps (5 to 10 is better).');
-  if (!C.wf) h += '<p class="muted">Needs ' + WW().many + ' (mark or find them in <strong>2. Points</strong>).</p>';
+  if (!C.wf) h += '<p class="muted">Needs ' + WW().many + ' (mark or find them in <strong>2. Reps and phases</strong>).</p>';
   else {
     h += '<div class="chips" id="wfChips">' + chs.map((c, k) => (R.N[k] ? '<button type="button" class="chip' + (A.wfHide && A.wfHide[c.key] ? '' : ' active') + '" data-wf="' + esc(c.key) + '"><span class="dot" style="background:' + col(k) + '"></span>' + name(k) + '</button>' : '')).join('') + '<label class="inline small"><input type="checkbox" id="wfEach"' + (A.wfEach ? ' checked' : '') + '> each rep</label></div>';
     h += '<div id="cWf" class="chartbox"></div>';

@@ -1,8 +1,9 @@
 // The session: adding files, saying which are MVICs, labelling trials and moving between them.
-import { A, $, esc, persist, status, uid, muscle, muscleKeys, forgetSession, defaultSet, SET, W } from './state.js?v=1.2.0';
-import { parseText } from './parse.js?v=1.2.0';
-import { registerMuscles, guessMvicFor } from './setup.js?v=1.2.0';
-import { forget, proc, findCycles } from './emg.js?v=1.2.0';
+import { A, $, esc, persist, status, uid, muscle, muscleKeys, forgetSession, defaultSet, SET, W, isCyclic } from './state.js?v=1.3.0';
+import { findSet, runFinder, activityChanged, presetPhaseNames } from './events.js?v=1.3.0';
+import { parseText } from './parse.js?v=1.3.0';
+import { registerMuscles, guessMvicFor } from './setup.js?v=1.3.0';
+import { forget, proc, repWindows } from './emg.js?v=1.3.0';
 
 function readText(file) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsText(file); }); }
 
@@ -20,8 +21,7 @@ export async function addFiles(files) {
     } catch (e) { status('<span class="bad">Could not read ' + esc(f.name) + ': ' + esc(e.message || e) + '</span>'); }
   }
   if (added) {
-    const cyc = SET().activity === 'gait' || SET().activity === 'cycling';
-    if (cyc) findAll(A.session.trials.slice(firstNew));
+    if (isCyclic()) findAll(A.session.trials.slice(firstNew));
     A.fn.openTrial(firstNew);
     const nm = A.session.trials.slice(firstNew).filter((t) => t.role === 'mvic').length;
     status('Added ' + added + ' file' + (added > 1 ? 's' : '') + (nm ? ' (' + nm + ' look like MVICs)' : '') + '. Check <strong>Type</strong> in the Session table: MVIC or Reference files set 100% for each muscle.');
@@ -49,17 +49,26 @@ export function addText(txt, name, opts) {
   return tr;
 }
 
-// Find the strides (or cycles) in files from their own accelerometer; files with any marked by hand are left alone.
+// Finds the reps (strides, cycles...) in one file from its movement signal, with the session's finder settings
+// (events.js). Points found before are replaced; points marked by hand are kept. `again` = a setting was changed.
+export function findIn(t, again) {
+  const pr = proc(t); if (!pr.ok) return { n: 0, why: 'This file could not be processed.' };
+  const f = findSet(), r = runFinder(pr, f), pc = (t.points || []).find((p) => p.pct !== undefined);
+  t.points = (t.points || []).filter((p) => !p.auto);
+  t.found = Object.assign({}, r.info || {}, { n: (r.info && r.info.n) || 0 });
+  if (!t.found.n) return { n: 0, why: r.why };
+  t.points = t.points.concat(r.pts.map((p) => Object.assign({ id: uid(), auto: true }, p))).sort((a, b) => a.t - b.t);
+  // phase changes that were placed at a % of every rep move with the new reps
+  if (pc && !r.info.phases) t.points = t.points.concat(repWindows(t, pr.fs, pr.n).map((w) => ({ id: uid(), type: 'phase', t: (w.i0 + (w.i1 - w.i0) * pc.pct / 100) / pr.fs, auto: true, pct: pc.pct }))).sort((a, b) => a.t - b.t);
+  if (!again && r.info.phases) presetPhaseNames(f.preset);
+  return { n: r.info.n, T: r.info.T, phases: r.info.phases };
+}
+// The same in several files; files with reps marked by hand are left alone. Returns how many files had some found.
 export function findAll(list) {
-  const set = SET(), kind = set.activity === 'cycling' ? 'smooth' : 'impact';
   let n = 0;
   list.forEach((t) => {
     if (t.role === 'mvic' || (t.points || []).some((p) => p.type === 'rep0' && !p.auto)) return;
-    const pr = proc(t); if (!pr.ok) return;
-    const s0 = Object.keys(pr.acc)[0]; if (!s0) return;
-    const ts = findCycles(pr, s0, kind, set.cycleGap); if (ts.length < 2) return;
-    t.points = (t.points || []).filter((p) => !p.auto).concat(ts.map((tm) => ({ id: uid(), type: 'rep0', t: tm, auto: true }))).sort((a, b) => a.t - b.t);
-    forget(t); n++;
+    if (findIn(t).n) n++;
   });
   persist();
   return n;
@@ -74,10 +83,10 @@ function renderGuide() {
   const trialNums = [...new Set(work.map((t) => t.labels.trial || '').filter(Boolean))].sort((a, b) => (+a || 0) - (+b || 0));
   const byNum = !!trialNums.length && work.every((t) => t.labels.trial);
   const keys = muscleKeys();
-  const nCyc = (t) => (t.points || []).filter((p) => p.type === 'rep0').length;
+  const nCyc = (t) => { const P = t.points || [], n0 = P.filter((p) => p.type === 'rep0').length; return P.some((p) => p.type === 'rep1') ? Math.min(n0, P.filter((p) => p.type === 'rep1').length) + 1 : n0; };
   const steps = [];
   // 1 what
-  steps.push({ ok: true, title: 'What are you analysing?', body: '<select id="gAct">' + [['reps', 'A gym exercise'], ['gait', 'Running or walking'], ['cycling', 'Cycling'], ['open', 'Something else']].map(([v, l]) => '<option value="' + v + '"' + (act === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>' });
+  steps.push({ ok: true, title: 'What are you analysing?', body: '<select id="gAct">' + [['reps', 'A gym exercise (reps)'], ['gait', 'Running or walking'], ['cycling', 'Cycling'], ['jump', 'Jumping'], ['iso', 'Isometric holds'], ['open', 'Something else']].map(([v, l]) => '<option value="' + v + '"' + (act === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>' });
   // 2 normalise
   if (set.norm === 'ref' || cyc) {
     const refT = work.filter((t) => t.role === 'ref'), covered = keys.every((k) => refT.some((t) => t.P.emg.some((e) => e.key === k)));
@@ -97,8 +106,8 @@ function renderGuide() {
       : '<span class="muted">Type it in the <em>Exercise or condition</em> column below. Files with the same name are grouped together in Compare.</span>' });
   // 4 cycles
   const done = work.filter((t) => nCyc(t) >= 2).length;
-  steps.push({ ok: work.length && done === work.length, title: (cyc ? 'Find the ' : 'Mark the ') + w.many + ' in every file',
-    body: '<span><strong>' + done + ' of ' + work.length + '</strong> files done.</span>' + (cyc || act === 'open' ? '<button type="button" class="btn small accent" id="gFind">Find ' + w.many + ' in every file</button><span class="muted small">Then open each file and check them on the graph.</span>' : '<span class="muted">Open each file and mark its reps in <strong>2. Points</strong>.</span>') });
+  steps.push({ ok: work.length && done === work.length, title: 'Find the ' + w.many + ' in every file',
+    body: '<span><strong>' + done + ' of ' + work.length + '</strong> files done.</span><button type="button" class="btn small accent" id="gFind">Find ' + w.many + ' in every file</button><span class="muted small">Then open each file and check them on the graph in <strong>2. Reps and phases</strong> (you can also mark them by hand there).</span>' });
   // 5 results
   const ready = steps.every((x) => x.ok);
   steps.push({ ok: false, title: 'Look at the results', body: '<button type="button" class="btn small' + (ready ? ' accent' : '') + '" id="gCmp">Compare every trial</button><span class="muted small">or open one file and use <strong>3. Results</strong>.</span>' });
@@ -106,11 +115,10 @@ function renderGuide() {
   el.innerHTML = '<ol class="guide">' + steps.map((x, j) => '<li class="' + (x.ok ? 'ok' : j === first ? 'now' : '') + '"><span class="gn">' + (x.ok ? '&#10003;' : j + 1) + '</span><div><p class="gt">' + x.title + '</p><div class="gb">' + x.body + '</div></div></li>').join('') + '</ol>';
   const re = (msg) => { persist(); forget(); A.fn.refresh({ keepView: true, keepStatus: !!msg }); if (msg) status(msg); };
   $('gAct').addEventListener('change', function () {
-    set.activity = this.value; set.cycleGap = set.activity === 'cycling' ? 0.4 : 0.5;
+    set.activity = this.value;
     const anyMvic = T.some((q) => q.role === 'mvic');
     if ((set.activity === 'gait' || set.activity === 'cycling') && set.norm === 'mvic' && !anyMvic) set.norm = 'ref';
-    const PH = { gait: ['Stance', 'Swing'], cycling: ['Downstroke', 'Upstroke'] }, dflt = defaultSet().phaseNames;
-    if (set.phaseNames.slice(0, 2).every((n, j) => n === dflt[j] || Object.values(PH).some((p) => p[j] === n))) set.phaseNames = (PH[set.activity] || dflt.slice(0, 2)).concat(dflt.slice(2));
+    presetPhaseNames(activityChanged().preset);
     let msg = '';
     if (set.activity === 'gait' || set.activity === 'cycling') { const n = findAll(T); if (n) msg = 'Found the ' + W().many + ' in ' + n + ' file' + (n > 1 ? 's' : '') + '. Check them on the graph.'; }
     re(msg);
@@ -128,7 +136,8 @@ function renderGuide() {
   }));
   if ($('gFind')) $('gFind').addEventListener('click', () => {
     const n = findAll(work);
-    re(n ? 'Found the ' + W().many + ' in ' + n + ' file' + (n > 1 ? 's' : '') + '. Open each file and check them on the graph (files with ' + W().many + ' marked by hand were left alone).' : '<span class="bad">No ' + W().many + ' found. Check the files have accelerometer data, or mark them by hand in 2. Points.</span>');
+    A.show.acc = true; A.show.reps = true;
+    re(n ? 'Found the ' + W().many + ' in ' + n + ' file' + (n > 1 ? 's' : '') + '. Open each file and check them on the graph (files with ' + W().many + ' marked by hand were left alone).' : '<span class="bad">No ' + W().many + ' found. Open a file and look at <strong>2. Reps and phases</strong>: change how they are found, or mark them by hand.</span>');
   });
   $('gCmp').addEventListener('click', () => A.fn.showTab('compare'));
 }

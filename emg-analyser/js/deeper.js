@@ -1,11 +1,11 @@
 // Go deeper: (1) the processing steps, one at a time; (2) median frequency over time (fatigue);
 // (3) the rate of rise of the EMG after onset.
-import { A, $, esc, persist, muscle, SET, W } from './state.js?v=1.2.0';
-import { Chart, frame, axes, line, band, range } from './plot.js?v=1.2.0';
-import { butterSos, sosfiltfilt, welch, specStats, linreg } from './dsp.js?v=1.2.0';
-import { fatigue, rateOfRise } from './emg.js?v=1.2.0';
-import { mean, sd, compute } from './results.js?v=1.2.0';
-import { burstTxt } from './emg.js?v=1.2.0';
+import { A, $, esc, persist, muscle, SET, W } from './state.js?v=1.3.0';
+import { Chart, frame, axes, line, band, range } from './plot.js?v=1.3.0';
+import { butterSos, sosfiltfilt, welch, specStats, linreg } from './dsp.js?v=1.3.0';
+import { fatigue, rateOfRise } from './emg.js?v=1.3.0';
+import { mean, sd, compute } from './results.js?v=1.3.0';
+import { burstTxt } from './emg.js?v=1.3.0';
 
 const f = (v, n) => (Number.isFinite(v) ? v.toFixed(n) : '&ndash;');
 function chSel(id, k) { const R = A.R; return '<select id="' + id + '" class="mini" style="width:auto">' + R.pr.ch.map((c, j) => '<option value="' + j + '"' + (j === k ? ' selected' : '') + '>' + esc(muscle(c.key).short) + '</option>').join('') + '</select>'; }
@@ -67,7 +67,7 @@ export function renderFatigue() {
     + '<div class="row tight"><label class="inline" for="ftCh" style="margin:0">Muscle</label>' + chSel('ftCh', k)
     + '<label class="inline" for="ftMode" style="margin:0 0 0 1rem">Work it out</label><select id="ftMode" class="mini" style="width:auto"><option value="reps"' + (mode === 'reps' ? ' selected' : '') + '>for each rep</option><option value="slide"' + (mode === 'slide' ? ' selected' : '') + '>in windows along the trial</option></select>'
     + (mode === 'slide' ? '<label class="inline" for="ftWin" style="margin:0 0 0 .6rem">of</label><input type="number" id="ftWin" class="mini" min="128" max="5000" step="50" value="' + set.fatigueWin + '" style="width:5.5rem;min-width:0"> ms' : '') + '</div>';
-  if (mode === 'reps' && !R.reps.length) h += '<p class="muted">No reps marked: switch to windows along the trial, or mark reps in 2. Points.</p>';
+  if (mode === 'reps' && !R.reps.length) h += '<p class="muted">No reps marked: switch to windows along the trial, or mark reps in 2. Reps and phases.</p>';
   h += '<div class="gridc"><div><span class="lab">Median frequency over time</span><div id="cFat" class="chartbox"></div></div><div><span class="lab">Power spectrum <span class="muted" id="specLab"></span></span><div id="cSpec" class="chartbox"></div></div></div>';
   if (P.length) h += '<div class="stats"><div class="stat"><span>Start</span><strong>' + f(first, 1) + ' Hz</strong></div><div class="stat"><span>End</span><strong>' + f(last, 1) + ' Hz</strong></div><div class="stat"><span>Change</span><strong>' + f((last - first) / first * 100, 1) + '%</strong></div>'
     + (reg ? '<div class="stat hl"><span>Slope (line of best fit)</span><strong>' + f(reg.m, 2) + ' Hz/s</strong><small>r = ' + f(reg.r, 2) + '</small></div>' : '') + '</div>';
@@ -113,7 +113,7 @@ export function renderRor() {
     + '<div class="row tight"><label class="inline" for="rorMs" style="margin:0">Over the first</label><select id="rorMs" class="mini" style="width:auto">' + [25, 50, 75, 100, 150, 200].map((v) => '<option' + (v === set.rorMs ? ' selected' : '') + '>' + v + '</option>').join('') + '</select> ms'
     + '<label class="inline" for="rorFc" style="margin:0 0 0 1rem">using</label><select id="rorFc" class="mini" style="width:auto"><option value="50"' + (fc === 50 ? ' selected' : '') + '>a fast envelope (50 Hz)</option><option value="20"' + (fc === 20 ? ' selected' : '') + '>a 20 Hz envelope</option><option value="0"' + (!fc ? ' selected' : '') + '>the main envelope (' + set.envFc + ' Hz)</option></select></div>'
     + '<div class="tip"><p>The main ' + set.envFc + '-Hz envelope is too smooth for this: it rounds off a fast rise. A faster envelope (50 Hz) follows it, scaled to the same MVIC.</p></div>';
-  if (!any) h += '<p class="muted">Needs onsets: mark each muscle&rsquo;s <strong>Onset</strong> in <strong>2. Points</strong>.</p>';
+  if (!any) h += '<p class="muted">Needs onsets: mark each muscle&rsquo;s <strong>Onset</strong> in <strong>2. Reps and phases</strong>.</p>';
   else {
     h += '<table class="restab"><thead><tr><th></th>' + R.pr.ch.map((c) => '<th style="color:' + muscle(c.key).col + '">' + esc(muscle(c.key).short) + '</th>').join('') + '</tr></thead><tbody>'
       + RR.map((b) => '<tr><td>' + esc(b.w.name) + '</td>' + b.per.map((p) => '<td class="num">' + (Number.isFinite(p.rate) ? '<strong>' + f(p.rate, 0) + '</strong> <span class="muted small">' + f(p.v0, 1) + '&rarr;' + f(p.v1, 1) + '</span>' : '&ndash;') + '</td>').join('') + '</tr>').join('')
@@ -135,10 +135,10 @@ export function renderOnOff() {
     + '<div class="row"><div><label for="onMethod">Threshold</label><select id="onMethod"><option value="pct"' + (set.onMethod !== 'rest' ? ' selected' : '') + '>A % of the peak of the average ' + w1 + ' (no rest needed)</option><option value="rest"' + (set.onMethod === 'rest' ? ' selected' : '') + '>Rest mean + SD (needs a rest period)</option></select></div>'
     + (set.onMethod === 'rest' ? '<div><label for="onK">Rest mean + (SD)</label><input type="number" id="onK" min="1" max="10" step="0.5" value="' + set.guideK + '"></div>' : '<div><label for="onPct">On above (% of the peak)</label><input type="number" id="onPct" min="5" max="80" step="1" value="' + set.onPct + '"></div>')
     + '<div><label for="onMin">Shortest burst or gap (ms)</label><input type="number" id="onMin" min="0" max="500" step="5" value="' + set.onMinMs + '"></div></div>';
-  if (set.onMethod === 'rest' && !R.rest) h += '<div class="warn"><p>No rest period is marked in this file, so the % of the peak is used. Mark <strong>Rest start</strong> and <strong>Rest end</strong> in 2. Points (section 3).</p></div>';
+  if (set.onMethod === 'rest' && !R.rest) h += '<div class="warn"><p>No rest period is marked in this file, so the % of the peak is used. Mark <strong>Rest start</strong> and <strong>Rest end</strong> in 2. Reps and phases (section 3).</p></div>';
   if (!R.autoOn) h += '<div class="tip"><p>This file has onsets marked by hand, so these settings are not used for its table. Delete its Onsets and Offsets to use them. The average ' + w1 + ' (and Compare) always uses them.</p></div>';
   h += '<div class="row tight"><label class="inline" for="onCh" style="margin:0">Muscle</label>' + chSel('onCh', k) + '</div>';
-  h += C && C.wf ? '<div id="cOn" class="chartbox"></div>' + (a ? '<p>On: <strong>' + (a.B.length ? a.B.map(burstTxt).join('; ') : 'never') + '</strong> of the average ' + w1 + ', active for <strong>' + f(a.active, 0) + '%</strong> of it.</p>' : '') : '<p class="muted">Needs ' + W().many + ' marked (2. Points) to show the average ' + w1 + '.</p>';
+  h += C && C.wf ? '<div id="cOn" class="chartbox"></div>' + (a ? '<p>On: <strong>' + (a.B.length ? a.B.map(burstTxt).join('; ') : 'never') + '</strong> of the average ' + w1 + ', active for <strong>' + f(a.active, 0) + '%</strong> of it.</p>' : '') : '<p class="muted">Needs ' + W().many + ' marked (2. Reps and phases) to show the average ' + w1 + '.</p>';
   h += '<details class="more" open><summary>Which to use</summary><p><strong>% of the peak</strong> (the default, 25%) is the usual method for running, walking and cycling: there is no rest to measure a baseline from, and the threshold scales with each muscle, so it is repeatable between trials and people. 20&ndash;25% is common; lower picks up more low-level activity, higher keeps only the main bursts. <strong>Rest mean + SD</strong> (Hodges and Bui, 1996) suits tasks that start from rest (e.g. a lift): it uses a fast ' + set.guideFc + ' Hz envelope and the rest period you mark. Either way, the shortest burst rule (about 30 ms) stops brief blips and dips from counting. Check the result against the graph: no automatic method is perfect, and crosstalk or artefact can switch a muscle on.</p></details>';
   el.innerHTML = h;
   const re = () => { persist(); A.fn.refresh({ keepView: true, keepStatus: true }); };
