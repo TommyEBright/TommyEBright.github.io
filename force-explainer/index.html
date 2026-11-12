@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Force to Motion</title>
+<meta name="description" content="How a force platform turns force into acceleration, velocity and displacement, one step at a time, for countermovement, squat and drop jumps.">
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="stylesheet" href="css/style.css?v=1.0.0">
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1><img src="icons/icon-192.png" alt="">Force to Motion</h1>
+    <p>How a force platform gets from force to acceleration, velocity and displacement, one step at a time.</p>
+  </div>
+  <div class="jumps" role="tablist" aria-label="Choose a jump">
+    <button type="button" class="jbtn" data-j="cmj" role="tab">Countermovement jump</button>
+    <button type="button" class="jbtn" data-j="sj" role="tab">Squat jump</button>
+    <button type="button" class="jbtn" data-j="dj" role="tab">Drop jump</button>
+  </div>
+</header>
+
+<main>
+  <nav class="progress" id="progress" aria-label="Steps"></nav>
+
+  <div class="layout">
+    <section class="card graphcard">
+      <div class="card-head"><h2 id="graphTitle">The force platform</h2><span class="muted small" id="graphHint">Hover over the graph: the numbers on the right follow the cursor.</span></div>
+      <div class="graphwrap" id="graphWrap">
+        <canvas id="cv" aria-label="Force, acceleration, velocity and displacement over time"></canvas>
+        <canvas id="ov" aria-hidden="true"></canvas>
+      </div>
+      <div id="extra"></div>
+    </section>
+
+    <section class="card stepcard" aria-live="polite">
+      <div class="card-head"><h2 id="stepTitle"></h2><span class="muted small" id="stepCount"></span></div>
+      <div class="card-body">
+        <div id="stepBody"></div>
+        <div class="nav">
+          <button type="button" class="btn ghost" id="back">&larr; Back</button>
+          <button type="button" class="btn" id="next">Next &rarr;</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="foot muted small">Force to Motion. The demo jumps are the same as in <a href="../force-analyser/">Force Analysis</a>, worked out the same way. Works offline once loaded; nothing is uploaded. Built by Dr Tommy Bright.</footer>
+</main>
+<script type="module" src="js/app.js?v=1.0.0"></script>
+</body>
+</html>
