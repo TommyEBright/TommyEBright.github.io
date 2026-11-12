@@ -1,21 +1,22 @@
 // Start-up: wires the page together. Jumps use the automatic jump analysis (analyse.js); everything else
 // (walking, running, landing, isometric, any force-time data) uses points marked by hand (generic.js).
-import { A, $, esc, status, persist, restoreSession, loadPrefs, savePrefs, VERSION, trialLabel } from './state.js?v=2.0.0';
-import { buildData } from './parse.js?v=2.0.0';
-import { analyse, JUMPS } from './analyse.js?v=2.0.0';
-import { computeVars, display } from './vars.js?v=2.0.0';
-import { initTrace, redraw, setView, jumpRange, cursorChanged, togglePlay } from './trace.js?v=2.0.0';
-import { initInteg, refreshInteg, integCursor, render as renderInteg } from './integ.js?v=2.0.0';
-import { initFilter, renderFilter, syncFilterInputs } from './filterview.js?v=2.0.0';
-import { keyStats, warnings, renderResults } from './results.js?v=2.0.0';
-import { initEvents, renderEvents } from './events.js?v=2.0.0';
-import { initSetup, syncSetup } from './setup.js?v=2.0.0';
-import { initSession, renderSession, addText, splitTrial } from './session.js?v=2.0.0';
-import { initCompare, renderCompare, analyseTrial } from './compare.js?v=2.0.0';
-import { initExport } from './export.js?v=2.0.0';
-import { analyseGeneric, TYPES } from './generic.js?v=2.0.0';
-import { initGTrace, gRedraw, setGView, wholeRange, gCursorChanged } from './gtrace.js?v=2.0.0';
-import { renderPoints } from './gpanel.js?v=2.0.0';
+import { A, $, esc, status, persist, restoreSession, loadPrefs, savePrefs, VERSION, trialLabel } from './state.js?v=2.2.0';
+import { buildData } from './parse.js?v=2.2.0';
+import { analyse, JUMPS } from './analyse.js?v=2.2.0';
+import { computeVars, display } from './vars.js?v=2.2.0';
+import { initTrace, redraw, setView, jumpRange, cursorChanged, togglePlay } from './trace.js?v=2.2.0';
+import { initInteg, refreshInteg, integCursor, render as renderInteg } from './integ.js?v=2.2.0';
+import { initFilter, renderFilter, syncFilterInputs } from './filterview.js?v=2.2.0';
+import { keyStats, warnings, renderResults } from './results.js?v=2.2.0';
+import { initEvents, renderEvents } from './events.js?v=2.2.0';
+import { initSetup, syncSetup } from './setup.js?v=2.2.0';
+import { initSession, renderSession, addText, splitTrial } from './session.js?v=2.2.0';
+import { initCompare, renderCompare, analyseTrial } from './compare.js?v=2.2.0';
+import { initExport } from './export.js?v=2.2.0';
+import { analyseGeneric, TYPES } from './generic.js?v=2.2.0';
+import { initGTrace, gRedraw, setGView, wholeRange, gCursorChanged } from './gtrace.js?v=2.2.0';
+import { renderPoints } from './gpanel.js?v=2.2.0';
+import { renderFigBuilder } from './figbuild.js?v=2.2.0';
 
 const isJump = () => !A.S || !A.S.set.type || A.S.set.type === 'jump';
 
@@ -47,6 +48,7 @@ function refresh(o) {
   if (!o.quick) {
     syncSetup(); if (jump) refreshInteg(); renderFilter(); renderResults(); showChips();
     const cur = $('panel').querySelector('.tab[aria-selected=true]'); if (cur && cur.getAttribute('data-t') === 'compare') renderCompare();
+    if (cur && cur.getAttribute('data-t') === 'figure') renderFigBuilder();
     sessionSummaries();
     if (!o.keepStatus) status(!A.R.ok ? '<span class="bad">' + A.R.error + '</span>'
       : jump ? JUMPS[A.R.jump] + ' analysed. ' + (A.R.warnings.length ? '<span class="bad">Check the notes under the graph.</span>' : 'Hover over the graph to explore it, or press <strong>Play the jump</strong>.')
@@ -82,7 +84,8 @@ function sessionSummaries() {
     const { R, V } = analyseTrial(t);
     let s = '';
     if (!R.ok) s = '<span class="bad">check</span>';
-    else if (R.generic) { const w = R.windows.length; s = w ? w + ' window' + (w === 1 ? '' : 's') : '<span class="muted">no points yet</span>'; const v = V.find((x) => x.key1); if (v) { const d = display(v.type, v.value, 'N', R); s += ', ' + (v.short || v.name) + ' ' + d.val + ' ' + d.unit; } }
+    else if (R.generic) { const w = R.windows.length; s = w ? w + ' window' + (w === 1 ? '' : 's') : '<span class="muted">no points yet</span>'; const v = V.find((x) => x.key1 && /_pk$/.test(x.key)) || V.find((x) => x.key1); if (v) { const d = display(v.type, v.value, 'N', R); s += ', ' + (v.short || v.name) + ' ' + d.val + ' ' + d.unit; } }
+    else if (R.jump === 'slj' && R.vh) s = R.jump === 'slj' && R.vh ? 'horizontal ' + R.vh[R.TO].toFixed(2) + ' m/s at ' + (Math.atan2(R.v[R.TO], R.vh[R.TO]) * 180 / Math.PI).toFixed(0) + '&deg;' : '';
     else { const tov = R.v[R.TO]; s = tov > 0 ? (tov * tov / 19.62 * 100).toFixed(1) + ' cm' : ''; if (R.jump === 'dj' && R.LD > 0) s += ', RSI ' + ((9.81 * ((R.LD - R.TO) / R.fs) ** 2 / 8) / ((R.TO - R.TD) / R.fs)).toFixed(2); }
     t._sum = s; const el = $('sesRes' + k); if (el) el.innerHTML = s;
   });
@@ -120,6 +123,7 @@ function showTab(t) {
   if (t === 'integ') refreshInteg();
   if (t === 'filter') renderFilter();
   if (t === 'compare') renderCompare();
+  if (t === 'figure') renderFigBuilder();
   if (t === 'results') renderResults();
   if (t === 'events') { if (isJump()) renderEvents(); else renderPoints(); }
 }
@@ -129,6 +133,9 @@ const DEMOS = {
   cmj: { file: 'demo/demo-cmj.txt', labels: { athlete: 'Demo', condition: 'CMJ', trial: '1' }, set: { type: 'jump', jump: 'cmj' } },
   sj: { file: 'demo/demo-squat-jump.txt', labels: { athlete: 'Demo', condition: 'Squat jump', trial: '1' }, set: { type: 'jump', jump: 'sj' } },
   dj: { file: 'demo/demo-drop-jump.txt', labels: { athlete: 'Demo', condition: 'Drop jump', trial: '1' }, set: { type: 'jump', jump: 'dj' } },
+  slj: { file: 'demo/demo-slj.txt', labels: { athlete: 'Demo', condition: 'Standing long jump', trial: '1' }, set: { type: 'jump', jump: 'slj' } },
+  slj1: { file: 'demo/demo-slj-single-leg.txt', labels: { athlete: 'Demo', condition: 'Standing long jump, left leg', trial: '1' }, set: { type: 'jump', jump: 'slj' } },
+  imtp: { file: 'demo/demo-imtp.txt', labels: { athlete: 'Demo', condition: 'IMTP', trial: '1' }, set: { type: 'iso' } },
   walk: { file: 'demo/demo-walk-two-plates.txt', labels: { athlete: 'Demo', condition: 'Walking', trial: '1' }, set: { type: 'walk' } },
   walk4: { file: 'demo/demo-walk-four-trials.txt', labels: { athlete: 'Demo', condition: 'Walking (right foot)', trial: '' }, set: { type: 'walk' } }
 };

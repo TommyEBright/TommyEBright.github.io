@@ -1,8 +1,8 @@
 // Key numbers under the graph, the full results table (tab 5), warnings and quality checks.
-import { A, $, esc, download, baseName, trialLabel, currentTrial } from './state.js?v=2.0.0';
-import { display, groupsFor } from './vars.js?v=2.0.0';
-import { JUMPS, PHASES } from './analyse.js?v=2.0.0';
-import { TYPES } from './generic.js?v=2.0.0';
+import { A, $, esc, download, baseName, trialLabel, currentTrial } from './state.js?v=2.2.0';
+import { display, groupsFor } from './vars.js?v=2.2.0';
+import { JUMPS, PHASES } from './analyse.js?v=2.2.0';
+import { TYPES } from './generic.js?v=2.2.0';
 
 const GCOL = { Unweighting: PHASES.unweight.col, Braking: PHASES.brake.col, Propulsion: PHASES.prop.col, Landing: PHASES.land.col, Touchdown: '#2563eb', Outcome: '#1d4ed8', Body: '#64748b', 'Left vs right': '#0f766e' };
 const open = new Set();
@@ -14,7 +14,7 @@ export function keyStats() {
   if (!A.R || !A.R.ok) { el.innerHTML = ''; return; }
   const list = A.V.filter((v) => v.key1 && !(v.level > A.level));
   // a few more at higher levels
-  const extra = { cmj: ['depth', 'rsimod'], sj: ['rfd100'], dj: ['vtd'] }[A.R.jump] || [];
+  const extra = { cmj: ['depth', 'rsimod'], sj: ['rfd100'], dj: ['vtd'], slj: ['himp', 'rf'] }[A.R.jump] || [];
   extra.forEach((k) => { const v = A.V.find((x) => x.key === k); if (v && !list.includes(v)) list.push(v); });
   el.innerHTML = list.map((v) => {
     const d = display(v.type, v.value, A.units, A.R);
@@ -27,7 +27,8 @@ export function warnings() {
   const R = A.R;
   if (!R) { el.innerHTML = ''; return; }
   if (!R.ok) { el.innerHTML = '<div class="warn"><p><strong>The trial could not be analysed.</strong> ' + R.error + '</p></div>'; return; }
-  el.innerHTML = R.warnings.length ? '<div class="warn">' + R.warnings.map((w) => '<p>' + w + '</p>').join('') + '</div>' : '';
+  el.innerHTML = (R.warnings.length ? '<div class="warn">' + R.warnings.map((w) => '<p>' + w + '</p>').join('') + '</div>' : '')
+    + (R.notes && R.notes.length ? '<div class="tip">' + R.notes.map((w) => '<p>' + w + '</p>').join('') + '</div>' : '');
 }
 
 export function renderResults() {
@@ -63,7 +64,8 @@ function quality() {
   const ok = (good, txt) => q.push('<li>' + (good ? '&#10004; ' : '<span class="bad">&#9888;</span> ') + txt + '</li>');
   if (R.w && R.bwMode === 'auto') ok(R.wsd < 0.01 * R.BW && (R.w.e - R.w.s) >= 0.3 * R.fs, 'Weighing: ' + ((R.w.e - R.w.s) / R.fs).toFixed(2) + ' s of still standing, SD ' + R.wsd.toFixed(1) + ' N (' + (R.wsd / R.BW * 100).toFixed(2) + '% of bodyweight). Aim for about 1 s with an SD under 1% of bodyweight.');
   if (R.headerBW > 0 && R.bwMode === 'auto') ok(Math.abs(R.headerBW - R.BW) < 0.01 * R.BW, 'The body weight stored in the file is ' + R.headerBW.toFixed(1) + ' N, ' + Math.abs(R.headerBW - R.BW).toFixed(1) + ' N from the weighing (' + (Math.abs(R.headerBW - R.BW) / R.BW * 100).toFixed(2) + '%).');
-  if (Number.isFinite(R.flightOffset)) ok(Math.abs(R.flightOffset) <= 5, 'In the air the plate read ' + R.flightOffset.toFixed(1) + ' N (should be about 0 N; SD ' + R.flightSD.toFixed(1) + ' N).');
+  if (R.thrInfo) ok(Math.abs(R.thrInfo.off) <= 5 && R.thrInfo.sd < 3, 'Empty plate: it read ' + R.thrInfo.off.toFixed(1) + ' N (SD ' + R.thrInfo.sd.toFixed(2) + ' N) with nobody on it. ' + (Math.abs(R.thrInfo.off) > 5 ? 'Zero (reset) the plate before each trial. The offset was taken off every sample, so the results are still right.' : 'It should read about 0 N.') + ' Contact threshold: ' + R.thrInfo.thr.toFixed(1) + ' N.');
+  else if (Number.isFinite(R.flightOffset)) ok(Math.abs(R.flightOffset) <= 5, 'In the air the plate read ' + R.flightOffset.toFixed(1) + ' N (should be about 0 N; SD ' + R.flightSD.toFixed(1) + ' N).');
   const jhT = A.V.find((v) => v.key === 'jh_tov'), jhF = A.V.find((v) => v.key === 'jh_ft');
   if (jhT && jhF && Number.isFinite(jhF.value)) {
     const d = (jhF.value - jhT.value) * 100;

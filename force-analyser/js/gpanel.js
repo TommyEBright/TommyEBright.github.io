@@ -1,9 +1,9 @@
 // Tab 2 for any force-time data: the point buttons, the points table (nudge one sample at a time), the
 // windows (made from the points, plus your own), and the exports for these trials.
-import { A, $, esc, persist, status, download, baseName, currentTrial } from './state.js?v=2.0.0';
-import { POINTS, POINT_HELP, GAIT, TYPES, defaultG } from './generic.js?v=2.0.0';
-import { setGView, gCursorChanged } from './gtrace.js?v=2.0.0';
-import { toCsv } from './results.js?v=2.0.0';
+import { A, $, esc, persist, status, download, baseName, currentTrial } from './state.js?v=2.2.0';
+import { POINTS, POINT_HELP, GAIT, TYPES, defaultG } from './generic.js?v=2.2.0';
+import { setGView, gCursorChanged } from './gtrace.js?v=2.2.0';
+import { toCsv } from './results.js?v=2.2.0';
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 function G() { const set = A.S.set; if (!set.g) set.g = defaultG(); return set.g; }
@@ -41,6 +41,7 @@ export function renderPoints() {
   h += '<div class="chips evchips">' + names.map((n) => '<button type="button" class="btn accent small" data-pt="' + esc(n) + '" title="' + esc(POINT_HELP[n] || '') + '">' + esc(n) + '</button>').join('');
   h += (type === 'any' ? '<span class="row tight" style="gap:.3rem"><input type="text" id="gOwn" class="mini" placeholder="Your own point (e.g. Peak)" style="width:12rem"><button type="button" class="btn ghost small" id="gOwnAdd">Mark it</button></span>' : '') + '</div>';
   if (gait && multi) h += '<div class="row tight" style="margin:.3rem 0"><label class="inline" for="gPlate" style="margin:0">Plate</label><select id="gPlate" class="mini" style="width:auto"><option value="auto">Work it out from the forces</option>' + R.used.map((j) => '<option value="' + j + '">' + esc(R.plates[j].name) + '</option>').join('') + '</select></div>';
+  if (type === 'iso') h += '<div class="tip"><p><strong>Found automatically:</strong> the baseline is the steadiest 1 s of pre-tension before the pull; <strong>onset</strong> is the first sample above the baseline mean + ' + (set.onsetK || 5) + ' SD; the <strong>end of the pull</strong> is where force falls back below that level. Check each on the graph and move any that look wrong.</p><button type="button" class="btn small ghost" id="gIsoAgain">Find them automatically again</button></div>';
   h += '<p class="muted" style="margin:.3rem 0">' + names.map((n) => '<strong>' + esc(n) + ':</strong> ' + esc(POINT_HELP[n] || '')).join('. ') + '.</p>';
   // the points table
   const P = R.points.slice().sort((a, b) => a.i - b.i);
@@ -78,6 +79,7 @@ export function renderPoints() {
   if (P.length >= 2) { $('gwB').selectedIndex = Math.min(1, P.length - 1); }
 
   el.querySelectorAll('[data-pt]').forEach((b) => b.addEventListener('click', () => addPoint(b.getAttribute('data-pt'))));
+  if ($('gIsoAgain')) $('gIsoAgain').addEventListener('click', () => { const g2 = G(); g2.points = g2.points.filter((p) => !/^(Baseline start|Baseline end|Onset|End of pull)$/.test(p.name)); g2.isoAuto = false; persist(); A.fn.refresh({ keepView: true }); status('Baseline, onset and end of pull found again.'); });
   if ($('gOwnAdd')) $('gOwnAdd').addEventListener('click', () => { const v = $('gOwn').value.trim(); if (v) addPoint(v); });
   el.querySelectorAll('[data-d]').forEach((b) => b.addEventListener('click', () => {
     const p = g.points.find((q) => q.id === b.getAttribute('data-id')); if (!p) return;

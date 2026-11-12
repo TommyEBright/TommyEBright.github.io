@@ -4,18 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Force Analysis</title>
-<meta name="description" content="Force–time analysis from your own force platform files: jumps, walking, running, landing, isometric or anything else. Runs in the browser; your data never leave your device.">
+<meta name="description" content="Force–time analysis from your own force platform files: jumps (including the standing long jump), walking, running, landing, isometric pulls (IMTP) or anything else. Runs in the browser; your data never leave your device.">
 <meta name="theme-color" content="#0f172a">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css?v=2.0.0">
+<link rel="stylesheet" href="css/style.css?v=2.2.0">
 </head>
 <body>
 <header class="top">
   <div>
     <h1><img src="icons/icon-192.png" alt="">Force Analysis <span class="muted" id="ver" style="color:#94a3b8;font-weight:400"></span></h1>
-    <p>Force&ndash;time analysis from your own force platform files: jumps, walking, running, landing, isometric or anything else. Everything runs in your browser and nothing is uploaded.</p>
+    <p>Force&ndash;time analysis from your own force platform files: jumps (including the standing long jump), walking, running, landing, isometric pulls (IMTP) or anything else. Everything runs in your browser and nothing is uploaded.</p>
   </div>
   <div class="actions">
     <label class="btn light filebtn">Add files<input type="file" id="file" accept=".txt,.csv,.tsv,.dat,.asc,text/plain,text/csv" multiple aria-label="Add force files"></label>
@@ -24,6 +24,9 @@
       <option value="cmj">Countermovement jump</option>
       <option value="sj">Squat jump</option>
       <option value="dj">Drop jump</option>
+      <option value="slj">Standing long jump</option>
+      <option value="slj1">Standing long jump (single leg)</option>
+      <option value="imtp">Isometric mid-thigh pull (IMTP)</option>
       <option value="walk">Walking (two plates)</option>
       <option value="walk4">Walking (four trials in one file)</option>
     </select>
@@ -40,7 +43,7 @@
         <li><strong>Stand completely still for at least 1 s</strong> before a countermovement or squat jump (for a squat jump, still in the squat). This is how the tool weighs the participant, and bodyweight has to be very accurate.</li>
         <li><strong>Drop jumps:</strong> start recording before the participant steps off the box, and <strong>stand still for at least 1 s after landing</strong>. The tool can then work out the real touchdown velocity by itself (backward integration). Also note the box height. If the box stands on a plate, switch that plate off in Setup.</li>
         <li><strong>Keep everything on the plates.</strong> All of both feet on the plate(s), and nothing else touching the floor. Arms: decide on hands on hips or arm swing and keep it the same.</li>
-        <li><strong>Walking and running:</strong> one whole foot on one plate for each contact, and do not aim for the plate (it changes the step). <strong>Isometric pulls:</strong> stand still on the plate for at least 1 s before pulling.</li>
+        <li><strong>Walking and running:</strong> one whole foot on one plate for each contact, and do not aim for the plate (it changes the step). <strong>Isometric pulls:</strong> enter the participant&rsquo;s body weight in BioWare (or weigh them standing still on the plate first), then stand still on the plate for at least 1 s before pulling.</li>
         <li><strong>Sample fast:</strong> 1000 Hz is ideal for jumps and landings. Lower rates (e.g. 250 Hz) work, but peaks and events are less precise.</li>
         <li><strong>Export from BioWare as a text (ASCII) file</strong> and open it here with <strong>Add files</strong>. Other force software works too if it can save a text or CSV file with a time column and force columns (check them in Setup &rarr; Plates and columns).</li>
       </ul>
@@ -130,6 +133,7 @@
       <button class="tab" role="tab" type="button" data-t="setup" aria-selected="true">1. Setup</button>
       <button class="tab" role="tab" type="button" data-t="events" aria-selected="false" id="tabPts">2. Points</button>
       <button class="tab" role="tab" type="button" data-t="results" aria-selected="false">3. Results</button>
+      <button class="tab" role="tab" type="button" data-t="figure" aria-selected="false">4. Figure</button>
       <button class="tab" role="tab" type="button" data-t="compare" aria-selected="false">Compare trials</button>
       <button class="tab" role="tab" type="button" data-t="files" aria-selected="false">Export</button>
       <span class="tabsep">Go deeper:</span>
@@ -147,6 +151,7 @@
               <option value="cmj">Countermovement jump (CMJ)</option>
               <option value="sj">Squat jump (SJ)</option>
               <option value="dj">Drop jump (DJ)</option>
+              <option value="slj">Standing long jump (SLJ)</option>
             </optgroup>
             <optgroup label="Other movements">
               <option value="walk">Walking</option>
@@ -206,7 +211,8 @@
       <details class="more" id="advSetup">
         <summary>More options for jumps: thresholds and integration</summary>
         <div class="row">
-          <div><label for="thr">Contact threshold (N)</label><input type="number" id="thr" min="1" step="1"></div>
+          <div><label for="thrMode">Take-off and landing</label><select id="thrMode"><option value="auto">From this trial&rsquo;s empty plate (5 SD of its noise, offset removed)</option><option value="fixed">A fixed threshold</option></select></div>
+          <div><label for="thr">Fixed contact threshold (N)</label><input type="number" id="thr" min="1" step="1"></div>
           <div><label for="hold">Must last at least (ms)</label><input type="number" id="hold" min="0" step="1"></div>
           <div><label for="onsetK">Start of movement: bodyweight &plusmn; (SD)</label><input type="number" id="onsetK" min="1" step="0.5"></div>
           <div><label for="onsetBack">&hellip; then back by (ms)</label><input type="number" id="onsetBack" min="0" step="1"></div>
@@ -289,6 +295,7 @@
     </div>
 
     <!-- COMPARE -->
+    <div class="pane hide" data-p="figure"><div id="fbBox"></div></div>
     <div class="pane hide" data-p="compare">
       <p id="cmpMsg" class="muted"></p>
       <div id="cmpBody" class="hide">
@@ -370,7 +377,8 @@
             <li><strong>Time normalisation</strong> resamples the start of movement (or touchdown) to take-off to 101 points (0&ndash;100%) by linear interpolation, which is accurate because force data are sampled so densely. Group curves are the mean &plusmn; SD point by point.</li>
             <li><strong>Walking, running, landing, isometric and any other force&ndash;time data.</strong> You mark the points by hand (e.g. foot contact and toe-off) on the graph; the tool does not find them. A window runs from one point to the next (each foot contact to the next toe-off on the same plate; touchdown to stable; onset to end of pull; start to end), and you can add your own between any two points. In each window: peak and minimum are the largest and smallest sample; impulse is the area under the force (trapezoid rule); mean force = impulse &divide; duration; mean rate of force development = (peak &minus; force at the start) &divide; time to peak.</li>
             <li><strong>Walking and running.</strong> Each plate is analysed on its own. Walking: first peak = the largest vertical force in the first half of contact, second peak = the largest in the second half, mid-stance minimum = the smallest between them, loading rate = first peak &divide; time from contact. Running: active peak = the largest vertical force; impact peak = the first clear peak in the first 40% of contact (force then drops by over 3% of the active peak), often absent in a forefoot strike; loading rate = the slope from 20% to 80% of the impact peak (or the active peak if there is none). Braking and propulsive impulse are the negative and positive areas of the front&ndash;back force, with forwards set in Setup. Double support (walking) is the overlap of two contacts on different plates; flight time (running) is toe-off to the next foot contact.</li>
-            <li><strong>Isometric.</strong> Baseline = the mean force in the 1 s before onset (or the still period you mark). Net force = force &minus; baseline. RFD 0&ndash;X ms = (force X ms after onset &minus; force at onset) &divide; X. Peak RFD = the steepest rise over any 20 ms before peak force. Net impulse 0&ndash;X ms = the area between the force and the baseline. Onset is the point you mark, so mark it carefully (zoom right in): a few samples either way changes early RFD a lot.</li>
+            <li><strong>Isometric (IMTP).</strong> Found automatically, then movable like any other point: the <strong>baseline</strong> is the latest steady 1 s of pre-tension before the pull; <strong>onset</strong> is the first sample above the baseline mean + 5 SD; the <strong>end of the pull</strong> is where force falls back below that level (as in the Coventry IMTP template). Pre-tension = baseline &minus; bodyweight (high if over 200 N); steadiness = 5 &times; baseline SD (poor if over 40 N). Net force = force &minus; bodyweight; relative force = force &divide; body mass (N/kg). Force at 50&ndash;250 ms is the force that many ms after onset. RFD 0&ndash;X ms = (force at X ms &minus; force at onset) &divide; X. Impulse is the area under the force from onset; net impulse takes off bodyweight &times; time. Left vs right compares the two plates at the moment of peak force.</li>
+            <li><strong>Standing long jump.</strong> Vertical force as a CMJ (the start of movement is found by working back from the lowest force of the countermovement, so a wobble while balancing is not counted). Horizontal force: for each plate, Fx or Fy (whichever has the biggest impulse before take-off), signed so forwards is positive, less its value while standing still. Horizontal velocity = the integral of horizontal force &divide; mass, from rest at the end of the still standing. Take-off angle = tan&#8315;&sup1;(vertical &divide; horizontal take-off velocity). Resultant force = &radic;(vertical&sup2; + horizontal&sup2;); ratio of forces = horizontal &divide; resultant (averaged over propulsion). Total power = vertical power + horizontal power.</li>
             <li><strong>Bodyweight for these movements</strong> (for results in N/kg or bodyweights): the mean force between <em>Still start</em> and <em>Still end</em>, a body mass you type in, or the body weight stored in the file.</li>
             <li><strong>Limits.</strong> This is the centre of mass of the whole body, from the force under the feet. It cannot tell you what each joint did. The arms, a foot off the plate or anything else touching the ground will change the results.</li>
           </ol>
@@ -382,6 +390,6 @@
   <footer>Force Analysis. Works offline once loaded. Nothing is uploaded. Built by Dr Tommy Bright.</footer>
 </main>
 <script>window.addEventListener('error',function(e){var s=document.getElementById('status');if(s)s.innerHTML='<span class="bad"><strong>Something went wrong.</strong> Try a hard refresh (Ctrl + Shift + R, or Cmd + Shift + R on a Mac). If it keeps happening, tell your tutor: '+(e.message||'')+'</span>';});</script>
-<script type="module" src="js/app.js?v=2.0.0"></script>
+<script type="module" src="js/app.js?v=2.2.0"></script>
 </body>
 </html>

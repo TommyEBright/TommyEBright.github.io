@@ -1,7 +1,7 @@
 // Tab 4: force -> net force -> acceleration -> velocity -> displacement, step by step, with the trial's own numbers.
-import { A, $, COL } from './state.js?v=2.0.0';
-import { Chart, frame, axes, line, range, band, vline, halo, dot, fillBetween } from './plot.js?v=2.0.0';
-import { integrateForward, integrateBackward, G } from './maths.js?v=2.0.0';
+import { A, $, COL } from './state.js?v=2.2.0';
+import { Chart, frame, axes, line, range, band, vline, halo, dot, fillBetween } from './plot.js?v=2.2.0';
+import { integrateForward, integrateBackward, G } from './maths.js?v=2.2.0';
 
 let P = [];
 let alt = null; // what-if bodyweight error
@@ -70,7 +70,7 @@ function drawPanel(k, ctx, w, h, exp) {
     ctx.textAlign = X > fr.L + fr.W - 80 ? 'right' : X < fr.L + 80 ? 'left' : 'center';
     halo(ctx, txt, X, below ? Y + 18 : Y - 6);
   };
-  if (R.jump === 'cmj') {
+  if ((R.jump === 'cmj' || R.jump === 'slj')) {
     if (k === 2) mark(R.vMinI, 'a = 0');
     if (k === 3) { mark(R.vMinI, 'fastest down ' + f(R.v[R.vMinI], 2), true); if (R.zeroI > 0) mark(R.zeroI, 'v = 0'); }
     if (k === 4 && R.zeroI > 0) mark(R.zeroI, 'lowest point ' + f(R.s[R.zeroI] * 100, 1) + ' cm', true);
@@ -145,7 +145,7 @@ function links() {
   const t = (i) => A.D.t[i].toFixed(3);
   const L = [];
   const go = (i, txt) => '<div class="tip"><p>' + txt + '</p><button type="button" class="btn small ghost" data-go="' + i + '">Show me</button></div>';
-  if (R.jump === 'cmj') {
+  if ((R.jump === 'cmj' || R.jump === 'slj')) {
     L.push(go(R.vMinI, 'At ' + t(R.vMinI) + ' s force comes back up to bodyweight, so net force and acceleration are zero. Velocity has stopped getting more negative: this is the fastest the centre of mass moves down (' + R.v[R.vMinI].toFixed(2) + ' m/s).'));
     if (R.zeroI > 0) L.push(go(R.zeroI, 'At ' + t(R.zeroI) + ' s velocity crosses zero: the centre of mass has stopped moving down, so displacement is at its lowest (' + (R.s[R.zeroI] * 100).toFixed(1) + ' cm). The blue area under acceleration has been cancelled out by the green area.'));
   }

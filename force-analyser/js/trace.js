@@ -1,9 +1,9 @@
 // The main force-time graph: phases, net impulse shading, events you can drag, hover read-out, zoom and the
 // overview strip underneath. Also the jumper figure and "play the jump".
-import { A, $, esc, COL, PLATE_COLS, persist, iOf } from './state.js?v=2.0.0';
-import { Chart, frame, axes, line, range, band, vline, hline, halo, dot, fillBetween } from './plot.js?v=2.0.0';
-import { phaseAt, explain, PHASES } from './analyse.js?v=2.0.0';
-import { drawFigure } from './figure.js?v=2.0.0';
+import { A, $, esc, COL, PLATE_COLS, persist, iOf } from './state.js?v=2.2.0';
+import { Chart, frame, axes, line, range, band, vline, hline, halo, dot, fillBetween } from './plot.js?v=2.2.0';
+import { phaseAt, explain, PHASES } from './analyse.js?v=2.2.0';
+import { drawFigure } from './figure.js?v=2.2.0';
 
 let main = null, over = null, fig = null;
 let drag = null, hoverEv = null;
@@ -48,6 +48,7 @@ function seriesList() {
   if (A.show.plates && multi) R.plates.forEach((p, j) => { if (p.role !== 'off') out.push({ y: p.fz, col: PLATE_COLS[j], width: 1.6, name: p.name + ' Fz' }); });
   if (A.show.fx) R.plates.forEach((p, j) => { if (p.fx && p.role !== 'off') out.push({ y: p.fx, col: PLATE_COLS[j], width: 1.4, dash: [7, 4], name: p.name + ' Fx' }); });
   if (A.show.fy) R.plates.forEach((p, j) => { if (p.fy && p.role !== 'off') out.push({ y: p.fy, col: PLATE_COLS[j], width: 1.4, dash: [2, 3], name: p.name + ' Fy' }); });
+  if (R.Fh && A.show.fh !== false) out.push({ y: R.Fh, col: '#ea580c', width: 2, dash: [8, 3], name: 'Horizontal force (forwards +)' });
   if (R.filtered && A.show.raw) out.push({ y: R.Fraw, col: COL.raw, width: 1.2, name: 'Raw (unfiltered)' });
   if (A.show.total || !out.length) out.push({ y: R.F, col: COL.total, width: 2.6, name: multi ? 'Total vertical force' : 'Vertical force (Fz)', main: true });
   return out;
@@ -73,7 +74,7 @@ function drawMain(ctx, w, h, exp) {
   }
   // reference lines
   hline(ctx, fr, R.BW / k, COL.bw, [7, 5], 'Bodyweight ' + (A.units === 'N' ? R.BW.toFixed(0) + ' N' : A.units === 'BW' ? '(1)' : (R.BW / R.m).toFixed(2) + ' N/kg'), 1.4);
-  hline(ctx, fr, A.S.set.thr / k, '#94a3b8', [2, 3], 'Contact threshold ' + A.S.set.thr + ' N', 1);
+  hline(ctx, fr, (R.thrUsed || A.S.set.thr) / k, '#94a3b8', [2, 3], 'Contact threshold ' + (+(R.thrUsed || A.S.set.thr).toFixed(1)) + ' N', 1);
   // lines
   ser.forEach((s) => line(ctx, fr, t, scaled(s.y), { col: s.col, width: s.width, dash: s.dash, i0, i1 }));
   // phase labels
@@ -270,6 +271,7 @@ export function readout() {
     + c('Displacement', (R.s[i] >= 0 ? '+' : '') + (R.s[i] * 100).toFixed(1) + ' cm');
   if (A.level >= 2) h += c('Power', R.P[i].toFixed(0) + ' W');
   if (R.plates.length > 1 && A.level >= 2) R.plates.forEach((pl, j) => { if (pl.role !== 'off') h += c(esc(pl.name) + ' Fz', fmtF(pl.fz[i])); });
+  if (R.Fh) h += c('Horizontal', R.Fh[i].toFixed(1) + ' N');
   if (A.show.fx || A.show.fy) R.plates.forEach((pl) => { if (pl.role === 'off') return; if (A.show.fx && pl.fx) h += c(esc(pl.name) + ' Fx', pl.fx[i].toFixed(1) + ' N'); if (A.show.fy && pl.fy) h += c(esc(pl.name) + ' Fy', pl.fy[i].toFixed(1) + ' N'); });
   h += '</div><div class="words">' + (p ? '<span class="ph" style="background:' + (p.key === 'flight' || p.key === 'drop' ? '#64748b' : p.col) + '">' + esc(p.key === 'drop' ? 'Falling from the box' : p.name) + '</span>' : '') + '<span>' + explain(R, i) + '</span></div>';
   el.innerHTML = h;

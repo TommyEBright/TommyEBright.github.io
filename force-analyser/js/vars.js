@@ -1,6 +1,6 @@
 // Every variable the tool reports: name, phase, level, units, how it is worked out (with the trial's own numbers).
 // Levels: 1 Foundation (Level 4), 2 Intermediate (Level 5), 3 Advanced (Level 6 and MSc).
-import { G, area, mean, argmax, argmin } from './maths.js?v=2.0.0';
+import { G, area, mean, argmax, argmin } from './maths.js?v=2.2.0';
 
 const f = (x, d) => (x === null || x === undefined || !Number.isFinite(x) ? '&ndash;' : x.toFixed(d));
 const fs3 = (x) => f(x, 3);
@@ -32,7 +32,8 @@ export function display(type, v, u, R) {
 const GROUPS = {
   cmj: ['Outcome', 'Body', 'Unweighting', 'Braking', 'Propulsion', 'Landing', 'Left vs right'],
   sj: ['Outcome', 'Body', 'Propulsion', 'Landing', 'Left vs right'],
-  dj: ['Outcome', 'Body', 'Touchdown', 'Braking', 'Propulsion', 'Landing', 'Left vs right']
+  dj: ['Outcome', 'Body', 'Touchdown', 'Braking', 'Propulsion', 'Landing', 'Left vs right'],
+  slj: ['Outcome', 'Body', 'Take-off', 'Horizontal', 'Direction of force', 'Unweighting', 'Braking', 'Propulsion', 'Left vs right']
 };
 export function groupsFor(jump) { return GROUPS[jump]; }
 
@@ -44,7 +45,7 @@ export function computeVars(R, set) {
   const out = [];
   const { F, v, s, P, fs, BW, m, TO, LD, TD, onset } = R;
   const dt = 1 / fs, meth = R.integ.method;
-  const jump = R.jump;
+  const jump = R.jump === 'slj' ? 'cmj' : R.jump, slj = R.jump === 'slj';
   const T = (i) => i / fs;
   const add = (o) => { out.push(o); return o; };
   const N0 = (x) => f(x, 0), N1 = (x) => f(x, 1), N2 = (x) => f(x, 2);
@@ -61,32 +62,33 @@ export function computeVars(R, set) {
   const jhF = Number.isFinite(ft) ? G * ft * ft / 8 : NaN;
 
   // ---------- outcome ----------
-  add({ key: 'jh_tov', name: 'Jump height (from take-off velocity)', short: 'Jump height (TOV)', group: 'Outcome', level: 1, type: 'height', value: jhT, key1: true,
+  if (slj) sljVars(R, add, tov);
+  if (!slj) add({ key: 'jh_tov', name: 'Jump height (from take-off velocity)', short: 'Jump height (TOV)', group: 'Outcome', level: 1, type: 'height', value: jhT, key1: true,
     how: 'Take-off velocity v = ' + N2(tov) + ' m/s. h = v&sup2; &divide; 2g = ' + N2(tov) + '&sup2; &divide; (2 &times; 9.81) = ' + fs3(jhT) + ' m = ' + N1(jhT * 100) + ' cm. This is how far the centre of mass rises after take-off (the impulse&ndash;momentum method; Linthorne, 2001).' });
-  add({ key: 'jh_ft', name: 'Jump height (from flight time)', short: 'Jump height (FT)', group: 'Outcome', level: 1, type: 'height', value: jhF, key1: true,
+  if (!slj) add({ key: 'jh_ft', name: 'Jump height (from flight time)', short: 'Jump height (FT)', group: 'Outcome', level: 1, type: 'height', value: jhF, key1: true,
     how: 'Flight time t = ' + fs3(ft) + ' s. h = g t&sup2; &divide; 8 = 9.81 &times; ' + fs3(ft) + '&sup2; &divide; 8 = ' + fs3(jhF) + ' m = ' + N1(jhF * 100) + ' cm. This assumes the body is in exactly the same position at landing as at take-off. Landing with bent knees or flat feet makes the flight longer, so this method usually gives a slightly higher jump than take-off velocity (Moir, 2008).' });
-  add({ key: 'tov', name: 'Take-off velocity', group: 'Outcome', level: 1, type: 'vel', value: tov, key1: true,
+  if (!slj) add({ key: 'tov', name: 'Take-off velocity', group: 'Outcome', level: 1, type: 'vel', value: tov, key1: true,
     how: 'The centre of mass velocity at the first sample below the threshold (' + fs3(T(TO)) + ' s), from integrating acceleration (see the Integration tab).' });
-  add({ key: 'ft', name: 'Flight time', group: 'Outcome', level: 1, type: 'time', value: ft,
-    how: 'Landing &minus; take-off = ' + fs3(LD >= 0 ? T(LD) : NaN) + ' &minus; ' + fs3(T(TO)) + ' = ' + fs3(ft) + ' s. Both are where the force crosses the ' + set.thr + ' N threshold.' });
+  if (!slj) add({ key: 'ft', name: 'Flight time', group: 'Outcome', level: 1, type: 'time', value: ft,
+    how: 'Landing &minus; take-off = ' + fs3(LD >= 0 ? T(LD) : NaN) + ' &minus; ' + fs3(T(TO)) + ' = ' + fs3(ft) + ' s. Both are where the force crosses the ' + f(R.thrUsed, 1) + ' N threshold.' });
 
   if (jump !== 'dj') {
     const ttt = (TO - onset) / fs;
     add({ key: 'ttt', name: jump === 'cmj' ? 'Time to take-off' : 'Propulsion time', group: 'Outcome', level: jump === 'cmj' ? 2 : 1, type: 'time', value: ttt,
       how: 'Take-off &minus; start of movement = ' + fs3(T(TO)) + ' &minus; ' + fs3(T(onset)) + ' = ' + fs3(ttt) + ' s.' + (jump === 'cmj' ? ' Also called contraction time.' : '') });
-    add({ key: 'rsimod', name: 'RSImod (reactive strength index modified)', short: 'RSImod', group: 'Outcome', level: 2, type: 'rsi', value: jhT / ttt,
+    if (!slj) add({ key: 'rsimod', name: 'RSImod (reactive strength index modified)', short: 'RSImod', group: 'Outcome', level: 2, type: 'rsi', value: jhT / ttt,
       how: 'Jump height (take-off velocity) &divide; time to take-off = ' + fs3(jhT) + ' m &divide; ' + fs3(ttt) + ' s = ' + N2(jhT / ttt) + ' (Ebben &amp; Petushek, 2010). Higher means the jump was both high and quick.' });
   }
 
   // Peak force before take-off
   const i0 = jump === 'dj' ? TD : onset;
   const pkI = argmax(F, i0, TO);
-  add({ key: 'pf', name: jump === 'dj' ? 'Peak force (contact)' : 'Peak force', group: 'Outcome', level: 1, type: 'force', value: F[pkI], key1: true,
+  add({ key: 'pf', name: jump === 'dj' ? 'Peak force (contact)' : slj ? 'Peak vertical force' : 'Peak force', group: 'Outcome', level: 1, type: 'force', value: F[pkI], key1: !slj,
     how: 'The biggest force between ' + (jump === 'dj' ? 'touchdown' : 'the start of movement') + ' and take-off: ' + N0(F[pkI]) + ' N at ' + fs3(T(pkI)) + ' s (' + N2(F[pkI] / BW) + ' &times; bodyweight).' });
 
   // Peak power
   const ppI = argmax(P, i0, TO);
-  add({ key: 'pp', name: 'Peak power', group: jump === 'dj' ? 'Propulsion' : 'Outcome', level: 2, type: 'power', value: P[ppI],
+  add({ key: 'pp', name: slj ? 'Peak vertical power' : 'Peak power', group: jump === 'dj' ? 'Propulsion' : 'Outcome', level: 2, type: 'power', value: P[ppI],
     how: 'Power = force &times; centre of mass velocity, at every sample. The biggest value before take-off is ' + N0(F[ppI]) + ' N &times; ' + N2(v[ppI]) + ' m/s = ' + N0(P[ppI]) + ' W at ' + fs3(T(ppI)) + ' s.' });
 
   if (jump === 'cmj') {
@@ -236,12 +238,14 @@ export function computeVars(R, set) {
     const fl = R.plates[L].fz, fr = R.plates[Rt].fz;
     const pairs = [];
     if (jump === 'cmj' && R.zeroI > 0) { pairs.push(['Braking impulse', R.vMinI, R.zeroI, 'imp']); pairs.push(['Propulsive impulse', R.zeroI, TO, 'imp']); pairs.push(['Peak force', onset, TO, 'pk']); }
+    if (slj && R.hInfo) { const hl = R.hInfo.find((q) => q.plate === L), hr = R.hInfo.find((q) => q.plate === Rt); if (hl && hr) pairs.push(['Horizontal impulse', R.hStart, TO, 'himp', hl, hr]); }
     if (jump === 'sj') { pairs.push(['Propulsive impulse', onset, TO, 'imp']); pairs.push(['Peak force', onset, TO, 'pk']); }
     if (jump === 'dj' && R.lowI > 0) { pairs.push(['Braking impulse', TD, R.lowI, 'imp']); pairs.push(['Propulsive impulse', R.lowI, TO, 'imp']); pairs.push(['Peak force', TD, TO, 'pk']); }
     if (LD >= 0) pairs.push(['Peak landing force', LD, R.landEndI > 0 ? R.landEndI : Math.min(R.n, LD + Math.round(0.5 * fs)), 'pk']);
-    pairs.forEach(([nm, a0, a1, kind]) => {
+    pairs.forEach(([nm, a0, a1, kind, hl, hr]) => {
       let vl, vr;
-      if (kind === 'imp') { vl = area(fl, dt, a0, a1, meth, BW / 2); vr = area(fr, dt, a0, a1, meth, BW / 2); }
+      if (kind === 'himp') { const P = (q) => { const y = R.plates[q.plate][q.ax]; let s0 = 0; for (let i = a0; i < a1; i++) s0 += q.sign * (y[i] - q.off) * dt; return s0; }; vl = P(hl); vr = P(hr); kind = 'imp'; }
+      else if (kind === 'imp') { vl = area(fl, dt, a0, a1, meth, BW / 2); vr = area(fr, dt, a0, a1, meth, BW / 2); }
       else { vl = fl[argmax(fl, a0, a1)]; vr = fr[argmax(fr, a0, a1)]; }
       const ai = asym(vl, vr);
       add({ key: 'asym_' + nm.replace(/\W+/g, '_').toLowerCase(), name: nm + ': left vs right', short: nm + ' asymmetry', group: 'Left vs right', level: 2, type: 'pct', value: ai, lr: [vl, vr, kind],
@@ -250,6 +254,63 @@ export function computeVars(R, set) {
   }
   return out;
 }
+
+// ---------- standing long jump ----------
+// Take-off velocity in both directions, the take-off angle, horizontal impulse and power, and the direction of the
+// ground reaction force (resultant force, its angle and the ratio of forces).
+function sljVars(R, add, tovZ) {
+  const { F, fs, BW, m, TO, onset } = R, dt = 1 / fs, T = (i) => i / fs;
+  const N0 = (x) => f(x, 0), N1 = (x) => f(x, 1), N2 = (x) => f(x, 2), deg = 180 / Math.PI;
+  if (!R.Fh) return;
+  const { Fh, vh, Ph } = R, h0 = R.hStart, vhT = vh[TO], vres = Math.hypot(vhT, tovZ), ang = Math.atan2(tovZ, vhT) * deg;
+  add({ key: 'vh', name: 'Horizontal take-off velocity', short: 'Horizontal velocity', group: 'Outcome', level: 1, type: 'vel', value: vhT, key1: true,
+    how: 'Horizontal acceleration = horizontal force &divide; body mass, integrated from rest at ' + f(T(h0), 3) + ' s (' + (h0 < onset ? 'the end of the still standing: the forward lean and arm swing can push horizontally before the vertical countermovement starts' : 'the start of movement') + ') to take-off at ' + f(T(TO), 3) + ' s = ' + N2(vhT) + ' m/s. It is the same as horizontal impulse &divide; mass. It decides most of the jump distance.' });
+  add({ key: 'tov', name: 'Vertical take-off velocity', short: 'Vertical velocity', group: 'Outcome', level: 1, type: 'vel', value: tovZ, key1: true,
+    how: 'The vertical centre of mass velocity at take-off, from integrating (vertical force &minus; bodyweight) &divide; mass from the start of movement, exactly as in a CMJ = ' + N2(tovZ) + ' m/s.' });
+  add({ key: 'vres', name: 'Resultant take-off velocity', short: 'Take-off speed', group: 'Take-off', level: 2, type: 'vel', value: vres,
+    how: '&radic;(horizontal&sup2; + vertical&sup2;) = &radic;(' + N2(vhT) + '&sup2; + ' + N2(tovZ) + '&sup2;) = ' + N2(vres) + ' m/s.' });
+  add({ key: 'toang', name: 'Take-off angle', group: 'Outcome', level: 1, type: 'deg', value: ang, key1: true,
+    how: 'The angle of the take-off velocity above the horizontal: tan&#8315;&sup1;(vertical &divide; horizontal) = tan&#8315;&sup1;(' + N2(tovZ) + ' &divide; ' + N2(vhT) + ') = ' + N1(ang) + '&deg;. Jumpers usually take off well below 45&deg;, because pushing more forwards is easier than pushing up.' });
+  add({ key: 'hrise', name: 'Rise of the centre of mass after take-off', short: 'Vertical rise', group: 'Take-off', level: 2, type: 'height', value: tovZ > 0 ? tovZ * tovZ / (2 * G) : NaN,
+    how: 'v&sup2; &divide; 2g with the vertical take-off velocity = ' + N2(tovZ) + '&sup2; &divide; 19.62 = ' + N1(tovZ > 0 ? tovZ * tovZ / (2 * G) * 100 : NaN) + ' cm: how much higher the centre of mass goes in flight. Measure the jump distance itself with a tape: it also depends on the body position at take-off and landing.' });
+  // horizontal
+  let pos = 0, neg = 0; for (let i = h0; i < TO; i++) { const a = (Fh[i] + Fh[i + 1]) / 2 * dt; if (a >= 0) pos += a; else neg += a; }
+  add({ key: 'himp', name: 'Horizontal impulse (net)', group: 'Horizontal', level: 1, type: 'imp', value: pos + neg,
+    how: 'The area under the horizontal force from ' + f(T(h0), 3) + ' s to take-off = ' + N1(pos + neg) + ' N&middot;s = m &times; horizontal take-off velocity = ' + N2(m) + ' &times; ' + N2(vhT) + ' = ' + N1(m * vhT) + ' N&middot;s.' });
+  add({ key: 'hpimp', name: 'Horizontal propulsive impulse', group: 'Horizontal', level: 2, type: 'imp', value: pos, how: 'The area of the forwards (positive) part of the horizontal force = ' + N1(pos) + ' N&middot;s.' });
+  add({ key: 'hbimp', name: 'Horizontal braking impulse', group: 'Horizontal', level: 3, type: 'imp', value: -neg, how: 'The area of the backwards (negative) part of the horizontal force = ' + N1(neg) + ' N&middot;s, given as a size. Usually small: some backwards force while rocking back at the start.' });
+  const ihp = argmax(Fh, h0, TO);
+  add({ key: 'hpf', name: 'Peak horizontal force', group: 'Horizontal', level: 1, type: 'force', value: Fh[ihp], key1: true, how: 'The biggest forwards force before take-off: ' + N0(Fh[ihp]) + ' N at ' + f(T(ihp), 3) + ' s.' });
+  const pr0 = R.zeroI > 0 ? R.zeroI : onset;
+  const mhf = mean(Fh, pr0, TO);
+  add({ key: 'hmf', name: 'Mean horizontal force (propulsion)', group: 'Horizontal', level: 2, type: 'force', value: mhf, how: 'The average horizontal force from the lowest point to take-off (the vertical propulsion phase) = ' + N0(mhf) + ' N.' });
+  const iph = argmax(Ph, h0, TO);
+  add({ key: 'hpp', name: 'Peak horizontal power', group: 'Horizontal', level: 2, type: 'power', value: Ph[iph], how: 'Horizontal force &times; horizontal velocity at every sample. The biggest is ' + N0(Fh[iph]) + ' N &times; ' + N2(vh[iph]) + ' m/s = ' + N0(Ph[iph]) + ' W at ' + f(T(iph), 3) + ' s.' });
+  const Pt = new Float64Array(TO + 1); for (let i = h0; i <= TO; i++) Pt[i] = F[i] * R.v[i] + Fh[i] * vh[i];
+  const ipt = argmax(Pt, h0, TO);
+  add({ key: 'ptot', name: 'Peak total power (vertical + horizontal)', short: 'Peak total power', group: 'Horizontal', level: 2, type: 'power', value: Pt[ipt], key1: true,
+    how: 'Vertical power + horizontal power at every sample (power adds, because both push the same centre of mass). The biggest is ' + N0(F[ipt] * R.v[ipt]) + ' + ' + N0(Fh[ipt] * vh[ipt]) + ' = ' + N0(Pt[ipt]) + ' W at ' + f(T(ipt), 3) + ' s.' });
+  const mpt = mean(Pt, pr0, TO);
+  add({ key: 'mptot', name: 'Mean total power (propulsion)', group: 'Horizontal', level: 3, type: 'power', value: mpt, how: 'The average of vertical + horizontal power from the lowest point to take-off = ' + N0(mpt) + ' W.' });
+  // direction of the force
+  const Fr = new Float64Array(TO + 1); for (let i = h0; i <= TO; i++) Fr[i] = Math.hypot(F[i], Fh[i]);
+  const ir = argmax(Fr, onset, TO), angR = Math.atan2(F[ir], Fh[ir]) * deg;
+  add({ key: 'rpf', name: 'Peak resultant force', group: 'Direction of force', level: 2, type: 'force', value: Fr[ir],
+    how: 'The resultant (combined) ground reaction force is &radic;(vertical&sup2; + horizontal&sup2;). The biggest is &radic;(' + N0(F[ir]) + '&sup2; + ' + N0(Fh[ir]) + '&sup2;) = ' + N0(Fr[ir]) + ' N at ' + f(T(ir), 3) + ' s.' });
+  add({ key: 'rang', name: 'Force angle at peak resultant force', group: 'Direction of force', level: 2, type: 'deg', value: angR,
+    how: 'The angle of the ground reaction force above the horizontal at that moment: tan&#8315;&sup1;(' + N0(F[ir]) + ' &divide; ' + N0(Fh[ir]) + ') = ' + N1(angR) + '&deg;. 90&deg; would be straight up.' });
+  let sa = 0, sr = 0, k = 0, cut = 0.5 * BW; for (let i = pr0; i < TO; i++) { if (Fr[i] < cut) continue; sa += Math.atan2(F[i], Fh[i]) * deg; sr += Fh[i] / Fr[i] * 100; k++; }
+  add({ key: 'mang', name: 'Mean force angle (propulsion)', group: 'Direction of force', level: 3, type: 'deg', value: k ? sa / k : NaN,
+    how: 'The average angle of the ground reaction force above the horizontal from the lowest point to take-off (samples where the resultant is above half of bodyweight, so the last moments as the feet leave the plate do not count) = ' + N1(k ? sa / k : NaN) + '&deg;.' });
+  add({ key: 'rf', name: 'Ratio of forces (propulsion)', short: 'Ratio of forces', group: 'Direction of force', level: 2, type: 'pct', value: k ? sr / k : NaN,
+    how: 'Horizontal force &divide; resultant force &times; 100, averaged over the same samples = ' + N1(k ? sr / k : NaN) + '%. It shows how much of the push is directed forwards (Morin et al., 2011, for sprinting).' });
+  const vimpZ = m * tovZ;
+  add({ key: 'iratio', name: 'Horizontal to vertical impulse ratio', group: 'Direction of force', level: 3, type: 'ratio', value: (pos + neg) / vimpZ,
+    how: 'Net horizontal impulse &divide; net vertical impulse = ' + N1(pos + neg) + ' &divide; ' + N1(vimpZ) + ' = ' + N2((pos + neg) / vimpZ) + '. Above 1 means more of the push went forwards than up.' });
+}
+UNITS.deg = { all: ['&deg;', 1, 1] };
+UNITS.nkg = { all: ['N/kg', 1, 2] };
+UNITS.ratio = { all: ['', 1, 2] };
 
 // Stiffness is shown in kN/m.
 UNITS.stiff = { all: ['kN/m', 1000, 1] };

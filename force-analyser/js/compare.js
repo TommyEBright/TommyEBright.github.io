@@ -1,15 +1,15 @@
 // Compare trials: a table of results for every trial with group means, overlaid curves and whole-session exports.
-import { A, $, esc, download, trialLabel } from './state.js?v=2.0.0';
-import { buildData } from './parse.js?v=2.0.0';
-import { analyse, JUMP_SHORT } from './analyse.js?v=2.0.0';
-import { computeVars, display } from './vars.js?v=2.0.0';
-import { meanSD, resample } from './maths.js?v=2.0.0';
-import { Chart, frame, axes, line, range } from './plot.js?v=2.0.0';
-import { toCsv, plain } from './results.js?v=2.0.0';
-import { analyseGeneric, TYPE_SHORT } from './generic.js?v=2.0.0';
+import { A, $, esc, download, trialLabel } from './state.js?v=2.2.0';
+import { buildData } from './parse.js?v=2.2.0';
+import { analyse, JUMP_SHORT } from './analyse.js?v=2.2.0';
+import { computeVars, display } from './vars.js?v=2.2.0';
+import { meanSD, resample } from './maths.js?v=2.2.0';
+import { Chart, frame, axes, line, range } from './plot.js?v=2.2.0';
+import { toCsv, plain } from './results.js?v=2.2.0';
+import { analyseGeneric, TYPE_SHORT } from './generic.js?v=2.2.0';
 
 const PAL = ['#2563eb', '#be185d', '#0f766e', '#d97706', '#7c3aed', '#0891b2', '#65a30d', '#dc2626', '#475569', '#c026d3'];
-const DEFAULT = { walk: ['w0_ct', 'w0_p1', 'w0_p2', 'w0_lr', 'w0_pimp', 'w0_bimp'], run: ['w0_ct', 'w0_act', 'w0_imp', 'w0_lr'], land: ['w0_pk', 'w0_tp', 'w0_lr', 'w0_tts'], iso: ['w0_pk', 'w0_npk', 'w0_rfd100', 'w0_rfd200', 'w0_tpk'], any: ['w0_dur', 'w0_pk', 'w0_mean', 'w0_imp'], cmj: ['jh_tov', 'jh_ft', 'ttt', 'rsimod', 'depth', 'prop_imp', 'pp'], sj: ['jh_tov', 'jh_ft', 'prop_mf', 'prop_imp', 'pp', 'rfd100'], dj: ['rsi', 'gct', 'jh_ft', 'jh_tov', 'vtd', 'pif'] };
+const DEFAULT = { slj: ['vh', 'tov', 'toang', 'himp', 'hpf', 'ptot'], walk: ['w0_ct', 'w0_p1', 'w0_p2', 'w0_lr', 'w0_pimp', 'w0_bimp'], run: ['w0_ct', 'w0_act', 'w0_imp', 'w0_lr'], land: ['w0_pk', 'w0_tp', 'w0_lr', 'w0_tts'], iso: ['w0_pk', 'w0_npk', 'w0_rpk', 'w0_f100', 'w0_f200', 'w0_rfd100', 'w0_pret'], any: ['w0_dur', 'w0_pk', 'w0_mean', 'w0_imp'], cmj: ['jh_tov', 'jh_ft', 'ttt', 'rsimod', 'depth', 'prop_imp', 'pp'], sj: ['jh_tov', 'jh_ft', 'prop_mf', 'prop_imp', 'pp', 'rfd100'], dj: ['rsi', 'gct', 'jh_ft', 'jh_tov', 'vtd', 'pif'] };
 const cache = new Map();
 let chosen = null, chosenFor = null, chart = null, data = null;
 

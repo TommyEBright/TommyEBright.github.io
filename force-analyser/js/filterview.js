@@ -1,7 +1,7 @@
 // Tab 3: what a low-pass filter does to the force signal, with residual analysis to suggest a cut-off.
-import { A, $, persist } from './state.js?v=2.0.0';
-import { Chart, frame, axes, line, range, hline } from './plot.js?v=2.0.0';
-import { butter, residualCurve } from './maths.js?v=2.0.0';
+import { A, $, persist } from './state.js?v=2.2.0';
+import { Chart, frame, axes, line, range, hline } from './plot.js?v=2.2.0';
+import { butter, residualCurve } from './maths.js?v=2.2.0';
 
 let cF, cR, cT, resid = null, filt = null, filtKey = '';
 

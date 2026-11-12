@@ -1,10 +1,11 @@
 // Tab 1: jump type, drop jump options, bodyweight, plates and columns, thresholds.
-import { A, $, esc, persist, PLATE_COLS, savePrefs } from './state.js?v=2.0.0';
-import { TYPE_HELP, GAIT, defaultG } from './generic.js?v=2.0.0';
+import { A, $, esc, persist, PLATE_COLS, savePrefs } from './state.js?v=2.2.0';
+import { TYPE_HELP, GAIT, defaultG } from './generic.js?v=2.2.0';
 
 const JUMP_HELP = {
   cmj: 'Stand still, dip down and jump straight up. Phases: unweighting, braking, propulsion, flight and landing.',
   sj: 'Hold a still squat, then push up without dipping first. Phases: propulsion, flight and landing. Any dip before the push is flagged.',
+  slj: 'Stand still with both feet (or one foot) on the plate, then jump as far forwards as possible, landing off the plate. Vertical phases as in a CMJ, plus horizontal take-off velocity, take-off angle, horizontal impulse and power, and the direction of the force.',
   dj: 'Step off a box, land on the plate and jump straight back up as quickly as possible. Phases: braking, propulsion, flight and landing.'
 };
 const ROLES = [['on', 'Use'], ['left', 'Use: left foot'], ['right', 'Use: right foot'], ['off', 'Switch off']];
@@ -15,7 +16,7 @@ export function syncSetup() {
   const jump = set.type === 'jump' || !set.type;
   $('type').value = jump ? set.jump : set.type;
   $('jumpHelp').textContent = jump ? JUMP_HELP[set.jump] : TYPE_HELP[set.type];
-  $('typeNext').innerHTML = jump ? 'Events are found automatically: check them in <strong>2. Events</strong>, then read <strong>3. Results</strong>.' : 'Next: mark the points by hand in <strong>2. Points</strong>, then read <strong>3. Results</strong>.';
+  $('typeNext').innerHTML = jump ? 'Events are found automatically: check them in <strong>2. Events</strong>, then read <strong>3. Results</strong>.' : set.type === 'iso' ? 'The baseline, onset and end of the pull are found automatically: check them in <strong>2. Points</strong>, then read <strong>3. Results</strong>.' : 'Next: mark the points by hand in <strong>2. Points</strong>, then read <strong>3. Results</strong>.';
   $('djBox').classList.toggle('hide', !(jump && set.jump === 'dj'));
   $('advSetup').classList.toggle('hide', !jump);
   $('axesBox').classList.toggle('hide', !GAIT[set.type]);
@@ -32,6 +33,7 @@ export function syncSetup() {
   $('fsIn').value = S.fs || '';
   $('fsInfo').innerHTML = S.P.fs ? 'From the file' + (S.P.format === 'bioware' ? ' (BioWare)' : '') : '<span class="bad">Not in the file: please enter it.</span>';
   ['thr', 'hold', 'onsetK', 'onsetBack', 'method'].forEach((k) => { $(k).value = set[k]; });
+  $('thrMode').value = set.thrMode || 'auto';
   const R = A.R;
   let b = '';
   if (R && R.ok && !R.generic) {
@@ -90,7 +92,7 @@ function changed(rebuild) { persist(); A.fn.refresh({ keepView: true, rebuild: !
 
 export function initSetup() {
   $('type').addEventListener('change', function () {
-    const v = this.value, set = A.S.set, jump = ['cmj', 'sj', 'dj'].includes(v);
+    const v = this.value, set = A.S.set, jump = ['cmj', 'sj', 'dj', 'slj'].includes(v);
     set.type = jump ? 'jump' : v; if (jump) { set.jump = v; set.ev = {}; set.weigh = null; }
     if (!set.g) set.g = defaultG();
     if (GAIT[set.type] && !set.axes) { set.axes = Object.assign({}, A.axes); }
@@ -103,6 +105,7 @@ export function initSetup() {
   $('bwMode').addEventListener('change', function () { A.S.set.bwMode = this.value; $('massWrap').classList.toggle('hide', this.value !== 'mass'); changed(); });
   $('mass').addEventListener('change', function () { const v = parseFloat(this.value); A.S.set.mass = v > 0 ? v : 0; changed(); });
   $('fsIn').addEventListener('change', function () { const v = parseFloat(this.value); if (v > 0) { A.S.fs = v; changed(true); } });
+  $('thrMode').addEventListener('change', function () { A.S.set.thrMode = this.value; changed(); });
   [['thr', parseFloat], ['hold', parseFloat], ['onsetK', parseFloat], ['onsetBack', parseFloat]].forEach(([id, p]) => {
     $(id).addEventListener('change', function () { const v = p(this.value); if (!(v >= 0)) return; A.S.set[id] = v; changed(); });
   });

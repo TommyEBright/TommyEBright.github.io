@@ -1,16 +1,16 @@
 // Exports for one trial: continuous, discrete and time-normalised CSV; PNG graphs; a Word report; project files.
-import { A, $, download, baseName, currentTrial, trialLabel, status, persist, VERSION } from './state.js?v=2.0.0';
-import { JUMPS, phaseAt } from './analyse.js?v=2.0.0';
-import { display, groupsFor } from './vars.js?v=2.0.0';
-import { resample } from './maths.js?v=2.0.0';
-import { toCsv, plain, resultsCsv, shown } from './results.js?v=2.0.0';
-import { snapshotMain } from './trace.js?v=2.0.0';
-import { snapshotInteg } from './integ.js?v=2.0.0';
-import { canvasToBlob } from './plot.js?v=2.0.0';
-import { zip } from './zip.js?v=2.0.0';
-import { TYPES } from './generic.js?v=2.0.0';
-import { gSnapshot } from './gtrace.js?v=2.0.0';
-import { gDownload } from './gpanel.js?v=2.0.0';
+import { A, $, download, baseName, currentTrial, trialLabel, status, persist, VERSION } from './state.js?v=2.2.0';
+import { JUMPS, phaseAt } from './analyse.js?v=2.2.0';
+import { display, groupsFor } from './vars.js?v=2.2.0';
+import { resample } from './maths.js?v=2.2.0';
+import { toCsv, plain, resultsCsv, shown } from './results.js?v=2.2.0';
+import { snapshotMain } from './trace.js?v=2.2.0';
+import { snapshotInteg } from './integ.js?v=2.2.0';
+import { canvasToBlob } from './plot.js?v=2.2.0';
+import { zip } from './zip.js?v=2.2.0';
+import { TYPES } from './generic.js?v=2.2.0';
+import { gSnapshot } from './gtrace.js?v=2.2.0';
+import { gDownload } from './gpanel.js?v=2.2.0';
 
 const ok = () => { if (!A.R || !A.R.ok) { status('<span class="bad">Nothing to export yet: the trial has not been analysed.</span>'); return false; } return true; };
 
@@ -61,7 +61,7 @@ async function docx() {
   body += para(run('Force–time analysis: ' + (gen ? TYPES[R.type] : JUMPS[R.jump]), { b: true, sz: 32 }), { after: 60 });
   body += para(run(trialLabel(t) + ' (' + t.name + ')', { sz: 22, col: '555555' }));
   const meth = gen ? (R.BW > 0 ? 'Bodyweight ' + R.BW.toFixed(1) + ' N (' + R.bwSource + '); body mass ' + R.m.toFixed(1) + ' kg. ' : 'No bodyweight (results in newtons). ') + 'Sample rate ' + R.fs + ' Hz. Points marked by hand: ' + R.points.slice().sort((a, b) => a.i - b.i).map((p) => p.name + ' ' + R.t[p.i].toFixed(3) + ' s').join(', ') + '. Impulse by the ' + (A.S.set.method === 'rect' ? 'rectangle rule' : 'trapezoid rule') + '. Force ' + (R.filtered ? 'filtered (low-pass Butterworth, ' + A.S.set.filt.fc + ' Hz)' : 'not filtered') + '.'
-    : 'Bodyweight ' + R.BW.toFixed(1) + ' N (' + R.bwSource + '); body mass ' + R.m.toFixed(1) + ' kg. Sample rate ' + R.fs + ' Hz. Contact threshold ' + A.S.set.thr + ' N. '
+    : 'Bodyweight ' + R.BW.toFixed(1) + ' N (' + R.bwSource + '); body mass ' + R.m.toFixed(1) + ' kg. Sample rate ' + R.fs + ' Hz. Contact threshold ' + (+(R.thrUsed || A.S.set.thr).toFixed(1)) + ' N' + (R.thrInfo ? ' (5 SD of the empty plate, offset of ' + R.thrInfo.off.toFixed(1) + ' N removed)' : '') + '. '
     + (R.jump === 'dj' ? 'Touchdown velocity from ' + (R.integ.dir === 'backward' ? 'backward integration from still standing after landing' : 'the drop height (' + A.S.set.drop + ' m)') + '. ' : 'Start of movement: bodyweight ' + (R.jump === 'cmj' ? '−' : '+') + ' ' + A.S.set.onsetK + ' SD, minus ' + A.S.set.onsetBack + ' ms. ')
     + 'Integration: ' + (R.integ.method === 'rect' ? 'rectangles (Riemann sum)' : 'trapezoid rule') + '. Force ' + (R.filtered ? 'filtered (low-pass Butterworth, ' + A.S.set.filt.fc + ' Hz)' : 'not filtered') + '.';
   body += para(run('Method. ', { b: true }) + run(meth));

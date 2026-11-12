@@ -1,8 +1,8 @@
 // Sessions: adding files, labelling trials, moving between them, carrying settings over.
-import { A, $, esc, persist, status, newTrial, currentTrial, SHARED, clone, forgetSession } from './state.js?v=2.0.0';
-import { parseText, buildData } from './parse.js?v=2.0.0';
-import { guessJump, JUMP_SHORT, analyse, defaultSettings } from './analyse.js?v=2.0.0';
-import { guessType, guessAxes, GAIT, TYPE_SHORT, defaultG } from './generic.js?v=2.0.0';
+import { A, $, esc, persist, status, newTrial, currentTrial, SHARED, clone, forgetSession } from './state.js?v=2.2.0';
+import { parseText, buildData } from './parse.js?v=2.2.0';
+import { guessJump, JUMP_SHORT, analyse, defaultSettings } from './analyse.js?v=2.2.0';
+import { guessType, guessAxes, GAIT, TYPE_SHORT, defaultG } from './generic.js?v=2.2.0';
 
 function readText(file) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsText(file); }); }
 
@@ -45,6 +45,12 @@ export function addText(txt, name, prev, opts) {
       const jumpOk = R.ok && R.LD >= 0 && (R.LD - R.TO) / R.fs > 0.1 && (R.LD - R.TO) / R.fs < 1.2;
       const gt = guessType(P, D, jumpOk), shapeOnly = gt === (jumpOk ? 'jump' : 'any');
       tr.set.type = prev && shapeOnly ? prev.set.type || 'jump' : gt;
+      // a standing long jump: named so, or a countermovement with a big forwards push and no landing on the plate
+      const nm = ((P.meta && P.meta.description) || '') + ' ' + name;
+      let slj = /slj|sbj|long.?jump|broad.?jump|horizontal.?jump/i.test(nm);
+      if (!slj && tr.set.type !== 'iso' && !GAIT[tr.set.type] && R.ok && R.LD < 0) { const R2 = analyse(D, Object.assign(defaultSettings(), { jump: 'slj' })); slj = R2.ok && R2.vh && R2.vh[R2.TO] > 1; }
+      const named = /slj|sbj|long.?jump|broad.?jump|horizontal.?jump/i.test(nm);
+      if (named || (slj && !(prev && shapeOnly && prev.set.type !== 'jump'))) { tr.set.type = 'jump'; tr.set.jump = 'slj'; }
       if (GAIT[tr.set.type] && !(prev && prev.set.axes)) { if (A.axesSet) tr.set.axes = Object.assign({}, A.axes); else { tr.set.axes = guessAxes(D); tr.set.axesGuessed = true; } }
     } catch (e) { /* leave as is */ }
   }
@@ -93,6 +99,7 @@ export function summarise(t) {
     const R = analyse(buildData(t.P, t.map, t.fs), t.set);
     if (!R.ok) return '<span class="bad">check</span>';
     const tov = R.v[R.TO]; const h = tov > 0 ? tov * tov / 19.62 * 100 : NaN;
+    if (R.jump === 'slj' && R.vh) return R.jump === 'slj' && R.vh ? 'horizontal ' + R.vh[R.TO].toFixed(2) + ' m/s at ' + (Math.atan2(R.v[R.TO], R.vh[R.TO]) * 180 / Math.PI).toFixed(0) + '&deg;' : '';
     return (Number.isFinite(h) ? h.toFixed(1) + ' cm' : '') + (R.jump === 'dj' ? ', RSI ' + (R.LD > 0 ? ((9.81 * ((R.LD - R.TO) / R.fs) ** 2 / 8) / ((R.TO - R.TD) / R.fs)).toFixed(2) : '&ndash;') : '');
   } catch (e) { return ''; }
 }

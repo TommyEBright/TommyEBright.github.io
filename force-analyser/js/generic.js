@@ -2,7 +2,7 @@
 // The user finds the points by hand; the tool works out the results between them.
 // The results come out in the same form as the jump results (see vars.js), so the same tables, exports and
 // comparisons work for both.
-import { G, area, mean, argmax, argmin, butter } from './maths.js?v=2.0.0';
+import { G, area, mean, sd, argmax, argmin, butter, quietestWindow } from './maths.js?v=2.2.0';
 
 export const TYPES = {
   any: 'Any force–time data',
@@ -17,7 +17,7 @@ export const TYPE_HELP = {
   walk: 'Foot contacts on one or more plates. Mark each foot contact and toe-off; the tool gives contact time, the two vertical peaks, the mid-stance dip, loading rate, and braking and propulsive forces and impulses.',
   run: 'Foot contacts while running. Mark each foot contact and toe-off; the tool gives contact time, impact and active peaks, loading rate, braking and propulsive forces and impulses, and flight time between contacts.',
   land: 'A landing (e.g. from a box or a jump). Mark touchdown and the moment the participant is stable; the tool gives peak landing force, time to peak, loading rate and time to stabilise.',
-  iso: 'An isometric pull or push (e.g. isometric mid-thigh pull). Mark the onset of the pull (and its end); the tool gives peak force, net force and rate of force development at set times, and impulse.'
+  iso: 'An isometric pull or push (e.g. isometric mid-thigh pull). The steady pre-tension before the pull, the onset (pre-tension + 5 SD) and the end of the pull are found automatically, and can be moved. Results: peak force, force at 50 to 250 ms (absolute, net of bodyweight and relative), rate of force development, impulse and the pre-tension checks. Type the body mass in Setup (or weigh the participant standing still) for net and relative values.'
 };
 // The point buttons for each type. Gait points belong to a plate.
 export const POINTS = {
@@ -25,7 +25,7 @@ export const POINTS = {
   walk: ['Foot contact', 'Toe-off'],
   run: ['Foot contact', 'Toe-off'],
   land: ['Touchdown', 'Stable'],
-  iso: ['Onset', 'End of pull']
+  iso: ['Baseline start', 'Baseline end', 'Onset', 'End of pull']
 };
 export const POINT_HELP = {
   Start: 'the start of the part you want to analyse',
@@ -35,12 +35,14 @@ export const POINT_HELP = {
   Touchdown: 'the first sample where force rises above zero',
   Stable: 'where force has settled at bodyweight and stays there',
   Onset: 'the last sample before force starts to rise (zoom right in)',
-  'End of pull': 'where force starts to fall at the end of the pull',
+  'End of pull': 'where force has fallen back at the end of the pull',
+  'Baseline start': 'the start of about 1 s of steady pre-tension on the bar, before the pull',
+  'Baseline end': 'the end of it (before force starts to rise)',
   'Still start': 'the start of a period of standing completely still',
   'Still end': 'the end of it'
 };
 export const GAIT = { walk: 1, run: 1 };
-export const POINT_COL = { Start: '#2563eb', End: '#7c3aed', 'Foot contact': '#2563eb', 'Toe-off': '#059669', Touchdown: '#2563eb', Stable: '#059669', Onset: '#2563eb', 'End of pull': '#7c3aed', 'Still start': '#64748b', 'Still end': '#64748b' };
+export const POINT_COL = { Start: '#2563eb', End: '#7c3aed', 'Foot contact': '#2563eb', 'Toe-off': '#059669', Touchdown: '#2563eb', Stable: '#059669', Onset: '#2563eb', 'End of pull': '#7c3aed', 'Baseline start': '#64748b', 'Baseline end': '#64748b', 'Still start': '#64748b', 'Still end': '#64748b' };
 export const CH_COL = { tot: '#1d4ed8', plates: ['#0f766e', '#be185d', '#d97706'] };
 const WIN_COL = ['#2563eb', '#be185d', '#0f766e', '#d97706', '#7c3aed', '#0891b2'];
 
@@ -144,6 +146,7 @@ export function analyseGeneric(D, set, axes) {
   const fs = D.fs, n = D.n, type = set.type, g = set.g || defaultG();
   if (!(fs > 0)) return { ok: false, error: 'The sample rate is not in the file. Enter it in Setup &rarr; Plates, columns and sample rate.' };
   const chs = channels(D, set, axes);
+  if (type === 'iso' && !g.isoAuto) { isoFind(D, set, chs.totRaw); }
   const pts = (g.points || []).map((p) => Object.assign({}, p, { i: Math.max(0, Math.min(n - 1, Math.round(p.t * fs))) }));
   const bw = bodyweight(D, set, pts, chs.totRaw);
   const wins = windows(type, pts, set, D, chs);
@@ -151,6 +154,8 @@ export function analyseGeneric(D, set, axes) {
     ok: true, generic: true, type, fs, n, t: D.t, ch: chs.list, F: chs.tot, Fraw: chs.totRaw, used: chs.used, filtered: !!(set.filt && set.filt.on),
     BW: bw.BW, m: bw.m, bwSource: bw.source, headerBW: D.headerBW || 0, points: pts, windows: wins, warnings: [], groups: [], plates: D.plates
   };
+  if (type === 'iso' && /stored/.test(bw.source) && Math.abs(D.headerBW - 800) < 1e-6) R.warnings.push('The body weight stored in the file is exactly 800 N, which is BioWare&rsquo;s default, so it was probably never entered. Type the participant&rsquo;s body mass in Setup, or the net and relative forces will be wrong.');
+  if (type === 'iso' && !(bw.BW > 0)) R.warnings.push('Bodyweight is not known, so net and relative forces cannot be worked out. Type the body mass in Setup (or mark a period of standing still on the plate before the pull).');
   R.V = genericVars(R, set, axes);
   return R;
 }
@@ -219,33 +224,7 @@ function genericVars(R, set, axes) {
         if (bw) { const net = s.imp - R.BW * s.dur; add({ key: kk + 'nimp', name: 'Net impulse (touchdown to stable)', group: grp, type: 'imp', value: net, how: 'Impulse &minus; bodyweight &times; time = ' + f1(s.imp) + ' &minus; ' + f0(R.BW) + ' &times; ' + f3(s.dur) + ' = ' + f1(net) + ' N&middot;s. It equals body mass &times; the downward velocity at touchdown that the landing took away.' }); }
       }
     } else if (w.iso) {
-      const on = w.i0, end = w.i1;
-      const pre0 = Math.max(0, on - Math.round(1.0 * fs)), still = R.points.some((p) => p.name === 'Still start') && R.points.some((p) => p.name === 'Still end');
-      let base = still && bw ? R.BW : (on - pre0 >= Math.round(0.1 * fs) ? mean(y, pre0, on) : y[on]);
-      const baseHow = still && bw ? 'the still period you marked' : (on - pre0 >= Math.round(0.1 * fs) ? 'the mean force in the ' + f3((on - pre0) / fs) + ' s before onset' : 'the force at onset');
-      add({ key: kk + 'base', name: 'Baseline force (before the pull)', group: grp, type: 'force', value: base, how: 'From ' + baseHow + ': ' + f0(base) + ' N. For a pull on a bar this is the weight of the participant (and anything else on the plate).' });
-      add(tile({ key: kk + 'pk', name: 'Peak force', short: 'Peak force', group: grp, type: 'force', value: s.peak, how: 'The largest force from onset to ' + (w.ended ? 'the end of the pull' : 'the end of the recording') + ': ' + f0(s.peak) + ' N at ' + f3(t(s.iPk)) + ' s.' }, k === 0));
-      add(tile({ key: kk + 'npk', name: 'Net peak force', short: 'Net peak force', group: grp, type: 'force', value: s.peak - base, how: 'Peak force &minus; baseline = ' + f0(s.peak) + ' &minus; ' + f0(base) + ' = ' + f0(s.peak - base) + ' N.' }, k === 0));
-      add(tile({ key: kk + 'tpk', name: 'Time to peak force', short: 'Time to peak', group: grp, type: 'time', value: (s.iPk - on) / fs, how: f3(t(s.iPk)) + ' &minus; ' + f3(t(on)) + ' = ' + f3((s.iPk - on) / fs) + ' s.' }, k === 0));
-      if (w.ended) add({ key: kk + 'mean', name: 'Mean force (onset to end of pull)', group: grp, type: 'force', value: s.mean, how: 'Impulse &divide; time = ' + f1(s.imp) + ' &divide; ' + f3(s.dur) + ' = ' + f0(s.mean) + ' N.' });
-      const g2 = w.name + ': force and rate of force development at set times', g3 = w.name + ': impulse';
-      [50, 100, 150, 200, 250].forEach((ms) => {
-        const j = on + Math.round(ms / 1000 * fs); if (j > end) return;
-        add({ key: kk + 'f' + ms, name: 'Net force at ' + ms + ' ms', group: g2, type: 'force', value: y[j] - base, how: 'Force ' + ms + ' ms after onset &minus; baseline = ' + f0(y[j]) + ' &minus; ' + f0(base) + ' = ' + f0(y[j] - base) + ' N.' });
-      });
-      [50, 100, 150, 200, 250].forEach((ms) => {
-        const j = on + Math.round(ms / 1000 * fs); if (j > end) return;
-        const r = (y[j] - y[on]) / (ms / 1000);
-        add(tile({ key: kk + 'rfd' + ms, name: 'RFD 0&ndash;' + ms + ' ms', short: 'RFD 0–' + ms + ' ms', group: g2, type: 'rfd', value: r, how: '(Force at ' + ms + ' ms &minus; force at onset) &divide; ' + (ms / 1000) + ' s = (' + f0(y[j]) + ' &minus; ' + f0(y[on]) + ') &divide; ' + (ms / 1000) + ' = ' + f0(r) + ' N/s.' }, k === 0 && (ms === 100 || ms === 200)));
-      });
-      const L = Math.max(1, Math.round(0.02 * fs)); let best = -Infinity, bi = on;
-      for (let i = on; i + L <= Math.min(end, s.iPk + L); i++) { const r = (y[i + L] - y[i]) / (L / fs); if (r > best) { best = r; bi = i; } }
-      add({ key: kk + 'prfd', name: 'Peak RFD (steepest 20 ms)', group: g2, type: 'rfd', value: best, how: 'The steepest rise over any 20 ms between onset and peak force: from ' + f3(t(bi)) + ' to ' + f3(t(bi + L)) + ' s, (' + f0(y[bi + L]) + ' &minus; ' + f0(y[bi]) + ') &divide; ' + (L / fs).toFixed(3) + ' = ' + f0(best) + ' N/s.' });
-      [100, 200, 300].forEach((ms) => {
-        const j = on + Math.round(ms / 1000 * fs); if (j > end) return;
-        const imp = area(y, 1 / fs, on, j, set.method) - base * (j - on) / fs;
-        add({ key: kk + 'imp' + ms, name: 'Net impulse 0&ndash;' + ms + ' ms', group: g3, type: 'imp', value: imp, how: 'The area between the force and the baseline from onset to ' + ms + ' ms = ' + f1(imp) + ' N&middot;s.' });
-      });
+      isoVars(R, w, y, set, add, tile, k, grp);
     }
     if (!w.gait && !w.land && !w.iso) {
       // any window (and every window the user added)
@@ -286,8 +265,113 @@ export function guessType(P, D, jumpOk) {
   const d = ((P.meta && P.meta.description) || '') + ' ' + (P.fileName || '');
   if (/walk|gait/i.test(d)) return 'walk';
   if (/run|sprint/i.test(d)) return 'run';
-  if (/imtp|isometric|mid.?thigh|iso/i.test(d)) return 'iso';
+  if (/imtp|isometric|mid.?thigh|iso|\bpull\b/i.test(d)) return 'iso';
   if (/land/i.test(d)) return 'land';
   if (/cmj|counter|squat jump|\bsj\b|drop|\bdj\b|jump/i.test(d)) return 'jump';
   return jumpOk ? 'jump' : 'any';
+}
+
+
+// ---------- isometric pulls (IMTP) ----------
+// Finds the steady pre-tension, the onset and the end of the pull, and adds them as points (marked auto) that can be
+// moved like any other. Method as in the Coventry IMTP template (Tallis): the baseline is 1 s of steady pre-tension;
+// onset is the first sample above its mean + 5 SD.
+// population SD, as in the template (STDEVP)
+const sdP = (y, a, b) => { const m = mean(y, a, b); let q = 0; for (let i = a; i < b; i++) q += (y[i] - m) ** 2; return b > a ? Math.sqrt(q / (b - a)) : NaN; };
+export function isoFind(D, set, y) {
+  const g = set.g, n = D.n, fs = D.fs, k = set.onsetK || 5;
+  g.points = (g.points || []).filter((p) => !(p.auto && /^(Baseline start|Baseline end|Onset|End of pull)$/.test(p.name)));
+  g.isoAuto = true;
+  const pk = argmax(y, 0, n); let lo = Infinity; for (let i = 0; i < pk; i++) if (y[i] < lo) lo = y[i];
+  if (!(pk > 0) || !(y[pk] - lo > 100)) return false;
+  const half = (lo + y[pk]) / 2; let rise = 0; while (rise < pk && y[rise] < half) rise++;
+  const end0 = Math.max(0, rise - Math.round(0.05 * fs));
+  let L = Math.round(1.0 * fs); if (end0 < L) L = Math.max(Math.round(0.25 * fs), end0 - 2);
+  // the latest steady second before the rise (just before the pull, as when the window is picked by hand):
+  // SD no more than 1.5 times that of the steadiest second, or 1 N more
+  const q0 = quietestWindow(y, 0, end0, L); if (!q0) return false;
+  let q = q0; const lim = Math.max(1.5 * q0.sd, q0.sd + 1);
+  for (let a = end0 - L; a >= 0; a -= Math.max(1, Math.round(0.01 * fs))) { const v = sd(y, a, a + L); if (v <= lim) { q = { s: a, e: a + L, sd: v }; break; } }
+  const base = mean(y, q.s, q.e), s0 = sdP(y, q.s, q.e), thr = base + k * s0;
+  let on = q.s; while (on < pk && y[on] <= thr) on++;
+  if (on >= pk) return false;
+  let e = pk; while (e < n - 1 && y[e] >= thr) e++;
+  if (e >= n - 1) { const lim = base + 0.1 * (y[pk] - base); e = pk; while (e < n - 1 && y[e] >= lim) e++; }
+  const add = (name, i) => g.points.push({ id: 'a' + Math.random().toString(36).slice(2, 9), name, t: i / fs, auto: true });
+  add('Baseline start', q.s); add('Baseline end', q.e - 1); add('Onset', on); if (e < n - 1) add('End of pull', e);
+  g.points.sort((a, b) => a.t - b.t);
+  return true;
+}
+
+function isoVars(R, w, y, set, add, tile, k, grp) {
+  const fs = R.fs, t = (i) => i / fs, on = w.i0, end = w.i1, kk = 'w' + k + '_', first = k === 0;
+  const f0 = (x) => (Number.isFinite(x) ? x.toFixed(0) : '&ndash;'), f1 = (x) => (Number.isFinite(x) ? x.toFixed(1) : '&ndash;'), f2 = (x) => (Number.isFinite(x) ? x.toFixed(2) : '&ndash;'), f3 = (x) => (Number.isFinite(x) ? x.toFixed(3) : '&ndash;');
+  const P = R.points, bs = P.filter((p) => p.name === 'Baseline start' && p.i < on).pop(), be = P.filter((p) => p.name === 'Baseline end' && p.i < on + 1).pop();
+  let b0, b1, bHow;
+  if (bs && be && be.i > bs.i + 2) { b0 = bs.i; b1 = be.i + 1; bHow = 'the steady pre-tension from ' + f3(t(b0)) + ' to ' + f3(t(be.i)) + ' s'; }
+  else { b0 = Math.max(0, on - Math.round(1.0 * fs)); b1 = on; bHow = 'the ' + f3((b1 - b0) / fs) + ' s before onset'; }
+  const base = b1 - b0 >= 3 ? mean(y, b0, b1) : y[on], bsd = b1 - b0 >= 3 ? sdP(y, b0, b1) : NaN, thr = base + (set.onsetK || 5) * bsd;
+  const BW = R.BW > 0 ? R.BW : NaN, m = BW / G, hasBW = Number.isFinite(BW);
+  const gPre = w.name + ': before the pull', gPk = w.name + ': peak force', gT = w.name + ': force at set times', gR = w.name + ': rate of force development', gI = w.name + ': impulse', gLR = w.name + ': left vs right';
+  // before the pull
+  add({ key: kk + 'base', name: 'Baseline force (pre-tension + bodyweight)', group: gPre, type: 'force', value: base, how: 'The mean force over ' + bHow + ' = ' + f1(base) + ' N. It includes the participant&rsquo;s weight and the pull they already have on the bar.' });
+  add({ key: kk + 'bsd', name: 'Baseline SD', group: gPre, type: 'force', value: bsd, how: 'How much the force varied over the baseline = ' + f2(bsd) + ' N.' });
+  add({ key: kk + 'thr', name: 'Onset threshold (baseline + ' + (set.onsetK || 5) + ' SD)', group: gPre, type: 'force', value: thr, how: f1(base) + ' + ' + (set.onsetK || 5) + ' &times; ' + f2(bsd) + ' = ' + f1(thr) + ' N. Onset is the first sample above this' + (P.find((p) => p.name === 'Onset' && p.i === on && !p.auto) ? ' (here the onset was marked by hand)' : '') + ': ' + f3(t(on)) + ' s.' });
+  if (hasBW) {
+    const pt = base - BW;
+    add(tile({ key: kk + 'pret', name: 'Pre-tension', short: 'Pre-tension', group: gPre, type: 'force', value: pt, how: 'Baseline &minus; bodyweight = ' + f1(base) + ' &minus; ' + f1(BW) + ' = ' + f1(pt) + ' N: ' + (pt > 200 ? '<strong>high</strong> (over 200 N). Too much pre-tension starts the pull early and lowers force at the early time points.' : '<strong>low</strong> (200 N or under), as it should be: enough to take the slack out of the body without starting the pull.') }, first));
+  }
+  const stab = 5 * bsd;
+  add({ key: kk + 'stab', name: 'Steadiness of the pre-tension (5 SD)', group: gPre, type: 'force', value: stab, how: '5 &times; baseline SD = ' + f1(stab) + ' N: ' + (stab > 40 ? '<strong>poor</strong> (over 40 N). The participant was not still before the pull, so the onset may be found too early or too late.' : '<strong>good</strong> (40 N or under).') });
+  // peak
+  const s = stats(y, on, end, fs, set.method);
+  add(tile({ key: kk + 'pk', name: 'Peak force', short: 'Peak force', group: gPk, type: 'force', value: s.peak, how: 'The largest force from onset to ' + (w.ended ? 'the end of the pull' : 'the end of the recording') + ': ' + f0(s.peak) + ' N at ' + f3(t(s.iPk)) + ' s. This is the absolute force, including bodyweight.' }, first));
+  if (hasBW) {
+    add(tile({ key: kk + 'npk', name: 'Net peak force', short: 'Net peak force', group: gPk, type: 'force', value: s.peak - BW, how: 'Peak force &minus; bodyweight = ' + f0(s.peak) + ' &minus; ' + f0(BW) + ' = ' + f0(s.peak - BW) + ' N: the force produced on top of the participant&rsquo;s own weight.' }, first));
+    add(tile({ key: kk + 'rpk', name: 'Relative peak force', short: 'Relative peak force', group: gPk, type: 'nkg', value: s.peak / m, how: 'Peak force &divide; body mass = ' + f0(s.peak) + ' &divide; ' + f1(m) + ' = ' + f2(s.peak / m) + ' N/kg (' + f0(s.peak / BW * 100) + '% of bodyweight).' }, first));
+  } else add({ key: kk + 'npk', name: 'Peak force above baseline', group: gPk, type: 'force', value: s.peak - base, how: 'Peak force &minus; baseline = ' + f0(s.peak) + ' &minus; ' + f0(base) + ' = ' + f0(s.peak - base) + ' N. Type the body mass in Setup to get net force (minus bodyweight) and relative force.' });
+  add(tile({ key: kk + 'tpk', name: 'Time to peak force', short: 'Time to peak', group: gPk, type: 'time', value: (s.iPk - on) / fs, how: f3(t(s.iPk)) + ' &minus; ' + f3(t(on)) + ' = ' + f3((s.iPk - on) / fs) + ' s.' }, false));
+  if (w.ended) {
+    add({ key: kk + 'len', name: 'Length of pull', group: gPk, type: 'time', value: s.dur, how: 'Onset to the end of the pull (where force falls back below the onset threshold) = ' + f3(t(end)) + ' &minus; ' + f3(t(on)) + ' = ' + f3(s.dur) + ' s.' });
+    add({ key: kk + 'mean', name: 'Mean force (onset to end of pull)', group: gPk, type: 'force', value: s.mean, how: 'Impulse &divide; time = ' + f1(s.imp) + ' &divide; ' + f3(s.dur) + ' = ' + f0(s.mean) + ' N.' });
+  }
+  // force at set times
+  [50, 100, 150, 200, 250].forEach((ms) => {
+    const j = on + Math.round(ms / 1000 * fs); if (j > end) return;
+    const nm = 'F@' + ms + ' ms';
+    add({ key: kk + 'af' + ms, name: 'Force at ' + ms + ' ms', group: gT, type: 'force', value: y[j], how: 'The force ' + ms + ' ms after onset (sample ' + j + ', ' + f3(t(j)) + ' s) = ' + f0(y[j]) + ' N.' });
+    if (hasBW) {
+      add(tile({ key: kk + 'f' + ms, name: 'Net force at ' + ms + ' ms', short: 'Net ' + nm, group: gT, type: 'force', value: y[j] - BW, how: 'Force at ' + ms + ' ms &minus; bodyweight = ' + f0(y[j]) + ' &minus; ' + f0(BW) + ' = ' + f0(y[j] - BW) + ' N.' }, first && (ms === 100 || ms === 200)));
+      add({ key: kk + 'rf' + ms, name: 'Relative force at ' + ms + ' ms', group: gT, type: 'nkg', value: y[j] / m, how: 'Force at ' + ms + ' ms &divide; body mass = ' + f0(y[j]) + ' &divide; ' + f1(m) + ' = ' + f2(y[j] / m) + ' N/kg.' });
+    } else add({ key: kk + 'f' + ms, name: 'Force above baseline at ' + ms + ' ms', group: gT, type: 'force', value: y[j] - base, how: 'Force at ' + ms + ' ms &minus; baseline = ' + f0(y[j]) + ' &minus; ' + f0(base) + ' = ' + f0(y[j] - base) + ' N.' });
+  });
+  // RFD
+  [50, 100, 150, 200, 250].forEach((ms) => {
+    const j = on + Math.round(ms / 1000 * fs); if (j > end) return;
+    const r = (y[j] - y[on]) / (ms / 1000);
+    add(tile({ key: kk + 'rfd' + ms, name: 'RFD 0&ndash;' + ms + ' ms', short: 'RFD 0–' + ms + ' ms', group: gR, type: 'rfd', value: r, how: '(Force at ' + ms + ' ms &minus; force at onset) &divide; ' + (ms / 1000) + ' s = (' + f0(y[j]) + ' &minus; ' + f0(y[on]) + ') &divide; ' + (ms / 1000) + ' = ' + f0(r) + ' N/s.' }, first && ms === 100));
+  });
+  const L = Math.max(1, Math.round(0.02 * fs)); let best = -Infinity, bi = on;
+  for (let i = on; i + L <= Math.min(end, s.iPk + L); i++) { const r = (y[i + L] - y[i]) / (L / fs); if (r > best) { best = r; bi = i; } }
+  add({ key: kk + 'prfd', name: 'Peak RFD (steepest 20 ms)', group: gR, type: 'rfd', value: best, how: 'The steepest rise over any 20 ms between onset and peak force: from ' + f3(t(bi)) + ' to ' + f3(t(bi + L)) + ' s, (' + f0(y[bi + L]) + ' &minus; ' + f0(y[bi]) + ') &divide; ' + (L / fs).toFixed(3) + ' = ' + f0(best) + ' N/s.' });
+  // impulse
+  const ref = hasBW ? BW : base, refNm = hasBW ? 'bodyweight' : 'the baseline';
+  [50, 100, 150, 200, 250, 300].forEach((ms) => {
+    const j = on + Math.round(ms / 1000 * fs); if (j > end) return;
+    const imp = area(y, 1 / fs, on, j, set.method), net = imp - ref * (j - on) / fs;
+    add({ key: kk + 'ai' + ms, name: 'Impulse 0&ndash;' + ms + ' ms', group: gI, type: 'imp', value: imp, how: 'The area under the force from onset to ' + ms + ' ms = ' + f1(imp) + ' N&middot;s.' });
+    add({ key: kk + 'imp' + ms, name: 'Net impulse 0&ndash;' + ms + ' ms', group: gI, type: 'imp', value: net, how: 'Impulse &minus; ' + refNm + ' &times; time = ' + f1(imp) + ' &minus; ' + f0(ref) + ' &times; ' + (ms / 1000) + ' = ' + f1(net) + ' N&middot;s.' });
+  });
+  // left vs right (two plates, both with force on them)
+  const zs = R.ch.filter((c) => c.kind === 'z' && c.plate >= 0);
+  if (zs.length === 2 && zs.every((c) => c.y[s.iPk] > 0.1 * s.peak)) {
+    const roleOf = (c) => (set.roles || [])[c.plate];
+    let lc = zs.find((c) => roleOf(c) === 'left'), rc = zs.find((c) => roleOf(c) === 'right');
+    if (!lc || !rc) { lc = zs[0]; rc = zs[1]; }
+    const vl = lc.y[s.iPk], vr = rc.y[s.iPk], b = Math.max(vl, vr), ai = b ? (vl - vr) / b * 100 : NaN, named = roleOf(lc) === 'left';
+    const ln = named ? 'Left' : lc.short, rn = named ? 'Right' : rc.short;
+    add({ key: kk + 'lpk', name: ln + ' force at peak', group: gLR, type: 'force', value: vl, how: lc.name + ' at the moment of peak total force (' + f3(t(s.iPk)) + ' s) = ' + f0(vl) + ' N.' });
+    add({ key: kk + 'rpk2', name: rn + ' force at peak', group: gLR, type: 'force', value: vr, how: rc.name + ' at the same moment = ' + f0(vr) + ' N.' });
+    add({ key: kk + 'asym', name: 'Asymmetry at peak force', group: gLR, type: 'pct', value: ai, how: '(' + ln + ' &minus; ' + rn + ') &divide; the bigger &times; 100 = (' + f0(vl) + ' &minus; ' + f0(vr) + ') &divide; ' + f0(b) + ' &times; 100 = ' + f1(ai) + '%.' + (named ? '' : ' Mark the plates as left and right foot in Setup to name them.') });
+  }
 }

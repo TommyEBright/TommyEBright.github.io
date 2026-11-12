@@ -1,7 +1,7 @@
 // The little jumper beside the force-time curve. Its centre of mass (hip) moves with the integrated displacement,
 // so students can link each part of the curve to the movement. Arrows show velocity and net force.
-import { A, COL } from './state.js?v=2.0.0';
-import { phaseAt } from './analyse.js?v=2.0.0';
+import { A, COL } from './state.js?v=2.2.0';
+import { phaseAt } from './analyse.js?v=2.2.0';
 
 const SEG = { ankle: 0.08, shank: 0.43, thigh: 0.44, trunk: 0.5, neck: 0.05, head: 0.1, upper: 0.29, fore: 0.27 };
 const H0 = SEG.ankle + SEG.shank + SEG.thigh; // standing hip height (m)
@@ -22,7 +22,7 @@ export function drawFigure(ctx, w, h, i) {
   const off = R.jump === 'sj' ? R.s[R.TO] - 0.08 : 0;
   const s = R.s[i] - off, v = R.v[i], F = R.F[i];
   const p = phaseAt(R, i);
-  const air = (p && (p.key === 'flight' || p.key === 'drop')) || (R.jump === 'dj' && i < R.TD) || F < A.S.set.thr;
+  const air = (p && (p.key === 'flight' || p.key === 'drop')) || (R.jump === 'dj' && i < R.TD) || F < (R.thrUsed || A.S.set.thr);
   // scale: fit from -0.6 m (deep squat) to standing hip + highest point + head
   const top = Math.max(0.55, (R.jump === 'dj' ? Math.max(R.dropEff || 0, 0) : 0) + 0.5, (R.v[R.TO] > 0 ? R.v[R.TO] ** 2 / 19.62 : 0) + 0.2);
   const ground = h - 26;

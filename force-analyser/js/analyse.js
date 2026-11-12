@@ -1,9 +1,11 @@
 // The analysis of one trial: bodyweight, events, integration (force -> acceleration -> velocity ->
 // displacement), phases and power. No page code here, so it can be tested on its own.
-import { G, butter, integrateForward, integrateBackward, mean, sd, argmax, argmin, quietestWindow } from './maths.js?v=2.0.0';
+import { G, butter, integrateForward, integrateBackward, mean, sd, argmax, argmin, quietestWindow } from './maths.js?v=2.2.0';
 
-export const JUMPS = { cmj: 'Countermovement jump (CMJ)', sj: 'Squat jump (SJ)', dj: 'Drop jump (DJ)' };
-export const JUMP_SHORT = { cmj: 'CMJ', sj: 'SJ', dj: 'Drop jump' };
+export const JUMPS = { cmj: 'Countermovement jump (CMJ)', sj: 'Squat jump (SJ)', dj: 'Drop jump (DJ)', slj: 'Standing long jump (SLJ)' };
+export const JUMP_SHORT = { cmj: 'CMJ', sj: 'SJ', dj: 'Drop jump', slj: 'SLJ' };
+// A standing long jump is analysed vertically exactly like a CMJ (it starts with a countermovement), plus the horizontal force.
+export const cmLike = (j) => j === 'cmj' || j === 'slj';
 
 export function defaultSettings() {
   return {
@@ -11,7 +13,8 @@ export function defaultSettings() {
     jump: 'cmj',
     g: { points: [], windows: [] }, // points and windows marked by hand (any force-time data)
     axes: null,       // walking and running: which horizontal force is front-back, and which way is forwards
-    thr: 20,          // contact threshold (N)
+    thr: 20,          // contact threshold (N) when fixed
+    thrMode: 'auto',  // 'auto': from this trial's empty plate (offset taken off, then mean + 5 SD); 'fixed': thr
     hold: 10,         // ms the force must stay above/below the threshold
     onsetK: 5,        // start of movement: bodyweight +/- k SD (Owen et al., 2014)
     onsetBack: 30,    // ... minus this many ms
@@ -74,8 +77,32 @@ function findQuiet(F, fs, i0, i1, prefer) {
 
 const first = (n, i0, i1, test) => { for (let i = Math.max(0, i0); i < Math.min(n, i1); i++) if (test(i)) return i; return -1; };
 
-export function analyse(D, set) {
-  const R = { ok: false, jump: set.jump, warnings: [], notes: [], fs: D.fs, n: D.n, t: D.t };
+// Take-off and landing. With thrMode 'auto' the trial is first analysed with the fixed threshold to find a period
+// with nobody on the plate (the flight, or after take-off in a standing long jump, or before touchdown in a drop jump).
+// Its mean (the plate's offset: it should read 0 N) is taken off every sample, and the threshold becomes 5 SD of its
+// noise (at least 3 N, at most 50 N). Then the trial is analysed again. If anything fails, the fixed threshold is kept.
+export function analyse(D, set0) {
+  const R1 = analyseCore(D, set0, 0);
+  if (set0.thrMode === 'fixed' || !R1.ok) return R1;
+  const fs = D.fs, n = D.n, g = Math.round(0.02 * fs), segs = [];
+  if (R1.LD > R1.TO) segs.push([R1.TO + g, R1.LD - g]);
+  else if (R1.TO > 0) segs.push([R1.TO + Math.round(0.05 * fs), Math.min(n, R1.TO + Math.round(1.05 * fs))]);
+  if (R1.TD > 0) segs.push([g, R1.TD - g]);
+  const seg = segs.filter((s) => s[1] - s[0] >= Math.round(0.03 * fs)).sort((a, b) => (b[1] - b[0]) - (a[1] - a[0]))[0];
+  if (!seg) { R1.notes.push('No clean period with nobody on the plate was found, so the fixed contact threshold (' + set0.thr + ' N) was used.'); return R1; }
+  const off = mean(R1.Fraw, seg[0], seg[1]), nsd = sd(R1.Fraw, seg[0], seg[1]);
+  if (!(Math.abs(off) < 100)) { R1.notes.push('The empty plate read ' + off.toFixed(0) + ' N, which is too far from 0 N to trust, so the fixed contact threshold was used.'); return R1; }
+  const thr = Math.min(50, Math.max(3, 5 * nsd));
+  const R = analyseCore(D, Object.assign({}, set0, { thr }), off);
+  if (!R.ok) { R1.notes.push('The threshold from the empty plate did not work for this trial, so the fixed contact threshold (' + set0.thr + ' N) was used.'); return R1; }
+  R.thrInfo = { off, sd: nsd, thr, a: seg[0], b: seg[1], fixed: set0.thr };
+  R.notes.push('Contact threshold ' + thr.toFixed(1) + ' N: 5 &times; the noise (SD ' + nsd.toFixed(2) + ' N) of the empty plate from ' + (seg[0] / fs).toFixed(3) + ' to ' + (seg[1] / fs).toFixed(3) + ' s.' + (Math.abs(off) >= 1 ? ' The empty plate read ' + off.toFixed(1) + ' N instead of 0 N, so ' + off.toFixed(1) + ' N was taken off every sample (the plate was not quite zeroed).' : ''));
+  return R;
+}
+
+function analyseCore(D, set0, off) {
+  const R = { ok: false, jump: set0.jump, warnings: [], notes: [], fs: D.fs, n: D.n, t: D.t, thrUsed: set0.thr, offset: off || 0 };
+  const slj = set0.jump === 'slj', set = slj ? Object.assign({}, set0, { jump: 'cmj' }) : set0;
   const fs = D.fs, dt = 1 / fs, n = D.n, t = D.t;
   if (!(fs > 0)) { R.error = 'The sample rate is not known. Enter it in Setup.'; return R; }
   const roles = D.plates.map((p, k) => set.roles[k] || 'on');
@@ -86,6 +113,7 @@ export function analyse(D, set) {
   R.plates = D.plates.map((p, k) => ({ name: p.name, role: roles[k], fz: prep(p.fz), fx: prep(p.fx), fy: prep(p.fy), rawFz: p.fz }));
   const Fraw = new Float64Array(n);
   used.forEach((k) => { const z = D.plates[k].fz; for (let i = 0; i < n; i++) Fraw[i] += z[i]; });
+  if (off) for (let i = 0; i < n; i++) Fraw[i] -= off;
   const F = filt ? butter(Fraw, set.filt.fc, fs) : Fraw;
   R.Fraw = Fraw; R.F = F; R.filtered = filt; R.used = used;
 
@@ -121,7 +149,8 @@ export function analyse(D, set) {
     if (ovr('landing') >= 0) LD = ovr('landing');
   }
   if (LD >= 0 && LD <= TO) LD = -1;
-  if (LD < 0) R.warnings.push('No landing was found, so flight time, jump height from flight time and the landing values are missing. Did the recording stop while the participant was in the air?');
+  if (LD < 0 && slj) R.notes.push('The participant landed off the plate, as usual in a standing long jump, so there are no flight or landing values.');
+  else if (LD < 0) R.warnings.push('No landing was found, so flight time, jump height from flight time and the landing values are missing. Did the recording stop while the participant was in the air?');
   R.TO = TO; R.LD = LD; R.TD = TD;
 
   // ---------- weighing (bodyweight) ----------
@@ -165,9 +194,15 @@ export function analyse(D, set) {
     if (set.jump === 'cmj') {
       R.onsetThr = BW - k * sdW; cross = first(n, from, TO, (i) => F[i] < BW - k * sdW);
       const upFirst = first(n, from, TO, (i) => F[i] > BW + Math.max(k * sdW, 0.1 * BW));
-      if (upFirst >= 0 && (cross < 0 || upFirst < cross)) { R.error = 'No countermovement was found: force rose above bodyweight before it ever dropped below it. This looks like a squat jump, so choose Squat jump in Setup.'; return R; }
+      if (upFirst >= 0 && (cross < 0 || upFirst < cross)) { R.error = slj ? 'No countermovement was found: force rose above bodyweight before it ever dropped below it. Check the still standing before the jump (Events tab).' : 'No countermovement was found: force rose above bodyweight before it ever dropped below it. This looks like a squat jump, so choose Squat jump in Setup.'; return R; }
     }
     else { R.onsetThr = BW + k * sdW; cross = first(n, from, TO, (i) => F[i] > BW + k * sdW); }
+    if (slj && cross >= 0) {
+      // balance sway (especially on one leg) can dip below the threshold long before the jump, so work back from
+      // the lowest force of the unweighting to the last sample above the threshold
+      const pk = argmax(F, from, TO), iMin = argmin(F, from, Math.max(from + 1, pk));
+      if (iMin > cross && F[iMin] < R.onsetThr) { let j = iMin; while (j > from && F[j] < R.onsetThr) j--; if (j + 1 > cross) { R.swayFrom = cross; cross = j + 1; } }
+    }
     if (cross < 0) {
       R.error = set.jump === 'cmj' ? 'No countermovement was found: force never dropped clearly below bodyweight before take-off. Is this a squat jump?' : 'The start of the push was not found. Is the weighing period right?';
       return R;
@@ -283,15 +318,57 @@ export function analyse(D, set) {
     const f0 = TO + Math.round(0.02 * fs), f1 = LD - Math.round(0.02 * fs);
     if (f1 - f0 > 5) {
       R.flightOffset = mean(Fraw, f0, f1); R.flightSD = sd(Fraw, f0, f1);
-      if (Math.abs(R.flightOffset) > 5) R.warnings.push('In the air the plate read ' + R.flightOffset.toFixed(1) + ' N instead of 0 N. The plate may not have been zeroed (reset) before the trial, which shifts every force value by about this much.');
+      if (Math.abs(R.flightOffset) > 5 && !off) R.warnings.push('In the air the plate read ' + R.flightOffset.toFixed(1) + ' N instead of 0 N. The plate may not have been zeroed (reset) before the trial, which shifts every force value by about this much.');
     }
   } else { R.landEndI = -1; R.peakLandI = -1; }
   ph.sort((x, y) => x.s - y.s);
   ev.sort((x, y) => x.i - y.i);
   if (w) { ev.push({ key: 'weighS', name: 'Weighing starts', i: w.s, edit: true, weigh: true }); ev.push({ key: 'weighE', name: 'Weighing ends', i: w.e - 1, edit: true, weigh: true }); }
   R.phases = ph; R.events = ev;
+  if (slj) horizontal(R, set0, w, onset, TO);
   R.ok = true;
   return R;
+}
+
+// ---------- standing long jump: the horizontal force ----------
+// For each plate, the horizontal force that pushes the jump forwards is the one (Fx or Fy) with the biggest impulse
+// from the start of movement to take-off, signed so that the impulse is forwards. Its value while standing still
+// (should be zero) is taken off first. Horizontal acceleration = Fh / m, integrated from rest at the start of movement.
+function horizontal(R, set, w, onset, TO) {
+  const n = R.n, fs = R.fs, dt = 1 / fs, Fh = new Float64Array(n), info = [];
+  const vimp = R.used.map((k) => { const z = R.plates[k].fz; let s = 0; for (let i = onset; i < TO; i++) s += z[i] * dt; return s; }), vt = vimp.reduce((a, b) => a + b, 0);
+  R.loaded = R.used.filter((k, j) => vimp[j] > 0.1 * vt);
+  R.single = R.loaded.length === 1 && R.used.length > 1;
+  R.loaded.forEach((k) => {
+    const p = R.plates[k], cand = [];
+    ['fx', 'fy'].forEach((ax) => {
+      const y = p[ax]; if (!y) return;
+      const off = w && w.e > w.s ? mean(y, w.s, w.e) : 0;
+      let imp = 0; for (let i = onset; i < TO; i++) imp += (y[i] - off) * dt;
+      cand.push({ ax, y, off, imp });
+    });
+    if (!cand.length) return;
+    const fixed = set.sljAxis && set.sljAxis[k];
+    let c = fixed ? cand.find((q) => q.ax === fixed.ax) : null;
+    if (!c) c = cand.reduce((a, b) => (Math.abs(b.imp) > Math.abs(a.imp) ? b : a));
+    const sign = fixed && c.ax === fixed.ax ? (fixed.sign || 1) : (c.imp >= 0 ? 1 : -1);
+    for (let i = 0; i < n; i++) Fh[i] += sign * (c.y[i] - c.off);
+    info.push({ plate: k, name: p.name, ax: c.ax, sign, off: c.off, imp: sign * c.imp, auto: !fixed });
+  });
+  if (!info.length) { R.warnings.push('This file has no horizontal force (Fx or Fy), so only the vertical part of the jump can be analysed.'); return; }
+  for (let i = TO; i < n; i++) Fh[i] = 0; // in the air there is no horizontal force from the plate
+  const meth = R.integ.method, m = R.m;
+  const ah = new Float64Array(n); for (let i = 0; i < n; i++) ah[i] = Fh[i] / m;
+  // from rest: the end of the still standing if it comes before the start of movement (an arm swing can start
+  // the horizontal push before the vertical countermovement), otherwise the start of movement
+  const h0 = w && w.e > 0 && w.e < onset ? w.e : onset;
+  const vh = integrateForward(ah, dt, h0, 0, meth), sh = integrateForward(vh, dt, h0, 0, meth);
+  for (let i = 0; i < h0; i++) { vh[i] = 0; sh[i] = 0; }
+  R.hStart = h0;
+  for (let i = TO + 1; i < n; i++) { vh[i] = vh[TO]; sh[i] = sh[TO] + vh[TO] * (i - TO) * dt; }
+  const Ph = new Float64Array(n); for (let i = 0; i < n; i++) Ph[i] = Fh[i] * vh[i];
+  R.Fh = Fh; R.ah = ah; R.vh = vh; R.sh = sh; R.Ph = Ph; R.hInfo = info;
+  R.notes.push('Horizontal force: ' + info.map((q) => q.name + ' ' + (q.sign < 0 ? '&minus;' : '') + q.ax.toUpperCase() + (Math.abs(q.off) > 2 ? ' (after taking off its standing-still value of ' + q.off.toFixed(1) + ' N)' : '')).join(' + ') + ', chosen as the force that pushes forwards.' + (R.single ? ' Only ' + R.plates[R.loaded[0]].name + ' was pushed on, so this is a single-leg jump.' : ''));
 }
 
 // Which phase is sample i in?
@@ -335,7 +412,7 @@ export function guessJump(D) {
   D.plates.forEach((p) => { for (let i = 0; i < n; i++) F[i] += p.fz[i]; });
   const k = Math.max(5, Math.round(0.1 * fs));
   if (mean(F, 0, k) < 50) return 'dj';
-  const R = analyse(D, Object.assign(defaultSettings(), { jump: 'cmj' }));
+  const R = analyseCore(D, Object.assign(defaultSettings(), { jump: 'cmj' }), 0);
   if (!R.ok && /squat jump/.test(R.error || '')) return 'sj';
   return 'cmj';
 }

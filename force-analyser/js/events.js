@@ -1,6 +1,6 @@
 // Tab 2: the events table, with nudging one sample at a time and resetting to automatic.
-import { A, $, esc, persist } from './state.js?v=2.0.0';
-import { applyEvent } from './trace.js?v=2.0.0';
+import { A, $, esc, persist } from './state.js?v=2.2.0';
+import { applyEvent } from './trace.js?v=2.2.0';
 
 const HOW = {
   cmj: [
@@ -18,6 +18,14 @@ const HOW = {
     ['Take-off', 'The first sample below the contact threshold.'],
     ['Landing', 'The first sample back above the contact threshold.'],
     ['Lowest point after landing', 'Where velocity is back to zero after landing.']
+  ],
+  slj: [
+    ['Weighing', 'The last still period before the jump (up to 1 s).'],
+    ['Start of movement', 'Bodyweight &minus; 5 SD of the weighing, as in a CMJ, but found by working back from the lowest force of the countermovement to the last sample above that level, then moved back 30 ms. Working back means a wobble while balancing (e.g. on one leg) is not taken as the start.'],
+    ['Peak downward velocity', 'The most negative vertical velocity before take-off (force back up to bodyweight).'],
+    ['Lowest point', 'Where vertical velocity crosses zero: the end of braking and the start of propulsion.'],
+    ['Take-off', 'The first sample below the contact threshold. The landing is off the plate, so there is no landing.'],
+    ['Horizontal force', 'For each plate, Fx or Fy (whichever has the biggest impulse before take-off), signed so forwards is positive, less its value while standing still. Horizontal velocity is integrated from rest at the end of the still standing.']
   ],
   dj: [
     ['Touchdown', 'The first sample above the contact threshold after the plate was empty.'],
