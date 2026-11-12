@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css?v=1.0.0">
+<link rel="stylesheet" href="css/style.css?v=1.1.0">
 </head>
 <body>
 <header class="top">
@@ -30,6 +30,7 @@
   <div class="layout">
     <section class="card graphcard">
       <div class="card-head"><h2 id="graphTitle">The force platform</h2><span class="muted small" id="graphHint">Hover over the graph: the numbers on the right follow the cursor.</span></div>
+      <div class="gtools hide" id="gtools"><label><input type="checkbox" id="showPlates"> Show each platform</label><span class="small" id="plateKey"></span></div>
       <div class="graphwrap" id="graphWrap">
         <canvas id="cv" aria-label="Force, acceleration, velocity and displacement over time"></canvas>
         <canvas id="ov" aria-hidden="true"></canvas>
@@ -51,6 +52,6 @@
 
   <footer class="foot muted small">Force to Motion. The demo jumps are the same as in <a href="../force-analyser/">Force Analysis</a>, worked out the same way. Works offline once loaded; nothing is uploaded. Built by Dr Tommy Bright.</footer>
 </main>
-<script type="module" src="js/app.js?v=1.0.0"></script>
+<script type="module" src="js/app.js?v=1.1.0"></script>
 </body>
 </html>

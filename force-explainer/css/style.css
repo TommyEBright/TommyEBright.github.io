@@ -72,3 +72,8 @@ table.hand input.ok { background: #d1fae5; border-color: var(--good); } table.ha
 .foot { text-align: center; margin: 1.2rem 0 .4rem; }
 kbd { border: 1px solid #cbd5e1; border-bottom-width: 2px; border-radius: .25rem; padding: 0 .3rem; font-size: .8rem; background: #fff; }
 @media (max-width: 1000px) { .layout { grid-template-columns: 1fr; } .graphcard { position: static; } .graphwrap { height: 60vh; } .stripbox { grid-template-columns: 1fr; } }
+.gtools { display: flex; flex-wrap: wrap; gap: .4rem 1rem; align-items: center; padding: .1rem .2rem .5rem; font-size: .92rem; }
+.gtools label { display: inline-flex; gap: .35rem; align-items: center; cursor: pointer; font-weight: 600; }
+.gtools .sw { display: inline-block; width: 1.4rem; height: 0; border-top: 3px solid; vertical-align: middle; margin: 0 .3rem 0 .6rem; }
+.gtools .sw.d { border-top-style: dashed; border-top-width: 2px; }
+.hide { display: none !important; }

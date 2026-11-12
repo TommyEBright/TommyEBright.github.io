@@ -2,16 +2,17 @@
 // velocity and displacement, for a countermovement jump, a squat jump and a drop jump.
 // The demo jumps were analysed with Force Analysis (same bodyweight, events and method); acceleration, velocity
 // and displacement are worked out again here, live, so the bodyweight error slider can change them.
-import { zip } from './zip.js?v=1.0.0';
+import { zip } from './zip.js?v=1.1.0';
 
 const G = 9.81;
 const $ = (id) => document.getElementById(id);
 const f = (x, d) => (Number.isFinite(x) ? x.toFixed(d) : '&ndash;');
 const sgn = (x, d) => (Number.isFinite(x) ? (x < 0 ? '&minus;' + Math.abs(x).toFixed(d) : x.toFixed(d)) : '&ndash;');
+const PCOL = ['#e69f00', '#009e73'];
 const COL = { F: '#1d4ed8', a: '#dc2626', v: '#7c3aed', s: '#0891b2', bw: '#475569', up: '#10b981', down: '#3b82f6' };
 const PH = { unweight: ['Unweighting', '#3b82f6'], brake: ['Braking', '#f59e0b'], prop: ['Propulsion', '#10b981'], flight: ['Flight', '#94a3b8'], land: ['Landing', '#a855f7'], drop: ['Falling from the box', '#cbd5e1'] };
 
-const S = { jump: 'cmj', step: 0, D: null, C: null, cur: -1, adj: 0, strip: -1, anim: -1, seen: {}, data: {} };
+const S = { jump: 'cmj', step: 0, D: null, C: null, cur: -1, adj: 0, strip: -1, anim: -1, seen: {}, data: {}, plates: false };
 
 // ---------- the maths ----------
 function compute(D, adj) {
@@ -66,8 +67,17 @@ function draw() {
   keys.forEach((k, j) => {
     const y = k === 'F' ? D.F : C[k], ghost = st.ghost && k !== 'F' ? S.Cref[k] : null;
     let lo = Infinity, hi = -Infinity; const upto = k === 'v' && S.anim >= 0 ? S.anim : n - 1;
-    [y, ghost].forEach((q) => { if (q) for (let i = 0; i < n; i++) { if (q[i] < lo) lo = q[i]; if (q[i] > hi) hi = q[i]; } });
+    const pl = k === 'F' && S.plates && D.P ? D.P : [];
+    [y, ghost, ...pl].forEach((q) => { if (q) for (let i = 0; i < n; i++) { if (q[i] < lo) lo = q[i]; if (q[i] > hi) hi = q[i]; } });
     if (k === 'F') { lo = Math.min(lo, 0); hi = Math.max(hi, C.W); } lo = Math.min(lo, 0); hi = Math.max(hi, 0);
+    // a hard landing can be several times the take-off force: keep the jump readable and label the peak instead
+    let clip = null;
+    if ((k === 'F' || k === 'a') && D.jump !== 'dj' && D.LD > 0) {
+      let pre = -Infinity, pk = D.LD; for (let i = 0; i < D.LD; i++) if (y[i] > pre) pre = y[i];
+      for (let i = D.LD; i < n; i++) if (y[i] > y[pk]) pk = i;
+      const cap = pre + 0.6 * (pre - lo);
+      if (y[pk] > cap) { clip = { i: pk, v: y[pk] }; hi = cap; }
+    }
     const pad = (hi - lo) * 0.08 || 1; lo -= pad; hi += pad;
     const b = { x: L, y: top + j * (ph + gap), w: w - L - R, h: ph }, Y = (v) => b.y + b.h - (v - lo) / (hi - lo) * b.h;
     frames.push({ k, b, Y, lo, hi, y });
@@ -95,10 +105,12 @@ function draw() {
       if (S.strip >= 0) { ctx.fillStyle = '#f59e0b'; ctx.globalAlpha = 0.9; ctx.fillRect(X(T(S.strip)) - 1, b.y, Math.max(3, X(T(S.strip + 1)) - X(T(S.strip)) + 2), b.h); ctx.globalAlpha = 1; }
     }
     // the line(s)
+    pl.forEach((q, pk) => { ctx.setLineDash([6, 3]); ctx.strokeStyle = PCOL[pk % 2]; ctx.lineWidth = 1.6; ctx.beginPath(); for (let i = 0; i <= upto; i++) { const px = X(T(i)), py = Y(q[i]); if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); } ctx.stroke(); ctx.setLineDash([]); });
     if (ghost) { ctx.setLineDash([5, 4]); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.6; ctx.beginPath(); for (let i = 0; i < n; i++) { const px = X(T(i)), py = Y(ghost[i]); if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); } ctx.stroke(); ctx.setLineDash([]); }
     ctx.strokeStyle = PANEL[k][1]; ctx.lineWidth = 2; ctx.beginPath();
     for (let i = 0; i <= upto; i++) { const px = X(T(i)), py = Y(y[i]); if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); }
     ctx.stroke();
+    if (clip) { const px = X(T(clip.i)); ctx.fillStyle = PANEL[k][1]; ctx.font = '600 12px system-ui, Arial'; ctx.textBaseline = 'top'; const lab = '\u2191 landing peak ' + clip.v.toFixed(0) + (k === 'F' ? ' N' : ' m/s\u00b2') + ' (off the scale)', tw = ctx.measureText(lab).width; ctx.textAlign = px + 5 + tw > b.x + b.w ? 'right' : 'left'; ctx.fillText(lab, ctx.textAlign === 'right' ? px - 5 : px + 5, b.y + 22); }
     // events
     (st.events ? EVENTS() : []).forEach((e) => { const px = X(T(e.i)); ctx.strokeStyle = '#334155'; ctx.setLineDash([4, 3]); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(px, b.y); ctx.lineTo(px, b.y + b.h); ctx.stroke(); ctx.setLineDash([]); });
     ctx.restore();
@@ -158,10 +170,10 @@ function STEPS() {
   const stillWhere = j === 'cmj' ? 'standing still before the jump' : j === 'sj' ? 'holding still in the squat, before the push' : 'standing still after the landing';
   return [
     { key: 'plate', title: 'What the plate measures', panels: ['F'], q: { q: 'The person is in the air. What does the plate read?', o: ['About 0 N', 'Their bodyweight', 'Twice their bodyweight'], a: 0, why: 'Nothing is pushing on the plate, so it reads (about) zero. That flat line at 0 N is the flight.' },
-      body: () => layer('words', 'In plain words', '<p>A force platform measures how hard you push down on it, ' + fs + ' times a second (one reading every ' + msT + ' ms). Standing still, it reads your weight. Push harder and the line goes up; let your legs give and it drops below your weight. In the air it reads zero.</p>' + (j === 'dj' ? '<p>In a drop jump you start on a box next to the plate, so the plate reads zero until you land on it.</p>' : ''))
+      body: () => layer('words', 'In plain words', '<p>A force platform measures how hard you push down on it, ' + fs + ' times a second (one reading every ' + msT + ' ms). Standing still, it reads your weight. Push harder and the line goes up; let your legs give and it drops below your weight. In the air it reads zero.</p>' + (D.P && D.P.length > 1 ? '<p>This jump was collected on <strong>' + D.P.length + ' platforms, one under each foot</strong>. Everything in this tool uses the <strong>total</strong> force (the platforms added together), because it is the total that moves the body. Tick <em>Show each platform</em> above the graph to see each foot on its own.</p>' : '') + (j === 'dj' ? '<p>In a drop jump you start on a box next to the plate, so the plate reads zero until you land on it.</p>' : ''))
         + layer('eq', 'The symbol', eqn('<var>F</var>') + keyList([['F', 'vertical ground reaction force, in newtons (N): the number the plate gives at every sample']]))
         + layer('nums', 'Your numbers', '<div id="nums"></div>'),
-      nums: (i) => '<p>' + hov() + ': ' + tIs(i) + ', <b>F = ' + f(D.F[i], 1) + ' N</b>.</p>' },
+      nums: (i) => '<p>' + hov() + ': ' + tIs(i) + ', <b>F = ' + f(D.F[i], 1) + ' N</b>.</p>' + (D.P && D.P.length > 1 ? '<div class="calc">F = ' + D.P.map((q, pk) => f(q[i], 1) + ' (platform ' + (pk + 1) + ')').join(' + ') + ' = <b>' + f(D.F[i], 1) + ' N</b></div>' : '') },
     { key: 'weigh', title: 'Weigh the person', panels: ['F'], shade: 'weigh', bw: true, q: { q: 'Someone has a mass of 72 kg. Roughly what does the plate read while they stand still?', o: ['72 N', '706 N', '7 N'], a: 1, why: 'Weight = mass &times; g = 72 &times; 9.81 = 706 N. Newtons measure force, kilograms measure mass.' },
       body: () => layer('words', 'In plain words', '<p>Before we can work anything out, we need the person&rsquo;s weight. While they are ' + stillWhere + ' (shaded grey), the plate reads just their weight, so we take the average over that time.</p>' + (j === 'dj' ? '<p>In a drop jump there is no still standing <em>before</em> the jump (they are on the box), so we weigh them once they have settled after landing.</p>' : '') + '<p>Then we turn weight into mass, because mass is what Newton&rsquo;s law needs.</p>')
         + layer('eq', 'The equations', eqn('<var>W</var> = average of <var>F</var> while still') + eqn('<var>m</var> = <var>W</var> &divide; <var>g</var>') + keyList([['W', 'bodyweight (N)'], ['m', 'body mass (kg)'], ['g', '9.81 m/s&sup2;, the acceleration due to gravity']]))
@@ -183,7 +195,7 @@ function STEPS() {
         + layer('nums', 'Your numbers', '<div id="nums"></div>'),
       nums: (i) => { const k = Math.max(1, i); return '<p>' + hov() + ': the strip from ' + ((k - 1) / fs).toFixed(3) + ' to ' + (k / fs).toFixed(3) + ' s.</p><div class="calc">v = ' + sgn(C.v[k - 1], 4) + ' + &frac12;(' + sgn(C.a[k - 1], 2) + ' + ' + sgn(C.a[k], 2) + ') &times; ' + (1 / fs).toFixed(4) + ' = <b>' + sgn(C.v[k], 4) + ' m/s</b></div><p>' + (C.v[k] < -0.02 ? 'Negative: moving downwards.' : C.v[k] > 0.02 ? 'Positive: moving upwards.' : 'About zero: not moving.') + '</p>'; } },
     { key: 'disp', title: 'Displacement: add up the velocity', panels: ['F', 'a', 'v', 's'], bw: true, q: { q: 'At the lowest point of the dip, what is the velocity?', o: ['Its most negative', 'Zero', 'Its most positive'], a: 1, why: 'At the lowest point the centre of mass stops going down and is about to go up, so for an instant its velocity is zero. That is where the displacement line reaches its minimum.' },
-      body: () => layer('words', 'In plain words', '<p>Now do exactly the same again, one level up. Velocity tells you how quickly position changes, so adding up <em>velocity &times; time</em>, strip by strip, gives the <strong>displacement</strong>: how far the centre of mass has moved up or down from where it started.</p><p>Where velocity is negative, displacement goes down; where velocity crosses zero, displacement is at its lowest (or highest) point.</p>')
+      body: () => layer('words', 'In plain words', '<p>Now do exactly the same again, one level up. Velocity tells you how quickly position changes, so adding up <em>velocity &times; time</em>, strip by strip, gives the <strong>displacement</strong>: how far the centre of mass has moved up or down from where it started.</p><p>Where velocity is negative, displacement goes down; where velocity crosses zero, displacement is at its lowest (or highest) point.</p>' + (j === 'sj' ? '<p>Zero is the starting squat. After landing the person stands up tall, so the line ends well above zero (roughly the distance from their squat to standing).</p>' : j === 'cmj' ? '<p>Zero is standing tall before the jump, so after landing and standing back up the line returns to about zero.</p>' : '<p>Zero is the moment of touchdown, so the start, standing on the box, is above zero (roughly the drop height).</p>'))
         + layer('eq', 'The equation', eqn('<var>s</var><sub>new</sub> = <var>s</var><sub>old</sub> + &frac12;(<var>v</var><sub>old</sub> + <var>v</var><sub>new</sub>) &times; &Delta;<var>t</var>') + keyList([['s', 'displacement of the centre of mass (m) from its starting position; positive = higher'], ['v', 'velocity at the two edges of the strip'], ['&Delta;t', (1 / fs).toFixed(4) + ' s']]) + '<details class="more"><summary>For the curious</summary><p class="small"><var>s</var> = &int; <var>v</var> d<var>t</var>: displacement is the integral of velocity, so it is the integral of the integral of acceleration.</p></details>')
         + layer('nums', 'Your numbers', '<div id="nums"></div>'),
       nums: (i) => { const k = Math.max(1, i); return '<p>' + hov() + ' (' + tIs(k) + '):</p><div class="calc">s = ' + sgn(C.s[k - 1], 4) + ' + &frac12;(' + sgn(C.v[k - 1], 3) + ' + ' + sgn(C.v[k], 3) + ') &times; ' + (1 / fs).toFixed(4) + ' = <b>' + sgn(C.s[k], 4) + ' m</b></div><p>That is ' + sgn(C.s[k] * 100, 1) + ' cm from ' + (j === 'dj' ? 'the height at touchdown' : 'the starting position') + '.</p>'; } },
@@ -228,6 +240,9 @@ function render() {
   $('stepCount').textContent = S.D.name + ', step ' + (S.step + 1) + ' of ' + st.length;
   $('graphTitle').textContent = S.D.name + ': ' + s.panels.map((k) => PANEL[k][0].split(' (')[0].toLowerCase()).join(', ').replace(/^./, (c) => c.toUpperCase());
   $('stepBody').innerHTML = s.body() + (s.q ? quiz(s.q) : '');
+  const hasP = S.D.P && S.D.P.length > 1 && s.panels.includes('F');
+  $('gtools').classList.toggle('hide', !hasP);
+  if (hasP) $('plateKey').innerHTML = '<span class="sw" style="border-color:' + COL.F + '"></span>Total' + (S.plates ? S.D.P.map((q, pk) => '<span class="sw d" style="border-color:' + PCOL[pk % 2] + '"></span>Platform ' + (pk + 1)).join('') : '');
   $('back').disabled = S.step === 0; $('next').disabled = S.step === st.length - 1;
   $('next').innerHTML = S.step === st.length - 1 ? 'The end' : 'Next &rarr;';
   S.seen[S.jump + S.step] = true;
@@ -327,6 +342,7 @@ $('progress').addEventListener('click', (e) => { const b = e.target.closest('[da
 $('back').addEventListener('click', () => { if (S.step > 0) { S.step--; render(); } });
 $('next').addEventListener('click', () => { if (S.step < STEPS().length - 1) { S.step++; render(); } });
 $('ov').addEventListener('mousemove', hover);
+$('showPlates').addEventListener('change', function () { S.plates = this.checked; render(); });
 $('ov').addEventListener('mouseleave', () => { S.cur = -1; drawCursor(); nums(); });
 $('ov').addEventListener('touchmove', (e) => { if (e.touches[0]) hover(e.touches[0]); }, { passive: true });
 document.addEventListener('keydown', (e) => { if (e.target.tagName === 'INPUT') return; if (e.key === 'ArrowRight' && S.step < STEPS().length - 1) { S.step++; render(); } if (e.key === 'ArrowLeft' && S.step > 0) { S.step--; render(); } });

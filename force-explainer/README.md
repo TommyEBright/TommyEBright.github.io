@@ -22,7 +22,7 @@ Each step has plain words, the equation with every symbol named, the jump's own 
 Links to a jump and step work, e.g. `index.html#dj-5` opens the drop jump at step 5.
 
 ## Data
-`data/*.json` are the Force Analysis demo jumps (CMJ: BioWare sample, 250 Hz; squat jump: computer-generated, 1000 Hz; drop jump: real, two plates, 1000 Hz), analysed with Force Analysis v2.2.0 (bodyweight, events, contact threshold from the empty plate). Acceleration, velocity and displacement are recalculated in the page with the trapezoid rule, giving the same take-off velocity as Force Analysis.
+`data/*.json` are real squat, countermovement and drop jumps (BioWare, two plates (one under each foot), 1000 Hz, same participant), analysed with Force Analysis v2.2.1. `F` is the total force; `P` holds each platform (shown with *Show each platform*). Bodyweight, events and the contact threshold come from Force Analysis. Acceleration, velocity and displacement are recalculated in the page with the trapezoid rule, giving the same take-off velocity as Force Analysis.
 
 ## Putting it online
 Upload the `force-explainer` folder next to `force-analyser` in the GitHub Pages repository. The "try your own jump" link points to `../force-analyser/`.
