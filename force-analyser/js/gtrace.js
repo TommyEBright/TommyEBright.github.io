@@ -1,9 +1,9 @@
 // The force-time graph for any force-time data: every force you choose to show, the points you have marked
 // (drag their labels to move them), the windows between them, a cursor you can step one sample at a time,
 // zoom and the overview strip underneath.
-import { A, $, esc, persist, iOf } from './state.js?v=2.2.0';
-import { Chart, frame, axes, line, range, band, vline, hline, dot, halo } from './plot.js?v=2.2.0';
-import { POINT_COL, GAIT } from './generic.js?v=2.2.0';
+import { A, $, esc, persist, iOf } from './state.js?v=2.2.1';
+import { Chart, frame, axes, line, range, band, vline, hline, dot, halo } from './plot.js?v=2.2.1';
+import { POINT_COL, GAIT } from './generic.js?v=2.2.1';
 
 let main = null, over = null, drag = null;
 

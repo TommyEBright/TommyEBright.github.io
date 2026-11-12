@@ -1,22 +1,22 @@
 // Start-up: wires the page together. Jumps use the automatic jump analysis (analyse.js); everything else
 // (walking, running, landing, isometric, any force-time data) uses points marked by hand (generic.js).
-import { A, $, esc, status, persist, restoreSession, loadPrefs, savePrefs, VERSION, trialLabel } from './state.js?v=2.2.0';
-import { buildData } from './parse.js?v=2.2.0';
-import { analyse, JUMPS } from './analyse.js?v=2.2.0';
-import { computeVars, display } from './vars.js?v=2.2.0';
-import { initTrace, redraw, setView, jumpRange, cursorChanged, togglePlay } from './trace.js?v=2.2.0';
-import { initInteg, refreshInteg, integCursor, render as renderInteg } from './integ.js?v=2.2.0';
-import { initFilter, renderFilter, syncFilterInputs } from './filterview.js?v=2.2.0';
-import { keyStats, warnings, renderResults } from './results.js?v=2.2.0';
-import { initEvents, renderEvents } from './events.js?v=2.2.0';
-import { initSetup, syncSetup } from './setup.js?v=2.2.0';
-import { initSession, renderSession, addText, splitTrial } from './session.js?v=2.2.0';
-import { initCompare, renderCompare, analyseTrial } from './compare.js?v=2.2.0';
-import { initExport } from './export.js?v=2.2.0';
-import { analyseGeneric, TYPES } from './generic.js?v=2.2.0';
-import { initGTrace, gRedraw, setGView, wholeRange, gCursorChanged } from './gtrace.js?v=2.2.0';
-import { renderPoints } from './gpanel.js?v=2.2.0';
-import { renderFigBuilder } from './figbuild.js?v=2.2.0';
+import { A, $, esc, status, persist, restoreSession, loadPrefs, savePrefs, VERSION, trialLabel } from './state.js?v=2.2.1';
+import { buildData } from './parse.js?v=2.2.1';
+import { analyse, JUMPS } from './analyse.js?v=2.2.1';
+import { computeVars, display } from './vars.js?v=2.2.1';
+import { initTrace, redraw, setView, jumpRange, cursorChanged, togglePlay } from './trace.js?v=2.2.1';
+import { initInteg, refreshInteg, integCursor, render as renderInteg } from './integ.js?v=2.2.1';
+import { initFilter, renderFilter, syncFilterInputs } from './filterview.js?v=2.2.1';
+import { keyStats, warnings, renderResults } from './results.js?v=2.2.1';
+import { initEvents, renderEvents } from './events.js?v=2.2.1';
+import { initSetup, syncSetup } from './setup.js?v=2.2.1';
+import { initSession, renderSession, addText, splitTrial } from './session.js?v=2.2.1';
+import { initCompare, renderCompare, analyseTrial } from './compare.js?v=2.2.1';
+import { initExport } from './export.js?v=2.2.1';
+import { analyseGeneric, TYPES } from './generic.js?v=2.2.1';
+import { initGTrace, gRedraw, setGView, wholeRange, gCursorChanged } from './gtrace.js?v=2.2.1';
+import { renderPoints } from './gpanel.js?v=2.2.1';
+import { renderFigBuilder } from './figbuild.js?v=2.2.1';
 
 const isJump = () => !A.S || !A.S.set.type || A.S.set.type === 'jump';
 

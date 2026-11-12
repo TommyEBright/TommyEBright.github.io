@@ -1,9 +1,9 @@
 // The figure builder (tab "Figure"): choose the kind of figure, switch lines, shading and labels on and off,
 // set the size and save it as a picture (PNG) or an editable drawing (SVG). The figure is drawn through a small
 // set of shapes with two back ends (canvas and SVG), so the preview, the PNG and the SVG always match.
-import { A, $, esc, status, download, baseName, trialLabel, PLATE_COLS, COL } from './state.js?v=2.2.0';
-import { niceStep, numTxt } from './plot.js?v=2.2.0';
-import { analyseTrial } from './compare.js?v=2.2.0';
+import { A, $, esc, status, download, baseName, trialLabel, PLATE_COLS, COL } from './state.js?v=2.2.1';
+import { niceStep, numTxt } from './plot.js?v=2.2.1';
+import { analyseTrial } from './compare.js?v=2.2.1';
 
 const OKABE = ['#0072B2', '#D55E00', '#009E73', '#CC79A7', '#E69F00', '#56B4E9', '#000000', '#999999']; // Okabe and Ito (2008)
 const SIZES = { slide: ['Slide (16:9)', 960, 540], report: ['Report (4:3)', 800, 600], wide: ['Wide and short', 1000, 400], poster: ['Poster (3:2)', 1080, 720], tall: ['Tall', 720, 960] };

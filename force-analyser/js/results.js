@@ -1,8 +1,8 @@
 // Key numbers under the graph, the full results table (tab 5), warnings and quality checks.
-import { A, $, esc, download, baseName, trialLabel, currentTrial } from './state.js?v=2.2.0';
-import { display, groupsFor } from './vars.js?v=2.2.0';
-import { JUMPS, PHASES } from './analyse.js?v=2.2.0';
-import { TYPES } from './generic.js?v=2.2.0';
+import { A, $, esc, download, baseName, trialLabel, currentTrial } from './state.js?v=2.2.1';
+import { display, groupsFor } from './vars.js?v=2.2.1';
+import { JUMPS, PHASES } from './analyse.js?v=2.2.1';
+import { TYPES } from './generic.js?v=2.2.1';
 
 const GCOL = { Unweighting: PHASES.unweight.col, Braking: PHASES.brake.col, Propulsion: PHASES.prop.col, Landing: PHASES.land.col, Touchdown: '#2563eb', Outcome: '#1d4ed8', Body: '#64748b', 'Left vs right': '#0f766e' };
 const open = new Set();

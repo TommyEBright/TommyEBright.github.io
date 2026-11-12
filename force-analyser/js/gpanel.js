@@ -1,9 +1,9 @@
 // Tab 2 for any force-time data: the point buttons, the points table (nudge one sample at a time), the
 // windows (made from the points, plus your own), and the exports for these trials.
-import { A, $, esc, persist, status, download, baseName, currentTrial } from './state.js?v=2.2.0';
-import { POINTS, POINT_HELP, GAIT, TYPES, defaultG } from './generic.js?v=2.2.0';
-import { setGView, gCursorChanged } from './gtrace.js?v=2.2.0';
-import { toCsv } from './results.js?v=2.2.0';
+import { A, $, esc, persist, status, download, baseName, currentTrial } from './state.js?v=2.2.1';
+import { POINTS, POINT_HELP, GAIT, TYPES, defaultG } from './generic.js?v=2.2.1';
+import { setGView, gCursorChanged } from './gtrace.js?v=2.2.1';
+import { toCsv } from './results.js?v=2.2.1';
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 function G() { const set = A.S.set; if (!set.g) set.g = defaultG(); return set.g; }

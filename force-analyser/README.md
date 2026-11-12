@@ -75,7 +75,7 @@ Files are read by the browser on the user's own device and are never uploaded. T
 ## Methods in brief
 
 - **Bodyweight:** the mean of the last still period before a CMJ or squat jump (up to 1 s), or the first still period after landing in a drop jump. It can also come from the body weight stored in the file, or a typed-in mass.
-- **Contact:** force above a threshold (20 N) for at least 10 ms. Take-off is the first sample below it and landing the first sample back above it.
+- **Contact:** force above a threshold (20 N) for at least 10 ms. Take-off is the first sample below it and landing the first sample back above it. A short burst above the threshold in the air whose peak stays below 3 &times; the threshold (at least 50 N) is the plate ringing after take-off or a hard landing, not a contact, so it is ignored (v2.2.1).
 - **Start of movement:** bodyweight ± 5 SD of the weighing period, moved back 30 ms (Owen et al., 2014).
 - **Integration:** a = (F − W) / m, then velocity and displacement by the trapezoid rule (or rectangles), as in Robertson et al. (2014, ch. 4). CMJ and squat jump start from rest at the start of movement. Drop jump: touchdown velocity from backward integration (from the still standing after landing, where velocity is zero) or from the box height (forward integration, v = −√(2gh)).
 - **Phases:** McMahon et al. (2018). Unweighting ends at peak downward velocity (force back to bodyweight); braking ends at zero velocity; propulsion ends at take-off.

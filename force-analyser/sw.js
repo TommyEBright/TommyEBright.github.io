@@ -1,5 +1,5 @@
 // Service worker: keeps the app working offline. Bump VERSION when you change any file.
-const VERSION = 'fa-2.2.0';
+const VERSION = 'fa-2.2.1';
 const CORE = [
   './', 'index.html', 'css/style.css', 'manifest.webmanifest',
   'js/app.js', 'js/state.js', 'js/parse.js', 'js/maths.js', 'js/analyse.js', 'js/vars.js', 'js/plot.js', 'js/trace.js', 'js/figure.js',

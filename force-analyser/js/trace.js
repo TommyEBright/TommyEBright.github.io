@@ -1,9 +1,9 @@
 // The main force-time graph: phases, net impulse shading, events you can drag, hover read-out, zoom and the
 // overview strip underneath. Also the jumper figure and "play the jump".
-import { A, $, esc, COL, PLATE_COLS, persist, iOf } from './state.js?v=2.2.0';
-import { Chart, frame, axes, line, range, band, vline, hline, halo, dot, fillBetween } from './plot.js?v=2.2.0';
-import { phaseAt, explain, PHASES } from './analyse.js?v=2.2.0';
-import { drawFigure } from './figure.js?v=2.2.0';
+import { A, $, esc, COL, PLATE_COLS, persist, iOf } from './state.js?v=2.2.1';
+import { Chart, frame, axes, line, range, band, vline, hline, halo, dot, fillBetween } from './plot.js?v=2.2.1';
+import { phaseAt, explain, PHASES } from './analyse.js?v=2.2.1';
+import { drawFigure } from './figure.js?v=2.2.1';
 
 let main = null, over = null, fig = null;
 let drag = null, hoverEv = null;

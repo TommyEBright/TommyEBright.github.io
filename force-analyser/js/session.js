@@ -1,8 +1,8 @@
 // Sessions: adding files, labelling trials, moving between them, carrying settings over.
-import { A, $, esc, persist, status, newTrial, currentTrial, SHARED, clone, forgetSession } from './state.js?v=2.2.0';
-import { parseText, buildData } from './parse.js?v=2.2.0';
-import { guessJump, JUMP_SHORT, analyse, defaultSettings } from './analyse.js?v=2.2.0';
-import { guessType, guessAxes, GAIT, TYPE_SHORT, defaultG } from './generic.js?v=2.2.0';
+import { A, $, esc, persist, status, newTrial, currentTrial, SHARED, clone, forgetSession } from './state.js?v=2.2.1';
+import { parseText, buildData } from './parse.js?v=2.2.1';
+import { guessJump, JUMP_SHORT, analyse, defaultSettings } from './analyse.js?v=2.2.1';
+import { guessType, guessAxes, GAIT, TYPE_SHORT, defaultG } from './generic.js?v=2.2.1';
 
 function readText(file) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsText(file); }); }
 

@@ -1,16 +1,16 @@
 // Exports for one trial: continuous, discrete and time-normalised CSV; PNG graphs; a Word report; project files.
-import { A, $, download, baseName, currentTrial, trialLabel, status, persist, VERSION } from './state.js?v=2.2.0';
-import { JUMPS, phaseAt } from './analyse.js?v=2.2.0';
-import { display, groupsFor } from './vars.js?v=2.2.0';
-import { resample } from './maths.js?v=2.2.0';
-import { toCsv, plain, resultsCsv, shown } from './results.js?v=2.2.0';
-import { snapshotMain } from './trace.js?v=2.2.0';
-import { snapshotInteg } from './integ.js?v=2.2.0';
-import { canvasToBlob } from './plot.js?v=2.2.0';
-import { zip } from './zip.js?v=2.2.0';
-import { TYPES } from './generic.js?v=2.2.0';
-import { gSnapshot } from './gtrace.js?v=2.2.0';
-import { gDownload } from './gpanel.js?v=2.2.0';
+import { A, $, download, baseName, currentTrial, trialLabel, status, persist, VERSION } from './state.js?v=2.2.1';
+import { JUMPS, phaseAt } from './analyse.js?v=2.2.1';
+import { display, groupsFor } from './vars.js?v=2.2.1';
+import { resample } from './maths.js?v=2.2.1';
+import { toCsv, plain, resultsCsv, shown } from './results.js?v=2.2.1';
+import { snapshotMain } from './trace.js?v=2.2.1';
+import { snapshotInteg } from './integ.js?v=2.2.1';
+import { canvasToBlob } from './plot.js?v=2.2.1';
+import { zip } from './zip.js?v=2.2.1';
+import { TYPES } from './generic.js?v=2.2.1';
+import { gSnapshot } from './gtrace.js?v=2.2.1';
+import { gDownload } from './gpanel.js?v=2.2.1';
 
 const ok = () => { if (!A.R || !A.R.ok) { status('<span class="bad">Nothing to export yet: the trial has not been analysed.</span>'); return false; } return true; };
 

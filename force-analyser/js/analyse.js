@@ -1,6 +1,6 @@
 // The analysis of one trial: bodyweight, events, integration (force -> acceleration -> velocity ->
 // displacement), phases and power. No page code here, so it can be tested on its own.
-import { G, butter, integrateForward, integrateBackward, mean, sd, argmax, argmin, quietestWindow } from './maths.js?v=2.2.0';
+import { G, butter, integrateForward, integrateBackward, mean, sd, argmax, argmin, quietestWindow } from './maths.js?v=2.2.1';
 
 export const JUMPS = { cmj: 'Countermovement jump (CMJ)', sj: 'Squat jump (SJ)', dj: 'Drop jump (DJ)', slj: 'Standing long jump (SLJ)' };
 export const JUMP_SHORT = { cmj: 'CMJ', sj: 'SJ', dj: 'Drop jump', slj: 'SLJ' };
@@ -42,7 +42,9 @@ const PH = {
 export const PHASES = PH;
 
 // Contact runs: where force is above the threshold, ignoring blips shorter than holdN samples.
-export function contactRuns(F, thr, holdN) {
+// minPeak: a short 'contact' in the air that never gets near a real foot contact is the plate ringing after
+// take-off (or after a hard landing), not a contact, so it is merged into the flight.
+export function contactRuns(F, thr, holdN, minPeak = 0) {
   const n = F.length, runs = [];
   let i = 0;
   while (i < n) { const v = F[i] > thr ? 1 : 0; let j = i; while (j < n && (F[j] > thr ? 1 : 0) === v) j++; runs.push({ v, s: i, e: j }); i = j; }
@@ -51,6 +53,13 @@ export function contactRuns(F, thr, holdN) {
     changed = false;
     for (let k = 1; k < runs.length - 1; k++) {
       if (runs[k].e - runs[k].s < holdN) { runs[k - 1].e = runs[k + 1].e; runs.splice(k, 2); changed = true; break; }
+    }
+  }
+  if (minPeak > 0) {
+    for (let k = runs.length - 2; k >= 1; k--) {
+      const r = runs[k]; if (r.v !== 1) continue;
+      let pk = -Infinity; for (let i = r.s; i < r.e; i++) if (F[i] > pk) pk = F[i];
+      if (pk < minPeak) { runs[k - 1].e = runs[k + 1].e; runs.splice(k, 2); if (k > runs.length - 1) k = runs.length - 1; }
     }
   }
   return runs;
@@ -119,7 +128,7 @@ function analyseCore(D, set0, off) {
 
   // ---------- contacts ----------
   const holdN = Math.max(1, Math.round((set.hold || 0) / 1000 * fs));
-  const runs = contactRuns(F, set.thr, holdN);
+  const runs = contactRuns(F, set.thr, holdN, Math.max(3 * set.thr, 50));
   const C = runs.filter((r) => r.v === 1);
   R.runs = runs;
   const ovr = (key) => { const v = set.ev && set.ev[key]; return v === null || v === undefined || Number.isNaN(v) ? -1 : Math.max(0, Math.min(n - 1, Math.round(v * fs))); };

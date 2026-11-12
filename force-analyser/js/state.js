@@ -1,8 +1,8 @@
 // Shared state and small helpers.
 // A.S is the trial being worked on (its file data, plate mapping and settings). A.R is its analysis.
-import { defaultSettings } from './analyse.js?v=2.2.0';
+import { defaultSettings } from './analyse.js?v=2.2.1';
 
-export const VERSION = '2.2.0';
+export const VERSION = '2.2.1';
 export const APP = 'Force Analysis';
 export const PLATE_COLS = ['#0f766e', '#be185d', '#d97706'];
 export const COL = { total: '#1d4ed8', raw: '#94a3b8', bw: '#475569', vel: '#7c3aed', disp: '#0891b2', acc: '#dc2626', net: '#1d4ed8', power: '#ea580c', pos: 'rgba(16,185,129,.28)', neg: 'rgba(59,130,246,.26)' };

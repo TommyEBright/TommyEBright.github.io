@@ -1,6 +1,6 @@
 // Tab 1: jump type, drop jump options, bodyweight, plates and columns, thresholds.
-import { A, $, esc, persist, PLATE_COLS, savePrefs } from './state.js?v=2.2.0';
-import { TYPE_HELP, GAIT, defaultG } from './generic.js?v=2.2.0';
+import { A, $, esc, persist, PLATE_COLS, savePrefs } from './state.js?v=2.2.1';
+import { TYPE_HELP, GAIT, defaultG } from './generic.js?v=2.2.1';
 
 const JUMP_HELP = {
   cmj: 'Stand still, dip down and jump straight up. Phases: unweighting, braking, propulsion, flight and landing.',
