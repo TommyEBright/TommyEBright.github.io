@@ -1,12 +1,12 @@
 // Export: data for this trial (CSV), images (PNG) and the project file (the whole session).
-import { A, $, esc, status, muscle, toCsv, download, baseName, persist, SET } from './state.js?v=1.3.0';
-import { analyse } from './emg.js?v=1.3.0';
-import { moveSignal } from './events.js?v=1.3.0';
-import { canvasToBlob } from './plot.js?v=1.3.0';
-import { snapshot } from './trace.js?v=1.3.0';
-import { resultRows, compute, wfSnapshot } from './results.js?v=1.3.0';
-import { barSnapshot } from './compare.js?v=1.3.0';
-import { pointLabel, forget } from './emg.js?v=1.3.0';
+import { A, $, esc, status, muscle, toCsv, download, baseName, persist, SET } from './state.js?v=1.4.0';
+import { analyse } from './emg.js?v=1.4.0';
+import { moveSignal } from './events.js?v=1.4.0';
+import { canvasToBlob } from './plot.js?v=1.4.0';
+import { snapshot } from './trace.js?v=1.4.0';
+import { resultRows, compute, wfSnapshot } from './results.js?v=1.4.0';
+import { barSnapshot } from './compare.js?v=1.4.0';
+import { pointLabel, forget } from './emg.js?v=1.4.0';
 
 function need() { if (!A.R || !A.R.ok) { status('Open a file first.'); return false; } return true; }
 const csv = (name, rows) => download(baseName() + '_' + name + '.csv', new Blob([toCsv(rows)], { type: 'text/csv' }));

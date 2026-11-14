@@ -1,6 +1,6 @@
 // Service worker: keeps the app working offline. Bump VERSION when you change any file.
 // The demo files are big, so they are cached the first time they are used rather than up front.
-const VERSION = 'emg-1.3.0';
+const VERSION = 'emg-1.4.0';
 const CORE = [
   './', 'index.html', 'css/style.css', 'manifest.webmanifest',
   'js/app.js', 'js/state.js', 'js/parse.js', 'js/dsp.js', 'js/emg.js', 'js/plot.js', 'js/trace.js', 'js/points.js',

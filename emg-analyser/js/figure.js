@@ -2,11 +2,11 @@
 // and the size, then save it as a picture (PNG) or as a drawing you can still edit (SVG).
 // The figure is drawn through a small set of shapes (rectangle, line, text) with two back ends, one for the
 // canvas on screen and one that writes SVG, so the picture and the SVG always match.
-import { A, $, esc, status, muscle, SET, W, PHASE_COLS, POINT_COL, download, baseName, trialLabel } from './state.js?v=1.3.0';
-import { analyse, waveforms } from './emg.js?v=1.3.0';
-import { compute, mean, sd } from './results.js?v=1.3.0';
-import { moveSignal } from './events.js?v=1.3.0';
-import { niceStep, numTxt } from './plot.js?v=1.3.0';
+import { A, $, esc, status, muscle, SET, W, PHASE_COLS, POINT_COL, download, baseName, trialLabel } from './state.js?v=1.4.0';
+import { analyse, waveforms } from './emg.js?v=1.4.0';
+import { compute, mean, sd } from './results.js?v=1.4.0';
+import { moveSignal } from './events.js?v=1.4.0';
+import { niceStep, numTxt } from './plot.js?v=1.4.0';
 
 const OKABE = ['#0072B2', '#D55E00', '#009E73', '#CC79A7', '#E69F00', '#56B4E9', '#000000', '#999999']; // Okabe and Ito (2008)
 const SIZES = { slide: ['Slide (16:9)', 960, 540], report: ['Report (4:3)', 800, 600], wide: ['Wide and short', 1000, 400], poster: ['Poster (3:2)', 1080, 720], tall: ['Tall', 720, 900] };
@@ -200,12 +200,12 @@ function build(g, w, h, f, R, R2) {
     return '';
   }
 
-  if (!R.reps.length) return 'This figure is made from the ' + wd.many + ': find or mark them in 2. Reps and phases first.';
+  if (!R.reps.length) return 'This figure is made from the ' + wd.many + ': find or mark them in Step 2 (Reps and phases) first.';
 
   if (f.type === 'pct') {
     const C = compute(R, 'reps'), wf = C.wf, wf2 = R2 && R2.reps.length ? waveforms(R2, R2.reps) : null;
     const ok = chs.filter((m) => wf[m.k] && !wf[m.k].none);
-    if (!ok.length) return 'These muscles are not normalised yet (see 1. Setup), so there is no average to draw.';
+    if (!ok.length) return 'These muscles are not normalised yet (see Step 1 (Set up)), so there is no average to draw.';
     const cmp = (m) => { if (!wf2) return null; const k2 = R2.pr.ch.findIndex((c) => c.key === m.key); return k2 >= 0 && wf2[k2] && !wf2[k2].none ? wf2[k2] : null; };
     const stack = f.layout === 'stack', panels = stack ? ok.map((m) => [m]) : [ok];
     const mx = (m) => { const s = wf[m.k], c2 = cmp(m); let v = 0; for (let j = 0; j < 101; j++) { v = Math.max(v, s.mean[j] + (on.sd ? s.sd[j] : 0)); if (on.each) s.curves.forEach((cv) => { if (cv[j] > v) v = cv[j]; }); if (c2) v = Math.max(v, c2.mean[j]); } return v; };

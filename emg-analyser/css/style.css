@@ -323,3 +323,37 @@ input.num4 { width: 5rem; min-width: 0; }
 dl.gloss { margin: .2rem 0; display: grid; grid-template-columns: max-content 1fr; gap: .25rem .9rem; }
 dl.gloss dt { font-weight: 700; } dl.gloss dd { margin: 0; }
 @media (max-width: 1050px) { .figgrid { grid-template-columns: 1fr; } .figprev { position: static; order: -1; } dl.gloss { grid-template-columns: 1fr; } dl.gloss dd { margin-bottom: .3rem; } .fgrid { grid-template-columns: 1fr; } }
+
+/* v1.4: one step bar that stays in view, step intros and a caption on the graph */
+.stepbar { position: sticky; top: 0; z-index: 30; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); margin: 0 0 .9rem; box-shadow: 0 2px 8px rgba(15,23,42,.08); }
+.stepbar .tabs { border-radius: var(--radius) var(--radius) 0 0; }
+.stepbar .tab[data-t="setup"], .stepbar .tab[data-t="events"], .stepbar .tab[data-t="results"], .stepbar .tab[data-t="figure"], .stepbar .tab[data-t="files"] { color: var(--ink); }
+.stepbar .tab[aria-selected=true] { color: var(--brand-dark); }
+.stepbar .tab.deep { display: none; font-weight: 500; }
+.stepbar.showdeep .tab.deep { display: inline-block; }
+.stepbar .tab.godeep { margin-left: auto; font-weight: 500; color: var(--muted); }
+.stepmsg { display: flex; gap: .5rem; align-items: center; padding: .45rem .6rem; }
+.stepmsg .status { flex: 1; margin: 0; }
+.graphcap { margin: 0 0 .45rem; font-size: .9rem; color: var(--ink); background: var(--soft); border-radius: .4rem; padding: .35rem .6rem; }
+details.howgraph > summary { cursor: pointer; font-size: .84rem; color: var(--brand-dark); font-weight: 600; margin-top: .3rem; }
+.stepintro { padding: .8rem .9rem 0; }
+.stepintro .si { background: #f0fdfa; border-left: 4px solid var(--accent); border-radius: .4rem; padding: .55rem .8rem; }
+.stepintro .si p { margin: .15rem 0; }
+.stepintro .si .what { color: var(--ink); }
+.stepintro .si .do { font-weight: 600; }
+.stepintro details { margin-top: .25rem; font-size: .88rem; }
+.stepintro details summary { cursor: pointer; color: var(--brand-dark); font-weight: 600; }
+details.session:not([open]) > summary::after { content: ' (click to show or change your files)'; font-weight: 400; color: var(--muted); font-size: .86rem; }
+ol.guide li .gn:empty::before { content: ''; }
+.procstrip { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; background: var(--soft); border-radius: .5rem; padding: .5rem .7rem; margin: .2rem 0 .6rem; font-size: .88rem; }
+.procstrip .ps { background: #fff; border: 1px solid var(--line); border-radius: .4rem; padding: .2rem .5rem; font-weight: 600; }
+.procstrip .arr { color: var(--muted); }
+.methods { background: #fff; border: 1px solid var(--line); border-left: 4px solid var(--brand); border-radius: .5rem; padding: .6rem .8rem; margin: .8rem 0; }
+.methods p.mtxt { margin: .3rem 0; line-height: 1.55; }
+details.moreres > summary { font-size: 1rem; }
+@media (max-width: 700px) { .stepbar { position: static; } }
+#traceCard.folded .card-body { display: none; }
+#traceCard.folded .card-head .toolbar .lab, #traceCard.folded #showChips { display: none; }
+.stepintro { padding: 0; margin: 0 0 .9rem; }
+.stepintro:empty { display: none; }
+.stepintro .si .btn { vertical-align: middle; margin: 0 .2rem; }

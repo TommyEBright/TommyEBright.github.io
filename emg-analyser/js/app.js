@@ -1,24 +1,26 @@
 // Start-up: wires the page together.
-import { A, $, esc, status, persist, restoreSession, loadPrefs, savePrefs, VERSION, trialLabel, muscle, defaultSet, W } from './state.js?v=1.3.0';
-import { findSet, moveSignal } from './events.js?v=1.3.0';
-import { renderFigure, figureViewChanged } from './figure.js?v=1.3.0';
-import { analyse, references, forget } from './emg.js?v=1.3.0';
-import { initTrace, redraw, wholeRange } from './trace.js?v=1.3.0';
-import { renderPoints } from './points.js?v=1.3.0';
-import { renderResults } from './results.js?v=1.3.0';
-import { renderSetup } from './setup.js?v=1.3.0';
-import { initSession, renderSession, addText } from './session.js?v=1.3.0';
-import { renderCompare } from './compare.js?v=1.3.0';
-import { initExport } from './export.js?v=1.3.0';
-import { renderSteps, stepsView, renderFatigue, renderRor, renderOnOff } from './deeper.js?v=1.3.0';
+import { A, $, esc, status, persist, restoreSession, loadPrefs, savePrefs, VERSION, trialLabel, muscle, defaultSet, W, SET } from './state.js?v=1.4.0';
+import { findSet, moveSignal } from './events.js?v=1.4.0';
+import { renderFigure, figureViewChanged } from './figure.js?v=1.4.0';
+import { analyse, references, forget } from './emg.js?v=1.4.0';
+import { initTrace, redraw, wholeRange } from './trace.js?v=1.4.0';
+import { renderPoints } from './points.js?v=1.4.0';
+import { renderResults } from './results.js?v=1.4.0';
+import { renderSetup } from './setup.js?v=1.4.0';
+import { initSession, renderSession, addText } from './session.js?v=1.4.0';
+import { renderCompare } from './compare.js?v=1.4.0';
+import { initExport } from './export.js?v=1.4.0';
+import { renderSteps, stepsView, renderFatigue, renderRor, renderOnOff } from './deeper.js?v=1.4.0';
 
-const curTab = () => { const b = $('panel').querySelector('.tab[aria-selected=true]'); return b ? b.getAttribute('data-t') : 'setup'; };
+const curTab = () => { const b = $('stepbar').querySelector('.tab[data-t][aria-selected=true]'); return b ? b.getAttribute('data-t') : 'setup'; };
+const STEPS = ['setup', 'events', 'results', 'figure', 'files'];
+const STEP_NAME = { setup: 'Set up', events: 'Reps and phases', results: 'Results', figure: 'Figure', files: 'Export' };
 
 // ---------- analysis and redrawing ----------
 function refresh(o) {
   o = o || {};
   const S = A.S;
-  if (!S) { A.R = null; showEmpty(true); renderTab(); return; }
+  if (!S) { A.R = null; showEmpty(true); renderTab(); stepGuide(); return; }
   showEmpty(false);
   try { A.R = analyse(S); } catch (e) { A.R = { ok: false, error: 'Could not analyse this file: ' + esc(e.message || e) }; console.error(e); }
   const ok = A.R.ok;
@@ -27,22 +29,22 @@ function refresh(o) {
   if (ok && A.lane >= A.R.pr.ch.length) A.lane = -1;
   $('traceWrap').classList.toggle('hide', !ok);
   if (ok) redraw();
-  $('tabPts').textContent = S.role === 'mvic' ? '2. Reps and phases (optional)' : '2. Reps and phases';
+  $('tabPts').innerHTML = 'Step 2 &middot; ' + (S.role === 'mvic' ? 'Reps and phases (optional)' : 'Reps and phases');
   if (o.quick) { if (curTab() === 'results') renderResults(); if (curTab() === 'events') renderPoints(); return; }
-  showChips(); renderSession(); renderTab(); sessionSummaries(); badge();
+  showChips(); renderSession(); renderTab(); sessionSummaries(); badge(); stepGuide();
   if (!o.keepStatus) status(!ok ? '<span class="bad">' + A.R.error + '</span>' : nextStep());
 }
 // One clear next step for the student.
 function nextStep() {
   const R = A.R, t = A.S, set = A.session.set;
-  if (R.mvic) return (t.mvicFor && t.mvicFor.length) ? 'MVIC file for <strong>' + t.mvicFor.map((k) => esc(muscle(k).short)).join(', ') + '</strong>. Nothing to mark: open a task trial next.' : 'This is an MVIC file. Tick which muscle it is for in <strong>1. Setup</strong>.';
+  if (R.mvic) return (t.mvicFor && t.mvicFor.length) ? 'MVIC file for <strong>' + t.mvicFor.map((k) => esc(muscle(k).short)).join(', ') + '</strong>. Nothing to mark: open a task trial next.' : 'This is an MVIC file. Tick which muscle it is for in <strong>Step 1 (Set up)</strong>.';
   const w = W(), cyc = set.activity === 'gait' || set.activity === 'cycling';
   if (set.norm === 'mvic' && R.missing.length) return 'No MVIC yet for <strong>' + R.missing.map((k) => esc(muscle(k).short)).join(', ') + '</strong>: add the MVIC files (and set their Type to MVIC) so the EMG can be shown as %MVIC.';
-  if (set.norm === 'ref' && R.missing.length) return 'No reference trial yet for <strong>' + R.missing.map((k) => esc(muscle(k).short)).join(', ') + '</strong>: set the reference trial&rsquo;s <strong>Type</strong> to Reference in the Session table' + (cyc ? ' and find its ' + w.many : '') + '.';
-  if (!R.reps.length) return 'Next: open <strong>2. Reps and phases</strong> and press <strong>Find ' + w.many + '</strong> (or mark them by hand), then check them on the graph.';
-  return R.reps.length + ' ' + (R.reps.length > 1 ? w.many : w.one) + (R.phases.length ? ', each split into phases' : '') + '. Check them on the graph, then look at <strong>3. Results</strong>' + (R.autoOn ? ' (on/off is found automatically)' : '') + ' and make a figure in <strong>4. Figure</strong>.';
+  if (set.norm === 'ref' && R.missing.length) return 'No reference trial yet for <strong>' + R.missing.map((k) => esc(muscle(k).short)).join(', ') + '</strong>: set the reference trial&rsquo;s <strong>Type</strong> to Reference in Your files' + (cyc ? ' and find its ' + w.many : '') + '.';
+  if (!R.reps.length) return 'Next: open <strong>Step 2 (Reps and phases)</strong> and press <strong>Find ' + w.many + '</strong> (or mark them by hand), then check them on the graph.';
+  return R.reps.length + ' ' + (R.reps.length > 1 ? w.many : w.one) + (R.phases.length ? ', each split into phases' : '') + '. Check them on the graph, then look at <strong>Step 3 (Results)</strong>' + (R.autoOn ? ' (on/off is found automatically)' : '') + ' and make a figure in <strong>Step 4 (Figure)</strong>.';
 }
-function badge() { const R = A.R, w = W(); $('tabRes').textContent = '3. Results' + (R && R.ok && !R.mvic && R.reps.length ? ' (' + R.reps.length + ' ' + (R.reps.length > 1 ? w.many : w.one) + ')' : ''); }
+function badge() { const R = A.R, w = W(); $('tabRes').innerHTML = 'Step 3 &middot; Results' + (R && R.ok && !R.mvic && R.reps.length ? ' (' + R.reps.length + ' ' + (R.reps.length > 1 ? w.many : w.one) + ')' : ''); }
 function showEmpty(on) { $('empty').classList.toggle('hide', !on); if (on) { $('traceWrap').classList.add('hide'); $('readout').innerHTML = ''; $('trialName').textContent = ''; $('showChips').innerHTML = ''; } }
 
 function openTrial(k) {
@@ -81,7 +83,7 @@ function showChips() {
     + (sensors.length > 1 && A.show.acc && sig && sig.sensor ? '<select id="accSel" class="mini" title="Which sensor&rsquo;s accelerometer the movement signal comes from">' + sensors.map((s) => '<option value="' + esc(s) + '"' + (sig.sensor === s ? ' selected' : '') + '>' + esc(muscle(s).short || s) + ' sensor</option>').join('') + '</select>' : '');
   el.querySelectorAll('[data-s]').forEach((b) => b.addEventListener('click', () => {
     const k = b.getAttribute('data-s'); A.show[k] = !A.show[k]; savePrefs(); showChips(); redraw();
-    if (k === 'guide' && A.show.guide && !R.rest) status('The onset guide needs a rest period: mark <strong>Rest start</strong> and <strong>Rest end</strong> in <strong>2. Reps and phases</strong> (section 3).');
+    if (k === 'guide' && A.show.guide && !R.rest) status('The onset guide needs a rest period: mark <strong>Rest start</strong> and <strong>Rest end</strong> in <strong>Step 2 (Reps and phases)</strong> (section 3).');
   }));
   if ($('accSel')) $('accSel').addEventListener('change', function () { fnd.sensor = this.value; persist(); redraw(); if (curTab() === 'events') renderPoints(); });
 }
@@ -100,9 +102,70 @@ function renderTab() {
   if (t === 'onoff') renderOnOff();
 }
 function showTab(t) {
-  document.querySelectorAll('#panel .tab').forEach((b) => b.setAttribute('aria-selected', String(b.getAttribute('data-t') === t)));
+  document.querySelectorAll('#stepbar .tab[data-t]').forEach((b) => b.setAttribute('aria-selected', String(b.getAttribute('data-t') === t)));
   document.querySelectorAll('#panel .pane').forEach((p) => p.classList.toggle('hide', p.getAttribute('data-p') !== t));
-  renderTab();
+  if (['steps', 'fatigue', 'onoff', 'ror'].includes(t)) $('stepbar').classList.add('showdeep');
+  // once past setup, fold the file list away so the graph and the step sit together
+  if (t !== 'setup' && A.session.trials.length) { const ses = document.querySelector('details.session'); if (ses) ses.open = false; }
+  renderTab(); stepGuide();
+  if (A.R && A.R.ok) {
+    const R = A.R, w = W(), n = R.reps ? R.reps.length : 0, nn = n + ' ' + (n === 1 ? w.one : w.many);
+    status(R.mvic || !n ? nextStep()
+      : t === 'results' ? 'Results for <strong>' + nn + '</strong> in this file. The first three sections are the ones most lab reports need.'
+      : t === 'figure' ? 'Making a figure from ' + nn + '. Press <strong>Show the graph</strong> if you want to zoom in on part of the trial first.'
+      : t === 'files' ? 'Ready to save the data for ' + nn + '.'
+      : nextStep());
+  }
+  const si = $('stepIntro'), bar = $('stepbar');
+  if (si && bar) window.scrollTo({ top: Math.max(0, si.getBoundingClientRect().top + window.scrollY - bar.offsetHeight - 10), behavior: 'smooth' });
+}
+// The graph matters while setting up and finding reps; for results, figures and exports it folds away (one click brings it back).
+const GRAPH_TABS = ['setup', 'events', 'steps', 'fatigue', 'onoff', 'ror'];
+function graphFold() {
+  const t = curTab(), card = $('traceCard'), btn = $('graphTgl');
+  const open = A.graphOpen !== undefined && A.graphTab === t ? A.graphOpen : GRAPH_TABS.includes(t);
+  const was = card.classList.contains('folded');
+  card.classList.toggle('folded', !open);
+  btn.textContent = open ? 'Hide the graph' : 'Show the graph';
+  if (was && open && A.R && A.R.ok) redraw();
+}
+// Back and Next, the short "what's happening / what to do" box for each step, and the caption above the graph.
+function stepGuide() {
+  const t = curTab(), j = STEPS.indexOf(t), w = W(), back = $('stepBack'), next = $('stepNext');
+  const prev = j > 0 ? STEPS[j - 1] : j < 0 ? 'results' : null, nxt = j >= 0 && j < STEPS.length - 1 ? STEPS[j + 1] : null;
+  back.classList.toggle('hide', !prev); next.classList.toggle('hide', !nxt);
+  if (prev) back.innerHTML = '&lsaquo; Back' + (j < 0 ? ' to Results' : '');
+  if (nxt) next.innerHTML = 'Next: ' + STEP_NAME[nxt] + ' &rsaquo;';
+  back.onclick = () => prev && showTab(prev); next.onclick = () => nxt && showTab(nxt);
+  const I = intro(t, w);
+  $('stepIntro').innerHTML = I ? '<div class="si"><p class="what">' + I[0] + '</p><p class="do">' + I[1] + '</p>' + (I[2] ? '<details><summary>Why?</summary><p>' + I[2] + '</p></details>' : '') + '</div>' : '';
+  const cap = $('graphCap'); if (cap) cap.innerHTML = caption(t, w);
+  if (A.graphTab !== t) { A.graphTab = t; A.graphOpen = undefined; }
+  graphFold();
+  const fb = $('introFind');
+  if (fb) fb.onclick = () => { const b = [...document.querySelectorAll('#ptsBox button')].find((x) => /^Find /.test(x.textContent.trim())); if (b) b.click(); };
+}
+function intro(t, w) {
+  const R = A.R, mv = R && R.ok && R.mvic, norm = SET().norm;
+  const ref = norm === 'mvic' ? 'each muscle&rsquo;s MVIC' : norm === 'ref' ? 'each muscle in your reference trial' : norm === 'peak' ? 'each muscle&rsquo;s highest value in the session' : 'nothing (µV)';
+  if (t === 'setup') return ['Tell the tool what you recorded and what counts as 100% for each muscle. At the moment 100% = ' + ref + '.',
+    mv ? 'This is an MVIC file: tick which muscle it is for, then open a task trial.' : 'Check the muscle names and where 100% comes from. The defaults are usually right, so if it all looks sensible press Next.',
+    'Raw EMG (in µV) depends on the skin, the fat underneath and exactly where the sensor sits, so it can&rsquo;t be compared between muscles, people or days. Dividing by a reference (an MVIC or a normal trial of the task) puts every muscle on the same scale.'];
+  if (t === 'events') return ['Every result is worked out inside each ' + w.one + ', so the tool needs to know where each one starts and ends.',
+    mv ? 'MVIC files don&rsquo;t need ' + w.many + '. Open a task trial instead.' : 'Press <button type="button" class="btn small accent" id="introFind">Find ' + w.many + '</button> then check each shaded box on the graph covers one whole ' + w.one + '. Drag any label that looks wrong, or mark them by hand underneath the graph.',
+    'The tool looks at the accelerometer inside the sensor (e.g. the knock of each foot strike, or how far the thigh tilts) to find each ' + w.one + '. It&rsquo;s a good estimate, not a perfect one, which is why you check it by eye.'];
+  if (t === 'results') return ['Your results, worked out inside each ' + w.one + ' and then averaged.',
+    'Start with the first three: how hard each muscle worked, when it switched on and off, and its average ' + w.one + '. The methods paragraph underneath can go straight into your lab report.',
+    'Everything comes from the smoothed envelope shown on the graph. The strip at the top shows what happened to the raw signal to get there.'];
+  if (t === 'figure') return ['Build a figure for your lab report from this trial.', 'Pick a view (over time, an average ' + w.one + ' or bars), switch muscles and labels on or off, then save it as a PNG.', ''];
+  if (t === 'files') return ['Save your numbers to use in Excel, SPSS or R.', '<strong>Discrete</strong> = one number per ' + w.one + ' (for your statistics). <strong>Continuous</strong> = the whole curve (for graphs).', ''];
+  if (t === 'compare') return ['Line up every trial in the session (e.g. 9 vs 12 km/h, or RDL vs Nordic).', 'Name each trial&rsquo;s exercise or condition in your file list first, so trials with the same name are grouped.', ''];
+  return null;
+}
+function caption(t, w) {
+  if (t === 'setup') return '<strong>What you&rsquo;re looking at:</strong> each coloured lane is one muscle&rsquo;s activity (its smoothed envelope). The bottom lane is the movement signal from the sensor. Press <strong>Raw EMG</strong> above the graph to see the signal before processing.';
+  if (t === 'events') return '<strong>What you&rsquo;re looking at:</strong> each shaded box is one ' + w.one + ' the tool found. Each box should cover one whole ' + w.one + '. Drag a label to move it.';
+  return '<strong>What you&rsquo;re looking at:</strong> the whole trial. The results come from inside each shaded ' + w.one + '.';
 }
 
 // ---------- demo: a hamstring session (7 MVICs, a Romanian deadlift and a Nordic hamstring exercise) ----------
@@ -132,7 +195,7 @@ async function demo(marked) {
     }
     persist();
     openTrial(A.session.trials.length - (marked ? 1 : 2));
-    status(marked ? 'Demo loaded with the reps already marked (and, in the Nordic, onsets and offsets for the first two reps). Look through <strong>3. Results</strong>, then try marking the rest yourself.' : 'Demo loaded: 7 MVIC files and two exercises. Start with the <strong>Romanian deadlift</strong>: open <strong>2. Reps and phases</strong> and press <strong>Find reps</strong>.');
+    status(marked ? 'Demo loaded with the reps already marked (and, in the Nordic, onsets and offsets for the first two reps). Look through <strong>Step 3 (Results)</strong>, then try marking the rest yourself.' : 'Demo loaded: 7 MVIC files and two exercises. Start with the <strong>Romanian deadlift</strong>: open <strong>Step 2 (Reps and phases)</strong> and press <strong>Find reps</strong>.');
   } catch (e) { status('<span class="bad">Could not load the demo (' + esc(e.message) + '). Demos need the tool to be opened from a web address, not straight from a file.</span>'); }
 }
 
@@ -146,7 +209,9 @@ async function start() {
     cursorMoved: () => {}
   });
   initTrace(); initSession(); initExport();
-  document.querySelectorAll('#panel .tab').forEach((b) => b.addEventListener('click', () => showTab(b.getAttribute('data-t'))));
+  document.querySelectorAll('#stepbar .tab[data-t]').forEach((b) => b.addEventListener('click', () => showTab(b.getAttribute('data-t'))));
+  $('graphTgl').addEventListener('click', () => { const card = $('traceCard'); A.graphTab = curTab(); A.graphOpen = card.classList.contains('folded'); graphFold(); });
+  $('deepBtn').addEventListener('click', function () { const on = $('stepbar').classList.toggle('showdeep'); this.setAttribute('aria-expanded', String(on)); });
   $('demoSel').addEventListener('change', function () { const k = this.value; this.value = ''; if (k) demo(k === 'marked'); });
   const saved = await restoreSession();
   if (saved) {

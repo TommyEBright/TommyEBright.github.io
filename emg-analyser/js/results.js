@@ -1,9 +1,10 @@
-// Tab 3: the seven results, each with what it tells you and how it was worked out.
-//  1 amplitude (peak and mean), 2 onset, offset and burst duration, 3 order of activation,
-//  4 co-contraction, 5 ratios between muscles, 6 average waveform, 7 integrated EMG.
-import { A, $, esc, persist, muscle, SET, toCsv, download, baseName, trialLabel, W } from './state.js?v=1.3.0';
-import { Chart, frame, axes, line, band } from './plot.js?v=1.3.0';
-import { orderOf, coContraction, overlap, waveforms, quality, curveBursts, burstTxt } from './emg.js?v=1.3.0';
+// Step 3: the results, each with what it tells you and how it was worked out.
+//  Shown first: 1 amplitude (peak and mean), 2 onset, offset and burst duration, 3 average waveform.
+//  In 'More results': 4 order of activation, 5 co-contraction, 6 ratios between muscles, 7 integrated EMG.
+//  Above them, a strip of the processing steps; below, a methods paragraph for the lab report.
+import { A, $, esc, persist, muscle, SET, toCsv, download, baseName, trialLabel, W, VERSION } from './state.js?v=1.4.0';
+import { Chart, frame, axes, line, band } from './plot.js?v=1.4.0';
+import { orderOf, coContraction, overlap, waveforms, quality, curveBursts, burstTxt } from './emg.js?v=1.4.0';
 
 let wfChart = null, ampChart = null;
 const f = (v, n) => (Number.isFinite(v) ? v.toFixed(n) : '&ndash;');
@@ -48,9 +49,10 @@ export function renderResults() {
   let h = '<div class="row tight" style="justify-content:space-between;align-items:center"><div class="row tight"><span class="lab inl">Results for</span>'
     + Object.entries(WIN).map(([k, l]) => '<button type="button" class="chip' + (type === k ? ' active' : '') + '" data-wt="' + k + '">' + l + ' <span class="muted" style="color:inherit;opacity:.75">' + R.windowsFor(k).length + '</span></button>').join('')
     + '</div><button class="btn small ghost" id="resCsv" type="button">Download results (CSV)</button></div>';
-  if (R.missing.length && norm) h += '<div class="warn"><p><strong>Not normalised:</strong> ' + R.missing.map((k) => esc(muscle(k).short)).join(', ') + ' (no MVIC file for ' + (R.missing.length > 1 ? 'these muscles' : 'this muscle') + '). Add the MVIC file and tick the muscle in <strong>1. Setup</strong>. Until then these are in µV and are left out of ratios and co-contraction.</p></div>';
+  if (R.missing.length && norm) h += '<div class="warn"><p><strong>Not normalised:</strong> ' + R.missing.map((k) => esc(muscle(k).short)).join(', ') + ' (no MVIC file for ' + (R.missing.length > 1 ? 'these muscles' : 'this muscle') + '). Add the MVIC file and tick the muscle in <strong>Step 1 (Set up)</strong>. Until then these are in µV and are left out of ratios and co-contraction.</p></div>';
+  h += procStrip(R);
   if (!W.length) {
-    h += '<div class="tip"><p>' + (type === 'reps' ? 'No reps yet. Mark each <strong>Rep start</strong> and <strong>Rep end</strong> in <strong>2. Reps and phases</strong>.' : type === 'phases' ? 'No phases yet. Mark a <strong>Phase change</strong> inside each rep in <strong>2. Reps and phases</strong>.' : 'No windows of your own yet. Add one in <strong>2. Reps and phases</strong>.') + ' Meanwhile, choose <strong>Whole trial</strong> above.</p></div>';
+    h += '<div class="tip"><p>' + (type === 'reps' ? 'No reps yet. Mark each <strong>Rep start</strong> and <strong>Rep end</strong> in <strong>Step 2 (Reps and phases)</strong>.' : type === 'phases' ? 'No phases yet. Mark a <strong>Phase change</strong> inside each rep in <strong>Step 2 (Reps and phases)</strong>.' : 'No windows of your own yet. Add one in <strong>Step 2 (Reps and phases)</strong>.') + ' Meanwhile, choose <strong>Whole trial</strong> above.</p></div>';
   }
   const many = W.length > 1;
   // 1 amplitude
@@ -66,12 +68,12 @@ export function renderResults() {
   // 2 timing
   const BB = R.bursts, anyOn = BB.some((b) => b.per.some((p) => Number.isFinite(p.on)));
   h += sec(2, 'Onset, offset and burst duration', 'When each muscle switches on and off, and for how long it is active. Times are from the start of each ' + (R.reps.length ? w1 : 'trial') + ' (and as % of the ' + w1 + ', so ' + w1 + 's of different speeds can be compared).' + (R.cycles ? ' A negative onset means the muscle switched on before the ' + w1 + ' started (e.g. &minus;12% = in the last 12% of the one before).' : ''),
-    (R.autoOn ? '<strong>Found automatically:</strong> a muscle is on while its envelope is above ' + (R.onThr && R.onThr[0] && R.onThr[0].how === 'rest' ? 'the rest mean + ' + SET().guideK + ' SD of a ' + SET().guideFc + ' Hz envelope (Hodges and Bui, 1996)' : SET().onPct + '% of the peak of its average ' + w1) + ', for at least ' + SET().onMinMs + ' ms (shorter dips are bridged and shorter blips ignored). A percentage of the peak is the usual method for running, walking and cycling, because there is no rest to set a baseline from. If a muscle has more than one burst in a ' + w1 + ', the table shows the biggest; the average ' + w1 + ' below lists them all. Change the settings in Go deeper &rarr; <strong>On/off</strong>, or mark onsets by hand in 2. Reps and phases. ' : 'You mark onset and offset by eye on each muscle (2. Reps and phases); the tool only does the arithmetic. ') + 'Burst duration = offset &minus; onset. Visual inspection by a trained eye is the reference method for onset (Hodges and Bui, 1996; Kamen and Gabriel, 2010), but note that a heavily smoothed (low cut-off) zero-lag envelope starts rising a little <em>before</em> the real onset, so judge onset on the raw EMG too (switch on <strong>Raw EMG</strong> above the graph).');
+    (R.autoOn ? '<strong>Found automatically:</strong> a muscle is on while its envelope is above ' + (R.onThr && R.onThr[0] && R.onThr[0].how === 'rest' ? 'the rest mean + ' + SET().guideK + ' SD of a ' + SET().guideFc + ' Hz envelope (Hodges and Bui, 1996)' : SET().onPct + '% of the peak of its average ' + w1) + ', for at least ' + SET().onMinMs + ' ms (shorter dips are bridged and shorter blips ignored). A percentage of the peak is the usual method for running, walking and cycling, because there is no rest to set a baseline from. If a muscle has more than one burst in a ' + w1 + ', the table shows the biggest; the average ' + w1 + ' below lists them all. Change the settings in Go deeper &rarr; <strong>On/off</strong>, or mark onsets by hand in Step 2 (Reps and phases). ' : 'You mark onset and offset by eye on each muscle (Step 2 (Reps and phases)); the tool only does the arithmetic. ') + 'Burst duration = offset &minus; onset. Visual inspection by a trained eye is the reference method for onset (Hodges and Bui, 1996; Kamen and Gabriel, 2010), but note that a heavily smoothed (low cut-off) zero-lag envelope starts rising a little <em>before</em> the real onset, so judge onset on the raw EMG too (switch on <strong>Raw EMG</strong> above the graph).');
   if (C.avgOn) {
-    h += '<p style="margin:.4rem 0 .2rem"><strong>Average ' + w1 + '</strong> <span class="muted small">(on above ' + SET().onPct + '% of each muscle&rsquo;s average peak; shown as bars under the average waveform in 6)</span></p><table class="restab"><thead><tr><th>Muscle</th><th>On (% of the ' + w1 + ')</th><th>Active for</th></tr></thead><tbody>'
+    h += '<p style="margin:.4rem 0 .2rem"><strong>Average ' + w1 + '</strong> <span class="muted small">(on above ' + SET().onPct + '% of each muscle&rsquo;s average peak; shown as bars under the average waveform in 3)</span></p><table class="restab"><thead><tr><th>Muscle</th><th>On (% of the ' + w1 + ')</th><th>Active for</th></tr></thead><tbody>'
       + C.avgOn.map((a, k) => (a ? '<tr><td style="color:' + col(k) + ';font-weight:700">' + name(k) + '</td><td>' + (a.B.length ? a.B.map(burstTxt).join('; ') : '<span class="muted">never above the threshold</span>') + '</td><td class="num"><strong>' + f(a.active, 0) + '%</strong> of the ' + w1 + '</td></tr>' : '')).join('') + '</tbody></table>';
   }
-  if (!anyOn) h += '<p class="muted">' + (R.autoOn ? 'No bursts found. Check the ' + w1 + 's are marked, or lower the threshold in Go deeper &rarr; <strong>On/off</strong>.' : 'No onsets yet: mark them in <strong>2. Reps and phases</strong> (click a muscle&rsquo;s lane, then <strong>Onset</strong> and <strong>Offset</strong>).') + '</p>';
+  if (!anyOn) h += '<p class="muted">' + (R.autoOn ? 'No bursts found. Check the ' + w1 + 's are marked, or lower the threshold in Go deeper &rarr; <strong>On/off</strong>.' : 'No onsets yet: mark them in <strong>Step 2 (Reps and phases)</strong> (click a muscle&rsquo;s lane, then <strong>Onset</strong> and <strong>Offset</strong>).') + '</p>';
   else {
     if (C.avgOn) h += '<p style="margin:.6rem 0 .2rem"><strong>Each ' + w1 + '</strong> <span class="muted small">(' + (R.autoOn ? 'the biggest burst' : 'marked by hand') + ')</span></p>';
     h += '<div class="tablewrap" style="max-height:none"><table class="restab"><thead><tr><th rowspan="2">' + (R.reps.length ? WW().One : '') + '</th>' + chs.map((c, k) => '<th colspan="3" style="color:' + col(k) + '">' + name(k) + '</th>').join('') + '</tr><tr>' + chs.map(() => '<th>Onset</th><th>Offset</th><th>Duration</th>').join('') + '</tr></thead><tbody>';
@@ -84,8 +86,9 @@ export function renderResults() {
     }
     h += '</tbody></table></div>';
   }
-  // 3 order
-  h += sec(3, 'Order of activation', 'Which muscle switches on first, and how long after it the others follow. Useful for coordination (e.g. does the gluteus maximus fire before the hamstrings?).',
+  const corePart = h; h = '';
+  // 4 order (in More results)
+  h += sec(4, 'Order of activation', 'Which muscle switches on first, and how long after it the others follow. Useful for coordination (e.g. does the gluteus maximus fire before the hamstrings?).',
     'Muscles are sorted by their onset in each rep. The delay is each onset minus the first one. Differences of a few ms are within the error of marking onset, so only read something into gaps of about 20 ms or more, and only if the order is the same in most reps.');
   if (chs.length < 2) h += '<p class="muted">Needs two or more muscles in the same file.</p>';
   else if (!anyOn) h += '<p class="muted">Needs onsets (see 2).</p>';
@@ -96,7 +99,7 @@ export function renderResults() {
     if (best && BB.length > 1) h += '<p>Most common order: <strong>' + best[0].split('>').map((k) => esc(muscle(k).short)).join(' &rarr; ') + '</strong> (' + best[1] + ' of ' + BB.filter((b) => orderOf(b).length).length + ' ' + WW().many + ').</p>';
   }
   // 4 co-contraction
-  h += sec(4, 'Co-contraction', 'How much two muscles that pull in opposite directions (an <strong>agonist</strong> and its <strong>antagonist</strong>, e.g. vastus lateralis and biceps femoris) are active at the same time. More co-contraction stiffens the joint (e.g. to protect it) but costs energy and works against the movement.',
+  h += sec(5, 'Co-contraction', 'How much two muscles that pull in opposite directions (an <strong>agonist</strong> and its <strong>antagonist</strong>, e.g. vastus lateralis and biceps femoris) are active at the same time. More co-contraction stiffens the joint (e.g. to protect it) but costs energy and works against the movement.',
     'Co-contraction index (CI) = 2 &times; the area under <em>both</em> curves (the smaller of the two at each sample) &divide; (area A + area B) &times; 100 (Falconer and Winter, 1985), from the normalised envelopes. 0% = never active together, 100% = identical. Overlap = the time both bursts (onset to offset) are on together. <strong>Crosstalk:</strong> muscles next to each other pick up each other&rsquo;s signal, which looks like co-contraction. Be careful with neighbouring muscles.');
   if (chs.length > 1) h += '<div class="row tight"><label class="inline" for="ccA" style="margin:0">Agonist</label><select id="ccA" class="mini" style="width:auto">' + pairOpts(SET().pairA, R) + '</select><label class="inline" for="ccB" style="margin:0">Antagonist</label><select id="ccB" class="mini" style="width:auto">' + pairOpts(SET().pairB, R) + '</select></div>';
   if (chs.length < 2) h += '<p class="muted">Needs two muscles. If each muscle is in its own file, use <strong>Compare trials</strong>: it pairs them by exercise or condition.</p>';
@@ -111,7 +114,7 @@ export function renderResults() {
     if (C.avgOn && C.avgOn[pr.cA] && C.avgOn[pr.cB]) h += '<p>Both on together: <strong>' + f(bothOn(C.avgOn[pr.cA], C.avgOn[pr.cB]), 0) + '% of the average ' + w1 + '</strong> <span class="muted small">(from the on/off of the average ' + w1 + ' in 2)</span></p>';
   }
   // 5 ratios
-  h += sec(5, 'Ratios between muscles', 'How the work is shared between two muscles, e.g. medial (SM, ST) against lateral (BF) hamstrings, or VMO against VL. 1.0 = equal (relative to each one&rsquo;s own MVIC); above 1 = the first muscle is working harder.',
+  h += sec(6, 'Ratios between muscles', 'How the work is shared between two muscles, e.g. medial (SM, ST) against lateral (BF) hamstrings, or VMO against VL. 1.0 = equal (relative to each one&rsquo;s own MVIC); above 1 = the first muscle is working harder.',
     'Ratio = mean ' + unit + ' of muscle A &divide; mean ' + unit + ' of muscle B in the same window (and the same for peaks). Only normalised EMG can be compared like this: raw µV depend on the electrode, the skin and the fat under it, so a ratio of µV means nothing (Kamen and Gabriel, 2010).');
   if (chs.length > 1) h += '<div class="row tight"><label class="inline" for="rtA" style="margin:0">Muscle A</label><select id="rtA" class="mini" style="width:auto">' + pairOpts(SET().ratA, R) + '</select><span>:</span><label class="inline" for="rtB" style="margin:0">Muscle B</label><select id="rtB" class="mini" style="width:auto">' + pairOpts(SET().ratB, R) + '</select></div>';
   if (chs.length < 2) h += '<p class="muted">Needs two muscles.</p>';
@@ -122,15 +125,17 @@ export function renderResults() {
       + W.map((w, j) => '<tr><td>' + esc(w.name) + '</td><td class="num"><strong>' + f(rm[j], 2) + '</strong></td><td class="num">' + f(rp[j], 2) + '</td></tr>').join('')
       + (many ? '<tr class="grp"><td>Mean &plusmn; SD</td><td class="num">' + f(mean(rm), 2) + ' &plusmn; ' + f(sd(rm), 2) + '</td><td class="num">' + f(mean(rp), 2) + ' &plusmn; ' + f(sd(rp), 2) + '</td></tr>' : '') + '</tbody></table>';
   }
-  // 6 waveform
-  h += sec(6, 'Average waveform', 'The typical pattern of each muscle through a rep: every rep is stretched to 0&ndash;100% so reps of different lengths line up, then averaged. The shaded band is &plusmn;1 SD (how much the reps differ).',
+  const morePart1 = h; h = '';
+  // 3 waveform
+  h += sec(3, 'Average waveform', 'The typical pattern of each muscle through a rep: every rep is stretched to 0&ndash;100% so reps of different lengths line up, then averaged. The shaded band is &plusmn;1 SD (how much the reps differ).',
     'Each rep is resampled to 101 points (0 to 100%) by linear interpolation, then the mean and SD are worked out at each point. VR (variance ratio) measures how alike the reps are: 0 = identical, 1 = no shared pattern (Hershler and Milner, 1978); below about 0.3 is consistent. Use at least 3 reps (5 to 10 is better).');
-  if (!C.wf) h += '<p class="muted">Needs ' + WW().many + ' (mark or find them in <strong>2. Reps and phases</strong>).</p>';
+  if (!C.wf) h += '<p class="muted">Needs ' + WW().many + ' (mark or find them in <strong>Step 2 (Reps and phases)</strong>).</p>';
   else {
     h += '<div class="chips" id="wfChips">' + chs.map((c, k) => (R.N[k] ? '<button type="button" class="chip' + (A.wfHide && A.wfHide[c.key] ? '' : ' active') + '" data-wf="' + esc(c.key) + '"><span class="dot" style="background:' + col(k) + '"></span>' + name(k) + '</button>' : '')).join('') + '<label class="inline small"><input type="checkbox" id="wfEach"' + (A.wfEach ? ' checked' : '') + '> each rep</label></div>';
     h += '<div id="cWf" class="chartbox"></div>';
     h += '<table class="restab"><thead><tr><th>Muscle</th><th>' + WIN.reps + '</th><th>Peak of the average</th><th>at</th><th>VR</th></tr></thead><tbody>' + C.wf.map((w, k) => w.none ? '' : '<tr><td style="color:' + col(k) + ';font-weight:700">' + name(k) + '</td><td class="num">' + w.n + '</td><td class="num">' + f(w.peak, 1) + ' ' + unit + '</td><td class="num">' + w.peakAt + '%</td><td class="num">' + f(w.vr, 2) + (w.n < 3 ? ' <span class="muted small">(needs 3+ reps)</span>' : '') + '</td></tr>').join('') + '</tbody></table>';
   }
+  const wfPart = h; h = '';
   // 7 iEMG
   h += sec(7, 'Integrated EMG (iEMG)', 'The total amount of muscle activity in the window: the area under the envelope. It grows with both <em>how hard</em> and <em>how long</em> the muscle works, so a slow rep scores more than a fast one at the same effort. Compare it only between windows of similar length, or use the mean (1) instead.',
     'iEMG = the area under the normalised envelope, by the trapezoid rule: the sum of &frac12;(y<sub>i&minus;1</sub> + y<sub>i</sub>) &Delta;t. Units: ' + unit + '&middot;s. iEMG &divide; duration = the mean.');
@@ -139,6 +144,8 @@ export function renderResults() {
       + W.map((w, j) => '<tr><td>' + esc(w.name) + '</td>' + st[j].map((s) => '<td class="num">' + f(s.iemg, 2) + '</td>').join('') + '</tr>').join('')
       + (many ? avgRows(W, st, chs, (s) => [s.iemg], [2], ['']) : '') + '</tbody></table><p class="muted small">' + unit + '&middot;s</p>';
   }
+  const morePart2 = h;
+  h = corePart + wfPart + methodsHtml(R) + '<details class="help moreres"><summary>More results: order of activation, co-contraction, ratios and iEMG</summary><div class="hb">' + morePart1 + morePart2 + '</div></details>';
   // quality
   const Q = quality(A.S);
   const nBad = Q.reduce((s, q) => s + q.items.filter((i) => i.lv !== 'info').length, 0);
@@ -151,7 +158,7 @@ function sec(n, title, what, how) {
 }
 function normHow(R) {
   const u = R.ni.unit, set = SET();
-  if (u === '%MVIC') return '%MVIC = envelope &divide; the muscle&rsquo;s MVIC reference &times; 100, where the reference is ' + (set.refMethod === 'win' ? 'the highest mean over ' + set.refWin + ' ms' : 'the highest value of the envelope') + ' across that muscle&rsquo;s MVIC files (see 1. Setup).';
+  if (u === '%MVIC') return '%MVIC = envelope &divide; the muscle&rsquo;s MVIC reference &times; 100, where the reference is ' + (set.refMethod === 'win' ? 'the highest mean over ' + set.refWin + ' ms' : 'the highest value of the envelope') + ' across that muscle&rsquo;s MVIC files (see Step 1 (Set up)).';
   if (u === '% ref') return '% ref = envelope &divide; the peak of the muscle&rsquo;s average ' + WW().one + ' in the reference trial(s) &times; 100 (Burden, 2010). Above 100% = more active than in the reference.';
   if (u === '% peak') return 'Each muscle is divided by its highest envelope across all task trials in this session &times; 100.';
   return 'Not normalised (µV). These cannot be compared between muscles or between people.';
@@ -170,7 +177,7 @@ export function qualHtml(Q) {
 
 function renderMvicResults(el, R) {
   const refs = A.fn.references(), t = A.S;
-  let h = '<p class="lead">This is an <strong>MVIC file</strong>: it sets 100% for ' + ((t.mvicFor || []).map((k) => esc(muscle(k).short)).join(', ') || '<span class="bad">no muscle yet (tick one in 1. Setup)</span>') + '.</p><table class="restab"><thead><tr><th>Muscle</th><th>Highest envelope here</th><th>Used as 100%?</th></tr></thead><tbody>';
+  let h = '<p class="lead">This is an <strong>MVIC file</strong>: it sets 100% for ' + ((t.mvicFor || []).map((k) => esc(muscle(k).short)).join(', ') || '<span class="bad">no muscle yet (tick one in Step 1 (Set up))</span>') + '.</p><table class="restab"><thead><tr><th>Muscle</th><th>Highest envelope here</th><th>Used as 100%?</th></tr></thead><tbody>';
   R.pr.ch.forEach((c) => {
     if (!(t.mvicFor || []).includes(c.key)) return;
     const r = refs[c.key], mine = r && r.all.find((x) => x.trial === t.id);
@@ -190,6 +197,12 @@ function wire(el, R, C, type) {
   if ($('wfEach')) $('wfEach').addEventListener('change', function () { A.wfEach = this.checked; if (wfChart) wfChart.render(); });
   if ($('cWf')) wfChart = new Chart($('cWf'), { height: (w) => Math.max(240, Math.min(340, w * 0.4)), draw: (ctx, w, h) => drawWf(ctx, w, h, R, C.wf, { onoff: C.avgOn }) });
   else wfChart = null;
+  if ($('seeSteps')) $('seeSteps').addEventListener('click', () => A.fn.showTab('steps'));
+  if ($('copyMeth')) $('copyMeth').addEventListener('click', function () {
+    const txt = $('methTxt').innerText;
+    const done = () => { this.textContent = 'Copied'; setTimeout(() => { this.textContent = 'Copy'; }, 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(txt).then(done, () => {}); else { const r = document.createRange(); r.selectNodeContents($('methTxt')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand('copy'); done(); }
+  });
   if ($('cAmp')) ampChart = new Chart($('cAmp'), { height: 200, draw: (ctx, w, h) => drawAmp(ctx, w, h, R, C) });
 }
 export function wfSnapshot() { return wfChart ? wfChart.snapshot(900, 420, 2) : null; }
@@ -298,3 +311,42 @@ export function resultRows(R, type, labels) {
 }
 export { trialLabel };
 const WW = W;
+
+
+// What happened to the raw signal, as one line, with a link to see each step on this file.
+function procStrip(R) {
+  const set = SET(), u = R.ni.unit;
+  const last = u === '%MVIC' ? '% of MVIC' : u === '% ref' ? '% of your reference trial' : u === '% peak' ? '% of the session peak' : 'left in µV';
+  const st = ['Raw EMG', 'Cleaned (' + set.bpLo + '&ndash;' + set.bpHi + ' Hz filter)', 'Flipped positive (rectified)', 'Smoothed (' + set.envFc + ' Hz envelope)', last];
+  return '<div class="procstrip"><span class="muted">What happened to your data:</span>' + st.map((x) => '<span class="ps">' + x + '</span>').join('<span class="arr">&rarr;</span>') + '<button type="button" class="btn small ghost" id="seeSteps" style="margin-left:auto">See each step on this file</button></div>';
+}
+
+// A methods paragraph built from the settings actually used, for the lab report.
+function muscleWords(k) {
+  let s = String(muscle(k).name || k).replace(/:.*$/, '').trim().toLowerCase();
+  s = s.replace(/^r\s+/, 'right ').replace(/^l\s+/, 'left ').replace(/^right\s*-\s*/, 'right ').replace(/^left\s*-\s*/, 'left ');
+  return s;
+}
+function listWords(a) { return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
+function methodsText(R) {
+  const set = SET(), w = WW(), u = R.ni.unit, t = A.S, ord = (n) => n + (n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th');
+  const ms = listWords(R.pr.ch.map((c) => muscleWords(c.key)));
+  const out = [];
+  out.push('Surface EMG of the ' + ms + ' was recorded at ' + R.fs.toFixed(0) + ' Hz using [EMG system, e.g. Delsys Trigno], with sensors placed following SENIAM guidelines [check your sites].');
+  out.push('Raw EMG was band-pass filtered (' + set.bpLo + '&ndash;' + set.bpHi + ' Hz, ' + ord(set.bpOrder) + '-order Butterworth, zero lag), full-wave rectified and low-pass filtered at ' + set.envFc + ' Hz (' + ord(set.envOrder) + '-order Butterworth, zero lag) to give a linear envelope.');
+  if (u === '%MVIC') out.push('Envelopes were normalised to ' + (set.refMethod === 'win' ? 'the highest ' + set.refWin + ' ms mean' : 'the peak envelope') + ' from each muscle&rsquo;s maximal voluntary isometric contraction (%MVIC).');
+  else if (u === '% ref') out.push('Envelopes were normalised to the peak of each muscle&rsquo;s average ' + w.one + ' in a reference trial [name it, e.g. preferred cadence] (% of reference).');
+  else if (u === '% peak') out.push('Envelopes were normalised to each muscle&rsquo;s highest value across the session&rsquo;s trials.');
+  else out.push('Envelopes were not normalised and are reported in µV.');
+  if (R.reps.length) {
+    const auto = (t.points || []).some((p) => p.type === 'rep0' && p.auto);
+    out.push((auto ? 'Each ' + w.one + ' was identified from the sensor&rsquo;s accelerometer signal and checked visually' : 'Each ' + w.one + ' was marked by hand') + ', and ' + R.reps.length + ' ' + (R.reps.length > 1 ? w.many : w.one) + ' were time-normalised to 101 points (0&ndash;100%) and averaged.');
+  }
+  if (R.autoOn) out.push('A muscle was classed as active when its envelope was above ' + (set.onMethod === 'rest' && R.rest ? 'the resting mean + ' + set.guideK + ' SD (Hodges and Bui, 1996)' : set.onPct + '% of the peak of its average ' + w.one) + ' for at least ' + set.onMinMs + ' ms.');
+  else out.push('Muscle onset and offset were identified by visual inspection.');
+  out.push('Data were processed in EMG Analysis (v' + VERSION + ').');
+  return out.join(' ');
+}
+function methodsHtml(R) {
+  return '<div class="methods"><div class="row tight" style="justify-content:space-between"><strong>Methods paragraph for your lab report</strong><button type="button" class="btn small ghost" id="copyMeth">Copy</button></div><p class="mtxt" id="methTxt">' + methodsText(R) + '</p><p class="muted small">Built from the settings used for this file. Fill in the parts in [square brackets] and reword it in your own style.</p></div>';
+}

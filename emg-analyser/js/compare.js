@@ -1,9 +1,9 @@
 // Compare trials: every task trial in the session, grouped by exercise (or participant), as a table,
 // a bar chart (like the lab MATLAB figure) and the average waveforms on top of each other.
-import { A, $, esc, muscle, muscleKeys, toCsv, download, trialLabel, SET, W } from './state.js?v=1.3.0';
-import { Chart, frame, axes, line } from './plot.js?v=1.3.0';
-import { analyse, curveBursts, burstTxt } from './emg.js?v=1.3.0';
-import { compute, resultRows, mean, sd, bothOn } from './results.js?v=1.3.0';
+import { A, $, esc, muscle, muscleKeys, toCsv, download, trialLabel, SET, W } from './state.js?v=1.4.0';
+import { Chart, frame, axes, line } from './plot.js?v=1.4.0';
+import { analyse, curveBursts, burstTxt } from './emg.js?v=1.4.0';
+import { compute, resultRows, mean, sd, bothOn } from './results.js?v=1.4.0';
 
 let barChart = null, wfChart = null;
 const f = (v, n) => (Number.isFinite(v) ? v.toFixed(n) : '&ndash;');
@@ -34,7 +34,7 @@ export function sessionData() {
 export function renderCompare() {
   const el = $('cmpBox');
   const D = sessionData();
-  if (!D.length) { el.innerHTML = '<p class="muted">Add task trials (and their MVICs) to compare them. Label each trial&rsquo;s <strong>Exercise</strong> in the Session table so they can be grouped.</p>'; return; }
+  if (!D.length) { el.innerHTML = '<p class="muted">Add task trials (and their MVICs) to compare them. Label each trial&rsquo;s <strong>Exercise</strong> in Your files so they can be grouped.</p>'; return; }
   const keys = muscleKeys().filter((k) => D.some((d) => d.per[k])), unit = D[0].unit, metric = A.cmpMetric || 'mean';
   const groups = []; D.forEach((d) => { if (!groups.includes(d.group)) groups.push(d.group); });
   let h = '<div class="row"><div><label for="cmpGroup">Group by</label><select id="cmpGroup">' + [['condition', 'Exercise or condition'], ['athlete', 'Participant'], ['both', 'Participant and condition'], ['none', 'No groups']].map(([v, l]) => '<option value="' + v + '"' + ((A.cmpGroup || 'condition') === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></div>'

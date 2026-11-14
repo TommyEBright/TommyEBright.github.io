@@ -3,8 +3,8 @@
 // sensor has tilted from where it started, a dynamometer's angle, or the EMG itself. Three choices find the
 // events in it: which signal, what to look for (a steady rhythm, out and back, or above or below a level),
 // and the limits. Each activity has a preset, and every event found can be checked and moved by hand.
-import { SET, muscle } from './state.js?v=1.3.0';
-import { butterSos, sosfiltfilt } from './dsp.js?v=1.3.0';
+import { SET, muscle } from './state.js?v=1.4.0';
+import { butterSos, sosfiltfilt } from './dsp.js?v=1.4.0';
 
 export const PRESETS = {
   run: { name: 'Running or walking', set: { signal: 'impact', mode: 'cycle', dir: 'above' } },

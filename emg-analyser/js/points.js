@@ -1,11 +1,11 @@
 // Tab 2: reps and phases. First, in plain words, how the reps and phases in this file are defined. Then the
 // two ways to make them: found automatically from a movement signal (events.js), or marked by hand. Then each
 // muscle's onset and offset, a rest period, markers, and your own windows between any two points.
-import { A, $, esc, persist, status, uid, muscle, POINT_COL, SET, W, ptName, PHASE_COLS, isCyclic } from './state.js?v=1.3.0';
-import { setView, cursorChanged } from './trace.js?v=1.3.0';
-import { pointLabel } from './emg.js?v=1.3.0';
-import { findSet, signalOptions, resolve, runFinder, finderLevel, describeFind, MODES, PRESETS } from './events.js?v=1.3.0';
-import { findIn } from './session.js?v=1.3.0';
+import { A, $, esc, persist, status, uid, muscle, POINT_COL, SET, W, ptName, PHASE_COLS, isCyclic } from './state.js?v=1.4.0';
+import { setView, cursorChanged } from './trace.js?v=1.4.0';
+import { pointLabel } from './emg.js?v=1.4.0';
+import { findSet, signalOptions, resolve, runFinder, finderLevel, describeFind, MODES, PRESETS } from './events.js?v=1.4.0';
+import { findIn } from './session.js?v=1.4.0';
 
 const HELP = {
   rep0: 'the moment the rep (or cycle) begins, e.g. the start of the lowering',
@@ -84,7 +84,7 @@ function finderHtml(R, S) {
   const sel = (id, list, cur) => '<select id="' + id + '" class="mini" style="width:auto;max-width:100%">' + list.map(([v, l]) => '<option value="' + esc(v) + '"' + (v === cur ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>';
   let h = '<h3>A. Find the ' + w.many + ' automatically</h3>';
   if (!opts.length) return h + '<p class="muted">This file has no signal to look in. Mark the ' + w.many + ' by hand below.</p>';
-  h += '<p style="margin:.2rem 0">Set up for <strong>' + PRESETS[f.preset].name.split(' (')[0] + '</strong> <span class="muted">(change this under &ldquo;What are you analysing?&rdquo; in the Session steps at the top).</span></p>'
+  h += '<p style="margin:.2rem 0">Set up for <strong>' + PRESETS[f.preset].name.split(' (')[0] + '</strong> <span class="muted">(change this under &ldquo;What are you analysing?&rdquo; in Your files at the top).</span></p>'
     + '<div class="tip">' + (S.found && S.found.n ? '' : '<p>' + (pre.info && pre.info.n ? '<strong>What it will do:</strong> ' + describeFind(pre.info, w) : (pre.why || 'Nothing found yet.')) + '</p>')
     + (!rs.usesAcc && /^(impact|tilt|mag|move|ax)/.test(f.signal) ? '<p class="warnTxt">This file has no accelerometer, so the ' + esc(pre.sig ? pre.sig.name : 'EMG') + ' is used instead.</p>' : '')
     + (f.signal === 'tilt' && rs.usesAcc ? '<p class="muted">Tilt only works if the sensor is on a part of the body that <strong>moves</strong> (e.g. the thigh in a squat). If its line on the movement lane is flat, choose another sensor or mark by hand.</p>' : '') + '</div>';
@@ -128,7 +128,7 @@ export function renderPoints() {
       + (R.pts.some((p) => p.pct !== undefined) ? '<button type="button" class="btn small ghost" id="pcClear">Remove these</button>' : '') + '<span class="muted small">' + (set.activity === 'gait' ? 'Toe-off is at about 35&ndash;40% of the stride when running and about 60% when walking (an estimate: mark it from video if it matters).' : '') + '</span></div>';
     const opts = R.pr.ch.map((c, k) => '<option value="' + k + '"' + (k === A.lane ? ' selected' : '') + '>' + esc(muscle(c.key).short) + '</option>').join('');
     h += '<details class="more"' + (R.autoOn ? '' : ' open') + '><summary>C. When each muscle switches on and off <span class="muted">(' + (R.autoOn ? 'found automatically: open this only to mark them yourself' : 'you are marking them by hand') + ')</span></summary>'
-      + '<p class="muted" style="margin:.2rem 0">This is separate from the phases: a <strong>phase</strong> is part of the movement, an <strong>onset</strong> is the moment a muscle&rsquo;s EMG rises. ' + (R.autoOn ? 'Onsets and offsets are found <strong>automatically</strong> at the moment (see <strong>3. Results</strong>; settings in Go deeper &rarr; <strong>On/off</strong>). Once you mark one by hand, the tool uses only the ones you mark.' : 'Delete every Onset and Offset to go back to finding them automatically.') + '</p>'
+      + '<p class="muted" style="margin:.2rem 0">This is separate from the phases: a <strong>phase</strong> is part of the movement, an <strong>onset</strong> is the moment a muscle&rsquo;s EMG rises. ' + (R.autoOn ? 'Onsets and offsets are found <strong>automatically</strong> at the moment (see <strong>Step 3 (Results)</strong>; settings in Go deeper &rarr; <strong>On/off</strong>). Once you mark one by hand, the tool uses only the ones you mark.' : 'Delete every Onset and Offset to go back to finding them automatically.') + '</p>'
       + '<div class="row tight"><label class="inline" for="ptLane" style="margin:0">Muscle</label><select id="ptLane" class="mini" style="width:auto">' + (A.lane < 0 ? '<option value="-1">Choose&hellip;</option>' : '') + opts + '</select>'
       + '<button type="button" class="btn small" data-pt="on" style="background:' + POINT_COL.on + '">Onset</button><button type="button" class="btn small" data-pt="off" style="background:' + POINT_COL.off + '">Offset</button></div>'
       + '<p class="muted" style="margin:.3rem 0"><strong>Onset:</strong> ' + HELP.on + '; <strong>offset:</strong> ' + HELP.off + '. Mark one onset and offset per muscle in each ' + w.one + '. Judging it by eye is the most accurate method there is (Hodges and Bui, 1996), but be consistent: zoom in to the same level each time and look for the first clear, lasting rise. Need help? Mark a rest period below and switch on <strong>Onset guide</strong> above the graph.</p></details>';
@@ -212,6 +212,6 @@ export function renderPoints() {
   if ($('wAdd')) $('wAdd').addEventListener('click', () => {
     const a = $('wA').value, b = $('wB').value; if (a === b) { status('Choose two different points.'); return; }
     S.wins = S.wins || []; S.wins.push({ id: uid(), a, b, name: $('wName').value.trim() || 'My window ' + (S.wins.length + 1) });
-    A.winType = 'own'; persist(); A.fn.refresh({ keepView: true }); status('Window added. Its results are in <strong>3. Results</strong> (choose <em>My windows</em>).');
+    A.winType = 'own'; persist(); A.fn.refresh({ keepView: true }); status('Window added. Its results are in <strong>Step 3 (Results)</strong> (choose <em>My windows</em>).');
   });
 }

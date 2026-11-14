@@ -1,9 +1,9 @@
 // The session: adding files, saying which are MVICs, labelling trials and moving between them.
-import { A, $, esc, persist, status, uid, muscle, muscleKeys, forgetSession, defaultSet, SET, W, isCyclic } from './state.js?v=1.3.0';
-import { findSet, runFinder, activityChanged, presetPhaseNames } from './events.js?v=1.3.0';
-import { parseText } from './parse.js?v=1.3.0';
-import { registerMuscles, guessMvicFor } from './setup.js?v=1.3.0';
-import { forget, proc, repWindows } from './emg.js?v=1.3.0';
+import { A, $, esc, persist, status, uid, muscle, muscleKeys, forgetSession, defaultSet, SET, W, isCyclic } from './state.js?v=1.4.0';
+import { findSet, runFinder, activityChanged, presetPhaseNames } from './events.js?v=1.4.0';
+import { parseText } from './parse.js?v=1.4.0';
+import { registerMuscles, guessMvicFor } from './setup.js?v=1.4.0';
+import { forget, proc, repWindows } from './emg.js?v=1.4.0';
 
 function readText(file) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsText(file); }); }
 
@@ -24,7 +24,7 @@ export async function addFiles(files) {
     if (isCyclic()) findAll(A.session.trials.slice(firstNew));
     A.fn.openTrial(firstNew);
     const nm = A.session.trials.slice(firstNew).filter((t) => t.role === 'mvic').length;
-    status('Added ' + added + ' file' + (added > 1 ? 's' : '') + (nm ? ' (' + nm + ' look like MVICs)' : '') + '. Check <strong>Type</strong> in the Session table: MVIC or Reference files set 100% for each muscle.');
+    status('Added ' + added + ' file' + (added > 1 ? 's' : '') + (nm ? ' (' + nm + ' look like MVICs)' : '') + '. Check <strong>Type</strong> in Your files: MVIC or Reference files set 100% for each muscle.');
   }
 }
 
@@ -97,7 +97,7 @@ function renderGuide() {
           : '<span class="muted">Set the <strong>Type</strong> of the reference file(s) to <strong>Reference</strong> in the table below (one for each muscle).</span>' + (covered ? '' : ' <span class="bad">Not every muscle has one yet.</span>') });
   } else {
     const has = keys.every((k) => T.some((t) => t.role === 'mvic' && (t.mvicFor || []).includes(k)));
-    steps.push({ ok: set.norm !== 'mvic' || has, title: 'What sets 100%?', body: set.norm === 'mvic' ? '<span class="muted">Set each MVIC file&rsquo;s <strong>Type</strong> to MVIC in the table below' + (has ? '.' : '; <span class="bad">not every muscle has one yet</span>.') + '</span>' : '<span class="muted">Change this in <strong>1. Setup</strong> &rarr; Normalise to.</span>' });
+    steps.push({ ok: set.norm !== 'mvic' || has, title: 'What sets 100%?', body: set.norm === 'mvic' ? '<span class="muted">Set each MVIC file&rsquo;s <strong>Type</strong> to MVIC in the table below' + (has ? '.' : '; <span class="bad">not every muscle has one yet</span>.') + '</span>' : '<span class="muted">Change this in <strong>Step 1 (Set up)</strong> &rarr; Normalise to.</span>' });
   }
   // 3 conditions
   const condOk = work.every((t) => t.labels.condition);
@@ -107,12 +107,9 @@ function renderGuide() {
   // 4 cycles
   const done = work.filter((t) => nCyc(t) >= 2).length;
   steps.push({ ok: work.length && done === work.length, title: 'Find the ' + w.many + ' in every file',
-    body: '<span><strong>' + done + ' of ' + work.length + '</strong> files done.</span><button type="button" class="btn small accent" id="gFind">Find ' + w.many + ' in every file</button><span class="muted small">Then open each file and check them on the graph in <strong>2. Reps and phases</strong> (you can also mark them by hand there).</span>' });
-  // 5 results
-  const ready = steps.every((x) => x.ok);
-  steps.push({ ok: false, title: 'Look at the results', body: '<button type="button" class="btn small' + (ready ? ' accent' : '') + '" id="gCmp">Compare every trial</button><span class="muted small">or open one file and use <strong>3. Results</strong>.</span>' });
+    body: '<span><strong>' + done + ' of ' + work.length + '</strong> files done.</span><button type="button" class="btn small accent" id="gFind">Find ' + w.many + ' in every file</button><span class="muted small">Then open each file and check them on the graph in <strong>Step 2 (Reps and phases)</strong> (you can also mark them by hand there).</span>' });
   let first = steps.findIndex((x) => !x.ok);
-  el.innerHTML = '<ol class="guide">' + steps.map((x, j) => '<li class="' + (x.ok ? 'ok' : j === first ? 'now' : '') + '"><span class="gn">' + (x.ok ? '&#10003;' : j + 1) + '</span><div><p class="gt">' + x.title + '</p><div class="gb">' + x.body + '</div></div></li>').join('') + '</ol>';
+  el.innerHTML = '<p class="lab" style="margin:.2rem 0 .3rem">Checklist before you start' + (steps.every((x) => x.ok) ? ': <span style="color:var(--accent)">all done, carry on with Step 1 below</span>' : '') + '</p><ol class="guide">' + steps.map((x, j) => '<li class="' + (x.ok ? 'ok' : j === first ? 'now' : '') + '"><span class="gn">' + (x.ok ? '&#10003;' : '') + '</span><div><p class="gt">' + x.title + '</p><div class="gb">' + x.body + '</div></div></li>').join('') + '</ol>';
   const re = (msg) => { persist(); forget(); A.fn.refresh({ keepView: true, keepStatus: !!msg }); if (msg) status(msg); };
   $('gAct').addEventListener('change', function () {
     set.activity = this.value;
@@ -137,9 +134,8 @@ function renderGuide() {
   if ($('gFind')) $('gFind').addEventListener('click', () => {
     const n = findAll(work);
     A.show.acc = true; A.show.reps = true;
-    re(n ? 'Found the ' + W().many + ' in ' + n + ' file' + (n > 1 ? 's' : '') + '. Open each file and check them on the graph (files with ' + W().many + ' marked by hand were left alone).' : '<span class="bad">No ' + W().many + ' found. Open a file and look at <strong>2. Reps and phases</strong>: change how they are found, or mark them by hand.</span>');
+    re(n ? 'Found the ' + W().many + ' in ' + n + ' file' + (n > 1 ? 's' : '') + '. Open each file and check them on the graph (files with ' + W().many + ' marked by hand were left alone).' : '<span class="bad">No ' + W().many + ' found. Open a file and look at <strong>Step 2 (Reps and phases)</strong>: change how they are found, or mark them by hand.</span>');
   });
-  $('gCmp').addEventListener('click', () => A.fn.showTab('compare'));
 }
 
 export function renderSession() {
@@ -155,7 +151,7 @@ export function renderSession() {
     h += '<tr class="' + (cur ? 'current' : '') + (mv ? ' mvrow' : '') + '"><td>' + (k + 1) + '</td><td class="small">' + esc(t.name) + '</td>'
       + '<td><select class="mini" data-role="' + k + '" style="width:auto">' + [['task', 'Task'], ['ref', 'Reference'], ['mvic', 'MVIC']].map(([v, l]) => '<option value="' + v + '"' + ((t.role || 'task') === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></td>'
       + '<td><input type="text" class="mini" data-k="' + k + '" data-f="athlete" value="' + esc(t.labels.athlete || '') + '" aria-label="participant"></td>'
-      + (mv ? '<td colspan="2" class="small">for ' + ((t.mvicFor || []).map((m) => '<strong>' + esc(muscle(m).short) + '</strong>').join(', ') || '<span class="bad">choose in 1. Setup</span>') + '</td>'
+      + (mv ? '<td colspan="2" class="small">for ' + ((t.mvicFor || []).map((m) => '<strong>' + esc(muscle(m).short) + '</strong>').join(', ') || '<span class="bad">choose in Step 1 (Set up)</span>') + '</td>'
         : ['condition', 'trial'].map((f) => '<td><input type="text" class="mini" data-k="' + k + '" data-f="' + f + '" value="' + esc(t.labels[f] || '') + '" aria-label="' + f + '"' + (f === 'condition' ? ' placeholder="e.g. RDL, 9 km/h"' : ' style="min-width:3rem;width:3.5rem"') + '></td>').join(''))
       + '<td class="small" id="sesRes' + k + '">' + (t._sum || '') + '</td><td class="nowrap">'
       + (cur ? '<span class="muted small">open</span>' : '<button class="btn small" type="button" data-open="' + k + '">Open</button>')

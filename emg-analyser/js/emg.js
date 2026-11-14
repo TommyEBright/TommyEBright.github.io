@@ -2,8 +2,8 @@
 // Every EMG channel: raw -> band-pass (zero lag) -> full-wave rectify -> low-pass (zero lag) = linear envelope.
 // The envelope is then normalised to the muscle's MVIC (or the session's highest task peak, or left in µV).
 // Windows (reps, phases, your own) come from the points marked by hand, and every result is worked out in them.
-import { A, SET, muscle, muscleKeys, W, ptName } from './state.js?v=1.3.0';
-import { processEmg, butterSos, sosfiltfilt, movingMean, welch, specStats, powerBelow, humRatio, normalise } from './dsp.js?v=1.3.0';
+import { A, SET, muscle, muscleKeys, W, ptName } from './state.js?v=1.4.0';
+import { processEmg, butterSos, sosfiltfilt, movingMean, welch, specStats, powerBelow, humRatio, normalise } from './dsp.js?v=1.4.0';
 
 // ---------- processing (cached) ----------
 const cache = new Map();
@@ -15,7 +15,7 @@ export function proc(t) {
   const key = t.id, s = sig(t), hit = cache.get(key);
   if (hit && hit.sig === s) return hit;
   const set = SET(), fs = trialFs(t);
-  if (!(fs > 0)) return { ok: false, error: 'The sample rate is unknown. Type it in <strong>1. Setup</strong>.' };
+  if (!(fs > 0)) return { ok: false, error: 'The sample rate is unknown. Type it in <strong>Step 1 (Set up)</strong>.' };
   const sc = t.scale || 1;
   const ch = t.P.emg.map((e) => {
     const raw = sc === 1 ? e.y : Float32Array.from(e.y, (v) => v * sc);
@@ -403,10 +403,10 @@ export function quality(t) {
     const sorted = Float64Array.from(c.env.subarray(lead, n - trail)).sort();
     const floor = sorted.length ? sorted[Math.floor(sorted.length * 0.05)] * 1e6 : 0;
     if (t.role !== 'mvic' && floor > 15) items.push({ lv: 'warn', txt: 'The envelope never goes quiet (lowest 5% is above ' + floor.toFixed(0) + ' µV). There may be no rest in this recording, or the baseline is noisy. A resting baseline should be only a few µV.' });
-    if (set.norm === 'ref' && !(div[c.key] > 0) && t.role !== 'mvic') items.push({ lv: 'bad', txt: 'No reference trial for this muscle. Set a trial&rsquo;s Type to <strong>Reference</strong> in the Session table.' });
+    if (set.norm === 'ref' && !(div[c.key] > 0) && t.role !== 'mvic') items.push({ lv: 'bad', txt: 'No reference trial for this muscle. Set a trial&rsquo;s Type to <strong>Reference</strong> in Your files.' });
     if (set.norm === 'ref' && div[c.key] > 0 && t.role === 'task') { let pk = 0; for (let i = 0; i < n; i++) if (c.env[i] > pk) pk = c.env[i]; const p = pk / div[c.key] * 100; if (p > 150) items.push({ lv: 'info', txt: 'Peaks at ' + p.toFixed(0) + '% of the reference. 100% is the peak of the muscle&rsquo;s <em>average</em> ' + W().one + ' in the reference trial, so single ' + W().many + ' above it are normal, and a harder trial should be higher. If it is several times higher, check that the reference trial is a sensible one.' }); }
     if (set.norm === 'mvic' && t.role !== 'mvic') {
-      if (!(div[c.key] > 0)) items.push({ lv: 'bad', txt: 'No MVIC file for this muscle, so it cannot be shown as %MVIC. Add its MVIC file and tick this muscle in <strong>1. Setup</strong>.' });
+      if (!(div[c.key] > 0)) items.push({ lv: 'bad', txt: 'No MVIC file for this muscle, so it cannot be shown as %MVIC. Add its MVIC file and tick this muscle in <strong>Step 1 (Set up)</strong>.' });
       else { let pk = 0; for (let i = 0; i < n; i++) if (c.env[i] > pk) pk = c.env[i]; const p = pk / div[c.key] * 100; if (p > 100) items.push({ lv: 'info', txt: 'Peaks at ' + p.toFixed(0) + '% MVIC. Above 100% is common in fast or eccentric work, but if it is well above, the MVIC may not have been a true maximum.' }); }
     }
     out.push({ key: c.key, name, items });

@@ -1,10 +1,10 @@
 // The main graph: one lane per muscle (the normalised linear envelope, with the raw EMG behind it if you
 // want), an accelerometer lane, the reps, the points you marked (drag their labels to move them), a cursor
 // you can step one sample at a time, zoom, and the overview strip underneath.
-import { A, $, esc, persist, muscle, POINT_COL, SET, W, PHASE_COLS } from './state.js?v=1.3.0';
-import { moveSignal, finderLevel } from './events.js?v=1.3.0';
-import { Chart, frame, axes, line, band, vline, hline, dot, halo, niceStep, numTxt } from './plot.js?v=1.3.0';
-import { pointLabel } from './emg.js?v=1.3.0';
+import { A, $, esc, persist, muscle, POINT_COL, SET, W, PHASE_COLS } from './state.js?v=1.4.0';
+import { moveSignal, finderLevel } from './events.js?v=1.4.0';
+import { Chart, frame, axes, line, band, vline, hline, dot, halo, niceStep, numTxt } from './plot.js?v=1.4.0';
+import { pointLabel } from './emg.js?v=1.4.0';
 
 let main = null, over = null, drag = null;
 const SHORT = { rep0: 'Start', rep1: 'End', phase: 'Phase', on: 'On', off: 'Off', rest0: 'Rest', rest1: 'Rest end', mark: 'Mark', hold0: 'MVIC start', hold1: 'MVIC end' };
@@ -254,7 +254,7 @@ function overMove(p, fr) {
 export function readout() {
   const el = $('readout'); const R = A.R; if (!el || !R || !R.ok) return;
   const i = A.cursor;
-  if (i < 0) { el.className = 'readout idle'; el.innerHTML = 'Hover over the graph to read the EMG. <strong>Click</strong> a muscle&rsquo;s lane to fix the cursor (and choose that muscle), then step one sample at a time with <kbd>&larr;</kbd> <kbd>&rarr;</kbd> (<kbd>Shift</kbd> for ten) and press a button in <strong>2. Reps and phases</strong>.'; return; }
+  if (i < 0) { el.className = 'readout idle'; el.innerHTML = 'Hover over the graph to read the EMG. <strong>Click</strong> a muscle&rsquo;s lane to fix the cursor (and choose that muscle), then step one sample at a time with <kbd>&larr;</kbd> <kbd>&rarr;</kbd> (<kbd>Shift</kbd> for ten) and press a button in <strong>Step 2 (Reps and phases)</strong>.'; return; }
   el.className = 'readout';
   const cell = (lab, v, col) => '<div><span' + (col ? ' style="color:' + col + '"' : '') + '>' + lab + '</span><b>' + v + '</b></div>';
   let h = '<div class="nums">' + cell('Time', R.pr.t[i].toFixed(3) + ' s') + cell('Sample', String(i));

@@ -1,6 +1,6 @@
 // Shared state and small helpers.
 // The session holds every file: MVIC files (to normalise each muscle) and task trials (the movements).
-export const VERSION = '1.3.0';
+export const VERSION = '1.4.0';
 export const APP = 'EMG Analysis';
 export const MUSCLE_COLS = ['#1d4ed8', '#be185d', '#0f766e', '#d97706', '#7c3aed', '#dc2626', '#0891b2', '#65a30d'];
 export const POINT_COL = { rep0: '#15803d', rep1: '#b91c1c', phase: '#7c3aed', on: '#0f766e', off: '#c2410c', rest0: '#64748b', rest1: '#64748b', mark: '#2563eb', hold0: '#15803d', hold1: '#b91c1c' };

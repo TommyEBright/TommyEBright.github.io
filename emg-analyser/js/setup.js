@@ -1,8 +1,8 @@
 // Tab 1: what the file is (an MVIC or a task trial), the muscles, normalisation and the processing settings.
-import { A, $, esc, persist, status, muscle, muscleKeys, SET, defaultSet, MUSCLE_COLS, W } from './state.js?v=1.3.0';
-import { references, refPeaks, forget, trialFs } from './emg.js?v=1.3.0';
-import { findAll } from './session.js?v=1.3.0';
-import { activityChanged, presetPhaseNames } from './events.js?v=1.3.0';
+import { A, $, esc, persist, status, muscle, muscleKeys, SET, defaultSet, MUSCLE_COLS, W } from './state.js?v=1.4.0';
+import { references, refPeaks, forget, trialFs } from './emg.js?v=1.4.0';
+import { findAll } from './session.js?v=1.4.0';
+import { activityChanged, presetPhaseNames } from './events.js?v=1.4.0';
 
 export function renderSetup() {
   const el = $('setupBox'); const t = A.S;
@@ -16,7 +16,7 @@ export function renderSetup() {
     h += '<label>This MVIC is for</label><div class="chks">' + keys.map((k) => '<label class="inline"><input type="checkbox" data-mv="' + esc(k) + '"' + ((t.mvicFor || []).includes(k) ? ' checked' : '') + '> ' + esc(muscle(k).short) + '</label>').join('') + '</div>'
       + '<p class="muted" style="margin:.2rem 0">Tick only the muscle(s) this test was <em>for</em>. Other sensors record during the test too, but they are not at their maximum.</p>';
   } else {
-    h += '<p class="muted" style="margin:.25rem 0 0">Label it in the Session table above (participant, exercise or condition, and trial number) so Compare can group it.' + (t.role === 'ref' ? ' A reference trial is analysed like any other trial, and sits at 100% in Compare.' : '') + '</p>';
+    h += '<p class="muted" style="margin:.25rem 0 0">Label it in Your files above (participant, exercise or condition, and trial number) so Compare can group it.' + (t.role === 'ref' ? ' A reference trial is analysed like any other trial, and sits at 100% in Compare.' : '') + '</p>';
   }
   h += '<h3>Normalise to</h3><select id="norm">' + [['mvic', 'MVIC (% of a maximal voluntary isometric contraction)'], ['ref', 'A reference trial (% of its average ' + W().one + '; Burden, 2010)'], ['peak', 'The highest value in this session&rsquo;s task trials (%)'], ['none', 'Nothing: leave it in µV']].map(([v, l]) => '<option value="' + v + '"' + (set.norm === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>';
   h += '<p class="muted" style="margin:.25rem 0 0">' + (set.norm === 'mvic' ? 'The usual choice for gym exercises. Raw EMG (µV) depends on the skin, the fat under it and exactly where the sensor is, so it cannot be compared between muscles, people or days. Dividing by each muscle&rsquo;s MVIC fixes that (Kamen and Gabriel, 2010).' : set.norm === 'ref' ? 'For running, walking and cycling, where MVICs are hard to get. Set one trial&rsquo;s Type to <strong>Reference</strong> (e.g. 9 km/h, or preferred speed). 100% = the peak of each muscle&rsquo;s average ' + W().one + ' in that trial, so another trial above 100% means the muscle worked harder than in the reference. Dynamic references like this are more reliable than MVICs for gait (Burden, 2010), but they cannot be compared between people on how hard they worked.' : set.norm === 'peak' ? 'Use when there are no MVICs (e.g. people who cannot give a true maximum). Muscles and trials in this session can be compared with each other, but not with other studies, and not between people on how hard they worked.' : 'Only for looking at one muscle in one session (e.g. timing). Do not compare µV between muscles or people.') + '</p>';
@@ -37,7 +37,7 @@ export function renderSetup() {
   });
   h += '</tbody></table>';
   if (set.norm === 'mvic' && muscleKeys().some((k) => !refs[k])) h += '<p class="muted">Add each muscle&rsquo;s MVIC file (<strong>Add files</strong>), open it and set <em>What is this file?</em> to MVIC.</p>';
-  if (set.norm === 'ref' && muscleKeys().some((k) => !refs[k])) h += '<p class="muted">Set the Type of the reference trial(s) to <strong>Reference</strong> in the Session table. Every muscle needs one.</p>';
+  if (set.norm === 'ref' && muscleKeys().some((k) => !refs[k])) h += '<p class="muted">Set the Type of the reference trial(s) to <strong>Reference</strong> in Your files. Every muscle needs one.</p>';
   h += '</div></div>';
   // processing
   h += '<details class="more"><summary>Processing: band-pass ' + set.bpLo + '&ndash;' + set.bpHi + ' Hz, rectify, low-pass ' + set.envFc + ' Hz <span class="muted">(change only if you know why)</span></summary>'
@@ -86,12 +86,12 @@ export function renderSetup() {
 }
 const ACTS = [['reps', 'A gym exercise (reps found from how far the sensor tilts)'], ['gait', 'Running or walking (strides found from foot contacts)'], ['cycling', 'Cycling (pedal cycles found from the accelerometer)'], ['jump', 'Jumping (flight found from the accelerometer)'], ['iso', 'Isometric holds (found from the EMG itself)'], ['open', 'Something else (you choose how reps are found)']];
 const ACT_HELP = {
-  jump: 'In flight the body is in free fall, so the accelerometer reads close to 0 g. <strong>2. Reps and phases</strong> finds each flight, and a jump runs from 1 s before take-off to 0.5 s after landing (change these there). Check them on the graph.',
-  iso: 'A hold is each stretch where the EMG is above a level. <strong>2. Reps and phases</strong> finds them for you to check, or mark the start and end of each hold by hand.',
-  reps: 'A rep is found each time the sensor tilts away from its starting position and comes back (e.g. the thigh in a squat). <strong>2. Reps and phases</strong> finds them for you to check, or you can mark them by hand. Normalise to MVICs if you have them.',
-  gait: 'Each stride runs from one foot strike to the next on the same leg. <strong>2. Reps and phases</strong> finds the foot strikes from the sensor&rsquo;s accelerometer for you to check. No MVIC needed: normalise to a reference trial.',
-  cycling: 'Each cycle runs from one peak of the thigh sensor&rsquo;s movement to the next. <strong>2. Reps and phases</strong> finds them from the accelerometer for you to check, or mark them by hand (e.g. top dead centre from video).',
-  open: 'Any other data. In <strong>2. Reps and phases</strong>, choose which signal to look in and what to look for, mark reps or cycles by hand, add your own windows between any two points, or use the whole trial.'
+  jump: 'In flight the body is in free fall, so the accelerometer reads close to 0 g. <strong>Step 2 (Reps and phases)</strong> finds each flight, and a jump runs from 1 s before take-off to 0.5 s after landing (change these there). Check them on the graph.',
+  iso: 'A hold is each stretch where the EMG is above a level. <strong>Step 2 (Reps and phases)</strong> finds them for you to check, or mark the start and end of each hold by hand.',
+  reps: 'A rep is found each time the sensor tilts away from its starting position and comes back (e.g. the thigh in a squat). <strong>Step 2 (Reps and phases)</strong> finds them for you to check, or you can mark them by hand. Normalise to MVICs if you have them.',
+  gait: 'Each stride runs from one foot strike to the next on the same leg. <strong>Step 2 (Reps and phases)</strong> finds the foot strikes from the sensor&rsquo;s accelerometer for you to check. No MVIC needed: normalise to a reference trial.',
+  cycling: 'Each cycle runs from one peak of the thigh sensor&rsquo;s movement to the next. <strong>Step 2 (Reps and phases)</strong> finds them from the accelerometer for you to check, or mark them by hand (e.g. top dead centre from video).',
+  open: 'Any other data. In <strong>Step 2 (Reps and phases)</strong>, choose which signal to look in and what to look for, mark reps or cycles by hand, add your own windows between any two points, or use the whole trial.'
 };
 function after(msg) { persist(); A.fn.refresh({ keepView: true, keepStatus: !!msg }); if (msg) status(msg); }
 
