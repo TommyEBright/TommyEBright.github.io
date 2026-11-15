@@ -936,7 +936,7 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
       </div>
     </div>
 
-    <!-- CPET %VO₂max row — shown only when CPET data is loaded -->
+    <!-- %VO₂max row — shown when stage V̇O₂, CPET data or an entered V̇O₂max is available -->
     <div class="metrics-row" id="cpetMetricsRow" style="display:none;grid-template-columns:repeat(4,1fr);margin-bottom:16px;">
       <div class="metric-card mc-cpet">
         <div class="mc-label">LT1 · %V̇O₂max</div>
@@ -951,7 +951,7 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
         <div class="mc-method" id="cpet-lt2-note"></div>
       </div>
       <div class="metric-card mc-cpet">
-        <div class="mc-label">V̇O₂max · CPET</div>
+        <div class="mc-label" id="cpet-vo2max-label">V̇O₂max · CPET</div>
         <div class="mc-value" id="cpet-vo2max-val">—</div>
         <div class="mc-sub" id="cpet-vo2max-sub" style="font-size:11px;"></div>
         <div class="mc-method" id="cpet-vo2max-note"></div>
@@ -1565,8 +1565,12 @@ function clearAll(){
 
 function loadDemo(){
   clearAll();
-  [[100,1.0,112,8],[150,1.1,131,9],[175,1.3,143,10],[200,1.6,154,12],
-   [225,2.2,163,13],[250,3.1,172,15],[275,4.8,180,17],[300,7.9,188,19]].forEach(([i,l,h,r])=>addRow(i,l,h,r));
+  // Same athlete as the CPET demo: 75 kg, V̇O₂max 4500 ml/min (60 ml/kg/min). Stage V̇O₂/V̇CO₂ are end-of-stage steady-state values.
+  [[100,1.0,112,8,1520,1290],[150,1.1,131,9,2050,1785],[175,1.3,143,10,2320,2040],[200,1.6,154,12,2600,2340],
+   [225,2.2,163,13,2880,2650],[250,3.1,172,15,3180,3020],[275,4.8,180,17,3520,3450],[300,7.9,188,19,3950,4190]]
+    .forEach(([i,l,h,r,v,c])=>addRow(i,l,h,r,v,c,(c/v).toFixed(2)));
+  if(!$('bodyMass').value) $('bodyMass').value=75;
+  if(!$('vo2max').value) $('vo2max').value=60;
 }
 
 function toggleCustomUnit(){
@@ -2742,11 +2746,9 @@ function exportDossier(){
   const cpetVM   = hasCPET ? cpetState.vo2max : null;
   const cpetBM   = parseFloat($('bodyMass').value) || null;
   const cpetVMkg = (cpetVM && cpetBM) ? cpetVM / cpetBM : null;
-  const cpetHasI = hasCPET && cpetState.cols && cpetState.cols.intensity >= 0;
-  const cpetLt1VO2 = (hasCPET && lt1) ? (cpetHasI ? cpetInterpByIntensity(lt1.x) : cpetState.vt1VO2) : null;
-  const cpetLt2VO2 = (hasCPET && lt2) ? (cpetHasI ? cpetInterpByIntensity(lt2.x) : cpetState.vt2VO2) : null;
-  const cpetLt1Pct = (cpetLt1VO2 != null && cpetVM) ? cpetLt1VO2 / cpetVM * 100 : null;
-  const cpetLt2Pct = (cpetLt2VO2 != null && cpetVM) ? cpetLt2VO2 / cpetVM * 100 : null;
+  const vctx = vo2Context(lt1, lt2);
+  const cpetLt1VO2 = vctx?.lt1?.v ?? null, cpetLt2VO2 = vctx?.lt2?.v ?? null;
+  const cpetLt1Pct = vctx?.lt1?.pct ?? null, cpetLt2Pct = vctx?.lt2?.pct ?? null;
 
   // Sanitise text so default Helvetica encoding renders correctly
   const S = (s)=> String(s)
@@ -2895,12 +2897,12 @@ function exportDossier(){
     if (cpetLt1Pct != null) cpetRows.push([
       'LT1 @ VO2max',
       `${cpetLt1Pct.toFixed(1)}%   (${Math.round(cpetLt1VO2).toLocaleString()} ml/min)`,
-      cpetHasI ? `Interpolated at ${lt1.x.toFixed(0)} ${unit}` : 'From VT1 time-point'
+      S(vctx.lt1.src)
     ]);
     if (cpetLt2Pct != null) cpetRows.push([
       'LT2 @ VO2max',
       `${cpetLt2Pct.toFixed(1)}%   (${Math.round(cpetLt2VO2).toLocaleString()} ml/min)`,
-      cpetHasI ? `Interpolated at ${lt2.x.toFixed(0)} ${unit}` : 'From VT2 time-point'
+      S(vctx.lt2.src)
     ]);
     if (cpetState.vt1Time != null) {
       const d1 = cpetState.vt1Intensity!=null && lt1 ? ` (${cpetState.vt1Intensity-lt1.x>0?'+':''}${(cpetState.vt1Intensity-lt1.x).toFixed(0)} ${unit} vs LT1)` : '';
@@ -3563,27 +3565,32 @@ function renderAgreementBar(results,lt1,lt2){
     return mean>0?(std/mean)*100:null;
   };
 
-  const lt1Methods=['loglog','obla20','obla25','moddmax','ltp1'];
-  const lt2Methods=['obla35','obla40','dmax','expdmax','ltp2','logpolymoddmax','logexpmoddmax'];
-  const lt1Vals=results.filter(r=>lt1Methods.includes(r.id)&&r.threshX!=null).map(r=>r.threshX);
-  const lt2Vals=results.filter(r=>lt2Methods.includes(r.id)&&r.threshX!=null).map(r=>r.threshX);
+  // Same LT1-type / LT2-type method sets as the "Method range" on the metric cards
+  const vals=ids=>results.filter(r=>ids.has(r.id)&&r.threshX!=null).map(r=>r.threshX);
+  const lt1Vals=vals(LT1_IDS), lt2Vals=vals(LT2_IDS);
+  const unit=lastAnalysis?.unit||'';
 
   const cv1=calcCV(lt1Vals), cv2=calcCV(lt2Vals);
+  // Score: 100 = all methods identical; each 1% of CV costs 4 points (CV ≥ 25% → 0)
   const score=(cv)=>cv==null?null:Math.max(0,Math.min(100,100-cv*4));
   const s1=score(cv1), s2=score(cv2);
   const agrColor=(s)=>s==null?'#64748B':s>=75?'#10B981':s>=50?'#F59E0B':'#EF4444';
-  const agrLabel=(s)=>s==null?'N/A':s>=75?'High':'Moderate';
+  const agrLabel=(s)=>s==null?'N/A':s>=75?'High':s>=50?'Moderate':'Low';
+  const row=(lab,col,s,cv,v)=>s==null?'':`
+    <div style="display:flex;align-items:center;gap:10px;width:100%;flex-wrap:wrap;">
+      <span style="font-size:11px;color:${col};width:26px;font-weight:700">${lab}</span>
+      <div class="agr-track"><div class="agr-fill" style="width:${s}%;background:${agrColor(s)}"></div></div>
+      <span class="agr-val" style="color:${agrColor(s)}">${s.toFixed(0)}%</span>
+      <span class="agr-desc">${agrLabel(s)} agreement · CV ${cv.toFixed(1)}% across ${v.length} methods (${Math.min(...v).toFixed(0)}–${Math.max(...v).toFixed(0)} ${unit})</span>
+    </div>`;
 
+  bar.style.flexDirection='column';
+  bar.style.alignItems='flex-start';
   bar.innerHTML=`
-    <span class="agr-label">Method Agreement</span>
-    ${s1!=null?`<span style="font-size:11px;color:var(--lt1)">LT1</span>
-    <div class="agr-track"><div class="agr-fill" style="width:${s1}%;background:${agrColor(s1)}"></div></div>
-    <span class="agr-val" style="color:${agrColor(s1)}">${s1.toFixed(0)}%</span>
-    <span class="agr-desc">${agrLabel(s1)} agreement${cv1!=null?' (CV '+cv1.toFixed(1)+'%)':''}</span>`:''}
-    ${s2!=null?`<span style="font-size:11px;color:var(--lt2);margin-left:8px">LT2</span>
-    <div class="agr-track"><div class="agr-fill" style="width:${s2}%;background:${agrColor(s2)}"></div></div>
-    <span class="agr-val" style="color:${agrColor(s2)}">${s2.toFixed(0)}%</span>
-    <span class="agr-desc">${agrLabel(s2)} agreement${cv2!=null?' (CV '+cv2.toFixed(1)+'%)':''}</span>`:''}
+    <span class="agr-label" title="How closely the different threshold methods agree with each other">Method Agreement</span>
+    ${row('LT1','var(--lt1)',s1,cv1,lt1Vals)}
+    ${row('LT2','var(--lt2)',s2,cv2,lt2Vals)}
+    <span style="font-size:10px;color:var(--muted);line-height:1.5;">How closely the methods in each group land on the same intensity. Low agreement means your choice of method matters a lot for this athlete — check the curve and the quality checks before trusting a single number.</span>
   `;
 }
 
@@ -4384,14 +4391,14 @@ function toggleCPET(){
 function cpetUpload(){$('cpetFile').click();}
 
 function cpetClear(){
-  Object.assign(cpetState,{data:null,vo2max:null,vo2maxKg:null,cols:{},
+  Object.assign(cpetState,{data:null,vo2max:null,vo2maxKg:null,cols:{},relative:false,ramp:false,
     vt1Time:null,vt2Time:null,vt1Intensity:null,vt2Intensity:null,vt1VO2:null,vt2VO2:null});
   $('cpetStatus').style.display='none';
   $('cpetClearBtn').style.display='none';
   $('cpetMetricsRow').style.display='none';
   $('cpetVTResult').style.display='none';
   $('cpetAlignCard').style.display='none';
-  if(lastAnalysis){const {lt1,lt2}=getConsensusData();renderChart(lt1,lt2);}
+  if(lastAnalysis){const {lt1,lt2}=getConsensusData();renderChart(lt1,lt2);renderCPETMetrics(lt1,lt2);}
 }
 
 function cpetHandleFile(e){
@@ -4423,64 +4430,118 @@ function cpetLoadDemo(){
   parseCPETCSV(rows.join('\n'));
 }
 
+function cpetParseTime(s){
+  s=String(s??'').trim();
+  if(!s) return null;
+  if(s.includes(':')){
+    const p=s.split(':').map(Number);
+    return p.some(isNaN)?null:p.reduce((a,v)=>a*60+v,0);
+  }
+  const v=parseFloat(s); return isNaN(v)?null:v;
+}
+
+function cpetFail(msg){
+  cpetClear();
+  $('cpetStatus').style.display='';
+  $('cpetColMap').innerHTML=`<span class="cpet-col-chip miss">⚠ ${msg}</span>`;
+  $('cpetStats').innerHTML='';
+}
+
 function parseCPETCSV(text){
-  const lines=text.trim().split('\n').filter(l=>l.trim());
-  if(lines.length<3){alert('CSV is too short. Need header + at least 2 data rows.');return;}
+  const lines=String(text).replace(/^﻿/,'').split(/\r?\n/).filter(l=>l.trim());
+  const norm=h=>h.trim().replace(/^"|"$/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
 
-  // Normalise headers: lowercase, alphanumeric only
-  const raw=lines[0].split(/[,\t]/);
-  const headers=raw.map(h=>h.trim().toLowerCase().replace(/[^a-z0-9]/g,''));
+  // Header row = first line (allowing metadata above it) that contains a V̇O₂ column
+  let hi=-1, delim=',';
+  for(let i=0;i<Math.min(60,lines.length);i++){
+    const d=[';','\t',','].reduce((best,c)=>lines[i].split(c).length>lines[i].split(best).length?c:best,',');
+    if(lines[i].split(d).map(norm).some(h=>/^vo2/.test(h))){hi=i;delim=d;break;}
+  }
+  if(hi<0) return cpetFail('Could not find a header row with a V̇O₂ column — check the CSV headers');
+  const headers=lines[hi].split(delim).map(norm);
+  const pick=test=>headers.findIndex(test);
 
-  const find=(...keys)=>{
-    for(const k of keys){
-      const i=headers.findIndex(h=>h===k||h.startsWith(k)||h.includes(k));
-      if(i>=0) return i;
-    }
-    return -1;
-  };
-
+  const vo2Abs=pick(h=>/^vo2/.test(h)&&!/kg/.test(h));
+  const vo2Rel=pick(h=>/^vo2/.test(h)&&/kg/.test(h));
+  let timeCol=pick(h=>/^(t|ts|tsec|time|times|timesec|elapsed|elapsedtime|sec|seconds)$/.test(h));
+  if(timeCol<0) timeCol=pick(h=>/^(time|elapsed)/.test(h));
   const cols={
-    time:     find('time','t','sec','seconds'),
-    intensity:find('watt','power','load','speed','intensity','kmh','mph'),
-    vo2:      find('vo2','oxygen','o2uptake'),
-    vco2:     find('vco2','co2output','co2prod'),
-    ve:       find('vent','ve','minutevent'),
-    peto2:    find('peto2','po2et','eto2'),
-    petco2:   find('petco2','pco2et','eco2'),
+    time:timeCol,
+    intensity:pick(h=>/^(w|wr|watt|power|load|work|speed|velocity|intensity|kmh|mph)/.test(h)&&!/^(weight|workout)/.test(h)),
+    vo2:vo2Abs>=0?vo2Abs:vo2Rel,
+    vco2:pick(h=>/^vco2/.test(h)&&!/kg/.test(h)),
+    ve:pick(h=>/^(ve|vebtps|vestpd|velmin|vemin|vent|ventilation|minutevent)/.test(h)&&!/^(vel|veo2|veco2|vevo2|vevco2)/.test(h)||/^velmin$/.test(h)),
+    peto2:pick(h=>/^(peto2|eto2|po2et|feto2)$/.test(h)),
+    petco2:pick(h=>/^(petco2|etco2|pco2et|fetco2)$/.test(h)),
   };
-  if(cols.time<0) cols.time=0;
-  if(cols.vo2<0){
-    $('cpetStatus').style.display='';
-    $('cpetColMap').innerHTML='<span class="cpet-col-chip miss">⚠ Could not detect VO₂ column — check CSV headers</span>';
-    return;
+
+  const decComma=delim!==',';
+  const num=s=>{
+    if(s==null) return null;
+    let t=String(s).trim().replace(/^"|"$/g,'');
+    if(decComma) t=t.replace(',','.');
+    const v=parseFloat(t); return isNaN(v)?null:v;
+  };
+  let data=[];
+  for(let i=hi+1;i<lines.length;i++){
+    const c=lines[i].split(delim);
+    const vo2=num(c[cols.vo2]);
+    if(vo2==null||vo2<=0) continue;           // skips units rows and blank samples
+    const t=cols.time>=0?cpetParseTime(String(c[cols.time]??'').replace(/^"|"$/g,'')):null;
+    data.push({
+      time:t!=null?t:data.length*30,
+      vo2, vco2:cols.vco2>=0?num(c[cols.vco2]):null, ve:cols.ve>=0?num(c[cols.ve]):null,
+      peto2:cols.peto2>=0?num(c[cols.peto2]):null, petco2:cols.petco2>=0?num(c[cols.petco2]):null,
+      intensity:cols.intensity>=0?num(c[cols.intensity]):null
+    });
+  }
+  if(data.length<3) return cpetFail('Found the headers but fewer than 3 usable data rows — check the file');
+  data.sort((a,b)=>a.time-b.time);
+
+  // Units: L/min → ml/min; ml/kg/min → ml/min when body mass is known
+  const notes=[];
+  const vHdr=headers[cols.vo2], bm=parseFloat($('bodyMass').value)||null;
+  const vMax=Math.max(...data.map(d=>d.vo2));
+  let relative=cols.vo2===vo2Rel&&vo2Abs<0;
+  const saysLmin=/lmin/.test(vHdr)&&!/mlmin/.test(vHdr);
+  if((saysLmin&&vMax<10)||(!relative&&vMax<10)){
+    data.forEach(d=>{d.vo2*=1000;});
+    notes.push('V̇O₂ read as L/min and converted to ml/min');
+  } else if(!relative&&vMax<100&&!/ml(min|pm)/.test(vHdr)){
+    relative=true;
+  }
+  if(relative){
+    if(bm){ data.forEach(d=>{d.vo2*=bm;}); relative=false; notes.push(`V̇O₂ read as ml/kg/min and converted with body mass ${bm} kg`); }
+    else notes.push('V̇O₂ is in ml/kg/min — enter body mass for absolute values');
+  }
+  if(cols.vco2>=0){
+    const cMax=Math.max(...data.map(d=>d.vco2||0));
+    if(cMax>0&&cMax<10) data.forEach(d=>{if(d.vco2!=null) d.vco2*=1000;});
   }
 
-  const data=[];
-  for(let i=1;i<lines.length;i++){
-    const c=lines[i].split(/[,\t]/);
-    const gv=(idx)=>idx>=0&&!isNaN(parseFloat(c[idx]))?parseFloat(c[idx]):null;
-    const row={
-      time:gv(cols.time)!=null?gv(cols.time):(i-1)*30,
-      vo2:gv(cols.vo2), vco2:gv(cols.vco2), ve:gv(cols.ve),
-      peto2:gv(cols.peto2), petco2:gv(cols.petco2),
-      intensity:gv(cols.intensity)
-    };
-    if(row.vo2>0) data.push(row);
-  }
-  if(data.length<3){alert('Could not parse enough rows. Check CSV format.');return;}
+  // Highest 30-s rolling average for V̇O₂max; smoothed V̇O₂ used for interpolation at LT
+  let j=0, sum=0;
+  data.forEach((d,i)=>{
+    sum+=d.vo2;
+    while(d.time-data[j].time>=30&&j<i){sum-=data[j].vo2;j++;}
+    d.vo2s=sum/(i-j+1);
+  });
+  const dt=(data[data.length-1].time-data[0].time)/(data.length-1);
+  const vo2max=Math.max(...data.slice(dt<30?Math.min(data.length-1,Math.ceil(30/Math.max(dt,1))-1):0).map(d=>d.vo2s));
+  if(dt<30) notes.push(`V̇O₂max = highest 30-s average (sampling every ~${dt.toFixed(0)} s)`);
+  if(decComma) notes.push(`Read as ${delim===';'?'semicolon':'tab'}-separated with decimal commas`);
 
-  const vo2max=Math.max(...data.map(d=>d.vo2));
-  const bm=parseFloat($('bodyMass').value)||null;
-  const vo2maxKg=bm?vo2max/bm:null;
+  const iv=data.map(d=>d.intensity).filter(v=>v!=null);
+  const ramp=iv.length>10&&new Set(iv.map(v=>Math.round(v))).size>iv.length*0.4;
 
-  Object.assign(cpetState,{data,cols,vo2max,vo2maxKg,
+  Object.assign(cpetState,{data,cols,vo2max,vo2maxKg:!relative&&bm?vo2max/bm:null,relative,ramp,
     vt1Time:null,vt2Time:null,vt1Intensity:null,vt2Intensity:null,vt1VO2:null,vt2VO2:null});
 
-  renderCPETUploadStatus(headers,cols,data,vo2max,vo2maxKg);
+  renderCPETUploadStatus(headers,cols,data,vo2max,cpetState.vo2maxKg,notes);
   if(lastAnalysis){const {lt1,lt2}=getConsensusData();renderCPETMetrics(lt1,lt2);}
 }
 
-function renderCPETUploadStatus(headers,cols,data,vo2max,vo2maxKg){
+function renderCPETUploadStatus(headers,cols,data,vo2max,vo2maxKg,notes=[]){
   $('cpetStatus').style.display='';
   $('cpetClearBtn').style.display='';
 
@@ -4498,12 +4559,14 @@ function renderCPETUploadStatus(headers,cols,data,vo2max,vo2maxKg){
 
   const hasI=cols.intensity>=0;
   const relStr=vo2maxKg?` · <strong style="color:var(--txt);">${vo2maxKg.toFixed(1)} ml/kg/min</strong>`:'';
+  const vmStr=cpetState.relative?`${vo2max.toFixed(1)} ml/kg/min`:`${Math.round(vo2max).toLocaleString()} ml/min`;
   $('cpetStats').innerHTML=
     `<strong style="color:var(--txt);">${data.length}</strong> rows loaded · ` +
-    `V̇O₂max: <strong style="color:var(--hr-blue);">${Math.round(vo2max).toLocaleString()} ml/min</strong>${relStr}<br>` +
+    `V̇O₂max: <strong style="color:var(--hr-blue);">${vmStr}</strong>${relStr}<br>` +
     (hasI
-      ? '<span style="color:var(--lt1);">✓ Intensity column found — chart overlay enabled</span>'
-      : '<span style="color:#F59E0B;">⚠ No intensity column — add one to enable chart overlay</span>');
+      ? '<span style="color:var(--lt1);">✓ Intensity column found — %V̇O₂max at LT1/LT2 and chart overlay enabled</span>'
+      : '<span style="color:#F59E0B;">⚠ No intensity column — %V̇O₂ at LT needs stage V̇O₂ in the table or a detected VT</span>') +
+    (notes.length?`<br><span style="color:var(--muted);">${notes.join(' · ')}</span>`:'');
 }
 
 // ── Interpolation helpers ──
@@ -4511,12 +4574,16 @@ function cpetInterpByIntensity(targetIntensity){
   if(!cpetState.data||cpetState.cols.intensity<0) return null;
   const pts=cpetState.data.filter(d=>d.intensity!=null).sort((a,b)=>a.intensity-b.intensity);
   if(pts.length<2) return null;
-  if(targetIntensity<=pts[0].intensity) return pts[0].vo2;
-  if(targetIntensity>=pts[pts.length-1].intensity) return pts[pts.length-1].vo2;
+  // Outside the file's intensity range there is no V̇O₂ to read
+  if(targetIntensity<pts[0].intensity||targetIntensity>pts[pts.length-1].intensity) return null;
+  // Average the smoothed V̇O₂ of all samples at (or nearest to) the target intensity
+  const near=pts.filter(d=>Math.abs(d.intensity-targetIntensity)<1e-6);
+  if(near.length) return near.reduce((s,d)=>s+(d.vo2s??d.vo2),0)/near.length;
   for(let i=0;i<pts.length-1;i++){
     if(targetIntensity>=pts[i].intensity&&targetIntensity<=pts[i+1].intensity){
-      const t=(targetIntensity-pts[i].intensity)/(pts[i+1].intensity-pts[i].intensity);
-      return pts[i].vo2+t*(pts[i+1].vo2-pts[i].vo2);
+      const a=pts[i].vo2s??pts[i].vo2, b=pts[i+1].vo2s??pts[i+1].vo2;
+      const t=(targetIntensity-pts[i].intensity)/(pts[i+1].intensity-pts[i].intensity||1);
+      return a+t*(b-a);
     }
   }
   return null;
@@ -4536,41 +4603,62 @@ function cpetInterpByTime(targetTime,field='vo2'){
   return null;
 }
 
-// ── Render CPET metric cards ──
-function renderCPETMetrics(lt1,lt2){
-  if(!cpetState.data) return;
-  $('cpetMetricsRow').style.display='';
-
-  const vm=cpetState.vo2max;
+// ── V̇O₂ at LT1/LT2 and %V̇O₂max ──
+// V̇O₂ at a threshold: steady-state stage V̇O₂ from the lactate table (preferred), else the CPET file
+// interpolated at the threshold intensity, else the V̇O₂ at the matching ventilatory threshold.
+// V̇O₂max: CPET peak (highest 30-s average), else entered V̇O₂max × body mass, else highest stage V̇O₂.
+function vo2Context(lt1,lt2){
+  const A=lastAnalysis; if(!A) return null;
   const bm=parseFloat($('bodyMass').value)||null;
-  const vmKg=bm?vm/bm:null;
-  const hasI=cpetState.cols.intensity>=0;
+  let st=(A.svo2s||[]).map((v,i)=>({x:A.sxs[i],v})).filter(d=>d.v!=null&&d.v>0);
+  if(st.length&&Math.max(...st.map(d=>d.v))<10) st=st.map(d=>({x:d.x,v:d.v*1000}));   // entered in L/min
+  const hasStage=st.length>=2;
+  const hasCPET=!!cpetState.data&&!(cpetState.relative&&hasStage);
+  const cpetI=hasCPET&&cpetState.cols.intensity>=0;
+  const entered=parseFloat($('vo2max').value)||null;
+
+  let vm=null,vmSrc='',vmLabel='V̇O₂max';
+  if(hasCPET){vm=cpetState.vo2max;vmSrc='Highest 30-s average from CPET file';vmLabel='V̇O₂max · CPET';}
+  else if(entered&&bm){vm=entered*bm;vmSrc='Entered V̇O₂max × body mass';}
+  else if(hasStage){vm=Math.max(...st.map(d=>d.v));vmSrc='Highest stage V̇O₂ — peak of this test, not a true max';vmLabel='V̇O₂peak · step test';}
+  if(!vm) return null;
+
+  const unit=A.unit||'';
+  const at=(lt,vtVO2)=>{
+    if(!lt) return null;
+    let v=null,src='';
+    if(hasStage){v=interp(lt.x,st.map(d=>d.x),st.map(d=>d.v));src=`Stage V̇O₂ interpolated at ${lt.x.toFixed(0)} ${unit}`;}
+    else if(cpetI){v=cpetInterpByIntensity(lt.x);src=`CPET V̇O₂ at ${lt.x.toFixed(0)} ${unit}${cpetState.ramp?' · ramp V̇O₂ lags power, so this may read low':''}`;}
+    else if(hasCPET&&vtVO2!=null){v=vtVO2;src='From ventilatory threshold time point (no intensity column)';}
+    if(v==null) return null;
+    return {v,pct:v/vm*100,src};
+  };
+  return {vm,vmSrc,vmLabel,vmKg:cpetState.relative&&hasCPET?null:(bm?vm/bm:null),rel:hasCPET&&cpetState.relative,
+    lt1:at(lt1,cpetState.vt1VO2),lt2:at(lt2,cpetState.vt2VO2)};
+}
+
+// ── Render V̇O₂ metric cards ──
+function renderCPETMetrics(lt1,lt2){
+  const ctx=vo2Context(lt1,lt2);
+  if(!ctx){ $('cpetMetricsRow').style.display='none'; return; }
+  $('cpetMetricsRow').style.display='';
   const unit=lastAnalysis?.unit||'W';
-
-  // Compute VO2 at LT intensities (preferred) or fall back to VT time-based VO2
-  const lt1VO2=lt1?(hasI?cpetInterpByIntensity(lt1.x):cpetState.vt1VO2):null;
-  const lt2VO2=lt2?(hasI?cpetInterpByIntensity(lt2.x):cpetState.vt2VO2):null;
-  const lt1Pct=lt1VO2!=null?lt1VO2/vm*100:null;
-  const lt2Pct=lt2VO2!=null?lt2VO2/vm*100:null;
-
+  const vU=ctx.rel?'ml/kg/min':'ml/min';
   const fP=v=>v!=null?`${v.toFixed(1)}<span class="unit">%</span>`:'—';
-  const fV=v=>v!=null?`${Math.round(v).toLocaleString()} ml/min`:'—';
+  const fV=v=>`${ctx.rel?v.toFixed(1):Math.round(v).toLocaleString()} ${vU}`;
 
-  $('cpet-lt1-pct').innerHTML=fP(lt1Pct);
-  $('cpet-lt1-vo2').textContent=lt1VO2!=null?`V̇O₂: ${fV(lt1VO2)}`:'';
-  $('cpet-lt1-note').textContent=lt1
-    ?(hasI?`At ${lt1.x.toFixed(0)} ${unit} (interpolated)`:'From VT1 time point')
-    :'Run lactate analysis first';
+  [['lt1',lt1],['lt2',lt2]].forEach(([k,lt])=>{
+    const r=ctx[k];
+    $(`cpet-${k}-pct`).innerHTML=fP(r?.pct);
+    $(`cpet-${k}-vo2`).textContent=r?`V̇O₂: ${fV(r.v)}`:'';
+    $(`cpet-${k}-note`).textContent=!lt?'Threshold not found':r?r.src:'No V̇O₂ available at this intensity';
+  });
 
-  $('cpet-lt2-pct').innerHTML=fP(lt2Pct);
-  $('cpet-lt2-vo2').textContent=lt2VO2!=null?`V̇O₂: ${fV(lt2VO2)}`:'';
-  $('cpet-lt2-note').textContent=lt2
-    ?(hasI?`At ${lt2.x.toFixed(0)} ${unit} (interpolated)`:'From VT2 time point')
-    :'Run lactate analysis first';
-
-  $('cpet-vo2max-val').innerHTML=`${Math.round(vm/1000*10)/10}<span class="unit">L/min</span>`;
-  $('cpet-vo2max-sub').textContent=vmKg?`${vmKg.toFixed(1)} ml/kg/min`:'Enter body mass for relative VO₂max';
-  $('cpet-vo2max-note').textContent='Peak VO₂ from CPET file';
+  $('cpet-vo2max-label').textContent=ctx.vmLabel;
+  $('cpet-vo2max-val').innerHTML=ctx.rel?`${ctx.vm.toFixed(1)}<span class="unit">ml/kg/min</span>`:`${(ctx.vm/1000).toFixed(2)}<span class="unit">L/min</span>`;
+  $('cpet-vo2max-sub').textContent=ctx.rel?'Enter body mass for absolute V̇O₂':ctx.vmKg?`${ctx.vmKg.toFixed(1)} ml/kg/min`:'Enter body mass for relative V̇O₂max';
+  $('cpet-vo2max-note').textContent=ctx.vmSrc;
+  if(!cpetState.data){ $('cpetAlignCard').style.display='none'; return; }
 
   // Alignment card (only if VT detected)
   if(cpetState.vt1Intensity!=null&&lt1){
