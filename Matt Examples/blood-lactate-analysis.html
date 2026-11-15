@@ -281,6 +281,52 @@ table.rt tr:hover td { background: rgba(255,255,255,.02); }
 .na { color: var(--muted); font-style: italic; }
 .caution { color: #FBBF24; font-size: 11px; margin-left: 3px; cursor: help; }
 
+/* ── QUALITY CHECKS ── */
+.qc-panel { margin-bottom: 16px; }
+.qc-grid { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.qc-row { display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px;
+  border-radius: 8px; font-size: 12px; line-height: 1.5; }
+.qc-pass { background: rgba(16,185,129,.06); border: 1px solid rgba(16,185,129,.2); }
+.qc-note { background: rgba(245,158,11,.06); border: 1px solid rgba(245,158,11,.2); }
+.qc-warn { background: rgba(239,68,68,.06); border: 1px solid rgba(239,68,68,.25); }
+.qc-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.qc-text strong { display: block; font-size: 11px; font-weight: 700; letter-spacing: .04em; }
+.qc-pass .qc-text strong { color: var(--lt1); }
+.qc-note .qc-text strong { color: #F59E0B; }
+.qc-warn .qc-text strong { color: var(--lt2); }
+.qc-text span { color: #94A3B8; font-size: 11px; }
+.qc-summary { font-size: 11px; color: var(--muted); margin-top: 8px; padding-top: 8px;
+  border-top: 1px solid var(--border); }
+
+/* ── JACKKNIFE HEATMAP ── */
+.jk-panel { margin-bottom: 16px; }
+.jk-wrap { overflow-x: auto; margin-top: 10px; }
+table.jk { border-collapse: collapse; font-size: 11px; min-width: 100%; }
+table.jk th { font-family: 'Lexend', sans-serif; font-size: 9px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+  padding: 5px 8px; border-bottom: 1px solid var(--border); text-align: center; white-space: nowrap; }
+table.jk th:first-child { text-align: left; min-width: 110px; }
+table.jk td { padding: 5px 6px; border-bottom: 1px solid rgba(51,65,85,.2);
+  text-align: center; white-space: nowrap; }
+table.jk td:first-child { text-align: left; font-size: 11px; color: #CBD5E1; padding-left: 8px; }
+.jk-cell { display: inline-block; min-width: 42px; padding: 2px 5px; border-radius: 4px;
+  font-size: 10px; font-weight: 600; font-family: 'Lexend', sans-serif; }
+.jk-up   { background: rgba(239,68,68,.18); color: #FCA5A5; }
+.jk-down { background: rgba(59,130,246,.18); color: #93C5FD; }
+.jk-neut { background: rgba(255,255,255,.04); color: var(--muted); }
+.jk-legend { display: flex; gap: 16px; margin-top: 8px; padding-top: 8px;
+  border-top: 1px solid var(--border); font-size: 10px; color: var(--muted); flex-wrap: wrap; }
+.jk-legend-item { display: flex; align-items: center; gap: 5px; }
+.jk-swatch { display: inline-block; width: 20px; height: 10px; border-radius: 3px; }
+
+/* ── METHOD SPREAD ── */
+.spread-range { font-size: 10px; color: var(--muted); margin-top: 4px;
+  padding-top: 4px; border-top: 1px solid var(--border); }
+.spread-range strong { color: #94A3B8; }
+
+/* ── W/KG ── */
+.wkg-badge { font-size: 11px; color: var(--muted); margin-left: 4px; }
+
 /* ── EXPORT ROW ── */
 .export-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
 .btn-export {
@@ -797,10 +843,13 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
       <div class="cb-group cb-lt1">
         <label>LT1 Consensus Method</label>
         <select id="lt1Method" onchange="updateConsensus()">
+          <option value="bsln05">Bsln+ 0.5 — Mattioni Maturana (2018)</option>
           <option value="ltp1">LTP1 — Hofmann &amp; Tschakert (2017)</option>
           <option value="loglog">Log-log — Beaver et al. (1985)</option>
           <option value="obla20">OBLA 2.0 — Heck et al. (1985)</option>
           <option value="moddmax">ModDmax — Bishop et al. (1998)</option>
+          <option value="bsln10">Bsln+ 1.0 — Mattioni Maturana (2018)</option>
+          <option value="bsln15">Bsln+ 1.5 — Mattioni Maturana (2018)</option>
         </select>
       </div>
       <div class="cb-group cb-lt2">
@@ -822,12 +871,14 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
         <div class="mc-value" id="mc-lt1-val">—</div>
         <div class="mc-sub" id="mc-lt1-sub"></div>
         <div class="mc-method" id="mc-lt1-method"></div>
+        <div class="spread-range" id="mc-lt1-spread" style="display:none"></div>
       </div>
       <div class="metric-card mc-lt2" id="mc-lt2">
         <div class="mc-label">Anaerobic Threshold · LT2</div>
         <div class="mc-value" id="mc-lt2-val">—</div>
         <div class="mc-sub" id="mc-lt2-sub"></div>
         <div class="mc-method" id="mc-lt2-method"></div>
+        <div class="spread-range" id="mc-lt2-spread" style="display:none"></div>
       </div>
       <div class="metric-card" id="mc-peak">
         <div class="mc-label">Peak Lactate</div>
@@ -885,6 +936,13 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
       <div class="toggles-wrap" id="togglesWrap"></div>
     </div>
 
+    <!-- Quality checks panel -->
+    <div class="card qc-panel" id="qcPanel" style="display:none;margin-bottom:16px;">
+      <div class="card-label">Test Quality Checks</div>
+      <div class="qc-grid" id="qcGrid"></div>
+      <div class="qc-summary" id="qcSummary"></div>
+    </div>
+
     <!-- Zone grid -->
     <div class="zone-grid">
       <div class="card">
@@ -892,8 +950,36 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
         <div id="zone3Container"></div>
       </div>
       <div class="card">
-        <div class="card-label">5-Zone Model · Applied Framework · Sitko &amp; Seiler (2025)</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="card-label" style="margin-bottom:0;">5-Zone Model · Applied Framework · Sitko &amp; Seiler (2025)</div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <label style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase;">Split</label>
+            <select id="zone5Split" onchange="if(lastAnalysis){const{lt1,lt2}=getConsensusData();renderZones(lt1,lt2,lastAnalysis.hrmax,lastAnalysis.unit);}" style="background:rgba(255,255,255,.05);border:1px solid rgba(51,65,85,.6);border-radius:6px;padding:4px 8px;color:var(--txt);font-size:11px;font-family:inherit;">
+              <option value="relative">Relative</option>
+              <option value="seiler">Seiler (1.5 / 6.0 mmol/L)</option>
+            </select>
+          </div>
+        </div>
         <div id="zone5Container"></div>
+      </div>
+    </div>
+
+    <!-- Jackknife heatmap panel -->
+    <div class="card jk-panel" id="jkPanel" style="display:none;margin-bottom:16px;">
+      <div class="card-label details-trigger" onclick="toggleJK()" id="jkTrigger">
+        Leave-One-Stage-Out Sensitivity
+        <span class="arrow">▼</span>
+      </div>
+      <div id="jkBody" style="display:none;">
+        <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:10px;">
+          Each cell shows the threshold shift when that stage is removed. <span style="color:#FCA5A5;">Red = threshold rises</span>, <span style="color:#93C5FD;">blue = falls</span>. Labelled when shift exceeds 3%.
+        </p>
+        <div class="jk-wrap"><div id="jkGrid"></div></div>
+        <div class="jk-legend">
+          <div class="jk-legend-item"><span class="jk-swatch" style="background:rgba(239,68,68,.18);"></span>Threshold rises (stage held back lactate)</div>
+          <div class="jk-legend-item"><span class="jk-swatch" style="background:rgba(59,130,246,.18);"></span>Threshold falls (stage pulled threshold up)</div>
+          <div class="jk-legend-item"><span class="jk-swatch" style="background:rgba(255,255,255,.04);"></span>Change &lt; 1%</div>
+        </div>
       </div>
     </div>
 
@@ -925,7 +1011,7 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
     <!-- All threshold methods (accordion) -->
     <div class="card details-card" id="detailsCard">
       <div class="card-label details-trigger" onclick="toggleDetails()" id="detailsTrigger">
-        All Threshold Methods (13)
+        All Threshold Methods (16)
         <span class="arrow">▼</span>
       </div>
       <div id="detailsBody">
@@ -943,6 +1029,7 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
       <div class="card-label">References</div>
       <div class="refs">
         <p>Beaver WL, Wasserman K, Whipp BJ. Improved detection of lactate threshold during exercise using a log-log transformation. <em>J Appl Physiol.</em> 1985;59(6):1936–40.</p>
+        <p>Mattioni Maturana F et al. Determination of the intensity corresponding to the maximal lactate steady state in well-trained cyclists. <em>Eur J Appl Physiol.</em> 2018;118(2):321–31. <em>[Bsln+ method — rise above individual lactate baseline]</em></p>
         <p>Bishop D, Jenkins DG, Mackinnon LT. The relationship between plasma lactate parameters, Wpeak and 1-h cycling performance in women. <em>Med Sci Sports Exerc.</em> 1998;30(8):1270–5.</p>
         <p>Cheng B et al. A New Approach for the Determination of Ventilatory and Lactate Thresholds. <em>Int J Sports Med.</em> 1992;13(07):518–22.</p>
         <p>Heck H et al. Justification of the 4-mmol/l Lactate Threshold. <em>Int J Sports Med.</em> 1985;06(03):117–30.</p>
@@ -1291,7 +1378,10 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
 //  CONFIG
 // ═══════════════════════════════════════════════
 const METHODS = [
-  { id:'loglog',         label:'Log-log',          group:'Log-Log', color:'#F87171', ref:'Beaver et al., 1985',          caution:true  },
+  { id:'bsln05',         label:'Bsln+ 0.5',         group:'Bsln+',   color:'#34D399', ref:'Mattioni Maturana et al., 2018', caution:false },
+  { id:'bsln10',         label:'Bsln+ 1.0',         group:'Bsln+',   color:'#059669', ref:'Mattioni Maturana et al., 2018', caution:false },
+  { id:'bsln15',         label:'Bsln+ 1.5',         group:'Bsln+',   color:'#065F46', ref:'Mattioni Maturana et al., 2018', caution:false },
+  { id:'loglog',         label:'Log-log',           group:'Log-Log', color:'#F87171', ref:'Beaver et al., 1985',          caution:true  },
   { id:'obla20',         label:'OBLA 2.0',          group:'OBLA',    color:'#14532D', ref:'Heck et al., 1985',            caution:false },
   { id:'obla25',         label:'OBLA 2.5',          group:'OBLA',    color:'#16A34A', ref:'Heck et al., 1985',            caution:false },
   { id:'obla30',         label:'OBLA 3.0',          group:'OBLA',    color:'#CA8A04', ref:'Kindermann et al., 1979',      caution:false },
@@ -1306,7 +1396,11 @@ const METHODS = [
   { id:'ltp2',           label:'LTP2',              group:'LTP',     color:'#EF4444', ref:'Hofmann & Tschakert, 2017',    caution:true  },
 ];
 const OBLA_T  = { obla20:2.0, obla25:2.5, obla30:3.0, obla35:3.5, obla40:4.0 };
-const GRP_COL = { 'Log-Log':'#F87171','OBLA':'#16A34A','Dmax':'#2563EB','LTP':'#10B981' };
+const BSLN_D  = { bsln05:0.5, bsln10:1.0, bsln15:1.5 };
+// LT1-category and LT2-category method ids for method spread computation
+const LT1_IDS = new Set(['bsln05','bsln10','bsln15','loglog','obla20','obla25','moddmax','ltp1']);
+const LT2_IDS = new Set(['obla30','obla35','obla40','dmax','expdmax','logpolymoddmax','logexpmoddmax','ltp2']);
+const GRP_COL = { 'Bsln+':'#34D399','Log-Log':'#F87171','OBLA':'#16A34A','Dmax':'#2563EB','LTP':'#10B981' };
 const ZONE_COL = ['#0D9488','#10B981','#F59E0B','#EF4444','#8B5CF6'];
 
 // ═══════════════════════════════════════════════
@@ -1583,6 +1677,84 @@ function calcLTP(xs,ys){
   return {ltp1:xs[b1],ltp2:xs[b2]};
 }
 
+function calcBslnPlus(xs,ys,delta){
+  // Rise above individual baseline: baseline = mean of lowest 1–2 lactate values
+  if(xs.length<4) return null;
+  const sortedByLac=[...ys].sort((a,b)=>a-b);
+  const baseline=sortedByLac.length>=2?(sortedByLac[0]+sortedByLac[1])/2:sortedByLac[0];
+  const target=baseline+delta;
+  if(target>Math.max(...ys)) return null;
+  const deg=$('oblaMethod').value==='poly4'?4:3;
+  if(xs.length<deg+1) return null;
+  const fit=makePolyFit(xs,ys,deg);
+  return bisect(fit.eval,fit.xMin,fit.xMax,target);
+}
+
+// ═══════════════════════════════════════════════
+//  QUALITY CHECKS
+// ═══════════════════════════════════════════════
+function runQualityChecks(sxs,sys,shrs,fxs,fys,lt1,lt2){
+  const checks=[];
+  const pass=(name,msg)=>checks.push({level:'pass',name,msg});
+  const note=(name,msg)=>checks.push({level:'note',name,msg});
+  const warn=(name,msg)=>checks.push({level:'warn',name,msg});
+
+  // 1. Stage count
+  if(sxs.length>=7) pass('Stage count',`${sxs.length} stages — adequate for reliable threshold detection.`);
+  else if(sxs.length>=5) note('Stage count',`${sxs.length} stages — results are valid but 7+ stages improve reliability.`);
+  else warn('Stage count',`${sxs.length} stages — fewer than 5 may produce unstable thresholds.`);
+
+  // 2. Resting sample (intensity = 0 or lowest stage below 30% of range)
+  const xRange=sxs[sxs.length-1]-sxs[0];
+  const hasResting=sxs[0]===0||(sxs.length>=2&&(sxs[1]-sxs[0])>xRange*0.3);
+  if(hasResting) pass('Resting sample','A resting or near-resting lactate value is present.');
+  else note('Resting sample','No clear resting stage detected. Including a baseline sample helps anchor the Bsln+ methods.');
+
+  // 3. Early lactate dip (first 3 values decreasing — sign of non-steady state)
+  if(sys.length>=4){
+    const dip=sys[0]>sys[1]&&sys[1]>sys[2];
+    if(dip) note('Early lactate dip','Lactate decreases over the first few stages. This may indicate non-steady state at test start. Consider excluding the first stage from curve fitting.');
+    else pass('Early dip','No early lactate dip detected — test start looks clean.');
+  }
+
+  // 4. Monotonic rise — check for large isolated spikes or dips mid-test
+  let outlierStage=null;
+  for(let i=1;i<sys.length-1;i++){
+    const prev=sys[i-1],curr=sys[i],next=sys[i+1];
+    if((curr<prev*0.8&&curr<next*0.8)||(curr>prev*1.5&&curr>next*1.5)){outlierStage=i+1;break;}
+  }
+  if(outlierStage) warn('Suspect stage',`Stage ${outlierStage} appears as an outlier (large isolated deviation). Verify the sample and consider removal.`);
+  else pass('Lactate progression','No isolated outlier stages detected.');
+
+  // 5. Peak lactate
+  const peakLac=Math.max(...sys);
+  if(peakLac>=6.0) pass('Peak lactate',`${peakLac.toFixed(1)} mmol/L — indicates a maximal or near-maximal effort.`);
+  else if(peakLac>=4.0) note('Peak lactate',`${peakLac.toFixed(1)} mmol/L — moderate peak. Test may not have reached maximum — LT2 methods near the top end of data are less reliable.`);
+  else warn('Peak lactate',`${peakLac.toFixed(1)} mmol/L — low peak lactate. Confirm the test reached the intended maximum intensity.`);
+
+  // 6. Thresholds within range (not at the edges)
+  if(lt1&&lt2){
+    const lo=sxs[0],hi=sxs[sxs.length-1],span=hi-lo;
+    if(lt1.x<lo+span*0.05) warn('LT1 at edge','LT1 is at the very bottom of the test range. Add lower-intensity stages to better characterise the aerobic threshold.');
+    else if(lt2.x>hi-span*0.05) warn('LT2 at edge','LT2 is at the very top of the test range. The anaerobic threshold may be extrapolated beyond the last measured stage.');
+    else pass('Thresholds in range','Both LT1 and LT2 fall within the well-measured intensity range.');
+
+    // 7. LT1-LT2 method agreement (spread relative to threshold value)
+    const spread=lt2.x-lt1.x;
+    const spreadPct=(spread/(hi-lo))*100;
+    if(spreadPct>15) pass('LT1–LT2 spread',`${spread.toFixed(0)} ${lt2.x>100?'W':'intensity units'} between thresholds (${spreadPct.toFixed(0)}% of test range) — good discrimination.`);
+    else note('LT1–LT2 spread',`Only ${spread.toFixed(0)} ${lt2.x>100?'W':'intensity units'} between LT1 and LT2 (${spreadPct.toFixed(0)}% of test range) — narrow aerobic-anaerobic window.`);
+  }
+
+  // 8. HR data present
+  const hrCount=shrs.filter(h=>h!=null).length;
+  if(hrCount===sxs.length) pass('Heart rate','HR recorded at every stage — enables HR-based training zone anchoring.');
+  else if(hrCount>0) note('Heart rate',`HR missing at ${sxs.length-hrCount} of ${sxs.length} stages. Complete HR data improves zone accuracy.`);
+  else note('Heart rate','No HR data entered. Add heart rate values to enable HR-anchored training zones.');
+
+  return checks;
+}
+
 // ═══════════════════════════════════════════════
 //  ZONE CALCULATIONS
 // ═══════════════════════════════════════════════
@@ -1594,9 +1766,39 @@ function buildZone3(lt1X,lt2X,lt1Lac,lt2Lac){
   ];
 }
 
-function buildZone5(lt1X,lt2X,lt1Lac,lt2Lac,hrmax){
-  const z1max=0.80*lt1X, z2max=lt1X, z3max=0.97*lt2X, z4max=1.05*lt2X;
+function buildZone5(lt1X,lt2X,lt1Lac,lt2Lac,hrmax,splitMode){
+  const mode=splitMode||($('zone5Split')?$('zone5Split').value:'relative');
   const hr=(pct)=>hrmax?Math.round(pct/100*hrmax):null;
+
+  if(mode==='seiler'){
+    // Seiler polarised split: Z1-moderate = < LT1, Z2-heavy anchored to 1.5 & 6.0 mmol/L
+    // Map lactate cut-points to intensity via inverse of linear interpolation on data
+    const {sxs,sys}=lastAnalysis;
+    const interpI=(lac)=>{
+      for(let i=1;i<sys.length;i++){
+        if(sys[i]>=lac){const t=(lac-sys[i-1])/(sys[i]-sys[i-1]);return sxs[i-1]+t*(sxs[i]-sxs[i-1]);}
+      }
+      return null;
+    };
+    const i15=interpI(1.5)||lt1X;
+    const i60=interpI(6.0)||(lt2X*1.1);
+    const z1max=lt1X*0.80, z2max=lt1X, z3max=i15, z4max=i60;
+    return [
+      {z:1,name:'Active Recovery',       sub:'Very easy, below LT1',                col:'#0D9488',
+        iMax:z1max,lacTarget:'< 1.5',rpe:'6–11',hrLo:hr(55),hrHi:hr(72)},
+      {z:2,name:'Foundational Endurance',sub:'Low aerobic, below LT1',              col:'#10B981',
+        iMin:z1max,iMax:z2max,lacTarget:'1.0–1.5',rpe:'9–12',hrLo:hr(67),hrHi:hr(82)},
+      {z:3,name:'Tempo / Heavy',         sub:'LT1 to 1.5 mmol/L above baseline',    col:'#F59E0B',
+        iMin:z2max,iMax:z3max,lacTarget:'1.5–3.5',rpe:'13–14',hrLo:hr(82),hrHi:hr(87)},
+      {z:4,name:'Lactate Threshold',     sub:'Heavy to severe, up to 6.0 mmol/L',   col:'#EF4444',
+        iMin:z3max,iMax:z4max,lacTarget:'3.5–6.0',rpe:'15–17',hrLo:hr(87),hrHi:hr(93)},
+      {z:5,name:'Anaerobic / VO₂max',    sub:'Above 6.0 mmol/L, supramaximal',      col:'#8B5CF6',
+        iMin:z4max,lacTarget:'> 6.0',rpe:'18–20',hrLo:hr(93),hrHi:hrmax},
+    ];
+  }
+
+  // Default relative split
+  const z1max=0.80*lt1X, z2max=lt1X, z3max=0.97*lt2X, z4max=1.05*lt2X;
   return [
     {z:1,name:'Active Recovery',       sub:'Very easy, fat oxidation',          col:'#0D9488',
       iMax:z1max,lacTarget:'< 1.5',rpe:'6–11',hrLo:hr(55),hrHi:hr(72)},
@@ -1632,11 +1834,12 @@ function analyse(){
   const {ltp1,ltp2}=calcLTP(fxs,fys);
   const llX=calcLogLog(fxs,fys,getLoglogFrac());
 
-  // Compute all 13 methods
+  // Compute all 16 methods
   const results=METHODS.map(m=>{
     let threshX=null;
     try{
-      if(m.id==='loglog')        threshX=llX;
+      if(m.id in BSLN_D)         threshX=calcBslnPlus(fxs,fys,BSLN_D[m.id]);
+      else if(m.id==='loglog')   threshX=llX;
       else if(m.id==='ltp1')     threshX=ltp1;
       else if(m.id==='ltp2')     threshX=ltp2;
       else if(m.id in OBLA_T)    threshX=calcOBLA(fxs,fys,OBLA_T[m.id],oblaM);
@@ -1661,7 +1864,8 @@ function analyse(){
   // Align metabolic arrays with sorted order (xs → sorted by intensity)
   const sortedIdx=xs.map((x,i)=>i).sort((a,b)=>xs[a]-xs[b]);
   const svo2s=sortedIdx.map(i=>vo2s[i]), svco2s=sortedIdx.map(i=>vco2s[i]), srers=sortedIdx.map(i=>rers[i]);
-  lastAnalysis={results,sxs,sys,shrs,srpes,svo2s,svco2s,srers,poly3,unit,hrmax:parseFloat($('hrMax').value)||null};
+  const bodyMass=parseFloat($('bodyMass').value)||null;
+  lastAnalysis={results,sxs,sys,shrs,srpes,svo2s,svco2s,srers,fxs,fys,poly3,unit,hrmax:parseFloat($('hrMax').value)||null,bodyMass};
   renderAll();
   $('results').style.display='block';
   $('results').scrollIntoView({behavior:'smooth',block:'start'});
@@ -1688,49 +1892,82 @@ function getConsensusData(){
 function updateConsensus(){ if(lastAnalysis) renderAll(); }
 
 function renderAll(){
-  const {results,sxs,sys,shrs,srpes,unit,hrmax}=lastAnalysis;
+  const {results,sxs,sys,shrs,srpes,fxs,fys,unit,hrmax,bodyMass}=lastAnalysis;
   const {lt1,lt2}=getConsensusData();
-  renderMetrics(lt1,lt2,sys,shrs,hrmax,unit);
+  renderMetrics(lt1,lt2,sys,shrs,hrmax,unit,results,bodyMass);
   renderChart(lt1,lt2);
   renderZones(lt1,lt2,hrmax,unit);
   renderToggles(results);
   renderThresholdTable(results,unit);
   renderAgreementBar(results,lt1,lt2);
   renderCPETMetrics(lt1,lt2);
+  renderQualityChecks(sxs,sys,shrs,fxs,fys,lt1,lt2);
+  renderJackknife(fxs,fys,shrs,sxs,results,unit);
 }
 
 // ═══════════════════════════════════════════════
 //  METRICS
 // ═══════════════════════════════════════════════
-function renderMetrics(lt1,lt2,sys,shrs,hrmax,unit){
+function renderMetrics(lt1,lt2,sys,shrs,hrmax,unit,results,bodyMass){
   const peakLac=Math.max(...sys);
+  const peakX=lastAnalysis.sxs[lastAnalysis.sxs.length-1];
   const maxHR=shrs.filter(h=>h!=null).reduce((a,b)=>Math.max(a,b),-Infinity);
+  const isWatts=unit==='W';
+
+  // Helper: compute method spread for a set of method ids
+  const getSpread=(ids)=>{
+    const vals=(results||[]).filter(r=>ids.has(r.id)&&r.threshX!=null).map(r=>r.threshX);
+    if(vals.length<2) return null;
+    return {min:Math.min(...vals),max:Math.max(...vals),n:vals.length};
+  };
+  const lt1spread=getSpread(LT1_IDS);
+  const lt2spread=getSpread(LT2_IDS);
 
   // LT1
   if(lt1){
-    $('mc-lt1-val').innerHTML=`${lt1.x.toFixed(1)}<span class="unit">${unit}</span>`;
-    $('mc-lt1-sub').innerHTML=`<span><span class="mc-dot" style="background:var(--lt1)"></span>${lt1.lac.toFixed(2)} mmol/L</span>`
-      +(lt1.hr?`<span><span class="mc-dot" style="background:var(--hr-blue)"></span>${Math.round(lt1.hr)} bpm</span>`:'');
+    let valHtml=`${lt1.x.toFixed(1)}<span class="unit">${unit}</span>`;
+    if(isWatts&&bodyMass) valHtml+=`<span class="wkg-badge">${(lt1.x/bodyMass).toFixed(2)} W/kg</span>`;
+    $('mc-lt1-val').innerHTML=valHtml;
+    let subHtml=`<span><span class="mc-dot" style="background:var(--lt1)"></span>${lt1.lac.toFixed(2)} mmol/L</span>`;
+    if(lt1.hr) subHtml+=`<span><span class="mc-dot" style="background:var(--hr-blue)"></span>${Math.round(lt1.hr)} bpm${hrmax?` (${(lt1.hr/hrmax*100).toFixed(0)}% HRmax)`:''}</span>`;
+    if(peakX>0) subHtml+=`<span style="font-size:10px;color:var(--muted)">${(lt1.x/peakX*100).toFixed(0)}% of peak intensity</span>`;
+    $('mc-lt1-sub').innerHTML=subHtml;
     $('mc-lt1-method').textContent=lt1.method+' · '+lt1.ref;
+    if(lt1spread){
+      $('mc-lt1-spread').innerHTML=`<strong>Method range:</strong> ${lt1spread.min.toFixed(1)}–${lt1spread.max.toFixed(1)} ${unit} across ${lt1spread.n} methods`;
+      $('mc-lt1-spread').style.display='';
+    } else { $('mc-lt1-spread').style.display='none'; }
   } else {
     $('mc-lt1-val').innerHTML='<span style="color:var(--muted)">N/A</span>';
     $('mc-lt1-sub').innerHTML=''; $('mc-lt1-method').textContent='Method returned no result';
+    $('mc-lt1-spread').style.display='none';
   }
 
   // LT2
   if(lt2){
-    $('mc-lt2-val').innerHTML=`${lt2.x.toFixed(1)}<span class="unit">${unit}</span>`;
-    $('mc-lt2-sub').innerHTML=`<span><span class="mc-dot" style="background:var(--lt2)"></span>${lt2.lac.toFixed(2)} mmol/L</span>`
-      +(lt2.hr?`<span><span class="mc-dot" style="background:var(--hr-blue)"></span>${Math.round(lt2.hr)} bpm</span>`:'');
+    let valHtml=`${lt2.x.toFixed(1)}<span class="unit">${unit}</span>`;
+    if(isWatts&&bodyMass) valHtml+=`<span class="wkg-badge">${(lt2.x/bodyMass).toFixed(2)} W/kg</span>`;
+    $('mc-lt2-val').innerHTML=valHtml;
+    let subHtml=`<span><span class="mc-dot" style="background:var(--lt2)"></span>${lt2.lac.toFixed(2)} mmol/L</span>`;
+    if(lt2.hr) subHtml+=`<span><span class="mc-dot" style="background:var(--hr-blue)"></span>${Math.round(lt2.hr)} bpm${hrmax?` (${(lt2.hr/hrmax*100).toFixed(0)}% HRmax)`:''}</span>`;
+    if(peakX>0) subHtml+=`<span style="font-size:10px;color:var(--muted)">${(lt2.x/peakX*100).toFixed(0)}% of peak intensity</span>`;
+    $('mc-lt2-sub').innerHTML=subHtml;
     $('mc-lt2-method').textContent=lt2.method+' · '+lt2.ref;
+    if(lt2spread){
+      $('mc-lt2-spread').innerHTML=`<strong>Method range:</strong> ${lt2spread.min.toFixed(1)}–${lt2spread.max.toFixed(1)} ${unit} across ${lt2spread.n} methods`;
+      $('mc-lt2-spread').style.display='';
+    } else { $('mc-lt2-spread').style.display='none'; }
   } else {
     $('mc-lt2-val').innerHTML='<span style="color:var(--muted)">N/A</span>';
     $('mc-lt2-sub').innerHTML=''; $('mc-lt2-method').textContent='Method returned no result';
+    $('mc-lt2-spread').style.display='none';
   }
 
   // Peak lactate
   $('mc-peak-val').innerHTML=`${peakLac.toFixed(2)}<span class="unit">mmol/L</span>`;
-  $('mc-peak-sub').innerHTML=maxHR>0?`<span><span class="mc-dot" style="background:var(--hr-blue)"></span>Max HR: ${Math.round(maxHR)} bpm</span>`:'';
+  let peakSubHtml=maxHR>0?`<span><span class="mc-dot" style="background:var(--hr-blue)"></span>Max HR: ${Math.round(maxHR)} bpm</span>`:'';
+  if(isWatts&&bodyMass) peakSubHtml+=`<span style="font-size:10px;color:var(--muted)">Peak: ${peakX.toFixed(0)} W (${(peakX/bodyMass).toFixed(2)} W/kg)</span>`;
+  $('mc-peak-sub').innerHTML=peakSubHtml;
 
   // Spread
   if(lt1&&lt2){
@@ -2037,6 +2274,96 @@ function toggleDetails(){
   trigger.classList.toggle('details-open',!open);
 }
 
+function toggleJK(){
+  const body=$('jkBody'), trigger=$('jkTrigger');
+  const open=body.style.display==='block';
+  body.style.display=open?'none':'block';
+  trigger.classList.toggle('details-open',!open);
+}
+
+// ═══════════════════════════════════════════════
+//  QUALITY CHECK RENDER
+// ═══════════════════════════════════════════════
+function renderQualityChecks(sxs,sys,shrs,fxs,fys,lt1,lt2){
+  const panel=$('qcPanel'); if(!panel) return;
+  const checks=runQualityChecks(sxs,sys,shrs,fxs,fys,lt1,lt2);
+  const icons={pass:'✓',note:'⚠',warn:'✗'};
+  $('qcGrid').innerHTML=checks.map(c=>`
+    <div class="qc-row qc-${c.level}">
+      <span class="qc-icon">${icons[c.level]}</span>
+      <div class="qc-text"><strong>${c.name}</strong><span>${c.msg}</span></div>
+    </div>`).join('');
+  const p=checks.filter(c=>c.level==='pass').length;
+  const n=checks.filter(c=>c.level==='note').length;
+  const w=checks.filter(c=>c.level==='warn').length;
+  $('qcSummary').textContent=`${checks.length} checks: ${p} passed, ${n} note${n!==1?'s':''}, ${w} warning${w!==1?'s':''}`;
+  panel.style.display='';
+}
+
+// ═══════════════════════════════════════════════
+//  JACKKNIFE LEAVE-ONE-OUT RENDER
+// ═══════════════════════════════════════════════
+function calcOneMethod(id,xs,ys,oblaM,llFrac){
+  const {ltp1,ltp2}=calcLTP(xs,ys);
+  const llX=calcLogLog(xs,ys,llFrac);
+  try{
+    if(id in BSLN_D)         return calcBslnPlus(xs,ys,BSLN_D[id]);
+    if(id==='loglog')        return llX;
+    if(id==='ltp1')          return ltp1;
+    if(id==='ltp2')          return ltp2;
+    if(id in OBLA_T)         return calcOBLA(xs,ys,OBLA_T[id],oblaM);
+    if(id==='dmax')          return calcDmax(xs,ys);
+    if(id==='moddmax')       return calcModDmax(xs,ys);
+    if(id==='expdmax')       return calcExpDmax(xs,ys);
+    if(id==='logpolymoddmax') return calcLogPolyModDmax(xs,ys);
+    if(id==='logexpmoddmax')  return calcLogExpModDmax(xs,ys);
+  }catch(e){}
+  return null;
+}
+
+function renderJackknife(fxs,fys,shrs,sxs,results,unit){
+  const panel=$('jkPanel'); if(!panel) return;
+  if(fxs.length<5){ panel.style.display='none'; return; }
+
+  const oblaM=$('oblaMethod').value;
+  const llFrac=getLoglogFrac();
+  // Only compute for methods that produced a result
+  const active=results.filter(r=>r.threshX!=null);
+  if(active.length===0){ panel.style.display='none'; return; }
+
+  const n=fxs.length;
+  // For each method: baseline value and leave-one-out values
+  const jkData=active.map(r=>{
+    const base=r.threshX;
+    const loo=[];
+    for(let i=0;i<n;i++){
+      const lxs=fxs.filter((_,j)=>j!==i);
+      const lys=fys.filter((_,j)=>j!==i);
+      if(lxs.length<4){loo.push(null);continue;}
+      loo.push(calcOneMethod(r.id,lxs,lys,oblaM,llFrac));
+    }
+    return {id:r.id,label:r.label,base,loo};
+  });
+
+  // Build table
+  const stageLabels=fxs.map((x,i)=>`${x.toFixed(0)} ${unit}`);
+  let html=`<table class="jk"><thead><tr><th>Method</th>${stageLabels.map((l,i)=>`<th>–Stage ${i+1}<br><span style="font-weight:400">${l}</span></th>`).join('')}</tr></thead><tbody>`;
+  jkData.forEach(d=>{
+    html+=`<tr><td>${d.label}</td>`;
+    d.loo.forEach(v=>{
+      if(v==null||d.base==null){html+=`<td><span class="jk-cell jk-neut">—</span></td>`;return;}
+      const pct=((v-d.base)/d.base)*100;
+      const cls=Math.abs(pct)<1?'jk-neut':pct>0?'jk-up':'jk-down';
+      const lbl=Math.abs(pct)>=3?`${pct>0?'+':''}${pct.toFixed(1)}%`:`${pct>0?'+':''}${pct.toFixed(1)}%`;
+      html+=`<td><span class="jk-cell ${cls}">${lbl}</span></td>`;
+    });
+    html+=`</tr>`;
+  });
+  html+=`</tbody></table>`;
+  $('jkGrid').innerHTML=html;
+  panel.style.display='';
+}
+
 // ═══════════════════════════════════════════════
 //  EXPORT PDF DOSSIER (jsPDF + autoTable)
 // ═══════════════════════════════════════════════
@@ -2134,7 +2461,12 @@ function exportDossier(){
   doc.text('AEROBIC THRESHOLD | LT1', M + 4, y + 5);
   doc.setTextColor(5, 150, 105);
   doc.setFontSize(16);
-  doc.text(lt1 ? `${lt1.x.toFixed(1)} ${unit}` : 'Not detected', M + 4, y + 13);
+  if (lt1) {
+    const lt1Wkg = (unit === 'W' && cpetBM) ? ` (${(lt1.x / cpetBM).toFixed(2)} W/kg)` : '';
+    doc.text(`${lt1.x.toFixed(1)} ${unit}${lt1Wkg}`, M + 4, y + 13);
+  } else {
+    doc.text('Not detected', M + 4, y + 13);
+  }
   doc.setTextColor(71, 85, 105);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
@@ -2159,7 +2491,12 @@ function exportDossier(){
   doc.text('ANAEROBIC THRESHOLD | LT2', x2 + 4, y + 5);
   doc.setTextColor(220, 38, 38);
   doc.setFontSize(16);
-  doc.text(lt2 ? `${lt2.x.toFixed(1)} ${unit}` : 'Not detected', x2 + 4, y + 13);
+  if (lt2) {
+    const lt2Wkg = (unit === 'W' && cpetBM) ? ` (${(lt2.x / cpetBM).toFixed(2)} W/kg)` : '';
+    doc.text(`${lt2.x.toFixed(1)} ${unit}${lt2Wkg}`, x2 + 4, y + 13);
+  } else {
+    doc.text('Not detected', x2 + 4, y + 13);
+  }
   doc.setTextColor(71, 85, 105);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
