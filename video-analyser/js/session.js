@@ -1,6 +1,6 @@
 // Sessions: several videos (trials) worked through one after another, then compared.
-import { A, $, esc, status, persist, freshState, clone, SHARED, restoreSession, forgetSession, currentTrial } from './state.js?v=2.2.0';
-import { loadVideoURL, viewDims } from './video.js?v=2.2.0';
+import { A, $, esc, status, persist, freshState, clone, SHARED, restoreSession, forgetSession, currentTrial } from './state.js?v=2.3.0';
+import { loadVideoFile, viewDims, hasVideo, clearVideo } from './video.js?v=2.3.0';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -10,6 +10,9 @@ export function newTrial(name, prev) {
   if (prev) { SHARED.forEach((k) => { if (prev.state[k] !== undefined) st[k] = clone(prev.state[k]); }); st.fpsSet = !!prev.state.fpsSet; st.graph.xevent = ''; }
   const L = prev ? prev.labels : {};
   const num = prev ? (parseInt(L.trial, 10) || A.session.trials.length) + 1 : 1;
+  // file names like Cody_HighTee_1.avi or P01-Pre-2.mp4 fill in participant, condition and trial
+  const m = /^([^_\- .]+)[_\- ]+(.+?)[_\- ]+(\d{1,2})(?=[_\- .]|$)/.exec(name);
+  if (m) return { id: uid(), name, labels: { athlete: m[1], condition: m[2].replace(/[_-]+/g, ' '), trial: m[3] }, state: st };
   return { id: uid(), name, labels: { athlete: L.athlete || '', condition: L.condition || '', trial: String(num) }, state: st };
 }
 function lastSetUp() {
@@ -41,7 +44,7 @@ export function openTrial(i) {
   if (!file) {
     A.S = t.state; A.results = null; renderSession(); if (A.fn.syncInputs) A.fn.syncInputs();
     A.relinkFor = t.id; $('stage').classList.add('hide'); $('empty').classList.remove('hide');
-    $('empty').innerHTML = 'Choose the video file for <strong>' + esc(t.name) + '</strong> to carry on.<br><label class="btn small" style="margin-top:.6rem">Choose video<input type="file" accept="video/*" class="hide" id="relinkOne"></label>';
+    $('empty').innerHTML = 'Choose the video file for <strong>' + esc(t.name) + '</strong> to carry on.<br><label class="btn small" style="margin-top:.6rem">Choose video<input type="file" accept="video/*,.avi" class="hide" id="relinkOne"></label>';
     $('relinkOne').addEventListener('change', function () { const f = this.files[0]; if (f) { A.files[t.id] = f; openTrial(i); } });
     status('This trial&rsquo;s video needs opening again (the browser cannot keep videos). Choose <strong>' + esc(t.name) + '</strong>.');
     return;
@@ -58,7 +61,7 @@ export function openTrial(i) {
     let prev = null; for (let k = i - 1; k >= 0; k--) if (T[k].state.calib) { prev = T[k]; break; }
     if (prev && confirm('Use the same calibration as ' + label(prev) + '?\n\nOnly choose OK if the camera did not move or zoom between the two videos.')) A.pendingCalib = prev;
   }
-  loadVideoURL(URL.createObjectURL(file), t.name, { state: t.state, msg: t.demoMsg || ('Trial ' + (i + 1) + ' of ' + T.length + ' loaded: <strong>' + esc(label(t)) + '</strong>.') });
+  loadVideoFile(file, t.name, { state: t.state, msg: t.demoMsg || ('Trial ' + (i + 1) + ' of ' + T.length + ' loaded: <strong>' + esc(label(t)) + '</strong>.') });
 }
 // After the video loads: apply a carried-over calibration if the picture is the same size.
 export function afterLoad() {
@@ -83,7 +86,7 @@ function removeTrial(i) {
   const T = A.session.trials, t = T[i];
   if (!confirm('Remove ' + label(t) + ' and all its work from the session?')) return;
   T.splice(i, 1); delete A.files[t.id];
-  if (A.session.cur === i) { A.session.cur = -1; A.S = freshState(); A.results = null; $('vid').removeAttribute('src'); $('stage').classList.add('hide'); $('empty').classList.remove('hide'); $('empty').innerHTML = 'Add a video to start.'; if (T.length) openTrial(Math.min(i, T.length - 1)); else if (A.fn.syncInputs) A.fn.syncInputs(); }
+  if (A.session.cur === i) { A.session.cur = -1; A.S = freshState(); A.results = null; clearVideo(); $('stage').classList.add('hide'); $('empty').classList.remove('hide'); $('empty').innerHTML = 'Add a video to start.'; if (T.length) openTrial(Math.min(i, T.length - 1)); else if (A.fn.syncInputs) A.fn.syncInputs(); }
   else if (A.session.cur > i) A.session.cur--;
   persist(); renderSession(); if (A.fn.renderCompare) A.fn.renderCompare();
 }
@@ -116,17 +119,18 @@ function relink(list) {
   });
   renderSession();
   status(n ? n + ' video' + (n > 1 ? 's' : '') + ' matched to trials.' : 'None of those files match the trials in this session (the file names must be the same).');
-  if (n && !$('vid').getAttribute('src') && A.session.cur >= 0) openTrial(A.session.cur);
+  if (n && !hasVideo() && A.session.cur >= 0) openTrial(A.session.cur);
 }
 
 export function initSession() {
   $('file').addEventListener('change', function () { addFiles(this.files); this.value = ''; });
   $('sesNext').addEventListener('click', nextTrial);
+  $('sesCmp').addEventListener('click', () => { if (A.fn.renderCompare) A.fn.renderCompare(); });
   $('sesRelink').addEventListener('change', function () { relink(this.files); this.value = ''; });
   $('sesNew').addEventListener('click', () => {
     if (A.session.trials.length && !confirm('Start a new, empty session? Everything in this one will be cleared from this browser. (Save a project file first if you want to keep it.)')) return;
     A.session = { trials: [], cur: -1 }; A.files = {}; A.S = freshState(); A.results = null; forgetSession();
-    $('vid').removeAttribute('src'); $('stage').classList.add('hide'); $('empty').classList.remove('hide'); $('empty').innerHTML = 'Add a video to start.';
+    clearVideo(); $('stage').classList.add('hide'); $('empty').classList.remove('hide'); $('empty').innerHTML = 'Add a video to start.';
     A.fn.syncInputs(); renderSession(); if (A.fn.renderCompare) A.fn.renderCompare(); status('New session started.');
   });
   A.fn.renderSession = renderSession; A.fn.afterLoad = afterLoad; A.fn.openTrial = openTrial;
@@ -135,7 +139,7 @@ export function initSession() {
   if (saved) {
     A.session = saved; const t = currentTrial() || saved.trials[saved.trials.length - 1];
     A.session.cur = saved.trials.indexOf(t); A.S = t.state;
-    $('empty').innerHTML = 'Your last session is still here (' + saved.trials.length + ' trial' + (saved.trials.length > 1 ? 's' : '') + '). The browser cannot keep videos, so choose them again to carry on digitising:<br><label class="btn small" style="margin-top:.6rem">Choose the videos<input type="file" accept="video/*" multiple class="hide" id="relinkAll"></label><br><span class="muted">Results and Compare work without the videos.</span>';
+    $('empty').innerHTML = 'Your last session is still here (' + saved.trials.length + ' trial' + (saved.trials.length > 1 ? 's' : '') + '). The browser cannot keep videos, so choose them again to carry on digitising:<br><label class="btn small" style="margin-top:.6rem">Choose the videos<input type="file" accept="video/*,.avi" multiple class="hide" id="relinkAll"></label><br><span class="muted">Results and Compare work without the videos.</span>';
     $('relinkAll').addEventListener('change', function () { relink(this.files); });
   }
   renderSession();

@@ -1,13 +1,13 @@
 // Compare trials: key numbers for every trial side by side, group means, overlaid time-normalised curves
 // and combined exports for the whole session.
-import { A, $, esc, fx, status, persist, withState, PALETTE, download, VERSION, APP } from './state.js?v=2.2.0';
-import { computeData, summaryRows } from './results.js?v=2.2.0';
-import { normalise, meanSd } from './normalise.js?v=2.2.0';
-import { mean, sd } from './maths.js?v=2.2.0';
-import { chart, legend } from './charts.js?v=2.2.0';
-import { label } from './session.js?v=2.2.0';
-import { sessionDiscreteCSV, selection } from './builder.js?v=2.2.0';
-import { allVariables } from './vars.js?v=2.2.0';
+import { A, $, esc, fx, status, persist, withState, PALETTE, download, VERSION, APP, tReal } from './state.js?v=2.3.0';
+import { computeData, summaryRows } from './results.js?v=2.3.0';
+import { normalise, meanSd } from './normalise.js?v=2.3.0';
+import { mean, sd } from './maths.js?v=2.3.0';
+import { chart, legend, svgToPng } from './charts.js?v=2.3.0';
+import { label } from './session.js?v=2.3.0';
+import { sessionDiscreteCSV, selection } from './builder.js?v=2.3.0';
+import { allVariables } from './vars.js?v=2.3.0';
 
 let cache = null;
 const groupOf = (t, g) => (g === 'athlete' ? t.labels.athlete || '(no participant)' : g === 'condition' ? t.labels.condition || '(no condition)' : g === 'both' ? (t.labels.athlete || '?') + ' / ' + (t.labels.condition || '?') : 'All trials');
@@ -20,7 +20,10 @@ function gather() {
       const R = computeData();
       const rows = summaryRows(R).filter((x) => typeof x[3] === 'number' && Number.isFinite(x[3]));
       const norm = R && N.start && N.end ? normalise(R, t.state, N.start, N.end, N.n) : null;
-      return { R, rows, norm };
+      // every variable over real time (force at its own sample rate), and the time of the first of each event
+      const vars = allVariables(R).map((v) => { const [T, , V] = v.get(); return v.force ? { key: v.key, label: v.label, unit: v.unit, T: R.force.Tfull, V: R.force.Vfull } : { key: v.key, label: v.label, unit: v.unit, T, V }; });
+      const evT = {}; t.state.events.slice().sort((a, b) => a.frame - b.frame).forEach((e) => { if (!(e.name in evT)) evT[e.name] = tReal(e.frame); });
+      return { R, rows, norm, vars, evT };
     });
     if (r.R || r.rows.length) out.push({ t, ...r });
   });
@@ -63,7 +66,69 @@ export function renderCompare() {
     }).join('');
   }
   $('cmpTab').innerHTML = h + '</table>';
+  renderOverlay(data, g);
   renderCmpNorm(data, g);
+}
+
+// ---------- every trial on one graph, over real time, lined up on an event ----------
+function interp(T, V, t) {
+  let lo = 0, hi = T.length - 1; if (!(t >= T[0] && t <= T[hi])) return null;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (T[m] <= t) lo = m; else hi = m; }
+  const a = V[lo], b = V[hi]; if (a === null || b === null || a === undefined || b === undefined) return null;
+  return T[hi] === T[lo] ? a : a + (b - a) * (t - T[lo]) / (T[hi] - T[lo]);
+}
+function renderOverlay(data, g) {
+  const ses = A.session, withV = data.filter((d) => d.vars.length);
+  if (!withV.length) { $('ovWrap').classList.add('hide'); return; }
+  $('ovWrap').classList.remove('hide');
+  // variables and events found in any trial
+  const keys = new Map(); withV.forEach((d) => d.vars.forEach((v) => { if (!keys.has(v.key)) keys.set(v.key, v); }));
+  const sel = $('ovVar'), old = ses.ovVar || sel.value;
+  sel.innerHTML = [...keys].map(([k, v]) => '<option value="' + esc(k) + '">' + esc(v.label) + '</option>').join('');
+  sel.value = keys.has(old) ? old : [...keys.keys()][0];
+  const evNames = [...new Set(withV.flatMap((d) => Object.keys(d.evT)))], al = $('ovAlign'), oldA = ses.ovAlign !== undefined ? ses.ovAlign : (evNames[0] || '');
+  al.innerHTML = '<option value="">Start of each video (no lining up)</option>' + evNames.map((n) => '<option value="' + esc(n) + '">' + esc(n) + '</option>').join('');
+  al.value = evNames.includes(oldA) ? oldA : (oldA === '' ? '' : (evNames[0] || ''));
+  $('ovMean').checked = !!ses.ovMean;
+  const key = sel.value, info = keys.get(key), align = al.value, hide = new Set(ses.ovHide || []);
+  const groups = g === 'none' ? ['All trials'] : [...new Set(withV.map((d) => groupOf(d.t, g)))];
+  const colOfGroup = (gn) => PALETTE[groups.indexOf(gn) % PALETTE.length];
+  const lines = [], leg = [], left = [], curves = {};
+  // trial chips to show or hide each trial
+  $('ovTrials').innerHTML = withV.map((d, i) => { const c = g === 'none' ? PALETTE[i % PALETTE.length] : colOfGroup(groupOf(d.t, g)); return '<button type="button" class="chip' + (hide.has(d.t.id) ? '' : ' active') + '" data-ov="' + d.t.id + '"><span class="dot" style="background:' + c + '"></span>' + esc(label(d.t)) + '</button>'; }).join('');
+  $('ovTrials').querySelectorAll('[data-ov]').forEach((b) => b.addEventListener('click', () => {
+    const id = b.dataset.ov, h = new Set(ses.ovHide || []); if (h.has(id)) h.delete(id); else h.add(id); ses.ovHide = [...h]; persist(); renderOverlay(cache || gather(), ses.cmpGroup || 'athlete');
+  }));
+  withV.forEach((d, i) => {
+    const v = d.vars.find((x) => x.key === key); if (!v || hide.has(d.t.id)) return;
+    let off = 0; if (align) { if (!(align in d.evT)) { left.push(label(d.t)); return; } off = d.evT[align]; }
+    const gn = g === 'none' ? 'All trials' : groupOf(d.t, g), c = g === 'none' ? PALETTE[i % PALETTE.length] : colOfGroup(gn);
+    const T = v.T.map((t) => t - off), on = ses.ovMean && withV.length > 1;
+    lines.push({ x: T, y: v.V, col: c, width: on ? 1.2 : 2, opacity: on ? 0.45 : 0.85, noMinMax: true });
+    (curves[gn] = curves[gn] || []).push({ T, V: v.V });
+    if (g === 'none' && !on) leg.push({ name: label(d.t), col: c });
+  });
+  if (ses.ovMean) {
+    Object.entries(curves).forEach(([gn, cs]) => {
+      if (cs.length < 2) return;
+      const t0 = Math.max(...cs.map((c) => c.T[0])), t1 = Math.min(...cs.map((c) => c.T[c.T.length - 1]));
+      if (!(t1 > t0)) return;
+      const dt = Math.min(...cs.map((c) => (c.T[c.T.length - 1] - c.T[0]) / Math.max(1, c.T.length - 1))), x = [], m = [], s = [];
+      for (let t = t0; t <= t1 + 1e-9; t += dt) {
+        const vals = cs.map((c) => interp(c.T, c.V, t)).filter((z) => z !== null);
+        if (vals.length < 2) continue; x.push(t); m.push(mean(vals)); s.push(sd(vals));
+      }
+      const c = g === 'none' ? '#1f2a33' : colOfGroup(gn);
+      lines.push({ x, y: m, col: c, width: 3.2 });
+      lines.push({ x, y: m.map((v, k) => v + s[k]), col: c, dash: '5 4', width: 1.2, noMinMax: true });
+      lines.push({ x, y: m.map((v, k) => v - s[k]), col: c, dash: '5 4', width: 1.2, noMinMax: true });
+    });
+  }
+  if (g !== 'none') groups.forEach((gn) => { if (curves[gn]) leg.push({ name: gn + ' (' + curves[gn].length + ' trial' + (curves[gn].length > 1 ? 's' : '') + ')', col: colOfGroup(gn) }); });
+  else if (ses.ovMean) leg.push({ name: 'Mean of all trials (dashed: \u00b1 1 SD)', col: '#1f2a33' });
+  chart($('cOverlay'), lines, { xlab: align ? 'Time from ' + align + ' (s)' : 'Time (s)', ylab: info.label + ' (' + info.unit + ')', zero: /velocity|acceleration|force/i.test(info.label), evs: align ? [{ t: 0, name: align }] : [] });
+  $('ovLegend').innerHTML = legend(leg) + (ses.ovMean ? '<p class="muted">Thick lines are means and dashed lines &plusmn; 1 SD, worked out only where the trials overlap in time.</p>' : '');
+  $('ovInfo').innerHTML = left.length ? '<span class="bad">Not shown because they have no <strong>' + esc(align) + '</strong> event: ' + left.map(esc).join(', ') + '.</span>' : '';
 }
 
 function renderCmpNorm(data, g) {
@@ -130,6 +195,10 @@ function normAll() {
 }
 
 export function initCompare() {
+  $('ovVar').addEventListener('change', () => { A.session.ovVar = $('ovVar').value; persist(); renderOverlay(cache || gather(), A.session.cmpGroup || 'athlete'); });
+  $('ovAlign').addEventListener('change', () => { A.session.ovAlign = $('ovAlign').value; persist(); renderOverlay(cache || gather(), A.session.cmpGroup || 'athlete'); });
+  $('ovMean').addEventListener('change', () => { A.session.ovMean = $('ovMean').checked; persist(); renderOverlay(cache || gather(), A.session.cmpGroup || 'athlete'); });
+  $('ovPng').addEventListener('click', async () => { const b = await svgToPng($('cOverlay'), 3); if (b) download('session_overlay_' + stamp() + '.png', b); });
   $('cmpGroup').addEventListener('change', () => { A.session.cmpGroup = $('cmpGroup').value; persist(); renderCompare(); });
   $('cmpVar').addEventListener('change', () => renderCmpNorm(cache || gather(), A.session.cmpGroup || 'athlete'));
   $('cmpCalc').addEventListener('click', renderCompare);

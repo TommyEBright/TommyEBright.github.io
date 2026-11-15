@@ -1,8 +1,8 @@
 // Force platform data: loading a force file, the side-by-side sync view, the sync itself and the check.
 // The sync is one number, the offset: video time = force file time + offset.
-import { A, $, esc, status, persist, tReal, fpsReal, download, baseName } from './state.js?v=2.2.0';
-import { parseText, buildData } from './forceparse.js?v=2.2.0';
-import { seek, viewCanvas } from './video.js?v=2.2.0';
+import { A, $, esc, status, persist, tReal, fpsReal, download, baseName } from './state.js?v=2.3.0';
+import { parseText, buildData } from './forceparse.js?v=2.3.0';
+import { seek, viewCanvas } from './video.js?v=2.3.0';
 
 const F = () => A.S.force;
 const V = { z: 1, cx: 0.5, cy: 0.5 }; // video view in the sync panel: zoom and centre (0-1)
@@ -54,7 +54,8 @@ export function renderForce() {
   $('fOpts').classList.toggle('hide', !fo);
   if (!fo) { $('fInfo').textContent = 'No force data for this trial yet.'; closeView(); lastFo = null; return; }
   if (fo !== lastFo) { lastFo = fo; fitForce(); W.cur = 0; checking = false; }
-  $('fInfo').innerHTML = '<strong>' + esc(fo.name) + '</strong>: ' + fo.n + ' samples at ' + (+fo.fs.toFixed(2)) + ' Hz (' + ((fo.n - 1) / fo.fs).toFixed(2) + ' s), ' + fo.plates.length + ' plate' + (fo.plates.length > 1 ? 's' : '') + (fo.bw ? ', body weight in the file ' + fo.bw.toFixed(0) + ' N' : '') + '.';
+  $('fInfo').innerHTML = '<strong>' + esc(fo.name) + '</strong>: ' + fo.n + ' samples at ' + (+fo.fs.toFixed(2)) + ' Hz (' + ((fo.n - 1) / fo.fs).toFixed(2) + ' s), ' + fo.plates.length + ' plate' + (fo.plates.length > 1 ? 's' : '') + (fo.bw ? ', body weight in the file ' + fo.bw.toFixed(0) + ' N' : '') + '.' +
+    (fo.fs < 500 ? '<span class="bad"><br><strong>This force file was recorded at only ' + (+fo.fs.toFixed(0)) + ' Hz</strong> (one sample every ' + (1000 / fo.fs).toFixed(0) + ' ms). Fast events such as foot contact or impact peaks fall between samples, so the curve looks jagged, peak forces are underestimated and the sync can only be as precise as one sample. Record at 1000 Hz or more where you can.</span>' : '');
   $('fUse').innerHTML = (fo.plates.length > 1 ? '<option value="sum">All plates added together (Fz)</option>' : '') + fo.plates.map((p, i) => '<option value="' + i + '">' + esc(p.name) + ' Fz</option>').join('');
   $('fUse').value = fo.use;
   let t = '';

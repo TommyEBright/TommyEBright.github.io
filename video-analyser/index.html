@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css?v=2.2.0">
+<link rel="stylesheet" href="css/style.css?v=2.3.0">
 </head>
 <body>
 <header class="top">
@@ -18,7 +18,7 @@
     <p>Linear and angular kinematics from your own video files. Everything runs in your browser and nothing is uploaded.</p>
   </div>
   <div class="actions">
-    <label class="btn light filebtn">Add videos<input type="file" id="file" accept="video/*" multiple aria-label="Add videos"></label>
+    <label class="btn light filebtn">Add videos<input type="file" id="file" accept="video/*,.avi" multiple aria-label="Add videos"></label>
     <button class="btn light" id="demoCmj" type="button">Demo: CMJ</button>
     <button class="btn light" id="demoSprint" type="button">Demo: sprint</button>
     <button class="btn accent hide" id="installBtn" type="button">Install as an app</button>
@@ -51,8 +51,9 @@
       <div class="row tight">
         <label class="btn small filebtn" for="file">Add videos</label>
         <button class="btn small accent" id="sesNext" type="button" disabled>Next trial &rsaquo;</button>
-        <label class="btn small ghost filebtn">Choose videos again<input type="file" id="sesRelink" accept="video/*" multiple aria-label="Choose videos again"></label>
+        <label class="btn small ghost filebtn">Choose videos again<input type="file" id="sesRelink" accept="video/*,.avi" multiple aria-label="Choose videos again"></label>
         <button class="btn small ghost" id="sesNew" type="button">New session</button>
+        <a class="btn small ghost" href="#compare" id="sesCmp" style="text-decoration:none">Compare all trials &darr;</a>
       </div>
     </div>
   </details>
@@ -563,6 +564,20 @@
         <span class="lab">Measures in the table</span>
         <div class="chips" id="cmpMetrics"></div>
         <div class="tablewrap" style="max-height:420px" id="cmpTab"></div>
+        <div id="ovWrap" class="hide">
+          <h3>All trials on one graph</h3>
+          <p class="muted">Each trial over real time. Line the trials up on an event (e.g. foot contact) so they start together, and tick the mean to see each group&rsquo;s average. Click a trial below to hide or show it.</p>
+          <div class="row">
+            <div style="flex:2 1 220px"><label for="ovVar">Show</label><select id="ovVar"></select></div>
+            <div style="flex:1 1 180px"><label for="ovAlign">Line up on</label><select id="ovAlign"></select></div>
+            <div style="flex:0 1 auto;align-self:end"><label class="inline"><input type="checkbox" id="ovMean"> Mean &plusmn; SD</label></div>
+          </div>
+          <div class="chips" id="ovTrials"></div>
+          <svg class="chart wide" id="cOverlay" viewBox="0 0 640 300"></svg>
+          <div id="ovLegend"></div>
+          <p id="ovInfo" class="small"></p>
+          <button class="btn small ghost" id="ovPng" type="button">Download this graph (PNG)</button>
+        </div>
         <h3>Time-normalised curves</h3>
         <p id="cmpNormInfo" class="muted"></p>
         <div id="cmpNormWrap" class="hide">
@@ -615,6 +630,6 @@
   <footer>Kinematic Analysis. Works offline once loaded. Nothing is uploaded. Built by Dr Tommy Bright.</footer>
 </main>
 <script>window.addEventListener('error',function(e){var s=document.getElementById('status');if(s)s.innerHTML='<span class="bad"><strong>Something went wrong loading the tool.</strong> Try a hard refresh (Ctrl + Shift + R, or Cmd + Shift + R on a Mac). If it keeps happening, tell your tutor: '+(e.message||'')+'</span>';});</script>
-<script type="module" src="js/app.js?v=2.2.0"></script>
+<script type="module" src="js/app.js?v=2.3.0"></script>
 </body>
 </html>

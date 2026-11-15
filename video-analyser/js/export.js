@@ -1,11 +1,11 @@
 // Saving and exporting: project files, three kinds of CSV, images, graphs and the photo sequence.
-import { A, $, esc, status, persist, migrate, points, tReal, fpsReal, download, baseName, VERSION, APP, currentTrial } from './state.js?v=2.2.0';
-import { toWorld, units, scale } from './maths.js?v=2.2.0';
-import { seekAsync, seek, viewCanvas } from './video.js?v=2.2.0';
-import { draw } from './overlay.js?v=2.2.0';
-import { svgToPng } from './charts.js?v=2.2.0';
-import { summaryRows, xOffset } from './results.js?v=2.2.0';
-import { intervalRows } from './events.js?v=2.2.0';
+import { A, $, esc, status, persist, migrate, points, tReal, fpsReal, download, baseName, VERSION, APP, currentTrial } from './state.js?v=2.3.0';
+import { toWorld, units, scale } from './maths.js?v=2.3.0';
+import { seekAsync, seek, viewCanvas, clearVideo } from './video.js?v=2.3.0';
+import { draw } from './overlay.js?v=2.3.0';
+import { svgToPng } from './charts.js?v=2.3.0';
+import { summaryRows, xOffset } from './results.js?v=2.3.0';
+import { intervalRows } from './events.js?v=2.3.0';
 
 const n = (v, d) => (v === null || v === undefined || Number.isNaN(v) ? '' : (+v).toFixed(d));
 const q = (s) => { s = String(s); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
@@ -191,7 +191,7 @@ function loadProject(file) {
       if (A.session.trials.length && !confirm('Replace the current session with the one in this file?')) return;
       ses.trials.forEach((t) => { t.state = migrate(t.state); });
       A.session = ses; A.files = {}; A.results = null;
-      $('vid').removeAttribute('src'); $('stage').classList.add('hide'); $('empty').classList.remove('hide');
+      clearVideo(); $('stage').classList.add('hide'); $('empty').classList.remove('hide');
       persist(); A.fn.openTrial(Math.max(0, Math.min(ses.cur, ses.trials.length - 1)));
       if (A.fn.renderCompare) A.fn.renderCompare();
       status('Project loaded (' + ses.trials.length + ' trial' + (ses.trials.length > 1 ? 's' : '') + '). Choose the videos again to carry on digitising; results and Compare work straight away.');

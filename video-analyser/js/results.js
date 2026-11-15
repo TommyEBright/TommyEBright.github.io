@@ -1,11 +1,11 @@
 // Results: filtering, derivatives, angles, graphs, time normalisation, the filter check, quality checks and live data.
-import { A, $, esc, fx, status, persist, points, colourOf, angleDefs, tReal, fpsReal, PALETTE, G, fwd, hipMarker, download, baseName } from './state.js?v=2.2.0';
-import { toWorld, units, butter, residualCurve, centralDiff, secondDiff, series, angleValue, anglePoints, canWrap, unwrap, mean, sd } from './maths.js?v=2.2.0';
-import { chart, legend } from './charts.js?v=2.2.0';
-import { seek } from './video.js?v=2.2.0';
-import { eventStats, statsHTML } from './events.js?v=2.2.0';
-import { normalise, variableList, eventNames } from './normalise.js?v=2.2.0';
-import { isSynced, forceSignal, forceAtVideo } from './force.js?v=2.2.0';
+import { A, $, esc, fx, status, persist, points, colourOf, angleDefs, tReal, fpsReal, PALETTE, G, fwd, hipMarker, download, baseName } from './state.js?v=2.3.0';
+import { toWorld, units, butter, residualCurve, centralDiff, secondDiff, series, angleValue, anglePoints, canWrap, unwrap, mean, sd } from './maths.js?v=2.3.0';
+import { chart, legend } from './charts.js?v=2.3.0';
+import { seek } from './video.js?v=2.3.0';
+import { eventStats, statsHTML } from './events.js?v=2.3.0';
+import { normalise, variableList, eventNames } from './normalise.js?v=2.3.0';
+import { isSynced, forceSignal, forceAtVideo } from './force.js?v=2.3.0';
 
 const angCol = (i) => PALETTE[(i + 3) % PALETTE.length];
 

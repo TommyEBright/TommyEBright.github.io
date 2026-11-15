@@ -1,7 +1,7 @@
 // Automatic digitising: marker tracking by template matching.
-import { A, $, esc, status, persist, points, fpsReal, isObject } from './state.js?v=2.2.0';
-import { seekAsync, grab, seek } from './video.js?v=2.2.0';
-import { draw, rad, markerHalf, renderChips, updateDigiCount, findCentre } from './overlay.js?v=2.2.0';
+import { A, $, esc, status, persist, points, fpsReal, isObject } from './state.js?v=2.3.0';
+import { seekAsync, grab, seek } from './video.js?v=2.3.0';
+import { draw, rad, markerHalf, renderChips, updateDigiCount, findCentre } from './overlay.js?v=2.3.0';
 
 // ---------- flags (points the student should check) ----------
 export function clearFlag(f, m) {

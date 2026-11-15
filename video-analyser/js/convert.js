@@ -1,7 +1,7 @@
 // Videos the browser cannot play (e.g. AVI from Quintic or lab cameras) are converted to MP4 (H.264)
 // on the user's own computer with ffmpeg.wasm. Nothing is uploaded. Every frame is kept and the
 // original frame rate is read from the file.
-import { A, $, esc, status, persist, currentTrial, download } from './state.js?v=2.2.0';
+import { A, $, esc, status, persist, currentTrial, download } from './state.js?v=2.3.0';
 
 const CORE = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm/';
 let ff = null, loading = null;
@@ -16,7 +16,7 @@ async function blobURL(url, type, onPct) {
 function getFF(onPct) {
   if (ff) return Promise.resolve(ff);
   if (!loading) loading = (async () => {
-    const { FFmpeg } = await import('./ffmpeg/index.js?v=2.2.0');
+    const { FFmpeg } = await import('./ffmpeg/index.js?v=2.3.0');
     const f = new FFmpeg(), base = window.KVA_FFMPEG_BASE || CORE;
     const coreURL = await blobURL(base + 'ffmpeg-core.js', 'text/javascript');
     const wasmURL = await blobURL(base + 'ffmpeg-core.wasm', 'application/wasm', onPct);
@@ -29,7 +29,7 @@ function getFF(onPct) {
 const ext = (n) => ((n || '').match(/\.([a-z0-9]+)$/i) || [])[1] || '';
 function reason(name) {
   const e = ext(name).toLowerCase();
-  if (e === 'avi') return 'AVI files (e.g. from Quintic or lab high-speed cameras) cannot be played in a web browser.';
+  if (e === 'avi') return 'This AVI file uses a compression the tool cannot read directly (most lab and Quintic AVIs open straight away).';
   if (['wmv', 'mpg', 'mpeg', 'flv', '3gp', 'mts', 'm2ts', 'mxf'].includes(e)) return '.' + e.toUpperCase() + ' files cannot be played in a web browser.';
   if (['mov', 'mp4', 'm4v'].includes(e)) return 'This video uses a format your browser cannot play (often iPhone &ldquo;High Efficiency&rdquo; HEVC video on Windows).';
   return 'This video&rsquo;s format cannot be played in this browser.';

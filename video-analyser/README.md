@@ -8,7 +8,7 @@ It runs entirely in the web browser. Videos are opened from the user's own devic
 
 It works for any movement filmed side-on (e.g. a squat, throw, kick, lift, gait, cycling, running or jumping), with extra results for running, vertical jumps and repeating movements.
 
-- **Session:** add one video or several (e.g. one participant's trials, or one trial from each participant) and label each with participant, condition and trial number. Work through them one at a time with **Next trial**. Markers, angles and settings carry over, and calibration can carry over after the user confirms the camera has not moved.
+- **Session:** add one video or several (file names such as `Cody_HighTee_1.avi` or `P01-Pre-2.mp4` fill in participant, condition and trial) (e.g. one participant's trials, or one trial from each participant) and label each with participant, condition and trial number. Work through them one at a time with **Next trial**. Markers, angles and settings carry over, and calibration can carry over after the user confirms the camera has not moved.
 - **Setup:**
   - frame-rate detection, and a "slowed down by" setting for slow-motion clips saved at 30 fps;
   - which way the participant faces (left, right, or no fixed direction);
@@ -26,7 +26,7 @@ It works for any movement filmed side-on (e.g. a squat, throw, kick, lift, gait,
   - automatic marker tracking, with tracked positions also pulled onto each marker's centre;
   - tracking pauses and asks for a click when a marker is lost, or when a position looks wrong: a marker jumping away from its path, a segment suddenly stretching or shrinking, or two markers landing on the same spot. The user can click the right place, or press **It was right, carry on**. A "Marker hidden" button leaves a gap when a marker cannot be seen. Uncertain frames are listed for checking.
 - **Events:** the movement (any movement, vertical jump, running, or repeating) is chosen here or in Results, and sets the event buttons and suggestions. Named event buttons (including your own), nudging a frame at a time, suggested events (running contacts, jump take-off and landing, or the highest and lowest point of a marker in each cycle), a stopwatch for the time between any two events, and looping a phase.
-- **Video formats:** MP4 and MOV open directly. Files the browser cannot play (e.g. AVI from Quintic or lab high-speed cameras) can be converted to MP4 inside the tool with **Convert to MP4**. Every frame is kept, the frame rate is read from the original file, and the result can be saved.
+- **Video formats:** MP4 and MOV open directly. MJPEG AVI files (most lab high-speed cameras and Quintic) are read directly, frame by frame, with the frame rate taken from the file, so there is no converting. Other files the browser cannot play (e.g. other AVI types, or iPhone HEVC on Windows) can be converted to MP4 inside the tool with **Convert to MP4**.
 - **Measure:** distance, joint angle, segment vs vertical or horizontal, and the angle between two lines on a single frame. **Reference lines** (horizontal, vertical, or in any direction) stay on the video on every frame and can be dragged; they follow the calibration (and tilt correction), and the line in any direction shows its length and angle from horizontal.
 - **Force (sync with force platform data):** load a force file (BioWare export or any text/CSV file with time and force columns), then open the sync view: the video and a zoomable force–time graph side by side (full screen if wanted), each stepped a frame or a sample at a time. Pick one moment seen in both (e.g. take-off), press **Sync**, then check a second moment (e.g. landing, the next foot contact); the tool reports how far apart the video and force are there, in ms and frames. Once synced, vertical force appears in Results (graph and live data) and in every export, plus a full-rate synced force CSV.
 - **Results (per trial):**
@@ -35,7 +35,7 @@ It works for any movement filmed side-on (e.g. a squat, throw, kick, lift, gait,
   - graphs of linear position, velocity and acceleration (x, y or resultant), the trajectory (path) of each marker, and angular position, velocity and acceleration, with max and min marked and time measured from an event if wanted;
   - a filter check with residual analysis, quality checks, and a live data panel under the video.
 - **Time normalisation:** any phase between two events (e.g. touchdown to toe-off, or one pedal cycle from an event to the next of the same name) is resampled to 0–100% (101 points by default), with the ensemble average (mean ± SD).
-- **Compare trials (whole session):** a table of chosen measures for every trial with group mean ± SD, and overlaid time-normalised curves by group.
+- **Compare trials (whole session):** a table of chosen measures for every trial with group mean ± SD; every trial on one graph over real time (any variable, including synced force), lined up on an event, with trials shown or hidden and an optional group mean ± SD; and overlaid time-normalised curves by group.
 - **Exports:**
   - **Continuous, Discrete and Time-normalised:** every linear and angular variable, frame by frame; maximum, minimum, time of each, range, mean and values at events; or 0–100% of a phase with the ensemble average.
   - **Quick downloads:** everything over time, summary, time-normalised, marker coordinates (raw pixels, metres and filtered, clicked or tracked), frame and graph images, and a photo sequence.
@@ -106,6 +106,7 @@ js/state.js            shared state, saving, helpers
 js/session.js          sessions: adding videos, labels, next trial, carrying settings over
 js/maths.js            calibration, filter, residual analysis, derivatives, angles, gap filling
 js/video.js            video loading, frame rendering, rotate/flip, seeking, frame-rate detection
+js/avi.js              reading MJPEG AVI files frame by frame
 js/overlay.js          drawing, magnifier, clicking, auto-centre, measurements
 js/tracking.js         marker tracking, jump checks, the pause-and-click flow, quality flags
 js/events.js           events, stopwatch, loop, suggested events, event-based values

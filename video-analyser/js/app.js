@@ -1,17 +1,17 @@
 // Start-up: wires the page together. Setup, calibration, the marker and angle builders, demos and the app install.
-import { A, $, esc, clone, status, persist, points, colourOf, angleDefs, eventTypes, VERSION, APP, download, fwd, ACTIVITY_OPTS, EVENT_DEFAULTS, isObject } from './state.js?v=2.2.0';
-import { tiltAngle } from './maths.js?v=2.2.0';
-import { initVideo, seek, recount, render, viewDims, play, pause, isPlaying, detectFps } from './video.js?v=2.2.0';
-import { initOverlay, draw, renderChips, updateDigiCount, renderMeasures, renderRefs, undo } from './overlay.js?v=2.2.0';
-import { initTracking, clearFlag, renderFlags } from './tracking.js?v=2.2.0';
-import { initEvents, renderEventBtns, renderEvents } from './events.js?v=2.2.0';
-import { initResults, compute, drawResults, live, renderNorm } from './results.js?v=2.2.0';
-import { initExport, renderExportPoints, renderPhotoOpts } from './export.js?v=2.2.0';
-import { initSession, addFiles, renderSession } from './session.js?v=2.2.0';
-import { initCompare, renderCompare } from './compare.js?v=2.2.0';
-import { initBuilder, renderBuilder } from './builder.js?v=2.2.0';
-import { initConvert } from './convert.js?v=2.2.0';
-import { initForce, renderForce, forceKey } from './force.js?v=2.2.0';
+import { A, $, esc, clone, status, persist, points, colourOf, angleDefs, eventTypes, VERSION, APP, download, fwd, ACTIVITY_OPTS, EVENT_DEFAULTS, isObject } from './state.js?v=2.3.0';
+import { tiltAngle } from './maths.js?v=2.3.0';
+import { initVideo, seek, recount, render, viewDims, play, pause, isPlaying, detectFps, hasVideo } from './video.js?v=2.3.0';
+import { initOverlay, draw, renderChips, updateDigiCount, renderMeasures, renderRefs, undo } from './overlay.js?v=2.3.0';
+import { initTracking, clearFlag, renderFlags } from './tracking.js?v=2.3.0';
+import { initEvents, renderEventBtns, renderEvents } from './events.js?v=2.3.0';
+import { initResults, compute, drawResults, live, renderNorm } from './results.js?v=2.3.0';
+import { initExport, renderExportPoints, renderPhotoOpts } from './export.js?v=2.3.0';
+import { initSession, addFiles, renderSession } from './session.js?v=2.3.0';
+import { initCompare, renderCompare } from './compare.js?v=2.3.0';
+import { initBuilder, renderBuilder } from './builder.js?v=2.3.0';
+import { initConvert } from './convert.js?v=2.3.0';
+import { initForce, renderForce, forceKey } from './force.js?v=2.3.0';
 
 Object.assign(A.fn, { draw, syncInputs, showCalib, compute, drawResults, clearFlag, renderFlags, live, renderPhotoOpts, renderNorm, renderDigiMode });
 
@@ -266,7 +266,7 @@ function initAngles() {
 }
 
 // ---------- video controls, tabs, keys ----------
-function togglePlay() { if (!$('vid').src) return; if (isPlaying()) pause(); else play(+$('rate').value); }
+function togglePlay() { if (!hasVideo()) return; if (isPlaying()) pause(); else play(+$('rate').value); }
 function initControls() {
   $('slider').addEventListener('input', function () { if (isPlaying()) pause(); seek(+this.value); });
   [['bBack1', -1], ['bFwd1', 1], ['bBack10', -10], ['bFwd10', 10]].forEach(([id, d]) => $(id).addEventListener('click', () => { if (isPlaying()) pause(); seek(A.cur + d); }));
