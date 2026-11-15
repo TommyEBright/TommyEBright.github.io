@@ -327,6 +327,44 @@ table.jk td:first-child { text-align: left; font-size: 11px; color: #CBD5E1; pad
 /* ── W/KG ── */
 .wkg-badge { font-size: 11px; color: var(--muted); margin-left: 4px; }
 
+/* ── BOOTSTRAP CI ── */
+.ci-line { font-size: 11px; color: #94A3B8; margin-top: 4px; }
+.ci-line strong { color: var(--txt); font-weight: 600; }
+.ci-cell { font-size: 11px; color: #94A3B8; white-space: nowrap; }
+.ci-pending { font-size: 10px; color: var(--muted); font-style: italic; }
+
+/* ── ZONE RULER ── */
+.ruler-wrap { margin-top: 6px; }
+.ruler-bar { display: flex; height: 44px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+.ruler-seg { display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: #fff; font-family: 'Lexend', sans-serif; min-width: 0; overflow: hidden; }
+.ruler-seg b { font-size: 13px; line-height: 1.1; }
+.ruler-seg span { font-size: 9px; opacity: .85; white-space: nowrap; }
+.ruler-ticks { position: relative; height: 34px; margin-top: 4px; }
+.ruler-tick { position: absolute; transform: translateX(-50%); text-align: center;
+  font-size: 10px; color: #CBD5E1; white-space: nowrap; line-height: 1.3; }
+.ruler-tick small { display: block; color: var(--muted); font-size: 9px; }
+.ruler-tick::before { content: ''; display: block; width: 1px; height: 6px; background: var(--border-hi); margin: 0 auto 2px; }
+
+/* ── FIT QUALITY & PREDICTION TABLES ── */
+table.mini { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+table.mini th { font-family: 'Lexend', sans-serif; font-size: 9px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; }
+table.mini td { padding: 7px 8px; border-bottom: 1px solid rgba(51,65,85,.25); color: #CBD5E1; }
+table.mini tr.best td { background: rgba(16,185,129,.07); }
+table.mini td.num { font-family: 'Lexend', sans-serif; font-weight: 600; color: var(--txt); white-space: nowrap; }
+.best-tag { display: inline-block; margin-left: 6px; font-size: 9px; font-weight: 700; letter-spacing: .06em;
+  color: var(--lt1); border: 1px solid rgba(16,185,129,.4); border-radius: 4px; padding: 0 5px; }
+.note-text { font-size: 11px; color: var(--muted); line-height: 1.6; margin-top: 10px; }
+.pred-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 800px) { .pred-grid { grid-template-columns: 1fr; } }
+.riegel-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-top: 8px; }
+.riegel-row .pf-group { flex: 1; min-width: 110px; }
+.verdict { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  border-radius: 4px; padding: 1px 6px; }
+.verdict.beyond { color: var(--lt1); border: 1px solid rgba(16,185,129,.4); }
+.verdict.within { color: var(--muted); border: 1px solid var(--border); }
+
 /* ── EXPORT ROW ── */
 .export-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
 .btn-export {
@@ -850,6 +888,7 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
           <option value="moddmax">ModDmax — Bishop et al. (1998)</option>
           <option value="bsln10">Bsln+ 1.0 — Mattioni Maturana (2018)</option>
           <option value="bsln15">Bsln+ 1.5 — Mattioni Maturana (2018)</option>
+          <option value="ltratio">LTratio — Dickhuth et al. (1999)</option>
         </select>
       </div>
       <div class="cb-group cb-lt2">
@@ -860,6 +899,7 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
           <option value="dmax">Dmax — Cheng et al. (1992)</option>
           <option value="logpolymoddmax">Log-Poly-ModDmax — Jamnick et al. (2018)</option>
           <option value="logexpmoddmax">Log-Exp-ModDmax — Jamnick et al. (2018)</option>
+          <option value="iat">IAT — Dickhuth et al. (1999)</option>
         </select>
       </div>
     </div>
@@ -872,6 +912,7 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
         <div class="mc-sub" id="mc-lt1-sub"></div>
         <div class="mc-method" id="mc-lt1-method"></div>
         <div class="spread-range" id="mc-lt1-spread" style="display:none"></div>
+        <div class="ci-line" id="mc-lt1-ci"></div>
       </div>
       <div class="metric-card mc-lt2" id="mc-lt2">
         <div class="mc-label">Anaerobic Threshold · LT2</div>
@@ -879,6 +920,7 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
         <div class="mc-sub" id="mc-lt2-sub"></div>
         <div class="mc-method" id="mc-lt2-method"></div>
         <div class="spread-range" id="mc-lt2-spread" style="display:none"></div>
+        <div class="ci-line" id="mc-lt2-ci"></div>
       </div>
       <div class="metric-card" id="mc-peak">
         <div class="mc-label">Peak Lactate</div>
@@ -964,6 +1006,49 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
       </div>
     </div>
 
+    <!-- Athlete-facing zone ruler -->
+    <div class="card" id="rulerCard" style="display:none;margin-bottom:16px;">
+      <div class="card-label">Athlete Zone Ruler · 5-Zone Model</div>
+      <div id="zoneRuler" class="ruler-wrap"></div>
+    </div>
+
+    <!-- Race / performance prediction -->
+    <div class="card" id="predCard" style="display:none;margin-bottom:16px;">
+      <div class="card-label">Performance Prediction</div>
+      <div class="pred-grid">
+        <div id="predFromThreshold"></div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--txt);">Race-to-race scaling · Riegel (1981)</div>
+          <div class="note-text" style="margin-top:4px;">Enter a recent race. A recent race usually predicts the next one better than a step test does.</div>
+          <div class="riegel-row">
+            <div class="pf-group"><label>Distance</label>
+              <select id="rgDist" onchange="renderRiegel()">
+                <option value="5">5 km</option><option value="10" selected>10 km</option>
+                <option value="21.0975">Half marathon</option><option value="42.195">Marathon</option>
+              </select></div>
+            <div class="pf-group"><label>Time (h:mm:ss)</label><input type="text" id="rgTime" placeholder="e.g. 40:00" oninput="renderRiegel()"></div>
+            <div class="pf-group"><label>Exponent</label>
+              <select id="rgB" onchange="renderRiegel()">
+                <option value="1.077">Men (1.077)</option><option value="1.083">Women (1.083)</option>
+                <option value="1.055">Men 40–70 (1.055)</option>
+              </select></div>
+          </div>
+          <div id="riegelOut"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Curve fit quality -->
+    <div class="card jk-panel" id="fqPanel" style="display:none;margin-bottom:16px;">
+      <div class="card-label details-trigger" onclick="toggleAcc('fqBody','fqTrigger')" id="fqTrigger">
+        Curve Fit Quality
+        <span class="arrow">▼</span>
+      </div>
+      <div id="fqBody" style="display:none;">
+        <div id="fqTable"></div>
+      </div>
+    </div>
+
     <!-- Jackknife heatmap panel -->
     <div class="card jk-panel" id="jkPanel" style="display:none;margin-bottom:16px;">
       <div class="card-label details-trigger" onclick="toggleJK()" id="jkTrigger">
@@ -1006,19 +1091,18 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
       </div>
       <div style="position:relative;height:380px;"><canvas id="compareChart"></canvas></div>
       <div id="compareDelta" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);display:flex;gap:20px;flex-wrap:wrap;"></div>
+      <div id="compareShift"></div>
     </div>
 
     <!-- All threshold methods (accordion) -->
     <div class="card details-card" id="detailsCard">
       <div class="card-label details-trigger" onclick="toggleDetails()" id="detailsTrigger">
-        All Threshold Methods (16)
+        All Threshold Methods (18)
         <span class="arrow">▼</span>
       </div>
       <div id="detailsBody">
         <table class="rt">
-          <thead><tr>
-            <th>Method</th><th>Intensity</th><th>Lactate</th><th>Heart Rate</th><th>Reference</th>
-          </tr></thead>
+          <thead id="resultsHead"></thead>
           <tbody id="resultsBody"></tbody>
         </table>
       </div>
@@ -1032,10 +1116,16 @@ table.vt-dt input[type="number"]:focus { outline: none; border-color: var(--bran
         <p>Mattioni Maturana F et al. Determination of the intensity corresponding to the maximal lactate steady state in well-trained cyclists. <em>Eur J Appl Physiol.</em> 2018;118(2):321–31. <em>[Bsln+ method — rise above individual lactate baseline]</em></p>
         <p>Bishop D, Jenkins DG, Mackinnon LT. The relationship between plasma lactate parameters, Wpeak and 1-h cycling performance in women. <em>Med Sci Sports Exerc.</em> 1998;30(8):1270–5.</p>
         <p>Cheng B et al. A New Approach for the Determination of Ventilatory and Lactate Thresholds. <em>Int J Sports Med.</em> 1992;13(07):518–22.</p>
+        <p>Davidson R, Flachaire E. The wild bootstrap, tamed at last. <em>J Econometrics.</em> 2008;146(1):162–9. <em>[Bootstrap confidence intervals]</em></p>
+        <p>Dickhuth HH et al. Individual anaerobic threshold for evaluation of competitive athletes and patients with left ventricular dysfunction. <em>Adv Ergometry.</em> 1991:173–9. <em>[LTratio, IAT]</em></p>
+        <p>Heuberger JAAC et al. Repeatability and predictive value of lactate threshold concepts in endurance sports. <em>PLOS ONE.</em> 2018;13(11):e0206846. <em>[Cycling time-trial prediction]</em></p>
+        <p>Hopkins WG. Measures of reliability in sports medicine and science. <em>Sports Med.</em> 2000;30(1):1–15. <em>[Test-to-test noise]</em></p>
         <p>Heck H et al. Justification of the 4-mmol/l Lactate Threshold. <em>Int J Sports Med.</em> 1985;06(03):117–30.</p>
         <p>Hofmann P, Tschakert G. Intensity- and Duration-Based Options to Regulate Endurance Training. <em>Front Physiol.</em> 2017;8:337.</p>
         <p>Hughson RL et al. Blood lactate concentration increases as a continuous function in progressive exercise. <em>J Appl Physiol.</em> 1987;62(5):1975–81.</p>
         <p>Jamnick NA et al. Manipulating graded exercise test variables affects the validity of the lactate threshold and VO2peak. <em>PLOS ONE.</em> 2018;13(7):e0199794.</p>
+        <p>Riegel PS. Athletic records and human endurance. <em>Am Sci.</em> 1981;69(3):285–90. <em>[Race-to-race scaling]</em></p>
+        <p>Roecker K et al. Predicting competition performance in long-distance running by means of a treadmill test. <em>Med Sci Sports Exerc.</em> 1998;30(10):1552–7. <em>[Running race prediction from IAT]</em></p>
         <p>Seiler S, Tønnessen E. Intervals, Thresholds, and Long Slow Distance: the Role of Intensity and Duration in Endurance Training. <em>Sportscience.</em> 2009;13:32–53.</p>
         <p>Sitko S, Seiler S, Viribay A et al. The Expert Consensus on Training Intensity Zones in Endurance Sports. <em>Int J Sports Physiol Perform.</em> 2025.</p>
       </div>
@@ -1394,13 +1484,15 @@ const METHODS = [
   { id:'logexpmoddmax',  label:'Log-Exp-ModDmax',   group:'Dmax',    color:'#7C3AED', ref:'Jamnick et al., 2018',         caution:false },
   { id:'ltp1',           label:'LTP1',              group:'LTP',     color:'#10B981', ref:'Hofmann & Tschakert, 2017',    caution:true  },
   { id:'ltp2',           label:'LTP2',              group:'LTP',     color:'#EF4444', ref:'Hofmann & Tschakert, 2017',    caution:true  },
+  { id:'ltratio',        label:'LTratio',           group:'LTratio', color:'#38BDF8', ref:'Dickhuth et al., 1999',        caution:false },
+  { id:'iat',            label:'IAT',               group:'LTratio', color:'#0EA5E9', ref:'Dickhuth et al., 1999',        caution:false },
 ];
 const OBLA_T  = { obla20:2.0, obla25:2.5, obla30:3.0, obla35:3.5, obla40:4.0 };
 const BSLN_D  = { bsln05:0.5, bsln10:1.0, bsln15:1.5 };
 // LT1-category and LT2-category method ids for method spread computation
-const LT1_IDS = new Set(['bsln05','bsln10','bsln15','loglog','obla20','obla25','moddmax','ltp1']);
-const LT2_IDS = new Set(['obla30','obla35','obla40','dmax','expdmax','logpolymoddmax','logexpmoddmax','ltp2']);
-const GRP_COL = { 'Bsln+':'#34D399','Log-Log':'#F87171','OBLA':'#16A34A','Dmax':'#2563EB','LTP':'#10B981' };
+const LT1_IDS = new Set(['bsln05','bsln10','bsln15','loglog','obla20','obla25','moddmax','ltp1','ltratio']);
+const LT2_IDS = new Set(['obla30','obla35','obla40','dmax','expdmax','logpolymoddmax','logexpmoddmax','ltp2','iat']);
+const GRP_COL = { 'Bsln+':'#34D399','Log-Log':'#F87171','OBLA':'#16A34A','Dmax':'#2563EB','LTP':'#10B981','LTratio':'#38BDF8' };
 const ZONE_COL = ['#0D9488','#10B981','#F59E0B','#EF4444','#8B5CF6'];
 
 // ═══════════════════════════════════════════════
@@ -1690,6 +1782,42 @@ function calcBslnPlus(xs,ys,delta){
   return bisect(fit.eval,fit.xMin,fit.xMax,target);
 }
 
+// Lowest lactate/intensity ratio on the fitted curve (resting point at 0 excluded)
+function calcLTratio(xs,ys){
+  const px=[],py=[];
+  xs.forEach((x,i)=>{if(x>0){px.push(x);py.push(ys[i]);}});
+  if(px.length<4) return null;
+  const fit=makePolyFit(px,py,3);
+  let best=null,bestR=Infinity;
+  for(let i=0;i<=500;i++){
+    const x=fit.xMin+(fit.xMax-fit.xMin)*i/500;
+    const r=fit.eval(x)/x;
+    if(r>0&&r<bestR){bestR=r;best=x;}
+  }
+  return best;
+}
+
+function calcIAT(xs,ys){
+  const ltr=calcLTratio(xs,ys);
+  if(ltr==null) return null;
+  const px=[],py=[];
+  xs.forEach((x,i)=>{if(x>0){px.push(x);py.push(ys[i]);}});
+  const fit=makePolyFit(px,py,3);
+  return bisect(fit.eval,ltr,fit.xMax,fit.eval(ltr)+1.5);
+}
+
+// HR at an intensity: interpolated, or extrapolated from the first three stages below the first stage
+function hrAt(x,xs,hrs){
+  const v=hrs.map((h,i)=>({x:xs[i],h})).filter(d=>d.h!=null&&d.x!=null);
+  if(v.length<2) return null;
+  if(x<v[0].x&&v.length>=3){
+    const s=v.slice(0,3), mx=s.reduce((a,d)=>a+d.x,0)/3, mh=s.reduce((a,d)=>a+d.h,0)/3;
+    const num=s.reduce((a,d)=>a+(d.x-mx)*(d.h-mh),0), den=s.reduce((a,d)=>a+(d.x-mx)**2,0);
+    if(den>0) return mh+num/den*(x-mx);
+  }
+  return interp(x,v.map(d=>d.x),v.map(d=>d.h));
+}
+
 // ═══════════════════════════════════════════════
 //  QUALITY CHECKS
 // ═══════════════════════════════════════════════
@@ -1848,13 +1976,14 @@ function analyse(){
       else if(m.id==='expdmax')       threshX=calcExpDmax(fxs,fys);
       else if(m.id==='logpolymoddmax') threshX=calcLogPolyModDmax(fxs,fys);
       else if(m.id==='logexpmoddmax')  threshX=calcLogExpModDmax(fxs,fys);
+      else if(m.id==='ltratio')        threshX=calcLTratio(fxs,fys);
+      else if(m.id==='iat')            threshX=calcIAT(fxs,fys);
     }catch(e){threshX=null;}
 
     let threshLac=null,threshHR=null;
     if(threshX!=null){
       threshLac=(m.id in OBLA_T)?OBLA_T[m.id]:Math.max(0,poly3.eval(threshX));
-      const vhr=shrs.map((h,i)=>({x:sxs[i],h})).filter(d=>d.h!=null);
-      if(vhr.length>=2) threshHR=interp(threshX,vhr.map(d=>d.x),vhr.map(d=>d.h));
+      threshHR=hrAt(threshX,sxs,shrs);
     }
     return {...m,threshX,threshLac,threshHR};
   });
@@ -1865,8 +1994,9 @@ function analyse(){
   const sortedIdx=xs.map((x,i)=>i).sort((a,b)=>xs[a]-xs[b]);
   const svo2s=sortedIdx.map(i=>vo2s[i]), svco2s=sortedIdx.map(i=>vco2s[i]), srers=sortedIdx.map(i=>rers[i]);
   const bodyMass=parseFloat($('bodyMass').value)||null;
-  lastAnalysis={results,sxs,sys,shrs,srpes,svo2s,svco2s,srers,fxs,fys,poly3,unit,hrmax:parseFloat($('hrMax').value)||null,bodyMass};
+  lastAnalysis={results,sxs,sys,shrs,srpes,svo2s,svco2s,srers,fxs,fys,poly3,unit,hrmax:parseFloat($('hrMax').value)||null,bodyMass,ci:null};
   renderAll();
+  startBootstrapCI();
   $('results').style.display='block';
   $('results').scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -1878,12 +2008,11 @@ function getConsensusData(){
   const lt1r=results.find(r=>r.id===lt1id), lt2r=results.find(r=>r.id===lt2id);
   const wrap=(r)=>{
     if(!r||r.threshX==null) return null;
-    const vhr=shrs.map((h,i)=>({x:sxs[i],h})).filter(d=>d.h!=null);
     return {
       x:r.threshX,
       lac:(r.id in OBLA_T)?OBLA_T[r.id]:Math.max(0,poly3.eval(r.threshX)),
-      hr:vhr.length>=2?interp(r.threshX,vhr.map(d=>d.x),vhr.map(d=>d.h)):null,
-      method:r.label, ref:r.ref
+      hr:hrAt(r.threshX,sxs,shrs),
+      method:r.label, ref:r.ref, id:r.id
     };
   };
   return {lt1:wrap(lt1r), lt2:wrap(lt2r)};
@@ -1903,6 +2032,9 @@ function renderAll(){
   renderCPETMetrics(lt1,lt2);
   renderQualityChecks(sxs,sys,shrs,fxs,fys,lt1,lt2);
   renderJackknife(fxs,fys,shrs,sxs,results,unit);
+  renderCI();
+  renderPrediction(results,unit,sxs,bodyMass);
+  renderFitQuality(fxs,fys);
 }
 
 // ═══════════════════════════════════════════════
@@ -2022,6 +2154,13 @@ function renderChart(lt1,lt2,pdfMode=false){
     annotations.lt2line={type:'line',xMin:lt2.x,xMax:lt2.x,borderColor:'#EF4444',borderWidth:1.5,borderDash:[6,4],
       label:{display:true,content:'LT2',position:'start',backgroundColor:'#EF4444',color:'#fff',
              font:{size:9,family:'Lexend, sans-serif',weight:'700'},padding:{x:5,y:2},borderRadius:3,yAdjust:22}};
+  }
+  const ciD=lastAnalysis.ci;
+  if(ciD){
+    if(lt1&&ciD[lt1.id]) annotations.lt1ci={type:'box',xMin:ciD[lt1.id].lo,xMax:ciD[lt1.id].hi,
+      backgroundColor:'rgba(16,185,129,0.12)',borderColor:'rgba(16,185,129,0.35)',borderWidth:1,borderDash:[2,3]};
+    if(lt2&&ciD[lt2.id]) annotations.lt2ci={type:'box',xMin:ciD[lt2.id].lo,xMax:ciD[lt2.id].hi,
+      backgroundColor:'rgba(239,68,68,0.12)',borderColor:'rgba(239,68,68,0.35)',borderWidth:1,borderDash:[2,3]};
   }
   // Other visible threshold lines — omitted in PDF mode (consensus lines only)
   if(!pdfMode){
@@ -2181,11 +2320,13 @@ function zoomOut(){ if(chartInstance) chartInstance.zoom(0.77); }
 //  ZONE TABLES (screen)
 // ═══════════════════════════════════════════════
 function renderZones(lt1,lt2,hrmax,unit){
-  if(!lt1||!lt2){ $('zone3Container').innerHTML='<p style="color:var(--muted);font-size:12px">Insufficient threshold data for zone calculation.</p>'; $('zone5Container').innerHTML=''; return; }
+  if(!lt1||!lt2){ $('zone3Container').innerHTML='<p style="color:var(--muted);font-size:12px">Insufficient threshold data for zone calculation.</p>'; $('zone5Container').innerHTML=''; $('rulerCard').style.display='none'; return; }
   const z3=buildZone3(lt1.x,lt2.x,lt1.lac,lt2.lac);
   const z5=buildZone5(lt1.x,lt2.x,lt1.lac,lt2.lac,hrmax);
   $('zone3Container').innerHTML=renderZone3Table(z3,unit);
   $('zone5Container').innerHTML=renderZone5Table(z5,unit,hrmax);
+  const {sxs,shrs}=lastAnalysis;
+  renderRuler(z5,unit,x=>hrAt(x,sxs,shrs));
 }
 
 function fmtI(min,max,unit){
@@ -2252,19 +2393,234 @@ function renderToggles(results){
 //  THRESHOLD TABLE
 // ═══════════════════════════════════════════════
 function renderThresholdTable(results,unit){
+  const {sxs,shrs,hrmax,bodyMass,ci}=lastAnalysis;
+  const peakX=sxs[sxs.length-1];
+  const peakHR=hrmax||shrs.filter(h=>h!=null).reduce((a,b)=>Math.max(a,b),0)||null;
+  const showWkg=unit==='W'&&bodyMass;
+  $('resultsHead').innerHTML=`<tr><th>Method</th><th>Intensity</th><th>95% CI</th><th>% Peak</th>${showWkg?'<th>W/kg</th>':''}<th>Lactate</th><th>Heart Rate</th><th>Reference</th></tr>`;
   const tbody=$('resultsBody'); tbody.innerHTML='';
   let lastG='';
   results.forEach(r=>{
     const tr=document.createElement('tr');
     const grpBadge=r.group!==lastG?`<span class="grp-b" style="background:${GRP_COL[r.group]||'#888'}">${r.group}</span><br>`:'';
     lastG=r.group;
-    const iVal=r.threshX!=null?`<span class="val">${r.threshX.toFixed(1)}</span> ${unit}`:'<span class="na">N/A</span>';
+    const has=r.threshX!=null;
+    const iVal=has?`<span class="val">${r.threshX.toFixed(1)}</span> ${unit}`:'<span class="na">N/A</span>';
+    const c=ci&&ci[r.id];
+    const ciVal=!has?'—':ci===null?'<span class="ci-pending">computing…</span>':c?`<span class="ci-cell">${c.lo.toFixed(0)}–${c.hi.toFixed(0)}</span>`:'<span class="na">—</span>';
+    const pVal=has&&peakX>0?`${(r.threshX/peakX*100).toFixed(0)}%`:'—';
+    const wVal=showWkg?`<td>${has?(r.threshX/bodyMass).toFixed(2):'—'}</td>`:'';
     const lVal=r.threshLac!=null?`<span class="val">${r.threshLac.toFixed(2)}</span> mmol/L`:'<span class="na">N/A</span>';
-    const hVal=r.threshHR!=null?`<span class="val">${Math.round(r.threshHR)}</span> bpm`:'<span class="na">—</span>';
+    const hVal=r.threshHR!=null?`<span class="val">${Math.round(r.threshHR)}</span> bpm${peakHR?` <span style="color:var(--muted);font-size:10px">(${(r.threshHR/peakHR*100).toFixed(0)}%)</span>`:''}`:'<span class="na">—</span>';
     tr.innerHTML=`<td>${grpBadge}<span class="dot" style="background:${r.color}"></span>${r.label}${r.caution?'<span class="caution" title="Scientific caveat: this method detects a subtle curve inflection that can vary with data density and noise. Automated result is valid — visual verification of the log-log or lactate curve is best practice.">⚠</span>':''}</td>
-      <td>${iVal}</td><td>${lVal}</td><td>${hVal}</td><td style="font-size:11px;color:var(--muted);font-style:italic">${r.ref}</td>`;
+      <td>${iVal}</td><td>${ciVal}</td><td>${pVal}</td>${wVal}<td>${lVal}</td><td>${hVal}</td><td style="font-size:11px;color:var(--muted);font-style:italic">${r.ref}</td>`;
     tbody.appendChild(tr);
   });
+}
+
+function toggleAcc(bodyId,triggerId){
+  const body=$(bodyId), trigger=$(triggerId);
+  const open=body.style.display==='block';
+  body.style.display=open?'none':'block';
+  trigger.classList.toggle('details-open',!open);
+}
+
+// ═══════════════════════════════════════════════
+//  BOOTSTRAP CONFIDENCE INTERVALS (wild bootstrap)
+// ═══════════════════════════════════════════════
+// Each replicate keeps the fitted curve and flips the sign of each stage's residual at random;
+// residuals are widened by sqrt(n/(n-p)) for the few degrees of freedom.
+let bootToken=0;
+function startBootstrapCI(nBoot=200){
+  const token=++bootToken;
+  const A=lastAnalysis, xs=A.fxs, ys=A.fys, n=xs.length;
+  const deg=$('oblaMethod').value==='poly4'?4:3;
+  if(n-(deg+1)<1){ A.ci={}; renderCI(); renderThresholdTable(A.results,A.unit); return; }
+  const fit=makePolyFit(xs,ys,deg);
+  const fitted=xs.map(x=>fit.eval(x));
+  const scale=Math.sqrt(n/(n-(deg+1)));
+  const res=ys.map((y,i)=>(y-fitted[i])*scale);
+  const oblaM=$('oblaMethod').value, llFrac=getLoglogFrac();
+  const ids=A.results.filter(r=>r.threshX!=null).map(r=>r.id);
+  const reps={}; ids.forEach(id=>reps[id]=[]);
+  let done=0;
+  const chunk=()=>{
+    if(token!==bootToken||lastAnalysis!==A) return;
+    const end=Math.min(done+20,nBoot);
+    for(;done<end;done++){
+      const yb=fitted.map((f,i)=>Math.max(0.05,f+res[i]*(Math.random()<0.5?-1:1)));
+      ids.forEach(id=>{const v=calcOneMethod(id,xs,yb,oblaM,llFrac); if(v!=null&&isFinite(v)) reps[id].push(v);});
+    }
+    if(done<nBoot){ setTimeout(chunk,0); return; }
+    const ci={};
+    ids.forEach(id=>{
+      const v=reps[id].sort((a,b)=>a-b);
+      if(v.length<nBoot*0.5) return;
+      const q=p=>v[Math.min(v.length-1,Math.max(0,Math.round(p*(v.length-1))))];
+      ci[id]={lo:q(0.025),hi:q(0.975),n:v.length};
+    });
+    A.ci=ci;
+    renderCI();
+    renderThresholdTable(A.results,A.unit);
+    const {lt1,lt2}=getConsensusData();
+    renderChart(lt1,lt2);
+  };
+  setTimeout(chunk,30);
+}
+
+function renderCI(){
+  if(!lastAnalysis) return;
+  const {ci,unit}=lastAnalysis;
+  const {lt1,lt2}=getConsensusData();
+  [['mc-lt1-ci',lt1],['mc-lt2-ci',lt2]].forEach(([el,lt])=>{
+    if(!$(el)) return;
+    if(!lt){ $(el).innerHTML=''; return; }
+    if(ci===null){ $(el).innerHTML='<span class="ci-pending">Computing 95% confidence interval…</span>'; return; }
+    const c=ci[lt.id];
+    $(el).innerHTML=c?`<strong>95% CI:</strong> ${c.lo.toFixed(1)}–${c.hi.toFixed(1)} ${unit} <span style="color:var(--muted)">(wild bootstrap)</span>`:'<span class="ci-pending">CI not available for this method</span>';
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  CURVE FIT QUALITY (RMSE vs leave-one-out prediction error)
+// ═══════════════════════════════════════════════
+function renderFitQuality(fxs,fys){
+  const panel=$('fqPanel'); if(!panel) return;
+  const n=fxs.length;
+  if(n<5){ panel.style.display='none'; return; }
+  const models=[
+    {name:'3rd degree polynomial',p:4,make:(x,y)=>makePolyFit(x,y,3)},
+    {name:'4th degree polynomial',p:5,make:(x,y)=>makePolyFit(x,y,4)},
+    {name:'Exponential (a + b·e^cx)',p:3,make:(x,y)=>makeExpFit(x,y)}
+  ].filter(m=>n>=m.p+2);
+  const rows=models.map(m=>{
+    const f=m.make(fxs,fys);
+    const rmse=Math.sqrt(fxs.reduce((s,x,i)=>s+(fys[i]-f.eval(x))**2,0)/n);
+    let sse=0;
+    for(let i=0;i<n;i++){
+      const xs=fxs.filter((_,j)=>j!==i), ys=fys.filter((_,j)=>j!==i);
+      sse+=(fys[i]-m.make(xs,ys).eval(fxs[i]))**2;
+    }
+    return {name:m.name,rmse,loo:Math.sqrt(sse/n)};
+  });
+  const best=rows.reduce((a,b)=>b.loo<a.loo?b:a);
+  $('fqTable').innerHTML=`
+    <table class="mini"><thead><tr><th>Curve</th><th>RMSE (fit to stages)</th><th>Prediction error (leave-one-out)</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr class="${r===best?'best':''}"><td>${r.name}${r===best?'<span class="best-tag">BEST PREDICTION</span>':''}</td>
+      <td class="num">${r.rmse.toFixed(3)} mmol/L</td><td class="num">${r.loo.toFixed(3)} mmol/L</td></tr>`).join('')}</tbody></table>
+    <p class="note-text">RMSE always favours curves with more parameters. Leave-one-out prediction error refits the curve with each stage removed and checks how well it predicts that stage, so it penalises over-fitting. Choose the curve before looking at thresholds and keep it the same across tests for one athlete. Expected scatter from analyser error alone is about 0.1–0.2 mmol/L.</p>`;
+  panel.style.display='';
+}
+
+// ═══════════════════════════════════════════════
+//  PERFORMANCE PREDICTION
+// ═══════════════════════════════════════════════
+// Cycling: 45-min TT power as % of threshold (Heuberger et al., 2018; 5-min stages, +25 W, venous blood)
+const TT_RATIOS=[
+  {id:'ltp2',label:'LTP2',m:0.92,sd:0.05},
+  {id:'iat',label:'IAT',m:0.95,sd:0.06},
+  {id:'moddmax',label:'ModDmax',m:0.94,sd:0.04},
+  {id:'obla40',label:'OBLA 4.0',m:0.90,sd:0.06},
+  {id:'logpolymoddmax',label:'Log-Poly-ModDmax',m:0.94,sd:0.06},
+  {id:'dmax',label:'Dmax',m:1.04,sd:0.07},
+  {id:'peak',label:'Peak step-test power',m:0.82,sd:0.03}
+];
+// Running: race speed as % of IAT speed (Roecker et al., 1998), ~±10% 95% range
+const RUN_RACES=[
+  {label:'5 km',d:5,r:1.185},{label:'10 km',d:10,r:1.095},
+  {label:'Half marathon',d:21.0975,r:1.055},{label:'Marathon',d:42.195,r:0.955}
+];
+function fmtTime(min){
+  if(!isFinite(min)||min<=0) return '—';
+  const s=Math.round(min*60), h=Math.floor(s/3600), m=Math.floor(s%3600/60), sec=s%60;
+  return h>0?`${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`:`${m}:${String(sec).padStart(2,'0')}`;
+}
+function parseTime(t){
+  const p=String(t||'').trim().split(':').map(Number);
+  if(!p.length||p.some(isNaN)) return null;
+  if(p.length===3) return p[0]*60+p[1]+p[2]/60;
+  if(p.length===2) return p[0]+p[1]/60;
+  if(p.length===1) return p[0];
+  return null;
+}
+const toKmh=(v,unit)=>unit==='km/h'?v:unit==='mph'?v*1.609344:unit==='m/s'?v*3.6:null;
+
+function renderPrediction(results,unit,sxs,bodyMass){
+  const card=$('predCard'); if(!card) return;
+  const get=id=>{const r=results.find(r=>r.id===id);return r&&r.threshX!=null?r.threshX:null;};
+  let html='';
+  if(unit==='W'){
+    const peak=sxs[sxs.length-1];
+    const rows=TT_RATIOS.map(t=>{
+      const thr=t.id==='peak'?peak:get(t.id);
+      if(thr==null) return '';
+      const p=thr*t.m, lo=thr*(t.m-1.96*t.sd), hi=thr*(t.m+1.96*t.sd);
+      return `<tr><td>${t.label}</td><td>${thr.toFixed(0)} W</td><td>${(t.m*100).toFixed(0)}%</td>
+        <td class="num">${p.toFixed(0)} W${bodyMass?` <span style="color:var(--muted);font-weight:400">(${(p/bodyMass).toFixed(2)} W/kg)</span>`:''}</td>
+        <td>${lo.toFixed(0)}–${hi.toFixed(0)} W</td></tr>`;
+    }).join('');
+    html=`<div style="font-size:12px;font-weight:600;color:var(--txt);">Cycling · 45-min time-trial power</div>
+      <table class="mini"><thead><tr><th>From</th><th>Threshold</th><th>TT %</th><th>Predicted</th><th>95% range</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="note-text">Ratios from Heuberger et al. (2018): 48 well-trained men, 5-min stages from 175 W in 25 W steps, venous blood. Expect about ±25 W error, and only for a matching protocol. Peak step-test power predicted the time trial as well as any threshold.</p>`;
+  } else {
+    const kmh=toKmh(1,unit);
+    const iat=get('iat');
+    if(kmh==null){
+      html=`<div class="note-text" style="margin-top:0;">Threshold-based race prediction needs intensity in watts (cycling) or speed (running).</div>`;
+    } else if(iat==null){
+      html=`<div class="note-text" style="margin-top:0;">IAT could not be found for this test, so running race times cannot be predicted from the step test.</div>`;
+    } else {
+      const v=iat*kmh;
+      const rows=RUN_RACES.map(r=>{
+        const s=v*r.r, t=r.d/s*60;
+        return `<tr><td>${r.label}</td><td>${(r.r*100).toFixed(1)}%</td><td>${s.toFixed(1)} km/h</td>
+          <td class="num">${fmtTime(t)}</td><td>${fmtTime(r.d/(s*1.10)*60)}–${fmtTime(r.d/(s*0.90)*60)}</td></tr>`;
+      }).join('');
+      const warn=(v<10||v>20)?`<p class="note-text" style="color:#F59E0B;">IAT speed (${v.toFixed(1)} km/h) is outside the 10–20 km/h range of the source data, so these predictions are extrapolated.</p>`:'';
+      html=`<div style="font-size:12px;font-weight:600;color:var(--txt);">Running · race prediction from IAT (${v.toFixed(1)} km/h)</div>
+        <table class="mini"><thead><tr><th>Race</th><th>% of IAT</th><th>Speed</th><th>Predicted</th><th>95% range</th></tr></thead><tbody>${rows}</tbody></table>${warn}
+        <p class="note-text">Roecker et al. (1998): 427 runners, 3-min stages, +2 km/h, 2% grade, earlobe blood. About ±10% (95% range). Smaller steps or longer stages shift IAT speed, so predictions only hold for a matching protocol.</p>`;
+    }
+  }
+  $('predFromThreshold').innerHTML=html;
+  renderRiegel();
+  card.style.display='';
+}
+
+function renderRiegel(){
+  const out=$('riegelOut'); if(!out) return;
+  const t=parseTime($('rgTime').value), d1=parseFloat($('rgDist').value), b=parseFloat($('rgB').value);
+  if(!t||t<=0){ out.innerHTML=''; return; }
+  const rows=[{label:'5 km',d:5},{label:'10 km',d:10},{label:'Half marathon',d:21.0975},{label:'Marathon',d:42.195}]
+    .filter(r=>Math.abs(r.d-d1)>0.01)
+    .map(r=>{const t2=t*Math.pow(r.d/d1,b);return `<tr><td>${r.label}</td><td class="num">${fmtTime(t2)}</td><td>${fmtTime(t2/r.d)} /km</td></tr>`;}).join('');
+  out.innerHTML=`<table class="mini"><thead><tr><th>Race</th><th>Predicted</th><th>Pace</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="note-text">T₂ = T₁ × (D₂/D₁)<sup>b</sup>. Riegel tends to be optimistic for the marathon: for half of 2,303 recreational runners it was at least 10 minutes too fast (Vickers &amp; Vertosick, 2016).</p>`;
+}
+
+// ═══════════════════════════════════════════════
+//  ZONE RULER (athlete-facing)
+// ═══════════════════════════════════════════════
+function renderRuler(z5,unit,hrFn){
+  const card=$('rulerCard'); if(!card) return;
+  const {sxs}=lastAnalysis;
+  const lo=Math.max(0,sxs.find(x=>x>0)??sxs[0]), hi=sxs[sxs.length-1];
+  const bounds=[lo];
+  z5.slice(0,4).forEach(z=>bounds.push(z.iMax));
+  bounds.push(hi);
+  const clamp=v=>Math.min(hi,Math.max(lo,v));
+  const span=hi-lo||1;
+  const segs=z5.map((z,i)=>{
+    const w=Math.max(0,clamp(bounds[i+1])-clamp(bounds[i]))/span*100;
+    return `<div class="ruler-seg" style="width:${w}%;background:${z.col}" title="${z.name}"><b>Z${z.z}</b>${w>=16?`<span>${z.name}</span>`:''}</div>`;
+  }).join('');
+  const ticks=bounds.slice(1,5).map(b=>{
+    const pos=(clamp(b)-lo)/span*100, hr=hrFn(b);
+    return `<div class="ruler-tick" style="left:${pos}%">${b.toFixed(0)} ${unit}${hr?`<small>${Math.round(hr)} bpm</small>`:''}</div>`;
+  }).join('');
+  $('zoneRuler').innerHTML=`<div class="ruler-bar">${segs}</div><div class="ruler-ticks">${ticks}</div>
+    <p class="note-text" style="margin-top:2px;">Bar spans the first to the last test stage. Heart rate is interpolated between stages, and extrapolated from the first three stages below the first stage.</p>`;
+  card.style.display='';
 }
 
 function toggleDetails(){
@@ -2317,6 +2673,8 @@ function calcOneMethod(id,xs,ys,oblaM,llFrac){
     if(id==='expdmax')       return calcExpDmax(xs,ys);
     if(id==='logpolymoddmax') return calcLogPolyModDmax(xs,ys);
     if(id==='logexpmoddmax')  return calcLogExpModDmax(xs,ys);
+    if(id==='ltratio')        return calcLTratio(xs,ys);
+    if(id==='iat')            return calcIAT(xs,ys);
   }catch(e){}
   return null;
 }
@@ -2477,7 +2835,8 @@ function exportDossier(){
     if (cpetLt1Pct != null) meta += ` | ${cpetLt1Pct.toFixed(1)}% VO2max`;
     doc.text(meta, M + 4, y + 18);
     doc.setFontSize(6); doc.setTextColor(100, 116, 139);
-    doc.text(S('Method: ' + lt1.method), M + 4, y + 22);
+    const c1 = lastAnalysis.ci && lastAnalysis.ci[lt1.id];
+    doc.text(S('Method: ' + lt1.method + (c1 ? `  |  95% CI ${c1.lo.toFixed(0)}-${c1.hi.toFixed(0)} ${unit}` : '')), M + 4, y + 22);
   }
 
   // LT2 card
@@ -2507,7 +2866,8 @@ function exportDossier(){
     if (cpetLt2Pct != null) meta += ` | ${cpetLt2Pct.toFixed(1)}% VO2max`;
     doc.text(meta, x2 + 4, y + 18);
     doc.setFontSize(6); doc.setTextColor(100, 116, 139);
-    doc.text(S('Method: ' + lt2.method), x2 + 4, y + 22);
+    const c2 = lastAnalysis.ci && lastAnalysis.ci[lt2.id];
+    doc.text(S('Method: ' + lt2.method + (c2 ? `  |  95% CI ${c2.lo.toFixed(0)}-${c2.hi.toFixed(0)} ${unit}` : '')), x2 + 4, y + 22);
   }
   y += cardH + 5;
 
@@ -2727,6 +3087,69 @@ function exportDossier(){
       margin: { left: M, right: M }
     });
     y = doc.lastAutoTable.finalY + 6;
+  }
+
+  // ─── ALL METHODS WITH 95% CI ──────────────
+  const pdfSection = (title, rgb) => {
+    if (y + 40 > H - M) { doc.addPage(); y = M; }
+    doc.setTextColor(30, 41, 59); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+    doc.text(S(title), M, y);
+    doc.setDrawColor(...rgb); doc.setLineWidth(0.5); doc.line(M, y + 1, W - M, y + 1);
+    y += 3;
+  };
+  const tblStyle = { theme:'striped', headStyles:{ fillColor:[31,26,74], textColor:255, fontSize:8, fontStyle:'bold' },
+    bodyStyles:{ fontSize:7.5, cellPadding:1.6 }, alternateRowStyles:{ fillColor:[248,250,252] }, margin:{ left:M, right:M } };
+  {
+    const {results, ci, bodyMass} = lastAnalysis;
+    const peakX = sxs[sxs.length-1];
+    const showWkg = unit === 'W' && bodyMass;
+    pdfSection('ALL THRESHOLD METHODS | 95% CONFIDENCE INTERVALS (wild bootstrap)', [100,116,139]);
+    doc.autoTable({ ...tblStyle, startY: y,
+      head: [['Method', 'Intensity', '95% CI', '% Peak', ...(showWkg?['W/kg']:[]), 'Lactate', 'HR']],
+      body: results.map(r => {
+        const has = r.threshX != null, c = ci && ci[r.id];
+        return [S(r.label), has ? `${r.threshX.toFixed(1)} ${unit}` : 'N/A',
+          c ? `${c.lo.toFixed(0)}-${c.hi.toFixed(0)}` : '-',
+          has && peakX > 0 ? `${(r.threshX/peakX*100).toFixed(0)}%` : '-',
+          ...(showWkg ? [has ? (r.threshX/bodyMass).toFixed(2) : '-'] : []),
+          r.threshLac != null ? r.threshLac.toFixed(2) : '-',
+          r.threshHR != null ? `${Math.round(r.threshHR)}` : '-'];
+      })
+    });
+    y = doc.lastAutoTable.finalY + 6;
+
+    // ─── PERFORMANCE PREDICTION ─────────────
+    const get = id => { const r = results.find(r => r.id === id); return r && r.threshX != null ? r.threshX : null; };
+    let pHead = null, pBody = [], pNote = '';
+    if (unit === 'W') {
+      pHead = [['From', 'Threshold', 'TT %', 'Predicted 45-min TT', '95% range']];
+      TT_RATIOS.forEach(t => {
+        const thr = t.id === 'peak' ? peakX : get(t.id);
+        if (thr == null) return;
+        const p = thr*t.m;
+        pBody.push([S(t.label), `${thr.toFixed(0)} W`, `${(t.m*100).toFixed(0)}%`,
+          `${p.toFixed(0)} W${bodyMass ? ` (${(p/bodyMass).toFixed(2)} W/kg)` : ''}`,
+          `${(thr*(t.m-1.96*t.sd)).toFixed(0)}-${(thr*(t.m+1.96*t.sd)).toFixed(0)} W`]);
+      });
+      pNote = 'Heuberger et al. (2018): 5-min stages, +25 W, venous blood. About +/-25 W; valid only for a matching protocol.';
+    } else if (toKmh(1, unit) != null && get('iat') != null) {
+      const v = get('iat') * toKmh(1, unit);
+      pHead = [['Race', '% of IAT', 'Speed', 'Predicted', '95% range']];
+      RUN_RACES.forEach(r => {
+        const s = v*r.r;
+        pBody.push([r.label, `${(r.r*100).toFixed(1)}%`, `${s.toFixed(1)} km/h`, fmtTime(r.d/s*60),
+          `${fmtTime(r.d/(s*1.1)*60)}-${fmtTime(r.d/(s*0.9)*60)}`]);
+      });
+      pNote = `Roecker et al. (1998) from IAT ${v.toFixed(1)} km/h: 3-min stages, +2 km/h, 2% grade. About +/-10%; valid only for a matching protocol.`;
+    }
+    if (pHead && pBody.length) {
+      pdfSection('PERFORMANCE PREDICTION', [230,0,126]);
+      doc.autoTable({ ...tblStyle, startY: y, head: pHead, body: pBody });
+      y = doc.lastAutoTable.finalY + 3;
+      doc.setFontSize(7); doc.setFont('helvetica', 'italic'); doc.setTextColor(100,116,139);
+      doc.splitTextToSize(pNote, W - M*2).forEach(l => { doc.text(l, M, y + 2); y += 3.5; });
+      y += 5;
+    }
   }
 
   // ─── PHYSIOLOGICAL SUMMARY ────────────────
@@ -3434,6 +3857,7 @@ function renderComparison(){
   if(!ltA?.lt1||!ltB?.lt1||!ltA?.lt2||!ltB?.lt2){
     delta.style.cssText='margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);';
     delta.innerHTML='Run analysis on both sessions to see threshold deltas.';
+    $('compareShift').innerHTML='';
     return;
   }
 
@@ -3496,6 +3920,59 @@ function renderComparison(){
         </div>
       </div>`;
   }).join('');
+
+  renderCurveShift(pA,pB,ltA,ltB,unit);
+}
+
+// Test-to-test noise (Hopkins, 2000): change ± 1.645·√2·CV·mean gives a 90% interval.
+// Default CVs approximate Heuberger et al. (2018) test-retest data: ~9% for first-rise (LT1) methods, ~5% for LT2-type methods.
+function noiseVerdict(a,b,lt){
+  const cv=lt&&lt.id&&LT1_IDS.has(lt.id)?0.09:0.05;
+  const d=b-a, half=1.645*Math.SQRT2*cv*(a+b)/2;
+  return {d,lo:d-half,hi:d+half,cv,beyond:(d-half>0)||(d+half<0)};
+}
+
+function renderCurveShift(pA,pB,ltA,ltB,unit){
+  const out=$('compareShift'); if(!out) return;
+  const row=(label,lt)=>{
+    const a=ltA?.[lt]?.x, b=ltB?.[lt]?.x;
+    if(a==null||b==null) return '';
+    const v=noiseVerdict(a,b,ltB[lt]);
+    const s=x=>(x>0?'+':'')+x.toFixed(1);
+    return `<tr><td>${label}${ltB[lt].method?` <span style="color:var(--muted)">(${ltB[lt].method})</span>`:''}</td>
+      <td class="num">${s(v.d)} ${unit}</td><td>${s(v.lo)} to ${s(v.hi)}</td><td>${(v.cv*100).toFixed(0)}%</td>
+      <td><span class="verdict ${v.beyond?'beyond':'within'}">${v.beyond?'Beyond the noise':'Within the noise'}</span></td></tr>`;
+  };
+  const xAt=(p,lac)=>{
+    const lo=p.xs[0], hi=p.xs[p.xs.length-1];
+    if(lac<p.fit.eval(lo)||lac>p.fit.eval(hi)) return null;
+    return bisect(p.fit.eval,lo,hi,lac);
+  };
+  const lacRows=[1.5,2,2.5,3,4].map(l=>{
+    const a=xAt(pA,l), b=xAt(pB,l);
+    if(a==null||b==null) return '';
+    const d=b-a;
+    return `<tr><td>${l.toFixed(1)} mmol/L</td><td>${a.toFixed(0)} ${unit}</td><td>${b.toFixed(0)} ${unit}</td>
+      <td class="num" style="color:${d>0?'var(--lt1)':d<0?'var(--lt2)':'inherit'}">${d>0?'+':''}${d.toFixed(0)} ${unit}</td></tr>`;
+  }).join('');
+  const lo=Math.max(pA.xs[0],pB.xs[0]), hi=Math.min(pA.xs[pA.xs.length-1],pB.xs[pB.xs.length-1]);
+  const atX=[ltA?.lt1?.x,ltA?.lt2?.x].filter(x=>x!=null&&x>=lo&&x<=hi).map(x=>{
+    const a=Math.max(0,pA.fit.eval(x)), b=Math.max(0,pB.fit.eval(x)), d=b-a;
+    return `<tr><td>${x.toFixed(0)} ${unit}</td><td>${a.toFixed(2)}</td><td>${b.toFixed(2)}</td>
+      <td class="num" style="color:${d<0?'var(--lt1)':d>0?'var(--lt2)':'inherit'}">${d>0?'+':''}${d.toFixed(2)} mmol/L</td></tr>`;
+  }).join('');
+  const verdictRows=row('LT1','lt1')+row('LT2','lt2');
+  out.innerHTML=`
+    ${verdictRows?`<div style="margin-top:16px;font-size:12px;font-weight:600;color:var(--txt);">Is the change real? (A → B)</div>
+    <table class="mini"><thead><tr><th>Threshold</th><th>Change</th><th>90% interval</th><th>Test CV</th><th>Verdict</th></tr></thead><tbody>${verdictRows}</tbody></table>
+    <p class="note-text">The interval reflects normal test-to-test variation (Hopkins, 2000). "Beyond the noise" means the whole interval sits on one side of zero. First-rise thresholds (e.g. Bsln+ 0.5, Log-log, LTP1) vary more between tests (~8–11%) than LT2-type thresholds (~4–6%). Decide which threshold you are tracking before looking — with many methods, some will cross the line by chance.</p>`:''}
+    <div class="pred-grid" style="margin-top:12px;">
+      <div><div style="font-size:12px;font-weight:600;color:var(--txt);">Curve shift · intensity at each lactate</div>
+        ${lacRows?`<table class="mini"><thead><tr><th>Lactate</th><th>A</th><th>B</th><th>Gain</th></tr></thead><tbody>${lacRows}</tbody></table>`:'<p class="note-text">The curves do not share a lactate range.</p>'}</div>
+      <div><div style="font-size:12px;font-weight:600;color:var(--txt);">Lactate change at Session A thresholds</div>
+        ${atX?`<table class="mini"><thead><tr><th>Intensity</th><th>A</th><th>B</th><th>Change</th></tr></thead><tbody>${atX}</tbody></table>`:'<p class="note-text">Session A thresholds fall outside the shared intensity range.</p>'}</div>
+    </div>
+    <p class="note-text">A rightward shift (more intensity for the same lactate) usually means improved endurance, but can also reflect low glycogen or overreaching — check diet and training load before the test.</p>`;
 }
 
 
