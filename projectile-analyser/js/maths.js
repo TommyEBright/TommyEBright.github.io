@@ -19,7 +19,7 @@ export function polyfit(t, y, k) {
   const res = new Float64Array(n); let ssr = 0;
   for (let i = 0; i < n; i++) { let f = 0; for (let j = 0; j < p; j++) f += c[j] * Math.pow(t[i], j); res[i] = y[i] - f; ssr += res[i] * res[i]; }
   const s2 = ssr / (n - p), se = new Float64Array(p); for (let j = 0; j < p; j++) se[j] = Math.sqrt(Math.max(0, s2 * inv[j][j]));
-  return { c, se, res, rms: Math.sqrt(ssr / n), n };
+  return { c, se, res, rms: Math.sqrt(ssr / n), n, s: Math.sqrt(s2), ivd: inv.map((r, j) => r[j]) };
 }
 function invert(M) {
   const n = M.length, A = M.map((r, i) => { const o = new Float64Array(2 * n); o.set(r); o[n + i] = 1; return o; });
@@ -33,19 +33,22 @@ function invert(M) {
   return A.map((r) => Array.from(r.slice(n)));
 }
 
-// The flight fit. t is measured from release (t = 0 at the release frame).
+// The flight fit. t is measured from release (t = 0 at the release frame). Three frames are enough when g is fixed
+// (two unknowns each way); the gravity check (g free) needs at least five. minS is the smallest believable position
+// error (e.g. the clicking precision): with very few frames the residuals alone can make the error look tiny.
 //   horizontal:      x = x0 + vx*t                      (straight line: no horizontal force)
 //   vertical, free:  y = y0 + vy*t + c2*t^2, g = -2*c2   (lets the data say what gravity is: the check)
 //   vertical, fixed: y + g*t^2/2 = y0 + vy*t            (g known, so only two unknowns: more precise)
-export function fitFlight(t, x, y) {
-  const fx = polyfit(t, x, 1), fy = polyfit(t, y, 2);
+export function fitFlight(t, x, y, minS = 0) {
+  const fx = polyfit(t, x, 1), fy = t.length >= 5 ? polyfit(t, y, 2) : null;
   const yc = y.map((v, i) => v + 0.5 * G * t[i] * t[i]), fyg = polyfit(t, yc, 1);
-  if (!fx || !fy || !fyg) return null;
+  if (!fx || !fyg) return null;
+  const sf = (f, j) => Math.sqrt(Math.max(f.s * f.s, minS * minS) * f.ivd[j]);
   const resY = fyg.res; // residuals of the fixed-g fit are the same in y
   return {
-    x0: fx.c[0], vx: fx.c[1], sevx: fx.se[1], resX: fx.res, rmsX: fx.rms,
-    y0: fyg.c[0], vy: fyg.c[1], sevy: fyg.se[1], resY, rmsY: fyg.rms,
-    gFree: -2 * fy.c[2], seg: 2 * fy.se[2], vyFree: fy.c[1], y0Free: fy.c[0], rmsYFree: fy.rms, n: t.length,
+    x0: fx.c[0], vx: fx.c[1], sevx: sf(fx, 1), resX: fx.res, rmsX: fx.rms,
+    y0: fyg.c[0], vy: fyg.c[1], sevy: sf(fyg, 1), sey0: sf(fyg, 0), resY, rmsY: fyg.rms,
+    gFree: fy ? -2 * fy.c[2] : NaN, seg: fy ? 2 * fy.se[2] : NaN, vyFree: fy ? fy.c[1] : fyg.c[1], y0Free: fy ? fy.c[0] : fyg.c[0], rmsYFree: fy ? fy.rms : fyg.rms, n: t.length,
   };
 }
 // Release speed and angle with their standard errors (first-order error propagation).

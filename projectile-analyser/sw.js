@@ -1,5 +1,5 @@
 // Service worker: keeps Projectile Motion working offline. Bump VERSION when you change any file.
-const VERSION = 'pm-1.2.0';
+const VERSION = 'pm-1.3.0';
 const CORE = ['./', 'index.html', 'css/style.css', 'manifest.webmanifest', 'js/app.js', 'js/maths.js', 'js/plot.js', 'js/learn.js', 'js/analyse.js', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(VERSION).then((c) => c.addAll(CORE)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== VERSION).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });

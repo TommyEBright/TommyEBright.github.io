@@ -1,8 +1,8 @@
 // Analyse: a real flight, from video (calibrate and digitise here) or from position data (e.g. a marker exported
 // from Kinematic Analysis), to release speed, angle and height, what they predict, and what-ifs.
 // Coordinates: metres, y up, x in the direction of travel (the tool mirrors the data if the flight goes right to left).
-import { G, rad, deg, fitFlight, polar, pos, tAtHeight, peakRise, fromPolar, range, optimumAngle, minSpeedToTarget, speedForTarget, DEMOS, VIDEO_DEMO } from './maths.js?v=1.2.0';
-import { panel, line, dots, arrow, label, lim, rightMark, fmt, sgn, COL } from './plot.js?v=1.2.0';
+import { G, rad, deg, fitFlight, polar, pos, tAtHeight, peakRise, fromPolar, range, optimumAngle, minSpeedToTarget, speedForTarget, DEMOS, VIDEO_DEMO } from './maths.js?v=1.3.0';
+import { panel, line, dots, arrow, label, lim, rightMark, fmt, sgn, COL } from './plot.js?v=1.3.0';
 
 const RIM_R = 0.2286, BALL_R = 0.119; // basketball: 18 in (45.7 cm) rim, size 7 ball (about 23.8 cm across)
 const C = { hyp: '#1d4ed8', adj: '#d97706', opp: '#7c3aed', pts: '#0f172a', fit: '#1d4ed8', what: '#db2777', flight: '#dbeafe', out: '#94a3b8' };
@@ -15,7 +15,7 @@ function fresh() {
     url: null, avi: null, bright: 1, vw: 0, vh: 0, fileFps: 60, realFps: 60, nF: 0, frame: 0, clicks: {}, cal: { a: null, b: null, len: 1, o: null }, mode: 'idle', stepBy: 1, hover: null, targetPx: null,
     // position data (raw, before mirroring)
     t: [], rx: [], ry: [], fr: [], flip: false, markers: null, csvParsed: null, marker: '', csv: null, units: 1, fpsData: 100,
-    rel: 0, land: 0, suggested: false, fromEvents: false, event: null, hist: [], gf: 0,
+    rel: 0, land: 0, suggested: false, fromEvents: false, event: null, hist: [], gf: 0, calBy: 'stick',
     // task inputs
     target: { x: 4.225, y: 3.05 }, landH: null, takeoffDist: 0, landingDist: 0, releaseAhead: 0,
     ex: null };
@@ -39,12 +39,14 @@ function fit() {
   const key = [A.rel, A.land, N(), A.flip, A.t[0], A.t[A.land], A.rx[A.rel], A.rx[A.land], A.ry[A.rel], A.ry[A.land]].join('|');
   if (key === FITKEY) return FIT;
   FITKEY = key; FIT = null;
-  if (N() < 6 || A.land - A.rel < 4) return null;
-  const f = flight(), F = fitFlight(f.t, f.x, f.y); if (!F) return null;
+  if (N() < 3 || A.land - A.rel < 2) return null;
+  const f = flight(), F = fitFlight(f.t, f.x, f.y, minSigma()); if (!F) return null;
   F.pol = polar(F.vx, F.vy, F.sevx, F.sevy); F.f = f;
   F.dt = A.t.length > 1 ? (A.t[A.t.length - 1] - A.t[0]) / (A.t.length - 1) : 0;
   FIT = F; return F;
 }
+// smallest believable position error: about 1.5 pixels of clicking on video, 3 mm for imported data
+function minSigma() { return A.src === 'video' && calibrated() ? 1.5 / scalePx() : 0.003; }
 const P0 = (F) => ({ x0: F.x0, y0: F.y0, vx: F.vx, vy: F.vy });
 function setWorld(t, x, y, fr) {
   A.t = t; A.rx = x; A.ry = y; A.fr = fr || t.map((q, i) => i);
@@ -219,7 +221,7 @@ function drawStage() {
   c.strokeStyle = 'rgba(29,78,216,.8)'; c.lineWidth = 2 * u; c.beginPath(); fs.forEach((f, i) => { const p = A.clicks[f]; i ? c.lineTo(...p) : c.moveTo(...p); }); c.stroke();
   fs.forEach((f) => dot(A.clicks[f], f === A.frame ? '#ef4444' : '#1d4ed8', f === A.frame ? 6 : 4));
   txt(c, 'Frame ' + A.frame + ' of ' + (A.nF - 1) + '  ·  ' + fmt(A.frame / A.realFps, 3) + ' s', 12 * u, 22 * u, '#fff', u, 'left', true);
-  const mt = { calA: '1. Click one end of the stick', calB: '2. Now click the other end', o: '3. Click the floor where you want 0 m', dig: 'Click the middle of the ball', target: '4. Click the middle of the hoop' }[A.mode];
+  const mt = { calA: A.calBy === 'ball' ? '1. Click the left edge of the ball' : '1. Click one end of the stick', calB: A.calBy === 'ball' ? '2. Now click its right edge' : '2. Now click the other end', o: '3. Click the floor where you want 0 m', dig: 'Click the middle of the ball', target: '4. Click the middle of the hoop' }[A.mode];
   if (mt) txt(c, mt, A.vw / 2, 70 * u, '#fde047', u * 1.6, 'center', true);
   const s = document.getElementById('frameNo'); if (s) s.textContent = A.frame; const s2 = document.getElementById('frameNo2'); if (s2) s2.textContent = A.frame;
   const k = document.getElementById('clickCount'); if (k) k.textContent = fs.length;
@@ -363,7 +365,7 @@ const OLD = [
   },
   {
     key: 'dig', short: 'Digitise', title: 'Click the ball in each frame', view: 'stage', enabled: () => A.src === 'video' && calibrated(),
-    canNext: () => N() >= 6,
+    canNext: () => N() >= 3,
     body: () => layer('words', 'How to digitise', '<ol><li>Go to a few frames <strong>before</strong> the ball leaves the hand (use the buttons under the video, or the arrow keys).</li><li>Press <strong>Start clicking</strong>, then click the <strong>centre of the ball</strong>. The video moves on by itself after each click.</li><li>Keep going until it lands or reaches the hoop. Click again on any frame to move that point.</li></ol><p>Aim for the centre every time, not the edge nearest to you. Each click is only as good as your aim: a ball that is 18 pixels across, clicked to within 2 pixels, is about 1.5 cm at this scale.</p>')
       + '<div class="row"><button type="button" class="btn' + (A.mode === 'dig' ? ' on' : '') + '" id="bDig">' + (A.mode === 'dig' ? 'Clicking: on' : 'Start clicking') + '</button><label class="small" style="display:inline-flex;gap:.3rem;align-items:center">Move on by <select id="stepBy" style="width:4.5rem">' + [1, 2, 3, 4].map((k) => '<option' + (k === A.stepBy ? ' selected' : '') + '>' + k + '</option>').join('') + '</select> frame(s)</label></div>'
       + '<div class="row" style="margin-top:.4rem"><button type="button" class="btn small ghost" id="bDel">Remove this frame&rsquo;s point</button><button type="button" class="btn small ghost" id="bClr">Clear all</button></div>'
@@ -391,13 +393,13 @@ const OLD = [
         + (A.suggested ? '<div class="status">The tool has <b>suggested</b> these frames, from where the data stop looking like a clean projectile, then moved in by about 15 ms at each end to be safe. Check them against the video, and move them if needed.</div>' : A.fromEvents ? '<div class="status">' + (A.event && A.event.how ? esc(A.event.how) : 'Set from the frame where the ball can be seen leaving the hand.') + ' Try moving them to see what the gravity check does.</div>' : '')
         + '<div class="slider"><label for="rel">Release</label><input type="range" id="rel" min="0" max="' + (n - 1) + '" step="1" value="' + A.rel + '"><b>frame ' + fr[A.rel] + '</b></div><div class="row tight" style="justify-content:flex-end"><button type="button" class="btn small ghost" data-nud="rel,-1">&minus;1</button><button type="button" class="btn small ghost" data-nud="rel,1">+1</button></div>'
         + '<div class="slider"><label for="land">Last flight frame</label><input type="range" id="land" min="0" max="' + (n - 1) + '" step="1" value="' + A.land + '"><b>frame ' + fr[A.land] + '</b></div><div class="row tight" style="justify-content:flex-end"><button type="button" class="btn small ghost" data-nud="land,-1">&minus;1</button><button type="button" class="btn small ghost" data-nud="land,1">+1</button><button type="button" class="btn small" id="bSug">Suggest</button></div>'
-        + layer('nums', 'Live check', F ? '<p>' + F.n + ' frames in flight (' + tt(A.rel) + ' to ' + tt(A.land) + ').</p><p>Gravity from these frames: <b>' + fmt(F.gFree, 2) + ' m/s&sup2;</b> ' + gBadge(F) + '</p><p class="small">Move a slider into the hand or the landing and watch this number move away from 9.81.</p>' : '<p>Choose at least 5 frames of flight.</p>');
+        + layer('nums', 'Live check', F ? '<p>' + F.n + ' frames in flight (' + tt(A.rel) + ' to ' + tt(A.land) + ').</p><p>' + (Number.isFinite(F.gFree) ? 'Gravity from these frames: <b>' + fmt(F.gFree, 2) + ' m/s&sup2;</b> ' + gBadge(F) : 'Too few frames for a gravity check (it needs 5).') + '</p><p class="small">Move a slider into the hand or the landing and watch this number move away from 9.81.</p>' : '<p>Choose at least 3 frames of flight.</p>');
     },
     wire() {
       ['rel', 'land'].forEach((k) => { const el = $(k); el.addEventListener('input', () => { set(k, +el.value); }); el.addEventListener('change', () => app.render()); });
       document.querySelectorAll('[data-nud]').forEach((b) => b.addEventListener('click', () => { const [k, d] = b.dataset.nud.split(','); set(k, A[k] + +d); app.render(); }));
       $('bSug').addEventListener('click', () => { if (!suggest()) alert('No clean flight found. Check the frame rate and scale, or set the frames by hand.'); app.render(); });
-      function set(k, val) { const n = N(); val = Math.max(0, Math.min(n - 1, val)); if (k === 'rel') A.rel = Math.min(val, A.land - 4 < 0 ? 0 : A.land - 4); else A.land = Math.max(val, Math.min(n - 1, A.rel + 4)); A.suggested = false; A.fromEvents = false; A.ex = null; FITKEY = ''; const b = $(k).nextElementSibling; if (b) b.textContent = 'frame ' + A.fr[A[k]]; app.redraw(); }
+      function set(k, val) { const n = N(); val = Math.max(0, Math.min(n - 1, val)); if (k === 'rel') A.rel = Math.min(val, A.land - 2 < 0 ? 0 : A.land - 2); else A.land = Math.max(val, Math.min(n - 1, A.rel + 2)); A.suggested = false; A.fromEvents = false; A.ex = null; FITKEY = ''; const b = $(k).nextElementSibling; if (b) b.textContent = 'frame ' + A.fr[A[k]]; app.redraw(); }
     },
     draw(ctx, w, h) {
       const t = A.t.map((q) => q - A.t[0]), x = X(), y = A.ry, F = fit();
@@ -406,7 +408,7 @@ const OLD = [
       const Px = panel(ctx, { rect: bot, x: tx, y: lim([x]), xl: 'Time (s)', yl: 'Horizontal (m)', title: 'Horizontal position' });
       [Py, Px].forEach((P) => { ctx.save(); ctx.fillStyle = 'rgba(29,78,216,.08)'; ctx.fillRect(P.X(t[A.rel]), P.r.T, P.X(t[A.land]) - P.X(t[A.rel]), P.r.B - P.r.T); ctx.restore(); line(ctx, P, [t[A.rel], t[A.rel]], P.y, '#16a34a', 2, [5, 4]); line(ctx, P, [t[A.land], t[A.land]], P.y, '#dc2626', 2, [5, 4]); });
       label(ctx, 'release', Py.X(t[A.rel]), Py.r.T + 10, '#16a34a', { size: 11 }); label(ctx, 'last flight frame', Py.X(t[A.land]), Py.r.T + 10, '#dc2626', { size: 11 });
-      if (F) { const t0 = t[A.rel], fx = [], fyy = [], fxx = []; const T = t[A.land] - t0; for (let k = -10; k <= 110; k++) { const tt = T * k / 100; fx.push(t0 + tt); fyy.push(F.y0Free + F.vyFree * tt - 0.5 * F.gFree * tt * tt); fxx.push(F.x0 + F.vx * tt); } line(ctx, Py, fx, fyy, C.fit, 2); line(ctx, Px, fx, fxx, C.fit, 2); }
+      if (F) { const t0 = t[A.rel], fx = [], fyy = [], fxx = []; const T = t[A.land] - t0; for (let k = -10; k <= 110; k++) { const tt = T * k / 100; fx.push(t0 + tt); fyy.push(F.y0Free + F.vyFree * tt - 0.5 * (Number.isFinite(F.gFree) ? F.gFree : G) * tt * tt); fxx.push(F.x0 + F.vx * tt); } line(ctx, Py, fx, fyy, C.fit, 2); line(ctx, Px, fx, fxx, C.fit, 2); }
       const inF = (i) => i >= A.rel && i <= A.land;
       dots(ctx, Py, t, y.map((q, i) => (inF(i) ? NaN : q)), C.out, 3); dots(ctx, Py, t, y.map((q, i) => (inF(i) ? q : NaN)), C.pts, 3);
       dots(ctx, Px, t, x.map((q, i) => (inF(i) ? NaN : q)), C.out, 3); dots(ctx, Px, t, x.map((q, i) => (inF(i) ? q : NaN)), C.pts, 3);
@@ -418,7 +420,7 @@ const OLD = [
     body: () => {
       const F = fit(); if (!F) return '';
       return layer('words', 'What the tool has done', '<p>It has fitted the flight equations to all ' + F.n + ' flight frames at once (least squares), with time measured from the release frame:</p>' + eqn(v('x') + ' = ' + sub('x', '0') + ' + ' + sub('v', 'x') + v('t')) + eqn(v('y') + ' = ' + sub('y', '0') + ' + ' + sub('v', 'y') + v('t') + ' &minus; &frac12;' + v('g') + v('t') + '<sup>2</sup>') + '<p>so ' + sub('v', 'x') + ' and ' + sub('v', 'y') + ' are the velocity components at release, and ' + sub('x', '0') + ' and ' + sub('y', '0') + ' are the release position.</p>')
-        + '<div class="' + gClass(F) + '"><p><b>Gravity check:</b> letting the data choose <em>g</em> gives <b>' + fmt(F.gFree, 2) + ' &plusmn; ' + fmt(F.seg, 2) + ' m/s&sup2;</b> (should be 9.81). ' + gText(F) + '</p></div>'
+        + '<div class="' + gClass(F) + '"><p><b>Gravity check:</b> ' + (Number.isFinite(F.gFree) ? 'letting the data choose <em>g</em> gives <b>' + fmt(F.gFree, 2) + ' &plusmn; ' + fmt(F.seg, 2) + ' m/s&sup2;</b> (should be 9.81). ' : '') + gText(F) + '</p></div>'
         + layer('nums', 'How well it fits', '<p>Residuals (data minus fit): <b>' + fmt(F.rmsX * 1000, 1) + ' mm</b> horizontally and <b>' + fmt(F.rmsY * 1000, 1) + ' mm</b> vertically (RMS). This is roughly your clicking (or marker) precision.</p><p class="small">Good residuals are small and scattered randomly either side of zero. A curve or a trend in the residuals means the model does not fit: usually a contact frame included, a moving camera, or (for light balls) air resistance.</p>')
         + layer('why', 'For the rest of the analysis', '<p>Now that the check has passed, the tool <strong>fixes g at 9.81 m/s&sup2;</strong> and fits again. We know gravity, so there is one less thing to estimate and the release velocity comes out more precise. The lower graph shows why we fit rather than difference.</p>');
     },
@@ -526,7 +528,7 @@ const OLD = [
     body: () => {
       const F = fit(); if (!F) return '';
       return layer('words', 'Downloads', '<div class="row"><button type="button" class="btn" id="dlCsv">Results and data (CSV)</button><button type="button" class="btn accent" id="dlPng">Figure (PNG)</button><button type="button" class="btn ghost" id="cpTxt">Copy results</button></div><p class="small">The CSV has the settings, the release values with their standard errors, the predicted outcome, and every frame: time, position, the fitted position and the residual. It opens in Excel.</p>')
-        + layer('words', 'For a lab report', '<p>Report the method as well as the numbers: frame rate, how you calibrated, how many frames were fitted, the gravity check (' + fmt(F.gFree, 2) + ' m/s&sup2;) and the residuals (' + fmt(F.rmsY * 1000, 1) + ' mm). A marker would want to know how you know your numbers are trustworthy.</p><details class="more"><summary>A method sentence to adapt</summary><p class="small">Release speed, angle and height were estimated by fitting a linear model to horizontal position and a quadratic model with gravitational acceleration fixed at 9.81 m&middot;s<sup>&minus;2</sup> to vertical position across ' + F.n + ' flight frames (least squares), with time referenced to the first frame after release. When gravitational acceleration was freely estimated it was ' + fmt(F.gFree, 2) + ' m&middot;s<sup>&minus;2</sup>, and root mean square residuals were ' + fmt(F.rmsX * 1000, 1) + ' mm (horizontal) and ' + fmt(F.rmsY * 1000, 1) + ' mm (vertical).</p></details>');
+        + layer('words', 'For a lab report', '<p>Report the method as well as the numbers: frame rate, how you calibrated, how many frames were fitted, the gravity check (' + fmt(F.gFree, 2) + ' m/s&sup2;) and the residuals (' + fmt(F.rmsY * 1000, 1) + ' mm). A marker would want to know how you know your numbers are trustworthy.</p><details class="more"><summary>A method sentence to adapt</summary><p class="small">Release speed, angle and height were estimated by fitting a linear model to horizontal position and a quadratic model with gravitational acceleration fixed at 9.81 m&middot;s<sup>&minus;2</sup> to vertical position across ' + F.n + ' flight frames (least squares), with time referenced to the first frame after release. ' + (Number.isFinite(F.gFree) ? 'When gravitational acceleration was freely estimated it was ' + fmt(F.gFree, 2) + ' m&middot;s<sup>&minus;2</sup>, and root' : 'Too few frames were available to estimate gravitational acceleration freely as a check, and root') + ' mean square residuals were ' + fmt(F.rmsX * 1000, 1) + ' mm (horizontal) and ' + fmt(F.rmsY * 1000, 1) + ' mm (vertical).</p></details>');
     },
     wire() { $('dlCsv').addEventListener('click', exportCSV); $('dlPng').addEventListener('click', exportPNG); $('cpTxt').addEventListener('click', () => { navigator.clipboard.writeText(resultRows().map((r) => r.join('\t')).join('\n')).then(() => { $('cpTxt').textContent = 'Copied'; }, () => {}); }); },
     draw(ctx, w, h) { const F = fit(); if (!F) return; const P = trajFigure(ctx, { x: 0, y: 0, w, h }, { predict: true }); predPath(ctx, P, P0(F), C.fit, 2.5); stamp(ctx, P, F); },
@@ -549,7 +551,8 @@ function drawTriangle(ctx, P, F, big = 1) {
   label(ctx, (F.vy >= 0 ? 'upwards ' : 'downwards ') + fmt(Math.abs(F.vy), 1), Hh[0] + 8, (Hh[1] + Tt[1]) / 2, C.opp, { align: 'left', size: 13 });
 }
 function ring(ctx, P, x, y, col, txt) { ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(P.X(x), P.Y(y), 11, 0, 2 * Math.PI); ctx.stroke(); ctx.restore(); label(ctx, txt, P.X(x), P.Y(y) - 22, col, { size: 12 }); }
-function oneLine(F) {
+function oneLine(F) { const t = oneLine0(F); return F.n < 10 ? t + ' <span class="small muted">(Rough: predicted from only ' + F.n + ' frames, so it could be well out.)</span>' : t; }
+function oneLine0(F) {
   const o = outcome(P0(F));
   if (A.task === 'freethrow') { if (!Number.isFinite(o.miss)) return 'It never comes back down to the hoop.'; const ok = o.margin > 0 && Math.abs(o.miss) <= o.margin; return 'Reaches the rim <b>' + Math.round(Math.abs(o.miss) * 100) + ' cm ' + (o.miss >= 0 ? 'long' : 'short') + '</b> of the middle, coming in at ' + fmt(o.entry, 0) + '&deg;: <b>' + (ok ? 'in' : 'out') + '</b>.'; }
   if (A.task === 'broadjump') return 'Jump distance <b>' + fmt(o.total, 2) + ' m</b> (centre of mass flight ' + fmt(o.R, 2) + ' m, plus take-off and landing distances).';
@@ -581,8 +584,13 @@ const STEPS = [
     body: () => {
       const c = A.cal, m = nextScaleMode();
       return '<div class="lead"><p>Follow the instruction on the video. The magnifier (top right) helps you click exactly.</p></div><ol class="checklist">'
-        + tick(!!c.a, m === 'calA', 'Click <b>one end</b> of the stick')
-        + tick(!!c.b, m === 'calB', 'Click <b>the other end</b>. It is <input type="number" id="calLen" min="0.01" step="0.01" value="' + c.len + '" style="width:5rem;display:inline-block"> m long')
+        + '<div class="subtabs" style="margin:.2rem 0 .5rem"><button type="button" data-calby="stick" class="' + (A.calBy === 'ball' ? '' : 'on') + '">Scale from a stick</button><button type="button" data-calby="ball" class="' + (A.calBy === 'ball' ? 'on' : '') + '">No stick? Use the ball</button></div>'
+        + (A.calBy === 'ball'
+          ? tick(!!c.a, m === 'calA', 'Go to a frame where the ball is <b>sharp and fully in the picture</b>, then click its <b>left edge</b>')
+            + tick(!!c.b, m === 'calB', 'Click its <b>right edge</b>. Ball size: <select id="ballSz" style="width:auto;display:inline-block"><option value="0.239"' + (c.len === 0.239 ? ' selected' : '') + '>size 7 (23.9 cm)</option><option value="0.232"' + (c.len === 0.232 ? ' selected' : '') + '>size 6 (23.2 cm)</option><option value="0.220"' + (c.len === 0.22 ? ' selected' : '') + '>size 5 (22.0 cm)</option></select>')
+            + '<li class="small muted" style="list-style:none">A ball is only a few dozen pixels across, so a one-pixel slip changes the scale by a few per cent. Zoom in with the magnifier and click the very edge. A stick is more accurate.</li>'
+          : tick(!!c.a, m === 'calA', 'Click <b>one end</b> of the stick')
+            + tick(!!c.b, m === 'calB', 'Click <b>the other end</b>. It is <input type="number" id="calLen" min="0.01" step="0.01" value="' + c.len + '" style="width:5rem;display:inline-block"> m long'))
         + tick(!!c.o, m === 'o', 'Click the <b>floor</b> where you want 0 m (e.g. the free-throw line or the take-off line)')
         + (A.task === 'freethrow' ? tick(!!A.targetPx, m === 'target', 'Click the <b>middle of the hoop</b>') : '') + '</ol>'
         + (calibrated() && m === 'idle' ? '<div class="light-good"><b>Done!</b> Press <b>Next</b> and click the ball.</div>' : '')
@@ -594,7 +602,9 @@ const STEPS = [
       wireFrameTools(); A.mode = nextScaleMode(); drawStage();
       $('fileFps').addEventListener('change', (e) => { A.fileFps = Math.max(1, +e.target.value || 30); A.nF = Math.max(1, Math.round($('vid').duration * A.fileFps)); showFrame(A.frame); buildFromClicks(); app.render(); });
       $('realFps').addEventListener('change', (e) => { A.realFps = Math.max(1, +e.target.value || A.fileFps); buildFromClicks(); app.render(); });
-      $('calLen').addEventListener('change', (e) => { A.cal.len = Math.max(0.001, +e.target.value || 1); buildFromClicks(); app.render(); });
+      const cl = $('calLen'); if (cl) cl.addEventListener('change', (e) => { A.cal.len = Math.max(0.001, +e.target.value || 1); buildFromClicks(); app.render(); });
+      const bs = $('ballSz'); if (bs) bs.addEventListener('change', (e) => { A.cal.len = +e.target.value; buildFromClicks(); app.render(); });
+      document.querySelectorAll('[data-calby]').forEach((b) => b.addEventListener('click', () => { A.calBy = b.dataset.calby; A.cal = { a: null, b: null, len: A.calBy === 'ball' ? 0.239 : 1, o: A.cal.o }; buildFromClicks(); app.render(); }));
       $('calReset').addEventListener('click', () => { A.cal = { a: null, b: null, len: A.cal.len, o: null }; A.targetPx = null; app.render(); });
       const t = $('bTgt'); if (t) t.addEventListener('click', () => { A.task = 'freethrow'; A.targetPx = null; app.render(); });
       const d = $('bDemoCal'); if (d) d.addEventListener('click', () => { A.cal = { a: VIDEO_DEMO.stickPx[0].slice(), b: VIDEO_DEMO.stickPx[1].slice(), len: VIDEO_DEMO.stickLen, o: VIDEO_DEMO.originPx.slice() }; A.targetPx = [VIDEO_DEMO.originPx[0] + 4.225 * 150, VIDEO_DEMO.originPx[1] - 3.05 * 150]; buildFromClicks(); app.render(); });
@@ -607,11 +617,11 @@ const STEPS = [
       const n = Object.keys(A.clicks).length;
       return '<div class="lead"><p>Click the <b>middle of the ball</b>. The video moves on by itself.</p></div><ol class="checklist">'
         + tick(n > 0, n === 0, 'Go back to <b>just before the ball leaves the hand</b> (&lsaquo; 1 and &laquo; 10 under the video, or the arrow keys)')
-        + tick(n >= 6, n > 0 && n < 6, 'Click the ball in <b>every frame</b> after that')
-        + tick(n >= 15, n >= 6, 'Keep going until it <b>lands or reaches the hoop</b>') + '</ol>'
-        + '<p class="small muted">Ball goes out of the picture after only a few frames? The tool needs at least 6 frames of flight, ideally 10 or more, so film from further back (see Before you film).</p>'
+        + tick(n >= 3, n > 0 && n < 3, 'Click the ball in <b>every frame</b> after that, starting with the first frame where it is clear of the hand')
+        + tick(n >= 15, n >= 3, 'Keep going until it <b>lands, reaches the hoop or leaves the picture</b>') + '</ol>'
+        + '<p class="small muted">Ball leaves the picture after only a few frames? Click every one you can (at least 3). You will still get release values, but rough ones, and no gravity check. 10 or more frames is much better.</p>'
         + '<div class="tiles"><div class="tile"><span>Clicks</span><b id="clickCount">' + n + '</b></div><div class="tile"><span>Frame</span><b id="frameNo2">' + A.frame + '</b></div></div>'
-        + (n >= 6 ? '<p>' + (n >= 15 ? '<b>Plenty.</b> ' : 'Enough to try, but more is better. ') + 'Press <b>Next</b> to see your results.</p>' : '')
+        + (n >= 3 ? '<p>' + (n >= 15 ? '<b>Plenty.</b> ' : n >= 10 ? 'Enough. ' : 'Enough for rough values, but more is better. ') + 'Press <b>Next</b> to see your results.</p>' : '')
         + '<div class="row"><button type="button" class="btn small ghost" id="bUndo"' + (A.hist.length ? '' : ' disabled') + '>Undo last click</button><button type="button" class="btn small ghost" id="bClr"' + (n ? '' : ' disabled') + '>Clear all</button>' + (A.demo ? '<button type="button" class="btn small ghost" id="bAuto">Do it for me</button>' : '') + '</div>'
         + '<details class="more"><summary>Options</summary><label class="small">After each click, move on by <select id="stepBy" style="width:4.5rem;display:inline-block">' + [1, 2, 3, 4].map((k) => '<option' + (k === A.stepBy ? ' selected' : '') + '>' + k + '</option>').join('') + '</select> frame(s)</label><p class="small">Missed one? Go to that frame and click again to move its point.</p></details>'
         + (A.demo ? '<p class="small muted">Tip: in the demo the ball leaves the hand at frame ' + VIDEO_DEMO.releaseFrame + '.</p>' : '');
@@ -631,10 +641,11 @@ const STEPS = [
     hint: () => 'Green ring: release. Red ring: last frame in the air.',
     body: () => {
       const F = fit(); if (!F) return ''; let gc = gClass(F); const few = F.n < 10; if (few && gc === 'light-good') gc = 'light-warn'; const how = A.fromEvents ? 'were set from the video' : 'were picked automatically';
-      return '<div class="tiles big"><div class="tile" style="border-color:' + C.hyp + '"><span>Release speed</span><b>' + fmt(F.pol.v, 2) + ' m/s</b></div><div class="tile" style="border-color:#475569"><span>Release angle</span><b>' + fmt(F.pol.th, 1) + '&deg;</b></div><div class="tile" style="border-color:#16a34a"><span>Release height</span><b>' + fmt(F.y0, 2) + ' m</b></div></div>'
+      const pmx = (se, d, u) => (few ? '<small style="display:block;font-size:.8rem;color:var(--muted)">&plusmn; ' + fmt(2 * se, d) + u + ' (95%)</small>' : '');
+      return '<div class="tiles big"><div class="tile" style="border-color:' + C.hyp + '"><span>Release speed</span><b>' + fmt(F.pol.v, 2) + ' m/s</b>' + pmx(F.pol.sv, 2, ' m/s') + '</div><div class="tile" style="border-color:#475569"><span>Release angle</span><b>' + fmt(F.pol.th, 1) + '&deg;</b>' + pmx(F.pol.sth, 1, '&deg;') + '</div><div class="tile" style="border-color:#16a34a"><span>Release height</span><b>' + fmt(F.y0, 2) + ' m</b>' + pmx(F.sey0, 2, ' m') + '</div></div>'
         + '<div class="field"><label for="taskSel2">What is it?</label><select id="taskSel2">' + Object.entries(TASKS).map(([k, n]) => '<option value="' + k + '"' + (k === A.task ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></div>'
         + '<p class="lead-sm">' + oneLine(F) + '</p>'
-        + '<div class="' + gc + '"><p style="margin:0"><b>' + (gc === 'light-good' ? '&#10003; You can trust these numbers.' : gc === 'light-warn' ? '&#9888; Nearly there: check before you trust these.' : '&#10007; Something is wrong: don&rsquo;t use these yet.') + '</b> ' + (few ? 'Only ' + F.n + ' frames in the air, so treat these as rough (10 or more is better). ' : '') + (gc === 'light-good' || (few && gClass(F) === 'light-good') ? 'The tool checked the flight against gravity and got ' + fmt(F.gFree, 2) + ' m/s&sup2; (it should be 9.81).' : 'Checking against gravity gave ' + fmt(F.gFree, 2) + ' m/s&sup2; instead of 9.81. The usual causes are the frame rate, the scale, or the release frame.') + '</p></div>'
+        + '<div class="' + gc + '"><p style="margin:0"><b>' + (gc === 'light-good' ? '&#10003; You can trust these numbers.' : gc === 'light-warn' ? '&#9888; Nearly there: check before you trust these.' : '&#10007; Something is wrong: don&rsquo;t use these yet.') + '</b> ' + (!Number.isFinite(F.gFree) ? gText(F) + ' ' : few ? 'Only ' + F.n + ' frames in the air, so treat these as rough (10 or more is better). ' : '') + (!Number.isFinite(F.gFree) ? '' : gc === 'light-good' || (few && gClass(F) === 'light-good') ? 'The tool checked the flight against gravity and got ' + fmt(F.gFree, 2) + ' m/s&sup2; (it should be 9.81).' : 'Checking against gravity gave ' + fmt(F.gFree, 2) + ' m/s&sup2; instead of 9.81. The usual causes are the frame rate, the scale, or the release frame.') + '</p></div>'
         + '<p class="small">Release (<b style="color:#16a34a">green ring</b>) and the last frame in the air (<b style="color:#dc2626">red ring</b>) ' + how + '. Does the green ring sit where the ball leaves the hand? If not, fix it in <b>Go further</b>.</p>'
         + (A.truth ? '<p class="small muted">Demo: the true release was ' + fmt(A.truth.v, 2) + ' m/s at ' + fmt(A.truth.th, 1) + '&deg; from ' + fmt(A.truth.y0, 2) + ' m.</p>' : '')
         + '<div class="row"><button type="button" class="btn" id="goFur">Go further &rarr;</button><button type="button" class="btn ghost" id="dlCsv2">Save results (CSV)</button><button type="button" class="btn ghost" id="dlPng2">Save picture</button></div>';
@@ -676,9 +687,10 @@ function welcome(ctx, w, h) {
   line(ctx, P, xs, ys, '#cbd5e1', 2.5, [7, 5]); line(ctx, P, [4.0, 4.6], [3.05, 3.05], '#ea580c', 4);
   label(ctx, 'Choose a demo or open your own file on the right', (P.r.L + P.r.R) / 2, P.r.T + 24, COL.muted, { bold: false });
 }
-function gClass(F) { const d = Math.abs(F.gFree - G); return d < Math.max(0.5, 2 * F.seg) ? 'light-good' : d < 1.2 ? 'light-warn' : 'light-bad'; }
+function gClass(F) { if (!Number.isFinite(F.gFree)) return 'light-warn'; const d = Math.abs(F.gFree - G); return d < Math.max(0.5, 2 * F.seg) ? 'light-good' : d < 1.2 ? 'light-warn' : 'light-bad'; }
 function gBadge(F) { const c = gClass(F); return c === 'light-good' ? '<span style="color:var(--good)">&#10003; close to 9.81</span>' : c === 'light-warn' ? '<span style="color:var(--warn)">check</span>' : '<span style="color:var(--bad)">&#10007; wrong</span>'; }
 function gText(F) {
+  if (!Number.isFinite(F.gFree)) return 'Only ' + F.n + ' frames in the air, and the check needs at least 5, so nothing has checked these numbers. Treat them as rough and use the &plusmn; values.';
   const c = gClass(F);
   if (c === 'light-good') return 'Close enough: frame rate, scale and flight frames look right.';
   const lo = F.gFree < G, list = '<ul class="small"><li>The <b>frame rate</b> (slow-motion clips: use the rate it was filmed at). A factor of 2 out changes g by a factor of 4.</li><li>The <b>scale</b> (was the known length in the plane of the flight? the right length typed in?).</li><li><b>Release or landing frames</b> that include contact (step 4).</li><li>The camera not <b>side-on</b>, or the ball moving towards it.</li>' + (lo ? '<li>For a light or fast ball, <b>air resistance</b>.</li>' : '') + '</ul>';
