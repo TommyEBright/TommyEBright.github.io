@@ -1,8 +1,8 @@
 // Analyse: a real flight, from video (calibrate and digitise here) or from position data (e.g. a marker exported
 // from Kinematic Analysis), to release speed, angle and height, what they predict, and what-ifs.
 // Coordinates: metres, y up, x in the direction of travel (the tool mirrors the data if the flight goes right to left).
-import { G, rad, deg, fitFlight, polar, pos, tAtHeight, peakRise, fromPolar, range, optimumAngle, minSpeedToTarget, speedForTarget, DEMOS, VIDEO_DEMO } from './maths.js?v=1.0.0';
-import { panel, line, dots, arrow, label, lim, rightMark, fmt, sgn, COL } from './plot.js?v=1.0.0';
+import { G, rad, deg, fitFlight, polar, pos, tAtHeight, peakRise, fromPolar, range, optimumAngle, minSpeedToTarget, speedForTarget, DEMOS, VIDEO_DEMO } from './maths.js?v=1.1.0';
+import { panel, line, dots, arrow, label, lim, rightMark, fmt, sgn, COL } from './plot.js?v=1.1.0';
 
 const RIM_R = 0.2286, BALL_R = 0.119; // basketball: 18 in (45.7 cm) rim, size 7 ball (about 23.8 cm across)
 const C = { hyp: '#1d4ed8', adj: '#d97706', opp: '#7c3aed', pts: '#0f172a', fit: '#1d4ed8', what: '#db2777', flight: '#dbeafe', out: '#94a3b8' };
@@ -15,7 +15,7 @@ function fresh() {
     url: null, vw: 0, vh: 0, fileFps: 60, realFps: 60, nF: 0, frame: 0, clicks: {}, cal: { a: null, b: null, len: 1, o: null }, mode: 'idle', stepBy: 1, hover: null, targetPx: null,
     // position data (raw, before mirroring)
     t: [], rx: [], ry: [], fr: [], flip: false, markers: null, csvParsed: null, marker: '', csv: null, units: 1, fpsData: 100,
-    rel: 0, land: 0, suggested: false, fromEvents: false, event: null,
+    rel: 0, land: 0, suggested: false, fromEvents: false, event: null, hist: [], gf: 0,
     // task inputs
     target: { x: 4.225, y: 3.05 }, landH: null, takeoffDist: 0, landingDist: 0, releaseAhead: 0,
     ex: null };
@@ -171,26 +171,28 @@ function drawStage() {
   c.strokeStyle = 'rgba(29,78,216,.8)'; c.lineWidth = 2 * u; c.beginPath(); fs.forEach((f, i) => { const p = A.clicks[f]; i ? c.lineTo(...p) : c.moveTo(...p); }); c.stroke();
   fs.forEach((f) => dot(A.clicks[f], f === A.frame ? '#ef4444' : '#1d4ed8', f === A.frame ? 6 : 4));
   txt(c, 'Frame ' + A.frame + ' of ' + (A.nF - 1) + '  ·  ' + fmt(A.frame / A.realFps, 3) + ' s', 12 * u, 22 * u, '#fff', u, 'left', true);
-  const mt = { calA: 'Click one end of the known length', calB: 'Click the other end', o: 'Click the origin: a point on the floor', dig: 'Click the centre of the ball (or the point you are tracking)', target: 'Click the centre of the hoop (target)' }[A.mode];
-  if (mt) txt(c, mt, A.vw / 2, A.vh - 22 * u, '#fff', u, 'center', true);
-  const s = document.getElementById('frameNo'); if (s) s.textContent = A.frame;
+  const mt = { calA: '1. Click one end of the stick', calB: '2. Now click the other end', o: '3. Click the floor where you want 0 m', dig: 'Click the middle of the ball', target: '4. Click the middle of the hoop' }[A.mode];
+  if (mt) txt(c, mt, A.vw / 2, 70 * u, '#fde047', u * 1.6, 'center', true);
+  const s = document.getElementById('frameNo'); if (s) s.textContent = A.frame; const s2 = document.getElementById('frameNo2'); if (s2) s2.textContent = A.frame;
   const k = document.getElementById('clickCount'); if (k) k.textContent = fs.length;
 }
 function txt(c, s, x, y, col, u, al = 'center', box) { c.save(); c.font = '600 ' + Math.round(15 * u) + 'px system-ui, sans-serif'; c.textAlign = al; c.textBaseline = 'middle'; if (box) { const w = c.measureText(s).width + 14 * u, bx = al === 'left' ? x - 7 * u : al === 'right' ? x - w + 7 * u : x - w / 2; c.fillStyle = 'rgba(15,23,42,.72)'; c.fillRect(bx, y - 13 * u, w, 26 * u); } c.fillStyle = col; c.fillText(s, x, y); c.restore(); }
 function stagePt(e) { const cv = $('stage'), r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; }
 function stageClick(e) {
   if (!A.vw) return; const p = stagePt(e).map((q) => Math.round(q * 10) / 10);
-  if (A.mode === 'calA') { A.cal.a = p; A.mode = 'calB'; }
-  else if (A.mode === 'calB') { A.cal.b = p; A.mode = A.cal.o ? 'idle' : 'o'; }
-  else if (A.mode === 'o') { A.cal.o = p; A.mode = 'idle'; }
-  else if (A.mode === 'target') { A.targetPx = p; A.mode = 'idle'; }
-  else if (A.mode === 'dig') { A.clicks[A.frame] = p; if (A.frame + A.stepBy < A.nF) { buildFromClicks(); showFrame(A.frame + A.stepBy); app.render(); return; } }
+  if (A.mode === 'calA') { A.cal.a = p; A.mode = 'x'; }
+  else if (A.mode === 'calB') { A.cal.b = p; A.mode = 'x'; }
+  else if (A.mode === 'o') { A.cal.o = p; A.mode = 'x'; }
+  else if (A.mode === 'target') { A.targetPx = p; A.mode = 'x'; }
+  else if (A.mode === 'dig') { A.clicks[A.frame] = p; A.hist.push(A.frame); if (A.frame + A.stepBy < A.nF) { buildFromClicks(); showFrame(A.frame + A.stepBy); app.render(); return; } }
   else return;
+  if (A.mode === 'x') A.mode = nextScaleMode();
   buildFromClicks(); app.render();
 }
 function loupe(e) {
   const lp = $('loupe'); if (!A.vw || A.mode === 'idle') { lp.style.display = 'none'; return; }
   const p = stagePt(e), z = 4, s = 160 / z, c = lp.getContext('2d');
+  if (p[0] < 0 || p[1] < 0 || p[0] > A.vw || p[1] > A.vh) { lp.style.display = 'none'; return; }
   lp.style.display = 'block'; c.imageSmoothingEnabled = false; c.fillStyle = '#000'; c.fillRect(0, 0, 160, 160);
   c.drawImage(frameCv, p[0] - s / 2, p[1] - s / 2, s, s, 0, 0, 160, 160);
   c.strokeStyle = '#ef4444'; c.lineWidth = 1; c.beginPath(); c.moveTo(80, 60); c.lineTo(80, 100); c.moveTo(60, 80); c.lineTo(100, 80); c.stroke();
@@ -243,7 +245,7 @@ function outcome(Pp) {
 function metricName() { return A.task === 'freethrow' ? 'Miss at the hoop (+ long, − short)' : A.task === 'broadjump' ? 'Jump distance' : A.task === 'shot' ? 'Distance thrown' : 'Horizontal distance'; }
 
 // ---------- steps ----------
-const STEPS = [
+const OLD = [
   {
     key: 'load', short: 'Load', title: 'Choose a flight to analyse', figTitle: () => (A.src ? A.name : 'Nothing loaded yet'),
     hint: () => (A.src && N() ? 'Each dot is one frame. Darker dots are the flight (set in step 4).' : ''),
@@ -476,6 +478,131 @@ const STEPS = [
   },
 ];
 
+// ---------- the simple path: Load, Scale, Click the ball, Results; everything else under Go further ----------
+const SUBS = [
+  { s: OLD[3], name: 'Release and landing frames' }, { s: OLD[4], name: 'Fit and gravity check' }, { s: OLD[5], name: 'Release, in detail' },
+  { s: OLD[6], name: 'What it predicts' }, { s: OLD[7], name: 'What if' }, { s: OLD[8], name: 'Save and report' },
+];
+const FILM_HELP = '<details class="more"><summary>Before you film: how to get a flight you can analyse</summary><ul class="small"><li><b>Side-on and square</b> to the throw or jump, with the camera <b>level</b> on a tripod. Don&rsquo;t move it.</li><li><b>Far back, zoomed in a little</b> (e.g. 8 to 10 m away for a free throw).</li><li>A <b>1 m stick</b> (or anything of known length) held upright where the athlete is, in the plane of the movement.</li><li>The <b>whole flight</b> in shot, from just before release to landing or the hoop.</li><li><b>Highest frame rate</b> you have (slow motion is great: note the rate it was filmed at), and plenty of light.</li></ul></details>';
+function nextScaleMode() { const c = A.cal; return !c.a ? 'calA' : !c.b ? 'calB' : !c.o ? 'o' : A.task === 'freethrow' && !A.targetPx ? 'target' : 'idle'; }
+const tick = (done, cur, html) => '<li class="chk' + (done ? ' done' : cur ? ' cur' : '') + '"><span>' + (done ? '&#10003;' : cur ? '&#9654;' : '&bull;') + '</span><div>' + html + '</div></li>';
+function drawTriangle(ctx, P, F, big = 1) {
+  const s = triScale() * big, O = [P.X(F.x0), P.Y(F.y0)], Hh = [P.X(F.x0 + F.vx * s), O[1]], Tt = [Hh[0], P.Y(F.y0 + F.vy * s)];
+  ctx.save(); ctx.fillStyle = 'rgba(29,78,216,.08)'; ctx.beginPath(); ctx.moveTo(...O); ctx.lineTo(...Hh); ctx.lineTo(...Tt); ctx.closePath(); ctx.fill(); ctx.restore();
+  arrow(ctx, O[0], O[1], Hh[0], Hh[1], C.adj, 4, 13); arrow(ctx, Hh[0], Hh[1], Tt[0], Tt[1], C.opp, 4, 13); arrow(ctx, O[0], O[1], Tt[0], Tt[1], C.hyp, 5, 15);
+  label(ctx, 'forwards ' + fmt(F.vx, 1), (O[0] + Hh[0]) / 2, O[1] + 18, C.adj, { size: 13 });
+  label(ctx, (F.vy >= 0 ? 'upwards ' : 'downwards ') + fmt(Math.abs(F.vy), 1), Hh[0] + 8, (Hh[1] + Tt[1]) / 2, C.opp, { align: 'left', size: 13 });
+}
+function ring(ctx, P, x, y, col, txt) { ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(P.X(x), P.Y(y), 11, 0, 2 * Math.PI); ctx.stroke(); ctx.restore(); label(ctx, txt, P.X(x), P.Y(y) - 22, col, { size: 12 }); }
+function oneLine(F) {
+  const o = outcome(P0(F));
+  if (A.task === 'freethrow') { if (!Number.isFinite(o.miss)) return 'It never comes back down to the hoop.'; const ok = o.margin > 0 && Math.abs(o.miss) <= o.margin; return 'Reaches the rim <b>' + Math.round(Math.abs(o.miss) * 100) + ' cm ' + (o.miss >= 0 ? 'long' : 'short') + '</b> of the middle, coming in at ' + fmt(o.entry, 0) + '&deg;: <b>' + (ok ? 'in' : 'out') + '</b>.'; }
+  if (A.task === 'broadjump') return 'Jump distance <b>' + fmt(o.total, 2) + ' m</b> (centre of mass flight ' + fmt(o.R, 2) + ' m, plus take-off and landing distances).';
+  if (A.task === 'shot') return 'Distance thrown <b>' + fmt(o.total, 2) + ' m</b> from the stop board.';
+  return 'Lands <b>' + fmt(o.R, 2) + ' m</b> further on, after <b>' + fmt(o.tf, 2) + ' s</b> in the air, peaking at ' + fmt(o.peak, 2) + ' m.';
+}
+const STEPS = [
+  {
+    key: 'load', short: 'Load', title: 'Choose something to analyse', figTitle: OLD[0].figTitle, hint: OLD[0].hint,
+    body: () => {
+      let h = '<div class="lead"><p>Start with the <b>free throw video</b>: you&rsquo;ll do every step yourself, and it takes about 5 minutes.</p></div><div class="choices">'
+        + '<button type="button" class="choice' + (A.demo === 'video' ? ' sel' : '') + '" data-demo="video"><b>&#9654; Free throw video</b><span>Recommended first. You set the scale and click the ball.</span></button>'
+        + '<button type="button" class="choice' + (A.demo === 'freethrow' ? ' sel' : '') + '" data-demo="freethrow"><b>Free throw, already clicked</b><span>Skip straight to the results.</span></button>'
+        + '<button type="button" class="choice' + (A.demo === 'broadjump' ? ' sel' : '') + '" data-demo="broadjump"><b>Broad jump</b><span>The jumper&rsquo;s centre of mass.</span></button>'
+        + '<button type="button" class="choice' + (A.demo === 'shot' ? ' sel' : '') + '" data-demo="shot"><b>Shot put</b><span>Filmed from far back.</span></button></div>'
+        + '<p style="margin:.9rem 0 .3rem"><b>Or your own:</b></p><div class="row"><label class="btn filebtn">Open a video<input type="file" id="fVid" accept="video/*" aria-label="Open a video"></label><label class="btn ghost filebtn">Open data (CSV)<input type="file" id="fCsv" accept=".csv,.txt,.tsv,text/csv,text/plain" aria-label="Open position data"></label></div>'
+        + FILM_HELP + '<details class="more"><summary>What a data file should look like</summary><p class="small">A <b>marker coordinates</b> export from <a href="../video-analyser/">Kinematic Analysis</a> works as it is (use the unfiltered positions). Otherwise a CSV with a header row: <code>time_s, x_m, y_m</code>, with y measured <b>up</b> from the floor, in metres.</p></details>';
+      if (A.src) h += '<div class="status"><b>Loaded:</b> ' + esc(A.name) + (A.src === 'data' ? ' (' + N() + ' frames)' : '') + '.' + (A.note ? ' <span class="small">' + esc(A.note) + '</span>' : '')
+        + (A.markers && A.markers.length > 1 ? '<div class="field"><label for="mkSel">Marker</label><select id="mkSel">' + A.markers.map((m) => '<option' + (m === A.marker ? ' selected' : '') + '>' + esc(m) + '</option>').join('') + '</select></div>' : '')
+        + (A.csvParsed && A.csvParsed.ti < 0 ? '<div class="field"><label for="fpsData">Frame rate</label><input type="number" id="fpsData" min="1" step="1" value="' + A.fpsData + '"></div>' : '')
+        + (A.csvParsed ? '<div class="field"><label for="unitSel">Units</label><select id="unitSel"><option value="1"' + (A.units === 1 ? ' selected' : '') + '>metres</option><option value="0.01"' + (A.units === 0.01 ? ' selected' : '') + '>centimetres</option><option value="0.001"' + (A.units === 0.001 ? ' selected' : '') + '>millimetres</option></select></div>' : '')
+        + '</div><p><b>Next &rarr;</b> ' + (A.src === 'video' ? 'set the scale.' : 'see the results.') + '</p>';
+      return h;
+    },
+    wire: OLD[0].wire, draw: OLD[0].draw,
+  },
+  {
+    key: 'scale', short: 'Scale', title: 'Tell the tool how big things are', view: 'stage', enabled: () => A.src === 'video', canNext: () => calibrated(),
+    body: () => {
+      const c = A.cal, m = nextScaleMode();
+      return '<div class="lead"><p>Follow the instruction on the video. The magnifier (top right) helps you click exactly.</p></div><ol class="checklist">'
+        + tick(!!c.a, m === 'calA', 'Click <b>one end</b> of the stick')
+        + tick(!!c.b, m === 'calB', 'Click <b>the other end</b>. It is <input type="number" id="calLen" min="0.01" step="0.01" value="' + c.len + '" style="width:5rem;display:inline-block"> m long')
+        + tick(!!c.o, m === 'o', 'Click the <b>floor</b> where you want 0 m (e.g. the free-throw line or the take-off line)')
+        + (A.task === 'freethrow' ? tick(!!A.targetPx, m === 'target', 'Click the <b>middle of the hoop</b>') : '') + '</ol>'
+        + (calibrated() && m === 'idle' ? '<div class="light-good"><b>Done!</b> Press <b>Next</b> and click the ball.</div>' : '')
+        + '<div class="row"><button type="button" class="btn small ghost" id="calReset">Start again</button>' + (A.task !== 'freethrow' ? '<button type="button" class="btn small ghost" id="bTgt">Shooting at a hoop? Click it</button>' : '') + (A.demo ? '<button type="button" class="btn small ghost" id="bDemoCal">Do it for me</button>' : '') + '</div>'
+        + '<details class="more"' + (A.demo ? '' : ' open') + '><summary>Frame rate' + (A.demo ? ' (already set: 60 fps)' : ': check this for your video') + '</summary><p class="small">For slow motion, use the rate it was <b>filmed</b> at (e.g. 240), not the rate it plays at.</p><div class="field"><label for="fileFps">Frames per second in the file</label><input type="number" id="fileFps" min="1" step="1" value="' + A.fileFps + '"></div><div class="field"><label for="realFps">Filmed at (fps)</label><input type="number" id="realFps" min="1" step="1" value="' + A.realFps + '"></div></details>';
+    },
+    tools: () => frameTools(),
+    wire() {
+      wireFrameTools(); A.mode = nextScaleMode(); drawStage();
+      $('fileFps').addEventListener('change', (e) => { A.fileFps = Math.max(1, +e.target.value || 30); A.nF = Math.max(1, Math.round($('vid').duration * A.fileFps)); showFrame(A.frame); buildFromClicks(); app.render(); });
+      $('realFps').addEventListener('change', (e) => { A.realFps = Math.max(1, +e.target.value || A.fileFps); buildFromClicks(); app.render(); });
+      $('calLen').addEventListener('change', (e) => { A.cal.len = Math.max(0.001, +e.target.value || 1); buildFromClicks(); app.render(); });
+      $('calReset').addEventListener('click', () => { A.cal = { a: null, b: null, len: A.cal.len, o: null }; A.targetPx = null; app.render(); });
+      const t = $('bTgt'); if (t) t.addEventListener('click', () => { A.task = 'freethrow'; A.targetPx = null; app.render(); });
+      const d = $('bDemoCal'); if (d) d.addEventListener('click', () => { A.cal = { a: VIDEO_DEMO.stickPx[0].slice(), b: VIDEO_DEMO.stickPx[1].slice(), len: VIDEO_DEMO.stickLen, o: VIDEO_DEMO.originPx.slice() }; A.targetPx = [VIDEO_DEMO.originPx[0] + 4.225 * 150, VIDEO_DEMO.originPx[1] - 3.05 * 150]; buildFromClicks(); app.render(); });
+    },
+    drawStage, leave: () => { A.mode = 'idle'; $('loupe').style.display = 'none'; },
+  },
+  {
+    key: 'click', short: 'Click the ball', title: 'Click the middle of the ball', view: 'stage', enabled: () => A.src === 'video' && calibrated(), canNext: () => N() >= 6,
+    body: () => {
+      const n = Object.keys(A.clicks).length;
+      return '<div class="lead"><p>Click the <b>middle of the ball</b>. The video moves on by itself.</p></div><ol class="checklist">'
+        + tick(n > 0, n === 0, 'Go back to <b>just before the ball leaves the hand</b> (&lsaquo; 1 and &laquo; 10 under the video, or the arrow keys)')
+        + tick(n >= 6, n > 0 && n < 6, 'Click the ball in <b>every frame</b> after that')
+        + tick(n >= 15, n >= 6, 'Keep going until it <b>lands or reaches the hoop</b>') + '</ol>'
+        + '<div class="tiles"><div class="tile"><span>Clicks</span><b id="clickCount">' + n + '</b></div><div class="tile"><span>Frame</span><b id="frameNo2">' + A.frame + '</b></div></div>'
+        + (n >= 6 ? '<p>' + (n >= 15 ? '<b>Plenty.</b> ' : 'Enough to try, but more is better. ') + 'Press <b>Next</b> to see your results.</p>' : '')
+        + '<div class="row"><button type="button" class="btn small ghost" id="bUndo"' + (A.hist.length ? '' : ' disabled') + '>Undo last click</button><button type="button" class="btn small ghost" id="bClr"' + (n ? '' : ' disabled') + '>Clear all</button>' + (A.demo ? '<button type="button" class="btn small ghost" id="bAuto">Do it for me</button>' : '') + '</div>'
+        + '<details class="more"><summary>Options</summary><label class="small">After each click, move on by <select id="stepBy" style="width:4.5rem;display:inline-block">' + [1, 2, 3, 4].map((k) => '<option' + (k === A.stepBy ? ' selected' : '') + '>' + k + '</option>').join('') + '</select> frame(s)</label><p class="small">Missed one? Go to that frame and click again to move its point.</p></details>'
+        + (A.demo ? '<p class="small muted">Tip: in the demo the ball leaves the hand at frame ' + VIDEO_DEMO.releaseFrame + '.</p>' : '');
+    },
+    tools: () => frameTools(),
+    wire() {
+      wireFrameTools(); A.mode = 'dig'; drawStage();
+      $('stepBy').addEventListener('change', (e) => { A.stepBy = +e.target.value; });
+      $('bUndo').addEventListener('click', () => { const f = A.hist.pop(); if (f !== undefined) { delete A.clicks[f]; buildFromClicks(); showFrame(f); app.render(); } });
+      $('bClr').addEventListener('click', () => { if (confirm('Remove every click?')) { A.clicks = {}; A.hist = []; buildFromClicks(); app.render(); } });
+      const au = $('bAuto'); if (au) au.addEventListener('click', autoDemo);
+    },
+    drawStage, leave: () => { A.mode = 'idle'; $('loupe').style.display = 'none'; },
+  },
+  {
+    key: 'results', short: 'Results', title: 'Your results', enabled: () => !!fit(), figTitle: () => 'The flight, and the triangle at release',
+    hint: () => 'Green ring: release. Red ring: last frame in the air.',
+    body: () => {
+      const F = fit(); if (!F) return ''; const gc = gClass(F), how = A.fromEvents ? 'were set from the video' : 'were picked automatically';
+      return '<div class="tiles big"><div class="tile" style="border-color:' + C.hyp + '"><span>Release speed</span><b>' + fmt(F.pol.v, 2) + ' m/s</b></div><div class="tile" style="border-color:#475569"><span>Release angle</span><b>' + fmt(F.pol.th, 1) + '&deg;</b></div><div class="tile" style="border-color:#16a34a"><span>Release height</span><b>' + fmt(F.y0, 2) + ' m</b></div></div>'
+        + '<div class="field"><label for="taskSel2">What is it?</label><select id="taskSel2">' + Object.entries(TASKS).map(([k, n]) => '<option value="' + k + '"' + (k === A.task ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></div>'
+        + '<p class="lead-sm">' + oneLine(F) + '</p>'
+        + '<div class="' + gc + '"><p style="margin:0"><b>' + (gc === 'light-good' ? '&#10003; You can trust these numbers.' : gc === 'light-warn' ? '&#9888; Nearly there: check before you trust these.' : '&#10007; Something is wrong: don&rsquo;t use these yet.') + '</b> ' + (gc === 'light-good' ? 'The tool checked the flight against gravity and got ' + fmt(F.gFree, 2) + ' m/s&sup2; (it should be 9.81).' : 'Checking against gravity gave ' + fmt(F.gFree, 2) + ' m/s&sup2; instead of 9.81. The usual causes are the frame rate, the scale, or the release frame.') + '</p></div>'
+        + '<p class="small">Release (<b style="color:#16a34a">green ring</b>) and the last frame in the air (<b style="color:#dc2626">red ring</b>) ' + how + '. Does the green ring sit where the ball leaves the hand? If not, fix it in <b>Go further</b>.</p>'
+        + (A.truth ? '<p class="small muted">Demo: the true release was ' + fmt(A.truth.v, 2) + ' m/s at ' + fmt(A.truth.th, 1) + '&deg; from ' + fmt(A.truth.y0, 2) + ' m.</p>' : '')
+        + '<div class="row"><button type="button" class="btn" id="goFur">Go further &rarr;</button><button type="button" class="btn ghost" id="dlCsv2">Save results (CSV)</button><button type="button" class="btn ghost" id="dlPng2">Save picture</button></div>';
+    },
+    wire() {
+      $('taskSel2').addEventListener('change', (e) => { A.task = e.target.value; A.ex = null; app.render(); });
+      $('goFur').addEventListener('click', () => { A.gf = gClass(fit()) === 'light-good' ? 3 : 1; app.go(4); });
+      $('dlCsv2').addEventListener('click', exportCSV); $('dlPng2').addEventListener('click', exportPNG);
+    },
+    draw(ctx, w, h) {
+      const F = fit(); if (!F) return; const P = trajFigure(ctx, { x: 0, y: 0, w, h }, { predict: true }); predPath(ctx, P, P0(F), C.fit, 2.5);
+      drawTriangle(ctx, P, F, 1.3); const x = X();
+      ring(ctx, P, x[A.rel], A.ry[A.rel], '#16a34a', 'release'); ring(ctx, P, x[A.land], A.ry[A.land], '#dc2626', 'last in the air');
+    },
+  },
+  {
+    key: 'further', short: 'Go further', title: 'Go further', enabled: () => !!fit(),
+    figTitle: () => SUBS[A.gf].s.figTitle(), hint: () => (SUBS[A.gf].s.hint ? SUBS[A.gf].s.hint() : ''), tools: () => (SUBS[A.gf].s.tools ? SUBS[A.gf].s.tools() : ''),
+    body: () => '<div class="subtabs">' + SUBS.map((q, i) => '<button type="button" data-gf="' + i + '" class="' + (i === A.gf ? 'on' : '') + '">' + q.name + '</button>').join('') + '</div>' + SUBS[A.gf].s.body(),
+    wire() { document.querySelectorAll('[data-gf]').forEach((b) => b.addEventListener('click', () => { A.gf = +b.dataset.gf; app.render(); })); if (SUBS[A.gf].s.wire) SUBS[A.gf].s.wire(); },
+    draw(ctx, w, h, ts) { SUBS[A.gf].s.draw(ctx, w, h, ts); },
+  },
+];
+
 // ---------- step helpers ----------
 // value +/- standard error, with enough decimals that the error shows two significant figures
 function pm(x, se, dmin = 2, dmax = 3) { const d = Math.min(dmax, Math.max(dmin, se > 0 ? 1 - Math.floor(Math.log10(se)) : dmin)); return sgn(x, d) + ' &plusmn; ' + fmt(se, d); }
@@ -538,8 +665,9 @@ function autoDemo() {
   // the demo shot's true path (60 fps, release at frame 29) with a realistic 2-pixel clicking error, every 2nd frame
   const r = (seed => () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; })(7), g2 = () => Math.sqrt(-2 * Math.log(r() || 1e-9)) * Math.cos(2 * Math.PI * r());
   const D = DEMOS.freethrow(); A.clicks = {};
-  for (let i = 0; i < D.t.length; i += 2) { const f = i + (VIDEO_DEMO.releaseFrame - D.iRel); const p = toPx(D.x[i], D.y[i]); A.clicks[f] = [Math.round((p[0] + g2() * 1.5) * 10) / 10, Math.round((p[1] + g2() * 1.5) * 10) / 10]; }
-  buildFromClicks(); const ri = A.fr.indexOf(VIDEO_DEMO.releaseFrame); if (ri >= 0) { A.rel = ri; A.land = N() - 1; A.suggested = false; A.fromEvents = true; FITKEY = ''; }
+  // clicks go where the ball really is in the video, so the user's own calibration errors carry through as they would
+  for (let i = 0; i < D.t.length; i += 2) { const f = i + (VIDEO_DEMO.releaseFrame - D.iRel); const p = [VIDEO_DEMO.originPx[0] + D.x[i] * 150, VIDEO_DEMO.originPx[1] - D.y[i] * 150]; A.clicks[f] = [Math.round((p[0] + g2() * 1.5) * 10) / 10, Math.round((p[1] + g2() * 1.5) * 10) / 10]; }
+  buildFromClicks(); A.hist = Object.keys(A.clicks).map(Number); const ri = A.fr.indexOf(VIDEO_DEMO.releaseFrame); if (ri >= 0) { A.rel = ri; A.land = N() - 1; A.suggested = false; A.fromEvents = true; FITKEY = ''; }
   app.render(); showFrame(VIDEO_DEMO.releaseFrame);
 }
 function guessUnits(P) { const vals = P.rows.slice(0, 200).flatMap((r) => [+r[P.xi], +r[P.yi]]).filter(Number.isFinite); const m = Math.max(...vals.map(Math.abs)); A.units = m > 300 ? 0.001 : m > 40 ? 0.01 : 1; }

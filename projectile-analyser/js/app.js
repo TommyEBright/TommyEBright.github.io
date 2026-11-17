@@ -1,14 +1,14 @@
 // Projectile Motion: the page shell. Two parts, Learn and Analyse, each a list of steps. A step has a title, a body
 // (HTML for the right-hand card), an optional quick check, and either a figure drawn on the canvas or the video stage.
-import { hidpi } from './plot.js?v=1.0.0';
-import { LEARN } from './learn.js?v=1.0.0';
-import { ANALYSE } from './analyse.js?v=1.0.0';
+import { hidpi } from './plot.js?v=1.1.0';
+import { LEARN } from './learn.js?v=1.1.0';
+import { ANALYSE } from './analyse.js?v=1.1.0';
 
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 const $ = (id) => document.getElementById(id);
 const PARTS = { learn: LEARN, analyse: ANALYSE };
 const S = { mode: 'learn', step: { learn: 0, analyse: 0 }, seen: {} };
-const app = { $, redraw, render, go, setMode, S };
+const app = { $, redraw, render, go: (k) => go(k), setMode, S };
 LEARN.init(app); ANALYSE.init(app);
 
 function part() { return PARTS[S.mode]; }
@@ -17,7 +17,6 @@ function cur() { return part().steps()[S.step[S.mode]]; }
 function render() {
   const P = part(), st = P.steps(), k = S.step[S.mode], s = st[k];
   document.querySelectorAll('[data-mode]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.mode === S.mode)));
-  $('filmHelp').classList.toggle('hide', S.mode !== 'analyse');
   $('progress').innerHTML = st.map((x, i) => {
     const off = x.enabled && !x.enabled();
     return '<button type="button" data-s="' + i + '"' + (off ? ' disabled' : '') + ' class="' + (i === k ? 'cur' : S.seen[S.mode + i] ? 'done' : '') + '">' + (i + 1) + '. ' + (x.short || x.title) + '</button>';
@@ -33,7 +32,7 @@ function render() {
   const nk = nextOn(k, 1), pk = nextOn(k, -1), nx = nk >= 0 ? st[nk] : null;
   $('back').disabled = pk < 0;
   $('next').disabled = !nx || (s.canNext && !s.canNext());
-  $('next').innerHTML = !nx ? (S.mode === 'learn' ? 'Now analyse &rarr;' : 'Done') : 'Next &rarr;';
+  $('next').innerHTML = k < st.length - 1 ? 'Next &rarr;' : (S.mode === 'learn' ? 'Now analyse &rarr;' : 'Done');
   if (!nx && S.mode === 'learn') $('next').disabled = false;
   S.seen[S.mode + k] = true;
   wireQuiz(s);
@@ -62,8 +61,8 @@ function redraw() {
   raf = requestAnimationFrame(frame);
 }
 function nextOn(k, d) { const st = part().steps(); for (let i = k + d; i >= 0 && i < st.length; i += d) if (!st[i].enabled || st[i].enabled()) return i; return -1; }
-function go(k) { const st = part().steps(); if (k < 0 || k >= st.length || (st[k].enabled && !st[k].enabled())) return; if (cur().leave) cur().leave(); S.step[S.mode] = k; render(); window.scrollTo({ top: Math.min(window.scrollY, $('progress').offsetTop - 8), behavior: 'smooth' }); }
-function setMode(m, k) { if (cur().leave) cur().leave(); S.mode = m; if (k !== undefined) S.step[m] = k; if (PARTS[m].enter) PARTS[m].enter(); render(); }
+function go(k) { const st = part().steps(); if (k < 0 || k >= st.length || (st[k].enabled && !st[k].enabled())) return; if (cur().leave) cur().leave(); S.step[S.mode] = k; if (cur().enter) cur().enter(); render(); window.scrollTo({ top: Math.min(window.scrollY, $('progress').offsetTop - 8), behavior: 'smooth' }); }
+function setMode(m, k) { if (cur().leave) cur().leave(); S.mode = m; if (k !== undefined) S.step[m] = k; if (PARTS[m].enter) PARTS[m].enter(); if (cur().enter) cur().enter(); render(); }
 
 document.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
 $('progress').addEventListener('click', (e) => { const b = e.target.closest('[data-s]'); if (b && !b.disabled) go(+b.dataset.s); });
