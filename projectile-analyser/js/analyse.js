@@ -1,8 +1,8 @@
 // Analyse: a real flight, from video (calibrate and digitise here) or from position data (e.g. a marker exported
 // from Kinematic Analysis), to release speed, angle and height, what they predict, and what-ifs.
 // Coordinates: metres, y up, x in the direction of travel (the tool mirrors the data if the flight goes right to left).
-import { G, rad, deg, fitFlight, polar, pos, tAtHeight, peakRise, fromPolar, range, optimumAngle, minSpeedToTarget, speedForTarget, DEMOS, VIDEO_DEMO } from './maths.js?v=1.1.0';
-import { panel, line, dots, arrow, label, lim, rightMark, fmt, sgn, COL } from './plot.js?v=1.1.0';
+import { G, rad, deg, fitFlight, polar, pos, tAtHeight, peakRise, fromPolar, range, optimumAngle, minSpeedToTarget, speedForTarget, DEMOS, VIDEO_DEMO } from './maths.js?v=1.2.0';
+import { panel, line, dots, arrow, label, lim, rightMark, fmt, sgn, COL } from './plot.js?v=1.2.0';
 
 const RIM_R = 0.2286, BALL_R = 0.119; // basketball: 18 in (45.7 cm) rim, size 7 ball (about 23.8 cm across)
 const C = { hyp: '#1d4ed8', adj: '#d97706', opp: '#7c3aed', pts: '#0f172a', fit: '#1d4ed8', what: '#db2777', flight: '#dbeafe', out: '#94a3b8' };
@@ -12,7 +12,7 @@ const A = fresh();
 function fresh() {
   return { src: null, name: '', note: '', task: 'general', demo: null, truth: null,
     // video
-    url: null, vw: 0, vh: 0, fileFps: 60, realFps: 60, nF: 0, frame: 0, clicks: {}, cal: { a: null, b: null, len: 1, o: null }, mode: 'idle', stepBy: 1, hover: null, targetPx: null,
+    url: null, avi: null, bright: 1, vw: 0, vh: 0, fileFps: 60, realFps: 60, nF: 0, frame: 0, clicks: {}, cal: { a: null, b: null, len: 1, o: null }, mode: 'idle', stepBy: 1, hover: null, targetPx: null,
     // position data (raw, before mirroring)
     t: [], rx: [], ry: [], fr: [], flip: false, markers: null, csvParsed: null, marker: '', csv: null, units: 1, fpsData: 100,
     rel: 0, land: 0, suggested: false, fromEvents: false, event: null, hist: [], gf: 0,
@@ -139,9 +139,57 @@ function useCSV() {
   setWorld(o.map((i) => t[i]), o.map((i) => x[i]), o.map((i) => y[i]), o.map((i) => fr[i]));
 }
 
+// ---------- AVI (Motion JPEG) from lab cameras ----------
+// Browsers will not play AVI, so these are read directly: each frame is a JPEG inside the file, and the frame rate
+// comes from the file header, so it is exact. Some cameras leave out the JPEG Huffman tables (Motion JPEG allows it);
+// the standard tables are put back in so every browser can decode the frame.
+const STD_DHT = Uint8Array.from(atob('/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6'), (ch) => ch.charCodeAt(0));
+async function readAVI(file) {
+  const buf = await file.arrayBuffer(), u8 = new Uint8Array(buf), dv = new DataView(buf), n = buf.byteLength;
+  const id = (o) => String.fromCharCode(u8[o], u8[o + 1], u8[o + 2], u8[o + 3]);
+  if (n < 12 || id(0) !== 'RIFF' || id(8) !== 'AVI ') return null;
+  let us = 0, fps = 0; const frames = [];
+  const walk = (o, end) => {
+    while (o + 8 <= end) {
+      const c = id(o), sz = dv.getUint32(o + 4, true);
+      if (c === 'RIFF' || c === 'LIST') walk(o + 12, Math.min(end, o + 8 + sz));
+      else if (c === 'avih') us = dv.getUint32(o + 8, true);
+      else if (c === 'strh' && id(o + 8) === 'vids' && !fps) { const sc = dv.getUint32(o + 28, true), ra = dv.getUint32(o + 32, true); if (sc) fps = ra / sc; }
+      else if (c[2] === 'd' && (c[3] === 'b' || c[3] === 'c') && sz > 4 && u8[o + 8] === 0xFF && u8[o + 9] === 0xD8) frames.push([o + 8, sz]);
+      o += 8 + sz + (sz & 1);
+    }
+  };
+  walk(0, n);
+  if (!fps && us) fps = 1e6 / us;
+  return { u8, frames, fps, tok: 0 };
+}
+function aviBlob(i) {
+  const [o, sz] = A.avi.frames[i], j = A.avi.u8.subarray(o, o + sz);
+  let k = 2, dht = false, sos = -1;
+  while (k + 4 < j.length && j[k] === 0xFF) { const m = j[k + 1]; if (m === 0xC4) dht = true; if (m === 0xDA) { sos = k; break; } k += 2 + ((j[k + 2] << 8) | j[k + 3]); }
+  return new Blob(dht || sos < 0 ? [j] : [j.subarray(0, sos), STD_DHT, j.subarray(sos)], { type: 'image/jpeg' });
+}
+async function aviFrame(i) { return createImageBitmap(aviBlob(i)); }
+async function loadAVI(file) {
+  reset(); A.src = 'video'; A.name = file.name; A.task = 'general'; app.render();
+  try {
+    const V = await readAVI(file);
+    if (!V || !V.frames.length) { A.note = 'This AVI is not Motion JPEG, so the browser cannot read it. Convert it to MP4 (H.264) first.'; app.render(); return; }
+    A.avi = V; A.nF = V.frames.length; A.fileFps = A.realFps = Math.round(V.fps * 1000) / 1000 || 100;
+    const bm = await aviFrame(0); A.vw = bm.width; A.vh = bm.height;
+    frameCv.width = A.vw; frameCv.height = A.vh; const fc = frameCv.getContext('2d'); fc.drawImage(bm, 0, 0);
+    const d = fc.getImageData(0, 0, A.vw, A.vh).data; let sum = 0, cnt = 0; for (let q = 0; q < d.length; q += 4 * 97) { sum += d[q]; cnt++; }
+    const mean = sum / cnt; A.bright = mean < 70 ? Math.min(4, Math.round(Math.max(1, 110 / Math.max(mean, 10)) * 4) / 4) : 1;
+    A.note = 'Lab camera file: ' + A.nF + ' frames at ' + fmt(A.fileFps, 0) + ' fps, read straight from the file (no converting needed).' + (A.bright > 1 ? ' It is quite dark, so the picture has been brightened (you can change this under the video).' : '');
+    A.frame = 0; drawStage(); app.render();
+  } catch (err) { A.note = 'Could not read this AVI: ' + err.message; app.render(); }
+}
+
 // ---------- video stage ----------
 const frameCv = document.createElement('canvas');
-function showFrame(f) { A.frame = Math.max(0, Math.min(A.nF - 1, f)); const vd = $('vid'); const tt = (A.frame + 0.5) / A.fileFps; if (Math.abs(vd.currentTime - tt) < 1e-4) { grab(); drawStage(); } else vd.currentTime = tt; }
+function showFrame(f) { A.frame = Math.max(0, Math.min(A.nF - 1, f));
+  if (A.avi) { const tok = ++A.avi.tok, fr = A.frame; aviFrame(fr).then((bm) => { if (tok !== A.avi.tok) return; frameCv.width = bm.width; frameCv.height = bm.height; frameCv.getContext('2d').drawImage(bm, 0, 0); drawStage(); }); return; }
+  const vd = $('vid'); const tt = (A.frame + 0.5) / A.fileFps; if (Math.abs(vd.currentTime - tt) < 1e-4) { grab(); drawStage(); } else vd.currentTime = tt; }
 function grab() { const vd = $('vid'); if (!A.vw) return; frameCv.width = A.vw; frameCv.height = A.vh; frameCv.getContext('2d').drawImage(vd, 0, 0, A.vw, A.vh); }
 function scalePx() { const c = A.cal; return c.a && c.b && c.len > 0 ? Math.hypot(c.b[0] - c.a[0], c.b[1] - c.a[1]) / c.len : NaN; }
 function toWorld(p) { const s = scalePx(), o = A.cal.o; return [(p[0] - o[0]) / s, (o[1] - p[1]) / s]; }
@@ -160,7 +208,7 @@ function drawStage() {
   const cv = $('stage'); if (!A.vw) { cv.width = 640; cv.height = 360; const c = cv.getContext('2d'); c.fillStyle = '#111'; c.fillRect(0, 0, 640, 360); c.fillStyle = '#cbd5e1'; c.font = '16px system-ui'; c.textAlign = 'center'; c.fillText('Load a video in step 1', 320, 180); return; }
   if (cv.width !== A.vw) { cv.width = A.vw; cv.height = A.vh; }
   const c = cv.getContext('2d'), u = A.vw / 900;
-  c.drawImage(frameCv, 0, 0);
+  drawBright(c, () => c.drawImage(frameCv, 0, 0), A.vw, A.vh);
   const dot = (p, col, r = 5) => { c.fillStyle = col; c.strokeStyle = '#fff'; c.lineWidth = 2 * u; c.beginPath(); c.arc(p[0], p[1], r * u, 0, 2 * Math.PI); c.fill(); c.stroke(); };
   const cal = A.cal;
   if (cal.a) dot(cal.a, '#facc15', 6); if (cal.b) dot(cal.b, '#facc15', 6);
@@ -177,6 +225,13 @@ function drawStage() {
   const k = document.getElementById('clickCount'); if (k) k.textContent = fs.length;
 }
 function txt(c, s, x, y, col, u, al = 'center', box) { c.save(); c.font = '600 ' + Math.round(15 * u) + 'px system-ui, sans-serif'; c.textAlign = al; c.textBaseline = 'middle'; if (box) { const w = c.measureText(s).width + 14 * u, bx = al === 'left' ? x - 7 * u : al === 'right' ? x - w + 7 * u : x - w / 2; c.fillStyle = 'rgba(15,23,42,.72)'; c.fillRect(bx, y - 13 * u, w, 26 * u); } c.fillStyle = col; c.fillText(s, x, y); c.restore(); }
+// Brighten dark footage for display only (clicks are unaffected). Uses the canvas filter where the browser has it,
+// otherwise scales the pixels directly.
+function drawBright(c, draw, w, h) {
+  if (A.bright === 1) { draw(); return; }
+  if ('filter' in c) { c.filter = 'brightness(' + A.bright + ')'; draw(); c.filter = 'none'; return; }
+  draw(); const im = c.getImageData(0, 0, w, h), d = im.data; for (let q = 0; q < d.length; q += 4) { d[q] = Math.min(255, d[q] * A.bright); d[q + 1] = Math.min(255, d[q + 1] * A.bright); d[q + 2] = Math.min(255, d[q + 2] * A.bright); } c.putImageData(im, 0, 0);
+}
 function stagePt(e) { const cv = $('stage'), r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; }
 function stageClick(e) {
   if (!A.vw) return; const p = stagePt(e).map((q) => Math.round(q * 10) / 10);
@@ -194,7 +249,7 @@ function loupe(e) {
   const p = stagePt(e), z = 4, s = 160 / z, c = lp.getContext('2d');
   if (p[0] < 0 || p[1] < 0 || p[0] > A.vw || p[1] > A.vh) { lp.style.display = 'none'; return; }
   lp.style.display = 'block'; c.imageSmoothingEnabled = false; c.fillStyle = '#000'; c.fillRect(0, 0, 160, 160);
-  c.drawImage(frameCv, p[0] - s / 2, p[1] - s / 2, s, s, 0, 0, 160, 160);
+  drawBright(c, () => c.drawImage(frameCv, p[0] - s / 2, p[1] - s / 2, s, s, 0, 0, 160, 160), 160, 160);
   c.strokeStyle = '#ef4444'; c.lineWidth = 1; c.beginPath(); c.moveTo(80, 60); c.lineTo(80, 100); c.moveTo(60, 80); c.lineTo(100, 80); c.stroke();
 }
 
@@ -255,7 +310,7 @@ const OLD = [
         + '<button type="button" class="choice" data-demo="freethrow"><b>Free throw: data</b><span>The same shot, already digitised. Ball centre, 60 Hz.</span></button>'
         + '<button type="button" class="choice" data-demo="broadjump"><b>Broad jump: centre of mass</b><span>Centre of mass at 100 Hz, from late push-off to the end of landing.</span></button>'
         + '<button type="button" class="choice" data-demo="shot"><b>Shot put</b><span>Filmed from far back at 50 fps, so the clicks are rougher.</span></button></div>')
-        + layer('words', 'Or use your own', '<div class="row"><label class="btn filebtn">Open a video<input type="file" id="fVid" accept="video/*" aria-label="Open a video"></label><label class="btn accent filebtn">Open position data (CSV)<input type="file" id="fCsv" accept=".csv,.txt,.tsv,text/csv,text/plain" aria-label="Open position data"></label></div>'
+        + layer('words', 'Or use your own', '<div class="row"><label class="btn filebtn">Open a video<input type="file" id="fVid" accept="video/*,.avi" aria-label="Open a video"></label><label class="btn accent filebtn">Open position data (CSV)<input type="file" id="fCsv" accept=".csv,.txt,.tsv,text/csv,text/plain" aria-label="Open position data"></label></div>'
         + '<details class="more"><summary>What the data file should look like</summary><p>A <strong>marker coordinates</strong> export from <a href="../video-analyser/">Kinematic Analysis</a> works as it is (you then pick the marker, e.g. the ball). Use the <em>unfiltered</em> positions: the fit here does the smoothing, and filtering blurs the moment of release.</p><p>Otherwise, a CSV with a header row and three columns: <code>time_s, x_m, y_m</code>. Time in seconds (or a <code>frame</code> column and the frame rate), x forwards and y <strong>up</strong>, in metres from an origin on the floor.</p></details>');
       if (A.src) h += layer('nums', 'Loaded', '<p><b>' + esc(A.name) + '</b>' + (A.src === 'data' ? ': ' + N() + ' frames, ' + fmt(A.t[N() - 1] - A.t[0], 3) + ' s.' : A.vw ? ': ' + A.vw + ' &times; ' + A.vh + ', ' + A.nF + ' frames.' : '') + '</p>' + (A.note ? '<p class="small">' + esc(A.note) + '</p>' : '')
         + (A.markers && A.markers.length > 1 ? '<div class="field"><label for="mkSel">Marker to analyse</label><select id="mkSel">' + A.markers.map((m) => '<option' + (m === A.marker ? ' selected' : '') + '>' + esc(m) + '</option>').join('') + '</select></div>' : '')
@@ -267,7 +322,7 @@ const OLD = [
     },
     wire() {
       document.querySelectorAll('[data-demo]').forEach((b) => b.addEventListener('click', () => { const k = b.dataset.demo; if (k === 'video') loadVideo(VIDEO_DEMO.file, 'Free throw video (demo)', true); else loadDemo(k); }));
-      $('fVid').addEventListener('change', (e) => { const f = e.target.files[0]; if (f) loadVideo(URL.createObjectURL(f), f.name, false); });
+      $('fVid').addEventListener('change', (e) => { const f = e.target.files[0]; if (!f) return; if (/\.avi$/i.test(f.name) || /msvideo|avi/i.test(f.type)) loadAVI(f); else loadVideo(URL.createObjectURL(f), f.name, false); });
       $('fCsv').addEventListener('change', async (e) => {
         const f = e.target.files[0]; if (!f) return;
         try { const text = await f.text(), P = parseCSV(text, f.name); reset(); A.src = 'data'; A.name = f.name; A.csvParsed = P; A.markers = P.markers; A.marker = P.markers ? (P.markers.find((m) => /ball|shot|com|centre|center/i.test(m)) || P.markers[0]) : ''; A.note = P.markers ? 'Kinematic Analysis marker export: ' + P.markers.length + ' marker(s).' : 'Columns found: ' + (P.ti >= 0 ? 'time, ' : P.fi >= 0 ? 'frame, ' : '') + 'x and y.'; guessUnits(P); useCSV(); }
@@ -510,7 +565,7 @@ const STEPS = [
         + '<button type="button" class="choice' + (A.demo === 'freethrow' ? ' sel' : '') + '" data-demo="freethrow"><b>Free throw, already clicked</b><span>Skip straight to the results.</span></button>'
         + '<button type="button" class="choice' + (A.demo === 'broadjump' ? ' sel' : '') + '" data-demo="broadjump"><b>Broad jump</b><span>The jumper&rsquo;s centre of mass.</span></button>'
         + '<button type="button" class="choice' + (A.demo === 'shot' ? ' sel' : '') + '" data-demo="shot"><b>Shot put</b><span>Filmed from far back.</span></button></div>'
-        + '<p style="margin:.9rem 0 .3rem"><b>Or your own:</b></p><div class="row"><label class="btn filebtn">Open a video<input type="file" id="fVid" accept="video/*" aria-label="Open a video"></label><label class="btn ghost filebtn">Open data (CSV)<input type="file" id="fCsv" accept=".csv,.txt,.tsv,text/csv,text/plain" aria-label="Open position data"></label></div>'
+        + '<p style="margin:.9rem 0 .3rem"><b>Or your own:</b></p><div class="row"><label class="btn filebtn">Open a video<input type="file" id="fVid" accept="video/*,.avi" aria-label="Open a video"></label><label class="btn ghost filebtn">Open data (CSV)<input type="file" id="fCsv" accept=".csv,.txt,.tsv,text/csv,text/plain" aria-label="Open position data"></label></div>'
         + FILM_HELP + '<details class="more"><summary>What a data file should look like</summary><p class="small">A <b>marker coordinates</b> export from <a href="../video-analyser/">Kinematic Analysis</a> works as it is (use the unfiltered positions). Otherwise a CSV with a header row: <code>time_s, x_m, y_m</code>, with y measured <b>up</b> from the floor, in metres.</p></details>';
       if (A.src) h += '<div class="status"><b>Loaded:</b> ' + esc(A.name) + (A.src === 'data' ? ' (' + N() + ' frames)' : '') + '.' + (A.note ? ' <span class="small">' + esc(A.note) + '</span>' : '')
         + (A.markers && A.markers.length > 1 ? '<div class="field"><label for="mkSel">Marker</label><select id="mkSel">' + A.markers.map((m) => '<option' + (m === A.marker ? ' selected' : '') + '>' + esc(m) + '</option>').join('') + '</select></div>' : '')
@@ -532,7 +587,7 @@ const STEPS = [
         + (A.task === 'freethrow' ? tick(!!A.targetPx, m === 'target', 'Click the <b>middle of the hoop</b>') : '') + '</ol>'
         + (calibrated() && m === 'idle' ? '<div class="light-good"><b>Done!</b> Press <b>Next</b> and click the ball.</div>' : '')
         + '<div class="row"><button type="button" class="btn small ghost" id="calReset">Start again</button>' + (A.task !== 'freethrow' ? '<button type="button" class="btn small ghost" id="bTgt">Shooting at a hoop? Click it</button>' : '') + (A.demo ? '<button type="button" class="btn small ghost" id="bDemoCal">Do it for me</button>' : '') + '</div>'
-        + '<details class="more"' + (A.demo ? '' : ' open') + '><summary>Frame rate' + (A.demo ? ' (already set: 60 fps)' : ': check this for your video') + '</summary><p class="small">For slow motion, use the rate it was <b>filmed</b> at (e.g. 240), not the rate it plays at.</p><div class="field"><label for="fileFps">Frames per second in the file</label><input type="number" id="fileFps" min="1" step="1" value="' + A.fileFps + '"></div><div class="field"><label for="realFps">Filmed at (fps)</label><input type="number" id="realFps" min="1" step="1" value="' + A.realFps + '"></div></details>';
+        + '<details class="more"' + (A.demo || A.avi ? '' : ' open') + '><summary>Frame rate' + (A.demo ? ' (already set: 60 fps)' : A.avi ? ' (read from the file: ' + fmt(A.realFps, 0) + ' fps)' : ': check this for your video') + '</summary><p class="small">For slow motion, use the rate it was <b>filmed</b> at (e.g. 240), not the rate it plays at.</p><div class="field"><label for="fileFps">Frames per second in the file</label><input type="number" id="fileFps" min="1" step="1" value="' + A.fileFps + '"></div><div class="field"><label for="realFps">Filmed at (fps)</label><input type="number" id="realFps" min="1" step="1" value="' + A.realFps + '"></div></details>';
     },
     tools: () => frameTools(),
     wire() {
@@ -554,6 +609,7 @@ const STEPS = [
         + tick(n > 0, n === 0, 'Go back to <b>just before the ball leaves the hand</b> (&lsaquo; 1 and &laquo; 10 under the video, or the arrow keys)')
         + tick(n >= 6, n > 0 && n < 6, 'Click the ball in <b>every frame</b> after that')
         + tick(n >= 15, n >= 6, 'Keep going until it <b>lands or reaches the hoop</b>') + '</ol>'
+        + '<p class="small muted">Ball goes out of the picture after only a few frames? The tool needs at least 6 frames of flight, ideally 10 or more, so film from further back (see Before you film).</p>'
         + '<div class="tiles"><div class="tile"><span>Clicks</span><b id="clickCount">' + n + '</b></div><div class="tile"><span>Frame</span><b id="frameNo2">' + A.frame + '</b></div></div>'
         + (n >= 6 ? '<p>' + (n >= 15 ? '<b>Plenty.</b> ' : 'Enough to try, but more is better. ') + 'Press <b>Next</b> to see your results.</p>' : '')
         + '<div class="row"><button type="button" class="btn small ghost" id="bUndo"' + (A.hist.length ? '' : ' disabled') + '>Undo last click</button><button type="button" class="btn small ghost" id="bClr"' + (n ? '' : ' disabled') + '>Clear all</button>' + (A.demo ? '<button type="button" class="btn small ghost" id="bAuto">Do it for me</button>' : '') + '</div>'
@@ -574,11 +630,11 @@ const STEPS = [
     key: 'results', short: 'Results', title: 'Your results', enabled: () => !!fit(), figTitle: () => 'The flight, and the triangle at release',
     hint: () => 'Green ring: release. Red ring: last frame in the air.',
     body: () => {
-      const F = fit(); if (!F) return ''; const gc = gClass(F), how = A.fromEvents ? 'were set from the video' : 'were picked automatically';
+      const F = fit(); if (!F) return ''; let gc = gClass(F); const few = F.n < 10; if (few && gc === 'light-good') gc = 'light-warn'; const how = A.fromEvents ? 'were set from the video' : 'were picked automatically';
       return '<div class="tiles big"><div class="tile" style="border-color:' + C.hyp + '"><span>Release speed</span><b>' + fmt(F.pol.v, 2) + ' m/s</b></div><div class="tile" style="border-color:#475569"><span>Release angle</span><b>' + fmt(F.pol.th, 1) + '&deg;</b></div><div class="tile" style="border-color:#16a34a"><span>Release height</span><b>' + fmt(F.y0, 2) + ' m</b></div></div>'
         + '<div class="field"><label for="taskSel2">What is it?</label><select id="taskSel2">' + Object.entries(TASKS).map(([k, n]) => '<option value="' + k + '"' + (k === A.task ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></div>'
         + '<p class="lead-sm">' + oneLine(F) + '</p>'
-        + '<div class="' + gc + '"><p style="margin:0"><b>' + (gc === 'light-good' ? '&#10003; You can trust these numbers.' : gc === 'light-warn' ? '&#9888; Nearly there: check before you trust these.' : '&#10007; Something is wrong: don&rsquo;t use these yet.') + '</b> ' + (gc === 'light-good' ? 'The tool checked the flight against gravity and got ' + fmt(F.gFree, 2) + ' m/s&sup2; (it should be 9.81).' : 'Checking against gravity gave ' + fmt(F.gFree, 2) + ' m/s&sup2; instead of 9.81. The usual causes are the frame rate, the scale, or the release frame.') + '</p></div>'
+        + '<div class="' + gc + '"><p style="margin:0"><b>' + (gc === 'light-good' ? '&#10003; You can trust these numbers.' : gc === 'light-warn' ? '&#9888; Nearly there: check before you trust these.' : '&#10007; Something is wrong: don&rsquo;t use these yet.') + '</b> ' + (few ? 'Only ' + F.n + ' frames in the air, so treat these as rough (10 or more is better). ' : '') + (gc === 'light-good' || (few && gClass(F) === 'light-good') ? 'The tool checked the flight against gravity and got ' + fmt(F.gFree, 2) + ' m/s&sup2; (it should be 9.81).' : 'Checking against gravity gave ' + fmt(F.gFree, 2) + ' m/s&sup2; instead of 9.81. The usual causes are the frame rate, the scale, or the release frame.') + '</p></div>'
         + '<p class="small">Release (<b style="color:#16a34a">green ring</b>) and the last frame in the air (<b style="color:#dc2626">red ring</b>) ' + how + '. Does the green ring sit where the ball leaves the hand? If not, fix it in <b>Go further</b>.</p>'
         + (A.truth ? '<p class="small muted">Demo: the true release was ' + fmt(A.truth.v, 2) + ' m/s at ' + fmt(A.truth.th, 1) + '&deg; from ' + fmt(A.truth.y0, 2) + ' m.</p>' : '')
         + '<div class="row"><button type="button" class="btn" id="goFur">Go further &rarr;</button><button type="button" class="btn ghost" id="dlCsv2">Save results (CSV)</button><button type="button" class="btn ghost" id="dlPng2">Save picture</button></div>';
@@ -654,9 +710,10 @@ function exOut(F, e, Pw) {
   el.innerHTML = h;
 }
 function frameTools() {
-  return '<div class="ctrls"><button type="button" class="btn small ghost" data-fr="-10">&laquo; 10</button><button type="button" class="btn small ghost" data-fr="-1">&lsaquo; 1</button><span class="readout">Frame <span id="frameNo">' + A.frame + '</span></span><button type="button" class="btn small ghost" data-fr="1">1 &rsaquo;</button><button type="button" class="btn small ghost" data-fr="10">10 &raquo;</button></div><input type="range" id="frSl" min="0" max="' + Math.max(0, A.nF - 1) + '" value="' + A.frame + '" style="flex:1 1 200px" aria-label="Frame"><span class="small muted">Arrow keys step frames.</span>';
+  return '<div class="ctrls"><button type="button" class="btn small ghost" data-fr="-10">&laquo; 10</button><button type="button" class="btn small ghost" data-fr="-1">&lsaquo; 1</button><span class="readout">Frame <span id="frameNo">' + A.frame + '</span></span><button type="button" class="btn small ghost" data-fr="1">1 &rsaquo;</button><button type="button" class="btn small ghost" data-fr="10">10 &raquo;</button></div><input type="range" id="frSl" min="0" max="' + Math.max(0, A.nF - 1) + '" value="' + A.frame + '" style="flex:1 1 200px" aria-label="Frame"><label class="small" style="display:inline-flex;gap:.35rem;align-items:center">Brightness <input type="range" id="brSl" min="1" max="4" step="0.25" value="' + A.bright + '" style="width:7rem"><b id="brOut">' + A.bright.toFixed(2) + '\u00d7</b></label>';
 }
 function wireFrameTools() {
+  const br = $('brSl'); if (br) br.addEventListener('input', () => { A.bright = +br.value; $('brOut').textContent = A.bright.toFixed(2) + '\u00d7'; drawStage(); });
   document.querySelectorAll('[data-fr]').forEach((b) => b.addEventListener('click', () => { showFrame(A.frame + +b.dataset.fr); syncSl(); }));
   const s = $('frSl'); if (s) s.addEventListener('input', () => showFrame(+s.value));
 }

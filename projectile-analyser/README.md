@@ -16,7 +16,7 @@ Picture first: one big animated or adjustable figure per step, a few plain sente
 Colours never change: forwards orange, upwards purple, the ball's direction blue, gravity red.
 
 ## 2. Analyse (4 steps, then Go further)
-1. **Load**: the free throw video (recommended first), three data demos, or your own video or CSV (Kinematic Analysis marker export, or `time_s, x_m, y_m`). Filming advice and the file format sit in drop-downs here.
+1. **Load**: the free throw video (recommended first), three data demos, or your own video (MP4, or AVI straight from the lab cameras) or CSV (Kinematic Analysis marker export, or `time_s, x_m, y_m`). Filming advice and the file format sit in drop-downs here.
 2. **Scale** (video): a checklist and a big instruction on the video itself walk through one end of the stick, the other end, the floor (origin) and, for shots, the hoop. Frame rates in a drop-down. *Do it for me* on the demo.
 3. **Click the ball** (video): clicking is on straight away and the video moves on after each click. Undo, clear, and *Do it for me* on the demo.
 4. **Results**: one picture (flight, predicted path, release triangle, green release ring and red last-in-the-air ring), three big numbers (speed, angle, height), one sentence on the outcome for the chosen task, and a traffic light ("You can trust these numbers") from the gravity check. Release and landing are picked automatically (or from the documented events in the demos).
@@ -38,3 +38,6 @@ Replace the drawn video with real footage when there is some: keep the `VIDEO_DE
 
 ## Files
 `index.html`, `css/style.css` (same theme as the other tools), `js/app.js` (page shell), `js/learn.js`, `js/analyse.js`, `js/maths.js` (fits, projectile equations, demos), `js/plot.js` (canvas figures), `sw.js` (offline; bump `VERSION` after any change), `manifest.webmanifest`, `icons/`.
+
+## Lab camera AVI files
+Browsers cannot play AVI, so Motion JPEG AVIs (e.g. the lab's high-speed cameras: greyscale, 100 or 200 fps) are read directly in the browser: each frame is decoded from the file and the frame rate is taken from the file header, so it is exact and no conversion is needed. Frames without JPEG Huffman tables (allowed in Motion JPEG) get the standard tables added before decoding. Dark footage is brightened automatically for display; the Brightness slider under the video changes it and never affects the clicks. Other AVI codecs still need converting to MP4 (H.264).
