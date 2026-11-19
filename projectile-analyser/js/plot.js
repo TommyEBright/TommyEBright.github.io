@@ -87,4 +87,4 @@ export function rightMark(ctx, cx, cy, d1, d2, s = 12, col = COL.muted) {
 // arc for an angle at (cx,cy) from a0 to a1 (canvas radians)
 export function arc(ctx, cx, cy, r, a0, a1, col) { ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, r, a0, a1, a1 < a0); ctx.stroke(); ctx.restore(); }
 export const fmt = (x, d = 2) => (Number.isFinite(x) ? (Math.abs(x) < 0.5 * Math.pow(10, -d) ? (0).toFixed(d) : x.toFixed(d)) : '–');
-export const sgn = (x, d = 2) => (Number.isFinite(x) ? (x < 0 ? '−' + Math.abs(x).toFixed(d) : x.toFixed(d)) : '–');
+export const sgn = (x, d = 2) => (Number.isFinite(x) ? (Number(x.toFixed(d)) === 0 ? (0).toFixed(d) : x < 0 ? '−' + Math.abs(x).toFixed(d) : x.toFixed(d)) : '–');

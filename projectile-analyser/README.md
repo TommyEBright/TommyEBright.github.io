@@ -4,40 +4,39 @@ Projectile motion for sport and exercise biomechanics students, from the basics 
 
 Runs in the browser, works offline once loaded, nothing is uploaded.
 
-## 1. Learn (5 steps, all on the same free throw)
+## 1. Learn (6 steps, all on the same free throw)
 Picture first: one big animated or adjustable figure per step, a few plain sentences, the equations and worked numbers behind **Show me the maths**, and a quick check question. Plain words ("forwards", "upwards") come before symbols.
 
 1. Once it is thrown, only gravity acts (animated ball with velocity and gravity arrows)
 2. Split the arrow into a triangle (speed and angle sliders; Pythagoras, SOH CAH TOA and Excel tips in the maths)
 3. Forwards stays the same, upwards changes (the ball every 0.1 s with its two arrows)
-4. Make the basket (speed, angle and height sliders, in/long/short, entry angle, room for error, and what +0.1 m/s or +1° is worth; best angles for distance in the maths)
+4. Make the basket (speed, angle and height sliders, in/long/short, entry angle, room for error, and what +0.1 m/s or +1° is worth)
 5. From video to numbers (noisy clicks appear, the fitted curve and release triangle snap on; clicking-error slider)
+6. **Film it right**: the perfect set-up, as the camera sees it (top) and from above (bottom): side-on, level, 8 to 10 m back, 1 m stick in the plane of the shot, 100 fps or more, tripod. Buttons show what each mistake does (too close, not side-on, stick too near the camera, low frame rate), with a count of frames of flight in shot and what it does to the numbers. Ends with *Try it yourself*.
 
 Colours never change: forwards orange, upwards purple, the ball's direction blue, gravity red.
 
-## 2. Analyse (4 steps, then Go further)
-1. **Load**: the free throw video (recommended first), three data demos, or your own video (MP4, or AVI straight from the lab cameras) or CSV (Kinematic Analysis marker export, or `time_s, x_m, y_m`). Filming advice and the file format sit in drop-downs here.
-2. **Scale** (video): a checklist and a big instruction on the video itself walk through one end of the stick, the other end, the floor (origin) and, for shots, the hoop. Frame rates in a drop-down. *Do it for me* on the demo.
-3. **Click the ball** (video): clicking is on straight away and the video moves on after each click. Undo, clear, and *Do it for me* on the demo.
-4. **Results**: one picture (flight, predicted path, release triangle, green release ring and red last-in-the-air ring), three big numbers (speed, angle, height), one sentence on the outcome for the chosen task, and a traffic light ("You can trust these numbers") from the gravity check. Release and landing are picked automatically (or from the documented events in the demos).
-5. **Go further**: everything rigorous, unchanged, in six tabs:
-   - **Release and landing frames**: move them by hand with a live gravity check, or *Suggest* (the longest clean projectile section, then about 15 ms in from each end).
-   - **Fit and gravity check**: least squares, x = x0 + vx t and y = y0 + vy t - g t^2/2, first with g free (the check), then g fixed at 9.81; residuals; differencing vs fitting.
-   - **Release, in detail**: values with standard errors (fit covariance, propagated to speed and angle), the demo truth at the chosen release frame, and the limits (release timing, 2D, air resistance).
-   - **What it predicts**: basketball (miss at rim height, entry angle, room for error R - r/sin(entry), minimum-speed angle, speed needed), broad jump (Hay, 1986, take-off + flight + landing distances), shot put (distance from the stop board, textbook optimum with the Linthorne, 2001 caveat), any projectile.
-   - **What if**: speed, angle and height sliders, and the effect of +0.1 m/s, +1° and +5 cm.
-   - **Save and report**: CSV, PNG and a method sentence.
+## 2. Analyse (5 steps, then Compare)
+1. **Load**: a demo (free throw video, recommended first; netball shot; line-out throw; standing long jump centre of mass; standing long jump on force platforms; shot put) or your own video (MP4, or Motion JPEG AVI straight from the lab cameras), CSV (Kinematic Analysis marker export, or `time_s, x_m, y_m`) or force platform file (BioWare text export, or CSV with time, Fx, Fz). Choose the task (basketball free throw, netball shot, line-out throw, jump, shot put, any projectile).
+2. **Scale** (video): the two ends of anything of known length in the plane of the shot (a 1 m stick is easiest; a measured floor line or floor to rim, 3.05 m, also work; type in the length), the floor (origin) and, for shots, the hoop or ring. *No stick? Use the ball* as a fallback. *Do it for me* on the demo.
+3. **Track the ball** (video): first **mark the events** (release, end of the flight, and your own if you want them), so only the frames that matter are digitised. Tick *Only show the marked part of the video* and the frame slider and step buttons are limited to the first to last marked event (add an event such as *start of the shot* to widen it). Then either:
+   - **Automatic**: click the ball once at release and the tool finds it in every frame to the end of the flight (blob, edge and circle fit, with template matching and a gravity-based guess of where it should be next). It stops and asks if it loses the ball; carry on by clicking it.
+   - **Manual**: click each frame; *Auto-centre* snaps each click to the middle of the ball. Switch between the two at any time, and fix any frame by clicking it again.
+4. **Results**: the flight, the predicted path and the release triangle; three big numbers (speed, angle, height) with 95% ranges when the flight is short; one sentence on the outcome for the task; a traffic light from the gravity check. *See it on the video* draws the predicted path over the footage. *Add to comparison* saves the trial.
+5. **Go further**: release and landing frames with a live gravity check, the fit and residuals, release values with standard errors, what it predicts (basketball and netball: miss at rim/ring height, entry angle, room for error; line-out: time to the catcher and height at the catcher; jumps: Hay, 1986, distance parts; shot put: distance and the Linthorne, 2001, caveat), what if, and save (CSV, PNG, method sentence). For force platform data: the force and velocity traces instead of the frame steps.
+6. **Compare**: every saved trial in a table with groups (e.g. made/missed, cue A/B), group means and SDs, all paths drawn from a common release point, and a report-ready figure and CSV. Trials are kept in this browser only.
 
-Deep links: `index.html#learn-4` (the game), `index.html#analyse-1`.
+Deep links: `index.html#learn-6` (filming), `index.html#analyse-1`.
 
 ## Demos
-- `demo/demo-free-throw-60fps.mp4`: a drawn, side-on free throw at 60 fps (1280 × 720, 150 px per metre), 1 m stick at the left, origin at the free-throw line, release at frame 29: 6.98 m/s at 52° from 2.10 m, hoop centre 4.225 m ahead and 3.05 m up. All-intra H.264 so frame seeking is exact. *Do it for me* in Scale sets the calibration; *Do it for me* in Click the ball digitises every second frame where the ball really is, with a 1.5 px clicking error, so any calibration error of the student's own carries through as it would.
-- Data demos are generated in `js/maths.js` (seeded, so always the same): free throw (60 Hz, 4 mm noise), broad jump centre of mass (100 Hz, 3 mm noise; 3.20 m/s at 36° from 0.88 m, take-off 0.42 m, landing 0.48 m), shot put (50 Hz, 15 mm noise; 12.5 m/s at 37° from 2.15 m). Each includes the motion before release and (broad jump) after landing, which is not a projectile. The release step compares the result with the true values at the chosen release frame.
+- `demo/demo-free-throw-100fps.mp4`: a drawn, side-on stick-person free throw filmed exactly as Learn step 6 recommends (100 fps, 1280 × 720, 150 px per metre, 1 m stick at the left, origin at the free-throw line). Release at frame 95: 6.98 m/s at 52° from 2.10 m; hoop centre 4.225 m ahead and 3.05 m up. All-intra H.264 so frame seeking is exact. Events are set for the demo; *Do it for me* tracks it automatically (mean error under 1 px).
+- **Standing long jump on force platforms** (`demo/demo-slj-force.txt`): the same file as the Force Analysis demo (1000 Hz, BioWare export), worked out by the same method: about 2.80 m/s forwards and 1.55 m/s upwards (3.20 m/s at 28.9°). Bodyweight from the steadiest 1 s, take-off when Fz drops below 20 N, velocity by integrating net force ÷ mass from rest. Force platforms do not give the height of the centre of mass at take-off, so the student enters it (demo: 0.90 m, with typical take-off and landing distances), and the predicted distance is shown with that caveat.
+- Data demos are generated in `js/maths.js` (seeded): free throw, netball shot, line-out throw, broad jump centre of mass and shot put, each including movement before release that is not a projectile. The release step compares the result with the true values at the chosen release frame.
 
-Replace the drawn video with real footage when there is some: keep the `VIDEO_DEMO` values in `js/maths.js` in step (frame rate, stick and origin pixels, release frame).
+Replace the drawn video with real footage when there is some: keep the `VIDEO_DEMO` values in `js/maths.js` in step (frame rate, stick and origin pixels, release and end frames).
 
 ## Files
-`index.html`, `css/style.css` (same theme as the other tools), `js/app.js` (page shell), `js/learn.js`, `js/analyse.js`, `js/maths.js` (fits, projectile equations, demos), `js/plot.js` (canvas figures), `sw.js` (offline; bump `VERSION` after any change), `manifest.webmanifest`, `icons/`.
+`index.html`, `css/style.css` (same theme as the other tools), `js/app.js` (page shell), `js/learn.js`, `js/analyse.js`, `js/maths.js` (fits, projectile equations, demos), `js/ball.js` (automatic ball finding and tracking), `js/forceplate.js` (force platform reader and take-off velocity), `js/plot.js` (canvas figures), `sw.js` (offline; bump `VERSION` after any change), `manifest.webmanifest`, `icons/`.
 
 ## Lab camera AVI files
 Browsers cannot play AVI, so Motion JPEG AVIs (e.g. the lab's high-speed cameras: greyscale, 100 or 200 fps) are read directly in the browser: each frame is decoded from the file and the frame rate is taken from the file header, so it is exact and no conversion is needed. Frames without JPEG Huffman tables (allowed in Motion JPEG) get the standard tables added before decoding. Dark footage is brightened automatically for display; the Brightness slider under the video changes it and never affects the clicks. Other AVI codecs still need converting to MP4 (H.264).

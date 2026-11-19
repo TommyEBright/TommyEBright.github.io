@@ -96,18 +96,36 @@ function series(o) {
   const Tp = o.pre * dt;
   for (let k = 0; k < o.pre; k++) add(herm(o.p0, o.m0, [P.x0, P.y0], [P.vx, P.vy], Tp, k / o.pre));
   const iRel = t.length; let k = 0, last;
-  for (;;) { const tt = k * dt, p = pos(P, tt); if (k > 2 && p[1] < o.endY && P.vy - G * tt < 0) break; add(p); last = [p, [P.vx, P.vy - G * tt]]; k++; }
+  for (;;) { const tt = k * dt, p = pos(P, tt); if (k > 2 && ((o.endX !== undefined && p[0] > o.endX) || (p[1] < o.endY && P.vy - G * tt < 0))) break; add(p); last = [p, [P.vx, P.vy - G * tt]]; k++; }
   const iLand = t.length - 1;
   if (o.post) { const Tq = o.post * dt; for (let q = 1; q <= o.post; q++) add(herm(last[0], last[1], o.stop, [0, 0], Tq, q / o.post)); }
   return { t, x, y, truth: { ...P, v: o.v, th: o.th }, iRel, iLand };
 }
 export const DEMOS = {
   freethrow: () => ({
-    name: 'Free throw (data, 60 Hz)', task: 'freethrow', fps: 60,
-    note: 'Ball centre from side-on video at 60 fps (the same shot as the demo video). Origin: the floor at the free-throw line.',
-    target: { x: 4.225, y: 3.05 }, events: 'Release and last flight frame were set from the video (ball leaving the hand, and the frame before the rim).',
-    ...series({ seed: 11, fps: 60, v: 6.982, th: 52, h: 2.10, x0: 0.35, noise: 0.004, pre: 12, p0: [0.12, 1.72], m0: [0.4, 1.0], endY: 2.62, post: 0 }),
+    name: 'Free throw (data, 100 Hz)', task: 'freethrow', fps: 100,
+    note: 'Ball centre from the side-on demo video at 100 fps. Origin: the floor at the free-throw line.',
+    target: { x: 4.225, y: 3.05 }, events: 'Release and the last frame above the rim were marked from the video.',
+    ...series({ seed: 11, fps: 100, v: 6.982, th: 52, h: 2.10, x0: 0.35, noise: 0.004, pre: 40, p0: [0.10, 1.16], m0: [0.3, 0.6], endY: 3.07, post: 0 }),
   }),
+  netball: () => {
+    const v = speedForTarget(2.52 - 0.30, 3.05 - 2.40, 58);
+    return {
+      name: 'Netball shot (data, 100 Hz)', task: 'netball', fps: 100,
+      note: 'Ball centre from side-on video at 100 fps, a shot from about 2.8 m out. Origin: the floor under the shooter\u2019s front foot.',
+      target: { x: 2.80, y: 3.05 }, events: 'Release and the last frame above the ring were marked from the video.',
+      ...series({ seed: 31, fps: 100, v, th: 58, h: 2.40, x0: 0.30, noise: 0.004, pre: 25, p0: [0.12, 1.95], m0: [0.3, 1.2], endY: 3.07, post: 0 }),
+    };
+  },
+  lineout: () => {
+    const v = speedForTarget(7.0 - 0.10, 3.40 - 2.05, 25);
+    return {
+      name: 'Line-out throw (data, 100 Hz)', task: 'lineout', fps: 100,
+      note: 'Ball centre (the middle of the ball) from side-on video at 100 fps, from release to the catch. Origin: the ground at the thrower\u2019s front foot.',
+      target: { x: 7.0, y: 3.40 }, events: 'Release and the catch were marked from the video.',
+      ...series({ seed: 41, fps: 100, v, th: 25, h: 2.05, x0: 0.10, noise: 0.008, pre: 15, p0: [-0.45, 2.10], m0: [6.0, 2.0], endY: 3.39, post: 0, endX: 7.0 }),
+    };
+  },
   broadjump: () => ({
     name: 'Broad jump, centre of mass (100 Hz)', task: 'broadjump', fps: 100,
     note: 'Centre of mass from a side-on segmental model at 100 Hz, from the end of the propulsion phase to the end of landing. Origin: the floor at the toes on the take-off line.',
@@ -121,5 +139,8 @@ export const DEMOS = {
     ...series({ seed: 23, fps: 50, v: 12.5, th: 37, h: 2.15, x0: 0.20, noise: 0.015, pre: 6, p0: [-0.55, 1.55], m0: [6.0, 4.2], endY: 0.0, post: 0 }),
   }),
 };
-// What the demo video shows (made with the same release values), so its hoop can be set once calibrated.
-export const VIDEO_DEMO = { file: 'demo/demo-free-throw-60fps.mp4', fps: 60, task: 'freethrow', target: { x: 4.225, y: 3.05 }, stickPx: [[77, 530], [77, 680]], originPx: [220, 680], stickLen: 1, releaseFrame: 29 };
+// What the demo video shows (made with the same release values), so it can be checked and filled in.
+export const VIDEO_DEMO = { file: 'demo/demo-free-throw-100fps.mp4', fps: 100, task: 'freethrow', target: { x: 4.225, y: 3.05 }, stickPx: [[77, 530], [77, 680]], originPx: [220, 680], stickLen: 1, releaseFrame: 95, endFrame: 185, ballR: 18 };
+// The standing long jump on two force platforms (a real trial, the same file as the Force Analysis demo). The platform
+// cannot give the centre of mass height or position, so typical values stand in for what you would measure on video.
+export const FORCE_DEMO = { file: 'demo/demo-slj-force.txt', name: 'Standing long jump on force platforms (1000 Hz)', h0: 0.90, takeoffDist: 0.40, landingDist: 0.45, landH: 0.55, measured: null };
