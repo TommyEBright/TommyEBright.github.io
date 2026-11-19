@@ -1,10 +1,10 @@
 // Analyse: a real flight, from video (calibrate and digitise here) or from position data (e.g. a marker exported
 // from Kinematic Analysis), to release speed, angle and height, what they predict, and what-ifs.
 // Coordinates: metres, y up, x in the direction of travel (the tool mirrors the data if the flight goes right to left).
-import { G, rad, deg, fitFlight, polar, pos, tAtHeight, peakRise, fromPolar, range, optimumAngle, minSpeedToTarget, speedForTarget, DEMOS, VIDEO_DEMO, FORCE_DEMO } from './maths.js?v=1.4.1';
-import { findBall, trackBall } from './ball.js?v=1.4.1';
-import { parseForce, analyseSLJ } from './forceplate.js?v=1.4.1';
-import { panel, line, dots, arrow, label, lim, rightMark, fmt, sgn, COL } from './plot.js?v=1.4.1';
+import { G, rad, deg, fitFlight, polar, pos, tAtHeight, peakRise, fromPolar, range, optimumAngle, minSpeedToTarget, speedForTarget, DEMOS, VIDEO_DEMO, FORCE_DEMO } from './maths.js?v=1.5.0';
+import { findBall, trackBall } from './ball.js?v=1.5.0';
+import { parseForce, analyseSLJ } from './forceplate.js?v=1.5.0';
+import { panel, line, dots, arrow, label, lim, rightMark, fmt, sgn, COL } from './plot.js?v=1.5.0';
 
 // Targets: a basketball rim is 45.7 cm across (size 7 ball about 23.8 cm); a netball ring is 38 cm across inside
 // (size 5 ball about 22.4 cm) with no backboard. A line-out has a catch point instead of a ring.
@@ -23,7 +23,7 @@ function fresh() {
     // position data (raw, before mirroring)
     t: [], rx: [], ry: [], fr: [], flip: false, markers: null, csvParsed: null, marker: '', csv: null, units: 1, fpsData: 100,
     rel: 0, land: 0, suggested: false, fromEvents: false, event: null, hist: [], gf: 0, calBy: 'stick',
-    ev: { rel: null, end: null, extra: [] }, trim: false, trackMode: 'auto', snap: true, ballR: null, busy: false, stopReq: false, trkMsg: '', trkDone: false,
+    ev: { rel: null, end: null, extra: [] }, trim: false, trackMode: 'manual', snap: true, ballR: null, ringR: null, busy: false, stopReq: false, trkMsg: '', trkDone: false,
     force: null, h0: 0.9, measured: null,
     // task inputs
     target: { x: 4.225, y: 3.05 }, landH: null, takeoffDist: 0, landingDist: 0, releaseAhead: 0,
@@ -243,10 +243,11 @@ function inWindow() { const E = A.ev; return Object.keys(A.clicks).map(Number).f
 const workCv = document.createElement('canvas');
 function seekVideo(t) {
   return new Promise((res) => {
-    const vd = $('vid'); if (Math.abs(vd.currentTime - t) < 1e-4) { res(); return; }
+    const vd = $('vid'), same = Math.abs(vd.currentTime - t) < 1e-4; if (same && !vd.seeking) { res(); return; }
     let done = false; const fin = () => { if (!done) { done = true; res(); } };
     const on = () => { vd.removeEventListener('seeked', on); if (vd.requestVideoFrameCallback) { vd.requestVideoFrameCallback(fin); setTimeout(fin, 250); } else fin(); };
-    vd.addEventListener('seeked', on); vd.currentTime = t;
+    // a seek to this frame may already be under way (e.g. from stepping): wait for it rather than grabbing the old frame
+    vd.addEventListener('seeked', on); if (!same) vd.currentTime = t;
   });
 }
 async function frameImage(f) {
@@ -296,10 +297,16 @@ function drawStage() {
   fs.forEach((f) => dot(A.clicks[f], f === A.frame ? '#ef4444' : inE(f) ? '#1d4ed8' : '#94a3b8', f === A.frame ? 6 : 4));
   if (A.clicks[A.frame] && A.ballR) { const p = A.clicks[A.frame]; c.strokeStyle = '#ef4444'; c.lineWidth = 2 * u; c.beginPath(); c.arc(p[0], p[1], A.ballR, 0, 2 * Math.PI); c.stroke(); }
   overlayPath(c, u);
+  if (A.mode === 'dig' && !A.busy) {
+    const gp = ghost(), r = ringR();
+    if (gp && !A.clicks[A.frame]) { c.save(); c.setLineDash([8 * u, 6 * u]); c.strokeStyle = 'rgba(250,204,21,.95)'; c.lineWidth = 2.5 * u; c.beginPath(); c.arc(gp[0], gp[1], r * 1.6, 0, 2 * Math.PI); c.stroke(); c.restore(); txt(c, 'the ball should be about here', gp[0], gp[1] - r * 1.6 - 14 * u, '#fde047', u, 'center', true); }
+    if (A.hover) { const h = A.hover; c.strokeStyle = '#fff'; c.lineWidth = 4 * u; c.beginPath(); c.arc(h[0], h[1], r, 0, 2 * Math.PI); c.stroke(); c.strokeStyle = '#ef4444'; c.lineWidth = 2 * u; c.beginPath(); c.arc(h[0], h[1], r, 0, 2 * Math.PI); c.stroke();
+      c.beginPath(); c.moveTo(h[0] - 6 * u, h[1]); c.lineTo(h[0] + 6 * u, h[1]); c.moveTo(h[0], h[1] - 6 * u); c.lineTo(h[0], h[1] + 6 * u); c.stroke(); }
+  }
   const tags = []; if (A.ev.rel === A.frame) tags.push('RELEASE'); if (A.ev.end === A.frame) tags.push('END'); A.ev.extra.forEach((x) => { if (x.f === A.frame) tags.push(x.name.toUpperCase()); });
   if (tags.length) txt(c, tags.join(' \u00b7 '), A.vw - 12 * u, 22 * u, '#4ade80', u * 1.2, 'right', true);
   txt(c, 'Frame ' + A.frame + ' of ' + (A.nF - 1) + (A.trim && evFrames().length >= 2 ? '  (showing ' + span()[0] + ' to ' + span()[1] + ')' : '') + '  ·  ' + fmt(A.frame / A.realFps, 3) + ' s', 12 * u, 22 * u, '#fff', u, 'left', true);
-  const mt = { calBall: '1. Click the ball (on a sharp frame)', calA: A.calBy === 'ballEdges' ? '1. Click the left edge of the ball' : '1. Click one end of the known length', calB: A.calBy === 'ballEdges' ? '2. Now click its right edge' : '2. Now click the other end', o: '3. Click the floor where you want 0 m', dig: A.ev.rel === null ? 'Find the frame the ball leaves the hand' : 'Click the middle of the ball', target: A.task === 'lineout' ? '4. Click the catcher\u2019s hands' : '4. Click the middle of the ' + ringOf().what }[A.mode];
+  const mt = { calBall: '1. Click the ball (on a sharp frame)', calA: A.calBy === 'ballEdges' ? '1. Click the left edge of the ball' : '1. Click one end of the known length', calB: A.calBy === 'ballEdges' ? '2. Now click its right edge' : '2. Now click the other end', o: '3. Click the floor where you want 0 m', dig: A.ev.rel === null ? 'Find the frame the ball leaves the hand' : A.ev.end === null ? 'Now find the last frame of the flight' : A.clicks[A.frame] ? '' : 'Put the ring over the ball and click', target: A.task === 'lineout' ? '4. Click the catcher\u2019s hands' : '4. Click the middle of the ' + ringOf().what }[A.mode];
   if (mt) txt(c, mt, A.vw / 2, 70 * u, '#fde047', u * 1.6, 'center', true);
   const s = document.getElementById('frameNo'); if (s) s.textContent = A.frame; const s2 = document.getElementById('frameNo2'); if (s2) s2.textContent = A.frame;
   const k = document.getElementById('clickCount'); if (k) k.textContent = fs.length;
@@ -319,6 +326,21 @@ function drawBright(c, draw, w, h) {
   if (A.bright === 1) { draw(); return; }
   if ('filter' in c) { c.filter = 'brightness(' + A.bright + ')'; draw(); c.filter = 'none'; return; }
   draw(); const im = c.getImageData(0, 0, w, h), d = im.data; for (let q = 0; q < d.length; q += 4) { d[q] = Math.min(255, d[q] * A.bright); d[q + 1] = Math.min(255, d[q + 1] * A.bright); d[q + 2] = Math.min(255, d[q + 2] * A.bright); } c.putImageData(im, 0, 0);
+}
+// The targeting ring: the size of the ball (measured, or worked out from the scale and the ball's real size).
+const BALL_D = { freethrow: 0.239, netball: 0.22, lineout: 0.19, shot: 0.12, broadjump: 0.22, generic: 0.22 };
+function ringR() { if (A.ringR) return A.ringR; if (A.ballR) return A.ballR; const s = scalePx(); return Number.isFinite(s) ? (BALL_D[A.task] || 0.22) / 2 * s : 14; }
+// Where the ball should be in the current frame, from the points already clicked (a parabola in pixels: steady
+// sideways, gravity downwards). Needs 2 points (straight line) or 3+ (curve). Only uses points inside the flight.
+function ghost() {
+  const E = A.ev; if (E.rel === null) return null;
+  const fs = Object.keys(A.clicks).map(Number).filter((f) => f !== A.frame && f >= E.rel && (E.end === null || f <= E.end)).sort((a, b) => a - b);
+  if (fs.length < 2) return null;
+  const near = fs.slice().sort((a, b) => Math.abs(a - A.frame) - Math.abs(b - A.frame)).slice(0, 8).sort((a, b) => a - b);
+  const t = near.map((f) => f - A.frame), x = near.map((f) => A.clicks[f][0]), y = near.map((f) => A.clicks[f][1]);
+  const lin = (ts, vs) => { const n = ts.length, mt = ts.reduce((a, b) => a + b) / n, mv = vs.reduce((a, b) => a + b) / n; let sxy = 0, sxx = 0; for (let i = 0; i < n; i++) { sxy += (ts[i] - mt) * (vs[i] - mv); sxx += (ts[i] - mt) ** 2; } const b = sxx ? sxy / sxx : 0; return mv - b * mt; };
+  const s = scalePx(); const gpx = Number.isFinite(s) ? 0.5 * G * s / (A.realFps * A.realFps) : 0; // gravity in pixels per frame squared (halved)
+  return [lin(t, x), lin(t, y.map((v, i) => v - gpx * t[i] * t[i]))];
 }
 function stagePt(e) { const cv = $('stage'), r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; }
 function stageClick(e) {
@@ -344,11 +366,12 @@ function stageClick(e) {
 }
 function loupe(e) {
   const lp = $('loupe'); if (!A.vw || A.mode === 'idle') { lp.style.display = 'none'; return; }
-  const p = stagePt(e), z = 4, s = 160 / z, c = lp.getContext('2d');
+  const p = stagePt(e), z = A.mode === 'dig' ? Math.max(1.5, Math.min(4, 55 / ringR())) : 4, s = 160 / z, c = lp.getContext('2d');
   if (p[0] < 0 || p[1] < 0 || p[0] > A.vw || p[1] > A.vh) { lp.style.display = 'none'; return; }
   lp.style.display = 'block'; c.imageSmoothingEnabled = false; c.fillStyle = '#000'; c.fillRect(0, 0, 160, 160);
   drawBright(c, () => c.drawImage(frameCv, p[0] - s / 2, p[1] - s / 2, s, s, 0, 0, 160, 160), 160, 160);
   c.strokeStyle = '#ef4444'; c.lineWidth = 1; c.beginPath(); c.moveTo(80, 60); c.lineTo(80, 100); c.moveTo(60, 80); c.lineTo(100, 80); c.stroke();
+  if (A.mode === 'dig') { c.lineWidth = 2; c.beginPath(); c.arc(80, 80, ringR() * z, 0, 2 * Math.PI); c.stroke(); }
 }
 
 // ---------- shared figure: the trajectory ----------
@@ -462,7 +485,7 @@ const OLD = [
       $('bCal').addEventListener('click', () => { A.mode = 'calA'; app.render(); });
       $('bOrig').addEventListener('click', () => { A.mode = 'o'; app.render(); });
       $('bTgt').addEventListener('click', () => { A.mode = 'target'; app.render(); });
-      const d = $('bDemoCal'); if (d) d.addEventListener('click', () => { A.cal = { a: VIDEO_DEMO.stickPx[0].slice(), b: VIDEO_DEMO.stickPx[1].slice(), len: VIDEO_DEMO.stickLen, o: VIDEO_DEMO.originPx.slice() }; A.targetPx = [VIDEO_DEMO.originPx[0] + 4.225 * 150, VIDEO_DEMO.originPx[1] - 3.05 * 150]; A.mode = 'idle'; buildFromClicks(); app.render(); });
+      const d = $('bDemoCal'); if (d) d.addEventListener('click', () => { A.cal = { a: VIDEO_DEMO.stickPx[0].slice(), b: VIDEO_DEMO.stickPx[1].slice(), len: VIDEO_DEMO.stickLen, o: VIDEO_DEMO.originPx.slice() }; A.targetPx = [VIDEO_DEMO.originPx[0] + 4.225 * VIDEO_DEMO.pxPerM, VIDEO_DEMO.originPx[1] - 3.05 * VIDEO_DEMO.pxPerM]; A.mode = 'idle'; buildFromClicks(); app.render(); });
     },
     drawStage, leave: () => { A.mode = 'idle'; $('loupe').style.display = 'none'; },
   },
@@ -758,12 +781,12 @@ const STEPS = [
       document.querySelectorAll('[data-calby]').forEach((b) => b.addEventListener('click', () => { A.calBy = b.dataset.calby; A.cal = { a: null, b: null, len: A.calBy === 'ball' ? (A.task === 'netball' ? 0.224 : 0.239) : 1, o: A.cal.o }; buildFromClicks(); app.render(); }));
       $('calReset').addEventListener('click', () => { A.cal = { a: null, b: null, len: A.cal.len, o: null }; A.targetPx = null; app.render(); });
       const t = $('bTgt'); if (t) t.addEventListener('change', () => { if (t.value) { A.task = t.value; A.targetPx = null; app.render(); } });
-      const d = $('bDemoCal'); if (d) d.addEventListener('click', () => { A.cal = { a: VIDEO_DEMO.stickPx[0].slice(), b: VIDEO_DEMO.stickPx[1].slice(), len: VIDEO_DEMO.stickLen, o: VIDEO_DEMO.originPx.slice() }; A.targetPx = [VIDEO_DEMO.originPx[0] + 4.225 * 150, VIDEO_DEMO.originPx[1] - 3.05 * 150]; buildFromClicks(); app.render(); });
+      const d = $('bDemoCal'); if (d) d.addEventListener('click', () => { A.cal = { a: VIDEO_DEMO.stickPx[0].slice(), b: VIDEO_DEMO.stickPx[1].slice(), len: VIDEO_DEMO.stickLen, o: VIDEO_DEMO.originPx.slice() }; A.targetPx = [VIDEO_DEMO.originPx[0] + 4.225 * VIDEO_DEMO.pxPerM, VIDEO_DEMO.originPx[1] - 3.05 * VIDEO_DEMO.pxPerM]; buildFromClicks(); app.render(); });
     },
     drawStage, leave: () => { A.mode = 'idle'; $('loupe').style.display = 'none'; },
   },
   {
-    key: 'track', short: 'Track the ball', title: 'Mark the flight, then track the ball', view: 'stage', enabled: () => A.src === 'video' && calibrated(), canNext: () => inWindow() >= 3,
+    key: 'track', short: 'Track the ball', title: 'Mark the flight, then track the ball', view: 'stage', enabled: () => A.src === 'video' && calibrated(), canNext: () => inWindow() >= 3 && !A.busy,
     body: () => {
       const E = A.ev, nIn = inWindow(), auto = A.trackMode === 'auto', tgt = isHoop() ? 'the ' + ringOf().name : A.task === 'lineout' ? 'the catcher' : 'the ground';
       const go = (f) => (f === null || f === undefined ? '' : ' <a href="#" data-gof="' + f + '">frame ' + f + '</a>');
@@ -773,13 +796,14 @@ const STEPS = [
         + tick(E.end !== null, E.rel !== null && E.end === null, 'Find the <b>last frame before it reaches ' + tgt + ' or leaves the picture</b>, then <button type="button" class="btn small" id="evEnd">Mark end here</button>' + go(E.end))
         + tick(nIn >= 3 && (!auto || A.trkDone), E.rel !== null && E.end !== null && !(nIn >= 3 && (!auto || A.trkDone)), auto
           ? (firstIn === undefined ? 'Go to the release frame and <b>click the middle of the ball</b> once. The tool finds its edge.' : 'Press <button type="button" class="btn small accent" id="bTrack"' + (A.busy ? ' disabled' : '') + '>' + (A.busy ? 'Tracking&hellip;' : nIn > 1 ? 'Carry on tracking' : 'Track the ball') + '</button>' + (A.busy ? ' <button type="button" class="btn small ghost" id="bStop">Stop</button>' : '') + ' and it follows the ball to the end frame.')
-          : 'Click the <b>middle of the ball</b> in every frame from release to end. The video moves on by itself.') + '</ol>'
+          : 'Put the <b>red ring over the ball</b> so it sits on the ball&rsquo;s outline, and click. The video moves on by itself. From the third point, a <b>yellow dashed circle</b> shows where the ball should be.') + '</ol>'
         + '<label class="small" style="display:flex;gap:.4rem;align-items:center;margin:.1rem 0 .5rem"><input type="checkbox" id="trimCb"' + (A.trim ? ' checked' : '') + (evFrames().length >= 2 ? '' : ' disabled') + '> Only show the marked part of the video' + (evFrames().length >= 2 ? ' (frames ' + Math.min(...evFrames()) + ' to ' + Math.max(...evFrames()) + ')' : ' (mark release and end first)') + '</label>'
-        + '<div class="subtabs"><button type="button" data-tm="auto" class="' + (auto ? 'on' : '') + '">Automatic</button><button type="button" data-tm="manual" class="' + (auto ? '' : 'on') + '">Manual</button></div>'
+        + '<div class="subtabs"><button type="button" data-tm="manual" class="' + (auto ? '' : 'on') + '">Click it myself</button><button type="button" data-tm="auto" class="' + (auto ? 'on' : '') + '">Automatic (clear video only)</button></div>'
+        + (auto ? '' : '<div class="row tight" style="align-items:center;gap:.4rem;margin:.2rem 0"><span class="small">Ring size</span><button type="button" class="btn small ghost" id="ringDn">&minus;</button><b id="ringOut" class="small">' + Math.round(ringR() * 2) + ' px</b><button type="button" class="btn small ghost" id="ringUp">+</button><span class="small muted">(or scroll on the video)</span></div>')
         + (A.trkMsg ? '<div class="status" id="trkMsg">' + A.trkMsg + '</div>' : '<div class="status hide" id="trkMsg"></div>')
         + '<div class="tiles"><div class="tile"><span>Ball points in the flight</span><b id="clickCount">' + nIn + '</b></div><div class="tile"><span>Frame</span><b id="frameNo2">' + A.frame + '</b></div></div>'
         + (nIn >= 3 && !A.busy ? '<p>' + (nIn >= 10 ? '<b>Done.</b> ' : 'Enough for rough values, but more is better. ') + 'Check the dots sit on the ball (step through, or look at the line), then press <b>Next</b>.</p>' : '')
-        + '<label class="small" style="display:flex;gap:.4rem;align-items:center;margin:.3rem 0"><input type="checkbox" id="snapCb"' + (A.snap ? ' checked' : '') + '> Auto-centre: snap each click to the middle of the ball</label>'
+        + '<label class="small" style="display:flex;gap:.4rem;align-items:center;margin:.3rem 0"><input type="checkbox" id="snapCb"' + (A.snap ? ' checked' : '') + '> Auto-centre: nudge each click to the middle of the ball (untick if it jumps to the wrong thing)</label>'
         + '<div class="row"><button type="button" class="btn small ghost" id="bUndo"' + (A.hist.length && !A.busy ? '' : ' disabled') + '>Undo last point</button><button type="button" class="btn small ghost" id="bClr"' + (Object.keys(A.clicks).length && !A.busy ? '' : ' disabled') + '>Clear all points</button>' + (A.demo ? '<button type="button" class="btn small ghost" id="bAuto"' + (A.busy ? ' disabled' : '') + '>Do it for me</button>' : '') + '</div>'
         + '<details class="more"><summary>Other events (optional)</summary><p class="small">Mark anything else worth knowing (e.g. <i>start of the shot</i>, <i>rim contact</i>, <i>catch</i> or <i>landing</i>). They go in your saved results, and an event before release or after the end widens the part of the video shown.</p>'
         + (E.extra.length ? '<ul class="small">' + E.extra.map((x, i) => '<li>' + esc(x.name) + ': ' + go(x.f) + ' <button type="button" class="btn small ghost" data-evdel="' + i + '">remove</button></li>').join('') + '</ul>' : '')
@@ -797,6 +821,8 @@ const STEPS = [
       $('evAdd').addEventListener('click', () => { const n = $('evName').value.trim(); if (!n) return; A.ev.extra.push({ name: n, f: A.frame }); app.render(); });
       $('evName').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('evAdd').click(); });
       $('snapCb').addEventListener('change', (e) => { A.snap = e.target.checked; });
+      const rd = $('ringDn'), ru = $('ringUp'); const ring = (k) => { A.ringR = Math.max(3, Math.min(200, ringR() * k)); $('ringOut').textContent = Math.round(ringR() * 2) + ' px'; drawStage(); };
+      if (rd) { rd.addEventListener('click', () => ring(1 / 1.1)); ru.addEventListener('click', () => ring(1.1)); }
       $('trimCb').addEventListener('change', (e) => { A.trim = e.target.checked; showFrame(A.frame); app.render(); });
       $('stepBy').addEventListener('change', (e) => { A.stepBy = +e.target.value; });
       const tr = $('bTrack'); if (tr) tr.addEventListener('click', runTrack);
@@ -829,6 +855,10 @@ const STEPS = [
       drawTriangle(ctx, P, F, F.force ? 0.8 : 1.3); if (F.force) { label(ctx, 'take-off', P.X(F.x0), P.Y(F.y0) - 22, '#16a34a', { size: 12 }); return; }
       const x = X(); ring(ctx, P, x[A.rel], A.ry[A.rel], '#16a34a', 'release'); ring(ctx, P, x[A.land], A.ry[A.land], '#dc2626', 'last in the air');
     },
+  },
+  {
+    key: 'meaning', short: 'What it means', title: 'What your numbers mean', enabled: () => !!fit(), figTitle: () => 'Your flight, showing the number you picked', hint: () => 'Tap a card on the right to change what is shown.',
+    body: () => meaningBody(), wire() { meaningWire(); }, draw(ctx, w, h) { meaningDraw(ctx, w, h); },
   },
   {
     key: 'further', short: 'Go further', title: 'Go further', enabled: () => !!fit(),
@@ -867,19 +897,143 @@ const STEPS = [
   },
 ];
 
+// ---------- what the numbers mean ----------
+// One card per number: what it is, what this trial shows (compared with projectile theory, not with norms), and a
+// sentence for a lab report. Clicking a card highlights that quantity on the figure.
+function meaningCards() {
+  const F = fit(); if (!F) return [];
+  const Pp = P0(F), o = outcome(Pp), few = F.n < 10, force = !!F.force, v = F.pol.v, th = F.pol.th, h = F.y0, vx = Math.abs(F.vx), vy = F.vy;
+  const pm = (se, d, u) => (few && se > 0 ? ' (&plusmn;' + fmt(2 * se, d) + u + ', 95%)' : '');
+  const what = force || A.task === 'broadjump' ? 'take-off' : 'release', who = force ? 'The jumper' : A.task === 'lineout' ? 'The thrower' : isHoop() ? 'The shooter' : 'The athlete';
+  const thing = force || A.task === 'broadjump' ? 'the centre of mass' : 'the ball', Thing = thing[0].toUpperCase() + thing.slice(1);
+  const at = (dv, dth) => outcome(fromPolar(v + dv, th + dth, h, Pp.x0));
+  const cards = [];
+  // speed
+  let ys = '';
+  if (isHoop() && o.min) ys = 'The least speed that could reach the ' + ringOf().what + ' from this ' + what + ' point is <b>' + fmt(o.min.v, 2) + ' m/s</b> (at ' + fmt(o.min.th, 0) + '&deg;), so this ' + what + ' used ' + fmt(v - o.min.v, 2) + ' m/s more than the minimum. Every extra 0.1 m/s moves the ball about <b>' + fmt(Math.abs(at(0.1, 0).miss - o.miss) * 100, 0) + ' cm</b> further at ' + ringOf().name + ' height, which is why consistent speed matters so much.';
+  else if (A.task === 'lineout') ys = 'Faster means less time in the air for defenders to compete: here the ball takes ' + fmt(o.tCatch, 2) + ' s to reach the catcher. Each extra 0.1 m/s raises the ball by about <b>' + fmt(Math.abs(at(0.1, 0).dyCatch - o.dyCatch) * 100, 0) + ' cm</b> at the catcher.';
+  else ys = 'Speed is the biggest single factor in how far it goes: range rises with speed <i>squared</i>, so 10% more speed gives roughly 20% more distance. Here, 0.1 m/s more would add about <b>' + fmt(Math.abs((at(0.1, 0).metric - o.metric)) * 100, 0) + ' cm</b>.';
+  cards.push({ k: 'v', col: C.hyp, name: (what === 'take-off' ? 'Take-off' : 'Release') + ' speed', val: fmt(v, 2) + ' m/s' + pm(F.pol.sv, 2, ' m/s'),
+    is: 'How fast ' + thing + ' is moving at the instant of ' + what + ' (the long side of the triangle). Together with the angle and the height, it decides the whole flight: once ' + thing + ' is in the air, nothing ' + (force ? 'the jumper' : 'the athlete') + ' does can change it.',
+    yours: ys,
+    rep: Thing + ' was ' + (what === 'take-off' ? 'travelling' : 'released') + ' at ' + fmt(v, 2) + ' m/s' + (few ? ' (95% CI &plusmn;' + fmt(2 * F.pol.sv, 2) + ' m/s)' : '') + '.' });
+  // angle
+  let ya = '';
+  if (isHoop() && o.min) ya = (Math.abs(th - o.min.th) < 2 ? 'Very close to' : th > o.min.th ? 'Steeper than' : 'Flatter than') + ' the minimum-speed angle (' + fmt(o.min.th, 0) + '&deg;). Near that angle, small errors in angle hardly change where the ball goes, so it is the most forgiving angle. Here, 1&deg; more moves the ball about <b>' + fmt(Math.abs(at(0, 1).miss - o.miss) * 100, 0) + ' cm</b> at ' + ringOf().name + ' height.';
+  else if (A.task === 'lineout') ya = 'A flatter throw gets there sooner but leaves less margin over the defenders; a steeper one is easier to catch but slower. Here, 1&deg; more changes the height at the catcher by about <b>' + fmt(Math.abs(at(0, 1).dyCatch - o.dyCatch) * 100, 0) + ' cm</b>.';
+  else { const hl = landHeight(), opt = optimumAngle(v, h - hl), Ropt = range(fromPolar(v, opt, h), hl), R0 = range(Pp, hl);
+    ya = 'For this speed and height, the angle that would carry furthest is <b>' + fmt(opt, 0) + '&deg;</b> (below 45&deg; because ' + what + ' is ' + (h > hl ? 'above' : 'below') + ' landing height), worth ' + ((Ropt - R0) < 0.01 ? 'less than 1 cm more, so the angle is already about as good as it gets for this speed.' : fmt((Ropt - R0) * 100, 0) + ' cm more.') + ' Real athletes ' + (A.task === 'broadjump' || force ? 'take off' : 'release') + ' lower than this because they cannot produce as much speed at steeper angles, so the best angle <i>for them</i> is lower again' + (A.task === 'shot' ? ' (Linthorne, 2001)' : A.task === 'broadjump' || force ? ' (Wakai &amp; Linthorne, 2005)' : '') + '.'; }
+  cards.push({ k: 'th', col: '#475569', name: (what === 'take-off' ? 'Take-off' : 'Release') + ' angle', val: fmt(th, 1) + '&deg;' + pm(F.pol.sth, 1, '&deg;'),
+    is: 'The direction ' + thing + ' sets off in, measured up from the horizontal. It splits the speed into a forwards part (v cos &theta;) and an upwards part (v sin &theta;).',
+    yours: ya, rep: 'The ' + what + ' angle was ' + fmt(th, 1) + '&deg; above the horizontal.' });
+  // height
+  cards.push({ k: 'h', col: '#16a34a', name: (what === 'take-off' ? 'Take-off' : 'Release') + ' height', val: fmt(h, 2) + ' m' + (force ? '' : pm(F.sey0 || 0, 2, ' m')),
+    is: 'How high ' + thing + ' is at ' + what + (force ? ' (entered by you: force platforms cannot see it)' : '') + '. A higher start means less height to gain, or more time to travel forwards.',
+    yours: isHoop() ? 'The ' + ringOf().what + ' is ' + fmt(A.target.y - h, 2) + ' m above the ' + what + ' point. Releasing higher (e.g. a taller player, or a jump shot) shortens that, so less speed is needed.' : A.task === 'lineout' ? 'The catch point is ' + fmt(A.target.y - h, 2) + ' m above the ' + what + ' point.' : 'Starting ' + fmt(h - landHeight(), 2) + ' m above landing height adds flight time, and so distance.',
+    rep: 'The ' + what + ' height was ' + fmt(h, 2) + ' m.' });
+  // the two parts of the velocity
+  cards.push({ k: 'vx', col: C.adj, name: 'Forwards velocity', val: fmt(vx, 2) + ' m/s',
+    is: 'The forwards part of the speed (v cos &theta;). Nothing pushes ' + thing + ' forwards or backwards in the air (air resistance aside), so it <b>stays the same</b> for the whole flight.',
+    yours: 'So ' + thing + ' covers ' + fmt(vx, 2) + ' m every second, and the dots on the figure are evenly spaced sideways.' + (Number.isFinite(F.rmsX) && !force ? ' Your points sit within ' + fmt(F.rmsX * 1000, 0) + ' mm (RMS) of a straight line, which is the check that it really is constant.' : ''),
+    rep: 'Forwards velocity was ' + fmt(vx, 2) + ' m/s' });
+  cards.push({ k: 'vy', col: C.opp, name: 'Upwards velocity', val: fmt(vy, 2) + ' m/s',
+    is: 'The upwards part of the speed (v sin &theta;). Gravity takes away 9.81 m/s of it every second: it shrinks to zero at the top of the flight, then becomes downwards.',
+    yours: 'From ' + fmt(vy, 2) + ' m/s, it takes ' + fmt(vy, 2) + ' &divide; 9.81 = <b>' + fmt(o.tPeak, 2) + ' s</b> to reach zero, which is the top of the flight.',
+    rep: 'and the initial vertical velocity was ' + fmt(vy, 2) + ' m/s.' });
+  cards.push({ k: 'peak', col: '#0891b2', name: 'Peak height', val: fmt(o.peak, 2) + ' m',
+    is: 'The highest point, reached when the upwards velocity is zero. It rises v<sub>y</sub>&sup2; &divide; (2 &times; 9.81) above the ' + what + ' point.',
+    yours: Thing + ' rises ' + fmt(o.rise, 2) + ' m above ' + what + ', ' + fmt(o.tPeak, 2) + ' s after ' + what + (isHoop() ? ', peaking ' + fmt(o.peak - A.target.y, 2) + ' m above the ' + ringOf().name + '. A higher arc comes down more steeply.' : '.'),
+    rep: Thing + ' reached a peak height of ' + fmt(o.peak, 2) + ' m, ' + fmt(o.tPeak, 2) + ' s after ' + what + '.' });
+  // outcome
+  if (isHoop() && Number.isFinite(o.miss)) {
+    const K = ringOf(), ok = o.margin > 0 && Math.abs(o.miss) <= o.margin;
+    cards.push({ k: 'out', col: C.what, name: 'At the ' + K.name, val: Math.round(Math.abs(o.miss) * 100) + ' cm ' + (o.miss >= 0 ? 'long' : 'short'),
+      is: 'Where the centre of the ball is when it comes down through ' + K.name + ' height, compared with the centre of the ' + K.what + ', and the angle it comes in at (the <b>entry angle</b>).',
+      yours: 'Entry angle <b>' + fmt(o.entry, 0) + '&deg;</b>, ' + fmt(o.tHoop, 2) + ' s after release. Coming in at that angle, the ball can be up to <b>' + fmt(Math.max(0, o.margin) * 100, 1) + ' cm</b> long or short and still drop through cleanly' + (ok ? ', so this one goes in.' : ', so this one ' + (o.margin > 0 ? 'hits the ' + K.name + ' or misses.' : 'cannot drop in cleanly.')) + ' A steeper entry makes the ' + K.what + ' &ldquo;look&rdquo; bigger to the ball (room = R &minus; r &divide; sin &alpha;), but needs a higher, slower arc.',
+      rep: 'The ball reached ' + K.name + ' height ' + fmt(o.tHoop, 2) + ' s after release, ' + Math.round(Math.abs(o.miss) * 100) + ' cm ' + (o.miss >= 0 ? 'long of' : 'short of') + ' the ' + K.what + ' centre, with an entry angle of ' + fmt(o.entry, 0) + '&deg;.' });
+  } else if (A.task === 'lineout') {
+    cards.push({ k: 'out', col: C.what, name: 'At the catcher', val: fmt(o.tCatch, 2) + ' s',
+      is: 'The time the ball takes to reach the catcher, and how high it is when it gets there.',
+      yours: (Math.abs(o.dyCatch) < 0.005 ? 'Right at the catch point' : fmt(Math.abs(o.dyCatch) * 100, 0) + ' cm ' + (o.dyCatch >= 0 ? 'above' : 'below') + ' the catch point') + ', and still ' + (o.rising ? '<b>rising</b>' : '<b>falling</b>') + ' at ' + fmt(o.vCatch, 1) + ' m/s. Whether it should still be rising at the catch depends on the call, so compare this with what the thrower was aiming for.',
+      rep: 'The ball reached the catcher ' + fmt(o.tCatch, 2) + ' s after release, ' + (Math.abs(o.dyCatch) < 0.005 ? 'at' : fmt(Math.abs(o.dyCatch) * 100, 0) + ' cm ' + (o.dyCatch >= 0 ? 'above' : 'below')) + ' the catch point.' });
+  } else if (Number.isFinite(o.R)) {
+    const jump = A.task === 'broadjump' || force;
+    cards.push({ k: 'out', col: C.what, name: jump ? 'Jump distance' : A.task === 'shot' ? 'Distance thrown' : 'Distance', val: fmt(o.metric, 2) + ' m',
+      is: jump ? 'The jump split into three parts (Hay, 1986): take-off distance (toes to centre of mass), flight distance (the projectile part), and landing distance (centre of mass to heels).' : 'How far it travels forwards before coming back down to landing height, after ' + fmt(o.tf, 2) + ' s in the air.',
+      yours: jump ? 'Take-off ' + fmt(A.takeoffDist, 2) + ' m + flight <b>' + fmt(o.R, 2) + ' m</b> + landing ' + fmt(A.landingDist, 2) + ' m. Only the flight part is decided by projectile motion; the other two depend on body position at take-off and landing.' : 'Time in the air (' + fmt(o.tf, 2) + ' s) &times; forwards velocity (' + fmt(vx, 2) + ' m/s) = ' + fmt(o.R, 2) + ' m' + (A.task === 'shot' ? ', plus ' + fmt(A.releaseAhead, 2) + ' m for releasing ahead of the stop board.' : '.'),
+      rep: jump ? 'Predicted jump distance was ' + fmt(o.metric, 2) + ' m, of which ' + fmt(o.R, 2) + ' m was flight distance.' : 'The predicted horizontal distance was ' + fmt(o.metric, 2) + ' m.' });
+  }
+  // gravity check (video and data only)
+  if (!force) {
+    const gOK = Number.isFinite(F.gFree);
+    cards.push({ k: 'g', col: '#dc2626', name: 'Gravity check', val: gOK ? fmt(F.gFree, 2) + ' m/s&sup2;' : 'not enough frames',
+      is: 'The tool also fits the flight letting gravity be anything, then compares it with the real value (9.81 m/s&sup2;). It is a check on <i>your method</i>, not on the athlete.',
+      yours: gOK ? (gClass(F) === 'light-good' ? 'Close to 9.81, so the scale, frame rate and clicks are all doing their job.' : 'Not close enough to 9.81. Check the frame rate, that the known length is in the plane of the flight, and the release and end frames.') + ' (&plusmn;' + fmt(2 * F.seg, 2) + ' m/s&sup2;, 95%.)' : 'This needs at least 5 frames of flight. With fewer, gravity was fixed at 9.81 m/s&sup2; and the results cannot be checked this way.',
+      rep: gOK ? 'Acceleration estimated from the flight (' + fmt(F.gFree, 2) + ' m/s&sup2;) was ' + (gClass(F) === 'light-good' ? 'consistent with' : 'not consistent with') + ' gravity, ' + (gClass(F) === 'light-good' ? 'supporting' : 'questioning') + ' the calibration.' : '' });
+  }
+  return cards;
+}
+function methodLine() {
+  const F = fit(); if (!F || F.force) return A.force ? 'Take-off velocity was calculated by integrating net ground reaction force divided by body mass from rest to take-off (force platforms, ' + fmt(A.force.fs, 0) + ' Hz); centre of mass height at take-off was ' + fmt(A.h0, 2) + ' m.' : '';
+  return (A.src === 'video' ? 'The ' + (A.task === 'broadjump' ? 'centre of mass' : 'ball') + ' was digitised from side-on video (' + fmt(A.realFps, 0) + ' fps) calibrated with a ' + fmt(A.cal.len, 2) + ' m known length in the plane of motion, and ' : 'Position data were imported, and ') + 'release values were found by least-squares fitting of the projectile equations (constant horizontal velocity; vertical acceleration fixed at 9.81 m/s&sup2;) to ' + F.n + ' frames of flight.';
+}
+function meaningBody() {
+  const cards = meaningCards(); if (!cards.length) return '';
+  if (!A.mk || !cards.some((c) => c.k === A.mk)) A.mk = cards[0].k;
+  const strip = (s) => s.replace(/<[^>]+>/g, '').replace(/&plusmn;/g, '±').replace(/&deg;/g, '°').replace(/&sup2;/g, '²').replace(/&divide;/g, '÷').replace(/&times;/g, '×').replace(/&minus;/g, '−').replace(/&amp;/g, '&').replace(/&[lr]dquo;/g, '"').replace(/&theta;/g, 'θ');
+  const sv = cards.find((c) => c.k === 'v'), sa = cards.find((c) => c.k === 'th'), sh = cards.find((c) => c.k === 'h');
+  const para = [methodLine(), [sv, sa, sh].map((c) => c.rep).join(' '), cards.filter((c) => c.k === 'vx' || c.k === 'vy').map((c) => c.rep).join(' '), ...cards.filter((c) => ['peak', 'out', 'g'].includes(c.k)).map((c) => c.rep)].filter(Boolean).map(strip).join(' ');
+  return '<div class="lead"><p>Each number below is one part of the projectile story. Tap a card to see it on the figure.</p></div>'
+    + cards.map((c) => '<div class="mcard' + (c.k === A.mk ? ' on' : '') + '" data-mk="' + c.k + '" style="border-left-color:' + c.col + '"><div class="mhead"><span>' + c.name + '</span><b style="color:' + c.col + '">' + c.val + '</b></div>'
+      + (c.k === A.mk ? '<p><b>What it is.</b> ' + c.is + '</p><p><b>What yours shows.</b> ' + c.yours + '</p>' + (c.rep ? '<p class="small muted"><b>In your report:</b> &ldquo;' + c.rep.replace(/^and the /, 'The ') + '&rdquo;</p>' : '') : '') + '</div>').join('')
+    + '<h3 style="margin:1rem 0 .3rem">A results paragraph to start from</h3><p class="small">Put it in your own words, and add what it means for <i>your</i> question (e.g. how two conditions differ in Compare).</p>'
+    + '<textarea id="repTxt" rows="7" style="width:100%;font:inherit;font-size:.9rem">' + esc(para) + '</textarea>'
+    + '<div class="row"><button type="button" class="btn small" id="repCopy">Copy</button><button type="button" class="btn accent" id="mGoFur">Go further &rarr;</button></div>';
+}
+function meaningWire() {
+  document.querySelectorAll('[data-mk]').forEach((el) => el.addEventListener('click', () => { if (A.mk !== el.dataset.mk) { A.mk = el.dataset.mk; app.render(); } }));
+  $('repCopy').addEventListener('click', () => { const t = $('repTxt'); t.select(); try { navigator.clipboard.writeText(t.value).then(() => { $('repCopy').textContent = 'Copied'; }, () => document.execCommand('copy')); } catch (e) { document.execCommand('copy'); } });
+  $('mGoFur').addEventListener('click', () => { const F = fit(); A.gf = F.force ? 0 : gClass(F) === 'light-good' ? 3 : 1; app.go(5); });
+}
+function meaningDraw(ctx, w, h) {
+  const F = fit(); if (!F) return; const Pp = P0(F), o = outcome(Pp), k = A.mk || 'v';
+  const P = trajFigure(ctx, { x: 0, y: 0, w, h }, { predict: true }); predPath(ctx, P, Pp, k === 'v' || k === 'th' ? C.fit : '#94a3b8', 2.5);
+  const R = [P.X(F.x0), P.Y(F.y0)];
+  const T = isHoop() ? o.tHoop : A.task === 'lineout' ? o.tCatch : o.tf, Tm = Number.isFinite(T) ? T : 1;
+  if (k === 'v' || k === 'th') { drawTriangle(ctx, P, F, F.force ? 0.8 : 1.3); if (k === 'th') { ctx.save(); ctx.strokeStyle = '#475569'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(R[0], R[1], 44, -rad(F.pol.th), 0); ctx.stroke(); ctx.restore(); label(ctx, fmt(F.pol.th, 1) + '°', R[0] + 52, R[1] - 16, '#475569', { align: 'left', size: 15 }); } else label(ctx, fmt(F.pol.v, 2) + ' m/s', R[0] + 20, R[1] - 50, C.hyp, { align: 'left', size: 15 }); }
+  if (k === 'h') { ctx.save(); ctx.setLineDash([6, 5]); ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(R[0], P.Y(0)); ctx.lineTo(R[0], R[1]); ctx.stroke(); ctx.restore(); label(ctx, fmt(F.y0, 2) + ' m', R[0] + 8, (P.Y(0) + R[1]) / 2, '#16a34a', { align: 'left', size: 15 }); }
+  if (k === 'vx' || k === 'vy') {
+    const sc = triScale() * 0.9;
+    for (let i = 0; i <= 5; i++) { const t = Tm * i / 5, p = pos(Pp, t), X0 = P.X(p[0]), Y0 = P.Y(p[1]);
+      if (k === 'vx') arrow(ctx, X0, Y0, P.X(p[0] + Pp.vx * sc), Y0, C.adj, 3.5, 11);
+      else { const vyt = Pp.vy - G * t; arrow(ctx, X0, Y0, X0, P.Y(p[1] + vyt * sc), C.opp, 3.5, 11); label(ctx, sgn(vyt, 1), X0 - 8, Y0, C.opp, { align: 'right', size: 12 }); } }
+    label(ctx, k === 'vx' ? 'same length all the way: ' + fmt(Math.abs(F.vx), 2) + ' m/s' : 'shrinks by 9.81 m/s every second', P.r.L + 10, P.r.T + 14, k === 'vx' ? C.adj : C.opp, { align: 'left', size: 13 });
+  }
+  if (k === 'peak') { const pk = pos(Pp, o.tPeak); ctx.save(); ctx.setLineDash([6, 5]); ctx.strokeStyle = '#0891b2'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(P.r.L, P.Y(o.peak)); ctx.lineTo(P.r.R, P.Y(o.peak)); ctx.stroke(); ctx.restore();
+    dots(ctx, P, [pk[0]], [pk[1]], '#0891b2', 7); label(ctx, 'peak ' + fmt(o.peak, 2) + ' m at ' + fmt(o.tPeak, 2) + ' s (upwards velocity = 0)', P.X(pk[0]), P.Y(o.peak) - 18, '#0891b2', { size: 13 }); }
+  if (k === 'out') {
+    const ts = []; for (let t = 0; t <= Tm + 1e-9; t += 0.1) ts.push(t); const pp = ts.map((t) => pos(Pp, t)); dots(ctx, P, pp.map((q) => q[0]), pp.map((q) => q[1]), C.what, 4);
+    const e = pos(Pp, Tm); dots(ctx, P, [e[0]], [e[1]], C.what, 7);
+    label(ctx, 'dots every 0.1 s; ' + fmt(Tm, 2) + ' s to ' + (isHoop() ? 'the ' + ringOf().name : A.task === 'lineout' ? 'the catcher' : 'landing'), P.r.L + 10, P.r.T + 14, C.what, { align: 'left', size: 13 });
+    if (isHoop() && Number.isFinite(o.entry)) label(ctx, 'entry ' + fmt(o.entry, 0) + '°', P.X(e[0]) - 14, P.Y(e[1]) - 22, C.what, { align: 'right', size: 14 });
+  }
+  if (k === 'g') { const x = X(); dots(ctx, P, x.slice(A.rel, A.land + 1), A.ry.slice(A.rel, A.land + 1), '#dc2626', 3.5); label(ctx, 'your points: do they follow the curve?', P.r.L + 10, P.r.T + 14, '#dc2626', { align: 'left', size: 13 }); }
+}
+
 // ---------- results helpers ----------
 function taskSel() { return '<div class="field"><label for="taskSel2">What is it?</label><select id="taskSel2">' + Object.entries(TASKS).map(([k, n]) => '<option value="' + k + '"' + (k === A.task ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></div>'; }
 function resultButtons() {
-  return '<div class="row" style="margin-top:.6rem"><button type="button" class="btn accent" id="addCmp">+ Add to comparison</button>' + (A.src === 'video' ? '<button type="button" class="btn ghost" id="seeVid">See it on the video</button>' : '') + '<button type="button" class="btn ghost" id="goFur">Go further &rarr;</button></div>'
+  return '<div class="row" style="margin-top:.6rem"><button type="button" class="btn accent" id="goMean">What do my numbers mean? &rarr;</button><button type="button" class="btn" id="addCmp">+ Add to comparison</button>' + (A.src === 'video' ? '<button type="button" class="btn ghost" id="seeVid">See it on the video</button>' : '') + '<button type="button" class="btn ghost" id="goFur">Go further &rarr;</button></div>'
     + '<div class="row" style="margin-top:.4rem"><button type="button" class="btn small ghost" id="dlCsv2">Save results (CSV)</button><button type="button" class="btn small ghost" id="dlPng2">Save figure for a report (PNG)</button></div>'
     + (A.cmpMsg ? '<p class="small" style="color:var(--good)">' + A.cmpMsg + '</p>' : '');
 }
 function wireResults() {
   const ts = $('taskSel2'); if (ts) ts.addEventListener('change', (e) => { A.task = e.target.value; A.ex = null; app.render(); });
-  $('goFur').addEventListener('click', () => { const F = fit(); A.gf = F.force ? 0 : gClass(F) === 'light-good' ? 3 : 1; app.go(4); });
+  $('goFur').addEventListener('click', () => { const F = fit(); A.gf = F.force ? 0 : gClass(F) === 'light-good' ? 3 : 1; app.go(5); });
   $('dlCsv2').addEventListener('click', exportCSV); $('dlPng2').addEventListener('click', exportPNG);
   const sv = $('seeVid'); if (sv) sv.addEventListener('click', () => { A.frame = A.ev.rel !== null ? A.ev.rel : A.frame; app.go(2); showFrame(A.frame); });
   $('addCmp').addEventListener('click', () => { addTrial(); app.render(); });
+  $('goMean').addEventListener('click', () => app.go(4));
   const bind = (id, fn) => { const el = $(id); if (el) el.addEventListener('change', () => { const val = el.value === '' ? null : +el.value; fn(val); A.ex = null; app.render(); }); };
   bind('fh0', (q) => { if (q > 0) A.h0 = q; }); bind('ftoD', (q) => { A.takeoffDist = q || 0; }); bind('flaD', (q) => { A.landingDist = q || 0; }); bind('flH', (q) => { A.landH = q; }); bind('fmeas', (q) => { A.measured = q; });
 }
@@ -985,7 +1139,7 @@ function autoDemo() {
   // a few pixels off), then run the real tracker. Any calibration error of the student's own carries through.
   if (A.busy) return;
   A.ev.rel = VIDEO_DEMO.releaseFrame; A.ev.end = VIDEO_DEMO.endFrame; A.trackMode = 'auto'; A.clicks = {}; A.hist = [];
-  const P = fromPolar(6.982, 52, 2.10, 0.35), px = [VIDEO_DEMO.originPx[0] + P.x0 * 150 + 3, VIDEO_DEMO.originPx[1] - P.y0 * 150 - 2];
+  const P = fromPolar(6.982, 52, 2.10, 0.35), px = [VIDEO_DEMO.originPx[0] + P.x0 * VIDEO_DEMO.pxPerM + 3, VIDEO_DEMO.originPx[1] - P.y0 * VIDEO_DEMO.pxPerM - 2];
   A.frame = VIDEO_DEMO.releaseFrame; showFrame(A.frame);
   frameImage(A.frame).then((im) => { const b = findBall(im, px, VIDEO_DEMO.ballR); const q = b ? b.c : px; A.ballR = b ? b.r : VIDEO_DEMO.ballR; A.clicks[A.frame] = [Math.round(q[0] * 10) / 10, Math.round(q[1] * 10) / 10]; A.hist.push(A.frame); buildFromClicks(); runTrack(); });
 }
@@ -1025,7 +1179,11 @@ export const ANALYSE = {
   init(a) {
     app = a; $ = a.$;
     const st = $('stage');
-    st.addEventListener('click', stageClick); st.addEventListener('pointermove', loupe); st.addEventListener('pointerleave', () => { $('loupe').style.display = 'none'; });
+    st.addEventListener('click', stageClick);
+    let raf = 0; const redraw = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; drawStage(); }); };
+    st.addEventListener('pointermove', (e) => { loupe(e); if (A.mode === 'dig' && e.pointerType !== 'touch') { A.hover = stagePt(e); redraw(); } });
+    st.addEventListener('pointerleave', () => { $('loupe').style.display = 'none'; if (A.hover) { A.hover = null; redraw(); } });
+    st.addEventListener('wheel', (e) => { if (A.mode !== 'dig') return; e.preventDefault(); A.ringR = Math.max(3, Math.min(200, ringR() * (e.deltaY < 0 ? 1.06 : 1 / 1.06))); const o = $('ringOut'); if (o) o.textContent = Math.round(ringR() * 2) + ' px'; redraw(); }, { passive: false });
     document.addEventListener('keydown', (e) => {
       if (app.S.mode !== 'analyse' || $('stageWrap').classList.contains('hide') || !A.vw || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName) && document.activeElement.type !== 'range') return;
       if (e.key === 'ArrowRight' || e.key === '.') { showFrame(A.frame + 1); syncSl(); e.preventDefault(); }

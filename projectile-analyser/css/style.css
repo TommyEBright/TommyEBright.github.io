@@ -163,3 +163,11 @@ details.more > summary { margin-top: .4rem; }
 .subtabs { display: flex; flex-wrap: wrap; gap: .3rem; margin: 0 0 .8rem; }
 .subtabs button { font: inherit; font-size: .84rem; font-weight: 600; cursor: pointer; border: 1px solid #b6c2cf; background: #fff; color: var(--ink); padding: .25rem .65rem; border-radius: 999px; }
 .subtabs button.on { background: var(--brand-dark); border-color: var(--brand-dark); color: #fff; }
+/* what the numbers mean */
+.mcard { border: 1px solid var(--line, #e2e8f0); border-left: 6px solid; border-radius: 10px; padding: .55rem .8rem; margin: .45rem 0; cursor: pointer; background: #fff; }
+.mcard:hover { background: #f8fafc; }
+.mcard.on { box-shadow: 0 2px 10px rgba(15, 23, 42, .08); cursor: default; }
+.mcard .mhead { display: flex; justify-content: space-between; gap: .6rem; align-items: baseline; flex-wrap: wrap; }
+.mcard .mhead span { font-weight: 600; }
+.mcard .mhead b { font-size: 1.15rem; }
+.mcard p { margin: .45rem 0 0; }

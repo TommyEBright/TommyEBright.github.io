@@ -1,10 +1,10 @@
 // Projectile Motion: the page shell. Two parts, Learn and Analyse, each a list of steps. A step has a title, a body
 // (HTML for the right-hand card), an optional quick check, and either a figure drawn on the canvas or the video stage.
-import { hidpi } from './plot.js?v=1.4.1';
-import { LEARN } from './learn.js?v=1.4.1';
-import { ANALYSE } from './analyse.js?v=1.4.1';
+import { hidpi } from './plot.js?v=1.5.0';
+import { LEARN } from './learn.js?v=1.5.0';
+import { ANALYSE } from './analyse.js?v=1.5.0';
 
-const VERSION = '1.4.1';
+const VERSION = '1.5.0';
 const $ = (id) => document.getElementById(id);
 const PARTS = { learn: LEARN, analyse: ANALYSE };
 const S = { mode: 'learn', step: { learn: 0, analyse: 0 }, seen: {} };

@@ -140,7 +140,7 @@ export const DEMOS = {
   }),
 };
 // What the demo video shows (made with the same release values), so it can be checked and filled in.
-export const VIDEO_DEMO = { file: 'demo/demo-free-throw-100fps.mp4', fps: 100, task: 'freethrow', target: { x: 4.225, y: 3.05 }, stickPx: [[77, 530], [77, 680]], originPx: [220, 680], stickLen: 1, releaseFrame: 95, endFrame: 185, ballR: 18 };
+export const VIDEO_DEMO = { file: 'demo/demo-free-throw-100fps.mp4', fps: 100, task: 'freethrow', target: { x: 4.225, y: 3.05 }, stickPx: [[116.25, 795], [116.25, 1020]], originPx: [330, 1020], pxPerM: 225, stickLen: 1, releaseFrame: 95, endFrame: 185, ballR: 27 };
 // The standing long jump on two force platforms (a real trial, the same file as the Force Analysis demo). The platform
 // cannot give the centre of mass height or position, so typical values stand in for what you would measure on video.
 export const FORCE_DEMO = { file: 'demo/demo-slj-force.txt', name: 'Standing long jump on force platforms (1000 Hz)', h0: 0.90, takeoffDist: 0.40, landingDist: 0.45, landH: 0.55, measured: null };
