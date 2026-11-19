@@ -2,8 +2,8 @@
 // few plain sentences; the equations and worked numbers sit behind "Show me the maths".
 // Colours never change: forwards (horizontal) orange, upwards (vertical) purple, the ball's actual direction blue,
 // gravity red.
-import { G, rad, deg, fromPolar, pos, tAtHeight, minSpeedToTarget, fitFlight } from './maths.js?v=1.5.0';
-import { panel, line, dots, arrow, label, rightMark, arc, fmt, COL } from './plot.js?v=1.5.0';
+import { G, rad, deg, fromPolar, pos, tAtHeight, minSpeedToTarget, fitFlight } from './maths.js?v=1.6.0';
+import { panel, line, dots, arrow, label, rightMark, arc, fmt, COL } from './plot.js?v=1.6.0';
 
 const C = { v: '#1d4ed8', fwd: '#d97706', up: '#7c3aed', g: '#dc2626', ghost: '#cbd5e1', ball: '#e2701e' };
 const REL = { x: 0.35, y: 2.10 }, HOOP = { x: 4.225, y: 3.05 }, RIM_R = 0.2286, BALL_R = 0.119;

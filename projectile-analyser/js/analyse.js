@@ -1,10 +1,10 @@
 // Analyse: a real flight, from video (calibrate and digitise here) or from position data (e.g. a marker exported
 // from Kinematic Analysis), to release speed, angle and height, what they predict, and what-ifs.
 // Coordinates: metres, y up, x in the direction of travel (the tool mirrors the data if the flight goes right to left).
-import { G, rad, deg, fitFlight, polar, pos, tAtHeight, peakRise, fromPolar, range, optimumAngle, minSpeedToTarget, speedForTarget, DEMOS, VIDEO_DEMO, FORCE_DEMO } from './maths.js?v=1.5.0';
-import { findBall, trackBall } from './ball.js?v=1.5.0';
-import { parseForce, analyseSLJ } from './forceplate.js?v=1.5.0';
-import { panel, line, dots, arrow, label, lim, rightMark, fmt, sgn, COL } from './plot.js?v=1.5.0';
+import { G, rad, deg, fitFlight, polar, pos, tAtHeight, peakRise, fromPolar, range, optimumAngle, minSpeedToTarget, speedForTarget, DEMOS, VIDEO_DEMO, FORCE_DEMO } from './maths.js?v=1.6.0';
+import { findBall, trackBall } from './ball.js?v=1.6.0';
+import { parseForce, analyseSLJ } from './forceplate.js?v=1.6.0';
+import { panel, line, dots, arrow, label, lim, rightMark, fmt, sgn, COL } from './plot.js?v=1.6.0';
 
 // Targets: a basketball rim is 45.7 cm across (size 7 ball about 23.8 cm); a netball ring is 38 cm across inside
 // (size 5 ball about 22.4 cm) with no backboard. A line-out has a catch point instead of a ring.
@@ -23,7 +23,7 @@ function fresh() {
     // position data (raw, before mirroring)
     t: [], rx: [], ry: [], fr: [], flip: false, markers: null, csvParsed: null, marker: '', csv: null, units: 1, fpsData: 100,
     rel: 0, land: 0, suggested: false, fromEvents: false, event: null, hist: [], gf: 0, calBy: 'stick',
-    ev: { rel: null, end: null, extra: [] }, trim: false, trackMode: 'manual', snap: true, ballR: null, ringR: null, busy: false, stopReq: false, trkMsg: '', trkDone: false,
+    ev: { rel: null, end: null, extra: [] }, trim: false, trackMode: 'manual', snap: false, pending: false, overlayOn: false, ballR: null, ringR: null, busy: false, stopReq: false, trkMsg: '', trkDone: false,
     force: null, h0: 0.9, measured: null,
     // task inputs
     target: { x: 4.225, y: 3.05 }, landH: null, takeoffDist: 0, landingDist: 0, releaseAhead: 0,
@@ -129,7 +129,8 @@ function loadVideo(src, name, demo) {
   else { A.url = src; A.note = 'Check the frame rates in the Scale step before you digitise.'; }
   const vd = $('vid'); vd.src = src;
   vd.onloadedmetadata = () => { A.vw = vd.videoWidth; A.vh = vd.videoHeight; A.nF = Math.max(1, Math.round(vd.duration * A.fileFps)); showFrame(0); app.render(); };
-  vd.onseeked = () => { grab(); drawStage(); if (vd.requestVideoFrameCallback) vd.requestVideoFrameCallback(() => { grab(); drawStage(); }); };
+  const ready = () => { if (vd.seeking) return; clearTimeout(A.pendT); A.pending = false; grab(); drawStage(); };
+  vd.onseeked = () => { if (vd.requestVideoFrameCallback) { grab(); drawStage(); vd.requestVideoFrameCallback(ready); setTimeout(ready, 300); } else ready(); };
   vd.onerror = () => { A.note = 'This video will not open in the browser. Convert it to MP4 (H.264) first, e.g. with Convert to MP4 in Kinematic Analysis, or HandBrake.'; app.render(); };
   app.render();
 }
@@ -215,8 +216,8 @@ const frameCv = document.createElement('canvas');
 function evFrames() { const E = A.ev; return [E.rel, E.end, ...E.extra.map((x) => x.f)].filter((f) => f !== null && f !== undefined); }
 function span() { const f = evFrames(); return A.trim && f.length >= 2 ? [Math.min(...f), Math.max(...f)] : [0, A.nF - 1]; }
 function showFrame(f) { const [lo, hi] = span(); A.frame = Math.max(lo, Math.min(hi, f));
-  if (A.avi) { const tok = ++A.avi.tok, fr = A.frame; aviFrame(fr).then((bm) => { if (tok !== A.avi.tok) return; frameCv.width = bm.width; frameCv.height = bm.height; frameCv.getContext('2d').drawImage(bm, 0, 0); drawStage(); }); return; }
-  const vd = $('vid'); const tt = (A.frame + 0.5) / A.fileFps; if (Math.abs(vd.currentTime - tt) < 1e-4) { grab(); drawStage(); } else vd.currentTime = tt; }
+  if (A.avi) { const tok = ++A.avi.tok, fr = A.frame; A.pending = true; aviFrame(fr).then((bm) => { if (tok !== A.avi.tok) return; A.pending = false; frameCv.width = bm.width; frameCv.height = bm.height; frameCv.getContext('2d').drawImage(bm, 0, 0); drawStage(); }); return; }
+  const vd = $('vid'); const tt = (A.frame + 0.5) / A.fileFps; if (Math.abs(vd.currentTime - tt) < 1e-4 && !vd.seeking) { grab(); drawStage(); } else { A.pending = true; drawStage(); clearTimeout(A.pendT); A.pendT = setTimeout(() => { A.pending = false; grab(); drawStage(); }, 1500); vd.currentTime = tt; } }
 function grab() { const vd = $('vid'); if (!A.vw) return; frameCv.width = A.vw; frameCv.height = A.vh; frameCv.getContext('2d').drawImage(vd, 0, 0, A.vw, A.vh); }
 function scalePx() { const c = A.cal; return c.a && c.b && c.len > 0 ? Math.hypot(c.b[0] - c.a[0], c.b[1] - c.a[1]) / c.len : NaN; }
 function toWorld(p) { const s = scalePx(), o = A.cal.o; return [(p[0] - o[0]) / s, (o[1] - p[1]) / s]; }
@@ -296,17 +297,17 @@ function drawStage() {
   const inE = (f) => (A.ev.rel === null || f >= A.ev.rel) && (A.ev.end === null || f <= A.ev.end);
   fs.forEach((f) => dot(A.clicks[f], f === A.frame ? '#ef4444' : inE(f) ? '#1d4ed8' : '#94a3b8', f === A.frame ? 6 : 4));
   if (A.clicks[A.frame] && A.ballR) { const p = A.clicks[A.frame]; c.strokeStyle = '#ef4444'; c.lineWidth = 2 * u; c.beginPath(); c.arc(p[0], p[1], A.ballR, 0, 2 * Math.PI); c.stroke(); }
-  overlayPath(c, u);
+  if (A.overlayOn) overlayPath(c, u);
   if (A.mode === 'dig' && !A.busy) {
     const gp = ghost(), r = ringR();
-    if (gp && !A.clicks[A.frame]) { c.save(); c.setLineDash([8 * u, 6 * u]); c.strokeStyle = 'rgba(250,204,21,.95)'; c.lineWidth = 2.5 * u; c.beginPath(); c.arc(gp[0], gp[1], r * 1.6, 0, 2 * Math.PI); c.stroke(); c.restore(); txt(c, 'the ball should be about here', gp[0], gp[1] - r * 1.6 - 14 * u, '#fde047', u, 'center', true); }
+    if (false && gp && !A.clicks[A.frame]) { c.save(); c.setLineDash([8 * u, 6 * u]); c.strokeStyle = 'rgba(250,204,21,.95)'; c.lineWidth = 2.5 * u; c.beginPath(); c.arc(gp[0], gp[1], r * 1.6, 0, 2 * Math.PI); c.stroke(); c.restore(); txt(c, 'the ball should be about here', gp[0], gp[1] - r * 1.6 - 14 * u, '#fde047', u, 'center', true); }
     if (A.hover) { const h = A.hover; c.strokeStyle = '#fff'; c.lineWidth = 4 * u; c.beginPath(); c.arc(h[0], h[1], r, 0, 2 * Math.PI); c.stroke(); c.strokeStyle = '#ef4444'; c.lineWidth = 2 * u; c.beginPath(); c.arc(h[0], h[1], r, 0, 2 * Math.PI); c.stroke();
       c.beginPath(); c.moveTo(h[0] - 6 * u, h[1]); c.lineTo(h[0] + 6 * u, h[1]); c.moveTo(h[0], h[1] - 6 * u); c.lineTo(h[0], h[1] + 6 * u); c.stroke(); }
   }
   const tags = []; if (A.ev.rel === A.frame) tags.push('RELEASE'); if (A.ev.end === A.frame) tags.push('END'); A.ev.extra.forEach((x) => { if (x.f === A.frame) tags.push(x.name.toUpperCase()); });
   if (tags.length) txt(c, tags.join(' \u00b7 '), A.vw - 12 * u, 22 * u, '#4ade80', u * 1.2, 'right', true);
   txt(c, 'Frame ' + A.frame + ' of ' + (A.nF - 1) + (A.trim && evFrames().length >= 2 ? '  (showing ' + span()[0] + ' to ' + span()[1] + ')' : '') + '  ·  ' + fmt(A.frame / A.realFps, 3) + ' s', 12 * u, 22 * u, '#fff', u, 'left', true);
-  const mt = { calBall: '1. Click the ball (on a sharp frame)', calA: A.calBy === 'ballEdges' ? '1. Click the left edge of the ball' : '1. Click one end of the known length', calB: A.calBy === 'ballEdges' ? '2. Now click its right edge' : '2. Now click the other end', o: '3. Click the floor where you want 0 m', dig: A.ev.rel === null ? 'Find the frame the ball leaves the hand' : A.ev.end === null ? 'Now find the last frame of the flight' : A.clicks[A.frame] ? '' : 'Put the ring over the ball and click', target: A.task === 'lineout' ? '4. Click the catcher\u2019s hands' : '4. Click the middle of the ' + ringOf().what }[A.mode];
+  const mt = { calBall: '1. Click the ball (on a sharp frame)', calA: A.calBy === 'ballEdges' ? '1. Click the left edge of the ball' : '1. Click one end of the known length', calB: A.calBy === 'ballEdges' ? '2. Now click its right edge' : '2. Now click the other end', o: '3. Click the floor where you want 0 m', dig: A.pending ? 'Loading the next frame…' : A.busy ? '' : A.ev.rel === null ? 'Find the frame where the ball has just left the hand, then click the ball' : A.clicks[A.frame] ? '' : 'Click the middle of the ball', target: A.task === 'lineout' ? '4. Click the catcher\u2019s hands' : '4. Click the middle of the ' + ringOf().what }[A.mode];
   if (mt) txt(c, mt, A.vw / 2, 70 * u, '#fde047', u * 1.6, 'center', true);
   const s = document.getElementById('frameNo'); if (s) s.textContent = A.frame; const s2 = document.getElementById('frameNo2'); if (s2) s2.textContent = A.frame;
   const k = document.getElementById('clickCount'); if (k) k.textContent = fs.length;
@@ -342,6 +343,7 @@ function ghost() {
   const s = scalePx(); const gpx = Number.isFinite(s) ? 0.5 * G * s / (A.realFps * A.realFps) : 0; // gravity in pixels per frame squared (halved)
   return [lin(t, x), lin(t, y.map((v, i) => v - gpx * t[i] * t[i]))];
 }
+function flashMsg(t) { const m = $('trkMsg'); if (!m) return; m.textContent = t; m.classList.remove('hide'); clearTimeout(A.flashT); A.flashT = setTimeout(() => m.classList.add('hide'), 1500); }
 function stagePt(e) { const cv = $('stage'), r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; }
 function stageClick(e) {
   if (!A.vw) return; const p = stagePt(e).map((q) => Math.round(q * 10) / 10);
@@ -354,11 +356,13 @@ function stageClick(e) {
   else if (A.mode === 'target') { A.targetPx = p; A.mode = 'x'; }
   else if (A.mode === 'dig') {
     if (A.busy) return;
-    let q = p;
-    if (A.snap) { const im = frameCv.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, A.vw, A.vh), b = findBall(im, p, A.ballR || 14); if (b && Math.hypot(b.c[0] - p[0], b.c[1] - p[1]) < 1.5 * (A.ballR || b.r)) { q = [Math.round(b.c[0] * 10) / 10, Math.round(b.c[1] * 10) / 10]; A.ballR = b.r; } }
-    A.clicks[A.frame] = q; A.hist.push(A.frame); A.trkDone = A.trackMode === 'auto' ? false : A.trkDone;
+    if (A.pending) { flashMsg('Wait for the next frame to appear, then click.'); return; }  // the picture is still the old frame
+    let q = p; const rr = ringR();
+    if (A.snap) { const im = frameCv.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, A.vw, A.vh), b = findBall(im, p, rr); if (b && Math.hypot(b.c[0] - p[0], b.c[1] - p[1]) < 0.5 * rr && b.r > 0.6 * rr && b.r < 1.6 * rr) q = [Math.round(b.c[0] * 10) / 10, Math.round(b.c[1] * 10) / 10]; }
+    if (A.ev.rel === null || A.frame < A.ev.rel) A.ev.rel = A.frame;   // the first ball click marks release
+    A.overlayOn = false; A.clicks[A.frame] = q; A.hist.push(A.frame); A.trkDone = false;
     const lastF = A.ev.end === null ? A.nF - 1 : A.ev.end;
-    if (A.trackMode === 'manual' && A.frame + A.stepBy <= lastF) { buildFromClicks(); showFrame(A.frame + A.stepBy); app.render(); return; }
+    if (A.frame + A.stepBy <= lastF) { buildFromClicks(); showFrame(A.frame + A.stepBy); app.render(); return; }
   }
   else return;
   if (A.mode === 'x') A.mode = nextScaleMode();
@@ -786,86 +790,63 @@ const STEPS = [
     drawStage, leave: () => { A.mode = 'idle'; $('loupe').style.display = 'none'; },
   },
   {
-    key: 'track', short: 'Track the ball', title: 'Mark the flight, then track the ball', view: 'stage', enabled: () => A.src === 'video' && calibrated(), canNext: () => inWindow() >= 3 && !A.busy,
+    key: 'track', short: 'Click the ball', title: 'Click the ball in each frame', view: 'stage', enabled: () => A.src === 'video' && calibrated(), canNext: () => inWindow() >= 3 && !A.busy,
     body: () => {
-      const E = A.ev, nIn = inWindow(), auto = A.trackMode === 'auto', tgt = isHoop() ? 'the ' + ringOf().name : A.task === 'lineout' ? 'the catcher' : 'the ground';
-      const go = (f) => (f === null || f === undefined ? '' : ' <a href="#" data-gof="' + f + '">frame ' + f + '</a>');
-      const firstIn = E.rel === null ? null : Object.keys(A.clicks).map(Number).filter((f) => f >= E.rel && (E.end === null || f <= E.end)).sort((a, b) => a - b)[0];
-      return '<div class="lead"><p>First tell the tool <b>when</b> the flight starts and ends. Then it follows the ball for you, or you click it yourself.</p></div><ol class="checklist">'
-        + tick(E.rel !== null, E.rel === null, 'Find the <b>first frame where the ball is clear of the hand</b>, then <button type="button" class="btn small" id="evRel">Mark release here</button>' + go(E.rel))
-        + tick(E.end !== null, E.rel !== null && E.end === null, 'Find the <b>last frame before it reaches ' + tgt + ' or leaves the picture</b>, then <button type="button" class="btn small" id="evEnd">Mark end here</button>' + go(E.end))
-        + tick(nIn >= 3 && (!auto || A.trkDone), E.rel !== null && E.end !== null && !(nIn >= 3 && (!auto || A.trkDone)), auto
-          ? (firstIn === undefined ? 'Go to the release frame and <b>click the middle of the ball</b> once. The tool finds its edge.' : 'Press <button type="button" class="btn small accent" id="bTrack"' + (A.busy ? ' disabled' : '') + '>' + (A.busy ? 'Tracking&hellip;' : nIn > 1 ? 'Carry on tracking' : 'Track the ball') + '</button>' + (A.busy ? ' <button type="button" class="btn small ghost" id="bStop">Stop</button>' : '') + ' and it follows the ball to the end frame.')
-          : 'Put the <b>red ring over the ball</b> so it sits on the ball&rsquo;s outline, and click. The video moves on by itself. From the third point, a <b>yellow dashed circle</b> shows where the ball should be.') + '</ol>'
-        + '<label class="small" style="display:flex;gap:.4rem;align-items:center;margin:.1rem 0 .5rem"><input type="checkbox" id="trimCb"' + (A.trim ? ' checked' : '') + (evFrames().length >= 2 ? '' : ' disabled') + '> Only show the marked part of the video' + (evFrames().length >= 2 ? ' (frames ' + Math.min(...evFrames()) + ' to ' + Math.max(...evFrames()) + ')' : ' (mark release and end first)') + '</label>'
-        + '<div class="subtabs"><button type="button" data-tm="manual" class="' + (auto ? '' : 'on') + '">Click it myself</button><button type="button" data-tm="auto" class="' + (auto ? 'on' : '') + '">Automatic (clear video only)</button></div>'
-        + (auto ? '' : '<div class="row tight" style="align-items:center;gap:.4rem;margin:.2rem 0"><span class="small">Ring size</span><button type="button" class="btn small ghost" id="ringDn">&minus;</button><b id="ringOut" class="small">' + Math.round(ringR() * 2) + ' px</b><button type="button" class="btn small ghost" id="ringUp">+</button><span class="small muted">(or scroll on the video)</span></div>')
+      const E = A.ev, nIn = inWindow(), tgt = isHoop() ? 'the ' + ringOf().name : A.task === 'lineout' ? 'the catcher' : 'the ground';
+      const started = E.rel !== null, ok = nIn >= 3;
+      return '<ol class="checklist">'
+        + tick(started, !started, 'Use the buttons under the video to find the frame where the ball has <b>just left the hand</b>.')
+        + tick(ok, started && !ok || !started, 'Click the <b>middle of the ball</b>. The video moves on one frame each time, so just keep clicking the ball.')
+        + tick(false, ok, 'Stop when it reaches ' + tgt + ' or leaves the picture, then press <b>Next</b>.') + '</ol>'
+        + '<div class="tiles"><div class="tile"><span>Ball points</span><b id="clickCount">' + nIn + '</b></div><div class="tile"><span>Frame</span><b id="frameNo2">' + A.frame + '</b></div></div>'
         + (A.trkMsg ? '<div class="status" id="trkMsg">' + A.trkMsg + '</div>' : '<div class="status hide" id="trkMsg"></div>')
-        + '<div class="tiles"><div class="tile"><span>Ball points in the flight</span><b id="clickCount">' + nIn + '</b></div><div class="tile"><span>Frame</span><b id="frameNo2">' + A.frame + '</b></div></div>'
-        + (nIn >= 3 && !A.busy ? '<p>' + (nIn >= 10 ? '<b>Done.</b> ' : 'Enough for rough values, but more is better. ') + 'Check the dots sit on the ball (step through, or look at the line), then press <b>Next</b>.</p>' : '')
-        + '<label class="small" style="display:flex;gap:.4rem;align-items:center;margin:.3rem 0"><input type="checkbox" id="snapCb"' + (A.snap ? ' checked' : '') + '> Auto-centre: nudge each click to the middle of the ball (untick if it jumps to the wrong thing)</label>'
-        + '<div class="row"><button type="button" class="btn small ghost" id="bUndo"' + (A.hist.length && !A.busy ? '' : ' disabled') + '>Undo last point</button><button type="button" class="btn small ghost" id="bClr"' + (Object.keys(A.clicks).length && !A.busy ? '' : ' disabled') + '>Clear all points</button>' + (A.demo ? '<button type="button" class="btn small ghost" id="bAuto"' + (A.busy ? ' disabled' : '') + '>Do it for me</button>' : '') + '</div>'
-        + '<details class="more"><summary>Other events (optional)</summary><p class="small">Mark anything else worth knowing (e.g. <i>start of the shot</i>, <i>rim contact</i>, <i>catch</i> or <i>landing</i>). They go in your saved results, and an event before release or after the end widens the part of the video shown.</p>'
-        + (E.extra.length ? '<ul class="small">' + E.extra.map((x, i) => '<li>' + esc(x.name) + ': ' + go(x.f) + ' <button type="button" class="btn small ghost" data-evdel="' + i + '">remove</button></li>').join('') + '</ul>' : '')
-        + '<div class="row"><input type="text" id="evName" placeholder="Event name" style="width:10rem"><button type="button" class="btn small ghost" id="evAdd">Add at this frame</button></div></details>'
-        + '<details class="more"><summary>Options</summary><label class="small">In manual mode, after each click move on by <select id="stepBy" style="width:4.5rem;display:inline-block">' + [1, 2, 3, 4].map((k) => '<option' + (k === A.stepBy ? ' selected' : '') + '>' + k + '</option>').join('') + '</select> frame(s)</label><p class="small">A point in the wrong place? Go to that frame and click the ball again. Automatic or manual, you can always correct by hand.</p></details>';
+        + (ok && !A.busy ? '<p class="small">' + (nIn >= 10 ? 'Plenty of points. ' : 'Enough for rough values, but 10 or more is better. ') + 'A dot in the wrong place? Go back to that frame and click the ball again.</p>' : '')
+        + '<div class="row"><button type="button" class="btn small ghost" id="bUndo"' + (A.hist.length && !A.busy ? '' : ' disabled') + '>Undo last point</button><button type="button" class="btn small ghost" id="bClr"' + (Object.keys(A.clicks).length && !A.busy ? '' : ' disabled') + '>Start again</button>' + (A.demo ? '<button type="button" class="btn small ghost" id="bAuto"' + (A.busy ? ' disabled' : '') + '>Do it for me</button>' : '') + '</div>'
+        + '<details class="more"><summary>More options</summary>'
+        + '<p class="small"><b>Ring size</b> (the red circle that follows the mouse): <button type="button" class="btn small ghost" id="ringDn">&minus;</button> <b id="ringOut">' + Math.round(ringR() * 2) + ' px</b> <button type="button" class="btn small ghost" id="ringUp">+</button> (or scroll on the video)</p>'
+        + '<label class="small" style="display:flex;gap:.4rem;align-items:center;margin:.3rem 0"><input type="checkbox" id="snapCb"' + (A.snap ? ' checked' : '') + '> Auto-centre: nudge each click onto the middle of the ball (only on clear video with a plain background)</label>'
+        + '<label class="small">Move on by <select id="stepBy" style="width:4.5rem;display:inline-block">' + [1, 2, 3, 4].map((k) => '<option' + (k === A.stepBy ? ' selected' : '') + '>' + k + '</option>').join('') + '</select> frame(s) after each click</label>'
+        + '<p class="small"><b>Automatic tracking</b> (clear video only): click the ball on the release frame, then <button type="button" class="btn small ghost" id="bTrack"' + (A.busy || !started ? ' disabled' : '') + '>' + (A.busy ? 'Tracking&hellip;' : 'Track automatically') + '</button>' + (A.busy ? ' <button type="button" class="btn small ghost" id="bStop">Stop</button>' : '') + '. Check every dot afterwards.</p>'
+        + (started ? '<p class="small">Release is frame <b>' + E.rel + '</b>. <button type="button" class="btn small ghost" id="evRel">Use this frame as release instead</button></p>' : '')
+        + '</details>';
     },
     tools: () => frameTools(),
     wire() {
       wireFrameTools(); A.mode = 'dig'; drawStage();
-      $('evRel').addEventListener('click', () => { A.ev.rel = A.frame; if (A.ev.end !== null && A.ev.end <= A.frame) A.ev.end = null; if (evFrames().length < 2) A.trim = false; A.trkDone = false; buildFromClicks(); app.render(); });
-      $('evEnd').addEventListener('click', () => { if (A.ev.rel !== null && A.frame <= A.ev.rel + 1) { A.trkMsg = 'The end has to be at least two frames after release.'; app.render(); return; } A.ev.end = A.frame; A.trkDone = false; buildFromClicks(); app.render(); });
-      document.querySelectorAll('[data-gof]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); showFrame(+a.dataset.gof); syncSl(); }));
-      document.querySelectorAll('[data-tm]').forEach((b) => b.addEventListener('click', () => { A.trackMode = b.dataset.tm; app.render(); }));
-      document.querySelectorAll('[data-evdel]').forEach((b) => b.addEventListener('click', () => { A.ev.extra.splice(+b.dataset.evdel, 1); if (evFrames().length < 2) A.trim = false; showFrame(A.frame); app.render(); }));
-      $('evAdd').addEventListener('click', () => { const n = $('evName').value.trim(); if (!n) return; A.ev.extra.push({ name: n, f: A.frame }); app.render(); });
-      $('evName').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('evAdd').click(); });
+      const er = $('evRel'); if (er) er.addEventListener('click', () => { A.ev.rel = A.frame; Object.keys(A.clicks).map(Number).filter((f) => f < A.frame).forEach((f) => delete A.clicks[f]); A.hist = A.hist.filter((f) => f >= A.frame); buildFromClicks(); app.render(); });
       $('snapCb').addEventListener('change', (e) => { A.snap = e.target.checked; });
-      const rd = $('ringDn'), ru = $('ringUp'); const ring = (k) => { A.ringR = Math.max(3, Math.min(200, ringR() * k)); $('ringOut').textContent = Math.round(ringR() * 2) + ' px'; drawStage(); };
-      if (rd) { rd.addEventListener('click', () => ring(1 / 1.1)); ru.addEventListener('click', () => ring(1.1)); }
-      $('trimCb').addEventListener('change', (e) => { A.trim = e.target.checked; showFrame(A.frame); app.render(); });
+      const ring = (k) => { A.ringR = Math.max(3, Math.min(200, ringR() * k)); $('ringOut').textContent = Math.round(ringR() * 2) + ' px'; drawStage(); };
+      $('ringDn').addEventListener('click', () => ring(1 / 1.1)); $('ringUp').addEventListener('click', () => ring(1.1));
       $('stepBy').addEventListener('change', (e) => { A.stepBy = +e.target.value; });
-      const tr = $('bTrack'); if (tr) tr.addEventListener('click', runTrack);
+      $('bTrack').addEventListener('click', () => { A.ev.end = null; runTrack(); });
       const sp = $('bStop'); if (sp) sp.addEventListener('click', () => { A.stopReq = true; });
-      $('bUndo').addEventListener('click', () => { const f = A.hist.pop(); if (f !== undefined) { delete A.clicks[f]; A.trkDone = false; buildFromClicks(); showFrame(f); app.render(); } });
-      $('bClr').addEventListener('click', () => { if (confirm('Remove every point?')) { A.clicks = {}; A.hist = []; A.trkDone = false; A.trkMsg = ''; buildFromClicks(); app.render(); } });
+      $('bUndo').addEventListener('click', () => { const f = A.hist.pop(); if (f !== undefined) { delete A.clicks[f]; if (!Object.keys(A.clicks).length) A.ev.rel = null; buildFromClicks(); showFrame(f); app.render(); } });
+      $('bClr').addEventListener('click', () => { if (confirm('Remove every point and start again?')) { const f = A.ev.rel; A.clicks = {}; A.hist = []; A.ev.rel = null; A.ev.end = null; A.trkDone = false; A.trkMsg = ''; buildFromClicks(); if (f !== null) showFrame(f); app.render(); } });
       const au = $('bAuto'); if (au) au.addEventListener('click', autoDemo);
     },
     drawStage, leave: () => { A.mode = 'idle'; A.stopReq = true; $('loupe').style.display = 'none'; },
   },
   {
-    key: 'results', short: 'Results', title: 'Your results', enabled: () => !!fit(), figTitle: () => (A.src === 'force' ? 'The jump predicted from the take-off velocity' : 'The flight, and the triangle at release'),
-    hint: () => (A.src === 'force' ? 'The triangle is the take-off velocity worked out from the forces.' : 'Green ring: release. Red ring: last frame in the air.'),
+    key: 'results', short: 'Results', title: 'Your results', enabled: () => !!fit(), figTitle: () => 'Your flight',
+    hint: () => 'Tap a number on the right to see it here.',
     body: () => {
       const F = fit(); if (!F) return '';
-      if (F.force) return forceResults(F);
+      if (F.force) return forceResults(F).replace('<!--cards-->', meaningBody());
       let gc = gClass(F); const few = F.n < 10; if (few && gc === 'light-good') gc = 'light-warn'; const how = A.fromEvents ? 'were set from the marked events' : 'were picked automatically';
       const pmx = (se, d, u) => (few ? '<small style="display:block;font-size:.8rem;color:var(--muted)">&plusmn; ' + fmt(2 * se, d) + u + ' (95%)</small>' : '');
-      return '<div class="tiles big"><div class="tile" style="border-color:' + C.hyp + '"><span>Release speed</span><b>' + fmt(F.pol.v, 2) + ' m/s</b>' + pmx(F.pol.sv, 2, ' m/s') + '</div><div class="tile" style="border-color:#475569"><span>Release angle</span><b>' + fmt(F.pol.th, 1) + '&deg;</b>' + pmx(F.pol.sth, 1, '&deg;') + '</div><div class="tile" style="border-color:#16a34a"><span>Release height</span><b>' + fmt(F.y0, 2) + ' m</b>' + pmx(F.sey0, 2, ' m') + '</div></div>'
-        + taskSel()
+      return taskSel()
         + '<p class="lead-sm">' + oneLine(F) + '</p>'
         + '<div class="' + gc + '"><p style="margin:0"><b>' + (gc === 'light-good' ? '&#10003; You can trust these numbers.' : gc === 'light-warn' ? '&#9888; Nearly there: check before you trust these.' : '&#10007; Something is wrong: don&rsquo;t use these yet.') + '</b> ' + (!Number.isFinite(F.gFree) ? gText(F) + ' ' : few ? 'Only ' + F.n + ' frames in the air, so treat these as rough (10 or more is better). ' : '') + (!Number.isFinite(F.gFree) ? '' : gc === 'light-good' || (few && gClass(F) === 'light-good') ? 'The tool checked the flight against gravity and got ' + fmt(F.gFree, 2) + ' m/s&sup2; (it should be 9.81).' : 'Checking against gravity gave ' + fmt(F.gFree, 2) + ' m/s&sup2; instead of 9.81. The usual causes are the frame rate, the scale, or the release frame.') + '</p></div>'
-        + '<p class="small">Release (<b style="color:#16a34a">green ring</b>) and the last frame in the air (<b style="color:#dc2626">red ring</b>) ' + how + '.' + (A.src === 'video' ? ' See the predicted path drawn on the video itself with <b>See it on the video</b>.' : '') + '</p>'
         + (A.truth ? '<p class="small muted">Demo: the true release was ' + fmt(A.truth.v, 2) + ' m/s at ' + fmt(A.truth.th, 1) + '&deg; from ' + fmt(A.truth.y0, 2) + ' m.</p>' : '')
-        + resultButtons();
+        + meaningBody() + resultButtons();
     },
-    wire() { wireResults(); },
-    draw(ctx, w, h) {
+    wire() { wireResults(); meaningWire(); },
+    draw(ctx, w, h) { meaningDraw(ctx, w, h); },
+    oldDraw(ctx, w, h) {
       const F = fit(); if (!F) return; const P = trajFigure(ctx, { x: 0, y: 0, w, h }, { predict: true }); predPath(ctx, P, P0(F), C.fit, 2.5);
       drawTriangle(ctx, P, F, F.force ? 0.8 : 1.3); if (F.force) { label(ctx, 'take-off', P.X(F.x0), P.Y(F.y0) - 22, '#16a34a', { size: 12 }); return; }
       const x = X(); ring(ctx, P, x[A.rel], A.ry[A.rel], '#16a34a', 'release'); ring(ctx, P, x[A.land], A.ry[A.land], '#dc2626', 'last in the air');
     },
-  },
-  {
-    key: 'meaning', short: 'What it means', title: 'What your numbers mean', enabled: () => !!fit(), figTitle: () => 'Your flight, showing the number you picked', hint: () => 'Tap a card on the right to change what is shown.',
-    body: () => meaningBody(), wire() { meaningWire(); }, draw(ctx, w, h) { meaningDraw(ctx, w, h); },
-  },
-  {
-    key: 'further', short: 'Go further', title: 'Go further', enabled: () => !!fit(),
-    figTitle: () => subs()[gfi()].s.figTitle(), hint: () => (subs()[gfi()].s.hint ? subs()[gfi()].s.hint() : ''), tools: () => (subs()[gfi()].s.tools ? subs()[gfi()].s.tools() : ''),
-    body: () => '<div class="subtabs">' + subs().map((q, i) => '<button type="button" data-gf="' + i + '" class="' + (i === gfi() ? 'on' : '') + '">' + q.name + '</button>').join('') + '</div>' + subs()[gfi()].s.body(),
-    wire() { document.querySelectorAll('[data-gf]').forEach((b) => b.addEventListener('click', () => { A.gf = +b.dataset.gf; app.render(); })); if (subs()[gfi()].s.wire) subs()[gfi()].s.wire(); },
-    draw(ctx, w, h, ts) { subs()[gfi()].s.draw(ctx, w, h, ts); },
   },
   {
     key: 'compare', short: 'Compare', title: 'Compare your trials', enabled: () => TRIALS.length > 0, figTitle: () => 'Every trial, from its release point', hint: () => 'Paths start together so their shapes can be compared. Colour shows the group.',
@@ -894,6 +875,13 @@ const STEPS = [
       $('cmpPng').addEventListener('click', () => { const cv = document.createElement('canvas'); cv.width = 1600; cv.height = 1000; const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 1600, 1000); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; drawCompare(ctx, 1600, 1000); cv.toBlob((b) => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'projectile_trials.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }); });
     },
     draw(ctx, w, h) { drawCompare(ctx, w, h); },
+  },
+  {
+    key: 'further', short: 'Extra detail', title: 'Extra detail (optional)', enabled: () => !!fit(),
+    figTitle: () => subs()[gfi()].s.figTitle(), hint: () => (subs()[gfi()].s.hint ? subs()[gfi()].s.hint() : ''), tools: () => (subs()[gfi()].s.tools ? subs()[gfi()].s.tools() : ''),
+    body: () => '<div class="subtabs">' + subs().map((q, i) => '<button type="button" data-gf="' + i + '" class="' + (i === gfi() ? 'on' : '') + '">' + q.name + '</button>').join('') + '</div>' + subs()[gfi()].s.body(),
+    wire() { document.querySelectorAll('[data-gf]').forEach((b) => b.addEventListener('click', () => { A.gf = +b.dataset.gf; app.render(); })); if (subs()[gfi()].s.wire) subs()[gfi()].s.wire(); },
+    draw(ctx, w, h, ts) { subs()[gfi()].s.draw(ctx, w, h, ts); },
   },
 ];
 
@@ -983,17 +971,16 @@ function meaningBody() {
   const strip = (s) => s.replace(/<[^>]+>/g, '').replace(/&plusmn;/g, '±').replace(/&deg;/g, '°').replace(/&sup2;/g, '²').replace(/&divide;/g, '÷').replace(/&times;/g, '×').replace(/&minus;/g, '−').replace(/&amp;/g, '&').replace(/&[lr]dquo;/g, '"').replace(/&theta;/g, 'θ');
   const sv = cards.find((c) => c.k === 'v'), sa = cards.find((c) => c.k === 'th'), sh = cards.find((c) => c.k === 'h');
   const para = [methodLine(), [sv, sa, sh].map((c) => c.rep).join(' '), cards.filter((c) => c.k === 'vx' || c.k === 'vy').map((c) => c.rep).join(' '), ...cards.filter((c) => ['peak', 'out', 'g'].includes(c.k)).map((c) => c.rep)].filter(Boolean).map(strip).join(' ');
-  return '<div class="lead"><p>Each number below is one part of the projectile story. Tap a card to see it on the figure.</p></div>'
+  return '<h3 style="margin:1rem 0 .2rem">What each number means</h3><p class="small">Tap a number to open it and see it on the figure.</p>'
     + cards.map((c) => '<div class="mcard' + (c.k === A.mk ? ' on' : '') + '" data-mk="' + c.k + '" style="border-left-color:' + c.col + '"><div class="mhead"><span>' + c.name + '</span><b style="color:' + c.col + '">' + c.val + '</b></div>'
       + (c.k === A.mk ? '<p><b>What it is.</b> ' + c.is + '</p><p><b>What yours shows.</b> ' + c.yours + '</p>' + (c.rep ? '<p class="small muted"><b>In your report:</b> &ldquo;' + c.rep.replace(/^and the /, 'The ') + '&rdquo;</p>' : '') : '') + '</div>').join('')
     + '<h3 style="margin:1rem 0 .3rem">A results paragraph to start from</h3><p class="small">Put it in your own words, and add what it means for <i>your</i> question (e.g. how two conditions differ in Compare).</p>'
     + '<textarea id="repTxt" rows="7" style="width:100%;font:inherit;font-size:.9rem">' + esc(para) + '</textarea>'
-    + '<div class="row"><button type="button" class="btn small" id="repCopy">Copy</button><button type="button" class="btn accent" id="mGoFur">Go further &rarr;</button></div>';
+    + '<div class="row"><button type="button" class="btn small" id="repCopy">Copy paragraph</button></div>';
 }
 function meaningWire() {
   document.querySelectorAll('[data-mk]').forEach((el) => el.addEventListener('click', () => { if (A.mk !== el.dataset.mk) { A.mk = el.dataset.mk; app.render(); } }));
   $('repCopy').addEventListener('click', () => { const t = $('repTxt'); t.select(); try { navigator.clipboard.writeText(t.value).then(() => { $('repCopy').textContent = 'Copied'; }, () => document.execCommand('copy')); } catch (e) { document.execCommand('copy'); } });
-  $('mGoFur').addEventListener('click', () => { const F = fit(); A.gf = F.force ? 0 : gClass(F) === 'light-good' ? 3 : 1; app.go(5); });
 }
 function meaningDraw(ctx, w, h) {
   const F = fit(); if (!F) return; const Pp = P0(F), o = outcome(Pp), k = A.mk || 'v';
@@ -1023,7 +1010,7 @@ function meaningDraw(ctx, w, h) {
 // ---------- results helpers ----------
 function taskSel() { return '<div class="field"><label for="taskSel2">What is it?</label><select id="taskSel2">' + Object.entries(TASKS).map(([k, n]) => '<option value="' + k + '"' + (k === A.task ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></div>'; }
 function resultButtons() {
-  return '<div class="row" style="margin-top:.6rem"><button type="button" class="btn accent" id="goMean">What do my numbers mean? &rarr;</button><button type="button" class="btn" id="addCmp">+ Add to comparison</button>' + (A.src === 'video' ? '<button type="button" class="btn ghost" id="seeVid">See it on the video</button>' : '') + '<button type="button" class="btn ghost" id="goFur">Go further &rarr;</button></div>'
+  return '<div class="row" style="margin-top:.6rem"><button type="button" class="btn accent" id="addCmp">+ Add to comparison</button>' + (A.src === 'video' ? '<button type="button" class="btn ghost" id="seeVid">See it on the video</button>' : '') + '<button type="button" class="btn ghost" id="goFur">Extra detail (optional)</button></div>'
     + '<div class="row" style="margin-top:.4rem"><button type="button" class="btn small ghost" id="dlCsv2">Save results (CSV)</button><button type="button" class="btn small ghost" id="dlPng2">Save figure for a report (PNG)</button></div>'
     + (A.cmpMsg ? '<p class="small" style="color:var(--good)">' + A.cmpMsg + '</p>' : '');
 }
@@ -1031,9 +1018,8 @@ function wireResults() {
   const ts = $('taskSel2'); if (ts) ts.addEventListener('change', (e) => { A.task = e.target.value; A.ex = null; app.render(); });
   $('goFur').addEventListener('click', () => { const F = fit(); A.gf = F.force ? 0 : gClass(F) === 'light-good' ? 3 : 1; app.go(5); });
   $('dlCsv2').addEventListener('click', exportCSV); $('dlPng2').addEventListener('click', exportPNG);
-  const sv = $('seeVid'); if (sv) sv.addEventListener('click', () => { A.frame = A.ev.rel !== null ? A.ev.rel : A.frame; app.go(2); showFrame(A.frame); });
+  const sv = $('seeVid'); if (sv) sv.addEventListener('click', () => { A.overlayOn = true; A.frame = A.ev.rel !== null ? A.ev.rel : A.frame; app.go(2); showFrame(A.frame); });
   $('addCmp').addEventListener('click', () => { addTrial(); app.render(); });
-  $('goMean').addEventListener('click', () => app.go(4));
   const bind = (id, fn) => { const el = $(id); if (el) el.addEventListener('change', () => { const val = el.value === '' ? null : +el.value; fn(val); A.ex = null; app.render(); }); };
   bind('fh0', (q) => { if (q > 0) A.h0 = q; }); bind('ftoD', (q) => { A.takeoffDist = q || 0; }); bind('flaD', (q) => { A.landingDist = q || 0; }); bind('flH', (q) => { A.landH = q; }); bind('fmeas', (q) => { A.measured = q; });
 }
@@ -1046,7 +1032,7 @@ function forceResults(F) {
     + '<div class="' + (good ? 'light-good' : 'light-warn') + '"><p style="margin:0"><b>' + (good ? '&#10003; The force record looks clean.' : '&#9888; Check the force record.') + '</b> Standing still, the jumper weighed ' + fmt(R.BW, 0) + ' N (steady to &plusmn;' + fmt(R.SD, 1) + ' N' + (bwOK ? '' : ': too unsteady, so the take-off velocity may drift') + '). In the air the platforms read ' + fmt(R.airN, 1) + ' N (should be about 0' + (airOK ? '' : ': check the platforms were zeroed') + ').</p></div>'
     + '<p class="small"><b>Your inputs.</b> The force platform cannot see where the centre of mass is, so these come from video or a tape' + (A.demo ? ' (typical values in the demo)' : '') + ':</p>'
     + num('fh0', 'Centre of mass height at take-off (m)', A.h0) + num('ftoD', 'Take-off distance: toes to centre of mass (m)', A.takeoffDist) + num('flaD', 'Landing distance: centre of mass to heels (m)', A.landingDist) + num('flH', 'Centre of mass height at landing (m)', landHeight()) + num('fmeas', 'Measured jump distance, if you have it (m)', A.measured)
-    + resultButtons();
+    + '<!--cards-->' + resultButtons();
 }
 
 // ---------- comparing trials ----------

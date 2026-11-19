@@ -1,7 +1,7 @@
 // A standing long jump from force platforms: take-off velocity forwards and upwards from the force-time record.
 // Same method as Force Analysis: weigh the jumper while standing still, then integrate acceleration (net force / mass)
 // from rest to take-off, separately for the vertical force and for the horizontal force that pushes the jump forwards.
-import { G } from './maths.js?v=1.5.0';
+import { G } from './maths.js?v=1.6.0';
 
 // BioWare text export (one or more platforms, each with Fx Fy Fz), or a CSV/TSV with time, Fx, Fz (and optionally Fy).
 export function parseForce(text) {
