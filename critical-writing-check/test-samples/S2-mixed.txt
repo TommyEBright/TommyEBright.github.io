@@ -1,0 +1,24 @@
+Introduction
+A needs analysis links the demands of a sport to the profile of an athlete so that tests are chosen for a reason [REF: needs analysis framework]. This report focuses on a 21-year-old WSL central midfielder whose high-intensity running fell in the final 20 minutes of matches last season.
+
+Athlete profile
+She is a professional player known for her work rate. Her training age is not given in the brief, so this report assumes several years of structured training. She missed two matches with recurring hamstring tightness.
+
+Physiological demands
+Female professional midfielders cover more total distance than other positions [REF: female professional soccer time-motion data]. [REF: author A] found that high-intensity running declines late in matches. [REF: author B] reported similar findings in female players. However, the decline may reflect tactical changes or substitutions rather than fatigue [REF: match-running variability]. For her, this means the GPS drop cannot be assumed to be a fitness problem.
+Repeated high-intensity efforts rely on rapid phosphocreatine resynthesis, which depends partly on aerobic capacity [REF: repeated sprint physiology review]. Data from male players are often used because female data are limited, and this report treats them as indicative only.
+
+Test selection
+The 30-15 Intermittent Fitness Test is selected because it reflects the intermittent demands identified above [REF: 30-15 IFT validity in female players]. Its reliability has been reported in trained players [REF: 30-15 IFT reliability], although the typical error should be compared with the change expected over six weeks. A repeated sprint test will also be used. It is a common test in football.
+
+Monitoring
+GPS high-intensity running will be tracked in training. The 30-15 IFT will be repeated in week five, before the league starts, and training running speeds will be adjusted from the final velocity.
+
+Constraints
+Her hamstring tightness is a constraint. The medical team should clear her before maximal sprint testing. The six-week preseason limits how many maximal tests can be run.
+
+Conclusion
+In conclusion, the priority is to establish whether her late-match decline is physiological, and the testing plan reflects that.
+
+References
+[REF: list]

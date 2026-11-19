@@ -1,0 +1,18 @@
+Introduction
+Rowing is a sport that needs a lot of fitness. This report will look at a rower.
+
+Demands
+Rowing is a predominantly aerobic sport and the aerobic system contributes [X]% of the energy [REF: rowing energy contribution]. Research shows that elite rowers have high VO2max values. [REF: author A] found that rowers have high aerobic capacity. [REF: author B] reported that strength is important. [REF: author C] showed that rowers need power.
+Heavyweight rowers produce [X] W in a race [REF: heavyweight rowing power]. Higher training volume leads to better performance, as shown by [REF: correlational study of training volume].
+
+Testing
+His VO2max of [X] L/min shows he has a good aerobic engine. This is above average compared with normative data for rowers [REF: rowing normative data]. A 2000 m ergometer test will be used because it is the gold standard. More research is needed on this test. A Wingate test will also be done.
+
+Monitoring
+He will be tested again later to see if he gets fitter. Monitoring is important.
+
+Conclusion
+In conclusion, rowing needs endurance, strength, power and speed.
+
+References
+[REF: list]

@@ -1,0 +1,1234 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Critical Writing Check</title>
+<meta name="description" content="A private, rule-based critical writing check for sport and exercise science, levelled from 4 to 7.">
+<style>
+:root{
+  --navy:#003d50;--teal:#00857e;--blue:#0071bc;--plum:#8b3556;--gold:#a68e30;
+  --bg:#f7fbfd;--card:#ffffff;--card2:#f8fcfe;--line:#d9e2e7;--line2:#abd6d9;--text:#1d1d1b;--muted:#4d5a62;
+  --teal-t:#00706a;--blue-t:#005f9e;--plum-t:#8b3556;--gold-t:#6b5a18;--navy-t:#003d50;
+  --flag-bg:#fff1bf;--flag-line:#a68e30;--ok-bg:#e6f5f3;--bad-bg:#fbedf2;--warn-bg:#fff7e3;
+  --btn-dark:#002c3a;--focus:#0071bc;--heat0:#ffffff;--heat1:#fff5d6;--heat2:#ffe08a;--heat3:#f4b6c9;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c1a20;--card:#12262e;--card2:#172f38;--line:#2b4652;--line2:#2f6a70;--text:#e7eff2;--muted:#a8bcc4;
+  --teal-t:#53c8be;--blue-t:#73bdf0;--plum-t:#e899b8;--gold-t:#d9c26e;--navy-t:#9fd3e6;
+  --flag-bg:#4a3d0e;--flag-line:#d9c26e;--ok-bg:#133a33;--bad-bg:#3e1d2a;--warn-bg:#352d10;
+  --btn-dark:#001c25;--focus:#73bdf0;--heat0:#12262e;--heat1:#2e2a12;--heat2:#5a4a10;--heat3:#5e2438;color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0c1a20;--card:#12262e;--card2:#172f38;--line:#2b4652;--line2:#2f6a70;--text:#e7eff2;--muted:#a8bcc4;
+  --teal-t:#53c8be;--blue-t:#73bdf0;--plum-t:#e899b8;--gold-t:#d9c26e;--navy-t:#9fd3e6;
+  --flag-bg:#4a3d0e;--flag-line:#d9c26e;--ok-bg:#133a33;--bad-bg:#3e1d2a;--warn-bg:#352d10;
+  --btn-dark:#001c25;--focus:#73bdf0;--heat0:#12262e;--heat1:#2e2a12;--heat2:#5a4a10;--heat3:#5e2438;color-scheme:dark;}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;line-height:1.58;font-size:16px}
+a{color:var(--blue-t)}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.wrap{max-width:1220px;margin:0 auto;padding:16px}
+.article{border:2px solid var(--line2);border-radius:1rem;background:var(--bg);overflow:hidden}
+header.top{background:#003d50;color:#fff;padding:1.6rem 1.6rem 1.3rem;border-bottom:.4rem solid var(--teal)}
+.pill{display:inline-block;background:#fff;color:#003d50;padding:.3rem .8rem;font-size:.85em;font-weight:bold;border-left:.35rem solid var(--blue);border-radius:.65rem;margin:0 0 .6rem}
+header.top h1{margin:0;font-size:1.9em;line-height:1.18}
+header.top p.sub{margin:.5rem 0 0;max-width:60ch}
+.toolbar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-top:1rem}
+.btn{font:inherit;font-weight:bold;cursor:pointer;border:0;border-bottom:.25rem solid var(--btn-dark);border-radius:.75rem;padding:.6rem 1rem;min-height:2.75rem;background:#003d50;color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem}
+.btn.teal{background:var(--teal);border-bottom-color:#006a65}
+.btn.blue{background:var(--blue);border-bottom-color:#00568f}
+.btn.plum{background:var(--plum);border-bottom-color:#682840}
+.btn.ghost{background:var(--card);color:var(--navy-t);border:2px solid var(--line2);border-bottom-width:.25rem}
+header .btn.ghost{background:#fff;color:#003d50;border-color:#fff}
+.btn.small{padding:.35rem .7rem;min-height:2.25rem;font-size:.9em}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.privacy{margin:1rem 1.2rem 0;background:var(--card);border:1px solid var(--line);border-left:.4rem solid var(--teal);border-radius:.75rem;padding:.9rem 1.1rem}
+.privacy h2{margin:0 0 .3rem;font-size:1.05em;color:var(--teal-t)}
+.privacy p{margin:0}
+.scen{margin:1rem 1.2rem 0;background:var(--card);border:1px solid var(--line);border-radius:.75rem;padding:.9rem 1.1rem}
+.scen fieldset{border:0;margin:0;padding:0}
+.scen legend{font-weight:bold;color:var(--navy-t);padding:0;margin-bottom:.5rem}
+.scen-opts{display:flex;flex-wrap:wrap;gap:.6rem}
+.scen-opts label{flex:1 1 220px;display:flex;gap:.6rem;align-items:flex-start;border:2px solid var(--line);border-radius:.75rem;padding:.6rem .8rem;cursor:pointer;background:var(--card2)}
+.scen-opts input{margin-top:.3rem;width:1.1rem;height:1.1rem;accent-color:var(--teal)}
+.scen-opts label:has(input:checked){border-color:var(--teal);box-shadow:inset .35rem 0 0 var(--teal)}
+.scen-opts small{display:block;color:var(--muted)}
+nav.tabs{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 1.2rem 0;border-bottom:2px solid var(--line2);padding-bottom:.6rem}
+nav.tabs [role=tab]{font:inherit;font-weight:bold;cursor:pointer;border:2px solid var(--line2);background:var(--card);color:var(--navy-t);border-radius:.75rem;padding:.55rem 1rem;min-height:2.75rem}
+nav.tabs [role=tab][aria-selected=true]{background:#003d50;color:#fff;border-color:#003d50;border-bottom:.25rem solid var(--teal)}
+main{padding:0 1.2rem 1.4rem}
+.panel{padding-top:1rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:1rem;overflow:hidden;margin-bottom:1.2rem}
+.card>.band{background:#003d50;color:#fff;padding:1rem 1.3rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.6rem}
+.band.teal{background:var(--teal)}.band.blue{background:var(--blue)}.band.plum{background:var(--plum)}
+.band .pill{margin:0 0 .35rem}
+.band.teal .pill{color:#00706a}.band.blue .pill{color:#005f9e;border-left-color:#003d50}.band.plum .pill{color:#8b3556;border-left-color:#003d50}
+.band h2,.band h3{margin:0;font-size:1.35em;color:#fff}
+.card>.body{padding:1.2rem 1.3rem}
+.mini{background:var(--card2);border:1px solid var(--line);border-left:.4rem solid var(--navy);border-radius:.75rem;padding:1rem;margin-bottom:1rem}
+.mini.teal{border-left-color:var(--teal)}.mini.blue{border-left-color:var(--blue)}.mini.plum{border-left-color:var(--plum)}.mini.gold{border-left-color:var(--gold)}
+.mini h3,.mini h4{margin:0 0 .5rem;color:var(--navy-t);font-size:1.05em}
+.row{display:flex;flex-wrap:wrap;gap:1rem;align-items:stretch}
+.row>*{flex:1 1 280px;min-width:0}
+label.f{display:block;font-weight:bold;color:var(--navy-t);margin:.7rem 0 .25rem}
+.hint{display:block;font-weight:normal;color:var(--muted);font-size:.92em}
+input[type=text],input[type=number],textarea,select{font:inherit;color:var(--text);background:var(--card);border:2px solid var(--line);border-radius:.6rem;padding:.5rem .65rem;width:100%}
+textarea{min-height:4.2rem;resize:vertical}
+textarea.big{min-height:16rem}
+input:focus,textarea:focus,select:focus{border-color:var(--blue)}
+dl.facts{display:grid;grid-template-columns:minmax(8rem,max-content) 1fr;gap:.25rem 1rem;margin:0}
+dl.facts dt{font-weight:bold;color:var(--navy-t)}dl.facts dd{margin:0}
+.stepper{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem}
+.stepper button{font:inherit;cursor:pointer;border:2px solid var(--line2);background:var(--card);color:var(--navy-t);border-radius:.7rem;padding:.4rem .7rem;min-height:2.6rem;text-align:left}
+.stepper button[aria-current=step]{background:var(--teal);color:#fff;border-color:var(--teal)}
+.stepper .st{font-size:.8em;display:block;font-weight:bold}
+.flag{background:var(--warn-bg);border:1px solid var(--line);border-left:.4rem solid var(--gold);border-radius:.6rem;padding:.55rem .8rem;margin:.5rem 0}
+.flag.bad{background:var(--bad-bg);border-left-color:var(--plum)}
+.flag.ok{background:var(--ok-bg);border-left-color:var(--teal)}
+.flag strong{color:var(--text)}
+.item{border:1px solid var(--line);border-radius:.75rem;padding:1rem;margin-bottom:1rem;background:var(--card2)}
+.item h4{margin:0 0 .4rem;color:var(--navy-t)}
+.item-head{display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;align-items:center}
+.appgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.5rem}
+.checks label{display:flex;gap:.5rem;align-items:flex-start;margin:.25rem 0;font-weight:normal}
+.checks input{width:1.1rem;height:1.1rem;margin-top:.25rem;accent-color:var(--teal)}
+.sowhat{border-left-color:var(--plum)}
+.status{display:inline-block;font-weight:bold;border-radius:.5rem;padding:.1rem .5rem;border:2px solid}
+.status.covered{color:var(--teal-t);border-color:var(--teal)}
+.status.partly{color:var(--gold-t);border-color:var(--gold)}
+.status.missing{color:var(--plum-t);border-color:var(--plum)}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid var(--line);padding:.45rem .6rem;text-align:left;vertical-align:top}
+th{background:#003d50;color:#fff}
+.tablewrap{overflow-x:auto;border-radius:.75rem;border:1px solid var(--line)}
+.timeline{display:flex;gap:2px;margin:.6rem 0 .3rem;overflow-x:auto}
+.timeline .wk{flex:1 0 2.6rem;text-align:center;border:1px solid var(--line);border-radius:.4rem;padding:.25rem 0;font-size:.85em;background:var(--card)}
+.timeline .wk.ev{background:var(--bad-bg);border-color:var(--plum)}
+.timeline .wk.rt{box-shadow:inset 0 -.35rem 0 var(--teal)}
+.timeline .tag{display:block;font-weight:bold;font-size:.8em}
+.bar{height:.9rem;background:var(--line);border-radius:.5rem;overflow:hidden}
+.bar>span{display:block;height:100%;background:var(--teal)}
+.bar.budget>span{background:var(--blue)}
+.doc{background:var(--card);border:1px solid var(--line);border-radius:.75rem;padding:1rem 1.2rem;max-height:70vh;overflow:auto}
+.doc p{margin:0 0 .9rem}
+.doc .ph{font-weight:bold;color:var(--navy-t);margin:.8rem 0 .4rem}
+.doc .pnum{font-size:.75em;font-weight:bold;color:var(--muted);margin-right:.35rem}
+mark.hl{background:var(--flag-bg);color:var(--text);border-bottom:2px solid var(--flag-line);padding:0 .1rem;border-radius:.2rem}
+mark.hl:target,mark.hl.pulse{outline:3px solid var(--focus)}
+sup.fn{font-weight:bold;color:var(--plum-t);font-size:.72em;margin-left:.15rem}
+details.cat{border:1px solid var(--line);border-radius:.75rem;margin-bottom:.7rem;background:var(--card)}
+details.cat>summary{cursor:pointer;padding:.7rem .9rem;font-weight:bold;color:var(--navy-t)}
+details.cat .fb{border-top:1px solid var(--line);padding:.7rem .9rem}
+.fb q{display:block;font-style:italic;color:var(--muted);margin:.25rem 0}
+.fb p{margin:.25rem 0}
+.tag-c{display:inline-block;font-size:.8em;font-weight:bold;border:1px solid var(--line2);border-radius:.4rem;padding:0 .4rem;color:var(--navy-t)}
+.heat td.h{font-weight:bold}
+.heat .l0{background:var(--heat0)}.heat .l1{background:var(--heat1)}.heat .l2{background:var(--heat2)}.heat .l3{background:var(--heat3)}
+.spot p.para{line-height:1.9}
+button.sent{font:inherit;color:inherit;background:transparent;border:0;border-bottom:2px dotted var(--line2);padding:0 .1rem;cursor:pointer;text-align:left;display:inline;line-height:1.9}
+button.sent[aria-pressed=true]{background:var(--flag-bg);border-bottom:2px solid var(--flag-line)}
+button.sent[aria-pressed=true]::before{content:"⚑ ";font-weight:bold}
+.pick{display:inline-block;margin:.2rem .3rem;vertical-align:middle}
+.pick select{width:auto;max-width:100%;padding:.2rem .4rem;font-size:.9em}
+.res{margin:.3rem 0;padding:.5rem .7rem;border-radius:.5rem;border:1px solid var(--line)}
+.res.good{background:var(--ok-bg)}.res.miss{background:var(--bad-bg)}.res.part{background:var(--warn-bg)}
+ol.actions li{margin-bottom:.5rem}
+.muted{color:var(--muted)}
+.tight{margin:.2rem 0}
+footer.foot{padding:1rem 1.2rem 1.4rem;color:var(--muted);font-size:.92em;text-align:center}
+@media (max-width:600px){
+  .wrap{padding:8px}
+  header.top{padding:1.2rem 1rem}
+  header.top h1{font-size:1.5em}
+  .privacy,.scen,nav.tabs{margin-left:.6rem;margin-right:.6rem}
+  main{padding:0 .6rem 1rem}
+  .card>.body{padding:1rem .8rem}
+  dl.facts{grid-template-columns:1fr}
+  nav.tabs [role=tab]{flex:1 1 auto}
+}
+@media print{nav.tabs,.toolbar,.scen,.stepper{display:none}}
+.levels{display:flex;flex-wrap:wrap;gap:.6rem}
+.levels label{flex:1 1 200px;display:flex;gap:.6rem;align-items:flex-start;border:2px solid var(--line);border-radius:.75rem;padding:.6rem .8rem;cursor:pointer;background:var(--card2)}
+.levels input{margin-top:.3rem;width:1.1rem;height:1.1rem;accent-color:var(--teal)}
+.levels label:has(input:checked){border-color:var(--teal);box-shadow:inset .35rem 0 0 var(--teal)}
+.levels small{display:block;color:var(--muted)}
+.stepnum{display:inline-flex;align-items:center;justify-content:center;width:1.9rem;height:1.9rem;border-radius:50%;background:#fff;color:#003d50;font-weight:bold;margin-right:.5rem}
+.top3 li{margin-bottom:.7rem}
+.top3 .try{display:block;color:var(--muted)}
+.lvtag{display:inline-block;font-size:.8em;font-weight:bold;border:1px solid var(--line2);border-radius:.4rem;padding:0 .4rem;color:var(--teal-t)}
+.briefbox{border-top:1px solid var(--line);margin-top:.8rem;padding-top:.6rem}
+details.more>summary{cursor:pointer;font-weight:bold;color:var(--navy-t);padding:.6rem 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="article">
+<header class="top" id="top">
+  <p class="pill">Sport and exercise science</p>
+  <h1>Critical Writing Check</h1>
+  <p class="sub">Check a paragraph, a section or a whole draft for the patterns that separate description from critical writing, at your level of study.</p>
+  <div class="toolbar">
+    <button type="button" class="btn ghost small" id="themeBtn" aria-pressed="false">Dark theme</button>
+    <button type="button" class="btn ghost small" id="clearBtn">Clear my data</button>
+    <a class="btn ghost small" id="newTab" href="#" target="_blank" rel="noopener" hidden>Open in a new tab</a>
+  </div>
+</header>
+
+<section class="privacy" aria-labelledby="privacy-h">
+  <h2 id="privacy-h">Private by design</h2>
+  <p>Everything runs in your browser using fixed, transparent rules. There is no AI, no server and nothing is sent anywhere. Your text and brief are kept only in this browser, and "Clear my data" removes them. Opening a PDF or Word file downloads a small open-source reader to read it on your device. The file itself never leaves your device.</p>
+</section>
+
+<main id="main">
+  <section class="card" style="margin-top:1rem" aria-labelledby="setup-h">
+    <div class="band teal"><h2 id="setup-h"><span class="stepnum" aria-hidden="true">1</span>Set up</h2></div>
+    <div class="body">
+      <fieldset style="border:0;padding:0;margin:0"><legend class="f" style="margin:0 0 .5rem">Your level of study</legend>
+        <div class="levels" id="levelOpts"></div></fieldset>
+      <details class="mini blue" id="briefPanel" style="margin-top:1rem"><summary><strong>Add your assessment brief (optional)</strong> <span class="muted" id="briefStatus"></span></summary>
+        <p class="tight" style="margin-top:.6rem">Paste the brief or open the PDF or Word file. The tool picks out the word limit, learning outcomes, marking criteria and key terms, and uses them in your feedback. Check what it found and correct anything it got wrong.</p>
+        <label class="f" for="briefText">Brief text</label>
+        <textarea id="briefText" rows="5"></textarea>
+        <div class="toolbar">
+          <button type="button" class="btn teal" id="readBrief">Read my brief</button>
+          <label class="btn ghost" for="briefFile" style="cursor:pointer">Open .pdf, .docx or .txt</label>
+          <input type="file" id="briefFile" accept=".pdf,.docx,.txt,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="sr-only">
+          <button type="button" class="btn ghost" id="clearBrief">Remove brief</button>
+        </div>
+        <p class="muted tight" id="briefMsg" role="status"></p>
+        <div id="briefFields"></div>
+      </details>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="write-h">
+    <div class="band blue"><h2 id="write-h"><span class="stepnum" aria-hidden="true">2</span>Check your writing</h2></div>
+    <div class="body">
+      <p class="tight">You do not need a finished draft. Check a paragraph as soon as you have written it, fix what is useful, and move on.</p>
+      <fieldset style="border:0;padding:0;margin:.6rem 0 0"><legend class="f" style="margin:0">What are you checking?</legend>
+        <div class="checks" id="modeOpts">
+          <label><input type="radio" name="cmode" value="part"> A paragraph or section</label>
+          <label><input type="radio" name="cmode" value="full"> My full draft <span class="muted">(adds word count and structure checks)</span></label>
+        </div></fieldset>
+      <label class="f" for="draft">Your text<span class="hint">One paragraph per line. For a full draft, put headings on their own lines. Anything after a "References" heading is ignored.</span></label>
+      <textarea id="draft" class="big"></textarea>
+      <div class="toolbar">
+        <button type="button" class="btn blue" id="runCheck">Check my writing</button>
+        <label class="btn ghost" for="fileIn" style="cursor:pointer">Open .docx or .txt</label>
+        <input type="file" id="fileIn" accept=".docx,.txt,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="sr-only">
+        <button type="button" class="btn ghost" id="clearDraft">Clear text</button>
+      </div>
+      <p class="muted tight" id="fileMsg" role="status"></p>
+      <div id="results"></div>
+      <p class="muted tight" style="margin-top:1rem">This tool matches patterns. It will flag some sentences that are fine and miss some problems. It never rewrites your text, gives no mark, and does not replace tutor feedback or Studiosity.</p>
+    </div>
+  </section>
+</main>
+<div id="live" class="sr-only" role="status" aria-live="polite"></div>
+<footer class="foot">Critical Writing Check | Plymouth Marjon University. Patterns, not judgements.</footer>
+</div>
+</div>
+
+<script>
+/* ===== CONFIG START =====
+   Everything a tutor may want to edit lives here: levels, rules, word lists, thresholds,
+   messages and how the assessment brief is read. The logic below only reads it.
+
+   Term lists: plain words match whole words, case-insensitive.
+   A trailing * matches a word stem (e.g. "reliab*"). A term written as "/pattern/" is a regular expression.
+*/
+const CONFIG = {
+  storageKey: "critical-writing-check-v1",
+  mammothUrl: "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js",
+  mammothSri: "sha384-nFoSjZIoH3CCp8W639jJyQkuPHinJ2NHe7on1xvlUA7SuGfJAfvMldrsoAVm6ECz",
+  pdfUrl: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
+  pdfSri: "sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e",
+  pdfWorkerUrl: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
+
+  // Used when no brief is given, or the brief has no word limit.
+  wordLimit: null,
+  wordTolerance: 10, // per cent, used when a brief gives a limit without a tolerance
+
+  /* Levels. Each level runs every rule whose minLevel is at or below it.
+     focus: the question the level asks. thresholds: overrides for CONFIG.thresholds at this level. */
+  levels: {
+    4: { label: "Level 4", focus: "Is it supported and explained?", blurb: "Claims backed by sources, sources named, evidence explained in your own words.",
+         thresholds: { citationChainRun: 3, hedgesPerSentence: 4 } },
+    5: { label: "Level 5", focus: "Is it applied?", blurb: "Evidence applied to athletes, sport contexts and practice, with the population in mind.",
+         thresholds: { citationChainRun: 2, hedgesPerSentence: 3 } },
+    6: { label: "Level 6", focus: "Is it critical?", blurb: "Sources compared and weighed, limitations made specific, conclusions justified.",
+         thresholds: { citationChainRun: 2, synthesisPer100Words: 0.3, synthesisParaMinCitations: 3 } },
+    7: { label: "Level 7", focus: "Is it rigorous?", blurb: "Methods and evidence quality evaluated, certainty calibrated, effects described by size.",
+         thresholds: { citationChainRun: 2, synthesisPer100Words: 0.45, synthesisParaMinCitations: 2, hedgesPerSentence: 3 } }
+  },
+  defaultLevel: 5,
+  focusWeight: 1.5, // rules introduced at the student's own level count this much more in "top 3"
+
+  // Generic section detection. Headings matched first, then body keywords.
+  sections: [
+    { id: "intro", label: "Introduction", criterion: null, heading: ["introduction", "background", "rationale"], body: ["this report", "this essay", "this assignment", "the aim of", "purpose of this"] },
+    { id: "tests", label: "Methods and testing", criterion: null, heading: ["method*", "test*", "assessment*", "protocol*", "procedure*"], body: ["reliab*", "valid*", "ICC", "coefficient of variation", "typical error", "protocol*"] },
+    { id: "demands", label: "Main body", criterion: null, heading: ["discussion", "review", "literature", "demand*", "physiolog*", "analysis", "evidence"], body: [] },
+    { id: "monitoring", label: "Practical application", criterion: null, heading: ["monitor*", "progression", "prescription", "programm*", "practical", "application", "implementation", "constraint*", "individualis*"], body: ["re-test*", "retest*", "prescri*", "monitor*"] },
+    { id: "conclusion", label: "Conclusion", criterion: null, heading: ["conclusion*", "summary", "recommendation*", "next steps"], body: ["in conclusion", "to conclude", "in summary", "overall"] }
+  ],
+  structureRequired: ["intro", "conclusion"],
+  documentOnlyTypes: ["docRequire", "docUnless"],
+
+  thresholds: {
+    headingMaxWords: 10,
+    citationChainRun: 2,
+    hedgesPerSentence: 3,
+    hedgeDensityPerSentence: 1.0,
+    synthesisPer100Words: 0.35,
+    synthesisParaMinCitations: 3,
+    priorityTermsMin: 2,
+    qualitiesListMin: 4,
+    testEvidenceWindow: 2,
+    negationWords: 4,
+    describeMinCitations: 2,   // a paragraph with this many citations and no evaluative language is "description only"
+    methodMinCitations: 2,     // Level 7: a paragraph with this many citations and no comment on methods
+    relevanceMinWords: 30,     // paragraphs shorter than this are not checked against the brief's key terms
+    heatBands: [0, 1, 3, 5]
+  },
+
+  citationPattern: "\\[REF:[^\\]]*\\]|\\([^()]*\\b(?:19|20)\\d{2}[a-z]?\\b[^()]*\\)|\\b[A-Z][A-Za-z'\\-]+(?:\\s+et\\s+al\\.?|\\s+(?:and|&)\\s+[A-Z][A-Za-z'\\-]+)?\\s*\\((?:19|20)\\d{2}[a-z]?\\)|\\[\\d+(?:[\\s,\\u2013-]+\\d+)*\\]",
+  numberPattern: "(?:\\d+(?:\\.\\d+)?|\\[X[^\\]]*\\]|\\[VALUE[^\\]]*\\])",
+
+  categories: {
+    structure:   { label: "Word count and structure", order: 0 },
+    relevance:   { label: "Possibly off the brief", order: 1 },
+    vague:       { label: "Vague attribution", order: 2 },
+    unsupported: { label: "Unsupported claim", order: 3 },
+    reasoning:   { label: "Evidence not explained", order: 4 },
+    descriptive: { label: "Study-by-study description", order: 5 },
+    overclaim:   { label: "Overclaiming", order: 6 },
+    hedge:       { label: "Over-hedging", order: 7 },
+    secondary:   { label: "Secondary citing", order: 8 },
+    application: { label: "Not applied to sport or practice", order: 9 },
+    population:  { label: "Missing population context", order: 10 },
+    normative:   { label: "Unmatched comparison data", order: 11 },
+    energy:      { label: "Energy-system certainty", order: 12 },
+    testEvidence:{ label: "Test without reliability or validity evidence", order: 13 },
+    testLink:    { label: "Test not linked to a purpose", order: 14 },
+    priority:    { label: "No prioritisation", order: 15 },
+    describe:    { label: "Description without evaluation", order: 16 },
+    synthesis:   { label: "Sources not compared", order: 17 },
+    causal:      { label: "Cause claimed from association", order: 18 },
+    genericLimit:{ label: "Generic limitation", order: 19 },
+    binary:      { label: "\"Significant\" without size", order: 20 },
+    method:      { label: "Methods not evaluated", order: 21 }
+  },
+
+  lists: {
+    synthesis: ["however", "in contrast", "by contrast", "consistent with", "whereas", "this may reflect", "conversely", "similarly", "together", "taken together", "although", "while", "despite", "in line with", "contrary to", "alternatively", "this suggests", "these findings", "both"],
+    reasoning: ["therefore", "thus", "this suggests", "this means", "which means", "implies", "implication*", "consequently", "because", "this indicates", "as a result", "so the", "so a", "this may explain", "this matters", "for this reason"],
+    // Language that shows evidence being judged rather than reported (Level 6 and above).
+    evaluative: ["however", "although", "whereas", "in contrast", "limitation*", "limited", "strengths", "a strength", "weakness*", "caution", "may not", "questionable", "robust", "conflicting", "inconsistent", "contradict*", "debate*", "unclear", "should be interpreted", "more convincing", "less convincing", "consistent with", "supports", "challenges", "undermines", "it is unclear", "despite", "interpret*", "confidence", "indicative", "established in", "treated as", "lower than", "higher than", "trustworth*", "weaker", "stronger"],
+    // Words that show evidence applied to sport and practice (Level 5 and above).
+    application: ["athlete*", "player*", "coach*", "practitioner*", "training", "programme*", "program", "client*", "team*", "squad", "competition*", "match*", "season", "in practice", "practical*", "applied", "prescri*", "session*", "performer*", "sprinter*", "rower*", "runner*", "cyclist*", "swimmer*", "patient*", "this population", "for this", "she", "her", "he", "his", "him", "they", "their"],
+    method: ["sample", "participants", "n =", "/\\bn\\s*=\\s*\\d/", "design", "randomi*", "control*", "cross-sectional", "longitudinal", "observational", "intervention", "method*", "protocol", "measure*", "reliab*", "valid*", "bias", "blind*", "power", "confound*", "statistic*", "effect size", "meta-analysis", "systematic review", "trained", "untrained", "elite", "recreational"],
+    evidence: ["ICC", "intraclass", "CV", "coefficient of variation", "typical error", "TE", "SWC", "smallest worthwhile", "SEM", "standard error of measurement", "reliab*", "valid*", "correlat*", "/\\br\\s*=/", "limits of agreement", "test-retest"],
+    priority: ["priorit*", "most important", "primary", "first priority", "key limiter", "limiting factor", "limiter", "rank*", "secondary", "above all", "more important", "less important", "main focus", "takes precedence"],
+    qualities: ["speed", "strength", "power", "endurance", "agility", "flexibility", "mobility", "aerobic capacity", "anaerobic capacity", "speed endurance", "repeated sprint ability", "aerobic fitness", "anaerobic fitness", "body composition", "stamina"],
+    testGeneric: ["Wingate", "VO2max test", "vertical jump", "beep test", "multistage fitness test", "MSFT", "sprint test", "jump test", "strength test", "fitness test", "blood lactate", "lactate threshold", "incremental", "step test", "1RM"],
+    linkGeneric: ["demand*", "determinant*", "identified", "to assess", "to measure", "target*", "reflect*", "relates to", "related to", "linked", "because", "underpin*", "requirement*", "capacity", "ability to", "specific to", "mirrors", "replicates", "purpose", "in order to"]
+  },
+
+  // Sport and exercise science word lists used by the population, test and application rules.
+  sport: {
+    athleteTerms: ["athlete*", "player*", "coach*", "this population", "this group", "for this"],
+    matchTerms: ["female", "male", "women", "men", "elite", "professional", "sub-elite", "amateur", "recreational", "trained", "untrained", "youth", "junior", "masters"],
+    eventTerms: [],
+    issueTerms: ["performance", "fatigue", "injur*", "sprint*", "endurance", "aerobic", "anaerobic", "strength", "power", "speed", "match*", "race*", "competition"],
+    testNames: ["Yo-Yo", "30-15", "IFT", "intermittent fitness test", "repeated sprint", "RSA", "VO2max", "incremental treadmill", "lactate threshold", "Nordic", "NordBord", "isokinetic", "CMJ", "countermovement jump", "squat jump", "drop jump", "reactive strength", "IMTP", "isometric mid-thigh", "10 m sprint", "20 m sprint", "30 m sprint", "40 m sprint", "time trial", "2000 m", "step test", "ergometer", "Wingate", "force plate", "1RM", "DXA", "DEXA", "skinfold", "body composition", "submaximal", "heart rate recovery", "critical power", "FTP"]
+  },
+
+  /* Rules. minLevel = the lowest level that runs the rule.
+     briefTrigger (optional) also runs the rule at any level when the brief's learning outcomes use that kind of verb.
+     Messages: detected (what was found), why (why it matters), ask (a question to ask yourself). {match} is replaced. */
+  rules: [
+    // ---------- Level 4: supported and explained ----------
+    { id: "vague", type: "uncited", category: "vague", minLevel: 4, severity: 2,
+      terms: ["research shows", "research suggests", "research has shown", "studies show", "studies suggest", "studies have shown", "it has been found", "it has been shown", "literature suggests", "the literature shows", "experts agree", "evidence shows", "evidence suggests", "it is suggested", "it is thought", "many studies", "some studies", "previous research"],
+      detected: "\"{match}\" with no citation in the sentence.",
+      why: "The reader cannot check which research you mean, or who it was done with.",
+      ask: "Which study, with which athletes or participants? Name it and cite it." },
+    { id: "unsupported", type: "unsupported", category: "unsupported", minLevel: 4, severity: 2,
+      sections: ["demands", "tests", "other"],
+      claimTerms: ["is the most", "are the most", "is a key", "are key", "key determinant*", "determine*", "account* for", "contribut*", "predominant*", "primarily", "is essential", "are essential", "is crucial", "is vital", "is important for", "are important for", "greater than", "higher than", "lower than", "more than", "require*", "relies on", "rely on", "dominant", "majority of", "improves", "reduces", "increases"],
+      exclude: ["this report", "this essay", "will be", "would be", "will use", "could be used", "should be", "is planned", "I will", "we will", "is recommended"],
+      detected: "A factual or evaluative claim with no citation in this or the next sentence.",
+      why: "Claims about physiology, performance or training need support from peer-reviewed evidence.",
+      ask: "Is this your claim or the literature's? If it is the literature's, cite it. If it is your own conclusion, show the reasoning that gets you there." },
+    { id: "reasoning", type: "reasoning", category: "reasoning", minLevel: 4, severity: 3,
+      detected: "This paragraph cites evidence but never explains what it means.",
+      why: "Evidence on its own is description. Marks come from explaining what it shows and why it matters for your argument.",
+      ask: "After the evidence, add a sentence starting \"This suggests...\" or \"This matters because...\"." },
+    { id: "chain", type: "openingChain", category: "descriptive", minLevel: 4, severity: 3,
+      verbs: ["found", "reported", "showed", "stated", "observed", "demonstrated", "noted", "concluded", "identified", "investigated", "examined"],
+      notSubjects: ["The", "This", "These", "It", "Research", "Studies", "Evidence", "Data", "He", "She", "They", "His", "Her", "Their", "One", "A", "An", "Another", "Previous", "Recent", "Results", "Testing", "Coaches"],
+      detected: "Several sentences in a row start with an author and a reporting verb (\"{match}\").",
+      why: "Going study by study reads as a list. Organising by point shows you understand what the studies mean together.",
+      ask: "What is the point these studies make together? Lead with that, then cite them together." },
+    { id: "overclaim", type: "termList", category: "overclaim", minLevel: 4, severity: 2, skipNegated: true,
+      terms: ["proves", "proven", "prove that", "clearly", "definitely", "undoubtedly", "it is well known", "well established that", "all studies", "always", "never", "guarantees", "guarantee", "without doubt", "certainly", "obviously"],
+      detected: "Certainty word \"{match}\".",
+      why: "Evidence in sport and exercise science is rarely certain, and depends on who was studied.",
+      ask: "How strong is the evidence really? Try \"indicates\" or \"is consistent with\"." },
+    { id: "hedge", type: "hedge", category: "hedge", minLevel: 4, severity: 1,
+      terms: ["may", "might", "could", "possibly", "perhaps", "potentially", "appears to", "seems", "seem to", "somewhat", "slightly", "to some extent", "arguably", "it is possible", "likely", "unlikely", "probably"],
+      detected: "Lots of hedging words ({match}).",
+      why: "Some caution is good, but too much hides what you actually think.",
+      ask: "Keep one hedge where the evidence really is uncertain, then say what you conclude." },
+    { id: "secondary", type: "secondary", category: "secondary", minLevel: 4, severity: 2,
+      terms: ["cited in", "as cited", "cited by", "quoted in"],
+      sourceTerms: ["review", "textbook", "handbook", "essentials of", "/\\[REF:\\s*(?:textbook|review)/"],
+      detected: "{match}",
+      why: "Second-hand values can be rounded, out of date or from a different population.",
+      ask: "Can you find and read the original study?" },
+    { id: "bareValid", type: "binary", category: "testEvidence", minLevel: 4, severity: 2, uncitedOnly: true,
+      terms: ["valid and reliable", "reliable and valid", "is valid", "is reliable", "is a valid", "is a reliable", "gold standard", "has good reliability", "has good validity", "is accurate"],
+      magnitude: ["ICC", "CV", "/\\bTE\\b/", "typical error", "SEM", "SWC", "/\\br\\s*=/", "limits of agreement", "/\\[X[^\\]]*\\]/"],
+      detected: "\"{match}\" with no statistic or citation.",
+      why: "Calling a test valid or reliable is a claim that needs evidence.",
+      ask: "Valid for what? Reliable to what degree, in whom, according to whom?" },
+
+    // ---------- Level 5: applied to sport and practice ----------
+    { id: "application", type: "application", category: "application", minLevel: 5, severity: 3,
+      detected: "Evidence is discussed but not applied to an athlete, sport or practical setting.",
+      why: "At Level 5 you are expected to apply understanding: show what the evidence means for athletes, coaches or practice.",
+      ask: "So what for practice? Who does this affect, and what would a practitioner do differently because of it?" },
+    { id: "population", type: "population", category: "population", minLevel: 5, severity: 2,
+      sections: ["demands", "tests", "other"],
+      units: ["%", "m", "km", "km·h", "km/h", "m·s", "m/s", "bpm", "b·min", "beats", "mmol", "mL", "ml", "L·min", "L/min", "W", "W·kg", "W/kg", "s", "min", "m·min"],
+      descriptors: ["female", "male", "women*", "men*", "elite", "professional", "national", "international", "junior", "senior", "youth", "players", "sprinters", "rowers", "athletes", "amateur", "sub-elite", "trained", "untrained", "level", "recreational", "masters", "years", "aged", "sample", "cohort", "participants", "/\\bU\\d{2}\\b/"],
+      selfTerms: ["this athlete", "personal best"],
+      nameWords: ["sprint*", "test*", "trial*", "time trial", "event*", "race*", "sprinter*", "runner*", "running", "ergometer", "piece*", "split*", "is", "was"],
+      detected: "A number (\"{match}\") with no population named nearby.",
+      why: "Values differ by sex, level, sport and position. Applying a number means knowing whose number it is.",
+      ask: "Whose data is this? Does that group match the athletes you are writing about?" },
+    { id: "normative", type: "normative", category: "normative", minLevel: 5, severity: 2, skipNegated: true,
+      terms: ["normative", "norms", "norm values", "above average", "below average", "percentile", "typical values", "reference values", "compared with elite", "compared to elite", "benchmark*"],
+      detected: "A comparison (\"{match}\") with no matching population named.",
+      why: "Norms from a different sex, level or sport can lead to the wrong conclusion.",
+      ask: "Which group do these norms come from, and does it match your athlete?" },
+    { id: "testEvidence", type: "testEvidence", category: "testEvidence", minLevel: 5, severity: 3,
+      detected: "Test named (\"{match}\") without reliability or validity evidence nearby.",
+      why: "Applying a test well means knowing how much its result varies from day to day, and what it really measures.",
+      ask: "What is the test's reliability (ICC, CV or typical error) and validity, and in whom was that shown?" },
+    { id: "testLink", type: "testLink", category: "testLink", minLevel: 5, severity: 2,
+      detected: "A test (\"{match}\") with no stated purpose.",
+      why: "In applied practice every test should answer a question about the athlete.",
+      ask: "What does this test tell you, and what decision will the result change?" },
+    { id: "energy", type: "energy", category: "energy", minLevel: 5, severity: 2,
+      systemTerms: ["aerobic", "anaerobic", "glycolytic", "glycolysis", "phosphocreatine", "PCr", "ATP-PC", "phosphagen", "oxidative", "energy system*", "energy contribution"],
+      variability: ["estimat*", "vary", "varies", "variation", "range*", "depend*", "method*", "approximately", "around", "about", "~", "between", "differ*", "model*", "up to", "roughly"],
+      detected: "A single energy-system percentage (\"{match}\") stated as fact.",
+      why: "Energy-system contributions are estimates that depend on method, athlete and event.",
+      ask: "How was this estimated, in whom, and do other methods give different values?" },
+    { id: "priority", type: "prioritisation", category: "priority", minLevel: 5, severity: 1,
+      detectedDoc: "Little language that ranks what matters most.",
+      detectedList: "Several qualities listed without saying which matters most (\"{match}\").",
+      why: "Applied work involves choices. Treating everything as equally important does not help a coach.",
+      ask: "Which matters most for this athlete or context, and why?" },
+
+    // ---------- Level 6: critical ----------
+    { id: "describe", type: "describeOnly", category: "describe", minLevel: 6, severity: 3, briefTrigger: "evaluate",
+      detected: "This paragraph reports several sources but does not judge them.",
+      why: "Critical writing weighs evidence: how strong it is, where sources disagree, and what that means.",
+      ask: "Which source is more convincing, and why? Where do they disagree, and what might explain it?" },
+    { id: "synthesis", type: "synthesis", category: "synthesis", minLevel: 6, severity: 2,
+      detected: "Few words that compare or connect sources ({match}).",
+      why: "Without \"however\", \"whereas\" or \"consistent with\", sources sit side by side rather than in conversation.",
+      ask: "Where do your sources agree or disagree, and why might they differ (participants, methods, sport)?" },
+    { id: "causal", type: "near", category: "causal", minLevel: 6, severity: 2,
+      terms: ["leads to", "lead to", "led to", "causes", "caused", "cause", "results in", "resulted in", "improves", "improved", "increases", "reduces", "drives", "is responsible for", "determines"],
+      near: ["associat*", "correlat*", "relationship", "linked", "related to", "cross-sectional", "observational", "predict*"],
+      detected: "Cause-and-effect wording (\"{match}\") near associative evidence.",
+      why: "A correlation or cross-sectional study cannot show that one thing causes another.",
+      ask: "Was this an intervention or an association? If an association, try \"was associated with\"." },
+    { id: "genericLimit", type: "genericLimit", category: "genericLimit", minLevel: 6, severity: 2,
+      terms: ["small sample", "sample size", "not sport-specific", "not sport specific", "more research is needed", "further research is needed", "more research", "further research", "lacks ecological validity", "low ecological validity", "has limitations", "has some limitations", "not perfect"],
+      consequence: ["this athlete", "for him", "for her", "so ", "therefore", "which means", "meaning", "this would", "this could", "this may", "as a result", "consequently"],
+      nextStarts: ["this", "so", "therefore", "for this", "as a result", "consequently", "which", "that means", "because of this"],
+      detected: "A general limitation (\"{match}\") with no consequence stated.",
+      why: "Naming a limitation is a start. Critical writing says what it means for the conclusion.",
+      ask: "So what? How does this limitation change how far you trust or apply the finding?" },
+    { id: "binary", type: "binary", category: "binary", minLevel: 6, severity: 2,
+      terms: ["significant*", "no effect", "had no effect", "found a difference", "no difference", "did not differ", "insignificant", "non-significant"],
+      magnitude: ["/\\b(?:d|g|r|ES|ICC|CV|TE)\\s*[=≈<>]/", "/\\d+(?:\\.\\d+)?\\s*%/", "±", "CI", "confidence interval", "effect size", "SWC", "smallest worthwhile", "trivial", "small", "moderate", "large", "/\\[X[^\\]]*\\]/"],
+      detected: "\"{match}\" without saying how big the effect was.",
+      why: "\"Significant\" says little about whether a change matters in practice. Avoid it in its everyday sense too.",
+      ask: "How big was the difference, with what uncertainty, and would it matter to an athlete?" },
+
+    // ---------- Level 7: rigorous ----------
+    { id: "method", type: "methodEval", category: "method", minLevel: 7, severity: 3,
+      detected: "Several sources are used but nothing is said about how the studies were done.",
+      why: "At Level 7, how much weight a finding deserves depends on design, sample, measurement and bias.",
+      ask: "What kind of study was it, with whom, and how does its design limit the conclusion?" },
+
+    // ---------- Brief-driven ----------
+    { id: "relevance", type: "relevance", category: "relevance", minLevel: 4, severity: 1, needsBrief: true,
+      detected: "This paragraph uses none of the key terms from your brief.",
+      why: "It may be fine, but check that every paragraph moves your answer to the question forward.",
+      ask: "How does this paragraph help answer the brief? If it does, can you make the link explicit?" }
+  ],
+
+  /* Reading the assessment brief. Everything found is shown to the student to correct before use. */
+  brief: {
+    verbs: ["critically evaluate", "critically analyse", "critically analyze", "critically discuss", "critically appraise", "critically reflect", "evaluate", "appraise", "analyse", "analyze", "synthesise", "justify", "apply", "design", "implement", "interpret", "compare", "discuss", "explain", "describe", "reflect", "recommend", "demonstrate"],
+    // Verb groups that switch on brief-triggered rules.
+    triggers: { evaluate: ["critically", "evaluate", "appraise", "analyse", "analyze", "synthesise", "justify"] },
+    criteriaHeadings: ["marking criteria", "assessment criteria", "marking guidance", "marking framework", "rubric", "how the assessment will be judged", "criteria"],
+    stopHeadings: ["learning outcome", "submission", "academic", "generative ai", "support", "references", "resit", "deadline"],
+    maxCriteria: 8,
+    maxKeyTerms: 15,
+    ignore: ["assessment", "assignment", "submission", "submit", "word", "words", "student", "students", "module", "marks", "mark", "marking", "deadline", "turnitin", "canvas", "report", "essay", "please", "will", "must", "should", "would", "could", "your", "you", "their", "they", "this", "that", "these", "those", "with", "from", "have", "been", "being", "were", "into", "each", "also", "such", "using", "used", "include", "including", "learning", "outcome", "outcomes", "criteria", "criterion", "level", "weighting", "format", "university", "page", "pages", "click", "link", "below", "above", "guidance", "tutor", "work", "about", "which", "where", "when", "what", "there", "other", "more", "most", "some", "than", "then", "them", "only", "both", "should", "well", "make", "made", "within", "between", "across", "evaluate", "critically", "apply", "demonstrate", "range", "appropriate", "relevant", "able", "understanding", "knowledge"]
+  }
+};
+/* ===== CONFIG END ===== */
+</script>
+
+<script>
+/* ===== ENGINE START =====
+   Pure text analysis. No DOM access, so it can be tested outside the browser. */
+const _rx = new Map();
+function norm(s) { return String(s).replace(/[‘’]/g, "'").replace(/[“”]/g, '"'); }
+function termRx(t, g) {
+  const key = t + (g ? "#g" : "");
+  if (_rx.has(key)) return _rx.get(key);
+  let r;
+  if (t.length > 2 && t[0] === "/" && t.lastIndexOf("/") > 0) {
+    r = new RegExp(t.slice(1, t.lastIndexOf("/")), "i" + (g ? "g" : ""));
+  } else {
+    const stem = t.endsWith("*");
+    const s = stem ? t.slice(0, -1) : t;
+    const e = s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+    const pre = /^\w/.test(s) ? "\\b" : "";
+    const post = stem ? "" : (/\w$/.test(s) ? "\\b" : "");
+    r = new RegExp(pre + e + post, "i" + (g ? "g" : ""));
+  }
+  _rx.set(key, r);
+  return r;
+}
+function findTerm(text, terms) {
+  const n = norm(text);
+  for (const t of terms || []) { const m = n.match(termRx(t)); if (m) return m[0]; }
+  return null;
+}
+function countTerms(text, terms) {
+  const n = norm(text); let c = 0;
+  for (const t of terms || []) c += (n.match(termRx(t, true)) || []).length;
+  return c;
+}
+function wordCount(s) { return (String(s).match(/[A-Za-z0-9À-ɏ]+(?:['’\-][A-Za-z0-9]+)*/g) || []).length; }
+const CITE_RX = new RegExp(CONFIG.citationPattern);
+function hasCite(s) { return CITE_RX.test(norm(s)); }
+function citeCount(s) { return (norm(s).match(new RegExp(CONFIG.citationPattern, "g")) || []).length; }
+
+function splitSentences(p) {
+  const SAFE = "․";
+  let t = p.replace(/\b(et al|e\.g|i\.e|cf|vs|approx|Fig|No|Dr|Prof|ca|etc)\./gi, m => m.replace(/\./g, SAFE))
+           .replace(/(\d)\.(\d)/g, "$1" + SAFE + "$2");
+  // protect full stops inside [REF: ...] and (...) citations
+  t = t.replace(/\[[^\]]*\]|\([^()]*\)/g, m => m.replace(/[.!?]/g, c => c === "." ? SAFE : c));
+  const parts = t.split(/(?<=[.!?]["'”’)]?)\s+(?=["'“‘(\[]?[A-Z0-9\[])/);
+  return parts.map(x => x.replace(new RegExp(SAFE, "g"), ".").trim()).filter(Boolean);
+}
+
+function parseDoc(raw) {
+  const lines = norm(raw).replace(/\r/g, "").split(/\n+/).map(l => l.trim()).filter(Boolean);
+  const paras = []; let inRefs = false;
+  lines.forEach(line => {
+    let text = line, kind = "body";
+    const md = /^#{1,6}\s+/.test(text);
+    if (md) text = text.replace(/^#{1,6}\s+/, "");
+    const clean = text.replace(/^\d+(\.\d+)*\.?\s+/, "");
+    if (/^(references?|reference list|bibliography|works cited)\s*:?$/i.test(clean)) { inRefs = true; paras.push({ text, kind: "heading", refsHeading: true }); return; }
+    if (inRefs) { paras.push({ text, kind: "ref" }); return; }
+    const wc = wordCount(text);
+    if (md || (wc <= CONFIG.thresholds.headingMaxWords && !/[.?!:;,]$/.test(text) && !hasCite(text))) kind = "heading";
+    paras.push({ text, kind });
+  });
+  paras.forEach((p, i) => {
+    p.i = i;
+    p.words = wordCount(p.text);
+    p.sentences = p.kind === "body" ? splitSentences(p.text).map(s => ({ text: s, cited: hasCite(s), words: wordCount(s) })) : [];
+  });
+  return { paras, raw };
+}
+
+function classifySections(doc, part) {
+  let headingSection = null, seenBody = false;
+  const bodies = doc.paras.filter(p => p.kind === "body");
+  const anyHeading = doc.paras.some(p => p.kind === "heading" && !p.refsHeading);
+  doc.paras.forEach(p => {
+    if (p.kind === "heading") {
+      if (p.refsHeading) return;
+      const m = CONFIG.sections.find(s => findTerm(p.text, s.heading));
+      headingSection = m ? m.id : null;
+      p.section = headingSection;
+      return;
+    }
+    if (p.kind !== "body") return;
+    let sec = headingSection;
+    if (!sec) {
+      let best = null, bestScore = 0;
+      CONFIG.sections.forEach(s => {
+        let sc = countTerms(p.text, s.body);
+        if (s.id === "conclusion" && /^(in conclusion|to conclude|in summary|overall)\b/i.test(p.text)) sc += 5;
+        if (sc > bestScore) { bestScore = sc; best = s.id; }
+      });
+      sec = bestScore >= 1 ? best : "other";
+      if (!part && !anyHeading && !seenBody && sec !== "conclusion") sec = "intro";
+      if (!anyHeading && p === bodies[bodies.length - 1] && /^(in conclusion|to conclude|in summary|overall)\b/i.test(p.text)) sec = "conclusion";
+    }
+    p.section = sec; seenBody = true;
+  });
+}
+
+const RULE_FNS = {
+  openingChain(doc, r) {
+    const hits = [];
+    const rx = new RegExp("^(?:\\[REF:[^\\]]*\\]|(?!(?:" + r.notSubjects.join("|") + ")\\b)[A-Z][A-Za-z'\\-]+(?:\\s+et\\s+al\\.?|\\s+(?:and|&)\\s+[A-Z][A-Za-z'\\-]+)?(?:\\s*\\((?:19|20)\\d{2}[a-z]?\\))?)\\s*,?\\s+(?:also\\s+|further\\s+|similarly\\s+)?(" + r.verbs.join("|") + ")\\b");
+    body(doc).forEach(p => {
+      let run = [];
+      const flush = () => { if (run.length >= CONFIG.thresholds.citationChainRun) run.forEach(o => hits.push({ p: p.i, s: o.j, match: o.m })); run = []; };
+      p.sentences.forEach((s, j) => { const m = s.text.match(rx); if (m) run.push({ j, m: m[0] }); else flush(); });
+      flush();
+    });
+    return hits;
+  },
+  termList(doc, r) { return eachSentence(doc, (s) => { const m = findTerm(s.text, r.terms); return m && !(r.skipNegated && negated(s.text, m)) ? m : null; }); },
+  hedge(doc, r) {
+    const hits = [], th = CONFIG.thresholds;
+    body(doc).forEach(p => {
+      let total = 0, flagged = false;
+      p.sentences.forEach((s, j) => {
+        const c = countTerms(s.text, r.terms); total += c;
+        if (c >= th.hedgesPerSentence) { hits.push({ p: p.i, s: j, match: c + " hedges in one sentence" }); flagged = true; }
+      });
+      if (!flagged && p.sentences.length >= 3 && total / p.sentences.length >= th.hedgeDensityPerSentence)
+        hits.push({ p: p.i, s: null, match: total + " hedges across " + p.sentences.length + " sentences" });
+    });
+    return hits;
+  },
+  uncited(doc, r) { return eachSentence(doc, (s, j, p) => s.cited || (j > 0 && p.sentences[j - 1].cited) ? null : findTerm(s.text, r.terms)); },
+  unsupported(doc, r) {
+    const numRx = new RegExp(CONFIG.numberPattern + "\\s*(?:%|m\\b|km|bpm|mmol|ml|mL|W\\b|s\\b)");
+    return eachSentence(doc, (s, j, p) => {
+      if (!inSections(p, r.sections)) return null;
+      if (s.cited || near(p, j, x => x.cited)) return null;
+      if (findTerm(s.text, r.exclude)) return null;
+      const m = findTerm(s.text, r.claimTerms) || (numRx.test(norm(s.text)) ? "numeric value" : null);
+      return m;
+    });
+  },
+  reasoning(doc, r, sc) {
+    const hits = [], terms = CONFIG.lists.reasoning.concat(sc.athleteTerms);
+    body(doc).forEach(p => {
+      if (!p.sentences.some(s => s.cited)) return;
+      if (!inSections(p, ["demands", "tests", "other"])) return;
+      if (p.sentences.some(s => findTerm(s.text, terms))) return;
+      let last = -1; p.sentences.forEach((s, j) => { if (s.cited) last = j; });
+      hits.push({ p: p.i, s: last, match: "" });
+    });
+    return hits;
+  },
+  synthesis(doc, r) {
+    const hits = [], th = CONFIG.thresholds, L = CONFIG.lists.synthesis;
+    const words = body(doc).reduce((a, p) => a + p.words, 0);
+    const markers = body(doc).reduce((a, p) => a + countTerms(p.text, L), 0);
+    if (!doc.part && words >= 200 && markers / words * 100 < th.synthesisPer100Words)
+      hits.push({ p: null, s: null, match: markers + " markers in " + words + " words" });
+    body(doc).forEach(p => {
+      if (citeCount(p.text) >= th.synthesisParaMinCitations && countTerms(p.text, L) === 0)
+        hits.push({ p: p.i, s: null, match: "none in a paragraph with " + citeCount(p.text) + " citations" });
+    });
+    return hits;
+  },
+  near(doc, r) {
+    return eachSentence(doc, (s, j, p) => {
+      const m = findTerm(s.text, r.terms); if (!m) return null;
+      return (findTerm(s.text, r.near) || near(p, j, x => findTerm(x.text, r.near))) ? m : null;
+    });
+  },
+  binary(doc, r) {
+    return eachSentence(doc, (s) => { if (r.uncitedOnly && s.cited) return null; const m = findTerm(s.text, r.terms); return m && !findTerm(s.text, r.magnitude) ? m : null; });
+  },
+  secondary(doc, r) {
+    const num = new RegExp(CONFIG.numberPattern + "\\s*(?:%|m\\b|km|bpm|mmol|ml|mL|W\\b|s\\b|L)");
+    return eachSentence(doc, (s) => {
+      const m = findTerm(s.text, r.terms); if (m) return "Secondary citation (\"" + m.trim() + "\").";
+      if (num.test(norm(s.text)) && findTerm(s.text, r.sourceTerms)) return "A specific value attributed to a review or textbook.";
+      return null;
+    });
+  },
+  population(doc, r, sc) {
+    const units = r.units.map(u => u.replace(/[.*+?^${}()|[\]\\\/]/g, "\\$&")).sort((a, b) => b.length - a.length).join("|");
+    const rx = new RegExp(CONFIG.numberPattern + "\\s*(?:" + units + ")(?![A-Za-z])");
+    const desc = r.descriptors.concat(sc.matchTerms);
+    return eachSentence(doc, (s, j, p) => {
+      if (!inSections(p, r.sections)) return null;
+      const t = norm(s.text), m = t.match(rx); if (!m) return null;
+      if (findTerm(s.text, r.selfTerms)) return null;
+      if (findTerm(m[0], sc.eventTerms || [])) return null;
+      const after = t.slice(m.index + m[0].length).trim().split(/\s+/)[0] || "";
+      if (/\bm$/.test(m[0]) && findTerm(after, r.nameWords)) return null;
+      if (findTerm(s.text, desc) || (j > 0 && findTerm(p.sentences[j - 1].text, desc))) return null;
+      return m[0];
+    });
+  },
+  energy(doc, r) {
+    const pct = new RegExp(CONFIG.numberPattern + "\\s*%", "g");
+    const range = new RegExp(CONFIG.numberPattern + "\\s*%?\\s*(?:\\u2013|-|to)\\s*" + CONFIG.numberPattern + "\\s*%");
+    return eachSentence(doc, (s) => {
+      const t = norm(s.text);
+      if (!findTerm(t, r.systemTerms)) return null;
+      const ms = t.match(pct); if (!ms) return null;
+      if (range.test(t) || findTerm(t, r.variability)) return null;
+      return ms[0];
+    });
+  },
+  normative(doc, r, sc) {
+    return eachSentence(doc, (s, j, p) => {
+      const m = findTerm(s.text, r.terms); if (!m) return null;
+      if (r.skipNegated && negated(s.text, m)) return null;
+      if (findTerm(s.text, sc.matchTerms) || near(p, j, x => findTerm(x.text, sc.matchTerms))) return null;
+      return m;
+    });
+  },
+  testEvidence(doc, r, sc) {
+    const names = sc.testNames.concat(CONFIG.lists.testGeneric);
+    const W = CONFIG.thresholds.testEvidenceWindow;
+    return eachTestMention(doc, names, (p, m, j) => {
+      const win = p.sentences.slice(j, j + W + 1);
+      const ok = win.some(s => findTerm(s.text, CONFIG.lists.evidence)) && win.some(s => s.cited);
+      return ok ? null : { s: j, match: m };
+    });
+  },
+  genericLimit(doc, r) {
+    return eachSentence(doc, (s, j, p) => {
+      const m = findTerm(s.text, r.terms); if (!m) return null;
+      const next = p.sentences[j + 1];
+      const rest = s.text.slice(norm(s.text).toLowerCase().indexOf(m.toLowerCase()) + m.length);
+      if (findTerm(rest, r.consequence) || (next && r.nextStarts.some(w => norm(next.text).toLowerCase().startsWith(w)))) return null;
+      return m;
+    });
+  },
+  testLink(doc, r, sc) {
+    const names = sc.testNames.concat(CONFIG.lists.testGeneric), link = CONFIG.lists.linkGeneric.concat(sc.issueTerms);
+    return eachTestMention(doc, names, (p, m, j) => {
+      const t = p.sentences.slice(Math.max(0, j - 1), j + 3).map(s => s.text).join(" ").split(m).join(" ");
+      return findTerm(t, link) ? null : { s: j, match: m };
+    });
+  },
+  monitoringGaps(doc, r) {
+    let paras = body(doc).filter(p => p.section === "monitoring");
+    const scope = paras.length ? paras : body(doc);
+    if (!scope.length) return [];
+    const anchor = paras.length ? paras[0].i : null;
+    const hits = [];
+    const hasRetest = scope.some(p => p.sentences.some(s => findTerm(s.text, r.retest) && findTerm(s.text, r.time)));
+    const hasPresc = scope.some(p => findTerm(p.text, r.prescription));
+    if (!hasRetest) hits.push({ p: anchor, s: null, detected: r.detectedRetest });
+    if (!hasPresc) hits.push({ p: anchor, s: null, detected: r.detectedPrescription });
+    return hits;
+  },
+  prioritisation(doc, r) {
+    const hits = [];
+    const text = body(doc).map(p => p.text).join(" ");
+    if (!doc.part && wordCount(text) >= 300 && countTerms(text, CONFIG.lists.priority) < CONFIG.thresholds.priorityTermsMin)
+      hits.push({ p: null, s: null, detected: r.detectedDoc });
+    eachSentence(doc, (s) => {
+      const qs = CONFIG.lists.qualities.filter(q => termRx(q).test(s.text));
+      return qs.length >= CONFIG.thresholds.qualitiesListMin && !findTerm(s.text, CONFIG.lists.priority) ? qs.join(", ") : null;
+    }).forEach(h => hits.push({ ...h, detected: r.detectedList.replace("{match}", h.match) }));
+    return hits;
+  },
+  nearUnless(doc, r) {
+    return eachSentence(doc, (s, j, p) => {
+      const m = findTerm(s.text, r.terms); if (!m) return null;
+      if (findTerm(s.text, r.unless) || near(p, j, x => findTerm(x.text, r.unless))) return null;
+      return m;
+    });
+  },
+  coOccur(doc, r) {
+    return eachSentence(doc, (s, j, p) => {
+      const ms = r.groups.map(g => findTerm(s.text, g));
+      if (ms.some(x => !x)) return null;
+      if (findTerm(s.text, r.unless) || (!r.sentenceOnly && near(p, j, x => findTerm(x.text, r.unless)))) return null;
+      return ms.join(" ... ");
+    });
+  },
+  docUnless(doc, r) {
+    const ps = body(doc).filter(p => findTerm(p.text, r.terms));
+    if (!ps.length) return [];
+    if (ps.some(p => findTerm(p.text, r.unless))) return [];
+    const j = ps[0].sentences.findIndex(s => findTerm(s.text, r.terms));
+    return [{ p: ps[0].i, s: j < 0 ? null : j, match: "" }];
+  },
+  docRequire(doc, r) {
+    const text = body(doc).map(p => p.text).join(" ");
+    if (wordCount(text) < 150) return [];
+    return findTerm(text, r.terms) ? [] : [{ p: null, s: null, match: "" }];
+  }
+};
+function body(doc) { return doc.paras.filter(p => p.kind === "body"); }
+function near(p, j, f) { const a = p.sentences[j - 1], b = p.sentences[j + 1]; return (a && f(a)) || (b && f(b)); }
+function eachSentence(doc, f) {
+  const hits = [];
+  body(doc).forEach(p => p.sentences.forEach((s, j) => { const m = f(s, j, p); if (m) hits.push({ p: p.i, s: j, match: m }); }));
+  return hits;
+}
+function inSections(p, list) { return !list || !p.section || list.includes(p.section); }
+function negated(text, m) {
+  const t = norm(text), i = t.toLowerCase().indexOf(m.toLowerCase()); if (i < 0) return false;
+  const before = t.slice(0, i).trim().split(/\s+/).slice(-CONFIG.thresholds.negationWords).join(" ");
+  return /\b(not|never|rather than|instead of|without|no)\b|n\x27t\b/i.test(before);
+}
+// Calls f once for each distinct test named in a test-related paragraph, at the sentence where it first appears.
+function eachTestMention(doc, names, f) {
+  const hits = [];
+  body(doc).forEach(p => {
+    if (p.section && ["intro", "conclusion", "profile", "monitoring", "constraints"].includes(p.section)) return;
+    if (p.section !== "tests" && !findTerm(p.text, ["test*", "assess*", "protocol*"])) return;
+    const seen = new Set();
+    p.sentences.forEach((s, j) => {
+      // sentences that continue discussing a test already named are not new mentions
+      if (/^(It|Its|This|These|The test|However|Although)\b/.test(s.text) || /limitation/i.test(s.text)) return;
+      const m = findTerm(s.text, names); if (!m || seen.has(m.toLowerCase())) return;
+      seen.add(m.toLowerCase());
+      const h = f(p, m, j); if (h) hits.push({ p: p.i, ...h });
+    });
+  });
+  return hits;
+}
+
+
+// Rules added for the general, levelled checker.
+Object.assign(RULE_FNS, {
+  // Level 5: a paragraph that cites evidence but never mentions an athlete, sport or practical setting.
+  application(doc, r) {
+    const hits = [], terms = CONFIG.lists.application;
+    body(doc).forEach(p => {
+      if (!p.sentences.some(s => s.cited) || !inSections(p, ["demands", "tests", "other"])) return;
+      if (findTerm(p.text, terms)) return;
+      let last = -1; p.sentences.forEach((s, j) => { if (s.cited) last = j; });
+      hits.push({ p: p.i, s: last, match: "" });
+    });
+    return hits;
+  },
+  // Level 6: several citations, no evaluative language.
+  describeOnly(doc, r) {
+    return body(doc).filter(p => citeCount(p.text) >= CONFIG.thresholds.describeMinCitations && !findTerm(p.text, CONFIG.lists.evaluative))
+      .map(p => ({ p: p.i, s: null, match: "" }));
+  },
+  // Level 7: several citations, nothing about how the studies were done.
+  methodEval(doc, r) {
+    return body(doc).filter(p => citeCount(p.text) >= CONFIG.thresholds.methodMinCitations && !findTerm(p.text, CONFIG.lists.method))
+      .map(p => ({ p: p.i, s: null, match: "" }));
+  },
+  // Brief: a substantial paragraph that uses none of the brief's key terms.
+  relevance(doc, r) {
+    const keys = (doc.brief && doc.brief.keyTerms) || [];
+    if (keys.length < 4) return [];
+    // relevant if the paragraph, or the heading above it, shares any word with the key terms, criteria or learning outcomes
+    const vocab = new Set(contentWords(keys.join(" ") + " " + doc.brief.criteria.join(" ") + " " + doc.brief.los.join(" ")).concat(keys.join(" ").split(/\s+/)).map(STEM));
+    const touches = t => (norm(t).toLowerCase().match(/[a-z0-9][a-z0-9\-]*/g) || []).some(w => vocab.has(STEM(w)));
+    const hits = []; let heading = "";
+    doc.paras.forEach(p => {
+      if (p.kind === "heading") { heading = p.text; return; }
+      if (p.kind !== "body" || p.words < CONFIG.thresholds.relevanceMinWords) return;
+      if (!touches(p.text) && !touches(heading)) hits.push({ p: p.i, s: null, match: "" });
+    });
+    return hits;
+  }
+});
+
+/* ---------- assessment brief ---------- */
+const STEM = w => w.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5);
+function contentWords(s) {
+  const ig = new Set(CONFIG.brief.ignore);
+  return (norm(s).toLowerCase().match(/[a-z][a-z\-]{3,}/g) || []).filter(w => !ig.has(w) && !STOP.has(w));
+}
+const STOP = new Set("a an and are as at be by for in is it its of on or the to was were with without not this that those these there their they them our your you we he she his her can may might will shall should would could than then also into from over under about after before during while within between such both each other more most less least very much many few all any some no nor only own same so too just how why who whom what which when where".split(" "));
+function hasKeyTerm(text, term) {
+  const words = (norm(text).toLowerCase().match(/[a-z0-9][a-z0-9\-]*/g) || []).map(STEM);
+  const set = new Set(words);
+  return term.split(/\s+/).every(t => set.has(STEM(t)));
+}
+// Reads a pasted brief. Returns plain fields the student can edit before they are used.
+function parseBrief(text) {
+  const t = norm(text || "").replace(/\r/g, "");
+  const lines = t.split(/\n+/).map(l => l.replace(/\s+/g, " ").trim()).filter(Boolean);
+  const out = { wordMin: "", wordMax: "", los: [], verbs: [], criteria: [], keyTerms: [] };
+  // word limit
+  const num = s => parseInt(String(s).replace(/,/g, ""), 10);
+  let m = t.match(/(\d[\d,]{2,5})\s*(?:-|–|to)\s*(\d[\d,]{2,5})\s*words?/i);
+  if (m) { out.wordMin = num(m[1]); out.wordMax = num(m[2]); }
+  else if ((m = t.match(/(\d{1,2},\d{3}|\d{3,5})\s*-?\s*words?/i))) {
+    const n = num(m[1]);
+    const tol = t.match(/(?:±|\+\/-|plus or minus)\s*(\d{1,2})\s*%/i);
+    const pc = tol ? +tol[1] : CONFIG.wordTolerance;
+    out.wordMin = Math.round(n * (1 - pc / 100)); out.wordMax = Math.round(n * (1 + pc / 100));
+  }
+  // learning outcomes
+  out.los = lines.filter(l => /^(?:[-•*]\s*)?(?:LO\s*\d+|learning outcome\s*\d+)\b/i.test(l)).map(l => l.replace(/^(?:[-•*]\s*)?(?:LO\s*\d+|learning outcome\s*\d+)\s*[:.)\-–]?\s*/i, ""));
+  if (!out.los.length) {
+    const i = lines.findIndex(l => /learning outcomes?/i.test(l) && l.length < 60);
+    if (i >= 0) out.los = lines.slice(i + 1, i + 7).filter(l => /^(?:\d+[.)]|[-•*])\s+/.test(l)).map(l => l.replace(/^(?:\d+[.)]|[-•*])\s+/, ""));
+  }
+  const verbSrc = (out.los.length ? out.los.join(" ") : t).toLowerCase();
+  out.verbs = CONFIG.brief.verbs.filter(v => termRx(v).test(verbSrc)).filter((v, k, a) => !a.some(o => o !== v && o.includes(v)));
+  // marking criteria: short lines after a criteria heading
+  const ci = lines.findIndex(l => l.length < 80 && CONFIG.brief.criteriaHeadings.some(h => l.toLowerCase().includes(h)));
+  if (ci >= 0) {
+    for (let k = ci + 1; k < lines.length && out.criteria.length < CONFIG.brief.maxCriteria; k++) {
+      const l = lines[k], wc = wordCount(l);
+      if (CONFIG.brief.stopHeadings.some(h => l.toLowerCase().startsWith(h))) break;
+      if (/^(criterion|what you should demonstrate|weighting|marks?)$/i.test(l)) continue;
+      if (wc >= 2 && wc <= 14 && !/[.]$/.test(l)) out.criteria.push(l.replace(/^(?:\d+[.)]|[-•*])\s*/, ""));
+    }
+  }
+  // key terms: repeated two-word phrases first, then repeated single words
+  // pairs only count when the two words sit next to each other in the brief
+  const bi = {}, uni = {}, ig = new Set(CONFIG.brief.ignore), ok = w => w && w.length >= 4 && !ig.has(w) && !STOP.has(w);
+  lines.forEach(l => {
+    const ws = norm(l).toLowerCase().split(/[^a-z\-]+/);
+    ws.forEach((w, k) => { if (!ok(w)) return; uni[w] = (uni[w] || 0) + 1; if (k && ok(ws[k - 1]) && ws[k - 1] !== w) { const b = ws[k - 1] + " " + w; bi[b] = (bi[b] || 0) + 1; } });
+  });
+  const keys = Object.entries(bi).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1]).map(([b]) => b);
+  Object.entries(uni).filter(([, c]) => c >= 3).sort((a, b) => b[1] - a[1]).forEach(([w]) => { if (!keys.some(k => k.split(" ").includes(w))) keys.push(w); });
+  out.keyTerms = keys.slice(0, CONFIG.brief.maxKeyTerms);
+  return out;
+}
+// Turns the (possibly edited) brief fields into what the engine uses.
+function briefModel(f) {
+  if (!f) return null;
+  const list = s => Array.isArray(s) ? s : String(s || "").split(/\n|,/).map(x => x.trim()).filter(Boolean);
+  const b = { wordMin: +f.wordMin || null, wordMax: +f.wordMax || null, los: list(f.los), criteria: list(f.criteria), keyTerms: list(f.keyTerms).map(x => x.toLowerCase()), verbs: [] };
+  const src = (b.los.join(" ") || "").toLowerCase();
+  b.verbs = CONFIG.brief.verbs.filter(v => termRx(v).test(src)).filter((v, k, a) => !a.some(o => o !== v && o.includes(v)));
+  b.triggers = {};
+  Object.entries(CONFIG.brief.triggers).forEach(([k, ws]) => { b.triggers[k] = ws.some(w => termRx(w).test(src)); });
+  if (!b.wordMin && !b.los.length && !b.criteria.length && !b.keyTerms.length) return null;
+  return b;
+}
+// How well each marking criterion's key words appear in the student's paragraphs.
+function briefCoverage(doc, brief) {
+  if (!brief || !brief.criteria.length) return [];
+  const paras = doc.paras.filter(p => p.kind !== "ref" && !p.refsHeading); // headings count as evidence of coverage
+  return brief.criteria.map(c => {
+    const cw = Array.from(new Set(contentWords(c).map(STEM)));
+    if (!cw.length) return { criterion: c, status: "unknown", paras: [] };
+    const hits = paras.filter(p => {
+      const set = new Set((norm(p.text).toLowerCase().match(/[a-z][a-z\-]*/g) || []).map(STEM));
+      return cw.filter(w => set.has(w)).length / cw.length >= 0.5;
+    }).map(p => p.i);
+    return { criterion: c, viaHeading: hits.some(i => doc.paras[i].kind === "heading"), status: hits.length >= 2 ? "covered" : hits.length ? "partly" : "missing", paras: hits };
+  });
+}
+
+function assessmentLevel(doc, part, brief) {
+  const out = { items: [], part: !!part };
+  const counted = body(doc);
+  out.words = counted.reduce((a, p) => a + p.words, 0);
+  out.headingWords = doc.paras.filter(p => p.kind === "heading").reduce((a, p) => a + p.words, 0);
+  out.refWords = doc.paras.filter(p => p.kind === "ref").reduce((a, p) => a + p.words, 0);
+  out.hasRefs = doc.paras.some(p => p.refsHeading);
+  out.coverage = briefCoverage(doc, brief);
+  if (part) return out;
+  if (brief && brief.wordMin && brief.wordMax) {
+    out.limit = { min: brief.wordMin, max: brief.wordMax };
+    out.wordStatus = out.words < brief.wordMin ? "under" : out.words > brief.wordMax ? "over" : "within";
+    if (out.wordStatus !== "within") out.items.push({ ruleId: "wordcount", category: "structure", minLevel: 4, severity: 2, p: null, s: null,
+      detected: `${out.words} words counted, ${out.wordStatus === "under" ? "below" : "above"} the ${brief.wordMin} to ${brief.wordMax} range in your brief.`,
+      why: "Check how your module applies the word limit.",
+      ask: out.wordStatus === "under" ? "Which part of the brief is least developed?" : "Which descriptive sentences could go to make room for evaluation?" });
+  }
+  const present = {};
+  doc.paras.forEach(p => { if (p.section) present[p.section] = true; });
+  out.structure = CONFIG.structureRequired.map(id => ({ id, label: CONFIG.sections.find(s => s.id === id).label, present: !!present[id] }));
+  out.structure.filter(s => !s.present).forEach(s => out.items.push({ ruleId: "structure-" + s.id, category: "structure", minLevel: 4, severity: 1, p: null, s: null,
+    detected: `No ${s.label.toLowerCase()} detected.`,
+    why: "Detection uses headings and keywords, so a clear heading helps the reader as well as this tool.",
+    ask: `Is there a ${s.label.toLowerCase()}? Does a heading make it obvious?` }));
+  out.coverage.filter(c => c.status === "missing").forEach(c => out.items.push({ ruleId: "brief-criterion", category: "relevance", minLevel: 4, severity: 2, p: null, s: null,
+    detected: `Little sign of this marking criterion: "${c.criterion}".`,
+    why: "Your brief says this will be marked. The check looks for its key words, so it may miss a criterion you cover in other words.",
+    ask: "Where in your draft do you address this? Could you make it more explicit?" }));
+  return out;
+}
+
+// level 4 to 7. opts.mode "part" checks an extract; opts.brief is the edited brief fields (or null).
+function analyse(raw, level, opts) {
+  opts = opts || {};
+  level = +level || CONFIG.defaultLevel;
+  const part = opts.mode === "part";
+  const brief = briefModel(opts.brief);
+  const sc = CONFIG.sport;
+  const saved = CONFIG.thresholds;
+  CONFIG.thresholds = Object.assign({}, saved, (CONFIG.levels[level] || {}).thresholds);
+  try {
+    const doc = parseDoc(raw); classifySections(doc, part);
+    doc.part = part; doc.brief = brief;
+    const items = [];
+    CONFIG.rules.forEach(r => {
+      if (r.enabled === false) return;
+      const byBrief = r.briefTrigger && brief && brief.triggers[r.briefTrigger];
+      if (r.minLevel > level && !byBrief) return;
+      if (r.needsBrief && !brief) return;
+      if (part && CONFIG.documentOnlyTypes.includes(r.type)) return;
+      const fn = RULE_FNS[r.type]; if (!fn) return;
+      fn(doc, r, sc).forEach(h => items.push({
+        ruleId: r.id, category: r.category, minLevel: r.minLevel, byBrief: !!(byBrief && r.minLevel > level), severity: r.severity, p: h.p, s: h.s,
+        detected: h.detected || r.detected.replace("{match}", h.match || ""), why: r.why, ask: r.ask, match: h.match
+      }));
+    });
+    const assess = assessmentLevel(doc, part, brief);
+    const all = assess.items.concat(items);
+    all.forEach((it, k) => it.n = k + 1);
+    return { doc, items: all, assess, level, brief };
+  } finally { CONFIG.thresholds = saved; }
+}
+/* ===== ENGINE END ===== */
+</script>
+
+<script>
+/* ===== APP (user interface) ===== */
+(function () {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const announce = m => { const l = $("#live"); l.textContent = ""; setTimeout(() => l.textContent = m, 30); };
+
+  /* ---------- state ---------- */
+  const blank = () => ({ v: 1, level: CONFIG.defaultLevel, mode: "part", theme: null, draft: "", briefText: "", brief: null });
+  let state = blank();
+  try { const s = JSON.parse(localStorage.getItem(CONFIG.storageKey)); if (s && s.v === 1) state = Object.assign(blank(), s); } catch (e) {}
+  let saveT;
+  function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(CONFIG.storageKey, JSON.stringify(state)); } catch (e) {} }, 250); }
+  let last = null; // last result, re-rendered when the level changes
+
+  /* ---------- theme and data ---------- */
+  function applyTheme() {
+    const root = document.documentElement;
+    if (state.theme) root.setAttribute("data-theme", state.theme); else root.removeAttribute("data-theme");
+    const dark = state.theme ? state.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    const b = $("#themeBtn"); b.setAttribute("aria-pressed", String(dark)); b.textContent = dark ? "Light theme" : "Dark theme";
+  }
+  $("#themeBtn").addEventListener("click", () => {
+    const dark = document.documentElement.getAttribute("data-theme") ? state.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    state.theme = dark ? "light" : "dark"; applyTheme(); save();
+  });
+  try { if (window.self !== window.top) { const a = $("#newTab"); a.href = location.href.split("#")[0]; a.hidden = false; } } catch (e) {}
+  $("#clearBtn").addEventListener("click", () => {
+    if (!confirm("Clear your text, brief and settings from this browser? This cannot be undone.")) return;
+    try { localStorage.removeItem(CONFIG.storageKey); } catch (e) {}
+    const theme = state.theme; state = blank(); state.theme = theme; last = null; renderAll(); announce("Your data has been cleared from this browser.");
+  });
+
+  /* ---------- level and mode ---------- */
+  function renderLevels() {
+    $("#levelOpts").innerHTML = Object.entries(CONFIG.levels).map(([k, l]) =>
+      `<label><input type="radio" name="level" value="${k}" ${+state.level === +k ? "checked" : ""}><span><strong>${esc(l.label)}. ${esc(l.focus)}</strong><small>${esc(l.blurb)}</small></span></label>`).join("");
+    $$("#modeOpts input").forEach(i => i.checked = i.value === state.mode);
+  }
+  $("#levelOpts").addEventListener("change", e => {
+    state.level = +e.target.value; save();
+    announce(CONFIG.levels[state.level].label + " selected.");
+    if (last) run(true);
+  });
+  $("#modeOpts").addEventListener("change", e => { state.mode = e.target.value; save(); });
+
+  /* ---------- file reading (all on this device) ---------- */
+  function loadScript(url, sri, test) {
+    return new Promise((res, rej) => {
+      if (test()) return res(test());
+      const s = document.createElement("script"); s.src = url; s.integrity = sri; s.crossOrigin = "anonymous"; s.referrerPolicy = "no-referrer";
+      s.onload = () => res(test()); s.onerror = rej; document.head.appendChild(s);
+    });
+  }
+  async function readDocx(f) {
+    const m = await loadScript(CONFIG.mammothUrl, CONFIG.mammothSri, () => window.mammoth);
+    const r = await m.convertToHtml({ arrayBuffer: await f.arrayBuffer() });
+    const div = document.createElement("div"); div.innerHTML = r.value;
+    return Array.from(div.querySelectorAll("h1,h2,h3,h4,h5,h6,p,li,td,th")).filter(n => !n.querySelector("p,li")).map(n => (/^H[1-6]$/.test(n.tagName) ? "# " : "") + n.textContent.trim()).filter(Boolean).join("\n");
+  }
+  async function readPdf(f) {
+    const lib = await loadScript(CONFIG.pdfUrl, CONFIG.pdfSri, () => window.pdfjsLib);
+    lib.GlobalWorkerOptions.workerSrc = CONFIG.pdfWorkerUrl;
+    const pdf = await lib.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise;
+    const out = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const tc = await (await pdf.getPage(i)).getTextContent();
+      out.push(tc.items.map(it => it.str + (it.hasEOL ? "\n" : "")).join(""));
+    }
+    return out.join("\n");
+  }
+  async function readFile(f, allowPdf) {
+    if (/\.txt$/i.test(f.name)) return f.text();
+    if (/\.docx$/i.test(f.name)) return readDocx(f);
+    if (allowPdf && /\.pdf$/i.test(f.name)) return readPdf(f);
+    throw new Error("type");
+  }
+
+  /* ---------- brief ---------- */
+  function briefSummary() {
+    const b = state.brief; if (!b) return "";
+    const n = s => String(s || "").split("\n").filter(x => x.trim()).length;
+    const bits = [];
+    if (b.wordMin && b.wordMax) bits.push(`${b.wordMin} to ${b.wordMax} words`);
+    if (n(b.los)) bits.push(`${n(b.los)} learning outcome${n(b.los) > 1 ? "s" : ""}`);
+    if (n(b.criteria)) bits.push(`${n(b.criteria)} criteria`);
+    if (b.keyTerms) { const k = String(b.keyTerms).split(",").filter(x => x.trim()).length; if (k) bits.push(`${k} key term${k > 1 ? "s" : ""}`); }
+    return bits.length ? "(in use: " + bits.join(", ") + ")" : "";
+  }
+  function renderBrief() {
+    $("#briefText").value = state.briefText || "";
+    $("#briefStatus").textContent = briefSummary();
+    const b = state.brief;
+    if (!b) { $("#briefFields").innerHTML = ""; return; }
+    $("#briefFields").innerHTML = `<div class="briefbox">
+      <h3 style="margin:.2rem 0;color:var(--navy-t);font-size:1.05em">What the tool found. Correct anything that is wrong.</h3>
+      <div class="row">
+        <div style="flex:0 1 150px"><label class="f" for="bMin">Minimum words</label><input type="number" id="bMin" data-b="wordMin" value="${esc(b.wordMin)}"></div>
+        <div style="flex:0 1 150px"><label class="f" for="bMax">Maximum words</label><input type="number" id="bMax" data-b="wordMax" value="${esc(b.wordMax)}"></div>
+      </div>
+      <label class="f" for="bLos">Learning outcomes<span class="hint">One per line. Verbs such as "critically evaluate" switch on extra checks.</span></label><textarea id="bLos" data-b="los" rows="3">${esc(b.los)}</textarea>
+      <label class="f" for="bCrit">Marking criteria<span class="hint">One per line, a few words each. Used to estimate which criteria your writing covers.</span></label><textarea id="bCrit" data-b="criteria" rows="4">${esc(b.criteria)}</textarea>
+      <label class="f" for="bKeys">Key terms<span class="hint">Separated by commas. Paragraphs that use none of them are gently flagged.</span></label><textarea id="bKeys" data-b="keyTerms" rows="2">${esc(b.keyTerms)}</textarea>
+    </div>`;
+  }
+  $("#briefFields").addEventListener("input", e => { const k = e.target.dataset.b; if (!k || !state.brief) return; state.brief[k] = e.target.value; $("#briefStatus").textContent = briefSummary(); save(); });
+  $("#briefText").addEventListener("input", e => { state.briefText = e.target.value; save(); });
+  function readBrief() {
+    const t = $("#briefText").value;
+    if (!t.trim()) { $("#briefMsg").textContent = "Paste your brief or open a file first."; return; }
+    const f = parseBrief(t);
+    state.brief = { wordMin: f.wordMin, wordMax: f.wordMax, los: f.los.join("\n"), criteria: f.criteria.join("\n"), keyTerms: f.keyTerms.join(", ") };
+    save(); renderBrief();
+    $("#briefMsg").textContent = "Brief read. Check the fields below. Your next check will use them.";
+    if (last) run(true);
+  }
+  $("#readBrief").addEventListener("click", readBrief);
+  $("#clearBrief").addEventListener("click", () => { state.brief = null; state.briefText = ""; save(); renderBrief(); $("#briefMsg").textContent = "Brief removed."; if (last) run(true); });
+  $("#briefFile").addEventListener("change", async e => {
+    const f = e.target.files[0]; if (!f) return; const msg = $("#briefMsg");
+    msg.textContent = "Reading your file on this device...";
+    try { const t = await readFile(f, true); $("#briefText").value = t; state.briefText = t; readBrief(); msg.textContent = `Read ${f.name}. Check the fields below.`; }
+    catch (err) { msg.textContent = "Sorry, that file could not be read. Try copying and pasting the text instead."; }
+    e.target.value = "";
+  });
+
+  /* ---------- writing ---------- */
+  $("#draft").addEventListener("input", e => { state.draft = e.target.value; save(); });
+  $("#clearDraft").addEventListener("click", () => { $("#draft").value = ""; state.draft = ""; save(); $("#results").innerHTML = ""; last = null; announce("Text cleared."); });
+  $("#fileIn").addEventListener("change", async e => {
+    const f = e.target.files[0]; if (!f) return; const msg = $("#fileMsg");
+    msg.textContent = "Reading your file on this device...";
+    try { const t = await readFile(f, false); $("#draft").value = t; state.draft = t; save(); msg.textContent = `Loaded ${f.name}. Select "Check my writing".`; }
+    catch (err) { msg.textContent = "Sorry, that file could not be read. Try pasting the text instead."; }
+    e.target.value = "";
+  });
+  $("#runCheck").addEventListener("click", () => run(false));
+  function run(quiet) {
+    const text = $("#draft").value;
+    if (!text.trim()) { if (!quiet) { announce("Paste or open some text first."); $("#draft").focus(); } return; }
+    last = analyse(text, state.level, { mode: state.mode, brief: state.brief });
+    renderResults(last);
+    if (!quiet) { $("#res-h").focus(); announce(`Check complete. ${last.items.length} items found.`); }
+  }
+
+  /* ---------- results ---------- */
+  function renderResults(res) {
+    const { doc, items, assess, level, brief } = res, cats = CONFIG.categories, L = CONFIG.levels[level];
+    const bySent = {}, byPara = {};
+    items.forEach(it => { if (it.p != null) { byPara[it.p] = (byPara[it.p] || 0) + 1; if (it.s != null) (bySent[it.p + "-" + it.s] = bySent[it.p + "-" + it.s] || []).push(it.n); } });
+    let bodyN = 0;
+    const docHtml = doc.paras.map(p => {
+      if (p.kind === "heading") return `<p class="ph">${esc(p.text)}${p.refsHeading ? ' <span class="muted">(ignored from here on)</span>' : ""}</p>`;
+      if (p.kind === "ref") return `<p class="muted" style="font-size:.9em">${esc(p.text)}</p>`;
+      bodyN++; p.n = bodyN;
+      const notes = items.filter(it => it.p === p.i && it.s == null).map(it => it.n);
+      return `<p id="para-${p.i}"><span class="pnum">¶${bodyN}${notes.length ? ` [${notes.join(", ")}]` : ""}</span>${p.sentences.map((s, j) => {
+        const ns = bySent[p.i + "-" + j];
+        return ns ? `<mark class="hl" id="s-${p.i}-${j}" tabindex="-1">${esc(s.text)}<sup class="fn">[${ns.join(", ")}]</sup></mark>` : esc(s.text);
+      }).join(" ")}</p>`;
+    }).join("");
+    const paraNum = i => { const p = doc.paras[i]; return p && p.n ? p.n : null; };
+    const groups = {};
+    items.forEach(it => (groups[it.category] = groups[it.category] || []).push(it));
+    const keys = Object.keys(groups);
+    const score = k => groups[k].reduce((a, it) => a + it.severity * (it.minLevel === level ? CONFIG.focusWeight : 1), 0);
+    const top = keys.slice().sort((a, b) => score(b) - score(a)).slice(0, 3);
+    const ordered = top.concat(keys.filter(k => !top.includes(k)).sort((a, b) => cats[a].order - cats[b].order));
+    const tag = it => it.byBrief ? "From your brief" : (it.minLevel > 4 ? `Level ${it.minLevel}` : "All levels");
+
+    const summary = `<div class="mini teal"><h4>Your top ${Math.min(3, top.length) || ""} to work on</h4>
+      <p class="tight muted">${assess.words} words checked at ${esc(L.label)}: ${esc(L.focus.toLowerCase())}</p>
+      ${top.length ? `<ol class="top3">${top.map(k => `<li><strong>${esc(cats[k].label)}</strong> (${groups[k].length} place${groups[k].length > 1 ? "s" : ""})<span class="try">Try asking: ${esc(groups[k][0].ask)}</span></li>`).join("")}</ol>`
+        : `<p class="tight">Nothing matched at this level. That does not mean the writing is strong, so read it once more against your brief, or try the next level up to see what it would expect.</p>`}</div>`;
+
+    let briefCard = "";
+    if (brief) {
+      const parts = [];
+      if (!assess.part && assess.limit) parts.push(`<p class="tight"><strong>Word count.</strong> ${assess.words} words, ${assess.wordStatus === "within" ? "within" : assess.wordStatus === "under" ? "below" : "above"} the ${assess.limit.min} to ${assess.limit.max} range. Headings${assess.hasRefs ? " and the reference list" : ""} are not counted.</p>`);
+      if (brief.verbs.length) parts.push(`<p class="tight"><strong>Your brief asks you to</strong> ${esc(brief.verbs.join(", "))}. Check that your paragraphs do this, not just describe.</p>`);
+      if (assess.coverage.length) parts.push(`<p class="tight" style="margin-top:.4rem"><strong>Marking criteria</strong> ${assess.part ? "(this extract)" : ""}</p><ul class="tight" style="padding-left:1.2rem">${assess.coverage.map(c => `<li>${c.status === "covered" ? "✓ Clearly present" : c.status === "partly" ? "◐ Touched on" : "✗ Not found"}. ${esc(c.criterion)}${c.paras.map(paraNum).filter(Boolean).length ? ` <span class="muted">(¶${c.paras.map(paraNum).filter(Boolean).join(", ¶")})</span>` : ""}</li>`).join("")}</ul><p class="tight muted">Estimated from the criteria's key words, so treat this as a prompt to check.</p>`);
+      briefCard = `<div class="mini blue"><h4>Against your brief</h4>${parts.join("") || '<p class="tight">Add learning outcomes or criteria to your brief fields to see more here.</p>'}</div>`;
+    } else if (!assess.part) {
+      briefCard = `<p class="tight muted">${assess.words} words. Add your brief in step 1 to check the word limit and marking criteria.</p>`;
+    }
+
+    const fb = ordered.map(k => `<details class="cat" ${top.includes(k) ? "open" : ""}><summary>${esc(cats[k].label)} (${groups[k].length})</summary>${groups[k].map(it => {
+      const where = it.p == null ? "Whole document" : `¶${paraNum(it.p)}${it.s != null ? ", sentence " + (it.s + 1) : ""}`;
+      const q = it.p != null && it.s != null ? doc.paras[it.p].sentences[it.s].text : null;
+      const link = it.p != null ? `<a href="#${it.s != null ? `s-${it.p}-${it.s}` : `para-${it.p}`}" data-jump>Show in text</a>` : "";
+      return `<div class="fb"><p><strong>[${it.n}] ${esc(where)}</strong> <span class="lvtag">${esc(tag(it))}</span> ${link}</p>${q ? `<q>${esc(q.length > 220 ? q.slice(0, 220) + "..." : q)}</q>` : ""}
+        <p><strong>Detected.</strong> ${esc(it.detected)}</p><p><strong>Why it matters.</strong> ${esc(it.why)}</p><p><strong>Ask yourself.</strong> ${esc(it.ask)}</p></div>`;
+    }).join("")}</details>`).join("");
+
+    const bands = CONFIG.thresholds.heatBands, lv = c => c >= bands[3] ? 3 : c >= bands[2] ? 2 : c >= bands[1] ? 1 : 0, lvName = ["None", "Low", "Medium", "High"];
+    const paras = body(doc);
+    const more = `<details class="more"><summary>More detail</summary>
+      <div class="row">
+        <div><div class="tablewrap"><table><caption class="sr-only">Items by category</caption><thead><tr><th scope="col">Category</th><th scope="col">Items</th></tr></thead><tbody>${keys.sort((a, b) => cats[a].order - cats[b].order).map(k => `<tr><td>${esc(cats[k].label)}</td><td>${groups[k].length}</td></tr>`).join("") || "<tr><td>None</td><td>0</td></tr>"}</tbody></table></div></div>
+        ${paras.length > 1 ? `<div><p class="tight muted">How many items point at each paragraph.</p><div class="tablewrap heat"><table><caption class="sr-only">Items per paragraph</caption><thead><tr><th scope="col">Paragraph</th><th scope="col">Words</th><th scope="col">Items</th></tr></thead><tbody>${paras.map(p => { const c = byPara[p.i] || 0, l = lv(c); return `<tr><td><a href="#para-${p.i}" data-jump>¶${p.n}</a></td><td>${p.words}</td><td class="h l${l}">${c} (${lvName[l]})</td></tr>`; }).join("")}</tbody></table></div></div>` : ""}
+      </div>
+      ${!assess.part && assess.structure ? `<p class="tight">Structure: ${assess.structure.map(s => `${s.present ? "✓" : "✗"} ${esc(s.label)}`).join(", ")}.</p>` : ""}
+      <p class="tight muted">Checks run at ${esc(L.label)}: every rule up to this level${brief && brief.triggers && brief.triggers.evaluate && level < 6 ? ", plus evaluation checks because your brief asks you to evaluate" : ""}.</p>
+    </details>`;
+
+    $("#results").innerHTML = `
+      <h3 id="res-h" tabindex="-1" style="color:var(--navy-t);margin-top:1.4rem">Your results</h3>
+      ${summary}${briefCard}
+      <h4 style="color:var(--navy-t);margin-top:1.2rem">Your text with highlights</h4>
+      <p class="muted tight">Yellow sentences matched a pattern. The numbers in square brackets are the feedback items below. Numbers next to a paragraph marker (¶) apply to the whole paragraph.</p>
+      <div class="doc" id="docView">${docHtml}</div>
+      <div class="item-head" style="margin-top:1.2rem"><h4 style="color:var(--navy-t);margin:0">Feedback</h4>${keys.length > 3 ? '<button type="button" class="btn ghost small" id="toggleAll">Open all</button>' : ""}</div>
+      <p class="muted tight">Your top three are open. Each item is a question to ask yourself, not a correction.</p>
+      ${fb || "<p>No items.</p>"}
+      ${more}`;
+  }
+  $("#results").addEventListener("click", e => {
+    if (e.target.id === "toggleAll") {
+      const open = e.target.textContent === "Open all";
+      $$("#results details.cat").forEach(d => d.open = open); e.target.textContent = open ? "Close all" : "Open all"; return;
+    }
+    const a = e.target.closest("a[data-jump]"); if (!a) return;
+    e.preventDefault(); const t = $(a.getAttribute("href")); if (!t) return;
+    t.scrollIntoView({ behavior: "smooth", block: "center" }); if (t.tagName === "MARK") { t.focus({ preventScroll: true }); t.classList.add("pulse"); setTimeout(() => t.classList.remove("pulse"), 1800); }
+  });
+
+  function renderAll() { applyTheme(); renderLevels(); renderBrief(); $("#draft").value = state.draft || ""; $("#results").innerHTML = ""; }
+  renderAll();
+})();
+</script>
+</body>
+</html>
