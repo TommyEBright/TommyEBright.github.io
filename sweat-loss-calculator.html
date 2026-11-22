@@ -22,7 +22,7 @@
   input:focus{outline:2px solid var(--accent);outline-offset:-1px}
   .settings input{width:140px}
   .scroll{overflow-x:auto}
-  table{border-collapse:collapse;width:100%;min-width:1060px}
+  table{border-collapse:collapse;width:100%;min-width:1250px}
   th,td{padding:6px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
   th{font-size:.75rem;font-weight:600;color:var(--muted);vertical-align:bottom}
   th.in{color:var(--accent)}
@@ -68,8 +68,8 @@
         <thead>
           <tr class="grp">
             <th class="name"></th>
-            <th colspan="5" class="in">Measured</th>
-            <th colspan="7">Calculated</th>
+            <th colspan="6" class="in">Measured</th>
+            <th colspan="10">Calculated</th>
             <th></th>
           </tr>
           <tr>
@@ -79,6 +79,7 @@
             <th class="in">Fluid intake (l)</th>
             <th class="in">Urine output (l)</th>
             <th class="in">Duration (min)</th>
+            <th class="in">Sweat sodium (mg per l)</th>
             <th>Mass loss (kg)</th>
             <th>Mass loss (%)</th>
             <th>Sweat loss (l)</th>
@@ -87,6 +88,8 @@
             <th>Volume during exercise (l)</th>
             <th>Volume post-exercise (l)</th>
             <th>CHO during exercise (g per h)</th>
+            <th>Sodium loss (mg)</th>
+            <th>Sodium loss (mg per h)</th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
@@ -98,7 +101,7 @@
       <button id="clear" class="sec">Clear all</button>
     </div>
     <textarea id="csv" readonly></textarea>
-    <p class="note">Use nude, towel-dried mass before and after exercise, with the bladder emptied where possible. Mass loss above the flag threshold is highlighted.</p>
+    <p class="note">Use nude, towel-dried mass before and after exercise, with the bladder emptied where possible. Mass loss above the flag threshold is highlighted. Leave sweat sodium blank if it was not measured.</p>
   </div>
 
   <div class="card formulas">
@@ -110,6 +113,7 @@
     <p><code>Volume during exercise = lower of sweat rate and the maximum drinking rate, × duration</code>. This assumes drinking to thirst, capped for safety.</p>
     <p><code>Volume post-exercise = sweat loss × replacement %</code>, still guided by thirst.</p>
     <p><code>CHO (g per h) = drinking rate (ml per h) × drink concentration (%) ÷ 100</code></p>
+    <p><code>Sodium loss (mg) = sweat loss (l) × sweat sodium (mg per l)</code>, and <code>(mg per h) = sodium loss ÷ duration (h)</code>. To convert to mmol, divide mg by 23.</p>
   </div>
 </div>
 
@@ -118,17 +122,17 @@
   var rowsEl = document.getElementById('rows');
   var $ = function(id){ return document.getElementById(id); };
 
-  var fields = ['name','pre','post','intake','urine','dur'];
+  var fields = ['name','pre','post','intake','urine','dur','na'];
 
   function addRow(vals){
     vals = vals || {};
     var tr = document.createElement('tr');
     var html = '<td class="name"><input data-f="name" type="text" placeholder="Name or ID" value="' + (vals.name||'') + '"></td>';
-    ['pre','post','intake','urine','dur'].forEach(function(f){
-      var step = f === 'dur' ? '1' : '0.01';
+    ['pre','post','intake','urine','dur','na'].forEach(function(f){
+      var step = f === 'dur' ? '1' : (f === 'na' ? '10' : '0.01');
       html += '<td><input data-f="' + f + '" type="number" step="' + step + '" min="0" value="' + (vals[f] != null ? vals[f] : '') + '"></td>';
     });
-    ['loss','losspct','sweat','rateh','ratem','dvol','pvol','cho'].forEach(function(o){
+    ['loss','losspct','sweat','rateh','ratem','dvol','pvol','cho','naloss','narate'].forEach(function(o){
       html += '<td class="out" data-o="' + o + '">-</td>';
     });
     html += '<td><button class="x" title="Remove">×</button></td>';
@@ -153,7 +157,7 @@
     rowsEl.querySelectorAll('tr').forEach(function(tr){
       var g = function(f){ return num(tr.querySelector('[data-f="' + f + '"]').value); };
       var name = tr.querySelector('[data-f="name"]').value;
-      var pre = g('pre'), post = g('post'), intake = g('intake') || 0, urine = g('urine') || 0, dur = g('dur');
+      var pre = g('pre'), post = g('post'), intake = g('intake') || 0, urine = g('urine') || 0, dur = g('dur'), na = g('na');
       var o = {};
       if (pre != null && post != null) {
         o.loss = pre - post;
@@ -167,8 +171,12 @@
           o.cho = rate * cho / 100;
         }
         o.pvol = o.sweat * repl / 100;
+        if (na != null) {
+          o.naloss = o.sweat * na;
+          if (dur) o.narate = o.naloss / (dur / 60);
+        }
       }
-      var map = {loss:[o.loss,2],losspct:[o.losspct,1],sweat:[o.sweat,2],rateh:[o.rateh,2],ratem:[o.ratem,0],dvol:[o.dvol,2],pvol:[o.pvol,2],cho:[o.cho,0]};
+      var map = {loss:[o.loss,2],losspct:[o.losspct,1],sweat:[o.sweat,2],rateh:[o.rateh,2],ratem:[o.ratem,0],dvol:[o.dvol,2],pvol:[o.pvol,2],cho:[o.cho,0],naloss:[o.naloss,0],narate:[o.narate,0]};
       Object.keys(map).forEach(function(k){
         var cell = tr.querySelector('[data-o="' + k + '"]');
         cell.textContent = fmt(map[k][0], map[k][1]);
@@ -177,7 +185,7 @@
       if (o.losspct != null && thr != null && o.losspct > thr) {
         tr.querySelector('[data-o="losspct"]').classList.add('warn');
       }
-      results.push({name:name, pre:pre, post:post, intake:intake, urine:urine, dur:dur, o:o});
+      results.push({name:name, pre:pre, post:post, intake:intake, urine:urine, dur:dur, na:na, o:o});
     });
   }
 
@@ -187,12 +195,12 @@
   $('clear').addEventListener('click', function(){ rowsEl.innerHTML = ''; addRow(); });
 
   $('copy').addEventListener('click', function(){
-    var head = ['Participant','Pre mass (kg)','Post mass (kg)','Fluid intake (l)','Urine output (l)','Duration (min)','Mass loss (kg)','Mass loss (%)','Sweat loss (l)','Sweat rate (l/h)','Sweat rate (ml/min)','Volume during exercise (l)','Volume post-exercise (l)','CHO during exercise (g/h)'];
+    var head = ['Participant','Pre mass (kg)','Post mass (kg)','Fluid intake (l)','Urine output (l)','Duration (min)','Mass loss (kg)','Mass loss (%)','Sweat loss (l)','Sweat rate (l/h)','Sweat rate (ml/min)','Volume during exercise (l)','Volume post-exercise (l)','CHO during exercise (g/h)','Sweat sodium (mg/l)','Sodium loss (mg)','Sodium loss (mg/h)'];
     var lines = [head.join(',')];
     results.forEach(function(r){
       var o = r.o;
       var cells = [ '"' + (r.name||'').replace(/"/g,'""') + '"', fmt(r.pre,2), fmt(r.post,2), fmt(r.intake,2), fmt(r.urine,2), fmt(r.dur,0),
-        fmt(o.loss,2), fmt(o.losspct,1), fmt(o.sweat,2), fmt(o.rateh,2), fmt(o.ratem,0), fmt(o.dvol,2), fmt(o.pvol,2), fmt(o.cho,0) ];
+        fmt(o.loss,2), fmt(o.losspct,1), fmt(o.sweat,2), fmt(o.rateh,2), fmt(o.ratem,0), fmt(o.dvol,2), fmt(o.pvol,2), fmt(o.cho,0), fmt(r.na,0), fmt(o.naloss,0), fmt(o.narate,0) ];
       lines.push(cells.map(function(c){ return c === '-' ? '' : c; }).join(','));
     });
     var text = lines.join('\n');
@@ -203,7 +211,7 @@
     } catch(e){ ta.select(); }
   });
 
-  addRow({name:'Example', pre:68.3, post:66.2, intake:0, urine:0.25, dur:90});
+  addRow({name:'Example', pre:68.3, post:66.2, intake:0, urine:0.25, dur:90, na:800});
 })();
 </script>
 </body>
