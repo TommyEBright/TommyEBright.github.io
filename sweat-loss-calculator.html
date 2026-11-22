@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sweat loss and fluid replacement calculator</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --ink:#1d2433; --muted:#5d6678; --line:#dde1e8;
+    --accent:#2f5fb3; --accent-soft:#e8eefa; --warn:#b45309; --warn-soft:#fdf1dc;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1180px;margin:0 auto;padding:24px 16px 48px}
+  h1{font-size:1.5rem;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+  .card h2{font-size:1rem;margin:0 0 10px}
+  .settings{display:flex;flex-wrap:wrap;gap:16px}
+  label.f{display:flex;flex-direction:column;font-size:.8rem;color:var(--muted);gap:4px}
+  input{font:inherit;color:var(--ink);padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;width:100%}
+  input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  .settings input{width:140px}
+  .scroll{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;min-width:1060px}
+  th,td{padding:6px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{font-size:.75rem;font-weight:600;color:var(--muted);vertical-align:bottom}
+  th.in{color:var(--accent)}
+  td.name,th.name{text-align:left}
+  td input{min-width:70px;text-align:right}
+  td.name input{text-align:left;min-width:110px}
+  td.out{font-variant-numeric:tabular-nums;background:var(--accent-soft)}
+  td.out.warn{background:var(--warn-soft);color:var(--warn);font-weight:600}
+  .grp th{border-bottom:none;text-align:center;font-size:.7rem;letter-spacing:.04em;text-transform:uppercase}
+  .btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  button{font:inherit;padding:7px 12px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
+  button.sec{background:#fff;color:var(--accent)}
+  button.x{padding:3px 8px;border-color:var(--line);color:var(--muted);background:#fff}
+  .formulas p{margin:4px 0;color:var(--ink)}
+  .formulas code{background:var(--bg);padding:1px 5px;border-radius:4px;font-size:.88em}
+  .note{color:var(--muted);font-size:.85rem}
+  textarea{width:100%;height:120px;margin-top:10px;font:12px/1.4 ui-monospace,Menlo,monospace;display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sweat loss and fluid replacement calculator</h1>
+  <p class="sub">Enter practical data for one or more participants. Blue cells calculate automatically.</p>
+
+  <div class="card">
+    <h2>Recommendation settings</h2>
+    <div class="settings">
+      <label class="f">Maximum drinking rate (ml per h)
+        <input type="number" id="cap" value="800" min="0" step="50"></label>
+      <label class="f">Post-exercise replacement (% of loss)
+        <input type="number" id="repl" value="150" min="0" step="10"></label>
+      <label class="f">Drink carbohydrate (%)
+        <input type="number" id="cho" value="6" min="0" step="0.5"></label>
+      <label class="f">Dehydration flag (% body mass loss)
+        <input type="number" id="thr" value="2" min="0" step="0.5"></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Participant data</h2>
+    <div class="scroll">
+      <table id="tbl">
+        <thead>
+          <tr class="grp">
+            <th class="name"></th>
+            <th colspan="5" class="in">Measured</th>
+            <th colspan="7">Calculated</th>
+            <th></th>
+          </tr>
+          <tr>
+            <th class="name in">Participant</th>
+            <th class="in">Pre mass (kg)</th>
+            <th class="in">Post mass (kg)</th>
+            <th class="in">Fluid intake (l)</th>
+            <th class="in">Urine output (l)</th>
+            <th class="in">Duration (min)</th>
+            <th>Mass loss (kg)</th>
+            <th>Mass loss (%)</th>
+            <th>Sweat loss (l)</th>
+            <th>Sweat rate (l per h)</th>
+            <th>Sweat rate (ml per min)</th>
+            <th>Volume during exercise (l)</th>
+            <th>Volume post-exercise (l)</th>
+            <th>CHO during exercise (g per h)</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="btns">
+      <button id="add">Add participant</button>
+      <button id="copy" class="sec">Copy results as CSV</button>
+      <button id="clear" class="sec">Clear all</button>
+    </div>
+    <textarea id="csv" readonly></textarea>
+    <p class="note">Use nude, towel-dried mass before and after exercise, with the bladder emptied where possible. Mass loss above the flag threshold is highlighted.</p>
+  </div>
+
+  <div class="card formulas">
+    <h2>Formulas used</h2>
+    <p><code>Mass loss (kg) = pre mass − post mass</code></p>
+    <p><code>Mass loss (%) = mass loss ÷ pre mass × 100</code></p>
+    <p><code>Sweat loss (l) = mass loss + fluid intake − urine output</code></p>
+    <p><code>Sweat rate (l per h) = sweat loss ÷ duration (h)</code>, and <code>(ml per min) = sweat loss × 1000 ÷ duration (min)</code></p>
+    <p><code>Volume during exercise = lower of sweat rate and the maximum drinking rate, × duration</code>. This assumes drinking to thirst, capped for safety.</p>
+    <p><code>Volume post-exercise = sweat loss × replacement %</code>, still guided by thirst.</p>
+    <p><code>CHO (g per h) = drinking rate (ml per h) × drink concentration (%) ÷ 100</code></p>
+  </div>
+</div>
+
+<script>
+(function(){
+  var rowsEl = document.getElementById('rows');
+  var $ = function(id){ return document.getElementById(id); };
+
+  var fields = ['name','pre','post','intake','urine','dur'];
+
+  function addRow(vals){
+    vals = vals || {};
+    var tr = document.createElement('tr');
+    var html = '<td class="name"><input data-f="name" type="text" placeholder="Name or ID" value="' + (vals.name||'') + '"></td>';
+    ['pre','post','intake','urine','dur'].forEach(function(f){
+      var step = f === 'dur' ? '1' : '0.01';
+      html += '<td><input data-f="' + f + '" type="number" step="' + step + '" min="0" value="' + (vals[f] != null ? vals[f] : '') + '"></td>';
+    });
+    ['loss','losspct','sweat','rateh','ratem','dvol','pvol','cho'].forEach(function(o){
+      html += '<td class="out" data-o="' + o + '">-</td>';
+    });
+    html += '<td><button class="x" title="Remove">×</button></td>';
+    tr.innerHTML = html;
+    rowsEl.appendChild(tr);
+    tr.querySelectorAll('input').forEach(function(i){ i.addEventListener('input', calc); });
+    tr.querySelector('.x').addEventListener('click', function(){ tr.remove(); calc(); });
+    calc();
+  }
+
+  function num(v){ var n = parseFloat(v); return isFinite(n) ? n : null; }
+  function fmt(v, d){ return v == null || !isFinite(v) ? '-' : v.toFixed(d); }
+
+  var results = [];
+
+  function calc(){
+    var cap = num($('cap').value) || 0;
+    var repl = num($('repl').value) || 0;
+    var cho = num($('cho').value) || 0;
+    var thr = num($('thr').value);
+    results = [];
+    rowsEl.querySelectorAll('tr').forEach(function(tr){
+      var g = function(f){ return num(tr.querySelector('[data-f="' + f + '"]').value); };
+      var name = tr.querySelector('[data-f="name"]').value;
+      var pre = g('pre'), post = g('post'), intake = g('intake') || 0, urine = g('urine') || 0, dur = g('dur');
+      var o = {};
+      if (pre != null && post != null) {
+        o.loss = pre - post;
+        o.losspct = pre > 0 ? o.loss / pre * 100 : null;
+        o.sweat = o.loss + intake - urine;
+        if (dur) {
+          o.rateh = o.sweat / (dur / 60);
+          o.ratem = o.sweat * 1000 / dur;
+          var rate = Math.min(Math.max(o.rateh * 1000, 0), cap);
+          o.dvol = rate * (dur / 60) / 1000;
+          o.cho = rate * cho / 100;
+        }
+        o.pvol = o.sweat * repl / 100;
+      }
+      var map = {loss:[o.loss,2],losspct:[o.losspct,1],sweat:[o.sweat,2],rateh:[o.rateh,2],ratem:[o.ratem,0],dvol:[o.dvol,2],pvol:[o.pvol,2],cho:[o.cho,0]};
+      Object.keys(map).forEach(function(k){
+        var cell = tr.querySelector('[data-o="' + k + '"]');
+        cell.textContent = fmt(map[k][0], map[k][1]);
+        cell.classList.remove('warn');
+      });
+      if (o.losspct != null && thr != null && o.losspct > thr) {
+        tr.querySelector('[data-o="losspct"]').classList.add('warn');
+      }
+      results.push({name:name, pre:pre, post:post, intake:intake, urine:urine, dur:dur, o:o});
+    });
+  }
+
+  ['cap','repl','cho','thr'].forEach(function(id){ $(id).addEventListener('input', calc); });
+
+  $('add').addEventListener('click', function(){ addRow(); });
+  $('clear').addEventListener('click', function(){ rowsEl.innerHTML = ''; addRow(); });
+
+  $('copy').addEventListener('click', function(){
+    var head = ['Participant','Pre mass (kg)','Post mass (kg)','Fluid intake (l)','Urine output (l)','Duration (min)','Mass loss (kg)','Mass loss (%)','Sweat loss (l)','Sweat rate (l/h)','Sweat rate (ml/min)','Volume during exercise (l)','Volume post-exercise (l)','CHO during exercise (g/h)'];
+    var lines = [head.join(',')];
+    results.forEach(function(r){
+      var o = r.o;
+      var cells = [ '"' + (r.name||'').replace(/"/g,'""') + '"', fmt(r.pre,2), fmt(r.post,2), fmt(r.intake,2), fmt(r.urine,2), fmt(r.dur,0),
+        fmt(o.loss,2), fmt(o.losspct,1), fmt(o.sweat,2), fmt(o.rateh,2), fmt(o.ratem,0), fmt(o.dvol,2), fmt(o.pvol,2), fmt(o.cho,0) ];
+      lines.push(cells.map(function(c){ return c === '-' ? '' : c; }).join(','));
+    });
+    var text = lines.join('\n');
+    var ta = $('csv');
+    ta.value = text; ta.style.display = 'block';
+    try {
+      navigator.clipboard.writeText(text).then(function(){ $('copy').textContent = 'Copied'; setTimeout(function(){ $('copy').textContent = 'Copy results as CSV'; }, 1500); }, function(){ ta.select(); });
+    } catch(e){ ta.select(); }
+  });
+
+  addRow({name:'Example', pre:68.3, post:66.2, intake:0, urine:0.25, dur:90});
+})();
+</script>
+</body>
+</html>
