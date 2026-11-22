@@ -5,12 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Caffeine and Fatigue Practical</title>
 <style>
-  :root { --ink:#1f2933; --muted:#52606d; --line:#d9e2ec; --accent:#0b6e4f; --bg:#f7f9fb; --a:#d55e00; --b:#0072b2; }
+  :root { --ink:#1f2933; --muted:#52606d; --line:#d9e2ec; --accent:#0b6e4f; --bg:#f7f9fb; --bad:#a61e1e; }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: var(--bg); margin: 0; line-height: 1.5; }
   header { background: var(--accent); color: #fff; padding: 2rem 1rem; }
+  header .in { max-width: 1080px; margin: 0 auto; }
   header h1 { margin: 0 0 .25rem; font-size: 1.8rem; }
-  header p { margin: 0; opacity: .9; }
+  header p { margin: 0; opacity: .92; }
   main { max-width: 1080px; margin: 0 auto; padding: 1rem; }
   nav { position: sticky; top: 0; background: #fff; border-bottom: 1px solid var(--line); z-index: 5; }
   nav ul { list-style: none; margin: 0 auto; padding: .5rem 1rem; display: flex; flex-wrap: wrap; gap: .25rem 1rem; max-width: 1080px; }
@@ -18,7 +20,8 @@
   nav a:hover { text-decoration: underline; }
   section { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
   h2 { margin-top: 0; color: var(--accent); font-size: 1.3rem; }
-  h3 { margin: 1rem 0 .25rem; font-size: 1.05rem; }
+  h3 { margin: 1.1rem 0 .3rem; font-size: 1.05rem; }
+  h4 { margin: .8rem 0 .2rem; font-size: .95rem; }
   table { border-collapse: collapse; width: 100%; margin: .75rem 0; font-size: .92rem; }
   th, td { border: 1px solid var(--line); padding: .35rem .5rem; text-align: left; vertical-align: top; }
   th { background: #eef3f7; }
@@ -26,175 +29,354 @@
   .scroll { overflow-x: auto; }
   .note { background: #eef7f3; border-left: 4px solid var(--accent); padding: .6rem .9rem; margin: .75rem 0; border-radius: 4px; }
   .warn { background: #fff6e5; border-left: 4px solid #d98c00; padding: .6rem .9rem; margin: .75rem 0; border-radius: 4px; }
-  .vas .line { position: relative; height: 2px; background: var(--ink); margin: 1.8rem 0 .4rem; }
-  .vas .line::before, .vas .line::after { content: ""; position: absolute; top: -9px; width: 2px; height: 20px; background: var(--ink); }
-  .vas .line::before { left: 0; } .vas .line::after { right: 0; }
-  .vas .ends { display: flex; justify-content: space-between; font-size: .85rem; color: var(--muted); }
-  .timer { text-align: center; padding: 1rem; }
-  .timer .count { font-size: 4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-  .timer .status { font-size: 1.1rem; color: var(--muted); min-height: 1.5rem; }
-  button, .btn { background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: .5rem .9rem; font-size: .95rem; cursor: pointer; margin: .2rem; display: inline-block; }
+  .say { background: #f1f4f8; border-left: 4px solid var(--muted); padding: .45rem .9rem; margin: .4rem 0; font-style: italic; border-radius: 4px; }
+  .tag { font-size: .85rem; color: var(--muted); }
+  ol li, ul li { margin: .2rem 0; }
+  ul.tight li { margin: .1rem 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: .5rem 1.5rem; }
+  details.station { border: 1px solid var(--line); border-radius: 6px; padding: 0 1rem .6rem; margin: .75rem 0; background: #fbfcfd; }
+  details.station > summary { cursor: pointer; font-weight: 700; font-size: 1.05rem; padding: .6rem 0; color: var(--accent); }
+  button, .btn { background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: .5rem .9rem; font-size: .95rem; cursor: pointer; margin: .2rem; display: inline-block; font-family: inherit; }
   button.secondary, .btn.secondary { background: #52606d; }
-  button.danger { background: #a61e1e; }
+  button.danger { background: var(--bad); }
   button.chip { background: #eef3f7; color: var(--ink); border: 1px solid var(--line); }
-  button.chip.active { background: var(--accent); color: #fff; }
-  input[type=number], input[type=text], select { font-size: .95rem; padding: .3rem .4rem; border: 1px solid #aab7c4; border-radius: 4px; max-width: 100%; }
+  button.chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  input[type=number], input[type=text], select, textarea { font-size: .95rem; font-family: inherit; padding: .3rem .4rem; border: 1px solid #aab7c4; border-radius: 4px; max-width: 100%; }
   input[type=number] { width: 6.2rem; }
-  input:disabled { background: #eceff2; }
+  table.entry input[type=number] { width: 5.6rem; }
+  input:disabled { background: #e4e8ec; border-color: #d0d7de; }
+  input.bad { border-color: var(--bad); background: #fdecec; }
+  textarea { width: 100%; }
+  tr.grp th { background: #dde7ee; font-size: .85rem; }
+  tr.done td { background: #f1f7f4; color: var(--muted); }
+  td.tick { text-align: center; }
+  td.tick input { width: 1.2rem; height: 1.2rem; }
   .row { display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; align-items: end; margin: .5rem 0; }
-  .row label { display: flex; flex-direction: column; font-size: .85rem; color: var(--muted); }
-  ul.tight li { margin: .15rem 0; }
-  .legend span { margin-right: 1.25rem; font-size: .9rem; white-space: nowrap; }
-  .tag { font-size: .8rem; color: var(--muted); }
+  .row label, label.wide { display: flex; flex-direction: column; font-size: .85rem; color: var(--muted); }
+  label.wide { margin: .5rem 0; }
+  ul.msgs { color: var(--bad); font-size: .9rem; margin: .5rem 0; }
+  ul.msgs:empty { display: none; }
+  .timerbox { border: 1px solid var(--line); border-radius: 8px; padding: 1rem; text-align: center; margin: 1rem 0; background: #fbfcfd; }
+  .timerbox .count { font-size: 3.6rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; margin: .5rem 0; }
+  .timerbox .status { color: var(--muted); min-height: 1.5rem; }
+  .timerbox .cue { min-height: 3rem; font-size: 1.05rem; margin: .4rem auto; max-width: 640px; }
+  .legend span { margin-right: 1.25rem; font-size: .9rem; display: inline-block; }
+  .summary li { margin: .3rem 0; }
+  .vas-line { position: relative; height: 2px; background: var(--ink); margin: 1.8rem 0 .4rem; width: 100mm; max-width: 100%; }
+  .vas-line::before, .vas-line::after { content: ""; position: absolute; top: -9px; width: 2px; height: 20px; background: var(--ink); }
+  .vas-line::before { left: 0; } .vas-line::after { right: 0; }
+  .vas-ends { display: flex; justify-content: space-between; font-size: .85rem; color: var(--muted); width: 100mm; max-width: 100%; }
+  .vas-slip { border-bottom: 1px dashed #888; padding: 5mm 0 7mm; break-inside: avoid; }
+  .vas-slip p { margin: 0; font-size: .9rem; }
+  .refs li { margin: .35rem 0; }
   footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 2rem 1rem; }
-  @media print { nav, .timer, button, .btn, .noprint { display: none !important; } body { background: #fff; } section { break-inside: avoid; border: 1px solid #999; } header { background: #fff; color: #000; border-bottom: 2px solid #000; } }
+  @media (max-width: 600px) { nav ul { flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; } section { padding: 1rem; } header h1 { font-size: 1.5rem; } .timerbox .count { font-size: 2.8rem; } }
+  @media print {
+    @page { size: A4; margin: 15mm; }
+    nav, .timerbox, button, .btn, .noprint, #vassheet { display: none !important; }
+    body { background: #fff; }
+    section { break-inside: avoid; border: 1px solid #999; }
+    header { background: #fff; color: #000; border-bottom: 2px solid #000; }
+    details.station { break-inside: avoid; }
+    body.print-vas header, body.print-vas footer, body.print-vas main > section:not(#vassheet) { display: none !important; }
+    body.print-vas #vassheet { display: block !important; border: 0; padding: 0; }
+  }
 </style>
 </head>
 <body>
-<header>
+<header><div class="in">
   <h1>Caffeine and Fatigue Practical</h1>
-  <p>Two hour session. Double-blind caffeine versus placebo gum, pre and post fatigue testing, with built-in analysis.</p>
-</header>
+  <p>Two hour session. Double-blind caffeine versus placebo gum, pre and post fatigue testing, step-by-step station instructions and built-in analysis.</p>
+</div></header>
 <nav><ul>
   <li><a href="#overview">Overview</a></li>
+  <li><a href="#start">Quick start</a></li>
   <li><a href="#runsheet">Run sheet</a></li>
+  <li><a href="#stations">Station instructions</a></li>
   <li><a href="#fatigue">Fatiguing task</a></li>
   <li><a href="#post">Post testing</a></li>
-  <li><a href="#cmj">CMJ variables</a></li>
-  <li><a href="#vas">Alertness VAS</a></li>
-  <li><a href="#roles">Roles and kit</a></li>
   <li><a href="#enter">Enter data</a></li>
   <li><a href="#analysis">Analysis</a></li>
   <li><a href="#discussion">Discussion</a></li>
   <li><a href="#safety">Safety</a></li>
+  <li><a href="#refs">References</a></li>
 </ul></nav>
 <main>
 
 <section id="overview">
   <h2>Overview</h2>
-  <p>Students complete baseline tests, chew caffeinated or placebo gum, attend a short lecture while the caffeine is absorbed, then complete a fatiguing task followed by repeated testing. The aim is to relate changes in performance, perception and jump strategy to candidate mechanisms of fatigue, and to judge what a small single-session dataset can and cannot tell us.</p>
+  <p>You will complete baseline tests, chew caffeinated or placebo gum, attend a short lecture while the caffeine is absorbed, then complete a fatiguing task followed by repeated testing. The aim is to link changes in performance, perception and jump strategy to possible mechanisms of fatigue, and to judge what a small single-session dataset can and cannot tell us.</p>
   <h3>Learning outcomes</h3>
   <ul class="tight">
-    <li>Describe central and peripheral contributors to fatigue and how task demands shift their balance.</li>
+    <li>Describe central and peripheral contributors to fatigue and explain how task demands shift the balance between them.</li>
     <li>Collect and process force-time data using consistent phase definitions.</li>
-    <li>Judge whether a change is larger than measurement noise and larger than the smallest worthwhile change (SWC).</li>
-    <li>Discuss expectancy, blinding and individual variability in the response to caffeine.</li>
+    <li>Calculate typical error and the smallest worthwhile change (SWC), and apply them to decide whether a change is larger than measurement noise.</li>
+    <li>Discuss expectancy, blinding and individual variation in the response to caffeine.</li>
   </ul>
-  <div class="note">Design. Between-participants, double-blind. A technician holds the allocation list, and groups are coded A and B until the unblinding at the end. Dose and gum product are set in the ethics and risk documents, not on this page.</div>
+  <div class="note"><strong>Design.</strong> Between-participants, double-blind. A technician holds the allocation list, and the gum is coded A or B until unblinding at the end. Nobody in your group should know which code is caffeine. Dose and gum product are set in the ethics and risk documents, not on this page. Caffeine from gum is absorbed faster than from capsules (Kamimori <em>et al.</em>, 2002), which is why the gap between chewing and testing is short.</div>
+</section>
+
+<section id="start">
+  <h2>Quick start for students</h2>
+  <p>You run this session yourselves. Work through these steps in order and use this page as your guide throughout.</p>
+  <ol>
+    <li><strong>Form a group of four or five</strong> and agree roles (below). One person is the participant.</li>
+    <li><strong>Read the <a href="#safety">safety section</a></strong> together. The participant completes the screening and consent forms.</li>
+    <li><strong>Set up your kit</strong> using the checklist below before the first test.</li>
+    <li><strong>Work down the <a href="#runsheet">run sheet</a></strong>. Tick each step when it is done. The page records the clock time, which you need for the gum timing.</li>
+    <li><strong>Follow the <a href="#stations">station instructions</a></strong> for every test. Read the cue in the grey box word for word each time, so every trial is run the same way.</li>
+    <li><strong>The Recorder enters results in <a href="#enter">Enter data</a></strong> as you go. It saves automatically in this browser.</li>
+    <li><strong>At the end</strong>, press Export CSV and send the file to your lecturer. Then work through the <a href="#analysis">analysis</a> and the <a href="#discussion">discussion questions</a>.</li>
+  </ol>
+  <div class="grid">
+    <div>
+      <h3>Roles</h3>
+      <ul class="tight">
+        <li><strong>Participant.</strong> Completes all tests. Does not look at the data until the end.</li>
+        <li><strong>Tester.</strong> Runs each test and reads the cues and encouragement.</li>
+        <li><strong>Timekeeper.</strong> Runs the timers on this page and keeps the group to the run sheet.</li>
+        <li><strong>Recorder.</strong> Writes results on paper and enters them on this page.</li>
+        <li><strong>Technician (one per class).</strong> Holds the allocation list. Tester and participant must not see it.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Equipment</h3>
+      <ul class="tight">
+        <li>Force platform and analysis software</li>
+        <li>Handgrip dynamometer</li>
+        <li>Batak reaction wall</li>
+        <li>BP monitor, HR monitor, scales</li>
+        <li>Printed VAS slips (<a href="#vassheet">print them here</a>), rulers, Borg RPE scale</li>
+        <li>Labelled, identical gum packs, bin, first aid kit</li>
+      </ul>
+    </div>
+  </div>
+  <h3>Before the first test</h3>
+  <ul class="tight">
+    <li>Force platform on a firm, level floor, software open, zeroed with nobody standing on it.</li>
+    <li>Handgrip dynamometer reset to zero, handle adjusted to the participant's hand (see the station).</li>
+    <li>Batak wall switched on and set to the agreed programme. Default is the 30 s random-lights programme where the score is the number of lights hit. Mark a standing spot on the floor with tape.</li>
+    <li>VAS slips printed at 100% scale. Check one line measures 100 mm with a ruler.</li>
+    <li>This page open on the Recorder's device, with a participant added in Enter data.</li>
+  </ul>
+  <div class="note">With one force platform or one Batak wall in the room, stagger groups by 5 to 10 min, or run those tests as stations while other groups complete grip and VAS.</div>
 </section>
 
 <section id="runsheet">
   <h2>Run sheet</h2>
+  <p class="tag">Tick each step when it is done. The time is recorded on this device and kept if the page is reloaded.</p>
   <div class="scroll"><table>
-    <tr><th>Time</th><th>Activity</th><th>Detail</th></tr>
-    <tr><td>0:00 to 0:10</td><td>Briefing and consent</td><td>Outline the session, confirm consent and screening, record body mass, issue numbered gum packs.</td></tr>
-    <tr><td>0:10 to 0:20</td><td>Resting baseline</td><td>Seated rest 5 min, then HR, BP, alertness VAS (baseline 1), habitual caffeine intake and time of last caffeine.</td></tr>
-    <tr><td>0:20 to 0:40</td><td>Baseline performance</td><td>Reaction time, handgrip MVC (3 trials), CMJ (3 trials). Rest 30 to 60 s between trials.</td></tr>
-    <tr><td>0:40 to 0:45</td><td>Gum</td><td>Chew for the time stated on the product, then dispose. Record the exact time.</td></tr>
-    <tr><td>0:45 to 1:00</td><td>Mini-lecture</td><td>Mechanisms of fatigue while absorption occurs.</td></tr>
-    <tr><td>1:00 to 1:05</td><td>Pre-task check</td><td>HR, BP, alertness VAS (baseline 2), perceived jitteriness.</td></tr>
-    <tr><td>1:05 to 1:20</td><td>Fatiguing task</td><td>Repeated CMJ set, then sustained handgrip hold.</td></tr>
-    <tr><td>1:20 to 1:40</td><td>Post-task testing</td><td>Immediately, +2 min and +10 min.</td></tr>
-    <tr><td>1:40 to 1:55</td><td>Data and discussion</td><td>Enter data below, read the analysis, link to mechanisms.</td></tr>
-    <tr><td>1:55 to 2:00</td><td>Unblinding and debrief</td><td>Reveal allocation, discuss expectancy, check for side effects.</td></tr>
+    <tr><th>Done</th><th>Clock</th><th>Time</th><th>Activity</th><th>What to do</th></tr>
+    <tr><td class="tick"><input type="checkbox" data-step="r1" aria-label="Briefing done"></td><td data-when="r1"></td><td>0:00 to 0:10</td><td>Briefing and consent</td><td>Read the safety section. Confirm consent and screening. Record body mass. Collect a numbered gum pack and do not open it.</td></tr>
+    <tr><td class="tick"><input type="checkbox" data-step="r2" aria-label="Resting baseline done"></td><td data-when="r2"></td><td>0:10 to 0:20</td><td>Resting baseline</td><td>Alertness VAS on arrival (Base 1). Sit quietly for 5 min. Record HR, BP and alertness VAS (Base 2). Note usual daily caffeine intake and time of last caffeine in Notes.</td></tr>
+    <tr><td class="tick"><input type="checkbox" data-step="r3" aria-label="Baseline performance done"></td><td data-when="r3"></td><td>0:20 to 0:40</td><td>Baseline performance</td><td>Warm up. Then CMJ x 3, handgrip MVC x 3, Batak x 2 practice runs followed by x 3 recorded runs. Rest 30 to 60 s between trials.</td></tr>
+    <tr><td class="tick"><input type="checkbox" data-step="r4" aria-label="Gum started"></td><td data-when="r4"></td><td>0:40 to 0:45</td><td>Gum</td><td><strong>Tick this when chewing starts.</strong> Chew for the time stated on the product, then put the gum in the bin.</td></tr>
+    <tr><td class="tick"><input type="checkbox" data-step="r5" aria-label="Mini-lecture done"></td><td data-when="r5"></td><td>0:45 to 1:00</td><td>Mini-lecture</td><td>Mechanisms of fatigue while the caffeine is absorbed.</td></tr>
+    <tr><td class="tick"><input type="checkbox" data-step="r6" aria-label="Pre-task check done"></td><td data-when="r6"></td><td>1:00 to 1:05</td><td>Pre-task check</td><td>HR, BP, alertness VAS (Pre-task). Ask about jitteriness and note it under side effects.</td></tr>
+    <tr><td class="tick"><input type="checkbox" data-step="r7" aria-label="Fatiguing task done"></td><td data-when="r7"></td><td>1:05 to 1:20</td><td>Fatiguing task</td><td>3 sets of 10 CMJ with 2 min rest and RPE after each set, then the grip hold at 40% MVC. See <a href="#fatigue">Fatiguing task</a>.</td></tr>
+    <tr><td class="tick"><input type="checkbox" data-step="r8" aria-label="Post-task testing done"></td><td data-when="r8"></td><td>1:20 to 1:40</td><td>Post-task testing</td><td>Start the post-task clock the moment the grip hold ends. Immediate, +2 min and +10 min blocks.</td></tr>
+    <tr><td class="tick"><input type="checkbox" data-step="r9" aria-label="Data entry done"></td><td data-when="r9"></td><td>1:40 to 1:55</td><td>Data and discussion</td><td>Finish entering data, export the CSV, read the analysis.</td></tr>
+    <tr><td class="tick"><input type="checkbox" data-step="r10" aria-label="Unblinding done"></td><td data-when="r10"></td><td>1:55 to 2:00</td><td>Unblinding and debrief</td><td><strong>Record the participant's guess before unblinding.</strong> Then reveal the allocation, record side effects and discuss expectancy.</td></tr>
   </table></div>
+  <p class="noprint"><button type="button" class="secondary" id="clearTicks">Clear all ticks</button> <span class="tag" id="gumNote"></span></p>
+</section>
+
+<section id="stations">
+  <h2>Station instructions</h2>
+  <p>Use the same order, cues and rest at every time point. Small differences in how a test is run can be larger than the effect you are looking for.</p>
+
+  <details class="station" open>
+    <summary>Warm-up (before baseline only)</summary>
+    <ol>
+      <li>3 min easy jogging or stepping on the spot.</li>
+      <li>Dynamic leg swings, squats and arm circles, 10 of each.</li>
+      <li>3 practice CMJ at about 50%, 75% and 90% effort.</li>
+    </ol>
+  </details>
+
+  <details class="station" open>
+    <summary>Countermovement jump on the force platform</summary>
+    <h4>Set up</h4>
+    <ul>
+      <li>Zero the platform with nobody on it. Enter body mass in the software if it asks.</li>
+      <li>Use the same software settings for every trial, including the movement-onset threshold.</li>
+    </ul>
+    <h4>Run each trial</h4>
+    <ol>
+      <li>Participant steps on with both feet, hands on hips.</li>
+      <li>Tester starts the recording and waits for at least 1 s of quiet standing. Check the trace is flat.</li>
+      <li>Tester reads the cue.</li>
+    </ol>
+    <div class="say">"Hands on hips. When you are ready, dip and jump as high and as fast as you can."</div>
+    <ol start="4">
+      <li>Participant lands on the platform on both feet, then stands still until the recording stops.</li>
+      <li>Rest 30 to 60 s. Repeat for the number of trials in the run sheet.</li>
+    </ol>
+    <h4>Discard and repeat the trial if</h4>
+    <ul class="tight">
+      <li>hands leave the hips, the participant moves before the dip, tucks the knees in the air, or lands off the platform.</li>
+    </ul>
+    <h4>Record</h4>
+    <ul class="tight">
+      <li><strong>Jump height</strong> (cm), as the performance anchor. Use the same method (impulse-momentum or flight time) for every trial.</li>
+      <li><strong>Braking phase duration</strong> and <strong>propulsive phase duration</strong> (s).</li>
+      <li><strong>Mean braking force</strong> and <strong>mean propulsive force</strong>, relative to body mass (N/kg).</li>
+      <li><strong>Force at end of braking</strong> (N/kg), at zero velocity at the bottom of the countermovement.</li>
+    </ul>
+    <h4>Phase definitions</h4>
+    <ul class="tight">
+      <li>Braking runs from peak negative velocity to zero velocity. Propulsion runs from zero velocity to take-off (McMahon <em>et al.</em>, 2018).</li>
+      <li>Body weight comes from about 1 s of quiet standing before each trial.</li>
+      <li>Durations and mean forces are linked through impulse, so they are not independent of each other.</li>
+    </ul>
+  </details>
+
+  <details class="station" open>
+    <summary>Handgrip MVC</summary>
+    <h4>Set up</h4>
+    <ul>
+      <li>Reset the dynamometer to zero. Adjust the handle so the second joint of the fingers sits around the bar.</li>
+      <li>Participant sits upright, upper arm by the side, elbow at 90 degrees, forearm and wrist neutral. Use the dominant hand all session.</li>
+    </ul>
+    <h4>Run each trial</h4>
+    <ol>
+      <li>Tester reads the cue and gives the same encouragement every time.</li>
+    </ol>
+    <div class="say">"Squeeze as hard as you can. Go, go, go, go... and relax."</div>
+    <ol start="2">
+      <li>The squeeze lasts 3 to 5 s. Encourage the participant to breathe out, not hold their breath.</li>
+      <li>Record the peak (kg), reset the dial, rest 30 to 60 s between trials.</li>
+    </ol>
+    <h4>Discard and repeat the trial if</h4>
+    <ul class="tight"><li>the elbow moves away from the side, the hand changes, or the dial was not reset.</li></ul>
+  </details>
+
+  <details class="station" open>
+    <summary>Batak reaction wall</summary>
+    <h4>Set up</h4>
+    <ul>
+      <li>Choose the programme where lights come on one at a time at random and the score is the <strong>number of lights hit in a fixed time</strong>. The default on this page is a 30 s test. Change it in Enter data if your class uses 60 s.</li>
+      <li>Use the same programme for every trial, every participant and every time point.</li>
+      <li>Participant stands on the taped spot, about arm's length from the centre of the wall, so every target can be reached.</li>
+    </ul>
+    <h4>Practice runs</h4>
+    <p>Scores rise with practice, so complete <strong>2 full practice runs</strong> before the baseline trials and do not record them. Without this, a learning effect can look like a caffeine effect.</p>
+    <h4>Run each trial</h4>
+    <div class="say">"Hit each light as soon as it comes on, with either hand. Keep going until the time runs out."</div>
+    <ol>
+      <li>Tester starts the programme. Nobody talks or counts aloud during the run.</li>
+      <li>Record the score (number of lights hit) shown at the end.</li>
+      <li>Rest 60 s between trials.</li>
+    </ol>
+    <h4>Record</h4>
+    <ul class="tight">
+      <li><strong>Batak score</strong> (hits). Higher is better.</li>
+      <li>If the wall also shows a time, misses or an average, write it in Notes but enter only the hits.</li>
+    </ul>
+    <div class="note">The Batak is not a pure reaction-time test. The score combines reaction, decision, arm movement speed and coordination. A fall in score after fatigue could therefore reflect central or peripheral changes, including tired shoulders.</div>
+  </details>
+
+  <details class="station" open>
+    <summary>Alertness VAS</summary>
+    <ol>
+      <li>Give the participant a fresh slip each time, so earlier marks cannot be seen.</li>
+      <li>Read the question.</li>
+    </ol>
+    <div class="say">"Put one mark across the line at the point that best describes how alert you feel right now."</div>
+    <ol start="3">
+      <li>Measure from the left end to the mark in mm (0 to 100) and write it on the slip.</li>
+    </ol>
+    <p>Taken on arrival (Base 1), after 5 min seated rest (Base 2), pre-task (after the gum), immediately post and at +10 min. Both baseline measures are before the gum, so any caffeine effect shows up at pre-task, not in the baseline.</p>
+    <div class="note">Wording follows the alertness item of the Bond-Lader scales (Bond and Lader, 1974). A single item used on its own has not been validated, so treat it as a rough guide.</div>
+  </details>
+
+  <details class="station" open>
+    <summary>Rating of perceived exertion (RPE)</summary>
+    <p>Use the Borg 6 to 20 scale (Borg, 1982). Show the printed scale and ask the question below. Record a whole number.</p>
+    <div class="say">"Using this scale, how hard did that feel overall?"</div>
+    <p class="tag">Anchors: 6 no exertion, 9 very light, 11 light, 13 somewhat hard, 15 hard, 17 very hard, 19 extremely hard, 20 maximal exertion.</p>
+    <p>Taken after each set of jumps, in the Immediate block (for the whole fatiguing task) and at +10 min (for the tests just completed).</p>
+  </details>
+</section>
+
+<section id="vassheet">
+  <h2>Printable VAS slips</h2>
+  <p class="noprint">Print at 100% scale (not "fit to page"), then cut along the dashed lines. <button type="button" class="secondary" id="printVas">Print VAS slips</button></p>
+  <div id="vasSlips"></div>
 </section>
 
 <section id="fatigue">
   <h2>Fatiguing task</h2>
   <ol>
-    <li><strong>Repeated CMJ.</strong> 3 sets of 10 jumps, one jump every 10 s, 2 min rest between sets. Record RPE after each set.</li>
-    <li><strong>Sustained handgrip hold.</strong> Hold at 40% of baseline MVC until force cannot be maintained (for example 5 s below target). Record time to failure and final RPE.</li>
-    <li>Move straight to post-testing. Do not let participants sit for more than 1 min.</li>
+    <li><strong>Repeated CMJ.</strong> 3 sets of 10 maximal jumps, hands on hips, on or off the platform. Stand still for 2 to 3 s between jumps so each one is a separate full effort. The Tester counts the jumps aloud. Rest 2 min between sets (use the rest timer). Record RPE straight after each set.</li>
+    <li><strong>Sustained grip hold.</strong> Same hand and position as the MVC. The participant holds at 40% of their baseline MVC, watching the dial. Start the stopwatch when force reaches the target. Press Stop when force falls below the target and is not back above it within 3 s. Use this rule for everyone.</li>
+    <li><strong>Start the post-task clock</strong> the moment the hold ends and begin the Immediate block within 1 min.</li>
   </ol>
-  <div class="timer" aria-live="polite">
-    <div class="status" id="status">Choose a mode and press start.</div>
-    <div class="count" id="count">10</div>
-    <div>
-      <select id="mode" aria-label="Timer mode">
-        <option value="jump">CMJ set (10 s per jump, 10 jumps)</option>
-        <option value="rest">Rest between sets (120 s)</option>
-      </select>
-      <button id="start">Start</button>
-      <button id="stop" class="secondary">Stop</button>
+  <div class="timerbox" aria-live="polite">
+    <div class="noprint" role="group" aria-label="Timer mode">
+      <button type="button" class="chip active" data-t="rest">Rest between sets (2 min)</button>
+      <button type="button" class="chip" data-t="hold">Grip hold stopwatch</button>
+      <button type="button" class="chip" data-t="post">Post-task clock</button>
     </div>
+    <div class="count" id="tCount">2:00</div>
+    <div class="status" id="tStatus"></div>
+    <div class="cue" id="tCue"></div>
+    <div>
+      <button type="button" id="tStart">Start</button>
+      <button type="button" id="tStop" class="secondary">Stop</button>
+      <button type="button" id="tReset" class="secondary">Reset</button>
+      <button type="button" id="tSave" hidden>Save time to participant</button>
+    </div>
+    <p class="tag" id="tTarget"></p>
   </div>
 </section>
 
 <section id="post">
   <h2>Post-task testing</h2>
-  <p>Keep the order the same at each time point, with the measure that recovers fastest taken first.</p>
+  <p>Keep the same order at each time point, with the measures that recover fastest taken first. The post-task clock above tells you when each block starts.</p>
   <div class="scroll"><table>
-    <tr><th>Time point</th><th>Measures</th></tr>
-    <tr><td>Immediately (within 1 min)</td><td>CMJ x 2, handgrip MVC x 2, reaction time, RPE, alertness VAS</td></tr>
-    <tr><td>+2 min</td><td>CMJ x 1, handgrip MVC x 1</td></tr>
-    <tr><td>+10 min</td><td>CMJ x 2, handgrip MVC x 2, reaction time, RPE, alertness VAS, HR, BP</td></tr>
+    <tr><th>Clock</th><th>Block</th><th>Measures, in this order</th></tr>
+    <tr><td>0:00 to about 1:50</td><td>Immediate</td><td>CMJ x 2, handgrip MVC x 2, Batak x 1, RPE for the whole fatiguing task, alertness VAS</td></tr>
+    <tr><td>2:00</td><td>+2 min</td><td>CMJ x 1, handgrip MVC x 1</td></tr>
+    <tr><td>2:30 to 10:00</td><td>Recovery</td><td>Participant sits quietly. Recorder enters data.</td></tr>
+    <tr><td>10:00</td><td>+10 min</td><td>CMJ x 2, handgrip MVC x 2, Batak x 1, RPE, alertness VAS, HR, BP</td></tr>
   </table></div>
-  <p class="tag">Enter the mean of the trials at each post time point. HR and BP are recorded on paper and are not analysed on this page.</p>
-</section>
-
-<section id="cmj">
-  <h2>CMJ variables</h2>
-  <ul class="tight">
-    <li><strong>Jump height</strong>, as the performance anchor.</li>
-    <li><strong>Braking phase duration</strong> and <strong>propulsive phase duration</strong>.</li>
-    <li><strong>Mean braking force</strong> and <strong>mean propulsive force</strong>, relative to body mass (N/kg).</li>
-    <li><strong>Force at end of braking</strong>, taken at zero velocity at the bottom of the countermovement.</li>
-  </ul>
-  <h3>Standardisation</h3>
-  <ul class="tight">
-    <li>Braking phase runs from minimum velocity to zero velocity. Propulsion runs from zero velocity to take-off.</li>
-    <li>Take body weight from about 1 s of quiet standing before each trial.</li>
-    <li>Use the same movement-onset threshold for every trial and participant.</li>
-    <li>Durations and mean forces are linked through impulse, so they are not independent.</li>
-  </ul>
-</section>
-
-<section id="vas">
-  <h2>Alertness VAS</h2>
-  <p>Mark the line at the point that best describes how you feel right now. Take it at rest, pre-task, immediately post and +10 min. Measure from the left end in mm.</p>
-  <div class="vas">
-    <div class="line"></div>
-    <div class="ends"><span>Not at all alert</span><span>Extremely alert</span></div>
-  </div>
-  <div class="note">Based on the alertness wording of the Bond-Lader scales. A single item with this wording has not been validated on its own. Record Borg RPE after each set and after the grip hold.</div>
-</section>
-
-<section id="roles">
-  <h2>Roles and equipment</h2>
-  <h3>Groups of four to five</h3>
-  <ul class="tight">
-    <li><strong>Participant.</strong></li>
-    <li><strong>Tester.</strong> Runs the protocol and uses the standard encouragement script.</li>
-    <li><strong>Timekeeper.</strong> Manages intervals, rest and time points.</li>
-    <li><strong>Recorder.</strong> Enters the data below.</li>
-    <li><strong>Technician (one per class).</strong> Holds the allocation list. Tester and participant must not see it.</li>
-  </ul>
-  <h3>Equipment</h3>
-  <ul class="tight">
-    <li>Force platform and analysis software, handgrip dynamometer, reaction time software or device</li>
-    <li>BP monitor, HR monitors, timers, rulers (for the VAS)</li>
-    <li>Labelled, identical gum packs, first aid kit</li>
-  </ul>
-  <div class="note">With one force platform, stagger groups by 5 to 10 min, or run CMJ as a station while other groups complete grip and reaction tasks.</div>
+  <p class="tag">Where two trials are taken, enter the mean of the two. If a block runs late, carry on and write the actual time in Notes. HR and BP stay on paper and are not analysed on this page.</p>
 </section>
 
 <!-- ============ DATA ENTRY ============ -->
 <section id="enter">
   <h2>Enter data</h2>
-  <p>Add one participant per tester. Enter condition as A or B until unblinding. Data are saved in this browser on this device. Use Export to share a group file, and Import to pool groups on one machine.</p>
+  <details open>
+    <summary><strong>How to enter data (Recorder)</strong></summary>
+    <ol>
+      <li>Press <strong>Add participant</strong>. Set <strong>Condition code</strong> to the letter the technician gives you for your gum pack number. Do not ask which letter is caffeine.</li>
+      <li>Type each result as soon as the trial is done. Everything saves automatically in this browser on this device.</li>
+      <li>Grey boxes are not measured at that time point. A <span style="color:var(--bad)">red box</span> means the value is outside the expected range, so check it and its unit.</li>
+      <li>For post time points with two trials, enter the mean of the two.</li>
+      <li>The grip hold target (40% of baseline MVC) appears once the three baseline grip values are in.</li>
+      <li>Ask for the allocation guess <strong>before</strong> unblinding.</li>
+      <li>At the end, press <strong>Export CSV</strong> and send the file to your lecturer. To pool groups, one person presses <strong>Import CSV</strong> for each group file.</li>
+    </ol>
+  </details>
   <div class="noprint">
-    <button id="addP">Add participant</button>
-    <button id="example" class="secondary">Load example data (simulated)</button>
-    <button id="exportCsv" class="secondary">Export CSV</button>
+    <button type="button" id="addP">Add participant</button>
+    <button type="button" id="example" class="secondary">Load example data (simulated)</button>
+    <button type="button" id="exportCsv" class="secondary">Export CSV</button>
     <label class="btn secondary">Import CSV<input id="importCsv" type="file" accept=".csv,text/csv" hidden></label>
-    <button id="clearAll" class="danger">Clear all</button>
+    <button type="button" id="clearAll" class="danger">Clear all</button>
   </div>
   <div class="row">
-    <label>Group A is <input type="text" id="labelA" value="Group A" size="14"></label>
-    <label>Group B is <input type="text" id="labelB" value="Group B" size="14"></label>
-    <span class="tag">After unblinding, type Caffeine or Placebo into these boxes. All tables update.</span>
+    <label>Batak test length
+      <select id="batakDur"><option value="30">30 s</option><option value="60">60 s</option></select>
+    </label>
+    <label>Which code was caffeine?
+      <select id="caffCode"><option value="">Not unblinded yet</option><option value="A">A was caffeine</option><option value="B">B was caffeine</option></select>
+    </label>
+    <label>Name for A <input type="text" id="labelA" value="Group A" size="12"></label>
+    <label>Name for B <input type="text" id="labelB" value="Group B" size="12"></label>
   </div>
+  <p class="tag">Leave the caffeine question until unblinding. Answering it renames A and B to Caffeine and Placebo in every table and scores the allocation guesses.</p>
   <div id="chips" class="noprint"></div>
   <div id="pform"></div>
 </section>
@@ -203,17 +385,21 @@
 <section id="analysis">
   <h2>Analysis</h2>
   <div class="warn" id="nWarn"></div>
-  <details open>
+  <details>
     <summary><strong>Terms used</strong></summary>
     <ul class="tight">
-      <li><strong>Typical error (TE).</strong> The within-participant SD of the baseline trials, pooled across participants. It describes trial-to-trial noise.</li>
+      <li><strong>Typical error (TE).</strong> The within-participant SD of the baseline trials, pooled across participants. It describes trial-to-trial noise (Hopkins, 2000).</li>
       <li><strong>CV (%).</strong> SD divided by the mean, as a percentage. The within-participant CV describes trial-to-trial variation. The between-participant CV describes spread across people.</li>
-      <li><strong>SWC.</strong> The smallest worthwhile change, by default 0.2 x the between-participant SD of baseline means.</li>
-      <li><strong>Noise threshold.</strong> A change must exceed this multiple of TE before we treat it as more than noise.</li>
-      <li><strong>Standardised difference (d).</strong> The difference in mean change between A and B divided by the pooled SD of change. Magnitudes: under 0.2 trivial, 0.2 small, 0.6 moderate, 1.2 large, 2.0 very large.</li>
+      <li><strong>SWC.</strong> The smallest worthwhile change, by default 0.2 x the between-participant SD of baseline means (Hopkins <em>et al.</em>, 2009).</li>
+      <li><strong>Noise threshold.</strong> A change must be larger than this multiple of TE before we treat it as more than noise. MDC95 is 1.96 x &radic;2 x TE, which is 2.77 x TE (Weir, 2005).</li>
+      <li><strong>Standardised difference (d).</strong> The difference in mean change between A and B divided by the pooled SD of change. Magnitudes are under 0.2 trivial, 0.2 small, 0.6 moderate, 1.2 large and 2.0 very large (Hopkins <em>et al.</em>, 2009).</li>
+      <li><strong>Better or worse.</strong> Shown for jump height, grip, Batak score and alertness, where higher is better. Phase durations and forces show only the direction, because a change there describes strategy rather than better or worse performance.</li>
     </ul>
   </details>
   <div class="row noprint">
+    <label>Variable
+      <select id="varSel"></select>
+    </label>
     <label>SWC method
       <select id="swcMode">
         <option value="sd">0.2 x between-participant SD</option>
@@ -228,33 +414,33 @@
         <option value="2.77">MDC95 (2.77 x TE)</option>
       </select>
     </label>
-    <label>Variable
-      <select id="varSel"></select>
-    </label>
-    <button id="printBtn" class="secondary">Print or save as PDF</button>
+    <button type="button" id="printBtn" class="secondary">Print or save as PDF</button>
   </div>
 
-  <h3>1. Reliability and thresholds (all variables)</h3>
-  <p class="tag">Based on baseline trials. Jump height, jump phase variables, grip and reaction time have three trials, alertness VAS has two measures, and RPE has no baseline.</p>
+  <h3>1. Summary in plain English for the selected variable</h3>
+  <div id="tblSum"></div>
+
+  <h3>2. Reliability and thresholds (all variables)</h3>
+  <p class="tag">Based on the baseline trials. CMJ, grip and Batak have three baseline trials, alertness VAS has two, and RPE has none. Practice runs on the Batak are not included.</p>
   <div class="scroll" id="tblRel"></div>
 
-  <h3>2. Descriptives for the selected variable</h3>
+  <h3>3. Descriptives for the selected variable</h3>
   <div class="scroll" id="tblDesc"></div>
 
-  <h3>3. Individual changes for the selected variable</h3>
-  <p class="tag">Change is the post value minus the mean of the baseline trials. Each row is classified against the noise threshold and the SWC.</p>
+  <h3>4. Individual changes for the selected variable</h3>
+  <p class="tag">Change is the value at that time point minus the mean of the baseline trials. Rows in bold are beyond the noise threshold and at or above the SWC.</p>
   <div class="scroll" id="tblInd"></div>
 
-  <h3>4. Comparison of A and B for the selected variable</h3>
+  <h3>5. Comparison of A and B for the selected variable</h3>
   <div class="scroll" id="tblCmp"></div>
 
-  <h3>5. Chart for the selected variable</h3>
+  <h3>6. Chart for the selected variable</h3>
   <div id="chart"></div>
 
-  <h3>6. Overview of all variables</h3>
+  <h3>7. Overview of all variables</h3>
   <div class="scroll" id="tblOver"></div>
 
-  <h3>7. Fatiguing task, side effects and blinding</h3>
+  <h3>8. Fatiguing task, side effects and blinding</h3>
   <div class="scroll" id="tblExtra"></div>
 </section>
 
@@ -262,22 +448,24 @@
   <h2>Mechanisms and discussion</h2>
   <div class="scroll"><table>
     <tr><th>Measure</th><th>What it speaks to</th></tr>
-    <tr><td>Fall in maximal voluntary force</td><td>Total fatigue (central and peripheral combined)</td></tr>
-    <tr><td>Fall in jump height, longer braking, lower propulsive force</td><td>Neuromuscular fatigue and altered strategy under stretch-shortening conditions</td></tr>
-    <tr><td>Slower reaction time, higher RPE, lower alertness</td><td>Central and perceptual contributions</td></tr>
+    <tr><td>Fall in maximal voluntary grip force</td><td>Total fatigue, with central and peripheral parts combined</td></tr>
+    <tr><td>Fall in jump height, longer braking, lower propulsive force</td><td>Neuromuscular fatigue and altered strategy in stretch-shortening movements</td></tr>
+    <tr><td>Fall in Batak score</td><td>Mixed. Reaction and decision speed (central) plus arm movement speed and shoulder fatigue (peripheral)</td></tr>
+    <tr><td>Higher RPE, lower alertness</td><td>Central and perceptual contributions</td></tr>
     <tr><td>Time course of recovery</td><td>Fast recovery points towards metabolic and ionic causes. Slower recovery points towards structural or glycogen-related causes</td></tr>
   </table></div>
   <h3>Central</h3>
-  <p>Reduced voluntary activation, altered motor unit recruitment and firing, supraspinal factors, perception of effort, and the role of adenosine, dopamine and serotonin.</p>
+  <p>Reduced voluntary activation, altered motor unit recruitment and firing, supraspinal factors, perception of effort, and the role of adenosine, dopamine and serotonin (Gandevia, 2001).</p>
   <h3>Peripheral</h3>
-  <p>Impaired excitation-contraction coupling, including sarcoplasmic reticulum Ca<sup>2+</sup> release and reuptake, inorganic phosphate accumulation, extracellular K<sup>+</sup> and Na<sup>+</sup>/K<sup>+</sup> pump activity, PCr depletion and glycogen depletion.</p>
+  <p>Impaired excitation-contraction coupling, including sarcoplasmic reticulum Ca<sup>2+</sup> release and reuptake, inorganic phosphate accumulation, extracellular K<sup>+</sup> and Na<sup>+</sup>/K<sup>+</sup> pump activity, PCr depletion and glycogen depletion (Allen, Lamb and Westerblad, 2008).</p>
   <h3>Where caffeine may act</h3>
-  <p>The main account is adenosine receptor antagonism, lowering perceived effort and possibly sustaining drive. Direct muscle effects are shown in vitro at concentrations unlikely to be reached with typical doses.</p>
+  <p>The main account is adenosine receptor antagonism, which lowers perceived effort and may help sustain central drive. Direct effects on muscle are shown in vitro at concentrations unlikely to be reached with typical doses (Davis and Green, 2009; Guest <em>et al.</em>, 2021). Responses vary between people (Pickering and Kiely, 2018), and simply believing you have had caffeine can change performance (Saunders <em>et al.</em>, 2017).</p>
   <h3>Questions for the group</h3>
   <ol>
     <li>Which changes were larger than the noise threshold, and which were not?</li>
     <li>Which changes were also larger than the SWC? Does that match what you would call a worthwhile change in performance?</li>
-    <li>Which mechanisms are consistent with the pattern, and which cannot be separated with these measures?</li>
+    <li>Which mechanisms are consistent with the pattern you found, and which cannot be separated with these measures?</li>
+    <li>Did the Batak score and grip force recover at the same rate? What might explain any difference?</li>
     <li>Were individual responses similar within a condition? What does that say about averaging across a few people?</li>
     <li>How many participants guessed their allocation correctly, and what does that say about blinding and expectancy?</li>
     <li>What would you change (more participants, more trials, a crossover design) to be more confident about a caffeine effect?</li>
@@ -289,12 +477,33 @@
   <div class="warn">
     <ul class="tight">
       <li>Screen for pregnancy, hypertension, cardiac or anxiety concerns, and any reason to avoid caffeine. Exclude where indicated.</li>
+      <li>Check the gum ingredient list for allergies and for aspartame, a source of phenylalanine.</li>
       <li>Participation is optional. Offer a non-participant role.</li>
-      <li>Stop anyone reporting chest pain, palpitations, dizziness or marked nausea.</li>
+      <li>Stop anyone reporting chest pain, palpitations, dizziness or marked nausea, and tell the lecturer.</li>
+      <li>Keep the area around the force platform and Batak wall clear. Remove watches and rings before the Batak.</li>
       <li>Avoid late afternoon sessions, because caffeine can affect sleep.</li>
       <li>Follow the approved ethics and risk assessment for dose, product and exclusions.</li>
     </ul>
   </div>
+</section>
+
+<section id="refs">
+  <h2>References</h2>
+  <ul class="refs">
+    <li>Allen, D.G., Lamb, G.D. and Westerblad, H. (2008) 'Skeletal muscle fatigue: cellular mechanisms', <em>Physiological Reviews</em>, 88(1), pp. 287&ndash;332.</li>
+    <li>Bond, A. and Lader, M. (1974) 'The use of analogue scales in rating subjective feelings', <em>British Journal of Medical Psychology</em>, 47(3), pp. 211&ndash;218.</li>
+    <li>Borg, G.A.V. (1982) 'Psychophysical bases of perceived exertion', <em>Medicine and Science in Sports and Exercise</em>, 14(5), pp. 377&ndash;381.</li>
+    <li>Davis, J.K. and Green, J.M. (2009) 'Caffeine and anaerobic performance: ergogenic value and mechanisms of action', <em>Sports Medicine</em>, 39(10), pp. 813&ndash;832.</li>
+    <li>Gandevia, S.C. (2001) 'Spinal and supraspinal factors in human muscle fatigue', <em>Physiological Reviews</em>, 81(4), pp. 1725&ndash;1789.</li>
+    <li>Guest, N.S. <em>et al.</em> (2021) 'International society of sports nutrition position stand: caffeine and exercise performance', <em>Journal of the International Society of Sports Nutrition</em>, 18(1), p. 1.</li>
+    <li>Hopkins, W.G. (2000) 'Measures of reliability in sports medicine and science', <em>Sports Medicine</em>, 30(1), pp. 1&ndash;15.</li>
+    <li>Hopkins, W.G., Marshall, S.W., Batterham, A.M. and Hanin, J. (2009) 'Progressive statistics for studies in sports medicine and exercise science', <em>Medicine and Science in Sports and Exercise</em>, 41(1), pp. 3&ndash;12.</li>
+    <li>Kamimori, G.H. <em>et al.</em> (2002) 'The rate of absorption and relative bioavailability of caffeine administered in chewing gum versus capsules to normal healthy volunteers', <em>International Journal of Pharmaceutics</em>, 234(1&ndash;2), pp. 159&ndash;167.</li>
+    <li>McMahon, J.J., Suchomel, T.J., Lake, J.P. and Comfort, P. (2018) 'Understanding the key phases of the countermovement jump force-time curve', <em>Strength and Conditioning Journal</em>, 40(4), pp. 96&ndash;106.</li>
+    <li>Pickering, C. and Kiely, J. (2018) 'Are the current guidelines on caffeine use in sport optimal for everyone? Inter-individual variation in caffeine ergogenicity, and a move towards personalised sports nutrition', <em>Sports Medicine</em>, 48(1), pp. 7&ndash;16.</li>
+    <li>Saunders, B. <em>et al.</em> (2017) 'Placebo in sports nutrition: a proof-of-principle study involving caffeine supplementation', <em>Scandinavian Journal of Medicine and Science in Sports</em>, 27(11), pp. 1240&ndash;1247.</li>
+    <li>Weir, J.P. (2005) 'Quantifying test-retest reliability using the intraclass correlation coefficient and the SEM', <em>Journal of Strength and Conditioning Research</em>, 19(1), pp. 231&ndash;240.</li>
+  </ul>
 </section>
 
 </main>
@@ -302,101 +511,108 @@
 
 <script>
 (function () {
-  /* ---------- timer ---------- */
-  var count = document.getElementById('count');
-  var status = document.getElementById('status');
-  var mode = document.getElementById('mode');
-  var timer = null, jump = 0, left = 0;
+  'use strict';
 
-  function stopTimer(msg) {
-    if (timer) { clearInterval(timer); timer = null; }
-    status.textContent = msg || 'Stopped.';
-  }
-  function beep() {
-    try {
-      var C = window.AudioContext || window.webkitAudioContext;
-      if (!C) return;
-      var ctx = new C(), o = ctx.createOscillator(), g = ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
-      o.frequency.value = 880; g.gain.value = 0.1;
-      o.start(); o.stop(ctx.currentTime + 0.15);
-    } catch (e) {}
-  }
-  document.getElementById('start').addEventListener('click', function () {
-    stopTimer('');
-    if (mode.value === 'jump') {
-      jump = 1; left = 10; count.textContent = left;
-      status.textContent = 'Jump ' + jump + ' of 10';
-      beep();
-      timer = setInterval(function () {
-        left--;
-        if (left <= 0) {
-          jump++;
-          if (jump > 10) { stopTimer('Set complete. Record RPE.'); count.textContent = '0'; return; }
-          left = 10; beep();
-          status.textContent = 'Jump ' + jump + ' of 10';
-        }
-        count.textContent = left;
-      }, 1000);
-    } else {
-      left = 120; count.textContent = left; status.textContent = 'Rest';
-      timer = setInterval(function () {
-        left--; count.textContent = left;
-        if (left <= 0) { stopTimer('Rest complete. Start next set.'); beep(); }
-      }, 1000);
-    }
-  });
-  document.getElementById('stop').addEventListener('click', function () { stopTimer('Stopped.'); });
-
-  /* ---------- variables ---------- */
-  // baseN = number of baseline entries; times = which post points are measured [imm, +2, +10]
-  var VARS = [
-    { key:'jump',  label:'Jump height',            unit:'cm',    dec:1, baseN:3, times:[1,1,1] },
-    { key:'brkD',  label:'Braking duration',       unit:'s',     dec:3, baseN:3, times:[1,1,1] },
-    { key:'proD',  label:'Propulsive duration',    unit:'s',     dec:3, baseN:3, times:[1,1,1] },
-    { key:'brkF',  label:'Mean braking force',     unit:'N/kg',  dec:2, baseN:3, times:[1,1,1] },
-    { key:'proF',  label:'Mean propulsive force',  unit:'N/kg',  dec:2, baseN:3, times:[1,1,1] },
-    { key:'endF',  label:'Force at end of braking',unit:'N/kg',  dec:2, baseN:3, times:[1,1,1] },
-    { key:'grip',  label:'Handgrip MVC',           unit:'kg',    dec:1, baseN:3, times:[1,1,1] },
-    { key:'rt',    label:'Reaction time',          unit:'ms',    dec:0, baseN:3, times:[1,0,1] },
-    { key:'rpe',   label:'RPE (after task)',       unit:'a.u.',  dec:1, baseN:0, times:[1,0,1] },
-    { key:'vas',   label:'Alertness VAS',          unit:'mm',    dec:0, baseN:2, times:[1,0,1] }
-  ];
-  var TIMES = ['Immediate', '+2 min', '+10 min'];
-  var COLS = ['Base 1', 'Base 2', 'Base 3', 'Immediate', '+2 min', '+10 min'];
-  var COL = { A:'#d55e00', B:'#0072b2', N:'#6b7280' };
-  var EXTRA_KEYS = ['gripHold', 'rpe1', 'rpe2', 'rpe3'];
-
-  /* ---------- state ---------- */
-  var state = { participants: [], sel: 0, labelA: 'Group A', labelB: 'Group B', swcMode: 'sd', swcPct: 2, noiseMult: 1, varKey: 'jump' };
-  var STORE = 'caffeine-practical-v2';
-
-  function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }
-  function load() {
-    try {
-      var s = localStorage.getItem(STORE);
-      if (s) { var o = JSON.parse(s); for (var k in o) state[k] = o[k]; }
-    } catch (e) {}
-  }
-
-  function newParticipant(id) {
-    var vals = {};
-    VARS.forEach(function (v) { vals[v.key] = ['', '', '', '', '', '']; });
-    return { id: id, cond: '', mass: '', vals: vals, extra: { gripHold:'', rpe1:'', rpe2:'', rpe3:'', guess:'', effects:'' } };
-  }
-
-  /* ---------- maths ---------- */
+  /* ---------- helpers ---------- */
+  function $(id) { return document.getElementById(id); }
+  function each(list, fn) { Array.prototype.forEach.call(list, fn); }
   function num(x) { var n = parseFloat(x); return isFinite(n) ? n : NaN; }
-  function finite(arr) { return arr.filter(function (x) { return isFinite(x); }); }
+  function finite(a) { return a.filter(function (x) { return typeof x === 'number' && isFinite(x); }); }
   function mean(a) { a = finite(a); return a.length ? a.reduce(function (s, x) { return s + x; }, 0) / a.length : NaN; }
   function sd(a) {
     a = finite(a); if (a.length < 2) return NaN;
     var m = mean(a); return Math.sqrt(a.reduce(function (s, x) { return s + (x - m) * (x - m); }, 0) / (a.length - 1));
   }
   function fmt(x, d) { return isFinite(x) ? x.toFixed(d) : 'n/a'; }
-  function condLabel(c) { return c === 'A' ? state.labelA : c === 'B' ? state.labelB : 'Not set'; }
-  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+  function sgn(x, d) { return isFinite(x) ? (x > 0 ? '+' : '') + x.toFixed(d) : 'n/a'; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function clockNow() { var d = new Date(); return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
+
+  /* ---------- sound ---------- */
+  var actx = null;
+  function unlockAudio() {
+    try { if (!actx) { var C = window.AudioContext || window.webkitAudioContext; if (C) actx = new C(); } if (actx && actx.state === 'suspended') actx.resume(); } catch (e) {}
+  }
+  function beep(n) {
+    try {
+      unlockAudio(); if (!actx) return;
+      for (var k = 0; k < (n || 1); k++) {
+        var o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + k * 0.25;
+        o.connect(g); g.connect(actx.destination); o.frequency.value = 880; g.gain.value = 0.12;
+        o.start(t); o.stop(t + 0.15);
+      }
+    } catch (e) {}
+  }
+
+  /* ---------- variables ---------- */
+  // baseN = number of baseline entries; times = which time points are measured [pre-task, immediate, +2, +10]
+  // dir = 1 when higher is better, 0 when only the direction is reported
+  var TIMES = ['Pre-task', 'Immediate', '+2 min', '+10 min'];
+  var COLS = ['Base 1', 'Base 2', 'Base 3'].concat(TIMES);
+  var VARS = [
+    { key:'jump',  group:'CMJ on the force platform', label:'Jump height',             unit:'cm',     dec:1, baseN:3, times:[0,1,1,1], dir:1, lo:5,    hi:80 },
+    { key:'brkD',  group:'CMJ on the force platform', label:'Braking duration',        unit:'s',      dec:3, baseN:3, times:[0,1,1,1], dir:0, lo:0.05, hi:1.5 },
+    { key:'proD',  group:'CMJ on the force platform', label:'Propulsive duration',     unit:'s',      dec:3, baseN:3, times:[0,1,1,1], dir:0, lo:0.05, hi:1 },
+    { key:'brkF',  group:'CMJ on the force platform', label:'Mean braking force',      unit:'N/kg',   dec:2, baseN:3, times:[0,1,1,1], dir:0, lo:1,    hi:60 },
+    { key:'proF',  group:'CMJ on the force platform', label:'Mean propulsive force',   unit:'N/kg',   dec:2, baseN:3, times:[0,1,1,1], dir:0, lo:1,    hi:60 },
+    { key:'endF',  group:'CMJ on the force platform', label:'Force at end of braking', unit:'N/kg',   dec:2, baseN:3, times:[0,1,1,1], dir:0, lo:1,    hi:80 },
+    { key:'grip',  group:'Handgrip',                  label:'Handgrip MVC',            unit:'kg',     dec:1, baseN:3, times:[0,1,1,1], dir:1, lo:5,    hi:90 },
+    { key:'batak', group:'Batak wall',                label:'Batak score',             unit:'hits',   dec:0, baseN:3, times:[0,1,0,1], dir:1, lo:1,    hi:200 },
+    { key:'rpe',   group:'Perception',                label:'RPE, Borg 6 to 20',       unit:'points', dec:1, baseN:0, times:[0,1,0,1], dir:0, lo:6,    hi:20 },
+    { key:'vas',   group:'Perception',                label:'Alertness VAS',           unit:'mm',     dec:0, baseN:2, times:[1,1,0,1], dir:1, lo:0,    hi:100 }
+  ];
+  var EXTRA_KEYS = ['gripHold', 'rpe1', 'rpe2', 'rpe3'];
+  var COL = { A:'#d55e00', B:'#0072b2', N:'#6b7280' };
+
+  /* ---------- state ---------- */
+  var state = { participants: [], sel: 0, labelA: 'Group A', labelB: 'Group B', swcMode: 'sd', swcPct: 2, noiseMult: 1, varKey: 'jump', batakDur: 30, caffCode: '', check: {} };
+  var STORE = 'caffeine-practical-v3', OLD_STORE = 'caffeine-practical-v2';
+
+  function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }
+  function newParticipant(id) {
+    var vals = {};
+    VARS.forEach(function (v) { vals[v.key] = ['', '', '', '', '', '', '']; });
+    return { id: id, cond: '', mass: '', notes: '', vals: vals, extra: { gripHold:'', rpe1:'', rpe2:'', rpe3:'', guess:'', effects:'' } };
+  }
+  // brings saved participants from older versions of this page up to date
+  function migrate(p, old) {
+    var q = newParticipant(p && p.id != null ? String(p.id) : 'P');
+    if (!p) return q;
+    q.cond = p.cond === 'A' || p.cond === 'B' ? p.cond : '';
+    q.mass = p.mass != null ? String(p.mass) : '';
+    q.notes = p.notes != null ? String(p.notes) : '';
+    VARS.forEach(function (v) {
+      var a = p.vals && p.vals[v.key];
+      if (!a || !a.length) return;
+      a = a.slice();
+      if (a.length === 6) a.splice(3, 0, '');
+      if (old && v.key === 'vas') { a[3] = a[1]; a[1] = ''; } // old page used pre-task VAS as Base 2
+      for (var i = 0; i < 7; i++) q.vals[v.key][i] = a[i] == null ? '' : String(a[i]);
+    });
+    if (p.extra) Object.keys(q.extra).forEach(function (k) { if (p.extra[k] != null) q.extra[k] = String(p.extra[k]); });
+    if (['C', 'P', 'U'].indexOf(q.extra.guess) < 0) q.extra.guess = '';
+    return q;
+  }
+  function load() {
+    var s = null, old = false;
+    try { s = localStorage.getItem(STORE); if (!s) { s = localStorage.getItem(OLD_STORE); old = !!s; } } catch (e) {}
+    if (!s) return;
+    var o; try { o = JSON.parse(s); } catch (e) { return; }
+    Object.keys(state).forEach(function (k) { if (o[k] != null) state[k] = o[k]; });
+    state.participants = (Array.isArray(state.participants) ? state.participants : []).map(function (p) { return migrate(p, old); });
+    if (!state.check || typeof state.check !== 'object') state.check = {};
+    if (state.batakDur !== 30 && state.batakDur !== 60) state.batakDur = 30;
+    if (state.sel >= state.participants.length) state.sel = 0;
+  }
+
+  /* ---------- maths ---------- */
   function varByKey(k) { return VARS.filter(function (v) { return v.key === k; })[0]; }
+  function vLabel(v) { return v.key === 'batak' ? 'Batak score, ' + state.batakDur + ' s test' : v.label; }
+  function vFull(v) { return vLabel(v) + ' (' + v.unit + ')'; }
+  function condLabel(c) { return c === 'A' ? state.labelA : c === 'B' ? state.labelB : 'Not set'; }
+  function byCond(c) { return state.participants.filter(function (p) { return p.cond === c; }); }
+  function onCell(v, i) { return i < 3 ? i < v.baseN : !!v.times[i - 3]; }
 
   function baseTrials(p, v) { return v.baseN ? finite(p.vals[v.key].slice(0, v.baseN).map(num)) : []; }
   function baseMean(p, v) { var t = baseTrials(p, v); return t.length ? mean(t) : NaN; }
@@ -408,40 +624,41 @@
     var b = baseMean(p, v);
     return isFinite(b) ? x - b : NaN;
   }
+  function gripTarget(p) { var g = varByKey('grip'), b = p ? baseMean(p, g) : NaN; return { base: b, target: 0.4 * b, n: p ? baseTrials(p, g).length : 0 }; }
 
   function varStats(v) {
-    var num_df = 0, sum_var = 0, sum_cv = 0, nRel = 0;
+    var dfSum = 0, varSum = 0, cvSum = 0, nRel = 0;
     state.participants.forEach(function (p) {
       var t = baseTrials(p, v);
       if (t.length >= 2) {
         var df = t.length - 1, s = sd(t), m = mean(t);
-        num_df += df; sum_var += df * s * s;
-        if (m !== 0) sum_cv += df * (s / m) * (s / m);
+        dfSum += df; varSum += df * s * s;
+        if (m !== 0) cvSum += df * (s / m) * (s / m);
         nRel++;
       }
     });
-    var te = num_df ? Math.sqrt(sum_var / num_df) : NaN;
-    var cvw = num_df ? Math.sqrt(sum_cv / num_df) * 100 : NaN;
+    var te = dfSum ? Math.sqrt(varSum / dfSum) : NaN;
+    var cvw = dfSum ? Math.sqrt(cvSum / dfSum) * 100 : NaN;
     var bm = state.participants.map(function (p) { return baseMean(p, v); });
-    var nB = finite(bm).length, mB = mean(bm), sB = sd(bm);
+    var mB = mean(bm), sB = sd(bm);
     var cvB = isFinite(sB) && mB ? sB / mB * 100 : NaN;
-    var swc = NaN;
-    if (state.swcMode === 'pct') swc = isFinite(mB) ? Math.abs(mB) * state.swcPct / 100 : NaN;
-    else swc = isFinite(sB) ? 0.2 * sB : NaN;
+    var swc = state.swcMode === 'pct' ? (isFinite(mB) ? Math.abs(mB) * state.swcPct / 100 : NaN) : (isFinite(sB) ? 0.2 * sB : NaN);
     var noise = isFinite(te) ? te * state.noiseMult : NaN;
-    return { nRel: nRel, te: te, cvw: cvw, nB: nB, mB: mB, sB: sB, cvB: cvB, swc: swc, noise: noise };
+    return { nRel: nRel, te: te, cvw: cvw, mB: mB, sB: sB, cvB: cvB, swc: swc, noise: noise };
   }
 
-  function classify(chg, st, hasBase) {
+  function isClear(chg, st) { return isFinite(chg) && isFinite(st.noise) && isFinite(st.swc) && Math.abs(chg) > st.noise && Math.abs(chg) >= st.swc; }
+  function classify(chg, st, v) {
     if (!isFinite(chg)) return '';
-    if (!hasBase) return 'Raw value (no baseline)';
-    var a = Math.abs(chg), arrow = chg > 0 ? '▲ ' : chg < 0 ? '▼ ' : '';
+    if (!v.baseN) return 'Raw value (no baseline)';
+    var a = Math.abs(chg);
+    var dirWord = chg > 0 ? '&#9650; Increase' : chg < 0 ? '&#9660; Decrease' : 'No change';
+    if (v.dir && chg !== 0) dirWord += chg * v.dir > 0 ? ' (better)' : ' (worse)';
     var nz = isFinite(st.noise) ? (a > st.noise ? 'beyond noise' : 'within noise') : 'noise unknown';
     var sw = isFinite(st.swc) ? (a >= st.swc ? 'above SWC' : 'below SWC') : 'SWC unknown';
-    var s = nz + ', ' + sw;
-    return arrow + s.charAt(0).toUpperCase() + s.slice(1);
+    var s = dirWord + ', ' + nz + ', ' + sw;
+    return isClear(chg, st) ? '<strong>' + s + '</strong>' : s;
   }
-
   function magnitude(d) {
     var a = Math.abs(d);
     if (!isFinite(a)) return 'n/a';
@@ -452,91 +669,242 @@
     return 'very large';
   }
 
-  function byCond(c) { return state.participants.filter(function (p) { return p.cond === c; }); }
+  /* ---------- run sheet ---------- */
+  function renderChecks() {
+    each(document.querySelectorAll('input[data-step]'), function (cb) {
+      var id = cb.getAttribute('data-step'), t = state.check[id];
+      cb.checked = !!t;
+      var w = document.querySelector('[data-when="' + id + '"]'); if (w) w.textContent = t || '';
+      var tr = cb.closest('tr'); if (tr) tr.classList.toggle('done', !!t);
+    });
+    $('gumNote').textContent = state.check.r4 ? 'Gum started at ' + state.check.r4 + '. Pre-task check is due about 20 min later.' : '';
+  }
+
+  /* ---------- VAS slips ---------- */
+  function renderVasSlips() {
+    var pts = ['Base 1, on arrival', 'Base 2, after 5 min rest', 'Pre-task, after the gum', 'Immediately after the fatiguing task', '+10 min after the fatiguing task'];
+    $('vasSlips').innerHTML = pts.map(function (t) {
+      return '<div class="vas-slip"><p><strong>Alertness.</strong> Participant ID ________ &nbsp; Time point ' + t + '</p>' +
+        '<p>Put one mark across the line at the point that best describes how alert you feel right now.</p>' +
+        '<div class="vas-line"></div><div class="vas-ends"><span>Not at all alert</span><span>Extremely alert</span></div>' +
+        '<p class="tag">Tester only. Distance from left end ______ mm</p></div>';
+    }).join('');
+  }
+
+  /* ---------- timers ---------- */
+  var T = { mode: 'rest', running: false, t0: 0, acc: 0, id: null, last: -1 };
+  var REST_MS = 120000;
+  var POST_CUES = [
+    { at: 0,   beep: 2, text: 'Immediate block now. CMJ x 2, grip MVC x 2, Batak x 1, RPE for the whole task, alertness VAS.' },
+    { at: 100, beep: 0, text: 'Finish the Immediate block. The +2 min block starts at 2:00.' },
+    { at: 120, beep: 3, text: '+2 min block now. CMJ x 1, grip MVC x 1.' },
+    { at: 160, beep: 0, text: 'Recovery. Participant sits quietly. Recorder enters the data so far.' },
+    { at: 570, beep: 1, text: 'Get ready. The +10 min block starts at 10:00.' },
+    { at: 600, beep: 3, text: '+10 min block now. CMJ x 2, grip MVC x 2, Batak x 1, RPE, alertness VAS, HR, BP.' },
+    { at: 780, beep: 0, text: 'Testing should be finished. Stop the clock and complete the data entry.' }
+  ];
+  function tElapsed() { return T.acc + (T.running ? Date.now() - T.t0 : 0); }
+  function fmtClock(ms, tenths) {
+    var tot = Math.max(0, ms) / 1000;
+    if (tenths) { tot = Math.round(tot * 10) / 10; var m1 = Math.floor(tot / 60), s1 = tot - m1 * 60; return m1 + ':' + (s1 < 10 ? '0' : '') + s1.toFixed(1); }
+    var m = Math.floor(tot / 60), s = Math.floor(tot - m * 60); return m + ':' + pad2(s);
+  }
+  function tHalt() {
+    if (T.running) { T.acc += Date.now() - T.t0; T.running = false; }
+    if (T.id) { clearInterval(T.id); T.id = null; }
+  }
+  function tRender() {
+    var e = tElapsed(), cnt = $('tCount'), stat = $('tStatus'), cue = $('tCue');
+    if (T.mode === 'rest') {
+      var left = REST_MS - e;
+      cue.textContent = '';
+      if (left <= 0) {
+        tHalt(); T.acc = REST_MS; cnt.textContent = '0:00';
+        stat.textContent = 'Rest complete. Start the next set of 10 jumps.';
+        if (T.last !== 1) { T.last = 1; beep(2); }
+        return;
+      }
+      cnt.textContent = fmtClock(Math.ceil(left / 1000) * 1000);
+      stat.textContent = T.running ? (left <= 10000 ? 'Get ready for the next set.' : 'Resting. Record RPE for the set just finished.') : (e ? 'Paused.' : 'Press Start at the end of each set.');
+    } else if (T.mode === 'hold') {
+      cue.textContent = '';
+      cnt.textContent = fmtClock(e, true);
+      stat.textContent = T.running ? 'Holding. Press Stop when force falls below the target and is not back within 3 s.' :
+        (e ? 'Stopped at ' + (Math.round(e / 100) / 10).toFixed(1) + ' s. Save it to the participant, or press Reset.' : 'Press Start when force reaches the target.');
+    } else {
+      cnt.textContent = fmtClock(e);
+      if (!T.running && !e) { stat.textContent = 'Press Start the moment the grip hold ends.'; cue.innerHTML = '<span class="tag">The clock gives a beep and an instruction at each block.</span>'; return; }
+      var sec = e / 1000, idx = 0;
+      for (var i = 0; i < POST_CUES.length; i++) if (sec >= POST_CUES[i].at) idx = i;
+      if (T.running && idx !== T.last) { T.last = idx; if (POST_CUES[idx].beep) beep(POST_CUES[idx].beep); }
+      var nx = POST_CUES[idx + 1];
+      stat.textContent = T.running ? 'Time since the end of the fatiguing task' : 'Paused.';
+      cue.innerHTML = '<strong>' + POST_CUES[idx].text + '</strong>' + (nx ? '<br><span class="tag">Next instruction at ' + fmtClock(nx.at * 1000) + '</span>' : '');
+    }
+  }
+  function tStart() {
+    unlockAudio();
+    if (T.running) return;
+    if (T.mode === 'rest' && tElapsed() >= REST_MS) { T.acc = 0; T.last = -1; }
+    T.running = true; T.t0 = Date.now();
+    T.id = setInterval(tRender, 100);
+    tRender();
+  }
+  function tReset() { tHalt(); T.acc = 0; T.last = -1; tRender(); }
+  function tMode(m) {
+    tHalt(); T.acc = 0; T.last = -1; T.mode = m;
+    each(document.querySelectorAll('.timerbox button[data-t]'), function (b) { b.classList.toggle('active', b.getAttribute('data-t') === m); });
+    $('tSave').hidden = m !== 'hold';
+    tRender();
+  }
+
+  function targetText(p) {
+    if (!p) return 'Add or select a participant in Enter data to see their grip hold target.';
+    var g = gripTarget(p);
+    if (!isFinite(g.target)) return 'Enter baseline grip MVC for ' + p.id + ' to see the 40% hold target.';
+    return 'Grip hold target for ' + p.id + ' is ' + g.target.toFixed(1) + ' kg (40% of baseline MVC ' + g.base.toFixed(1) + ' kg' + (g.n < 3 ? ', from ' + g.n + ' of 3 trials' : '') + ').';
+  }
+  function updateTargets() {
+    var p = state.participants[state.sel], t = targetText(p);
+    $('tTarget').textContent = t;
+    var f = $('fTarget'); if (f) f.textContent = t;
+  }
 
   /* ---------- entry UI ---------- */
+  function progress(p) {
+    var tot = 0, got = 0;
+    VARS.forEach(function (v) { for (var i = 0; i < 7; i++) if (onCell(v, i)) { tot++; if (String(p.vals[v.key][i]).trim() !== '') got++; } });
+    EXTRA_KEYS.forEach(function (k) { tot++; if (String(p.extra[k]).trim() !== '') got++; });
+    return got + ' of ' + tot;
+  }
   function renderChips() {
-    var h = '';
+    var el = $('chips'), h = '';
     state.participants.forEach(function (p, i) {
-      h += '<button class="chip' + (i === state.sel ? ' active' : '') + '" data-i="' + i + '">' + esc(p.id) + (p.cond ? ' (' + p.cond + ')' : '') + '</button>';
+      h += '<button type="button" class="chip' + (i === state.sel ? ' active' : '') + '" data-i="' + i + '">' + esc(p.id) + (p.cond ? ' (' + p.cond + ')' : '') + ', ' + progress(p) + ' entered</button>';
     });
-    if (!state.participants.length) h = '<p class="tag">No participants yet. Press Add participant, or load the example data.</p>';
-    var el = document.getElementById('chips');
+    if (!state.participants.length) h = '<p class="tag">No participants yet. Press Add participant, or load the example data to explore the analysis.</p>';
     el.innerHTML = h;
-    Array.prototype.forEach.call(el.querySelectorAll('button'), function (b) {
+    each(el.querySelectorAll('button'), function (b) {
       b.addEventListener('click', function () { state.sel = +b.getAttribute('data-i'); save(); renderChips(); renderForm(); });
     });
   }
-
+  function rangeAttrs(name, lo, hi) { return ' data-name="' + esc(name) + '" data-lo="' + lo + '" data-hi="' + hi + '"'; }
+  function checkForm() {
+    var el = $('pform'), msgs = [];
+    each(el.querySelectorAll('input[data-lo]'), function (inp) {
+      var v = inp.value.trim(), bad = false;
+      if (v !== '' && !inp.disabled) { var n = num(v); bad = !isFinite(n) || n < +inp.getAttribute('data-lo') || n > +inp.getAttribute('data-hi'); }
+      inp.classList.toggle('bad', bad);
+      if (bad) msgs.push(esc(inp.getAttribute('data-name')) + ' is ' + esc(v) + '. Expected ' + inp.getAttribute('data-lo') + ' to ' + inp.getAttribute('data-hi') + '. Check the value and the unit.');
+    });
+    var m = $('fMsgs'); if (m) m.innerHTML = msgs.map(function (x) { return '<li>' + x + '</li>'; }).join('');
+  }
   function renderForm() {
-    var el = document.getElementById('pform');
-    var p = state.participants[state.sel];
-    if (!p) { el.innerHTML = ''; return; }
+    var el = $('pform'), p = state.participants[state.sel];
+    if (!p) { el.innerHTML = ''; updateTargets(); return; }
     var h = '<div class="row">' +
       '<label>Participant ID <input type="text" id="fId" value="' + esc(p.id) + '" size="10"></label>' +
-      '<label>Condition <select id="fCond"><option value="">Not set</option><option value="A">A</option><option value="B">B</option></select></label>' +
-      '<label>Body mass (kg) <input type="number" step="any" id="fMass" value="' + esc(p.mass) + '"></label>' +
-      '<button class="danger noprint" id="delP">Remove participant</button></div>';
-    h += '<div class="scroll"><table><tr><th>Variable (unit)</th>' + COLS.map(function (c) { return '<th>' + c + '</th>'; }).join('') + '</tr>';
+      '<label>Condition code <select id="fCond"><option value="">Not set</option><option value="A">A</option><option value="B">B</option></select></label>' +
+      '<label>Body mass (kg) <input type="number" step="any" inputmode="decimal" id="fMass"' + rangeAttrs('Body mass', 30, 200) + ' value="' + esc(p.mass) + '"></label>' +
+      '<button type="button" class="danger noprint" id="delP">Remove participant</button></div>';
+    h += '<div class="scroll"><table class="entry"><tr><th>Variable (unit)</th>' + COLS.map(function (c) { return '<th>' + c + '</th>'; }).join('') + '</tr>';
+    var grp = '';
     VARS.forEach(function (v) {
-      h += '<tr><td>' + v.label + ' (' + v.unit + ')</td>';
-      for (var i = 0; i < 6; i++) {
-        var on = i < 3 ? i < v.baseN : v.times[i - 3];
-        h += '<td><input type="number" step="any" data-k="' + v.key + '" data-i="' + i + '" value="' + esc(p.vals[v.key][i]) + '"' + (on ? '' : ' disabled') + ' aria-label="' + v.label + ' ' + COLS[i] + '"></td>';
+      if (v.group !== grp) { grp = v.group; h += '<tr class="grp"><th colspan="8">' + esc(grp) + '</th></tr>'; }
+      h += '<tr><td>' + esc(vFull(v)) + '</td>';
+      for (var i = 0; i < 7; i++) {
+        var on = onCell(v, i);
+        h += '<td><input type="number" step="any" inputmode="decimal" data-k="' + v.key + '" data-i="' + i + '"' +
+          rangeAttrs(vLabel(v) + ', ' + COLS[i], v.lo, v.hi) + ' value="' + esc(p.vals[v.key][i]) + '"' +
+          (on ? '' : ' disabled tabindex="-1"') + ' aria-label="' + esc(vLabel(v) + ', ' + COLS[i]) + '"></td>';
       }
       h += '</tr>';
     });
     h += '</table></div>';
+    h += '<p class="tag">Alertness VAS. Base 1 is on arrival and Base 2 is after 5 min rest, both before the gum. Pre-task is after the gum. Batak baseline uses the 3 recorded runs after the 2 practice runs.</p>';
+    h += '<p class="note" id="fTarget"></p>';
     h += '<h3>Fatiguing task and debrief</h3><div class="row">' +
-      '<label>RPE set 1 <input type="number" step="any" data-x="rpe1" value="' + esc(p.extra.rpe1) + '"></label>' +
-      '<label>RPE set 2 <input type="number" step="any" data-x="rpe2" value="' + esc(p.extra.rpe2) + '"></label>' +
-      '<label>RPE set 3 <input type="number" step="any" data-x="rpe3" value="' + esc(p.extra.rpe3) + '"></label>' +
-      '<label>Grip hold to failure (s) <input type="number" step="any" data-x="gripHold" value="' + esc(p.extra.gripHold) + '"></label>' +
-      '<label>Guess at allocation <select id="fGuess"><option value="">Not asked</option><option value="A">A</option><option value="B">B</option><option value="U">Unsure</option></select></label>' +
-      '<label>Side effects reported <input type="text" id="fEff" value="' + esc(p.extra.effects) + '" size="28"></label></div>';
+      '<label>RPE set 1 <input type="number" step="1" inputmode="numeric" data-x="rpe1"' + rangeAttrs('RPE set 1', 6, 20) + ' value="' + esc(p.extra.rpe1) + '"></label>' +
+      '<label>RPE set 2 <input type="number" step="1" inputmode="numeric" data-x="rpe2"' + rangeAttrs('RPE set 2', 6, 20) + ' value="' + esc(p.extra.rpe2) + '"></label>' +
+      '<label>RPE set 3 <input type="number" step="1" inputmode="numeric" data-x="rpe3"' + rangeAttrs('RPE set 3', 6, 20) + ' value="' + esc(p.extra.rpe3) + '"></label>' +
+      '<label>Grip hold to failure (s) <input type="number" step="any" inputmode="decimal" data-x="gripHold"' + rangeAttrs('Grip hold', 5, 900) + ' value="' + esc(p.extra.gripHold) + '"></label>' +
+      '<label>Guess before unblinding <select id="fGuess"><option value="">Not asked yet</option><option value="C">Caffeine</option><option value="P">Placebo</option><option value="U">Unsure</option></select></label>' +
+      '<label>Side effects reported <input type="text" id="fEff" value="' + esc(p.extra.effects) + '" size="26"></label></div>';
+    h += '<label class="wide">Notes (usual caffeine intake, anything that did not go to plan, actual times if a block ran late)<textarea id="fNotes" rows="2">' + esc(p.notes) + '</textarea></label>';
+    h += '<ul class="msgs" id="fMsgs" aria-live="polite"></ul>';
     el.innerHTML = h;
-    document.getElementById('fCond').value = p.cond;
-    document.getElementById('fGuess').value = p.extra.guess;
+    $('fCond').value = p.cond;
+    $('fGuess').value = p.extra.guess;
 
-    document.getElementById('fId').addEventListener('input', function (e) { p.id = e.target.value; save(); renderChips(); update(); });
-    document.getElementById('fCond').addEventListener('change', function (e) { p.cond = e.target.value; save(); renderChips(); update(); });
-    document.getElementById('fMass').addEventListener('input', function (e) { p.mass = e.target.value; save(); });
-    document.getElementById('fGuess').addEventListener('change', function (e) { p.extra.guess = e.target.value; save(); update(); });
-    document.getElementById('fEff').addEventListener('input', function (e) { p.extra.effects = e.target.value; save(); update(); });
-    document.getElementById('delP').addEventListener('click', function () {
-      if (!confirm('Remove ' + p.id + '?')) return;
+    $('fId').addEventListener('input', function (e) { p.id = e.target.value; save(); renderChips(); updateTargets(); update(); });
+    $('fCond').addEventListener('change', function (e) { p.cond = e.target.value; save(); renderChips(); update(); });
+    $('fMass').addEventListener('input', function (e) { p.mass = e.target.value; save(); checkForm(); });
+    $('fGuess').addEventListener('change', function (e) { p.extra.guess = e.target.value; save(); update(); });
+    $('fEff').addEventListener('input', function (e) { p.extra.effects = e.target.value; save(); update(); });
+    $('fNotes').addEventListener('input', function (e) { p.notes = e.target.value; save(); });
+    $('delP').addEventListener('click', function () {
+      if (!confirm('Remove ' + p.id + ' and all of their data?')) return;
       state.participants.splice(state.sel, 1); state.sel = Math.max(0, state.sel - 1); save(); renderChips(); renderForm(); update();
     });
-    Array.prototype.forEach.call(el.querySelectorAll('input[data-k]'), function (inp) {
-      inp.addEventListener('input', function () { p.vals[inp.getAttribute('data-k')][+inp.getAttribute('data-i')] = inp.value; save(); update(); });
+    each(el.querySelectorAll('input[data-k]'), function (inp) {
+      inp.addEventListener('input', function () {
+        var k = inp.getAttribute('data-k');
+        p.vals[k][+inp.getAttribute('data-i')] = inp.value; save(); checkForm(); renderChips(); update();
+        if (k === 'grip') updateTargets();
+      });
     });
-    Array.prototype.forEach.call(el.querySelectorAll('input[data-x]'), function (inp) {
-      inp.addEventListener('input', function () { p.extra[inp.getAttribute('data-x')] = inp.value; save(); update(); });
+    each(el.querySelectorAll('input[data-x]'), function (inp) {
+      inp.addEventListener('input', function () { p.extra[inp.getAttribute('data-x')] = inp.value; save(); checkForm(); renderChips(); update(); });
     });
+    checkForm(); updateTargets();
   }
 
   /* ---------- analysis rendering ---------- */
   function tableHtml(head, rows, numFrom) {
     var h = '<table><tr>' + head.map(function (c, i) { return '<th' + (i >= numFrom ? ' class="num"' : '') + '>' + c + '</th>'; }).join('') + '</tr>';
-    rows.forEach(function (r) {
-      h += '<tr>' + r.map(function (c, i) { return '<td' + (i >= numFrom ? ' class="num"' : '') + '>' + c + '</td>'; }).join('') + '</tr>';
-    });
+    rows.forEach(function (r) { h += '<tr>' + r.map(function (c, i) { return '<td' + (i >= numFrom ? ' class="num"' : '') + '>' + c + '</td>'; }).join('') + '</tr>'; });
     return h + '</table>';
+  }
+
+  function renderSummary(v) {
+    var st = varStats(v), d = v.dec, items = [];
+    ['A', 'B'].forEach(function (c) {
+      var ps = byCond(c); if (!ps.length) return;
+      var bm = mean(ps.map(function (p) { return baseMean(p, v); }));
+      TIMES.forEach(function (t, i) {
+        if (!v.times[i]) return;
+        var ch = finite(ps.map(function (p) { return change(p, v, i); }));
+        if (!ch.length) return;
+        var m = mean(ch), s = '<strong>' + esc(condLabel(c)) + ', ' + t + '.</strong> ';
+        if (!v.baseN) { items.push(s + 'Mean ' + fmt(m, d) + ' ' + v.unit + ' (n = ' + ch.length + ').'); return; }
+        s += 'Mean change ' + sgn(m, d) + ' ' + v.unit + (isFinite(bm) && bm ? ' (' + sgn(m / bm * 100, 1) + '%)' : '') + ', n = ' + ch.length + '.';
+        if (isFinite(st.noise)) {
+          var up = ch.filter(function (x) { return x > st.noise; }).length, dn = ch.filter(function (x) { return x < -st.noise; }).length;
+          s += ' ' + (up + dn) + ' of ' + ch.length + ' beyond noise (' + up + ' up, ' + dn + ' down)';
+          if (isFinite(st.swc)) s += ', and ' + ch.filter(function (x) { return isClear(x, st); }).length + ' of those at or above the SWC';
+          s += '.';
+        }
+        items.push(s);
+      });
+    });
+    var el = $('tblSum');
+    if (!items.length) { el.innerHTML = '<p class="tag">Enter baseline and post values for at least one participant with a condition code to see a summary.</p>'; return; }
+    var dirNote = v.dir ? 'For ' + vLabel(v).toLowerCase() + ', higher is better.' : v.baseN ? 'For this variable the direction describes strategy, not better or worse.' : 'RPE has no baseline, so raw values are shown.';
+    el.innerHTML = '<ul class="summary">' + items.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul><p class="tag">' + dirNote + ' These counts describe this group only. With a few people, one unusual result can change the picture.</p>';
   }
 
   function renderRel() {
     var rows = VARS.map(function (v) {
       var s = varStats(v), d = v.dec;
-      if (!v.baseN) return [v.label + ' (' + v.unit + ')', 'n/a', 'n/a', 'n/a', 'n/a', 'n/a', 'n/a', 'n/a', 'n/a'];
-      return [v.label + ' (' + v.unit + ')', s.nRel, fmt(s.te, d + 1), fmt(s.cvw, 1), fmt(s.mB, d), fmt(s.sB, d + 1), fmt(s.cvB, 1), fmt(s.swc, d + 1), fmt(s.noise, d + 1)];
+      if (!v.baseN) return [esc(vFull(v)), 'n/a', 'n/a', 'n/a', 'n/a', 'n/a', 'n/a', 'n/a', 'n/a'];
+      return [esc(vFull(v)), s.nRel, fmt(s.te, d + 1), fmt(s.cvw, 1), fmt(s.mB, d), fmt(s.sB, d + 1), fmt(s.cvB, 1), fmt(s.swc, d + 1), fmt(s.noise, d + 1)];
     });
-    document.getElementById('tblRel').innerHTML = tableHtml(
-      ['Variable', 'n (reliability)', 'TE', 'Within CV (%)', 'Baseline mean', 'Between SD', 'Between CV (%)', 'SWC', 'Noise threshold'], rows, 1);
+    $('tblRel').innerHTML = tableHtml(['Variable', 'n (reliability)', 'TE', 'Within CV (%)', 'Baseline mean', 'Between SD', 'Between CV (%)', 'SWC', 'Noise threshold'], rows, 1) +
+      '<p class="tag">If the noise threshold is larger than the SWC, this test cannot reliably detect the smallest worthwhile change in a single person.</p>';
   }
 
   function renderDesc(v) {
-    var d = v.dec, rows = [];
-    var series = [];
+    var d = v.dec, rows = [], series = [];
     if (v.baseN) series.push({ name: 'Baseline mean', get: function (p) { return baseMean(p, v); } });
     TIMES.forEach(function (t, i) { if (v.times[i]) series.push({ name: t, get: function (p) { return postVal(p, v, i); } }); });
     series.forEach(function (s) {
@@ -548,8 +916,8 @@
       rows.push(row);
     });
     var A = esc(condLabel('A')), B = esc(condLabel('B'));
-    var head = ['Time point', A + ' n', A + ' mean', A + ' SD', A + ' CV (%)', B + ' n', B + ' mean', B + ' SD', B + ' CV (%)'];
-    document.getElementById('tblDesc').innerHTML = tableHtml(head, rows, 1) + '<p class="tag">CV here is the between-participant CV within a condition. Unit: ' + v.unit + '.</p>';
+    $('tblDesc').innerHTML = tableHtml(['Time point', A + ' n', A + ' mean', A + ' SD', A + ' CV (%)', B + ' n', B + ' mean', B + ' SD', B + ' CV (%)'], rows, 1) +
+      '<p class="tag">CV here is the between-participant CV within a condition. Unit ' + esc(v.unit) + '.</p>';
   }
 
   function renderInd(v) {
@@ -557,18 +925,16 @@
     var head = ['Participant', 'Condition', v.baseN ? 'Baseline' : '-'];
     TIMES.forEach(function (t, i) { if (v.times[i]) head.push(t + (v.baseN ? ' change' : ' value'), t + (v.baseN ? ' (%)' : ''), t + ' classification'); });
     var rows = state.participants.map(function (p) {
-      var b = baseMean(p, v);
-      var r = [esc(p.id), esc(condLabel(p.cond)), v.baseN ? fmt(b, d) : '-'];
+      var b = baseMean(p, v), r = [esc(p.id), esc(condLabel(p.cond)), v.baseN ? fmt(b, d) : '-'];
       TIMES.forEach(function (t, i) {
         if (!v.times[i]) return;
         var c = change(p, v, i);
-        r.push(fmt(c, d), v.baseN && isFinite(c) && b ? fmt(c / b * 100, 1) : '-', classify(c, st, !!v.baseN));
+        r.push(v.baseN ? sgn(c, d) : fmt(c, d), v.baseN && isFinite(c) && b ? sgn(c / b * 100, 1) : '-', classify(c, st, v));
       });
       return r;
     });
-    var h = tableHtml(head, rows, 2);
-    h += '<p class="tag">Thresholds for ' + v.label + ': noise ' + fmt(st.noise, d + 1) + ' ' + v.unit + ', SWC ' + fmt(st.swc, d + 1) + ' ' + v.unit + '.</p>';
-    document.getElementById('tblInd').innerHTML = h;
+    $('tblInd').innerHTML = (rows.length ? tableHtml(head, rows, 2) : '<p class="tag">No participants yet.</p>') +
+      '<p class="tag">Thresholds for ' + esc(vLabel(v)) + '. Noise ' + fmt(st.noise, d + 1) + ' ' + esc(v.unit) + ', SWC ' + fmt(st.swc, d + 1) + ' ' + esc(v.unit) + '.</p>';
   }
 
   function renderCmp(v) {
@@ -578,143 +944,124 @@
       var a = finite(byCond('A').map(function (p) { return change(p, v, i); }));
       var b = finite(byCond('B').map(function (p) { return change(p, v, i); }));
       var mA = mean(a), mB = mean(b), diff = mA - mB;
-      var sA = a.length > 1 ? sd(a) : 0, sB = b.length > 1 ? sd(b) : 0;
-      var df = a.length + b.length - 2;
+      var sA = a.length > 1 ? sd(a) : 0, sB = b.length > 1 ? sd(b) : 0, df = a.length + b.length - 2;
       var pooled = df > 0 ? Math.sqrt(((a.length - 1) * sA * sA + (b.length - 1) * sB * sB) / df) : NaN;
       var dd = pooled > 0 ? diff / pooled : NaN;
-      var vs = !v.baseN ? 'n/a' : (isFinite(st.swc) && isFinite(diff) ? (Math.abs(diff) >= st.swc ? 'Above SWC' : 'Below SWC') : 'n/a');
-      rows.push([t, a.length, fmt(mA, d), fmt(sd(a), d + 1), b.length, fmt(mB, d), fmt(sd(b), d + 1), fmt(diff, d), fmt(dd, 2), magnitude(dd), vs]);
+      var vs = !v.baseN ? 'n/a' : (isFinite(st.swc) && isFinite(diff) ? (Math.abs(diff) >= st.swc ? 'At or above SWC' : 'Below SWC') : 'n/a');
+      rows.push([t, a.length, fmt(mA, d), fmt(sd(a), d + 1), b.length, fmt(mB, d), fmt(sd(b), d + 1), sgn(diff, d), fmt(dd, 2), magnitude(dd), vs]);
     });
-    var A = esc(condLabel('A')), B = esc(condLabel('B'));
-    var lab = v.baseN ? 'change' : 'value';
-    var head = ['Time point', A + ' n', A + ' mean ' + lab, A + ' SD', B + ' n', B + ' mean ' + lab, B + ' SD', 'Difference (A minus B)', 'd', 'Magnitude', 'Difference vs SWC'];
-    document.getElementById('tblCmp').innerHTML = tableHtml(head, rows, 1) +
-      '<p class="tag">Difference is in ' + v.unit + '. With only a few people per condition, d and the magnitude label are unstable. Use them to describe this dataset, not to claim an effect of caffeine.</p>';
+    var A = esc(condLabel('A')), B = esc(condLabel('B')), lab = v.baseN ? 'change' : 'value';
+    $('tblCmp').innerHTML = tableHtml(['Time point', A + ' n', A + ' mean ' + lab, A + ' SD', B + ' n', B + ' mean ' + lab, B + ' SD', 'Difference (A minus B)', 'd', 'Magnitude', 'Difference vs SWC'], rows, 1) +
+      '<p class="tag">Difference is in ' + esc(v.unit) + '. With only a few people per condition, d and the magnitude label are unstable. Use them to describe this dataset, not to claim an effect of caffeine.</p>';
   }
 
   function renderChart(v) {
     var st = varStats(v), d = v.dec;
     var W = 680, H = 340, ml = 64, mr = 20, mt = 20, mb = 46;
-    var xs = [0, 1, 2, 3]; // baseline, imm, +2, +10
-    var labels = ['Baseline'].concat(TIMES);
+    var pos = [];
+    if (v.baseN) pos.push({ label: 'Baseline', i: -1 });
+    TIMES.forEach(function (t, i) { if (v.times[i]) pos.push({ label: t, i: i }); });
     var series = state.participants.map(function (p) {
-      var pts = [];
-      if (v.baseN) pts.push(isFinite(baseMean(p, v)) ? 0 : NaN);
-      else pts.push(NaN);
-      for (var i = 0; i < 3; i++) pts.push(v.times[i] ? change(p, v, i) : NaN);
-      return { p: p, pts: pts };
+      return { p: p, pts: pos.map(function (q) { return q.i < 0 ? (isFinite(baseMean(p, v)) ? 0 : NaN) : change(p, v, q.i); }) };
     });
     var all = [];
     series.forEach(function (s) { all = all.concat(finite(s.pts)); });
-    if (isFinite(st.swc) && v.baseN) all.push(st.swc, -st.swc);
-    if (isFinite(st.noise) && v.baseN) all.push(st.noise, -st.noise);
-    if (!all.length) { document.getElementById('chart').innerHTML = '<p class="tag">Enter data to see the chart.</p>'; return; }
+    if (!all.length) { $('chart').innerHTML = '<p class="tag">Enter data to see the chart.</p>'; return; }
+    if (v.baseN) { [st.swc, st.noise].forEach(function (x) { if (isFinite(x)) all.push(x, -x); }); all.push(0); }
     var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all);
-    if (v.baseN) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
     if (lo === hi) { lo -= 1; hi += 1; }
-    var pad = (hi - lo) * 0.08; lo -= pad; hi += pad;
-    function X(i) { return ml + (W - ml - mr) * (i / 3); }
+    var padY = (hi - lo) * 0.08; lo -= padY; hi += padY;
+    var n = pos.length;
+    function X(k) { return n > 1 ? ml + (W - ml - mr) * (k / (n - 1)) : ml + (W - ml - mr) / 2; }
     function Y(val) { return mt + (H - mt - mb) * (1 - (val - lo) / (hi - lo)); }
-    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="Individual and mean ' + (v.baseN ? 'change from baseline' : 'values') + ' for ' + v.label + '" style="max-width:720px;background:#fff">';
-    // axes
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="Individual and mean ' + (v.baseN ? 'change from baseline' : 'values') + ' for ' + esc(vLabel(v)) + '" style="max-width:720px;background:#fff">';
     s += '<line x1="' + ml + '" y1="' + (H - mb) + '" x2="' + (W - mr) + '" y2="' + (H - mb) + '" stroke="#333"/>';
     s += '<line x1="' + ml + '" y1="' + mt + '" x2="' + ml + '" y2="' + (H - mb) + '" stroke="#333"/>';
-    // ticks
     for (var k = 0; k <= 4; k++) {
       var tv = lo + (hi - lo) * k / 4, ty = Y(tv);
       s += '<line x1="' + (ml - 4) + '" y1="' + ty + '" x2="' + ml + '" y2="' + ty + '" stroke="#333"/>';
       s += '<text x="' + (ml - 8) + '" y="' + (ty + 4) + '" font-size="11" text-anchor="end" fill="#333">' + tv.toFixed(d) + '</text>';
     }
-    labels.forEach(function (lb, i) {
-      if (i === 0 && !v.baseN) return;
-      s += '<text x="' + X(i) + '" y="' + (H - mb + 18) + '" font-size="12" text-anchor="middle" fill="#333">' + lb + '</text>';
-    });
-    s += '<text x="14" y="' + (mt + (H - mt - mb) / 2) + '" font-size="12" text-anchor="middle" fill="#333" transform="rotate(-90 14 ' + (mt + (H - mt - mb) / 2) + ')">' + (v.baseN ? 'Change from baseline (' : 'Value (') + v.unit + ')</text>';
+    pos.forEach(function (q, k) { s += '<text x="' + X(k) + '" y="' + (H - mb + 18) + '" font-size="12" text-anchor="middle" fill="#333">' + q.label + '</text>'; });
+    var midY = mt + (H - mt - mb) / 2;
+    s += '<text x="14" y="' + midY + '" font-size="12" text-anchor="middle" fill="#333" transform="rotate(-90 14 ' + midY + ')">' + (v.baseN ? 'Change from baseline (' : 'Value (') + esc(v.unit) + ')</text>';
     if (v.baseN) {
       if (isFinite(st.swc)) s += '<rect x="' + ml + '" y="' + Y(st.swc) + '" width="' + (W - ml - mr) + '" height="' + (Y(-st.swc) - Y(st.swc)) + '" fill="#d9d9d9" opacity="0.6"/>';
-      if (isFinite(st.noise)) {
-        s += '<line x1="' + ml + '" x2="' + (W - mr) + '" y1="' + Y(st.noise) + '" y2="' + Y(st.noise) + '" stroke="#333" stroke-dasharray="2 3"/>';
-        s += '<line x1="' + ml + '" x2="' + (W - mr) + '" y1="' + Y(-st.noise) + '" y2="' + Y(-st.noise) + '" stroke="#333" stroke-dasharray="2 3"/>';
-      }
-      s += '<line x1="' + ml + '" x2="' + (W - mr) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="#333" stroke-width="1"/>';
+      if (isFinite(st.noise)) [st.noise, -st.noise].forEach(function (y) { s += '<line x1="' + ml + '" x2="' + (W - mr) + '" y1="' + Y(y) + '" y2="' + Y(y) + '" stroke="#333" stroke-dasharray="2 3"/>'; });
+      s += '<line x1="' + ml + '" x2="' + (W - mr) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="#333"/>';
     }
     function marker(c, x, y, size, op) {
-      var col = c === 'A' ? COL.A : c === 'B' ? COL.B : COL.N;
+      var col = COL[c] || COL.N;
       if (c === 'A') return '<circle cx="' + x + '" cy="' + y + '" r="' + size + '" fill="' + col + '" opacity="' + op + '"/>';
       if (c === 'B') return '<rect x="' + (x - size) + '" y="' + (y - size) + '" width="' + (2 * size) + '" height="' + (2 * size) + '" fill="' + col + '" opacity="' + op + '"/>';
       return '<polygon points="' + x + ',' + (y - size) + ' ' + (x + size) + ',' + (y + size) + ' ' + (x - size) + ',' + (y + size) + '" fill="' + col + '" opacity="' + op + '"/>';
     }
     function line(pts, c, w, op) {
-      var col = c === 'A' ? COL.A : c === 'B' ? COL.B : COL.N, dash = c === 'B' ? ' stroke-dasharray="6 3"' : '';
-      var out = '', seg = [];
+      var col = COL[c] || COL.N, dash = c === 'B' ? ' stroke-dasharray="6 3"' : '', out = '', seg = [];
       function flush() { if (seg.length > 1) out += '<polyline points="' + seg.join(' ') + '" fill="none" stroke="' + col + '" stroke-width="' + w + '" opacity="' + op + '"' + dash + '/>'; seg = []; }
-      pts.forEach(function (val, i) { if (isFinite(val)) seg.push(X(i) + ',' + Y(val)); else flush(); });
+      pts.forEach(function (val, k) { if (isFinite(val)) seg.push(X(k) + ',' + Y(val)); else flush(); });
       flush();
-      pts.forEach(function (val, i) { if (isFinite(val)) out += marker(c, X(i), Y(val), w > 2 ? 5 : 3, op); });
+      pts.forEach(function (val, k) { if (isFinite(val)) out += marker(c, X(k), Y(val), w > 2 ? 5 : 3, op); });
       return out;
     }
     series.forEach(function (sr) { s += line(sr.pts, sr.p.cond || 'N', 1.5, 0.45); });
     ['A', 'B'].forEach(function (c) {
-      var pts = [0, 1, 2, 3].map(function (i) {
-        var vals = series.filter(function (sr) { return sr.p.cond === c; }).map(function (sr) { return sr.pts[i]; });
-        return mean(vals);
-      });
-      if (!v.baseN) pts[0] = NaN;
+      var pts = pos.map(function (q, k) { return mean(series.filter(function (sr) { return sr.p.cond === c; }).map(function (sr) { return sr.pts[k]; })); });
       s += line(pts, c, 3.5, 1);
     });
     s += '</svg>';
     s += '<div class="legend"><span style="color:' + COL.A + '">&#9679; ' + esc(condLabel('A')) + ' (solid line)</span>' +
          '<span style="color:' + COL.B + '">&#9632; ' + esc(condLabel('B')) + ' (dashed line)</span>' +
          '<span>Thin lines are individuals, thick lines are condition means.</span>' +
-         (v.baseN ? '<span>Grey band is plus or minus SWC. Dotted lines are plus or minus the noise threshold.</span>' : '') + '</div>';
-    document.getElementById('chart').innerHTML = s;
+         (v.baseN ? '<span>Grey band is plus or minus the SWC. Dotted lines are plus or minus the noise threshold.</span>' : '') + '</div>';
+    $('chart').innerHTML = s;
   }
 
   function renderOver() {
     var rows = VARS.map(function (v) {
-      var d = v.dec, row = [v.label + ' (' + v.unit + ')'];
-      [0, 2].forEach(function (i) {
+      var row = [esc(vFull(v))];
+      [1, 3].forEach(function (i) {
         ['A', 'B'].forEach(function (c) {
           if (!v.times[i]) { row.push('n/a'); return; }
-          var ch = finite(byCond(c).map(function (p) { return change(p, v, i); }));
-          row.push(fmt(mean(ch), d));
+          var m = mean(byCond(c).map(function (p) { return change(p, v, i); }));
+          row.push(v.baseN ? sgn(m, v.dec) : fmt(m, v.dec));
         });
       });
       return row;
     });
     var A = esc(condLabel('A')), B = esc(condLabel('B'));
-    document.getElementById('tblOver').innerHTML = tableHtml(
-      ['Variable', 'Immediate, ' + A, 'Immediate, ' + B, '+10 min, ' + A, '+10 min, ' + B], rows, 1) +
-      '<p class="tag">Mean change from baseline in the unit shown. RPE has no baseline, so raw means are shown.</p>';
+    $('tblOver').innerHTML = tableHtml(['Variable', 'Immediate, ' + A, 'Immediate, ' + B, '+10 min, ' + A, '+10 min, ' + B], rows, 1) +
+      '<p class="tag">Mean change from baseline in the unit shown. RPE has no baseline, so raw means are shown. Pre-task alertness is in the tables for that variable.</p>';
   }
 
   function renderExtra() {
-    var cols = [['rpe1', 'RPE set 1', 1], ['rpe2', 'RPE set 2', 1], ['rpe3', 'RPE set 3', 1], ['gripHold', 'Grip hold (s)', 0]];
-    var rows = [];
+    var cols = [['rpe1', 1], ['rpe2', 1], ['rpe3', 1], ['gripHold', 0]], rows = [];
     ['A', 'B'].forEach(function (c) {
       var ps = byCond(c), r = [esc(condLabel(c)), ps.length];
       cols.forEach(function (k) {
         var a = finite(ps.map(function (p) { return num(p.extra[k[0]]); }));
-        r.push(isFinite(mean(a)) ? fmt(mean(a), k[2]) + ' (' + fmt(sd(a), k[2] + 1) + ')' : 'n/a');
+        r.push(a.length ? fmt(mean(a), k[1]) + ' (' + fmt(sd(a), k[1] + 1) + ')' : 'n/a');
       });
       var asked = ps.filter(function (p) { return p.extra.guess; });
-      var correct = asked.filter(function (p) { return p.extra.guess === c; }).length;
       var unsure = asked.filter(function (p) { return p.extra.guess === 'U'; }).length;
-      r.push(asked.length ? correct + ' of ' + asked.length + ' (unsure ' + unsure + ')' : 'n/a');
+      if (!asked.length) r.push('n/a');
+      else if (!state.caffCode) r.push(asked.length + ' asked (unsure ' + unsure + '). Unblind to score.');
+      else {
+        var truth = c === state.caffCode ? 'C' : 'P';
+        r.push(asked.filter(function (p) { return p.extra.guess === truth; }).length + ' of ' + asked.length + ' correct (unsure ' + unsure + ')');
+      }
       rows.push(r);
     });
-    var effs = state.participants.filter(function (p) { return p.extra.effects; }).map(function (p) { return esc(p.id) + ' (' + esc(condLabel(p.cond)) + '): ' + esc(p.extra.effects); });
-    document.getElementById('tblExtra').innerHTML = tableHtml(
-      ['Condition', 'n', 'RPE set 1 mean (SD)', 'RPE set 2 mean (SD)', 'RPE set 3 mean (SD)', 'Grip hold mean (SD)', 'Correct allocation guesses'], rows, 1) +
+    var effs = state.participants.filter(function (p) { return p.extra.effects; }).map(function (p) { return esc(p.id) + ' (' + esc(condLabel(p.cond)) + ') ' + esc(p.extra.effects); });
+    $('tblExtra').innerHTML = tableHtml(['Condition', 'n', 'RPE set 1 mean (SD)', 'RPE set 2 mean (SD)', 'RPE set 3 mean (SD)', 'Grip hold, s, mean (SD)', 'Allocation guesses'], rows, 1) +
       '<p><strong>Side effects reported.</strong> ' + (effs.length ? effs.join('; ') : 'None recorded.') + '</p>';
   }
 
   function update() {
     var v = varByKey(state.varKey) || VARS[0];
-    var n = state.participants.length;
-    var nA = byCond('A').length, nB = byCond('B').length;
-    document.getElementById('nWarn').innerHTML = '<strong>Small sample.</strong> This page holds ' + n + ' participant' + (n === 1 ? '' : 's') + ' (' + nA + ' in A, ' + nB + ' in B). With 2 to 4 people, SD, CV, TE and SWC are unstable, and a single unusual result can change the picture. Use the outputs to describe this dataset and to discuss measurement error, not to claim an effect of caffeine. Pooling groups or adding trials gives steadier estimates.';
-    renderRel(); renderDesc(v); renderInd(v); renderCmp(v); renderChart(v); renderOver(); renderExtra();
+    var n = state.participants.length, nA = byCond('A').length, nB = byCond('B').length, nX = n - nA - nB;
+    $('nWarn').innerHTML = '<strong>Small sample.</strong> This page holds ' + n + ' participant' + (n === 1 ? '' : 's') + ' (' + nA + ' in A, ' + nB + ' in B' + (nX ? ', ' + nX + ' with no condition code' : '') + '). With 2 to 4 people, SD, CV, TE and SWC are unstable, and a single unusual result can change the picture. Use the outputs to describe this dataset and to discuss measurement error, not to claim an effect of caffeine. Pooling groups gives steadier estimates.';
+    renderSummary(v); renderRel(); renderDesc(v); renderInd(v); renderCmp(v); renderChart(v); renderOver(); renderExtra();
   }
 
   /* ---------- example data ---------- */
@@ -726,113 +1073,182 @@
       jump: { base: 32, bsd: 4, wsd: 0.9, fat: -6 }, brkD: { base: 0.30, bsd: 0.04, wsd: 0.012, fat: 8 },
       proD: { base: 0.26, bsd: 0.03, wsd: 0.008, fat: 4 }, brkF: { base: 14, bsd: 1.5, wsd: 0.4, fat: -4 },
       proF: { base: 20, bsd: 2, wsd: 0.5, fat: -5 }, endF: { base: 24, bsd: 3, wsd: 1.0, fat: -6 },
-      grip: { base: 38, bsd: 8, wsd: 1.5, fat: -8 }, rt: { base: 280, bsd: 25, wsd: 10, fat: 6 },
+      grip: { base: 38, bsd: 8, wsd: 1.5, fat: -8 }, batak: { base: 38, bsd: 5, wsd: 1.5, fat: -5 },
       vas: { base: 55, bsd: 12, wsd: 4, fat: -12 }
     };
     var conds = ['A', 'B', 'A', 'B'];
+    state.batakDur = 30;
     state.participants = conds.map(function (c, idx) {
       var p = newParticipant('P' + (idx + 1)); p.cond = c; p.mass = String(Math.round(60 + 20 * rnd()));
       VARS.forEach(function (v) {
-        var d = v.dec, r = function (x) { return x.toFixed(d); };
+        var r = function (x) { if (v.key === 'vas') x = Math.max(0, Math.min(100, x)); return x.toFixed(v.dec); };
         if (v.key === 'rpe') {
-          p.vals.rpe[3] = r(16 - (c === 'A' ? 1.5 : 0) + 0.8 * g());
-          p.vals.rpe[5] = r(11 - (c === 'A' ? 1 : 0) + 0.8 * g());
+          p.vals.rpe[4] = String(Math.round(16 - (c === 'A' ? 1.5 : 0) + 0.8 * g()));
+          p.vals.rpe[6] = String(Math.round(11 - (c === 'A' ? 1 : 0) + 0.8 * g()));
           return;
         }
         var sp = spec[v.key], tb = sp.base + sp.bsd * g();
         for (var i = 0; i < v.baseN; i++) p.vals[v.key][i] = r(tb + sp.wsd * g());
         var f = sp.fat / 100 * (c === 'A' ? 0.75 : 1), off = (v.key === 'vas' && c === 'A') ? 8 : 0;
-        var fr = [1, 0.7, 0.3];
-        for (var j = 0; j < 3; j++) if (v.times[j]) p.vals[v.key][3 + j] = r(tb * (1 + f * fr[j]) + off + sp.wsd * g());
+        var fr = [0, 1, 0.7, 0.3];
+        for (var j = 0; j < 4; j++) if (v.times[j]) p.vals[v.key][3 + j] = r(tb * (1 + f * fr[j]) + off + sp.wsd * g());
       });
       p.extra.rpe1 = String(Math.round(13 + 1.5 * g())); p.extra.rpe2 = String(Math.round(15 + 1.5 * g())); p.extra.rpe3 = String(Math.round(17 + 1.5 * g()));
       p.extra.gripHold = String(Math.round(70 + (c === 'A' ? 12 : 0) + 10 * g()));
-      p.extra.guess = idx % 2 === 0 ? 'A' : 'U';
+      p.extra.guess = idx % 2 === 0 ? 'C' : 'U';
       return p;
     });
-    state.sel = 0; state.labelA = 'Caffeine'; state.labelB = 'Placebo';
-    document.getElementById('labelA').value = state.labelA; document.getElementById('labelB').value = state.labelB;
-    save(); renderChips(); renderForm(); update();
+    state.sel = 0; state.caffCode = 'A'; state.labelA = 'Caffeine'; state.labelB = 'Placebo';
+    syncSettings(); save(); renderChips(); renderForm(); update();
   }
 
   /* ---------- CSV ---------- */
+  var CSV_COLS = ['b1', 'b2', 'b3', 'pre', 'imm', 'p2', 'p10'];
+  function clean(s) { return String(s == null ? '' : s).replace(/[,\r\n"]/g, ' '); }
   function exportCsv() {
-    var rows = [['id', 'condition', 'variable', 'b1', 'b2', 'b3', 'imm', 'p2', 'p10']];
+    if (!state.participants.length) { alert('There is no data to export yet.'); return; }
+    var blank = ['', '', '', '', '', ''];
+    var rows = [['id', 'condition', 'variable'].concat(CSV_COLS)];
     state.participants.forEach(function (p) {
-      var id = String(p.id).replace(/[,\n"]/g, ' ');
-      VARS.forEach(function (v) { rows.push([id, p.cond, v.key].concat(p.vals[v.key])); });
-      rows.push([id, p.cond, '_mass', p.mass, '', '', '', '', '']);
-      EXTRA_KEYS.forEach(function (k) { rows.push([id, p.cond, '_' + k, p.extra[k], '', '', '', '', '']); });
-      rows.push([id, p.cond, '_guess', p.extra.guess, '', '', '', '', '']);
-      rows.push([id, p.cond, '_effects', String(p.extra.effects).replace(/[,\n"]/g, ' '), '', '', '', '', '']);
+      var id = clean(p.id);
+      VARS.forEach(function (v) { rows.push([id, p.cond, v.key].concat(p.vals[v.key].map(clean))); });
+      rows.push([id, p.cond, '_mass', clean(p.mass)].concat(blank));
+      EXTRA_KEYS.forEach(function (k) { rows.push([id, p.cond, '_' + k, clean(p.extra[k])].concat(blank)); });
+      rows.push([id, p.cond, '_guess', p.extra.guess].concat(blank));
+      rows.push([id, p.cond, '_effects', clean(p.extra.effects)].concat(blank));
+      rows.push([id, p.cond, '_notes', clean(p.notes)].concat(blank));
     });
     var blob = new Blob([rows.map(function (r) { return r.join(','); }).join('\n')], { type: 'text/csv' });
     var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'caffeine-fatigue-data.csv';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
   }
   function importCsv(file, replace) {
     var rd = new FileReader();
     rd.onload = function () {
-      var lines = String(rd.result).split(/\r?\n/).slice(1), map = {}, order = [];
-      lines.forEach(function (ln) {
+      var lines = String(rd.result).split(/\r?\n/);
+      var head = (lines[0] || '').split(',').map(function (h) { return h.trim().toLowerCase(); });
+      var iId = head.indexOf('id'), iCond = head.indexOf('condition'), iVar = head.indexOf('variable');
+      var idx = CSV_COLS.map(function (k) { return head.indexOf(k); });
+      if (iId < 0 || iVar < 0 || idx[0] < 0) { alert('This file does not look like an export from this page.'); return; }
+      var old = idx[3] < 0, map = {}, order = [];
+      lines.slice(1).forEach(function (ln) {
         if (!ln.trim()) return;
-        var c = ln.split(','), id = c[0], cond = c[1], key = c[2];
-        if (!map[id]) { map[id] = newParticipant(id); map[id].cond = cond; order.push(id); }
-        var p = map[id];
-        if (p.vals[key]) { for (var i = 0; i < 6; i++) p.vals[key][i] = c[3 + i] || ''; }
-        else if (key === '_mass') p.mass = c[3] || '';
-        else if (key === '_guess') p.extra.guess = c[3] || '';
-        else if (key === '_effects') p.extra.effects = c[3] || '';
-        else if (key.charAt(0) === '_' && EXTRA_KEYS.indexOf(key.slice(1)) >= 0) p.extra[key.slice(1)] = c[3] || '';
+        var c = ln.split(','), id = (c[iId] || '').trim(), key = (c[iVar] || '').trim();
+        if (!id) return;
+        if (!map[id]) { map[id] = newParticipant(id); var cd = (c[iCond] || '').trim(); map[id].cond = cd === 'A' || cd === 'B' ? cd : ''; order.push(id); }
+        var p = map[id], first = (c[idx[0]] || '').trim();
+        if (p.vals[key]) {
+          var vals = idx.map(function (j) { return j >= 0 ? (c[j] || '').trim() : ''; });
+          if (old && key === 'vas') { vals[3] = vals[1]; vals[1] = ''; }
+          p.vals[key] = vals;
+        }
+        else if (key === '_mass') p.mass = first;
+        else if (key === '_guess') p.extra.guess = ['C', 'P', 'U'].indexOf(first) >= 0 ? first : '';
+        else if (key === '_effects') p.extra.effects = first;
+        else if (key === '_notes') p.notes = first;
+        else if (key.charAt(0) === '_' && EXTRA_KEYS.indexOf(key.slice(1)) >= 0) p.extra[key.slice(1)] = first;
       });
       var incoming = order.map(function (id) { return map[id]; });
+      if (!incoming.length) { alert('No participants were found in this file.'); return; }
       if (replace) state.participants = [];
       var used = {}; state.participants.forEach(function (p) { used[p.id] = 1; });
       incoming.forEach(function (p) { var base = p.id, n = 2; while (used[p.id]) p.id = base + '_' + (n++); used[p.id] = 1; state.participants.push(p); });
       state.sel = 0; save(); renderChips(); renderForm(); update();
+      alert('Imported ' + incoming.length + ' participant' + (incoming.length === 1 ? '' : 's') + '.' + (old ? ' This file came from an older version of the page, so reaction time values were not imported.' : ''));
     };
     rd.readAsText(file);
   }
 
   /* ---------- wiring ---------- */
+  function fillVarSel() {
+    var vs = $('varSel');
+    vs.innerHTML = VARS.map(function (v) { return '<option value="' + v.key + '">' + esc(vFull(v)) + '</option>'; }).join('');
+    vs.value = varByKey(state.varKey) ? state.varKey : 'jump';
+  }
+  function syncSettings() {
+    $('labelA').value = state.labelA; $('labelB').value = state.labelB;
+    $('batakDur').value = String(state.batakDur); $('caffCode').value = state.caffCode;
+    $('swcMode').value = state.swcMode; $('swcPct').value = state.swcPct; $('noiseMult').value = String(state.noiseMult);
+    $('pctWrap').hidden = state.swcMode !== 'pct';
+    fillVarSel();
+  }
   function init() {
     load();
-    var vs = document.getElementById('varSel');
-    vs.innerHTML = VARS.map(function (v) { return '<option value="' + v.key + '">' + v.label + ' (' + v.unit + ')</option>'; }).join('');
-    vs.value = state.varKey;
-    vs.addEventListener('change', function () { state.varKey = vs.value; save(); update(); });
-    document.getElementById('labelA').value = state.labelA;
-    document.getElementById('labelB').value = state.labelB;
-    document.getElementById('labelA').addEventListener('input', function (e) { state.labelA = e.target.value || 'Group A'; save(); renderChips(); update(); });
-    document.getElementById('labelB').addEventListener('input', function (e) { state.labelB = e.target.value || 'Group B'; save(); renderChips(); update(); });
-    var sm = document.getElementById('swcMode'), sp = document.getElementById('swcPct'), nm = document.getElementById('noiseMult');
-    sm.value = state.swcMode; sp.value = state.swcPct; nm.value = String(state.noiseMult);
-    document.getElementById('pctWrap').hidden = state.swcMode !== 'pct';
-    sm.addEventListener('change', function () { state.swcMode = sm.value; document.getElementById('pctWrap').hidden = sm.value !== 'pct'; save(); update(); });
-    sp.addEventListener('input', function () { state.swcPct = num(sp.value) || 0; save(); update(); });
-    nm.addEventListener('change', function () { state.noiseMult = parseFloat(nm.value); save(); update(); });
-    document.getElementById('addP').addEventListener('click', function () {
-      var n = state.participants.length + 1, id = 'P' + n;
-      var used = {}; state.participants.forEach(function (p) { used[p.id] = 1; });
-      while (used[id]) id = 'P' + (++n);
-      state.participants.push(newParticipant(id)); state.sel = state.participants.length - 1; save(); renderChips(); renderForm(); update();
+    syncSettings();
+    renderVasSlips();
+    renderChecks();
+
+    each(document.querySelectorAll('input[data-step]'), function (cb) {
+      cb.addEventListener('change', function () {
+        var id = cb.getAttribute('data-step');
+        if (cb.checked) state.check[id] = clockNow(); else delete state.check[id];
+        save(); renderChecks();
+      });
     });
-    document.getElementById('example').addEventListener('click', function () {
+    $('clearTicks').addEventListener('click', function () { if (!confirm('Clear all run sheet ticks and times?')) return; state.check = {}; save(); renderChecks(); });
+
+    each(document.querySelectorAll('.timerbox button[data-t]'), function (b) { b.addEventListener('click', function () { tMode(b.getAttribute('data-t')); }); });
+    $('tStart').addEventListener('click', tStart);
+    $('tStop').addEventListener('click', function () { tHalt(); tRender(); });
+    $('tReset').addEventListener('click', tReset);
+    $('tSave').addEventListener('click', function () {
+      var p = state.participants[state.sel], e = tElapsed();
+      if (!p) { alert('Add or select a participant in Enter data first.'); return; }
+      if (!e) { alert('Run the stopwatch first.'); return; }
+      tHalt();
+      p.extra.gripHold = (Math.round(e / 100) / 10).toFixed(1);
+      save(); renderChips(); renderForm(); update(); tRender();
+      $('tStatus').textContent = 'Saved ' + p.extra.gripHold + ' s to ' + p.id + '.';
+    });
+
+    $('varSel').addEventListener('change', function () { state.varKey = $('varSel').value; save(); update(); });
+    $('labelA').addEventListener('input', function (e) { state.labelA = e.target.value || 'Group A'; save(); renderChips(); update(); });
+    $('labelB').addEventListener('input', function (e) { state.labelB = e.target.value || 'Group B'; save(); renderChips(); update(); });
+    $('batakDur').addEventListener('change', function (e) { state.batakDur = +e.target.value; save(); fillVarSel(); renderForm(); update(); });
+    $('caffCode').addEventListener('change', function (e) {
+      state.caffCode = e.target.value;
+      if (state.caffCode === 'A') { state.labelA = 'Caffeine'; state.labelB = 'Placebo'; }
+      else if (state.caffCode === 'B') { state.labelA = 'Placebo'; state.labelB = 'Caffeine'; }
+      else { state.labelA = 'Group A'; state.labelB = 'Group B'; }
+      $('labelA').value = state.labelA; $('labelB').value = state.labelB;
+      save(); renderChips(); update();
+    });
+    $('swcMode').addEventListener('change', function (e) { state.swcMode = e.target.value; $('pctWrap').hidden = state.swcMode !== 'pct'; save(); update(); });
+    $('swcPct').addEventListener('input', function (e) { state.swcPct = num(e.target.value) || 0; save(); update(); });
+    $('noiseMult').addEventListener('change', function (e) { state.noiseMult = parseFloat(e.target.value); save(); update(); });
+
+    $('addP').addEventListener('click', function () {
+      var n = state.participants.length + 1, id = 'P' + n, used = {};
+      state.participants.forEach(function (p) { used[p.id] = 1; });
+      while (used[id]) id = 'P' + (++n);
+      state.participants.push(newParticipant(id)); state.sel = state.participants.length - 1;
+      save(); renderChips(); renderForm(); update();
+      $('fCond').focus();
+    });
+    $('example').addEventListener('click', function () {
       if (state.participants.length && !confirm('Replace the current data with simulated example data?')) return;
       loadExample();
     });
-    document.getElementById('exportCsv').addEventListener('click', exportCsv);
-    document.getElementById('importCsv').addEventListener('change', function (e) {
+    $('exportCsv').addEventListener('click', exportCsv);
+    $('importCsv').addEventListener('change', function (e) {
       var f = e.target.files[0]; if (!f) return;
-      var replace = state.participants.length ? confirm('Press OK to replace current data with the file, or Cancel to add the file to the current data.') : true;
+      var replace = state.participants.length ? confirm('Press OK to replace the current data with the file, or Cancel to add the file to the current data.') : true;
       importCsv(f, replace); e.target.value = '';
     });
-    document.getElementById('clearAll').addEventListener('click', function () {
-      if (!confirm('Clear all participants and data on this page?')) return;
+    $('clearAll').addEventListener('click', function () {
+      if (!confirm('Clear all participants and data on this page? Export a CSV first if you need it.')) return;
       state.participants = []; state.sel = 0; save(); renderChips(); renderForm(); update();
     });
-    document.getElementById('printBtn').addEventListener('click', function () { window.print(); });
-    renderChips(); renderForm(); update();
+    $('printBtn').addEventListener('click', function () { window.print(); });
+    $('printVas').addEventListener('click', function () {
+      document.body.classList.add('print-vas');
+      window.print();
+      setTimeout(function () { document.body.classList.remove('print-vas'); }, 500);
+    });
+    window.addEventListener('afterprint', function () { document.body.classList.remove('print-vas'); });
+
+    renderChips(); renderForm(); update(); tRender();
   }
   init();
 })();
