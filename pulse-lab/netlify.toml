@@ -1,0 +1,4 @@
+# Deploy this folder as the site root. No build step.
+[build]
+  publish = "."
+  command = ""

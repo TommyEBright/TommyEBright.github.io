@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pulse Lab tests</title>
+<style>
+  :root { --bg: #f6f5fb; --text: #1b1830; --muted: #5b5872; --good: #1a8f4c; --poor: #d23a3a; --card: #fff; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0f0e17; --text: #f2f0fa; --muted: #aaa6c0; --good: #3ccf7e; --poor: #ff6b6b; --card: #1a1926; } }
+  body { margin: 0; padding: 20px 16px; background: var(--bg); color: var(--text); font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  #summary { font-weight: 700; font-size: 1.1rem; margin: 12px 0; }
+  .pass { color: var(--good); } .fail { color: var(--poor); }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li { background: var(--card); border-radius: 12px; padding: 10px 14px; margin: 8px 0; }
+  li span { color: var(--text); }
+  .note { color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Pulse Lab: signal processing tests</h1>
+  <p style="color:var(--muted)">Runs every pure function in <code>dsp.js</code>. For the end-to-end check open <a href="./?test=1">index.html?test=1</a> (add <code>&amp;speed=10</code> to run it faster, <code>&amp;mode=lab</code> for the full metrics).</p>
+  <p id="summary">Running…</p>
+  <ul id="out"></ul>
+</main>
+<script src="dsp.js"></script>
+<script src="tests.js"></script>
+</body>
+</html>

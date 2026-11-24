@@ -1,0 +1,1385 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pulse Lab</title>
+<meta name="description" content="Measure your heart rate and heart rate variability with your phone camera. Plymouth Marjon University Sport Science.">
+<meta name="theme-color" content="#f6f5fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f0e17" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pulse Lab">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+/* ============================================================ tokens
+   Swap --accent (and --accent-ink, the text colour on top of it) for
+   Marjon brand colours. Everything else derives from these. */
+:root {
+  --accent: #6234d4;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(98, 52, 212, .12);
+  --heart: #e5484d;
+  --bg: #f6f5fb;
+  --surface: #ffffff;
+  --surface-2: #f0eef7;
+  --text: #1b1830;
+  --muted: #5b5872;
+  --border: #e2dfec;
+  --good: #1a8f4c;
+  --fair: #c77c00;
+  --poor: #d23a3a;
+  --focus: #1a73e8;
+  --shadow: 0 1px 2px rgba(27, 24, 48, .06), 0 8px 24px rgba(27, 24, 48, .08);
+  --radius: 20px;
+  --radius-sm: 14px;
+  --ease: cubic-bezier(.2, .7, .2, 1);
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --accent: #a587ff;
+    --accent-ink: #160b36;
+    --accent-soft: rgba(165, 135, 255, .16);
+    --heart: #ff6369;
+    --bg: #0f0e17;
+    --surface: #1a1926;
+    --surface-2: #232233;
+    --text: #f2f0fa;
+    --muted: #aaa6c0;
+    --border: #2e2c41;
+    --good: #3ccf7e;
+    --fair: #f0a92c;
+    --poor: #ff6b6b;
+    --focus: #8ab4ff;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px rgba(0, 0, 0, .35);
+    color-scheme: dark;
+  }
+}
+
+/* ============================================================ base */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; min-height: 100vh; min-height: 100dvh;
+  background: var(--bg); color: var(--text);
+  font: 17px/1.5 var(--font);
+  display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-tap-highlight-color: transparent;
+}
+h1, h2, h3 { line-height: 1.2; margin: 0; letter-spacing: -.01em; }
+h1 { font-size: 1.85rem; font-weight: 750; }
+h2 { font-size: 1.3rem; font-weight: 700; }
+h3 { font-size: 1.05rem; font-weight: 650; }
+p { margin: 0; }
+a { color: var(--accent); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 10px; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.muted { color: var(--muted); }
+.small { font-size: .875rem; }
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* ============================================================ layout */
+.top {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; gap: 8px;
+  max-width: 520px; width: 100%; margin: 0 auto; padding: 10px 16px;
+  background: var(--bg);
+}
+.logo {
+  display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 4px 8px 4px 2px;
+  background: none; border: 0; cursor: pointer; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  font-weight: 750; font-size: 1.1rem; letter-spacing: -.01em; touch-action: manipulation;
+}
+.logo-mark { width: 34px; height: 34px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; transition: transform .6s var(--ease); }
+.logo.holding .logo-mark { transform: scale(.88); }
+.chip { font-size: .75rem; font-weight: 650; padding: 4px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.spacer { flex: 1; }
+.icon-btn {
+  width: 48px; height: 48px; border-radius: 14px; border: 0; background: transparent; color: var(--muted);
+  display: grid; place-items: center; cursor: pointer;
+}
+.icon-btn:hover { background: var(--surface-2); }
+main { flex: 1; width: 100%; max-width: 520px; margin: 0 auto; padding: 4px 16px 24px; }
+.screen { display: flex; flex-direction: column; gap: 18px; animation: enter .35s var(--ease); }
+@keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.screen > h1:focus, .screen > header h1:focus, .screen h2:focus { outline: none; }
+footer.disclaimer { text-align: center; font-size: .8rem; color: var(--muted); padding: 12px 16px 18px; }
+
+.card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.row { display: flex; gap: 12px; align-items: center; }
+
+/* ============================================================ buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 52px; padding: 12px 22px; border-radius: 16px; border: 0; cursor: pointer;
+  font-weight: 650; font-size: 1.02rem; text-decoration: none; text-align: center;
+  transition: transform .15s var(--ease), background-color .2s, box-shadow .2s;
+  touch-action: manipulation;
+}
+.btn:active { transform: scale(.98); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 18px rgba(98, 52, 212, .28); }
+.btn.secondary { background: var(--accent-soft); color: var(--accent); }
+.btn.ghost { background: transparent; color: var(--text); border: 1.5px solid var(--border); }
+.btn.danger { background: transparent; color: var(--poor); border: 1.5px solid var(--border); }
+.btn.big { min-height: 64px; font-size: 1.15rem; border-radius: 20px; width: 100%; }
+.btn.block { width: 100%; }
+.btns { display: flex; flex-direction: column; gap: 10px; }
+
+/* ============================================================ start */
+.hero { padding: 8px 2px 0; display: flex; flex-direction: column; gap: 8px; }
+.hero p { color: var(--muted); font-size: 1.02rem; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: flex; align-items: center; gap: 16px; padding: 14px 16px; }
+.step-art { flex: none; width: 64px; height: 64px; border-radius: 18px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; }
+.step-num { font-size: .78rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .06em; }
+.step h3 { margin-top: 2px; }
+.step p { color: var(--muted); font-size: .92rem; }
+.privacy { display: flex; gap: 10px; align-items: flex-start; font-size: .9rem; color: var(--muted); padding: 0 4px; }
+.privacy svg { flex: none; margin-top: 2px; color: var(--good); }
+
+/* ============================================================ measure */
+.measure-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.phase-label { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.ring-wrap { position: relative; width: min(72vw, 260px); aspect-ratio: 1; margin: 4px auto 0; }
+.ring-wrap svg.ring { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring-track { stroke: var(--surface-2); }
+.ring-prog { stroke: var(--accent); transition: stroke-dashoffset .25s linear, stroke .3s; }
+.ring-prog.settle { stroke: var(--muted); }
+.ring-centre { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-align: center; }
+.heart { width: 58px; height: 58px; color: var(--heart); transform-origin: 50% 60%; }
+.heart.beat { animation: beat .42s var(--ease); }
+@keyframes beat { 0% { transform: scale(1); } 18% { transform: scale(1.22); } 40% { transform: scale(.96); } 100% { transform: scale(1); } }
+.heart.idle { color: var(--border); }
+.timer { font-size: 2.6rem; font-weight: 750; letter-spacing: -.02em; line-height: 1; }
+.timer-unit { font-size: .85rem; color: var(--muted); }
+.hint { text-align: center; font-size: 1.05rem; min-height: 3em; padding: 0 8px; display: flex; align-items: center; justify-content: center; }
+.wave-card { padding: 14px 14px 12px; display: flex; flex-direction: column; gap: 10px; }
+.wave-head { display: flex; align-items: center; justify-content: space-between; font-size: .85rem; color: var(--muted); }
+canvas.wave { width: 100%; height: 96px; display: block; }
+.swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); background: #333; transition: background-color .3s; }
+.sqi { display: flex; align-items: center; gap: 10px; font-size: .9rem; }
+.sqi-bar { flex: 1; height: 10px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.sqi-fill { height: 100%; width: 0; border-radius: 99px; background: var(--poor); transition: width .5s var(--ease), background-color .4s; }
+.sqi-word { min-width: 3.6em; text-align: right; font-weight: 650; }
+.notice { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: .95rem; }
+.notice svg { flex: none; margin-top: 2px; }
+.notice.warn { background: rgba(199, 124, 0, .12); }
+.notice.warn svg { color: var(--fair); }
+.tips { margin: 6px 0 0; padding-left: 1.2em; }
+.tips li { margin: 4px 0; }
+.finger-art { width: 130px; margin: 0 auto; color: var(--accent); }
+.finger-art .finger { animation: press 2.4s var(--ease) infinite; }
+@keyframes press { 0%, 15% { transform: translate(0, -28px); opacity: .0; } 40%, 80% { transform: none; opacity: 1; } 100% { transform: translate(0, -28px); opacity: 0; } }
+.spinner { width: 44px; height: 44px; border-radius: 50%; border: 4px solid var(--surface-2); border-top-color: var(--accent); animation: spin .9s linear infinite; margin: 0 auto; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============================================================ result card */
+.result-card { position: relative; overflow: hidden; padding: 22px 20px 20px; display: flex; flex-direction: column; gap: 18px; }
+.result-card::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 150px; pointer-events: none;
+  background: linear-gradient(180deg, var(--accent-soft), transparent);
+}
+.rc-head { position: relative; display: flex; align-items: center; justify-content: space-between; font-size: .85rem; color: var(--muted); }
+.rc-brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: var(--text); }
+.rc-brand .logo-mark { width: 26px; height: 26px; border-radius: 8px; }
+.rc-metrics { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.metric { background: var(--surface-2); border-radius: 18px; padding: 16px 12px 14px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.metric-label { font-size: .8rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.metric-value { font-size: 2.9rem; font-weight: 800; letter-spacing: -.03em; line-height: 1; }
+.metric-unit { font-size: .9rem; color: var(--muted); }
+.gauge { width: 112px; height: 64px; margin-top: 2px; }
+.gauge .g-track { stroke: var(--border); }
+.gauge .g-prog { stroke: var(--accent); transition: stroke-dasharray 1.1s var(--ease); }
+.gauge-value { margin-top: -34px; font-size: 1.9rem; font-weight: 800; line-height: 1; }
+.rc-explain { position: relative; font-size: 1rem; }
+.rc-foot { font-size: .78rem; color: var(--muted); text-align: center; border-top: 1px solid var(--border); padding-top: 12px; }
+.dim .metric-value, .dim .gauge-value { opacity: .45; }
+
+/* ============================================================ lab + trends */
+table.metrics { width: 100%; border-collapse: collapse; font-size: .95rem; }
+table.metrics th, table.metrics td { padding: 9px 4px; border-bottom: 1px solid var(--border); text-align: left; }
+table.metrics td { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+table.metrics tr:last-child th, table.metrics tr:last-child td { border-bottom: 0; }
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart text { fill: var(--muted); font-size: 10px; font-family: var(--font); }
+.chart .grid { stroke: var(--border); stroke-width: 1; }
+.chart .line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .line2 { fill: none; stroke: var(--heart); stroke-width: 2; stroke-linejoin: round; }
+.chart .dot { fill: var(--accent); }
+.chart .dot2 { fill: var(--heart); }
+.chart .bad { stroke: var(--poor); stroke-width: 2; }
+.chart .band { fill: var(--accent-soft); }
+.chart .ident { stroke: var(--muted); stroke-dasharray: 4 4; stroke-width: 1; }
+.chart .ellipse { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+.chart .axis-sd1 { stroke: var(--heart); stroke-width: 2; }
+.chart .axis-sd2 { stroke: var(--accent); stroke-width: 2; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .82rem; color: var(--muted); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+details.how { padding: 0; }
+details.how summary { cursor: pointer; padding: 16px 18px; min-height: 52px; font-weight: 650; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+details.how summary::-webkit-details-marker { display: none; }
+details.how summary::after { content: "+"; font-size: 1.4rem; color: var(--accent); }
+details.how[open] summary::after { content: "\2212"; }
+details.how .body { padding: 0 18px 18px; display: flex; flex-direction: column; gap: 10px; font-size: .95rem; }
+details.how h3 { margin-top: 6px; }
+.light { width: 46px; height: 46px; flex: none; border-radius: 50%; box-shadow: inset 0 0 0 6px rgba(255, 255, 255, .25); }
+.light.within { background: var(--good); }
+.light.above { background: var(--fair); }
+.light.below { background: var(--poor); }
+.light.building, .light.none { background: var(--border); }
+.readings { list-style: none; margin: 0; padding: 0; }
+.readings li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.readings li:last-child { border-bottom: 0; }
+.readings .r-main { flex: 1; min-width: 0; }
+.readings .r-date { font-weight: 600; font-size: .95rem; }
+.readings .r-vals { font-size: .85rem; color: var(--muted); }
+.test-panel { border: 2px dashed var(--accent); }
+.test-panel.pass { border-color: var(--good); }
+.test-panel.fail { border-color: var(--poor); }
+
+/* ============================================================ settings sheet */
+dialog.sheet {
+  border: 0; padding: 0; margin: auto auto 0; width: 100%; max-width: 520px; max-height: 92vh; max-height: 92dvh;
+  border-radius: 24px 24px 0 0; background: var(--surface); color: var(--text); box-shadow: var(--shadow);
+}
+dialog.sheet[open] { animation: sheet-up .32s var(--ease); }
+@keyframes sheet-up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+dialog.sheet::backdrop { background: rgba(10, 8, 25, .45); }
+.sheet-inner { padding: 10px 18px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 16px; }
+.grabber { width: 40px; height: 5px; border-radius: 99px; background: var(--border); margin: 4px auto 0; }
+fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
+.opt { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 16px; border: 1.5px solid var(--border); cursor: pointer; min-height: 56px; }
+.opt:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.opt input { width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--accent); flex: none; }
+.opt b { display: block; }
+.opt span { font-size: .88rem; color: var(--muted); }
+.seg { display: flex; gap: 6px; background: var(--surface-2); padding: 4px; border-radius: 14px; }
+.seg label { flex: 1; position: relative; }
+.seg input { position: absolute; opacity: 0; inset: 0; }
+.seg span { display: grid; place-items: center; min-height: 44px; border-radius: 11px; font-weight: 650; font-size: .95rem; cursor: pointer; }
+.seg input:checked + span { background: var(--surface); box-shadow: var(--shadow); color: var(--accent); }
+.seg input:focus-visible + span { outline: 3px solid var(--focus); }
+.field-label { font-size: .9rem; color: var(--muted); margin-bottom: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+  .heart.beat { animation: none; color: var(--heart); filter: brightness(1.25); }
+  .finger-art .finger { animation: none; opacity: 1; transform: none; }
+  .spinner { animation: spin 2s linear infinite !important; animation-duration: 2s !important; animation-iteration-count: infinite !important; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path fill="currentColor" d="M12 21.2l-1.4-1.3C5.4 15.3 2 12.2 2 8.4 2 5.3 4.4 3 7.5 3c1.7 0 3.4.8 4.5 2.1C13.1 3.8 14.8 3 16.5 3 19.6 3 22 5.3 22 8.4c0 3.8-3.4 6.9-8.6 11.5L12 21.2z"/></symbol>
+    <symbol id="i-pulse" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M3 12h4l2-5 3.5 10 2.5-7 1.5 2H21"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 017 0v3"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></g></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></g></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17v.01"/></g></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></symbol>
+    <!-- step illustrations -->
+    <symbol id="art-sit" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="21" cy="9" r="4.5"/><path d="M21 15v12h11l3 13M21 21l8 3"/><path d="M14 22v13h18M14 35v7M32 35v7"/></g></symbol>
+    <symbol id="art-finger" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="4" width="26" height="40" rx="5"/><circle cx="18" cy="12" r="3.2"/><circle cx="27" cy="12" r="1.6" fill="currentColor"/></g><path fill="currentColor" opacity=".9" d="M15.5 6.5c2-2.6 6-2.4 7.6.5l.9 1.7c.5.9 1.6 15 1.6 15l-8 .3-3.4-12.6c-.4-1.7.1-3.6 1.3-4.9z"/></symbol>
+    <symbol id="art-breathe" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 17h24a5 5 0 10-5-5"/><path d="M5 25h33a5 5 0 11-5 5"/><path d="M5 33h15a4 4 0 11-4 4"/></g></symbol>
+  </defs>
+</svg>
+
+<header class="top">
+  <button class="logo" id="logo" type="button" aria-label="Pulse Lab" aria-describedby="logoHint">
+    <span class="logo-mark" aria-hidden="true"><svg width="22" height="22"><use href="#i-pulse"/></svg></span>
+    <span>Pulse Lab</span>
+  </button>
+  <span id="logoHint" class="sr-only">Press and hold for settings.</span>
+  <span class="chip" id="modeChip" hidden></span>
+  <span class="spacer"></span>
+  <button class="icon-btn" id="gearBtn" type="button" aria-label="Settings" hidden><svg width="24" height="24" aria-hidden="true"><use href="#i-gear"/></svg></button>
+</header>
+
+<main id="main">
+  <!-- ======================================================= START -->
+  <section class="screen" id="screen-start" aria-labelledby="startTitle">
+    <div class="hero">
+      <h1 id="startTitle" tabindex="-1">Measure your heart</h1>
+      <p id="startSub">Find your heart rate and heart rate variability in about a minute, using your phone's camera.</p>
+    </div>
+    <ol class="steps" aria-label="How it works">
+      <li class="card step">
+        <span class="step-art" aria-hidden="true"><svg width="44" height="44"><use href="#art-sit"/></svg></span>
+        <div><span class="step-num">Step 1</span><h3>Sit still</h3><p>Sit down, relax and rest your arm on a table or your knee.</p></div>
+      </li>
+      <li class="card step">
+        <span class="step-art" aria-hidden="true"><svg width="44" height="44"><use href="#art-finger"/></svg></span>
+        <div><span class="step-num">Step 2</span><h3>Finger on the camera</h3><p>Rest a fingertip lightly over the rear camera and flash.</p></div>
+      </li>
+      <li class="card step">
+        <span class="step-art" aria-hidden="true"><svg width="44" height="44"><use href="#art-breathe"/></svg></span>
+        <div><span class="step-num">Step 3</span><h3>Breathe normally</h3><p>Stay still and quiet for about a minute while we listen to your pulse.</p></div>
+      </li>
+    </ol>
+    <div class="btns">
+      <button class="btn primary big" id="startBtn" type="button">
+        <svg width="24" height="24" aria-hidden="true"><use href="#i-heart"/></svg><span id="startBtnLabel">Measure my heart</span>
+      </button>
+      <button class="btn secondary block" id="trendsBtn" type="button" hidden>View my trends</button>
+      <p class="small muted" id="labNote" hidden style="text-align:center"></p>
+    </div>
+    <p class="privacy"><svg width="18" height="18" aria-hidden="true"><use href="#i-lock"/></svg><span id="privacyLine">Private by design: everything stays on this phone. No pictures, no personal details, nothing uploaded.</span></p>
+  </section>
+
+  <!-- ======================================================= MEASURE -->
+  <section class="screen" id="screen-measure" aria-labelledby="measureTitle" hidden>
+    <div class="measure-top">
+      <h2 id="measureTitle" tabindex="-1" class="phase-label">Getting ready</h2>
+      <button class="btn ghost" id="cancelBtn" type="button" style="min-height:48px;padding:8px 18px">Cancel</button>
+    </div>
+    <div id="torchNote" class="notice" hidden><svg width="20" height="20" aria-hidden="true"><use href="#i-info"/></svg><p>Your flash can't be switched on here. Sit near a bright light or a window.</p></div>
+
+    <div id="measureLive">
+      <div class="ring-wrap">
+        <svg class="ring" viewBox="0 0 220 220" aria-hidden="true">
+          <circle class="ring-track" cx="110" cy="110" r="96" fill="none" stroke-width="12"/>
+          <circle class="ring-prog settle" id="ringProg" cx="110" cy="110" r="96" fill="none" stroke-width="12" stroke-linecap="round" stroke-dasharray="603.19" stroke-dashoffset="603.19"/>
+        </svg>
+        <div class="ring-centre">
+          <svg class="heart idle" id="heart" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-heart"/></svg>
+          <div class="timer tnum" id="timer" aria-hidden="true">15</div>
+          <div class="timer-unit" id="timerUnit" aria-hidden="true">seconds</div>
+        </div>
+      </div>
+      <p class="hint" id="hint" aria-live="polite">Starting the camera…</p>
+    </div>
+
+    <div id="fingerHelp" class="card stack" hidden>
+      <svg class="finger-art" viewBox="0 0 48 48" aria-hidden="true">
+        <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="10" y="4" width="26" height="40" rx="5"/><circle cx="18" cy="12" r="3.2"/><circle cx="27" cy="12" r="1.6" fill="currentColor"/></g>
+        <path class="finger" fill="currentColor" opacity=".85" d="M15.5 6.5c2-2.6 6-2.4 7.6.5l.9 1.7c.5.9 1.6 15 1.6 15l-8 .3-3.4-12.6c-.4-1.7.1-3.6 1.3-4.9z"/>
+      </svg>
+      <div id="fingerTips" hidden>
+        <h3>Still looking for your fingertip</h3>
+        <ul class="tips">
+          <li>Turn the phone over so the camera faces up.</li>
+          <li>Cover both the camera and the flash with the pad of one finger.</li>
+          <li>Rest it lightly. Pressing hard squeezes the blood out.</li>
+          <li>If it's dark, move closer to a bright light or a window.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card wave-card">
+      <div class="wave-head"><span>Your pulse</span><span class="swatch" id="swatch" aria-hidden="true" title="What the camera sees"></span></div>
+      <canvas class="wave" id="wave" role="img" aria-label="Live pulse waveform"></canvas>
+      <div class="sqi">
+        <span>Signal</span>
+        <div class="sqi-bar" id="sqiMeter" role="meter" aria-label="Signal quality" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Poor"><div class="sqi-fill" id="sqiFill"></div></div>
+        <span class="sqi-word" id="sqiWord">Poor</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================= ANALYSING -->
+  <section class="screen" id="screen-analysing" aria-labelledby="anaTitle" hidden>
+    <div class="card stack" style="text-align:center;padding:40px 20px">
+      <div class="spinner" aria-hidden="true"></div>
+      <h2 id="anaTitle" tabindex="-1">Working out your result</h2>
+      <p class="muted">Finding each heartbeat and measuring the gaps between them.</p>
+    </div>
+  </section>
+
+  <!-- ======================================================= RESULT (Open Day / Trends) -->
+  <section class="screen" id="screen-result" aria-labelledby="resTitle" hidden>
+    <h2 id="resTitle" tabindex="-1" class="sr-only">Your result</h2>
+    <div id="resNotice" class="notice warn" hidden><svg width="20" height="20" aria-hidden="true"><use href="#i-warn"/></svg><div><b>This reading wasn't very clear.</b> <span id="resNoticeText">Try again, resting your fingertip lightly and keeping very still.</span></div></div>
+    <article class="card result-card" id="resultCard" aria-describedby="resSummary">
+      <div class="rc-head">
+        <span class="rc-brand"><span class="logo-mark" aria-hidden="true"><svg width="16" height="16"><use href="#i-pulse"/></svg></span>Pulse Lab</span>
+        <span id="resDate"></span>
+      </div>
+      <div class="rc-metrics">
+        <div class="metric">
+          <span class="metric-label">Heart rate</span>
+          <svg width="26" height="26" style="color:var(--heart)" aria-hidden="true"><use href="#i-heart"/></svg>
+          <span class="metric-value tnum" id="resHr">–</span>
+          <span class="metric-unit">beats per minute</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">HRV score</span>
+          <svg class="gauge" viewBox="0 0 112 64" aria-hidden="true">
+            <path class="g-track" d="M10 58a46 46 0 0 1 92 0" fill="none" stroke-width="10" stroke-linecap="round"/>
+            <path class="g-prog" id="gaugeProg" d="M10 58a46 46 0 0 1 92 0" fill="none" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/>
+          </svg>
+          <span class="gauge-value tnum" id="resScore">–</span>
+          <span class="metric-unit">out of 100</span>
+        </div>
+      </div>
+      <p class="rc-explain">HRV is the small variation in time between heartbeats. Sport scientists use it to track recovery and training.</p>
+      <p class="rc-foot">Plymouth Marjon University · Sport Science</p>
+    </article>
+    <p class="sr-only" id="resSummary" role="status"></p>
+    <p class="small muted" id="savedNote" hidden style="text-align:center"></p>
+    <div class="card test-panel stack" id="testPanelA" hidden></div>
+    <div class="btns">
+      <button class="btn primary big" id="againBtn" type="button">Try again</button>
+      <button class="btn secondary block" id="seeTrendsBtn" type="button" hidden>See my trends</button>
+      <a class="btn ghost block" id="learnLink" href="#" target="_blank" rel="noopener">Learn more about studying Sport Science at Marjon</a>
+    </div>
+  </section>
+
+  <!-- ======================================================= LAB RESULT -->
+  <section class="screen" id="screen-lab" aria-labelledby="labTitle" hidden>
+    <div>
+      <h1 id="labTitle" tabindex="-1">Recording results</h1>
+      <p class="muted small" id="labMeta"></p>
+    </div>
+    <p class="sr-only" id="labSummary" role="status"></p>
+    <div id="labNotice" class="notice warn" hidden><svg width="20" height="20" aria-hidden="true"><use href="#i-warn"/></svg><div><b>Unreliable reading.</b> <span id="labNoticeText"></span></div></div>
+    <div class="card test-panel stack" id="testPanelB" hidden></div>
+    <div class="card">
+      <h2 style="margin-bottom:6px">Metrics</h2>
+      <table class="metrics" id="metricsTable"><caption class="sr-only">HRV metrics for this recording</caption><tbody></tbody></table>
+    </div>
+    <div class="card stack">
+      <h2>Tachogram</h2>
+      <p class="small muted">RR interval for every beat across the recording.</p>
+      <svg class="chart" id="tachoChart" viewBox="0 0 340 200" role="img" aria-label="Tachogram of RR intervals"></svg>
+      <div class="legend"><span><i style="background:var(--accent)"></i>Kept</span><span><i style="background:var(--poor)"></i>Removed as artefact</span></div>
+    </div>
+    <div class="card stack">
+      <h2>Poincaré plot</h2>
+      <p class="small muted">Each RR interval plotted against the next. SD1 (short-term variability) runs across the line of identity, SD2 (longer-term) along it.</p>
+      <svg class="chart" id="poincareChart" viewBox="0 0 320 320" role="img" aria-label="Poincaré plot"></svg>
+      <div class="legend"><span><i style="background:var(--heart)"></i>SD1</span><span><i style="background:var(--accent)"></i>SD2</span></div>
+    </div>
+    <div class="card stack">
+      <h2>Export</h2>
+      <p class="small muted">Download CSV files to compare with a chest strap such as a Polar H10 (for example with a Bland–Altman plot or a Bayesian agreement model). Clock times let you line the two recordings up.</p>
+      <button class="btn primary block" id="csvBeats" type="button">Beats and RR intervals (CSV)</button>
+      <button class="btn secondary block" id="csvSummary" type="button">Summary metrics (CSV)</button>
+      <button class="btn ghost block" id="csvPpg" type="button">Filtered PPG signal (CSV)</button>
+    </div>
+    <details class="card how">
+      <summary>How this works</summary>
+      <div class="body">
+        <h3>Photoplethysmography (PPG)</h3>
+        <p>Each heartbeat pushes a pulse of blood into your fingertip. More blood absorbs more light, so the brightness the camera sees dips slightly with every beat. Pulse Lab samples the average red (or green) colour of the centre of each video frame, resamples it to 30 Hz, removes slow drift, band-pass filters it (0.7 to 3.5 Hz, zero-phase Butterworth) and finds each pulse peak, refined below the frame interval by parabolic interpolation.</p>
+        <h3>PRV is not quite ECG HRV</h3>
+        <p>ECG-derived HRV uses the electrical R wave. A camera measures the pulse arriving at the finger, so strictly this is pulse rate variability (PRV). The pulse transit time from heart to finger varies a little from beat to beat (with breathing and blood pressure), which adds variability that the ECG does not see.</p>
+        <h3>Cleaning the data</h3>
+        <p>Intervals shorter than 300 ms or longer than 2000 ms, or more than 20% away from the local median, are removed. RMSSD only uses differences between two neighbouring kept intervals. If more than 20% of beats are removed the reading is flagged as unreliable.</p>
+        <h3>Limitations</h3>
+        <ul class="tips">
+          <li>Valid only at rest, seated or lying still.</li>
+          <li>Any movement of the finger or phone ruins the signal.</li>
+          <li>Camera frame rate (about 30 per second) limits timing precision to a few milliseconds.</li>
+          <li>PPG may read SDNN and RMSSD slightly higher than ECG, especially when HRV is low.</li>
+          <li>Cold hands, pressing too hard and poor light all reduce signal quality.</li>
+          <li>For education only. Not a medical device.</li>
+        </ul>
+      </div>
+    </details>
+    <div class="btns"><button class="btn primary big" id="labAgainBtn" type="button">Measure again</button></div>
+  </section>
+
+  <!-- ======================================================= TRENDS -->
+  <section class="screen" id="screen-trends" aria-labelledby="trTitle" hidden>
+    <div class="row">
+      <button class="icon-btn" id="trBack" type="button" aria-label="Back"><svg width="24" height="24" aria-hidden="true"><use href="#i-back"/></svg></button>
+      <h1 id="trTitle" tabindex="-1">My trends</h1>
+    </div>
+    <p class="privacy"><svg width="18" height="18" aria-hidden="true"><use href="#i-lock"/></svg><span>Your readings are saved only on this phone. Nothing is sent anywhere. Clearing your browser data deletes them.</span></p>
+    <div class="card stack" id="trToday" role="status"></div>
+    <div class="card stack" id="trChartCard">
+      <h2>History</h2>
+      <svg class="chart" id="trChart" viewBox="0 0 340 260" role="img" aria-label="Daily ln RMSSD and heart rate"></svg>
+      <div class="legend"><span><i style="background:var(--accent)"></i>ln RMSSD</span><span><i style="background:var(--accent-soft);border:1px solid var(--accent)"></i>Usual range</span><span><i style="background:var(--heart)"></i>Resting HR</span></div>
+    </div>
+    <div class="card stack">
+      <h2>Readings</h2>
+      <ul class="readings" id="trList"></ul>
+      <button class="btn danger block" id="trDeleteAll" type="button">Delete all readings</button>
+    </div>
+    <button class="btn primary big" id="trMeasure" type="button">Take a reading</button>
+  </section>
+
+  <!-- ======================================================= ERROR -->
+  <section class="screen" id="screen-error" aria-labelledby="errTitle" hidden>
+    <div class="card stack" style="padding:24px 20px">
+      <span class="step-art" aria-hidden="true" style="background:rgba(199,124,0,.14);color:var(--fair)"><svg width="34" height="34"><use href="#i-warn"/></svg></span>
+      <h1 id="errTitle" tabindex="-1">Something went wrong</h1>
+      <p id="errBody" class="muted"></p>
+      <ul class="tips" id="errSteps"></ul>
+    </div>
+    <div class="btns">
+      <button class="btn primary big" id="errRetry" type="button">Try again</button>
+      <button class="btn ghost block" id="errBack" type="button">Back to start</button>
+    </div>
+  </section>
+</main>
+
+<footer class="disclaimer">For education only. Not a medical device.</footer>
+
+<div id="announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+<video id="video" playsinline muted autoplay aria-hidden="true" style="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;left:0;top:0"></video>
+
+<!-- ======================================================= SETTINGS SHEET -->
+<dialog class="sheet" id="settings" aria-labelledby="setTitle">
+  <form method="dialog" class="sheet-inner" id="settingsForm">
+    <div class="grabber" aria-hidden="true"></div>
+    <h2 id="setTitle">Settings</h2>
+    <fieldset>
+      <legend>Mode</legend>
+      <label class="opt"><input type="radio" name="mode" value="openday"><span><b>Open Day</b><span>One simple measurement. Nothing is saved.</span></span></label>
+      <label class="opt"><input type="radio" name="mode" value="trends"><span><b>My Trends</b><span>Save readings on this phone and compare with your usual range.</span></span></label>
+      <label class="opt"><input type="radio" name="mode" value="lab"><span><b>Lab</b><span>Full metrics, tachogram, Poincaré plot and CSV export for practicals.</span></span></label>
+    </fieldset>
+    <fieldset id="labOpts">
+      <legend>Lab recording</legend>
+      <div>
+        <p class="field-label" id="lenLbl">Recording length</p>
+        <div class="seg" role="radiogroup" aria-labelledby="lenLbl">
+          <label><input type="radio" name="recordS" value="60"><span>60 s</span></label>
+          <label><input type="radio" name="recordS" value="120"><span>120 s</span></label>
+          <label><input type="radio" name="recordS" value="300"><span>300 s</span></label>
+        </div>
+      </div>
+      <div>
+        <p class="field-label" id="setLbl">Settle time (no data kept)</p>
+        <div class="seg" role="radiogroup" aria-labelledby="setLbl">
+          <label><input type="radio" name="settleS" value="5"><span>5 s</span></label>
+          <label><input type="radio" name="settleS" value="10"><span>10 s</span></label>
+          <label><input type="radio" name="settleS" value="15"><span>15 s</span></label>
+          <label><input type="radio" name="settleS" value="30"><span>30 s</span></label>
+        </div>
+      </div>
+    </fieldset>
+    <p class="small muted">All processing happens on this phone. Pulse Lab uses no cookies and no analytics, and never uploads anything.</p>
+    <button class="btn primary block" value="done" type="submit">Done</button>
+  </form>
+</dialog>
+
+<script src="dsp.js"></script>
+<script>
+(function () {
+  'use strict';
+  var DSP = window.PulseDSP;
+
+  /* ------------------------------------------------------------ config */
+  var LEARN_MORE_URL = 'https://www.marjon.ac.uk/'; // placeholder: swap for the course page
+  var FS = DSP.FS;
+  var params = new URLSearchParams(location.search);
+  var TEST = params.get('test') === '1';
+  var SPEED = Math.max(1, Math.min(50, Number(params.get('speed')) || 1)); // test mode playback speed
+  var SEED = Number(params.get('seed')) || 7;
+  var NOISE = params.get('noise') != null && isFinite(+params.get('noise')) ? +params.get('noise') : 0.1; // test mode noise SD
+  var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ------------------------------------------------------------ storage (always try/catch) */
+  var mem = {};
+  var store = {
+    get: function (k, d) {
+      try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); }
+      catch (e) { return k in mem ? mem[k] : d; }
+    },
+    set: function (k, v) {
+      try { localStorage.setItem(k, JSON.stringify(v)); return true; }
+      catch (e) { mem[k] = v; return false; }
+    }
+  };
+  var K = { mode: 'pulselab.mode', settings: 'pulselab.settings', readings: 'pulselab.readings' };
+
+  var mode = store.get(K.mode, 'openday');
+  var qMode = params.get('mode');
+  if (qMode === 'lab' || qMode === 'trends' || qMode === 'openday') { mode = qMode; store.set(K.mode, mode); }
+  if (['openday', 'trends', 'lab'].indexOf(mode) < 0) mode = 'openday';
+  var settings = Object.assign({ recordS: 60, settleS: 15 }, store.get(K.settings, {}));
+
+  /* ------------------------------------------------------------ helpers */
+  var $ = function (id) { return document.getElementById(id); };
+  function fmt(v, d) { return isFinite(v) ? v.toFixed(d) : '–'; }
+  function announce(msg) { var a = $('announcer'); a.textContent = ''; setTimeout(function () { a.textContent = msg; }, 60); }
+  function show(id) {
+    document.querySelectorAll('.screen').forEach(function (s) { s.hidden = s.id !== id; });
+    var h = $(id).querySelector('[tabindex="-1"]');
+    window.scrollTo(0, 0);
+    if (h) setTimeout(function () { h.focus({ preventScroll: true }); }, 30);
+  }
+  function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
+  function timing() {
+    return mode === 'lab' ? { settleS: +settings.settleS, recordS: +settings.recordS } : { settleS: 15, recordS: 60 };
+  }
+  function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+  /* ------------------------------------------------------------ mode UI */
+  function applyMode() {
+    var chip = $('modeChip');
+    chip.hidden = mode === 'openday' && !TEST;
+    chip.textContent = TEST ? 'Test mode' : mode === 'lab' ? 'Lab' : 'My Trends';
+    $('gearBtn').hidden = mode === 'openday';
+    $('trendsBtn').hidden = mode !== 'trends';
+    var t = timing();
+    if (mode === 'openday') {
+      $('startTitle').textContent = 'Measure your heart';
+      $('startBtnLabel').textContent = 'Measure my heart';
+      $('privacyLine').textContent = 'Private by design: everything stays on this phone. No pictures, no personal details, nothing uploaded.';
+      $('labNote').hidden = true;
+    } else if (mode === 'trends') {
+      $('startTitle').textContent = 'Track your HRV';
+      $('startBtnLabel').textContent = 'Take a reading';
+      $('privacyLine').textContent = 'Readings are saved only on this phone. Nothing is uploaded, and there are no accounts or cookies.';
+      $('labNote').hidden = true;
+    } else {
+      $('startTitle').textContent = 'PPG recording';
+      $('startBtnLabel').textContent = 'Start recording';
+      $('privacyLine').textContent = 'All processing happens on this phone. Nothing is uploaded. CSV files are only created when you tap Export.';
+      $('labNote').hidden = false;
+      $('labNote').textContent = 'Settle ' + t.settleS + ' s, then record ' + t.recordS + ' s. Change this in settings.';
+    }
+  }
+
+  /* ------------------------------------------------------------ settings sheet + long-press logo */
+  var dlg = $('settings');
+  function openSettings() {
+    var f = $('settingsForm');
+    f.mode.value = mode; f.recordS.value = String(settings.recordS); f.settleS.value = String(settings.settleS);
+    $('labOpts').hidden = mode !== 'lab';
+    if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+  }
+  $('settingsForm').addEventListener('change', function (e) {
+    var f = e.currentTarget;
+    if (e.target.name === 'mode') { mode = f.mode.value; store.set(K.mode, mode); $('labOpts').hidden = mode !== 'lab'; }
+    else { settings.recordS = +f.recordS.value; settings.settleS = +f.settleS.value; store.set(K.settings, settings); }
+    applyMode();
+  });
+  dlg.addEventListener('close', function () {
+    applyMode();
+    if (!$('screen-start').hidden) show('screen-start');
+  });
+  dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); }); // tap on backdrop
+  if (typeof dlg.showModal !== 'function') $('settingsForm').addEventListener('submit', function (e) { e.preventDefault(); dlg.removeAttribute('open'); applyMode(); });
+  $('gearBtn').addEventListener('click', openSettings);
+
+  (function longPress() {
+    var logo = $('logo'), timer = null;
+    function startHold() {
+      clearTimeout(timer); logo.classList.add('holding');
+      timer = setTimeout(function () {
+        logo.classList.remove('holding'); timer = null;
+        if (navigator.vibrate) try { navigator.vibrate(20); } catch (e) {}
+        if (isMeasuring()) return;
+        openSettings();
+      }, 800);
+    }
+    function endHold() { clearTimeout(timer); timer = null; logo.classList.remove('holding'); }
+    logo.addEventListener('pointerdown', startHold);
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { logo.addEventListener(ev, endHold); });
+    logo.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    logo.addEventListener('keydown', function (e) { if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) { e.preventDefault(); startHold(); } });
+    logo.addEventListener('keyup', function (e) { if (e.key === 'Enter' || e.key === ' ') endHold(); });
+  })();
+
+  /* ------------------------------------------------------------ frame sources */
+  function CameraSource() {
+    var video = $('video'), stream = null, track = null, cvs = document.createElement('canvas'), ctx, rvfc = null, raf = null;
+    var useMediaTime = true, lastT = -Infinity, stalls = 0, prevSig = '';
+    cvs.width = cvs.height = 24;
+    this.torch = false;
+    this.start = async function (onFrame) {
+      if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        var err = new Error('unsupported'); err.name = 'Unsupported'; throw err;
+      }
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }
+      });
+      track = stream.getVideoTracks()[0];
+      video.srcObject = stream;
+      try { await video.play(); } catch (e) { /* autoplay with muted+playsinline normally works */ }
+      // Torch: works on most Android Chrome devices, rarely on iOS.
+      try {
+        await track.applyConstraints({ advanced: [{ torch: true }] });
+        var st = track.getSettings ? track.getSettings() : {};
+        this.torch = st.torch === true || (track.getCapabilities && track.getCapabilities().torch === true && st.torch !== false);
+      } catch (e) { this.torch = false; }
+      ctx = cvs.getContext('2d', { willReadFrequently: true });
+      var self = this;
+      function grab(t) {
+        var w = video.videoWidth, h = video.videoHeight;
+        if (!w || !h) return;
+        var c = DSP.centreCrop(w, h, 0.5);
+        ctx.drawImage(video, c.sx, c.sy, c.sw, c.sh, 0, 0, 24, 24);
+        var rgb = DSP.meanRGB(ctx.getImageData(0, 0, 24, 24).data);
+        onFrame(t, rgb);
+      }
+      if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
+        var cb = function (now, meta) {
+          var t = now;
+          if (useMediaTime && meta && typeof meta.mediaTime === 'number') {
+            var mt = meta.mediaTime * 1000;
+            if (mt > lastT) { t = mt; stalls = 0; }
+            else if (++stalls > 15) { useMediaTime = false; lastT = -Infinity; self.onClockChange && self.onClockChange(); }
+            else { rvfc = video.requestVideoFrameCallback(cb); return; }
+          }
+          if (t > lastT) { lastT = t; grab(t); }
+          rvfc = video.requestVideoFrameCallback(cb);
+        };
+        rvfc = video.requestVideoFrameCallback(cb);
+      } else {
+        var loop = function (now) {
+          // rAF can run faster than the camera: skip repeated frames.
+          var vt = video.currentTime, sig = String(vt);
+          if (sig !== prevSig) { prevSig = sig; grab(now); }
+          raf = requestAnimationFrame(loop);
+        };
+        raf = requestAnimationFrame(loop);
+      }
+    };
+    this.stop = function () {
+      if (rvfc != null && video.cancelVideoFrameCallback) video.cancelVideoFrameCallback(rvfc);
+      if (raf != null) cancelAnimationFrame(raf);
+      rvfc = raf = null;
+      if (track) { try { track.applyConstraints({ advanced: [{ torch: false }] }); } catch (e) {} }
+      if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
+      video.srcObject = null; stream = track = null;
+    };
+  }
+
+  /** ?test=1 : plays a generated PPG with known RR intervals through the full pipeline. */
+  function SyntheticSource(totalS) {
+    var timer = null;
+    this.torch = true;
+    this.synth = DSP.synthPPG({ duration: totalS, seed: SEED, meanRR: 850, rsaAmp: 40, jitter: 15, noise: NOISE });
+    var s = this.synth;
+    this.start = async function (onFrame) {
+      var i = 0, t0 = performance.now();
+      timer = setInterval(function () {
+        var dataNow = (performance.now() - t0) * SPEED;
+        while (i < s.times.length && s.times[i] <= dataNow) { onFrame(s.times[i], { r: s.red[i], g: s.green[i], b: s.blue[i] }); i++; }
+      }, 15);
+    };
+    this.stop = function () { clearInterval(timer); };
+  }
+
+  /* ------------------------------------------------------------ measurement controller */
+  var M = null; // current measurement state
+  function isMeasuring() { return !!M && !M.done; }
+
+  async function startMeasurement() {
+    if (isMeasuring()) return;
+    var t = timing();
+    M = {
+      settleS: t.settleS, recordS: t.recordS,
+      phase: 'starting', fingerOk: 0, lostAt: null, lastT: null, reason: 'notRed', waitingSince: null,
+      settleEl: 0, recordEl: 0, resettleEl: 0,
+      segments: [], seg: null, recStartT: null, recStartWall: null, recEndT: null,
+      channel: 'red', winR: [], winG: [], sinceSqi: 0, warm: 0, wave: [], lastPushWall: 0,
+      quality: { score: 0, level: 'poor' }, rgb: null, done: false, wakeLock: null
+    };
+    M.resampler = DSP.createStreamResampler(FS, onUniform);
+    M.filtR = DSP.createStreamFilter(DSP.designBandpass(FS));
+    M.filtG = DSP.createStreamFilter(DSP.designBandpass(FS));
+    M.beat = DSP.createLiveBeatDetector(FS);
+
+    show('screen-measure');
+    $('torchNote').hidden = true;
+    $('fingerHelp').hidden = true; $('fingerTips').hidden = true;
+    setPhaseUI('starting');
+    setQuality({ score: 0, level: 'poor' });
+    sizeWave();
+
+    M.source = TEST ? new SyntheticSource(t.settleS + t.recordS + 15) : new CameraSource();
+    var mine = M, src = M.source;
+    src.onClockChange = function () { if (M === mine) resetLive(); };
+    try {
+      await src.start(onFrame);
+    } catch (e) {
+      try { src.stop(); } catch (x) {}
+      if (M !== mine) return; // cancelled while the permission prompt was open
+      M = null;
+      return showCameraError(e);
+    }
+    if (M !== mine) { try { src.stop(); } catch (x) {} return; }
+    $('torchNote').hidden = !!M.source.torch;
+    try { if (navigator.wakeLock) M.wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
+    M.waitingSince = performance.now();
+    setPhase('waiting');
+    requestAnimationFrame(render);
+  }
+
+  function stopMeasurement() {
+    if (!M) return;
+    M.done = true;
+    try { M.source.stop(); } catch (e) {}
+    try { if (M.wakeLock) M.wakeLock.release(); } catch (e) {}
+  }
+
+  function resetLive() {
+    M.resampler.reset(); M.filtR.reset(); M.filtG.reset(); M.beat.reset();
+    M.winR = []; M.winG = []; M.warm = 0;
+  }
+
+  function newSegment() { M.seg = { times: [], red: [], green: [] }; M.segments.push(M.seg); }
+  function closeSegment(cutAfterT) {
+    var s = M.seg; M.seg = null;
+    if (!s) return;
+    while (s.times.length && s.times[s.times.length - 1] > cutAfterT) { s.times.pop(); s.red.pop(); s.green.pop(); }
+  }
+
+  function onFrame(t, rgb) {
+    if (!M || M.done) return;
+    M.rgb = rgb;
+    var f = DSP.detectFinger(rgb);
+    var dt = M.lastT == null ? 0 : Math.min(0.25, Math.max(0, (t - M.lastT) / 1000));
+    M.lastT = t;
+    var wasPresent = M.fingerOk > 0;
+    if (f.present) { M.fingerOk += dt || 0.001; M.lostAt = null; }
+    else { M.fingerOk = 0; M.reason = f.reason; if (M.lostAt == null) M.lostAt = t; }
+    var lostFor = M.lostAt == null ? 0 : t - M.lostAt;
+
+    switch (M.phase) {
+      case 'waiting':
+        if (M.fingerOk >= 0.5) setPhase('settle');
+        break;
+      case 'settle':
+        if (!f.present && lostFor > 1000) setPhase('waiting');
+        else if (f.present) { M.settleEl += dt; if (M.settleEl >= M.settleS) setPhase('record', t); }
+        break;
+      case 'record':
+        if (f.present) {
+          M.seg.times.push(t); M.seg.red.push(rgb.r); M.seg.green.push(rgb.g);
+          M.recordEl += dt; M.recEndT = t;
+          if (M.recordEl >= M.recordS) { finish(); return; }
+        } else if (lostFor > 700) {
+          closeSegment(M.lostAt - 300);
+          setPhase('paused');
+        }
+        break;
+      case 'paused':
+        if (M.fingerOk >= 0.5) setPhase('resettle');
+        break;
+      case 'resettle':
+        if (!f.present && lostFor > 1000) setPhase('paused');
+        else if (f.present) { M.resettleEl += dt; if (M.resettleEl >= 3) { newSegment(); setPhase('record', t, true); } }
+        break;
+    }
+
+    if (f.present) M.resampler.push(t, [rgb.r, rgb.g]);
+    else if (wasPresent) { resetLive(); setQuality({ score: 0, level: 'poor' }); }
+    if (!f.present) pushWave(0);
+  }
+
+  function onUniform(tU, v) {
+    var yR = M.filtR.process(v[0]), yG = M.filtG.process(v[1]);
+    M.winR.push(v[0]); M.winG.push(v[1]);
+    if (M.winR.length > 8 * FS) { M.winR.shift(); M.winG.shift(); }
+    var y = -(M.channel === 'green' ? yG : yR);
+    M.warm++;
+    pushWave(M.warm > FS * 1.5 ? y : 0);
+    if (M.beat.process(y) && M.warm > FS * 2) onBeat();
+    if (++M.sinceSqi >= FS) { M.sinceSqi = 0; updateLiveQuality(); }
+  }
+
+  function updateLiveQuality() {
+    if (M.winR.length < 4 * FS) { setQuality({ score: Math.min(30, M.winR.length), level: 'poor' }); return; }
+    var a = DSP.analyseWindow(M.winR, FS), b = DSP.analyseWindow(M.winG, FS);
+    var useG = b.quality.score > a.quality.score + 10;
+    var ch = useG ? 'green' : 'red';
+    if (ch !== M.channel) { M.channel = ch; M.beat.reset(); }
+    setQuality(useG ? b.quality : a.quality);
+  }
+
+  function onBeat() {
+    if (!(M.phase === 'settle' || M.phase === 'record' || M.phase === 'resettle')) return;
+    var h = $('heart');
+    h.classList.remove('beat'); void h.getBoundingClientRect(); h.classList.add('beat');
+    if (!TEST && navigator.vibrate && M.quality.level !== 'poor') { try { navigator.vibrate(12); } catch (e) {} }
+  }
+
+  function setPhase(p, t, resume) {
+    var prev = M.phase;
+    M.phase = p;
+    if (p === 'settle') M.settleEl = 0;
+    if (p === 'resettle') M.resettleEl = 0;
+    if (p === 'record' && !resume) { M.recStartT = t; M.recStartWall = Date.now(); newSegment(); }
+    if (p === 'waiting') M.waitingSince = performance.now();
+    setPhaseUI(p);
+    var msgs = {
+      waiting: 'Place your fingertip over the camera and flash.',
+      settle: 'Finger found. Keep still for ' + M.settleS + ' seconds while the signal settles.',
+      record: resume ? 'Recording again.' : 'Recording started. ' + M.recordS + ' seconds.',
+      paused: 'Finger lifted. Recording paused.',
+      resettle: 'Finger found. Resuming in a moment.'
+    };
+    if (msgs[p] && p !== prev) announce(msgs[p]);
+  }
+
+  function setPhaseUI(p) {
+    var labels = { starting: 'Getting ready', waiting: 'Waiting for your finger', settle: 'Settling', record: 'Recording', paused: 'Paused', resettle: 'Settling' };
+    $('measureTitle').textContent = labels[p] || '';
+    $('ringProg').classList.toggle('settle', p !== 'record');
+    $('heart').classList.toggle('idle', p === 'starting' || p === 'waiting' || p === 'paused');
+    var help = p === 'waiting' || p === 'paused';
+    $('fingerHelp').hidden = !help;
+    if (!help) $('fingerTips').hidden = true;
+    updateHint();
+  }
+
+  function updateHint() {
+    if (!M) return;
+    var h = '', p = M.phase;
+    if (p === 'starting') h = 'Starting the camera…';
+    else if (p === 'waiting') h = M.reason === 'dark' && M.rgb && M.rgb.r > 5
+      ? "It's a bit dark. Cover the camera and flash fully, or move closer to a light."
+      : 'Place your fingertip lightly over the camera and flash.';
+    else if (p === 'settle' || p === 'resettle') h = 'Keep still and breathe normally. Getting a clear signal.';
+    else if (p === 'record') h = M.quality.level === 'poor' && M.recordEl > 5 ? 'Weak signal. Press a little more gently and keep your hand still.' : 'Recording. Keep still and breathe normally.';
+    else if (p === 'paused') h = 'Finger lifted. Place it back on the camera to carry on.';
+    var el = $('hint');
+    if (el.textContent !== h) el.textContent = h;
+  }
+
+  function setQuality(q) {
+    if (M) M.quality = q;
+    var word = q.level === 'good' ? 'Good' : q.level === 'fair' ? 'Fair' : 'Poor';
+    var fill = $('sqiFill');
+    fill.style.width = Math.max(4, q.score) + '%';
+    fill.style.backgroundColor = q.level === 'good' ? 'var(--good)' : q.level === 'fair' ? 'var(--fair)' : 'var(--poor)';
+    $('sqiWord').textContent = word;
+    var m = $('sqiMeter');
+    m.setAttribute('aria-valuenow', String(q.score)); m.setAttribute('aria-valuetext', word + ', ' + q.score + ' out of 100');
+  }
+
+  /* ------------------------------------------------------------ live drawing */
+  var waveCtx = null, waveScale = 1, waveColour = '#6234d4', waveMuted = '#999';
+  function sizeWave() {
+    var c = $('wave'), dpr = Math.min(3, window.devicePixelRatio || 1);
+    c.width = Math.round(c.clientWidth * dpr); c.height = Math.round(c.clientHeight * dpr);
+    waveCtx = c.getContext('2d');
+    waveColour = cssVar('--accent') || waveColour; waveMuted = cssVar('--border') || waveMuted;
+  }
+  window.addEventListener('resize', function () { if (isMeasuring()) sizeWave(); });
+  if (window.matchMedia) {
+    var mq = matchMedia('(prefers-color-scheme: dark)');
+    var onScheme = function () { if (isMeasuring()) sizeWave(); };
+    if (mq.addEventListener) mq.addEventListener('change', onScheme); else if (mq.addListener) mq.addListener(onScheme);
+  }
+  var WAVE_N = 5 * FS;
+  function pushWave(y) {
+    if (!M) return;
+    M.wave.push(y); if (M.wave.length > WAVE_N + 2) M.wave.shift();
+    M.lastPushWall = performance.now();
+  }
+  function drawWave() {
+    var c = $('wave'), ctx = waveCtx; if (!ctx) return;
+    var W = c.width, H = c.height, buf = M.wave, n = buf.length;
+    ctx.clearRect(0, 0, W, H);
+    var mx = 0; for (var i = 0; i < n; i++) mx = Math.max(mx, Math.abs(buf[i]));
+    var target = mx > 1e-6 ? mx * 1.15 : waveScale;
+    waveScale += (target - waveScale) * 0.08;
+    var step = W / WAVE_N;
+    var frac = Math.min(1, (performance.now() - M.lastPushWall) / (1000 / FS / SPEED));
+    var off = (WAVE_N - n) * step - frac * step;
+    var dpr = W / Math.max(1, c.clientWidth);
+    ctx.lineWidth = 2.5 * dpr; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    var live = M.phase === 'settle' || M.phase === 'record' || M.phase === 'resettle';
+    ctx.strokeStyle = live ? waveColour : waveMuted;
+    ctx.beginPath();
+    for (var k = 0; k < n; k++) {
+      var x = off + k * step, yv = H / 2 - (buf[k] / (waveScale || 1)) * (H * 0.44);
+      if (k === 0) ctx.moveTo(x, yv); else ctx.lineTo(x, yv);
+    }
+    ctx.stroke();
+  }
+
+  var CIRC = 2 * Math.PI * 96;
+  function render() {
+    if (!M || M.done) return;
+    var p = M.phase, frac = 0, remain = 0;
+    if (p === 'settle') { frac = M.settleEl / M.settleS; remain = M.settleS - M.settleEl; }
+    else if (p === 'resettle') { frac = M.resettleEl / 3; remain = 3 - M.resettleEl; }
+    else if (p === 'record' || p === 'paused') { frac = M.recordEl / M.recordS; remain = M.recordS - M.recordEl; }
+    else remain = M.settleS;
+    $('ringProg').style.strokeDashoffset = String(CIRC * (1 - Math.min(1, frac)));
+    var txt = String(Math.max(0, Math.ceil(remain - 1e-6)));
+    var tm = $('timer'); if (tm.textContent !== txt) tm.textContent = txt;
+    if (M.rgb) $('swatch').style.backgroundColor = 'rgb(' + (M.rgb.r | 0) + ',' + (M.rgb.g | 0) + ',' + (M.rgb.b | 0) + ')';
+    if (p === 'waiting' && performance.now() - M.waitingSince > 20000) $('fingerTips').hidden = false;
+    updateHint();
+    drawWave();
+    requestAnimationFrame(render);
+  }
+
+  /* ------------------------------------------------------------ finish + analyse */
+  function finish() {
+    var m = M;
+    stopMeasurement();
+    show('screen-analysing');
+    announce('Recording finished. Working out your result.');
+    setTimeout(function () {
+      var segs = m.segments.filter(function (s) { return s.times.length > FS * 4; }).map(function (s) {
+        return {
+          t0: (s.times[0] - m.recStartT) / 1000,
+          red: DSP.resampleUniform(s.times, s.red, FS).values,
+          green: DSP.resampleUniform(s.times, s.green, FS).values
+        };
+      });
+      var res = segs.length ? DSP.analyseRecording(segs, FS) : null;
+      if (!res || !res.intervals.length || !isFinite(res.metrics.hr)) return showError('poor');
+      res.startWall = m.recStartWall;
+      res.recordS = m.recordS;
+      if (TEST) res.test = testCheck(m, res);
+      lastResult = res;
+      if (mode === 'lab') showLab(res); else showResult(res);
+    }, reduceMotion ? 50 : 700);
+  }
+
+  function testCheck(m, res) {
+    var known = DSP.knownIntervals(m.source.synth, m.recStartT / 1000, m.recEndT / 1000);
+    var knownR = DSP.rmssdOf(known);
+    var diff = res.metrics.rmssd - knownR;
+    var out = {
+      knownRmssd: knownR, computedRmssd: res.metrics.rmssd, diffMs: diff, pass: Math.abs(diff) <= 2,
+      knownIntervals: known.length, detectedIntervals: res.intervals.length, artefactPct: res.artefacts.removedPct,
+      knownMeanRR: DSP.mean(known), computedMeanRR: res.metrics.meanRR, sqi: res.quality.score, seed: SEED, noise: NOISE
+    };
+    window.__pulseTest = out;
+    try { console.log('[Pulse Lab test]', JSON.stringify(out)); } catch (e) {}
+    return out;
+  }
+  function renderTestPanel(el, t) {
+    if (!t) { el.hidden = true; return; }
+    el.hidden = false;
+    el.className = 'card test-panel stack ' + (t.pass ? 'pass' : 'fail');
+    el.innerHTML = '<h3>Synthetic test (seed ' + t.seed + ', noise ' + t.noise + ')</h3>' +
+      '<p class="tnum">Known RMSSD <b>' + t.knownRmssd.toFixed(2) + ' ms</b>, computed <b>' + t.computedRmssd.toFixed(2) + ' ms</b>, difference <b>' + (t.diffMs >= 0 ? '+' : '') + t.diffMs.toFixed(2) + ' ms</b></p>' +
+      '<p class="small muted tnum">Known mean RR ' + t.knownMeanRR.toFixed(1) + ' ms, computed ' + t.computedMeanRR.toFixed(1) + ' ms. Intervals: ' + t.knownIntervals + ' known, ' + t.detectedIntervals + ' detected. Artefacts removed ' + t.artefactPct.toFixed(1) + '%.</p>' +
+      '<p><b>' + (t.pass ? 'PASS: within 2 ms' : 'FAIL: more than 2 ms out') + '</b></p>';
+  }
+
+  var lastResult = null;
+
+  function reasonText(res) {
+    if (res.reasons.indexOf('artefacts') >= 0) return 'Too many beats (' + res.artefacts.removedPct.toFixed(0) + '%) had to be removed. Rest your fingertip lightly, keep your hand still and try again.';
+    if (res.reasons.indexOf('beats') >= 0) return 'We found too few clear heartbeats. Make sure the camera and flash are fully covered and try again.';
+    return 'The pulse signal was weak. Rest your fingertip lightly, keep very still and try again.';
+  }
+
+  function showResult(res) {
+    var m = res.metrics, score = DSP.hrvScore(m.lnRmssd), hr = Math.round(m.hr);
+    $('resHr').textContent = isFinite(hr) ? hr : '–';
+    $('resScore').textContent = isFinite(m.lnRmssd) ? score : '–';
+    $('resDate').textContent = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    $('gaugeProg').setAttribute('stroke-dasharray', '0 100');
+    requestAnimationFrame(function () { setTimeout(function () { $('gaugeProg').setAttribute('stroke-dasharray', (isFinite(m.lnRmssd) ? score : 0) + ' 100'); }, 60); });
+    $('resultCard').classList.toggle('dim', !res.reliable);
+    $('resNotice').hidden = res.reliable;
+    $('resNoticeText').textContent = reasonText(res);
+    $('learnLink').href = LEARN_MORE_URL;
+    $('learnLink').hidden = mode === 'lab';
+    renderTestPanel($('testPanelA'), res.test);
+
+    var saved = '';
+    if (mode === 'trends') {
+      if (res.reliable) {
+        var ok = saveReading(res);
+        saved = ok ? 'Saved to My trends on this phone.' : "Couldn't save on this phone (storage may be turned off in private browsing).";
+      } else saved = "Not saved, because the signal wasn't clear enough.";
+    }
+    $('savedNote').hidden = !saved; $('savedNote').textContent = saved;
+    $('seeTrendsBtn').hidden = mode !== 'trends';
+
+    var summary = 'Your heart rate is ' + hr + ' beats per minute. Your HRV score is ' + score + ' out of 100.' +
+      (res.reliable ? '' : " This reading wasn't very clear, so you may want to try again.");
+    $('resSummary').textContent = summary;
+    show('screen-result');
+    announce(summary);
+  }
+
+  /* ------------------------------------------------------------ Lab view */
+  function showLab(res) {
+    var m = res.metrics;
+    var start = new Date(res.startWall);
+    $('labMeta').textContent = start.toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'medium' }) + ' · ' + res.channel + ' channel' + (TEST ? ' · synthetic' : '');
+    $('labNotice').hidden = res.reliable;
+    $('labNoticeText').textContent = reasonText(res);
+    renderTestPanel($('testPanelB'), res.test);
+    var rows = [
+      ['Heart rate', fmt(m.hr, 1) + ' bpm'], ['Mean RR', fmt(m.meanRR, 1) + ' ms'],
+      ['RMSSD', fmt(m.rmssd, 1) + ' ms'], ['ln RMSSD', fmt(m.lnRmssd, 2)],
+      ['SDNN', fmt(m.sdnn, 1) + ' ms'], ['SD1', fmt(m.sd1, 1) + ' ms'], ['SD2', fmt(m.sd2, 1) + ' ms'],
+      ['Beats detected', String(res.beats.length)],
+      ['Artefacts removed', fmt(res.artefacts.removedPct, 1) + '% (' + res.artefacts.removed + ' of ' + res.intervals.length + ')'],
+      ['Signal quality', res.quality.score + ' / 100 (' + res.quality.level + ')'],
+      ['Recording length', fmt(res.duration, 1) + ' s']
+    ];
+    $('metricsTable').tBodies[0].innerHTML = rows.map(function (r) { return '<tr><th scope="row">' + r[0] + '</th><td>' + r[1] + '</td></tr>'; }).join('');
+    drawTachogram($('tachoChart'), res);
+    drawPoincare($('poincareChart'), res);
+    var summary = 'Recording analysed. Heart rate ' + fmt(m.hr, 0) + ' beats per minute, RMSSD ' + fmt(m.rmssd, 1) + ' milliseconds, ' +
+      fmt(res.artefacts.removedPct, 0) + ' percent of beats removed.' + (res.reliable ? '' : ' Marked as unreliable.');
+    $('labSummary').textContent = summary;
+    show('screen-lab');
+    announce(summary);
+  }
+
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, parent, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function niceTicks(lo, hi, n) {
+    var span = hi - lo || 1, raw = span / (n || 4), mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    var step = [1, 2, 2.5, 5, 10].map(function (s) { return s * mag; }).filter(function (s) { return s >= raw; })[0] || mag * 10;
+    var out = []; for (var v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(6));
+    return out;
+  }
+
+  function drawTachogram(svg, res) {
+    svg.innerHTML = '';
+    var W = 340, H = 200, L = 42, R = 8, T = 10, B = 26;
+    var iv = res.intervals, kept = res.kept;
+    var kv = iv.filter(function (_, i) { return kept[i]; }).map(function (d) { return d.rr; });
+    if (!kv.length) kv = iv.map(function (d) { return d.rr; });
+    var lo = Math.min.apply(null, kv), hi = Math.max.apply(null, kv), pad = Math.max(20, (hi - lo) * 0.15);
+    lo -= pad; hi += pad;
+    var dur = Math.max(res.duration, iv.length ? iv[iv.length - 1].t : 1);
+    var x = function (t) { return L + (t / dur) * (W - L - R); };
+    var y = function (v) { return T + (1 - (Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo)) * (H - T - B); };
+    niceTicks(lo, hi, 4).forEach(function (v) {
+      el('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), class: 'grid' }, svg);
+      el('text', { x: L - 6, y: y(v) + 3, 'text-anchor': 'end' }, svg, v);
+    });
+    niceTicks(0, dur, 5).forEach(function (v) { el('text', { x: x(v), y: H - 8, 'text-anchor': 'middle' }, svg, v + ' s'); });
+    el('text', { x: 4, y: T + 4, transform: 'rotate(-90 4 ' + (T + 4) + ')', 'text-anchor': 'end' }, svg, 'RR (ms)');
+    var d = '', pen = false;
+    iv.forEach(function (p, i) {
+      if (!kept[i] || (i > 0 && iv[i - 1].seg !== p.seg)) pen = false;
+      if (!kept[i]) return;
+      d += (pen ? 'L' : 'M') + x(p.t).toFixed(1) + ' ' + y(p.rr).toFixed(1);
+      pen = true;
+    });
+    el('path', { d: d, class: 'line' }, svg);
+    iv.forEach(function (p, i) {
+      var cx = x(p.t), cy = y(p.rr);
+      if (kept[i]) el('circle', { cx: cx, cy: cy, r: 1.8, class: 'dot' }, svg);
+      else el('path', { d: 'M' + (cx - 4) + ' ' + (cy - 4) + 'l8 8M' + (cx + 4) + ' ' + (cy - 4) + 'l-8 8', class: 'bad' }, svg);
+    });
+    svg.setAttribute('aria-label', 'Tachogram: ' + iv.length + ' intervals, ' + res.artefacts.removed + ' removed, ranging from ' + Math.round(Math.min.apply(null, kv)) + ' to ' + Math.round(Math.max.apply(null, kv)) + ' milliseconds.');
+  }
+
+  function drawPoincare(svg, res) {
+    svg.innerHTML = '';
+    var S = 320, L = 44, R = 10, T = 10, B = 34, iv = res.intervals, kept = res.kept, m = res.metrics;
+    var pts = [];
+    for (var i = 1; i < iv.length; i++) if (kept[i] && kept[i - 1] && iv[i].seg === iv[i - 1].seg) pts.push([iv[i - 1].rr, iv[i].rr]);
+    var vals = pts.reduce(function (a, p) { return a.concat(p); }, []);
+    if (!vals.length) vals = [m.meanRR - 50, m.meanRR + 50];
+    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    var ext = Math.max((hi - lo) * 0.12, 2.6 * (m.sd2 || 20) - (hi - lo) / 2, 20);
+    lo -= ext; hi += ext;
+    var w = S - L - R, h = S - T - B, side = Math.min(w, h);
+    var px = function (v) { return L + (v - lo) / (hi - lo) * side; };
+    var py = function (v) { return T + (1 - (v - lo) / (hi - lo)) * side; };
+    niceTicks(lo, hi, 4).forEach(function (v) {
+      el('line', { x1: L, x2: L + side, y1: py(v), y2: py(v), class: 'grid' }, svg);
+      el('line', { y1: T, y2: T + side, x1: px(v), x2: px(v), class: 'grid' }, svg);
+      el('text', { x: L - 6, y: py(v) + 3, 'text-anchor': 'end' }, svg, v);
+      el('text', { x: px(v), y: T + side + 14, 'text-anchor': 'middle' }, svg, v);
+    });
+    el('text', { x: L + side / 2, y: T + side + 30, 'text-anchor': 'middle' }, svg, 'RR n (ms)');
+    el('text', { x: 10, y: T + side / 2, transform: 'rotate(-90 10 ' + (T + side / 2) + ')', 'text-anchor': 'middle' }, svg, 'RR n+1 (ms)');
+    el('line', { x1: px(lo), y1: py(lo), x2: px(hi), y2: py(hi), class: 'ident' }, svg);
+    if (isFinite(m.sd1) && isFinite(m.sd2)) {
+      var c = m.meanRR, d = '', u = Math.SQRT1_2;
+      for (var k = 0; k <= 64; k++) {
+        var th = k / 64 * 2 * Math.PI, a = m.sd2 * Math.cos(th), b = m.sd1 * Math.sin(th);
+        var X = c + a * u - b * u, Y = c + a * u + b * u;
+        d += (k ? 'L' : 'M') + px(X).toFixed(1) + ' ' + py(Y).toFixed(1);
+      }
+      el('path', { d: d + 'Z', class: 'ellipse' }, svg);
+      el('line', { x1: px(c), y1: py(c), x2: px(c + m.sd2 * u), y2: py(c + m.sd2 * u), class: 'axis-sd2' }, svg);
+      el('line', { x1: px(c), y1: py(c), x2: px(c - m.sd1 * u), y2: py(c + m.sd1 * u), class: 'axis-sd1' }, svg);
+    }
+    pts.forEach(function (p) { el('circle', { cx: px(p[0]), cy: py(p[1]), r: 2.4, class: 'dot', 'fill-opacity': .7 }, svg); });
+    svg.setAttribute('aria-label', 'Poincaré plot of ' + pts.length + ' pairs. SD1 ' + fmt(m.sd1, 1) + ' milliseconds, SD2 ' + fmt(m.sd2, 1) + ' milliseconds.');
+  }
+
+  function download(name, text) {
+    var blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
+  }
+  function stamp() {
+    var d = new Date(lastResult.startWall), p = function (n) { return String(n).padStart(2, '0'); };
+    return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+  }
+  $('csvBeats').addEventListener('click', function () { if (lastResult) download('pulselab-beats-' + stamp() + '.csv', DSP.beatsCSV(lastResult, lastResult.startWall)); });
+  $('csvSummary').addEventListener('click', function () { if (lastResult) download('pulselab-summary-' + stamp() + '.csv', DSP.summaryCSV(lastResult, { startIso: new Date(lastResult.startWall).toISOString() })); });
+  $('csvPpg').addEventListener('click', function () { if (lastResult) download('pulselab-ppg-' + stamp() + '.csv', DSP.ppgCSV(lastResult, FS)); });
+
+  /* ------------------------------------------------------------ Trends */
+  function getReadings() { var r = store.get(K.readings, []); return Array.isArray(r) ? r : []; }
+  function saveReading(res) {
+    var m = res.metrics, list = getReadings();
+    list.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ts: Date.now(), hr: +m.hr.toFixed(1), rmssd: +m.rmssd.toFixed(1), lnRmssd: +m.lnRmssd.toFixed(3), sqi: res.quality.score });
+    if (list.length > 1000) list = list.slice(-1000);
+    return store.set(K.readings, list);
+  }
+  function showTrends() {
+    var list = getReadings(), sum = DSP.trendSummary(list, Date.now());
+    var box = $('trToday'), b = sum.baseline, t = sum.today;
+    var words = {
+      above: 'Higher than your usual range', within: 'Within your usual range', below: 'Lower than your usual range',
+      building: 'Building your usual range', none: 'No reading yet today'
+    };
+    var detail = '';
+    if (sum.status === 'building') detail = 'Take readings on at least ' + b.minDays + ' different days to see your usual range. ' + plural(b.nDays, 'day') + ' in the last week so far.';
+    else if (sum.status === 'none') detail = b.ready ? 'Take a reading to compare with your usual range.' : 'Take a reading each morning, ideally at the same time, to build your usual range.';
+    else detail = 'Your usual range is based on the 7 days before today (average ± half a standard deviation).';
+    var html = '<div class="row"><span class="light ' + sum.status + '" aria-hidden="true"></span><div><h2>' + words[sum.status] + '</h2><p class="small muted">' + detail + '</p></div></div>';
+    if (t) {
+      html += '<table class="metrics"><tbody>' +
+        '<tr><th scope="row">Today ln RMSSD</th><td>' + t.ln.toFixed(2) + (b.ready ? ' <span class="muted small">(usual ' + b.lower.toFixed(2) + ' to ' + b.upper.toFixed(2) + ')</span>' : '') + '</td></tr>' +
+        '<tr><th scope="row">Today resting HR</th><td>' + Math.round(t.hr) + ' bpm' + (b.ready ? ' <span class="muted small">(usual ' + Math.round(b.hrMean) + ' bpm)</span>' : '') + '</td></tr>' +
+        '</tbody></table>';
+    }
+    html += '<p class="small muted">Day-to-day changes are normal. Sleep, stress, illness, caffeine, alcohol and training all affect HRV.</p>';
+    box.innerHTML = html;
+    $('trChartCard').hidden = sum.days.length < 1;
+    if (sum.days.length) drawTrendChart($('trChart'), sum.days);
+    var ul = $('trList');
+    ul.innerHTML = '';
+    if (!list.length) { ul.innerHTML = '<li class="muted">No readings yet. Your readings will appear here.</li>'; }
+    list.slice().reverse().forEach(function (r) {
+      var when = new Date(r.ts).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      var li = document.createElement('li');
+      li.innerHTML = '<div class="r-main"><div class="r-date"></div><div class="r-vals tnum"></div></div>' +
+        '<button class="icon-btn" type="button"><svg width="22" height="22" aria-hidden="true"><use href="#i-trash"/></svg></button>';
+      li.querySelector('.r-date').textContent = when;
+      li.querySelector('.r-vals').textContent = 'HR ' + Math.round(r.hr) + ' bpm · ln RMSSD ' + r.lnRmssd.toFixed(2) + ' · RMSSD ' + Math.round(r.rmssd) + ' ms';
+      var btn = li.querySelector('button');
+      btn.setAttribute('aria-label', 'Delete reading from ' + when);
+      btn.addEventListener('click', function () {
+        store.set(K.readings, getReadings().filter(function (x) { return x.id !== r.id; }));
+        announce('Reading deleted.'); showTrends(); $('trTitle').focus();
+      });
+      ul.appendChild(li);
+    });
+    $('trDeleteAll').hidden = !list.length;
+    if ($('screen-trends').hidden) show('screen-trends');
+  }
+  function drawTrendChart(svg, days) {
+    svg.innerHTML = '';
+    var W = 340, L = 36, R = 36, T = 10, H1 = 130, gap = 34, H2 = 70;
+    var lastIdx = days[days.length - 1].idx, todayIdx = DSP.dayIndex(DSP.dayKey(Date.now()));
+    var x1 = Math.max(todayIdx, lastIdx), x0 = Math.min(x1 - 6, Math.max(days[0].idx, x1 - 27));
+    var shown = days.filter(function (d) { return d.idx >= x0; });
+    var x = function (i) { return L + (i - x0) / Math.max(1, x1 - x0) * (W - L - R); };
+    // band: rolling baseline for each shown day
+    var bands = shown.map(function (d) { return { idx: d.idx, b: DSP.baselineFor(days, d.idx) }; }).filter(function (o) { return o.b.ready; });
+    var lnVals = shown.map(function (d) { return d.ln; });
+    bands.forEach(function (o) { lnVals.push(o.b.lower, o.b.upper); });
+    var lo = Math.min.apply(null, lnVals) - 0.15, hi = Math.max.apply(null, lnVals) + 0.15;
+    var y = function (v) { return T + (1 - (v - lo) / (hi - lo)) * H1; };
+    niceTicks(lo, hi, 5).forEach(function (v) { el('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), class: 'grid' }, svg); el('text', { x: L - 5, y: y(v) + 3, 'text-anchor': 'end' }, svg, v.toFixed(1)); });
+    el('text', { x: L, y: T + H1 + 14 }, svg, 'ln RMSSD');
+    if (bands.length) {
+      var top = bands.map(function (o, i) { return (i ? 'L' : 'M') + x(o.idx) + ' ' + y(o.b.upper); }).join('');
+      var bot = bands.slice().reverse().map(function (o) { return 'L' + x(o.idx) + ' ' + y(o.b.lower); }).join('');
+      if (bands.length === 1) { var o = bands[0]; el('rect', { x: x(o.idx) - 6, width: 12, y: y(o.b.upper), height: y(o.b.lower) - y(o.b.upper), class: 'band', rx: 3 }, svg); }
+      else el('path', { d: top + bot + 'Z', class: 'band' }, svg);
+    }
+    el('path', { d: shown.map(function (d, i) { return (i ? 'L' : 'M') + x(d.idx) + ' ' + y(d.ln); }).join(''), class: 'line' }, svg);
+    shown.forEach(function (d) { el('circle', { cx: x(d.idx), cy: y(d.ln), r: 3.5, class: 'dot' }, svg); });
+    // HR panel
+    var T2 = T + H1 + gap, hrs = shown.map(function (d) { return d.hr; });
+    var hlo = Math.min.apply(null, hrs) - 4, hhi = Math.max.apply(null, hrs) + 4;
+    var y2 = function (v) { return T2 + (1 - (v - hlo) / (hhi - hlo)) * H2; };
+    niceTicks(hlo, hhi, 2).forEach(function (v) { el('line', { x1: L, x2: W - R, y1: y2(v), y2: y2(v), class: 'grid' }, svg); el('text', { x: W - R + 5, y: y2(v) + 3 }, svg, Math.round(v)); });
+    el('path', { d: shown.map(function (d, i) { return (i ? 'L' : 'M') + x(d.idx) + ' ' + y2(d.hr); }).join(''), class: 'line2' }, svg);
+    shown.forEach(function (d) { el('circle', { cx: x(d.idx), cy: y2(d.hr), r: 3, class: 'dot2' }, svg); });
+    el('text', { x: L, y: T2 + H2 + 14 }, svg, 'Resting HR (bpm)');
+    var lbl = function (i) { var dt = new Date(i * 864e5); return dt.getUTCDate() + ' ' + dt.toLocaleString('en-GB', { month: 'short', timeZone: 'UTC' }); };
+    el('text', { x: W - R, y: T2 + H2 + 14, 'text-anchor': 'end' }, svg, lbl(x1));
+    el('text', { x: L, y: T + H1 + 28 }, svg, '');
+    el('text', { x: (L + W - R) / 2, y: T + H1 + 14, 'text-anchor': 'middle' }, svg, lbl(x0) + ' to ' + lbl(x1));
+    svg.setAttribute('aria-label', 'History chart of ' + shown.length + ' days of ln RMSSD and resting heart rate.');
+  }
+  $('trDeleteAll').addEventListener('click', function () {
+    if (confirm('Delete all saved readings from this phone? This cannot be undone.')) {
+      store.set(K.readings, []); announce('All readings deleted.'); showTrends();
+    }
+  });
+
+  /* ------------------------------------------------------------ errors */
+  var ERR = {
+    unsupported: { t: "This browser can't use the camera", b: 'Pulse Lab needs camera access over a secure connection.', s: ['Open this page in Safari on iPhone, or Chrome on Android.', 'Check the web address starts with https://', 'If you opened the link inside another app, choose "Open in browser".'] },
+    denied: { t: 'Camera access is turned off', b: 'Pulse Lab only uses the camera to see the colour of your fingertip. No pictures or video are kept.', s: ['iPhone: tap "aA" in the address bar, then Website Settings, and set Camera to Allow.', 'Android: tap the icon to the left of the web address, then Permissions, and allow Camera.', 'Then tap Try again.'] },
+    notfound: { t: "We couldn't find a rear camera", b: 'Pulse Lab needs a phone with a camera on the back.', s: ['Try on a different phone.', 'If you are on a laptop, open this page on your phone instead.'] },
+    busy: { t: 'The camera is being used by another app', b: "Another app or browser tab is using the camera, so we can't start it.", s: ['Close other apps that use the camera, such as video calls.', 'Close other browser tabs, then tap Try again.'] },
+    poor: { t: "We couldn't get a clear reading", b: "The pulse signal wasn't strong or steady enough to measure.", s: ['Rest your fingertip lightly. Pressing hard squeezes the blood out.', 'Cover both the camera and the flash.', 'Keep your hand and phone still, resting on a table or your knee.', 'Cold hands? Rub them together to warm them up first.'] },
+    interrupted: { t: 'Measurement stopped', b: 'The app went into the background, so the measurement was stopped.', s: ['Keep Pulse Lab on screen for the whole minute.', 'Tap Try again to start a new measurement.'] },
+    generic: { t: 'Something went wrong', b: "The camera couldn't be started.", s: ['Close and reopen the browser, then try again.'] }
+  };
+  function showError(kind) {
+    var e = ERR[kind] || ERR.generic;
+    $('errTitle').textContent = e.t; $('errBody').textContent = e.b;
+    $('errSteps').innerHTML = '';
+    e.s.forEach(function (s) { var li = document.createElement('li'); li.textContent = s; $('errSteps').appendChild(li); });
+    show('screen-error');
+    announce(e.t + '. ' + e.b);
+  }
+  function showCameraError(e) {
+    var n = e && e.name;
+    if (n === 'Unsupported' || n === 'TypeError') showError('unsupported');
+    else if (n === 'NotAllowedError' || n === 'SecurityError' || n === 'PermissionDeniedError') showError('denied');
+    else if (n === 'NotFoundError' || n === 'OverconstrainedError' || n === 'DevicesNotFoundError') showError('notfound');
+    else if (n === 'NotReadableError' || n === 'TrackStartError' || n === 'AbortError') showError('busy');
+    else showError('generic');
+  }
+
+  /* ------------------------------------------------------------ wiring */
+  function goStart() { applyMode(); show('screen-start'); }
+  $('startBtn').addEventListener('click', startMeasurement);
+  $('againBtn').addEventListener('click', startMeasurement);
+  $('labAgainBtn').addEventListener('click', startMeasurement);
+  $('trMeasure').addEventListener('click', startMeasurement);
+  $('errRetry').addEventListener('click', startMeasurement);
+  $('errBack').addEventListener('click', goStart);
+  $('trendsBtn').addEventListener('click', showTrends);
+  $('seeTrendsBtn').addEventListener('click', showTrends);
+  $('trBack').addEventListener('click', goStart);
+  $('cancelBtn').addEventListener('click', function () { stopMeasurement(); M = null; announce('Measurement cancelled.'); goStart(); });
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && isMeasuring() && !TEST) { stopMeasurement(); M = null; showError('interrupted'); }
+  });
+
+  applyMode();
+  show('screen-start');
+
+  if ('serviceWorker' in navigator && window.isSecureContext && !TEST) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  }
+
+  // Expose a small hook for automated checks in test mode.
+  if (TEST) window.__pulseStart = startMeasurement;
+})();
+</script>
+</body>
+</html>
