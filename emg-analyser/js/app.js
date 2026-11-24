@@ -1,16 +1,17 @@
 // Start-up: wires the page together.
-import { A, $, esc, status, persist, restoreSession, loadPrefs, savePrefs, VERSION, trialLabel, muscle, defaultSet, W, SET } from './state.js?v=1.4.0';
-import { findSet, moveSignal } from './events.js?v=1.4.0';
-import { renderFigure, figureViewChanged } from './figure.js?v=1.4.0';
-import { analyse, references, forget } from './emg.js?v=1.4.0';
-import { initTrace, redraw, wholeRange } from './trace.js?v=1.4.0';
-import { renderPoints } from './points.js?v=1.4.0';
-import { renderResults } from './results.js?v=1.4.0';
-import { renderSetup } from './setup.js?v=1.4.0';
-import { initSession, renderSession, addText } from './session.js?v=1.4.0';
-import { renderCompare } from './compare.js?v=1.4.0';
-import { initExport } from './export.js?v=1.4.0';
-import { renderSteps, stepsView, renderFatigue, renderRor, renderOnOff } from './deeper.js?v=1.4.0';
+import { openIntro, maybeIntro } from './guide.js?v=1.5.0';
+import { A, $, esc, status, persist, restoreSession, loadPrefs, savePrefs, VERSION, trialLabel, muscle, defaultSet, W, SET } from './state.js?v=1.5.0';
+import { findSet, moveSignal } from './events.js?v=1.5.0';
+import { renderFigure, figureViewChanged } from './figure.js?v=1.5.0';
+import { analyse, references, forget } from './emg.js?v=1.5.0';
+import { initTrace, redraw, wholeRange } from './trace.js?v=1.5.0';
+import { renderPoints } from './points.js?v=1.5.0';
+import { renderResults } from './results.js?v=1.5.0';
+import { renderSetup } from './setup.js?v=1.5.0';
+import { initSession, renderSession, addText } from './session.js?v=1.5.0';
+import { renderCompare } from './compare.js?v=1.5.0';
+import { initExport } from './export.js?v=1.5.0';
+import { renderSteps, stepsView, renderFatigue, renderRor, renderOnOff } from './deeper.js?v=1.5.0';
 
 const curTab = () => { const b = $('stepbar').querySelector('.tab[data-t][aria-selected=true]'); return b ? b.getAttribute('data-t') : 'setup'; };
 const STEPS = ['setup', 'events', 'results', 'figure', 'files'];
@@ -213,6 +214,7 @@ async function start() {
   $('graphTgl').addEventListener('click', () => { const card = $('traceCard'); A.graphTab = curTab(); A.graphOpen = card.classList.contains('folded'); graphFold(); });
   $('deepBtn').addEventListener('click', function () { const on = $('stepbar').classList.toggle('showdeep'); this.setAttribute('aria-expanded', String(on)); });
   $('demoSel').addEventListener('change', function () { const k = this.value; this.value = ''; if (k) demo(k === 'marked'); });
+  if ($('introBtn')) $('introBtn').addEventListener('click', () => openIntro(0));
   const saved = await restoreSession();
   if (saved) {
     A.session = { trials: saved.trials, cur: saved.cur, muscles: saved.muscles || {}, set: Object.assign(defaultSet(), saved.set || {}) };
@@ -225,4 +227,4 @@ async function start() {
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
   window.__EMG = A;
 }
-start();
+start().then(() => setTimeout(maybeIntro, 300));

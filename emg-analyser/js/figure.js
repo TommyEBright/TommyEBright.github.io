@@ -2,11 +2,11 @@
 // and the size, then save it as a picture (PNG) or as a drawing you can still edit (SVG).
 // The figure is drawn through a small set of shapes (rectangle, line, text) with two back ends, one for the
 // canvas on screen and one that writes SVG, so the picture and the SVG always match.
-import { A, $, esc, status, muscle, SET, W, PHASE_COLS, POINT_COL, download, baseName, trialLabel } from './state.js?v=1.4.0';
-import { analyse, waveforms } from './emg.js?v=1.4.0';
-import { compute, mean, sd } from './results.js?v=1.4.0';
-import { moveSignal } from './events.js?v=1.4.0';
-import { niceStep, numTxt } from './plot.js?v=1.4.0';
+import { A, $, esc, status, muscle, SET, W, PHASE_COLS, POINT_COL, download, baseName, trialLabel } from './state.js?v=1.5.0';
+import { analyse, waveforms } from './emg.js?v=1.5.0';
+import { compute, mean, sd } from './results.js?v=1.5.0';
+import { moveSignal } from './events.js?v=1.5.0';
+import { niceStep, numTxt } from './plot.js?v=1.5.0';
 
 const OKABE = ['#0072B2', '#D55E00', '#009E73', '#CC79A7', '#E69F00', '#56B4E9', '#000000', '#999999']; // Okabe and Ito (2008)
 const SIZES = { slide: ['Slide (16:9)', 960, 540], report: ['Report (4:3)', 800, 600], wide: ['Wide and short', 1000, 400], poster: ['Poster (3:2)', 1080, 720], tall: ['Tall', 720, 900] };

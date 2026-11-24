@@ -16,6 +16,20 @@ One row of steps stays at the top of the page, with **Back** and **Next** button
 
 The graph is shown while setting up and finding reps, and folds away for results, figures and exports (**Show the graph** brings it back).
 
+## Help for first-time EMG users (v1.5.0)
+- **How EMG works (1 min):** a four-card walkthrough that opens the first time (and from the header). It covers what the sensor records, what 100% means, one rep or stride at a time, and the words students will see.
+- **What 100% means:** one line at the top of Results (e.g. "100% = the average activity across the strides in Preferred"). It also checks that the reference trial itself reads 100%.
+- **Reference trial default:** 100% is now the **mean** of the reference trial's strides, so the reference reads 100% and 120% means 20% more. The peak is still an option in Step 1.
+- **Checks that say what to do**, in Step 2 and Results:
+  - a missing foot strike, with a button that adds it
+  - too few reps or strides
+  - a cadence that missed its label (e.g. "labelled 90%, reached 92%")
+- **What do these results say?** A plain-English summary, closed until opened ("try to answer yourself first"), with a fixed caution about one participant.
+- **Inline warnings** where a mistake would happen:
+  - iEMG across cadences or rep lengths
+  - ratios without %MVIC
+  - comparing one muscle with another in Compare
+
 ## Processing (matches the lab MATLAB script)
 - Band-pass 20–450 Hz, 4th-order Butterworth, zero lag (`butter(4,[20 450]/nyq,'bandpass')` + `filtfilt`)
 - Full-wave rectify

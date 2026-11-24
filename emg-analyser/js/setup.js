@@ -1,8 +1,8 @@
 // Tab 1: what the file is (an MVIC or a task trial), the muscles, normalisation and the processing settings.
-import { A, $, esc, persist, status, muscle, muscleKeys, SET, defaultSet, MUSCLE_COLS, W } from './state.js?v=1.4.0';
-import { references, refPeaks, forget, trialFs } from './emg.js?v=1.4.0';
-import { findAll } from './session.js?v=1.4.0';
-import { activityChanged, presetPhaseNames } from './events.js?v=1.4.0';
+import { A, $, esc, persist, status, muscle, muscleKeys, SET, defaultSet, MUSCLE_COLS, W } from './state.js?v=1.5.0';
+import { references, refPeaks, forget, trialFs } from './emg.js?v=1.5.0';
+import { findAll } from './session.js?v=1.5.0';
+import { activityChanged, presetPhaseNames } from './events.js?v=1.5.0';
 
 export function renderSetup() {
   const el = $('setupBox'); const t = A.S;
@@ -19,7 +19,8 @@ export function renderSetup() {
     h += '<p class="muted" style="margin:.25rem 0 0">Label it in Your files above (participant, exercise or condition, and trial number) so Compare can group it.' + (t.role === 'ref' ? ' A reference trial is analysed like any other trial, and sits at 100% in Compare.' : '') + '</p>';
   }
   h += '<h3>Normalise to</h3><select id="norm">' + [['mvic', 'MVIC (% of a maximal voluntary isometric contraction)'], ['ref', 'A reference trial (% of its average ' + W().one + '; Burden, 2010)'], ['peak', 'The highest value in this session&rsquo;s task trials (%)'], ['none', 'Nothing: leave it in µV']].map(([v, l]) => '<option value="' + v + '"' + (set.norm === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>';
-  h += '<p class="muted" style="margin:.25rem 0 0">' + (set.norm === 'mvic' ? 'The usual choice for gym exercises. Raw EMG (µV) depends on the skin, the fat under it and exactly where the sensor is, so it cannot be compared between muscles, people or days. Dividing by each muscle&rsquo;s MVIC fixes that (Kamen and Gabriel, 2010).' : set.norm === 'ref' ? 'For running, walking and cycling, where MVICs are hard to get. Set one trial&rsquo;s Type to <strong>Reference</strong> (e.g. 9 km/h, or preferred speed). 100% = the peak of each muscle&rsquo;s average ' + W().one + ' in that trial, so another trial above 100% means the muscle worked harder than in the reference. Dynamic references like this are more reliable than MVICs for gait (Burden, 2010), but they cannot be compared between people on how hard they worked.' : set.norm === 'peak' ? 'Use when there are no MVICs (e.g. people who cannot give a true maximum). Muscles and trials in this session can be compared with each other, but not with other studies, and not between people on how hard they worked.' : 'Only for looking at one muscle in one session (e.g. timing). Do not compare µV between muscles or people.') + '</p>';
+  h += '<p class="muted" style="margin:.25rem 0 0">' + (set.norm === 'mvic' ? 'The usual choice for gym exercises. Raw EMG (µV) depends on the skin, the fat under it and exactly where the sensor is, so it cannot be compared between muscles, people or days. Dividing by each muscle&rsquo;s MVIC fixes that (Kamen and Gabriel, 2010).' : set.norm === 'ref' ? 'For running, walking and cycling, where MVICs are hard to get. Set one trial&rsquo;s Type to <strong>Reference</strong> (e.g. 9 km/h, or preferred speed). 100% = the ' + (set.refStat === 'peak' ? 'peak of each muscle&rsquo;s average ' + W().one : '<strong>mean</strong> of each muscle&rsquo;s ' + W().many) + ' in that trial, so the reference reads 100% and another trial at 120% means the muscle worked 20% harder than in the reference. Dynamic references like this are more reliable than MVICs for gait (Burden, 2010), but they cannot be compared between people on how hard they worked.' : set.norm === 'peak' ? 'Use when there are no MVICs (e.g. people who cannot give a true maximum). Muscles and trials in this session can be compared with each other, but not with other studies, and not between people on how hard they worked.' : 'Only for looking at one muscle in one session (e.g. timing). Do not compare µV between muscles or people.') + '</p>';
+  if (set.norm === 'ref') h += '<label for="refStat">100% is the</label><select id="refStat"><option value="mean"' + (set.refStat !== 'peak' ? ' selected' : '') + '>mean of the reference ' + W().many + ' (recommended: the reference reads 100%)</option><option value="peak"' + (set.refStat === 'peak' ? ' selected' : '') + '>peak of the average reference ' + W().one + ' (means then read well below 100%)</option></select>';
   if (set.norm === 'mvic') {
     h += '<label for="refMethod">MVIC reference (100%)</label><select id="refMethod"><option value="peak"' + (set.refMethod === 'peak' ? ' selected' : '') + '>The highest point of the envelope (as the lab MATLAB script)</option><option value="win"' + (set.refMethod === 'win' ? ' selected' : '') + '>The highest mean over a window</option></select>';
     if (set.refMethod === 'win') h += '<div class="row"><div><label for="refWin">Window (ms)</label><input type="number" id="refWin" min="100" max="3000" step="50" value="' + set.refWin + '"></div></div>';
@@ -31,7 +32,7 @@ export function renderSetup() {
   h += '<h3>Muscles</h3><table><thead><tr><th>Name in the file</th><th>Short name</th>' + (hasRef ? '<th>' + (set.norm === 'ref' ? 'Reference' : 'MVIC') + ' (100%)</th>' : '') + '</tr></thead><tbody>';
   muscleKeys().forEach((k) => {
     const m = muscle(k), r = refs[k];
-    const txt = !r ? '<span class="bad">none yet</span>' : set.norm === 'ref' ? '<strong>' + (r.v * 1e6).toFixed(1) + ' µV</strong> ' + (r.n ? 'peak of the average of ' + r.n + ' ' + W().many : '<span class="warnTxt">highest point (mark its ' + W().many + ' to use the average)</span>') + ' in ' + esc(r.names.join(', ')) : '<strong>' + (r.v * 1e6).toFixed(1) + ' µV</strong> from ' + esc(r.name);
+    const txt = !r ? '<span class="bad">none yet</span>' : set.norm === 'ref' ? '<strong>' + (r.v * 1e6).toFixed(1) + ' µV</strong> ' + (r.n ? (r.stat === 'peak' ? 'peak of the average of ' : 'mean of ') + r.n + ' ' + W().many : '<span class="warnTxt">highest point (mark its ' + W().many + ' to use the average)</span>') + ' in ' + esc(r.names.join(', ')) : '<strong>' + (r.v * 1e6).toFixed(1) + ' µV</strong> from ' + esc(r.name);
     h += '<tr><td class="small"><span class="swatch" style="background:' + m.col + '"></span>' + esc(m.name || k) + '</td><td><input type="text" class="mini" data-mn="' + esc(k) + '" value="' + esc(m.short) + '" style="min-width:4rem;width:6rem"></td>'
       + (hasRef ? '<td class="small">' + txt + '</td>' : '') + '</tr>';
   });
@@ -72,6 +73,7 @@ export function renderSetup() {
   }));
   $('norm').addEventListener('change', function () { set.norm = this.value; after(); });
   if ($('refMethod')) $('refMethod').addEventListener('change', function () { set.refMethod = this.value; after(); });
+  if ($('refStat')) $('refStat').addEventListener('change', function () { set.refStat = this.value; after(); });
   if ($('refWin')) $('refWin').addEventListener('change', function () { const v = +this.value; if (v >= 50) { set.refWin = v; after(); } });
   el.querySelectorAll('[data-mn]').forEach((i) => i.addEventListener('change', function () { const m = A.session.muscles[this.getAttribute('data-mn')]; if (m) { m.short = this.value.trim() || m.short; after(); } }));
   ['bpLo', 'bpHi', 'bpOrder', 'envFc', 'envOrder'].forEach((id) => $(id).addEventListener('change', function () {

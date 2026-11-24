@@ -1,9 +1,9 @@
 // The session: adding files, saying which are MVICs, labelling trials and moving between them.
-import { A, $, esc, persist, status, uid, muscle, muscleKeys, forgetSession, defaultSet, SET, W, isCyclic } from './state.js?v=1.4.0';
-import { findSet, runFinder, activityChanged, presetPhaseNames } from './events.js?v=1.4.0';
-import { parseText } from './parse.js?v=1.4.0';
-import { registerMuscles, guessMvicFor } from './setup.js?v=1.4.0';
-import { forget, proc, repWindows } from './emg.js?v=1.4.0';
+import { A, $, esc, persist, status, uid, muscle, muscleKeys, forgetSession, defaultSet, SET, W, isCyclic } from './state.js?v=1.5.0';
+import { findSet, runFinder, activityChanged, presetPhaseNames } from './events.js?v=1.5.0';
+import { parseText } from './parse.js?v=1.5.0';
+import { registerMuscles, guessMvicFor } from './setup.js?v=1.5.0';
+import { forget, proc, repWindows } from './emg.js?v=1.5.0';
 
 function readText(file) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsText(file); }); }
 

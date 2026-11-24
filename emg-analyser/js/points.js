@@ -1,11 +1,12 @@
+import { checksHtml, wireChecks } from './guide.js?v=1.5.0';
 // Tab 2: reps and phases. First, in plain words, how the reps and phases in this file are defined. Then the
 // two ways to make them: found automatically from a movement signal (events.js), or marked by hand. Then each
 // muscle's onset and offset, a rest period, markers, and your own windows between any two points.
-import { A, $, esc, persist, status, uid, muscle, POINT_COL, SET, W, ptName, PHASE_COLS, isCyclic } from './state.js?v=1.4.0';
-import { setView, cursorChanged } from './trace.js?v=1.4.0';
-import { pointLabel } from './emg.js?v=1.4.0';
-import { findSet, signalOptions, resolve, runFinder, finderLevel, describeFind, MODES, PRESETS } from './events.js?v=1.4.0';
-import { findIn } from './session.js?v=1.4.0';
+import { A, $, esc, persist, status, uid, muscle, POINT_COL, SET, W, ptName, PHASE_COLS, isCyclic } from './state.js?v=1.5.0';
+import { setView, cursorChanged } from './trace.js?v=1.5.0';
+import { pointLabel } from './emg.js?v=1.5.0';
+import { findSet, signalOptions, resolve, runFinder, finderLevel, describeFind, MODES, PRESETS } from './events.js?v=1.5.0';
+import { findIn } from './session.js?v=1.5.0';
 
 const HELP = {
   rep0: 'the moment the rep (or cycle) begins, e.g. the start of the lowering',
@@ -69,7 +70,7 @@ function defBox(R, S) {
   h += '<p class="muted"><strong>' + n + ' ' + (n > 1 ? w.many : w.one) + '</strong>, ' + m.toFixed(2) + ' s long on average' + (n > 1 ? ' (SD ' + sdv.toFixed(2) + ' s; shortest ' + Math.min(...d).toFixed(2) + ', longest ' + Math.max(...d).toFixed(2) + ')' : '') + '.'
     + (n > 2 && sdv / m > 0.25 ? ' <span class="warnTxt">They differ a lot in length: check none is missing or doubled.</span>' : '') + '</p>';
   if (nPh > 1 && counts.some((c) => c !== nPh)) h += '<p class="warnTxt">Not every ' + w.one + ' has the same number of phases (' + R.reps.filter((r, j) => counts[j] !== nPh).map((r) => esc(r.name)).join(', ') + ' ha' + (counts.filter((c) => c !== nPh).length > 1 ? 've' : 's') + ' fewer). Add or delete phase changes so they match.</p>';
-  if (R.skipped) h += '<p class="warnTxt">' + R.skipped + ' gap' + (R.skipped > 1 ? 's' : '') + ' between ' + esc(w.start.toLowerCase()) + 's ' + (R.skipped > 1 ? 'were' : 'was') + ' much longer than usual (a missed one?), so ' + (R.skipped > 1 ? 'they are' : 'it is') + ' left out. Add the missing ' + esc(w.start.toLowerCase()) + ' to use ' + (R.skipped > 1 ? 'them' : 'it') + '.</p>';
+  h += checksHtml(R);
   // phase names
   if (nPh > 1) h += '<div class="row tight dnames"><span class="lab inl">Phase names</span>' + names.map((nm, j) => '<input type="text" class="mini" data-ph="' + j + '" value="' + esc(nm) + '" aria-label="Name of phase ' + (j + 1) + '" style="border-left:5px solid ' + PHASE_COLS[j % PHASE_COLS.length] + '">').join('')
     + '<select id="phQuick" class="mini" style="width:auto" aria-label="Common phase names"><option value="">Common names&hellip;</option>' + QUICK.filter((q) => q.length === nPh).map((q) => '<option>' + q.join(' | ') + '</option>').join('') + '</select></div>';
@@ -166,6 +167,7 @@ export function renderPoints() {
     }
   }
   el.innerHTML = h;
+  wireChecks(el, R);
   if ($('wB')) $('wB').selectedIndex = Math.min(1, P.length - 1);
 
   // A: the finder

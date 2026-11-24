@@ -2,8 +2,8 @@
 // Every EMG channel: raw -> band-pass (zero lag) -> full-wave rectify -> low-pass (zero lag) = linear envelope.
 // The envelope is then normalised to the muscle's MVIC (or the session's highest task peak, or left in µV).
 // Windows (reps, phases, your own) come from the points marked by hand, and every result is worked out in them.
-import { A, SET, muscle, muscleKeys, W, ptName } from './state.js?v=1.4.0';
-import { processEmg, butterSos, sosfiltfilt, movingMean, welch, specStats, powerBelow, humRatio, normalise } from './dsp.js?v=1.4.0';
+import { A, SET, muscle, muscleKeys, W, ptName } from './state.js?v=1.5.0';
+import { processEmg, butterSos, sosfiltfilt, movingMean, welch, specStats, powerBelow, humRatio, normalise } from './dsp.js?v=1.5.0';
 
 // ---------- processing (cached) ----------
 const cache = new Map();
@@ -106,16 +106,17 @@ export function refPeaks(ath) {
       const pr = proc(t); if (!pr.ok) return;
       const wins = repWindows(t, pr.fs, pr.n);
       pr.ch.forEach((c) => {
-        const p = pool[c.key] || (pool[c.key] = { curves: [], whole: 0, names: [] });
+        const p = pool[c.key] || (pool[c.key] = { curves: [], means: [], whole: 0, names: [] });
         if (!p.names.includes(t.name)) p.names.push(t.name);
-        wins.forEach((w) => p.curves.push(normalise(c.env, w.i0, Math.min(w.i1, c.n - 1), 101)));
+        wins.forEach((w) => { const i1 = Math.min(w.i1, c.n - 1); p.curves.push(normalise(c.env, w.i0, i1, 101)); let q = 0; for (let i = w.i0; i <= i1; i++) q += c.env[i]; p.means.push(q / (i1 - w.i0 + 1)); });
         for (let i = 0; i < c.n; i++) if (c.env[i] > p.whole) p.whole = c.env[i];
       });
     });
     const out = {};
     Object.keys(pool).forEach((k) => {
       const p = pool[k];
-      if (p.curves.length) { let pk = 0; for (let j = 0; j < 101; j++) { let m = 0; p.curves.forEach((c) => { m += c[j]; }); pk = Math.max(pk, m / p.curves.length); } out[k] = { v: pk, n: p.curves.length, names: p.names }; }
+      // mean (default): the average of each rep's own mean, worked out as in the results, so the reference trial reads 100%
+      if (p.curves.length) { let pk = 0; for (let j = 0; j < 101; j++) { let m = 0; p.curves.forEach((c) => { m += c[j]; }); pk = Math.max(pk, m / p.curves.length); } const mn = p.means.reduce((a, b) => a + b, 0) / p.means.length; const usePeak = SET().refStat === 'peak'; out[k] = { v: usePeak ? pk : mn, peak: pk, mean: mn, stat: usePeak ? 'peak' : 'mean', n: p.curves.length, names: p.names }; }
       else out[k] = { v: p.whole, n: 0, names: p.names };
     });
     return out;
@@ -126,7 +127,7 @@ export function refPeaks(ath) {
 }
 export function normInfo() {
   const n = SET().norm;
-  return n === 'mvic' ? { unit: '%MVIC', lab: 'EMG (% MVIC)', k: 100 } : n === 'ref' ? { unit: '% ref', lab: 'EMG (% of the reference trial)', k: 100 } : n === 'peak' ? { unit: '% peak', lab: 'EMG (% of the session peak)', k: 100 } : { unit: 'µV', lab: 'EMG envelope (µV)', k: 1e6 };
+  return n === 'mvic' ? { unit: '%MVIC', lab: 'EMG (% MVIC)', k: 100 } : n === 'ref' ? { unit: '% of ref', lab: 'EMG (% of the reference trial' + (SET().refStat === 'peak' ? '&rsquo;s peak' : '') + ')', k: 100 } : n === 'peak' ? { unit: '% peak', lab: 'EMG (% of the session peak)', k: 100 } : { unit: 'µV', lab: 'EMG envelope (µV)', k: 1e6 };
 }
 // Divisor for each muscle (volts -> the display unit is value / div * k)
 export function divisors(t) {
@@ -404,7 +405,7 @@ export function quality(t) {
     const floor = sorted.length ? sorted[Math.floor(sorted.length * 0.05)] * 1e6 : 0;
     if (t.role !== 'mvic' && floor > 15) items.push({ lv: 'warn', txt: 'The envelope never goes quiet (lowest 5% is above ' + floor.toFixed(0) + ' µV). There may be no rest in this recording, or the baseline is noisy. A resting baseline should be only a few µV.' });
     if (set.norm === 'ref' && !(div[c.key] > 0) && t.role !== 'mvic') items.push({ lv: 'bad', txt: 'No reference trial for this muscle. Set a trial&rsquo;s Type to <strong>Reference</strong> in Your files.' });
-    if (set.norm === 'ref' && div[c.key] > 0 && t.role === 'task') { let pk = 0; for (let i = 0; i < n; i++) if (c.env[i] > pk) pk = c.env[i]; const p = pk / div[c.key] * 100; if (p > 150) items.push({ lv: 'info', txt: 'Peaks at ' + p.toFixed(0) + '% of the reference. 100% is the peak of the muscle&rsquo;s <em>average</em> ' + W().one + ' in the reference trial, so single ' + W().many + ' above it are normal, and a harder trial should be higher. If it is several times higher, check that the reference trial is a sensible one.' }); }
+    if (set.norm === 'ref' && div[c.key] > 0 && t.role === 'task') { let pk = 0; for (let i = 0; i < n; i++) if (c.env[i] > pk) pk = c.env[i]; const p = pk / div[c.key] * 100; const isPk = set.refStat === 'peak'; if (p > (isPk ? 150 : 600)) items.push({ lv: 'info', txt: 'Peaks at ' + p.toFixed(0) + '% of the reference. ' + (isPk ? '100% is the peak of the muscle&rsquo;s <em>average</em> ' + W().one + ' in the reference trial, so single ' + W().many + ' above it are normal.' : '100% is the muscle&rsquo;s <em>average</em> activity across the reference ' + W().many + ', so peaks of 300&ndash;500% are normal (a burst is much higher than the average).') + ' If it is far higher, check that the reference trial is a sensible one.' }); }
     if (set.norm === 'mvic' && t.role !== 'mvic') {
       if (!(div[c.key] > 0)) items.push({ lv: 'bad', txt: 'No MVIC file for this muscle, so it cannot be shown as %MVIC. Add its MVIC file and tick this muscle in <strong>Step 1 (Set up)</strong>.' });
       else { let pk = 0; for (let i = 0; i < n; i++) if (c.env[i] > pk) pk = c.env[i]; const p = pk / div[c.key] * 100; if (p > 100) items.push({ lv: 'info', txt: 'Peaks at ' + p.toFixed(0) + '% MVIC. Above 100% is common in fast or eccentric work, but if it is well above, the MVIC may not have been a true maximum.' }); }

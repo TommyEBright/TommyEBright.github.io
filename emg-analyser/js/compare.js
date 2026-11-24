@@ -1,9 +1,9 @@
 // Compare trials: every task trial in the session, grouped by exercise (or participant), as a table,
 // a bar chart (like the lab MATLAB figure) and the average waveforms on top of each other.
-import { A, $, esc, muscle, muscleKeys, toCsv, download, trialLabel, SET, W } from './state.js?v=1.4.0';
-import { Chart, frame, axes, line } from './plot.js?v=1.4.0';
-import { analyse, curveBursts, burstTxt } from './emg.js?v=1.4.0';
-import { compute, resultRows, mean, sd, bothOn } from './results.js?v=1.4.0';
+import { A, $, esc, muscle, muscleKeys, toCsv, download, trialLabel, SET, W } from './state.js?v=1.5.0';
+import { Chart, frame, axes, line } from './plot.js?v=1.5.0';
+import { analyse, curveBursts, burstTxt } from './emg.js?v=1.5.0';
+import { compute, resultRows, mean, sd, bothOn } from './results.js?v=1.5.0';
 
 let barChart = null, wfChart = null;
 const f = (v, n) => (Number.isFinite(v) ? v.toFixed(n) : '&ndash;');
@@ -48,6 +48,9 @@ export function renderCompare() {
     if (rows.length > 1 || groups.length > 1) h += '<tr class="grp"><td colspan="3">' + esc(g) + ': all ' + W().many + '</td>' + keys.map((k) => { const v = [].concat(...rows.map((d) => (d.per[k] ? d.per[k][metric] : []))); return '<td class="num">' + f(mean(v), 1) + ' &plusmn; ' + f(sd(v), 1) + '</td>'; }).join('') + '</tr>';
   });
   h += '</tbody></table></div><p class="muted small">Mean &plusmn; SD of the ' + W().many + '. ' + METRICS[metric] + ' in ' + (metric === 'iemg' ? unit + '·s' : unit) + '.</p>';
+  if (metric === 'iemg') h += '<p class="inlinewarn">&#9888; <strong>Careful:</strong> iEMG grows with time as well as effort. Trials at different cadences, speeds or rep lengths will differ partly for that reason, so compare the <strong>mean</strong> instead.</p>';
+  if (keys.length > 1 && unit !== '%MVIC' && unit !== 'µV') h += '<p class="inlinewarn">&#9888; Read each muscle across the conditions (e.g. BF at 90%, 100% and 110%), <strong>not one muscle against another</strong>: each is scaled to its own reference (' + esc(unit) + ').</p>';
+  else if (keys.length > 1 && unit === 'µV') h += '<p class="inlinewarn">&#9888; These are µV: do not compare one muscle with another, or one person with another.</p>';
   h += '<h3>' + METRICS[metric] + ' for each ' + ((A.cmpGroup || 'condition') === 'athlete' ? 'participant' : 'exercise or condition') + '</h3><div id="cBar" class="chartbox"></div>';
   h += '<h3>Average waveforms</h3><div class="row tight"><label class="inline" for="cmpWfM" style="margin:0">Muscle</label><select id="cmpWfM" class="mini" style="width:auto">' + keys.map((k) => '<option value="' + esc(k) + '"' + (A.cmpWfM === k ? ' selected' : '') + '>' + esc(muscle(k).short) + '</option>').join('') + '</select><span class="muted small">Every ' + W().one + ' in each group, stretched to 0&ndash;100%, mean &plusmn; SD.</span></div><div id="cCmpWf" class="chartbox"></div><div class="legend" id="cmpLeg"></div>';
   if (keys.length >= 2) {
@@ -111,7 +114,7 @@ function drawBars(ctx, w, h, D, groups, keys, metric, unit) {
   let mx = 0; vals.forEach((r) => r.forEach((v) => { if (Number.isFinite(v.m)) mx = Math.max(mx, v.m + (Number.isFinite(v.s) ? v.s : 0)); }));
   const fr = frame(w, h, 0, groups.length, 0, (mx || 1) * 1.12, { L: 60, B: 46, T: 26 });
   axes(ctx, fr, { ylab: metric === 'iemg' ? unit + '·s' : unit, noX: true });
-  if ((unit === '%MVIC' || unit === '% ref') && metric !== 'iemg') { const y = fr.Y(100); if (y > fr.T) { ctx.save(); ctx.strokeStyle = '#94a3b8'; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(fr.L, y); ctx.lineTo(fr.L + fr.W, y); ctx.stroke(); ctx.restore(); } }
+  if ((unit === '%MVIC' || unit === '% of ref') && metric !== 'iemg') { const y = fr.Y(100); if (y > fr.T) { ctx.save(); ctx.strokeStyle = '#94a3b8'; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(fr.L, y); ctx.lineTo(fr.L + fr.W, y); ctx.stroke(); ctx.restore(); } }
   const gw = fr.W / groups.length, bw = Math.min(40, gw * 0.8 / keys.length);
   ctx.save(); ctx.font = '600 12px system-ui'; ctx.textAlign = 'center';
   groups.forEach((g, gi) => {
@@ -126,7 +129,7 @@ function drawBars(ctx, w, h, D, groups, keys, metric, unit) {
   });
   let lx = fr.L + 6; ctx.textAlign = 'left'; ctx.font = '600 11.5px system-ui';
   keys.forEach((k) => { ctx.fillStyle = muscle(k).col; ctx.fillRect(lx, 8, 12, 10); ctx.fillStyle = '#1f2a33'; ctx.fillText(muscle(k).short, lx + 16, 17); lx += ctx.measureText(muscle(k).short).width + 34; });
-  ctx.fillStyle = '#5b6770'; ctx.font = '11px system-ui'; ctx.textAlign = 'right'; ctx.fillText('mean ± SD of all ' + W().many + (metric !== 'iemg' ? (unit === '%MVIC' ? '; dashed = 100% MVIC' : unit === '% ref' ? '; dashed = the reference' : '') : ''), fr.L + fr.W, 17);
+  ctx.fillStyle = '#5b6770'; ctx.font = '11px system-ui'; ctx.textAlign = 'right'; ctx.fillText('mean ± SD of all ' + W().many + (metric !== 'iemg' ? (unit === '%MVIC' ? '; dashed = 100% MVIC' : unit === '% of ref' ? '; dashed = the reference' : '') : ''), fr.L + fr.W, 17);
   ctx.restore();
   return fr;
 }
@@ -142,7 +145,7 @@ function drawGroupWf(ctx, w, h, D, groups, unit) {
   let mx = 0; G.forEach((g) => { if (g) for (let j = 0; j < 101; j++) mx = Math.max(mx, g.m[j] + g.s[j]); });
   const fr = frame(w, h, 0, 100, 0, (mx || 1) * 1.08, { L: 60 });
   axes(ctx, fr, { ylab: muscle(k).short + ' (' + unit + ')', xlab: '% of the ' + W().one, xGrid: true });
-  if (unit === '% ref') { const y = fr.Y(100); if (y > fr.T) { ctx.save(); ctx.strokeStyle = '#94a3b8'; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(fr.L, y); ctx.lineTo(fr.L + fr.W, y); ctx.stroke(); ctx.restore(); } }
+  if (unit === '% of ref') { const y = fr.Y(100); if (y > fr.T) { ctx.save(); ctx.strokeStyle = '#94a3b8'; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(fr.L, y); ctx.lineTo(fr.L + fr.W, y); ctx.stroke(); ctx.restore(); } }
   G.forEach((g, j) => {
     if (!g) return; const col = GCOL[j % GCOL.length];
     ctx.save(); ctx.globalAlpha = 0.12; ctx.fillStyle = col; ctx.beginPath();

@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css?v=1.4.0">
+<link rel="stylesheet" href="css/style.css?v=1.5.0">
 </head>
 <body>
 <header class="top">
@@ -19,6 +19,7 @@
   </div>
   <div class="actions">
     <label class="btn light filebtn">Add files<input type="file" id="file" accept=".txt,.csv,.tsv,.dat,.asc,text/plain,text/csv" multiple aria-label="Add EMG files"></label>
+    <button type="button" class="btn light" id="introBtn">How EMG works (1 min)</button>
     <select id="demoSel" class="demosel" aria-label="Try a demo">
       <option value="">Try a demo&hellip;</option>
       <option value="plain">Hamstrings: find the reps yourself</option>
@@ -207,6 +208,6 @@
   <footer>EMG Analysis. Works offline once loaded. Nothing is uploaded. Built by Dr Tommy Bright.</footer>
 </main>
 <script>window.addEventListener('error',function(e){var s=document.getElementById('status');if(s)s.innerHTML='<span class="bad"><strong>Something went wrong.</strong> Try a hard refresh (Ctrl + Shift + R, or Cmd + Shift + R on a Mac). If it keeps happening, tell your tutor: '+(e.message||'')+'</span>';});</script>
-<script type="module" src="js/app.js?v=1.4.0"></script>
+<script type="module" src="js/app.js?v=1.5.0"></script>
 </body>
 </html>

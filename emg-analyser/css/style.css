@@ -357,3 +357,31 @@ details.moreres > summary { font-size: 1rem; }
 .stepintro { padding: 0; margin: 0 0 .9rem; }
 .stepintro:empty { display: none; }
 .stepintro .si .btn { vertical-align: middle; margin: 0 .2rem; }
+
+/* ---------- v1.5: help for first-time EMG users ---------- */
+.h100 { background: #f0fdfa; border-left: 4px solid var(--accent); border-radius: .4rem; padding: .5rem .75rem; margin: .6rem 0; font-size: .92rem; }
+.h100.warnbox { background: #fffbeb; border-left-color: var(--warn); }
+.okTxt { color: #15803d; font-weight: 600; }
+.checks { margin: .5rem 0; }
+.chk { display: flex; gap: .5rem; align-items: flex-start; margin: .3rem 0; padding: .45rem .65rem; border-radius: .4rem; font-size: .9rem; }
+.chk .ci { flex: none; width: 1.3rem; height: 1.3rem; border-radius: 50%; color: #fff; font-weight: 700; font-size: .8rem; display: inline-flex; align-items: center; justify-content: center; margin-top: .05rem; }
+.chk.bad { background: #fef2f2; } .chk.bad .ci { background: #dc2626; }
+.chk.warn { background: #fffbeb; } .chk.warn .ci { background: #d97706; }
+.chk.ok { background: #f0fdf4; } .chk.ok .ci { background: #15803d; }
+.inlinewarn { background: #fffbeb; border-left: 4px solid var(--warn); border-radius: .35rem; padding: .4rem .65rem; margin: .4rem 0; font-size: .88rem; }
+details.plain-sum { border: 2px solid #7c3aed; border-radius: .6rem; padding: .3rem .8rem; margin: .8rem 0; background: #faf5ff; }
+details.plain-sum > summary { font-weight: 700; cursor: pointer; padding: .3rem 0; }
+details.plain-sum ul { margin: .3rem 0 .4rem 1.1rem; padding: 0; }
+details.plain-sum li { margin: .25rem 0; }
+.caution { font-size: .85rem; color: #5b21b6; background: #ede9fe; border-radius: .4rem; padding: .4rem .6rem; }
+.introov { position: fixed; inset: 0; background: rgba(15, 23, 42, .55); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.introov.hide { display: none; }
+.introbox { background: #fff; border-radius: .9rem; max-width: 34rem; width: 100%; padding: 1.1rem 1.3rem; box-shadow: 0 20px 50px rgba(0,0,0,.3); }
+.introbox h2 { margin: .3rem 0 .5rem; font-size: 1.2rem; }
+.introsvg svg { width: 100%; height: auto; background: #f8fafc; border-radius: .5rem; }
+.introp { font-size: .95rem; line-height: 1.5; }
+.introdots { display: flex; gap: .3rem; }
+.introdots span { width: .55rem; height: .55rem; border-radius: 50%; background: #cbd5e1; }
+.introdots span.on { background: var(--accent); }
+dl.gloss { display: grid; grid-template-columns: max-content 1fr; gap: .35rem .8rem; margin: .2rem 0; }
+dl.gloss dt { font-weight: 700; } dl.gloss dd { margin: 0; }
