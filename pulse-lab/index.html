@@ -179,6 +179,10 @@ canvas.wave { width: 100%; height: 96px; display: block; }
 .tips li { margin: 4px 0; }
 .finger-art { width: 110px; height: 110px; margin: 0 auto; color: var(--accent); }
 @keyframes press { 0%, 15% { transform: translate(0, -28px); opacity: .0; } 40%, 80% { transform: none; opacity: 1; } 100% { transform: translate(0, -28px); opacity: 0; } }
+.cam-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.cam-chip { min-height: 48px; padding: 8px 16px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--surface); font-weight: 650; cursor: pointer; }
+.cam-chip[aria-checked="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.cam-chip:disabled { opacity: .5; }
 .lens-check { display: flex; align-items: center; gap: 16px; }
 .lens-dot { flex: none; width: 76px; height: 76px; border-radius: 50%; background: #222; border: 4px solid var(--border); transition: background-color .25s, border-color .25s; }
 .lens-dot.ok { border-color: var(--good); }
@@ -325,7 +329,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
       </li>
       <li class="card step">
         <span class="step-art" aria-hidden="true"><svg width="44" height="44"><use href="#art-finger"/></svg></span>
-        <div><span class="step-num">Step 2</span><h3>Finger on the camera</h3><p>Rest a fingertip lightly over the main rear lens. We'll show you when it's in the right place.</p></div>
+        <div><span class="step-num">Step 2</span><h3>Finger on the camera</h3><p>Rest a fingertip lightly over a rear camera lens. We'll show you when it's in the right place.</p></div>
       </li>
       <li class="card step">
         <span class="step-art" aria-hidden="true"><svg width="44" height="44"><use href="#art-breathe"/></svg></span>
@@ -378,12 +382,17 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
         <h3>Still looking for your fingertip</h3>
         <ul class="tips">
           <li>Turn the phone over so the cameras face up.</li>
-          <li>Phones with several lenses: only one is used. The app picks the main lens. Slide your fingertip slowly from lens to lens until the circle turns red, then keep it there.</li>
+          <li>Phones with several lenses: only one is used. Use the Camera buttons below to choose one, then cover that lens. The circle turns red when you've got it.</li>
           <li>Lay the pad of your finger flat so it covers the whole lens. If the flash is on, let your finger reach over it too if you can. Light shining into the side of your fingertip is enough.</li>
           <li>Rest it lightly. Pressing hard squeezes the blood out.</li>
           <li>If it's dark, move closer to a bright light or a window.</li>
         </ul>
       </div>
+    </div>
+
+    <div id="camPicker" class="card stack" hidden>
+      <div><h3 id="camLbl">Camera</h3><p class="small muted">Phones with several lenses use one at a time. Pick one, then cover that lens. If the flash comes on, the lens closest to it usually works best.</p></div>
+      <div class="cam-chips" id="camChips" role="radiogroup" aria-labelledby="camLbl"></div>
     </div>
 
     <div class="card wave-card">
@@ -607,7 +616,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
       catch (e) { mem[k] = v; return false; }
     }
   };
-  var K = { mode: 'pulselab.mode', settings: 'pulselab.settings', readings: 'pulselab.readings' };
+  var K = { mode: 'pulselab.mode', settings: 'pulselab.settings', readings: 'pulselab.readings', camera: 'pulselab.camera' };
 
   var mode = store.get(K.mode, 'openday');
   var qMode = params.get('mode');
@@ -700,58 +709,50 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
   })();
 
   /* ------------------------------------------------------------ frame sources */
+  /**
+   * Friendly name for a rear camera label. Returns null for iPhone virtual
+   * multi-lens cameras ("Back Dual/Triple Camera"): they switch lens by
+   * themselves, so they are offered only as "Automatic".
+   */
+  function cameraName(label, n) {
+    var l = (label || '').trim();
+    if (/dual|triple/i.test(l)) return null;
+    if (/ultra ?wide/i.test(l)) return 'Ultra wide';
+    if (/telephoto/i.test(l)) return 'Telephoto';
+    if (/^back camera$/i.test(l)) return 'Main (wide)';
+    return l ? l.replace(/\s*\([^)]*\)\s*$/, '') : 'Rear camera ' + n;
+  }
+
   function CameraSource() {
-    var video = $('video'), stream = null, track = null, cvs = document.createElement('canvas'), ctx, rvfc = null, raf = null;
-    var useMediaTime = true, lastT = -Infinity, stalls = 0, prevSig = '';
+    var video = $('video'), stream = null, track = null, cvs = document.createElement('canvas'), ctx = null, rvfc = null, raf = null;
+    var onFrameCb = null, gen = 0, lastT = -Infinity, mediaOffset = null, useMediaTime = true, stalls = 0, prevSig = '';
+    var size = { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } };
+    var self = this;
     cvs.width = cvs.height = 24;
-    this.torch = false;
-    this.start = async function (onFrame) {
-      if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        var err = new Error('unsupported'); err.name = 'Unsupported'; throw err;
-      }
-      var size = { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } };
-      stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: Object.assign({ facingMode: { ideal: 'environment' } }, size) });
-      track = stream.getVideoTracks()[0];
-      // Pro iPhones expose a virtual "Back Triple/Dual Camera" that switches
-      // lens by itself (close up it jumps to the ultra-wide macro lens). Lock
-      // to the plain main lens ("Back Camera") when the device lists one.
-      try {
-        var devs = await navigator.mediaDevices.enumerateDevices();
-        var main = devs.filter(function (d) { return d.kind === 'videoinput' && /^back camera$/i.test(d.label.trim()); })[0];
-        var cur = track.getSettings ? track.getSettings().deviceId : null;
-        if (main && main.deviceId && main.deviceId !== cur) {
-          var locked = await navigator.mediaDevices.getUserMedia({ audio: false, video: Object.assign({ deviceId: { exact: main.deviceId } }, size) });
-          stream.getTracks().forEach(function (t) { t.stop(); });
-          stream = locked; track = stream.getVideoTracks()[0];
-        }
-      } catch (e) { /* keep the default rear camera */ }
-      this.label = track.label || '';
-      video.srcObject = stream;
-      try { await video.play(); } catch (e) { /* autoplay with muted+playsinline normally works */ }
-      // Torch: works on most Android Chrome devices, rarely on iOS.
-      try {
-        await track.applyConstraints({ advanced: [{ torch: true }] });
-        var st = track.getSettings ? track.getSettings() : {};
-        this.torch = st.torch === true || (track.getCapabilities && track.getCapabilities().torch === true && st.torch !== false);
-      } catch (e) { this.torch = false; }
-      ctx = cvs.getContext('2d', { willReadFrequently: true });
-      var self = this;
-      function grab(t) {
-        var w = video.videoWidth, h = video.videoHeight;
-        if (!w || !h) return;
-        var c = DSP.centreCrop(w, h, 0.5);
-        ctx.drawImage(video, c.sx, c.sy, c.sw, c.sh, 0, 0, 24, 24);
-        var rgb = DSP.meanRGB(ctx.getImageData(0, 0, 24, 24).data);
-        onFrame(t, rgb);
-      }
+    this.torch = false; this.label = ''; this.deviceId = null; this.cameras = [];
+
+    function grab(t) {
+      var w = video.videoWidth, h = video.videoHeight;
+      if (!w || !h) return;
+      var c = DSP.centreCrop(w, h, 0.5);
+      ctx.drawImage(video, c.sx, c.sy, c.sw, c.sh, 0, 0, 24, 24);
+      onFrameCb(t, DSP.meanRGB(ctx.getImageData(0, 0, 24, 24).data));
+    }
+    function startLoop() {
+      var my = ++gen;
+      mediaOffset = null; useMediaTime = true; stalls = 0; prevSig = '';
       if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
         var cb = function (now, meta) {
+          if (my !== gen) return;
           var t = now;
+          // mediaTime is the frame's own timestamp. Offset it onto the
+          // performance clock so time keeps running smoothly across camera switches.
           if (useMediaTime && meta && typeof meta.mediaTime === 'number') {
             var mt = meta.mediaTime * 1000;
-            if (mt > lastT) { t = mt; stalls = 0; }
-            else if (++stalls > 15) { useMediaTime = false; lastT = -Infinity; self.onClockChange && self.onClockChange(); }
-            else { rvfc = video.requestVideoFrameCallback(cb); return; }
+            if (mediaOffset === null) mediaOffset = Math.max(now, lastT + 1) - mt;
+            t = mt + mediaOffset;
+            if (!(t > lastT)) { if (++stalls > 15) useMediaTime = false; rvfc = video.requestVideoFrameCallback(cb); return; }
+            stalls = 0;
           }
           if (t > lastT) { lastT = t; grab(t); }
           rvfc = video.requestVideoFrameCallback(cb);
@@ -759,22 +760,69 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
         rvfc = video.requestVideoFrameCallback(cb);
       } else {
         var loop = function (now) {
+          if (my !== gen) return;
           // rAF can run faster than the camera: skip repeated frames.
-          var vt = video.currentTime, sig = String(vt);
-          if (sig !== prevSig) { prevSig = sig; grab(now); }
+          var sig = String(video.currentTime);
+          if (sig !== prevSig && now > lastT) { prevSig = sig; lastT = now; grab(now); }
           raf = requestAnimationFrame(loop);
         };
         raf = requestAnimationFrame(loop);
       }
-    };
-    this.stop = function () {
+    }
+    function close() {
+      gen++;
       if (rvfc != null && video.cancelVideoFrameCallback) video.cancelVideoFrameCallback(rvfc);
       if (raf != null) cancelAnimationFrame(raf);
       rvfc = raf = null;
-      if (track) { try { track.applyConstraints({ advanced: [{ torch: false }] }); } catch (e) {} }
+      if (track && track.applyConstraints) { try { var pr = track.applyConstraints({ advanced: [{ torch: false }] }); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {} }
       if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
       video.srcObject = null; stream = track = null;
+    }
+    async function open(deviceId) {
+      var v = Object.assign(deviceId ? { deviceId: { exact: deviceId } } : { facingMode: { ideal: 'environment' } }, size);
+      stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: v });
+      track = stream.getVideoTracks()[0];
+      self.label = track.label || '';
+      self.deviceId = deviceId || null;
+      video.srcObject = stream;
+      try { await video.play(); } catch (e) { /* muted + playsinline normally autoplays */ }
+      // Torch: works on most Android Chrome devices, not always on iOS.
+      try {
+        await track.applyConstraints({ advanced: [{ torch: true }] });
+        var st = track.getSettings ? track.getSettings() : {};
+        self.torch = st.torch === true || (track.getCapabilities && track.getCapabilities().torch === true && st.torch !== false);
+      } catch (e) { self.torch = false; }
+      startLoop();
+    }
+    async function listCameras() {
+      try {
+        var devs = await navigator.mediaDevices.enumerateDevices(), list = [];
+        devs.forEach(function (d) {
+          if (d.kind !== 'videoinput' || !d.deviceId || /front|facetime|user/i.test(d.label)) return;
+          var name = cameraName(d.label, list.length + 1);
+          if (name) list.push({ deviceId: d.deviceId, label: d.label, name: name });
+        });
+        self.cameras = list;
+      } catch (e) { self.cameras = []; }
+    }
+
+    this.start = async function (onFrame, preferredLabel) {
+      if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        var err = new Error('unsupported'); err.name = 'Unsupported'; throw err;
+      }
+      onFrameCb = onFrame;
+      ctx = cvs.getContext('2d', { willReadFrequently: true });
+      await open(null);
+      await listCameras(); // labels are only available once permission is granted
+      var pick = preferredLabel && self.cameras.filter(function (c) { return c.label === preferredLabel; })[0];
+      if (pick) await self.switchTo(pick.deviceId);
     };
+    /** Switch to another rear camera (null = the browser's automatic choice). */
+    this.switchTo = async function (deviceId) {
+      close();
+      try { await open(deviceId); } catch (e) { await open(null); }
+    };
+    this.stop = close;
   }
 
   /** ?test=1 : plays a generated PPG with known RR intervals through the full pipeline. */
@@ -822,9 +870,8 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
 
     M.source = TEST ? new SyntheticSource(t.settleS + t.recordS + 15) : new CameraSource();
     var mine = M, src = M.source;
-    src.onClockChange = function () { if (M === mine) resetLive(); };
     try {
-      await src.start(onFrame);
+      await src.start(onFrame, store.get(K.camera, ''));
     } catch (e) {
       try { src.stop(); } catch (x) {}
       if (M !== mine) return; // cancelled while the permission prompt was open
@@ -833,10 +880,49 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     }
     if (M !== mine) { try { src.stop(); } catch (x) {} return; }
     $('torchNote').hidden = !!M.source.torch;
+    renderCameraPicker();
     try { if (navigator.wakeLock) M.wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
     M.waitingSince = performance.now();
     setPhase('waiting');
     requestAnimationFrame(render);
+  }
+
+  /* Camera picker: every rear camera the phone offers, plus Automatic. */
+  function cameraOptions() {
+    var cams = (M && M.source && M.source.cameras) || [];
+    return [{ deviceId: null, name: 'Automatic', label: '' }].concat(cams);
+  }
+  function renderCameraPicker() {
+    var box = $('camChips'), opts = cameraOptions();
+    box.innerHTML = '';
+    opts.forEach(function (o) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'cam-chip'; b.textContent = o.name;
+      b.setAttribute('role', 'radio');
+      b.setAttribute('aria-checked', String((M.source.deviceId || null) === o.deviceId));
+      b.addEventListener('click', function () { chooseCamera(o); });
+      box.appendChild(b);
+    });
+    updateCamPickerVisibility();
+  }
+  function updateCamPickerVisibility() {
+    var p = M && M.phase;
+    $('camPicker').hidden = !(M && !TEST && cameraOptions().length > 2 && ['waiting', 'settle', 'paused', 'resettle'].indexOf(p) >= 0);
+  }
+  async function chooseCamera(o) {
+    if (!M || !M.source.switchTo || (M.source.deviceId || null) === o.deviceId) return;
+    var mine = M;
+    $('camChips').querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+    try { await M.source.switchTo(o.deviceId); }
+    catch (e) { if (M === mine) { stopMeasurement(); M = null; showCameraError(e); } return; }
+    if (M !== mine) return;
+    store.set(K.camera, o.label || '');
+    resetLive(); M.fingerOk = 0; M.lastT = null; M.lostAt = null;
+    if (M.phase === 'settle') setPhase('waiting');
+    else if (M.phase === 'resettle') setPhase('paused');
+    $('torchNote').hidden = !!M.source.torch;
+    renderCameraPicker();
+    announce('Switched to the ' + o.name + ' camera.');
   }
 
   function stopMeasurement() {
@@ -937,7 +1023,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     if (p === 'waiting') M.waitingSince = performance.now();
     setPhaseUI(p);
     var msgs = {
-      waiting: 'Cover the main rear lens with your fingertip. Try each lens until the circle turns red.',
+      waiting: 'Cover a rear camera lens with your fingertip. The circle turns red when it is covered.',
       settle: 'Finger found. Keep still for ' + M.settleS + ' seconds while the signal settles.',
       record: resume ? 'Recording again.' : 'Recording started. ' + M.recordS + ' seconds.',
       paused: 'Finger lifted. Recording paused.',
@@ -954,6 +1040,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     var help = p === 'waiting' || p === 'paused';
     $('fingerHelp').hidden = !help;
     document.querySelector('.ring-wrap').hidden = help;
+    updateCamPickerVisibility();
     if (!help) $('fingerTips').hidden = true;
     updateHint();
   }
@@ -964,7 +1051,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     if (p === 'starting') h = 'Starting the camera…';
     else if (p === 'waiting') h = M.reason === 'dark' && M.rgb && M.rgb.r > 5
       ? "It's a bit dark. Cover the lens fully, or move closer to a light."
-      : 'Cover the main rear lens with your fingertip. Try each lens until the circle turns red.';
+      : 'Cover a rear camera lens with your fingertip. The circle turns red when it is covered.';
     else if (p === 'settle' || p === 'resettle') h = 'Keep still and breathe normally. Getting a clear signal.';
     else if (p === 'record') h = M.quality.level === 'poor' && M.recordEl > 5 ? 'Weak signal. Press a little more gently and keep your hand still.' : 'Recording. Keep still and breathe normally.';
     else if (p === 'paused') h = 'Finger lifted. Place it back on the camera to carry on.';
@@ -1105,7 +1192,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
 
   function reasonText(res) {
     if (res.reasons.indexOf('artefacts') >= 0) return 'Too many beats (' + res.artefacts.removedPct.toFixed(0) + '%) had to be removed. Rest your fingertip lightly, keep your hand still and try again.';
-    if (res.reasons.indexOf('beats') >= 0) return 'We found too few clear heartbeats. Make sure the main lens is fully covered and try again.';
+    if (res.reasons.indexOf('beats') >= 0) return 'We found too few clear heartbeats. Make sure the camera lens is fully covered, or try a different camera.';
     return 'The pulse signal was weak. Rest your fingertip lightly, keep very still and try again.';
   }
 
@@ -1369,7 +1456,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     denied: { t: 'Camera access is turned off', b: 'Pulse Lab only uses the camera to see the colour of your fingertip. No pictures or video are kept.', s: ['iPhone: tap "aA" in the address bar, then Website Settings, and set Camera to Allow.', 'Android: tap the icon to the left of the web address, then Permissions, and allow Camera.', 'Then tap Try again.'] },
     notfound: { t: "We couldn't find a rear camera", b: 'Pulse Lab needs a phone with a camera on the back.', s: ['Try on a different phone.', 'If you are on a laptop, open this page on your phone instead.'] },
     busy: { t: 'The camera is being used by another app', b: "Another app or browser tab is using the camera, so we can't start it.", s: ['Close other apps that use the camera, such as video calls.', 'Close other browser tabs, then tap Try again.'] },
-    poor: { t: "We couldn't get a clear reading", b: "The pulse signal wasn't strong or steady enough to measure.", s: ['Rest your fingertip lightly. Pressing hard squeezes the blood out.', 'Cover the main rear lens completely. On phones with several lenses, try each one.', 'Keep your hand and phone still, resting on a table or your knee.', 'Cold hands? Rub them together to warm them up first.'] },
+    poor: { t: "We couldn't get a clear reading", b: "The pulse signal wasn't strong or steady enough to measure.", s: ['Rest your fingertip lightly. Pressing hard squeezes the blood out.', 'Cover the camera lens completely. On phones with several lenses, try a different camera.', 'Keep your hand and phone still, resting on a table or your knee.', 'Cold hands? Rub them together to warm them up first.'] },
     interrupted: { t: 'Measurement stopped', b: 'The app went into the background, so the measurement was stopped.', s: ['Keep Pulse Lab on screen for the whole minute.', 'Tap Try again to start a new measurement.'] },
     generic: { t: 'Something went wrong', b: "The camera couldn't be started.", s: ['Close and reopen the browser, then try again.'] }
   };
