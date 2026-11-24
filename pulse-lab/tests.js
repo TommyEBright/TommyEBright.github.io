@@ -162,6 +162,14 @@
     near(D.hrvScore(7), 100, 0); near(D.hrvScore(0.2), 0, 0); near(D.hrvScore(NaN), 0, 0);
   });
 
+  test('hrvScoreBand boundaries', function () {
+    ok(D.hrvScoreBand(0).key === 'low' && D.hrvScoreBand(44).key === 'low', 'low');
+    ok(D.hrvScoreBand(45).key === 'moderate' && D.hrvScoreBand(64).key === 'moderate', 'moderate');
+    ok(D.hrvScoreBand(65).key === 'good' && D.hrvScoreBand(79).key === 'good', 'good');
+    ok(D.hrvScoreBand(80).key === 'high' && D.hrvScoreBand(100).key === 'high', 'high');
+    D.SCORE_BANDS.forEach(function (b) { ok(b.text.indexOf('\u2014') < 0 && b.title.indexOf('\u2014') < 0, 'no em dashes'); });
+  });
+
   /* trends */
   test('trendSummary: baseline, SWC band and status', function () {
     var day = 864e5, now = new Date(2026, 10, 24, 8, 0).getTime(), r = [];

@@ -456,6 +456,31 @@
     return Math.round(100 * clamp01((lnRmssd - HRV_SCORE.lnMin) / (HRV_SCORE.lnMax - HRV_SCORE.lnMin)));
   }
 
+  /*
+   * Plain-English bands for the Open Day HRV score. Worded so no band reads
+   * as "bad": a single resting minute reflects how someone is right now,
+   * not how healthy they are.
+   *   0-44   (RMSSD below about 22 ms)  steady rhythm right now
+   *   45-64  (about 22 to 37 ms)        some variation
+   *   65-79  (about 37 to 60 ms)        plenty of variation
+   *   80-100 (about 60 ms or more)      lots of variation
+   */
+  var SCORE_BANDS = [
+    { key: 'low', min: 0, label: 'Steady', title: 'A steady rhythm right now',
+      text: "Your heartbeats were quite evenly spaced. That's common after exercise, a short night, a busy day or caffeine, or just from feeling a bit nervous about being measured." },
+    { key: 'moderate', min: 45, label: 'Some', title: 'Some variation',
+      text: 'Your heart is adjusting the gap between beats a moderate amount. Lots of healthy people score here, especially when they are a bit on the go.' },
+    { key: 'good', min: 65, label: 'Plenty', title: 'Plenty of variation',
+      text: 'Your heart is changing the gap between beats quite a lot, which usually goes with being rested and relaxed.' },
+    { key: 'high', min: 80, label: 'Lots', title: 'Lots of variation',
+      text: "Your heart is changing the gap between beats a lot. That's often seen in people who are well rested, relaxed or very aerobically fit." }
+  ];
+  function hrvScoreBand(score) {
+    var b = SCORE_BANDS[0];
+    for (var i = 0; i < SCORE_BANDS.length; i++) if (score >= SCORE_BANDS[i].min) b = SCORE_BANDS[i];
+    return b;
+  }
+
   /* ------------------------------------------------ trends (Tier 2) */
   function dayKey(ts) {
     var d = new Date(ts);
@@ -632,7 +657,7 @@
     intervalsFromPeaks: intervalsFromPeaks, correctArtefacts: correctArtefacts, computeMetrics: computeMetrics,
     autocorrPeriodicity: autocorrPeriodicity, perfusionIndex: perfusionIndex, signalQuality: signalQuality,
     qualityLevel: qualityLevel, analyseWindow: analyseWindow, analyseChannel: analyseChannel,
-    analyseRecording: analyseRecording, hrvScore: hrvScore,
+    analyseRecording: analyseRecording, hrvScore: hrvScore, hrvScoreBand: hrvScoreBand, SCORE_BANDS: SCORE_BANDS,
     dayKey: dayKey, dayIndex: dayIndex, dailySeries: dailySeries, baselineFor: baselineFor, trendSummary: trendSummary,
     beatsCSV: beatsCSV, ppgCSV: ppgCSV, summaryCSV: summaryCSV,
     mulberry32: mulberry32, gauss: gauss, synthPPG: synthPPG, rmssdOf: rmssdOf, knownIntervals: knownIntervals

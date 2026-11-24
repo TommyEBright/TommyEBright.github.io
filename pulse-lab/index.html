@@ -209,6 +209,12 @@ canvas.wave { width: 100%; height: 96px; display: block; }
 .gauge .g-prog { stroke: var(--accent); transition: stroke-dasharray 1.1s var(--ease); }
 .gauge-value { margin-top: -34px; font-size: 1.9rem; font-weight: 800; line-height: 1; }
 .rc-explain { position: relative; font-size: 1rem; }
+.rc-band { position: relative; display: flex; flex-direction: column; gap: 6px; }
+.band-scale { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 4px; }
+.band-scale span { text-align: center; font-size: .75rem; font-weight: 700; padding: 6px 2px; border-radius: 8px; background: var(--surface-2); color: var(--muted); transition: background-color .4s, color .4s; }
+.band-scale span.on { background: var(--accent); color: var(--accent-ink); }
+.band-title { font-weight: 750; font-size: 1.15rem; }
+.band-text { color: var(--muted); font-size: .95rem; }
 .rc-foot { font-size: .78rem; color: var(--muted); text-align: center; border-top: 1px solid var(--border); padding-top: 12px; }
 .dim .metric-value, .dim .gauge-value { opacity: .45; }
 
@@ -441,7 +447,14 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
           <span class="metric-unit">out of 100</span>
         </div>
       </div>
-      <p class="rc-explain">HRV is the small variation in time between heartbeats. Sport scientists use it to track recovery and training.</p>
+      <div class="rc-band" id="resBand">
+        <div class="band-scale" aria-hidden="true">
+          <span data-b="low">Steady</span><span data-b="moderate">Some</span><span data-b="good">Plenty</span><span data-b="high">Lots</span>
+        </div>
+        <p class="band-title" id="bandTitle"></p>
+        <p class="band-text" id="bandText"></p>
+      </div>
+      <p class="rc-explain">HRV is the small variation in time between heartbeats. Sport scientists use it to track recovery and training. A higher score means more variation. It changes from day to day, so there's no good or bad number.</p>
       <p class="rc-foot">Plymouth Marjon University · Sport Science</p>
     </article>
     <p class="sr-only" id="resSummary" role="status"></p>
@@ -1204,6 +1217,11 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     $('gaugeProg').setAttribute('stroke-dasharray', '0 100');
     requestAnimationFrame(function () { setTimeout(function () { $('gaugeProg').setAttribute('stroke-dasharray', (isFinite(m.lnRmssd) ? score : 0) + ' 100'); }, 60); });
     $('resultCard').classList.toggle('dim', !res.reliable);
+    var band = DSP.hrvScoreBand(score), hasScore = isFinite(m.lnRmssd);
+    $('resBand').hidden = !hasScore;
+    document.querySelectorAll('.band-scale span').forEach(function (sp) { sp.classList.toggle('on', sp.getAttribute('data-b') === band.key); });
+    $('bandTitle').textContent = band.title;
+    $('bandText').textContent = band.text;
     $('resNotice').hidden = res.reliable;
     $('resNoticeText').textContent = reasonText(res);
     $('learnLink').href = LEARN_MORE_URL;
@@ -1223,7 +1241,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     $('savedNote').hidden = !saved; $('savedNote').textContent = saved;
     $('seeTrendsBtn').hidden = mode !== 'trends';
 
-    var summary = 'Your heart rate is ' + hr + ' beats per minute. Your HRV score is ' + score + ' out of 100.' +
+    var summary = 'Your heart rate is ' + hr + ' beats per minute. Your HRV score is ' + score + ' out of 100: ' + band.title + '. ' + band.text +
       (res.reliable ? '' : " This reading wasn't very clear, so you may want to try again.");
     $('resSummary').textContent = summary;
     show('screen-result');

@@ -127,6 +127,17 @@ HRV score = 100 × (ln RMSSD − 1.0) / (5.0 − 1.0), limited to 0..100
 | 90 ms | 4.5 | 88 |
 | 148 ms or more | 5.0 | 100 |
 
+The result card also places the score in one of four plain-English bands, with a sentence explaining it (`hrvScoreBand()` in `dsp.js`):
+
+| Score | Band | Meaning shown to visitors |
+| --- | --- | --- |
+| 0 to 44 | Steady | A steady rhythm right now (common after exercise, a short night, caffeine or nerves) |
+| 45 to 64 | Some | Some variation (lots of healthy people score here) |
+| 65 to 79 | Plenty | Plenty of variation (usually goes with being rested and relaxed) |
+| 80 to 100 | Lots | Lots of variation (often seen in well-rested or very aerobically fit people) |
+
+The wording is deliberately neutral. One resting minute reflects how someone is right now, not how healthy they are, so no band is described as bad.
+
 It is linear in ln RMSSD because ln RMSSD is roughly normally distributed. Most healthy young adults sitting at rest score between about 50 and 90. The mapping is in `hrvScore()` in `dsp.js`. The score is only for engagement. It is not a norm-referenced or clinical scale.
 
 ## My Trends
