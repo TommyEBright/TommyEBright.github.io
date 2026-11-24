@@ -378,8 +378,8 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
         <h3>Still looking for your fingertip</h3>
         <ul class="tips">
           <li>Turn the phone over so the cameras face up.</li>
-          <li>Phones with several lenses: only one is used. Slide your fingertip slowly from lens to lens until the circle turns red. On most iPhones it's the top-left lens.</li>
-          <li>Lay the pad of your finger flat so it covers the whole lens. You don't need to cover the flash.</li>
+          <li>Phones with several lenses: only one is used. The app picks the main lens. Slide your fingertip slowly from lens to lens until the circle turns red, then keep it there.</li>
+          <li>Lay the pad of your finger flat so it covers the whole lens. If the flash is on, let your finger reach over it too if you can. Light shining into the side of your fingertip is enough.</li>
           <li>Rest it lightly. Pressing hard squeezes the blood out.</li>
           <li>If it's dark, move closer to a bright light or a window.</li>
         </ul>
@@ -708,11 +708,23 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
       if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         var err = new Error('unsupported'); err.name = 'Unsupported'; throw err;
       }
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: { facingMode: { ideal: 'environment' }, width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }
-      });
+      var size = { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } };
+      stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: Object.assign({ facingMode: { ideal: 'environment' } }, size) });
       track = stream.getVideoTracks()[0];
+      // Pro iPhones expose a virtual "Back Triple/Dual Camera" that switches
+      // lens by itself (close up it jumps to the ultra-wide macro lens). Lock
+      // to the plain main lens ("Back Camera") when the device lists one.
+      try {
+        var devs = await navigator.mediaDevices.enumerateDevices();
+        var main = devs.filter(function (d) { return d.kind === 'videoinput' && /^back camera$/i.test(d.label.trim()); })[0];
+        var cur = track.getSettings ? track.getSettings().deviceId : null;
+        if (main && main.deviceId && main.deviceId !== cur) {
+          var locked = await navigator.mediaDevices.getUserMedia({ audio: false, video: Object.assign({ deviceId: { exact: main.deviceId } }, size) });
+          stream.getTracks().forEach(function (t) { t.stop(); });
+          stream = locked; track = stream.getVideoTracks()[0];
+        }
+      } catch (e) { /* keep the default rear camera */ }
+      this.label = track.label || '';
       video.srcObject = stream;
       try { await video.play(); } catch (e) { /* autoplay with muted+playsinline normally works */ }
       // Torch: works on most Android Chrome devices, rarely on iOS.
@@ -1057,6 +1069,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
       var res = segs.length ? DSP.analyseRecording(segs, FS) : null;
       if (!res || !res.intervals.length || !isFinite(res.metrics.hr)) return showError('poor');
       res.startWall = m.recStartWall;
+      res.camera = m.source.label || (TEST ? 'synthetic' : '');
       res.recordS = m.recordS;
       if (TEST) res.test = testCheck(m, res);
       lastResult = res;
@@ -1132,7 +1145,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
   function showLab(res) {
     var m = res.metrics;
     var start = new Date(res.startWall);
-    $('labMeta').textContent = start.toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'medium' }) + ' · ' + res.channel + ' channel' + (TEST ? ' · synthetic' : '');
+    $('labMeta').textContent = start.toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'medium' }) + ' · ' + res.channel + ' channel' + (res.camera ? ' · ' + res.camera : '');
     $('labNotice').hidden = res.reliable;
     $('labNoticeText').textContent = reasonText(res);
     renderTestPanel($('testPanelB'), res.test);
