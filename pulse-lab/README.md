@@ -1,6 +1,6 @@
 # Pulse Lab
 
-A mobile-first web app that turns a smartphone into a heart rate variability (HRV) tool using camera photoplethysmography (PPG): a fingertip over the rear camera and flash. Built for Plymouth Marjon University Sport Science open days and teaching practicals.
+A mobile-first web app that turns a smartphone into a heart rate variability (HRV) tool using camera photoplethysmography (PPG): a fingertip over the main rear lens. Built for Plymouth Marjon University Sport Science open days and teaching practicals.
 
 Plain HTML, CSS and JavaScript. No framework, no build step, no libraries, no analytics, no cookies. All processing happens on the phone.
 
@@ -62,6 +62,10 @@ The camera only works over HTTPS, and Netlify gives you that automatically.
 2. The flash should switch on. If it doesn't (some phones use a different rear camera), use a bright light as above.
 3. You should feel a light tap with each heartbeat.
 4. To install: menu → **Install app** or **Add to Home screen**.
+
+**Phones with several lenses (iPhone Pro, most recent Android phones):** the browser only uses one rear lens, usually the main wide lens, and you can't choose which one from a web page. While the app waits for your finger it shows a large circle with the live colour the camera sees. Slide your fingertip from lens to lens until the circle turns red and the text says "Covered". On iPhone 13 Pro and similar, that is usually the top-left lens. On an iPhone you don't need to cover the flash, because Safari can't switch it on anyway.
+
+**Which readings are saved:** Open Day mode never saves anything (the result screen says so), which keeps it safe for under-18 visitors. To keep a history, switch to My Trends: press and hold the logo, or open `?mode=trends` once. In My Trends, clear readings are saved automatically. Unclear readings get a **Save anyway** button. They are stored marked as unclear, shown in the list, and left out of the usual-range calculation.
 
 **What a good reading looks like:** the signal bar goes green within a few seconds of the settle period, the waveform shows a regular train of peaks, and the heart beats in time with your pulse. If it stays red, press more lightly (pressing hard squeezes the blood out), cover the flash and camera fully, and rest your hand on something.
 
@@ -127,7 +131,7 @@ It is linear in ln RMSSD because ln RMSSD is roughly normally distributed. Most 
 
 ## My Trends
 
-- Each reliable reading (HR, RMSSD, ln RMSSD, quality) is saved to `localStorage` on that phone only. Unreliable readings are not saved. All reads and writes are wrapped in try/catch, so private browsing, where storage may be blocked, still works without saving.
+- Each reliable reading (HR, RMSSD, ln RMSSD, quality) is saved to `localStorage` on that phone only. Unreliable readings are only saved if you tap **Save anyway**. They are marked as unclear and left out of the baseline. All reads and writes are wrapped in try/catch, so private browsing, where storage may be blocked, still works without saving.
 - Today's value is the mean of today's readings. The baseline is the mean of daily values over the 7 calendar days before today, with at least 3 days needed. The smallest worthwhile change (SWC) is 0.5 × the SD of those daily ln RMSSD values.
 - Status: higher than, within, or lower than the usual range (mean ± SWC). The wording is neutral. There is no "readiness score".
 - History chart: daily ln RMSSD with the rolling usual-range band, plus resting HR. You can delete readings one at a time or all at once.

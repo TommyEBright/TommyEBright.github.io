@@ -177,9 +177,12 @@ canvas.wave { width: 100%; height: 96px; display: block; }
 .notice.warn svg { color: var(--fair); }
 .tips { margin: 6px 0 0; padding-left: 1.2em; }
 .tips li { margin: 4px 0; }
-.finger-art { width: 130px; margin: 0 auto; color: var(--accent); }
-.finger-art .finger { animation: press 2.4s var(--ease) infinite; }
+.finger-art { width: 110px; height: 110px; margin: 0 auto; color: var(--accent); }
 @keyframes press { 0%, 15% { transform: translate(0, -28px); opacity: .0; } 40%, 80% { transform: none; opacity: 1; } 100% { transform: translate(0, -28px); opacity: 0; } }
+.lens-check { display: flex; align-items: center; gap: 16px; }
+.lens-dot { flex: none; width: 76px; height: 76px; border-radius: 50%; background: #222; border: 4px solid var(--border); transition: background-color .25s, border-color .25s; }
+.lens-dot.ok { border-color: var(--good); }
+.lens-title { font-weight: 700; font-size: 1.05rem; }
 .spinner { width: 44px; height: 44px; border-radius: 50%; border: 4px solid var(--surface-2); border-top-color: var(--accent); animation: spin .9s linear infinite; margin: 0 auto; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -275,7 +278,6 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
   .heart.beat { animation: none; color: var(--heart); filter: brightness(1.25); }
-  .finger-art .finger { animation: none; opacity: 1; transform: none; }
   .spinner { animation: spin 2s linear infinite !important; animation-duration: 2s !important; animation-iteration-count: infinite !important; }
 }
 </style>
@@ -293,7 +295,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     <symbol id="i-back" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></symbol>
     <!-- step illustrations -->
     <symbol id="art-sit" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="21" cy="9" r="4.5"/><path d="M21 15v12h11l3 13M21 21l8 3"/><path d="M14 22v13h18M14 35v7M32 35v7"/></g></symbol>
-    <symbol id="art-finger" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="4" width="26" height="40" rx="5"/><circle cx="18" cy="12" r="3.2"/><circle cx="27" cy="12" r="1.6" fill="currentColor"/></g><path fill="currentColor" opacity=".9" d="M15.5 6.5c2-2.6 6-2.4 7.6.5l.9 1.7c.5.9 1.6 15 1.6 15l-8 .3-3.4-12.6c-.4-1.7.1-3.6 1.3-4.9z"/></symbol>
+    <symbol id="art-finger" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="30" height="42" rx="6"/><rect x="12" y="6" width="17" height="17" rx="4.5"/></g><g fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="16.5" cy="10.5" r="2.6"/><circle cx="16.5" cy="18.5" r="2.6"/><circle cx="24.5" cy="14.5" r="2.6"/></g><circle cx="24.5" cy="8.5" r="1.2" fill="currentColor"/><path fill="currentColor" opacity=".88" d="M12.6 11.5c0-3.3 1.8-5.3 4.1-5.3s4.1 2 4.1 5.3V30h-8.2z"/></symbol>
     <symbol id="art-breathe" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 17h24a5 5 0 10-5-5"/><path d="M5 25h33a5 5 0 11-5 5"/><path d="M5 33h15a4 4 0 11-4 4"/></g></symbol>
   </defs>
 </svg>
@@ -323,7 +325,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
       </li>
       <li class="card step">
         <span class="step-art" aria-hidden="true"><svg width="44" height="44"><use href="#art-finger"/></svg></span>
-        <div><span class="step-num">Step 2</span><h3>Finger on the camera</h3><p>Rest a fingertip lightly over the rear camera and flash.</p></div>
+        <div><span class="step-num">Step 2</span><h3>Finger on the camera</h3><p>Rest a fingertip lightly over the main rear lens. We'll show you when it's in the right place.</p></div>
       </li>
       <li class="card step">
         <span class="step-art" aria-hidden="true"><svg width="44" height="44"><use href="#art-breathe"/></svg></span>
@@ -364,15 +366,20 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     </div>
 
     <div id="fingerHelp" class="card stack" hidden>
-      <svg class="finger-art" viewBox="0 0 48 48" aria-hidden="true">
-        <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="10" y="4" width="26" height="40" rx="5"/><circle cx="18" cy="12" r="3.2"/><circle cx="27" cy="12" r="1.6" fill="currentColor"/></g>
-        <path class="finger" fill="currentColor" opacity=".85" d="M15.5 6.5c2-2.6 6-2.4 7.6.5l.9 1.7c.5.9 1.6 15 1.6 15l-8 .3-3.4-12.6c-.4-1.7.1-3.6 1.3-4.9z"/>
-      </svg>
+      <div class="lens-check">
+        <span class="lens-dot" id="lensDot" aria-hidden="true"></span>
+        <div>
+          <p class="lens-title" id="lensText" aria-live="polite">Lens not covered yet</p>
+          <p class="small muted">This circle shows what the camera sees. It turns red when your fingertip is on the right lens.</p>
+        </div>
+      </div>
+      <svg class="finger-art" viewBox="0 0 48 48" aria-hidden="true"><use href="#art-finger"/></svg>
       <div id="fingerTips" hidden>
         <h3>Still looking for your fingertip</h3>
         <ul class="tips">
-          <li>Turn the phone over so the camera faces up.</li>
-          <li>Cover both the camera and the flash with the pad of one finger.</li>
+          <li>Turn the phone over so the cameras face up.</li>
+          <li>Phones with several lenses: only one is used. Slide your fingertip slowly from lens to lens until the circle turns red. On most iPhones it's the top-left lens.</li>
+          <li>Lay the pad of your finger flat so it covers the whole lens. You don't need to cover the flash.</li>
           <li>Rest it lightly. Pressing hard squeezes the blood out.</li>
           <li>If it's dark, move closer to a bright light or a window.</li>
         </ul>
@@ -430,6 +437,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     </article>
     <p class="sr-only" id="resSummary" role="status"></p>
     <p class="small muted" id="savedNote" hidden style="text-align:center"></p>
+    <button class="btn secondary block" id="saveAnywayBtn" type="button" hidden>Save anyway</button>
     <div class="card test-panel stack" id="testPanelA" hidden></div>
     <div class="btns">
       <button class="btn primary big" id="againBtn" type="button">Try again</button>
@@ -916,7 +924,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     if (p === 'waiting') M.waitingSince = performance.now();
     setPhaseUI(p);
     var msgs = {
-      waiting: 'Place your fingertip over the camera and flash.',
+      waiting: 'Cover the main rear lens with your fingertip. Try each lens until the circle turns red.',
       settle: 'Finger found. Keep still for ' + M.settleS + ' seconds while the signal settles.',
       record: resume ? 'Recording again.' : 'Recording started. ' + M.recordS + ' seconds.',
       paused: 'Finger lifted. Recording paused.',
@@ -932,6 +940,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     $('heart').classList.toggle('idle', p === 'starting' || p === 'waiting' || p === 'paused');
     var help = p === 'waiting' || p === 'paused';
     $('fingerHelp').hidden = !help;
+    document.querySelector('.ring-wrap').hidden = help;
     if (!help) $('fingerTips').hidden = true;
     updateHint();
   }
@@ -941,8 +950,8 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     var h = '', p = M.phase;
     if (p === 'starting') h = 'Starting the camera…';
     else if (p === 'waiting') h = M.reason === 'dark' && M.rgb && M.rgb.r > 5
-      ? "It's a bit dark. Cover the camera and flash fully, or move closer to a light."
-      : 'Place your fingertip lightly over the camera and flash.';
+      ? "It's a bit dark. Cover the lens fully, or move closer to a light."
+      : 'Cover the main rear lens with your fingertip. Try each lens until the circle turns red.';
     else if (p === 'settle' || p === 'resettle') h = 'Keep still and breathe normally. Getting a clear signal.';
     else if (p === 'record') h = M.quality.level === 'poor' && M.recordEl > 5 ? 'Weak signal. Press a little more gently and keep your hand still.' : 'Recording. Keep still and breathe normally.';
     else if (p === 'paused') h = 'Finger lifted. Place it back on the camera to carry on.';
@@ -1014,7 +1023,17 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     $('ringProg').style.strokeDashoffset = String(CIRC * (1 - Math.min(1, frac)));
     var txt = String(Math.max(0, Math.ceil(remain - 1e-6)));
     var tm = $('timer'); if (tm.textContent !== txt) tm.textContent = txt;
-    if (M.rgb) $('swatch').style.backgroundColor = 'rgb(' + (M.rgb.r | 0) + ',' + (M.rgb.g | 0) + ',' + (M.rgb.b | 0) + ')';
+    if (M.rgb) {
+      var col = 'rgb(' + (M.rgb.r | 0) + ',' + (M.rgb.g | 0) + ',' + (M.rgb.b | 0) + ')';
+      $('swatch').style.backgroundColor = col;
+      if (!$('fingerHelp').hidden) {
+        $('lensDot').style.backgroundColor = col;
+        var on = M.fingerOk > 0;
+        $('lensDot').classList.toggle('ok', on);
+        var lt = on ? 'Covered. Hold still.' : M.reason === 'dark' && M.rgb.r > 5 ? 'Too dark. Move nearer a light.' : 'Lens not covered yet';
+        if ($('lensText').textContent !== lt) $('lensText').textContent = lt;
+      }
+    }
     if (p === 'waiting' && performance.now() - M.waitingSince > 20000) $('fingerTips').hidden = false;
     updateHint();
     drawWave();
@@ -1072,7 +1091,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
 
   function reasonText(res) {
     if (res.reasons.indexOf('artefacts') >= 0) return 'Too many beats (' + res.artefacts.removedPct.toFixed(0) + '%) had to be removed. Rest your fingertip lightly, keep your hand still and try again.';
-    if (res.reasons.indexOf('beats') >= 0) return 'We found too few clear heartbeats. Make sure the camera and flash are fully covered and try again.';
+    if (res.reasons.indexOf('beats') >= 0) return 'We found too few clear heartbeats. Make sure the main lens is fully covered and try again.';
     return 'The pulse signal was weak. Rest your fingertip lightly, keep very still and try again.';
   }
 
@@ -1095,8 +1114,10 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
       if (res.reliable) {
         var ok = saveReading(res);
         saved = ok ? 'Saved to My trends on this phone.' : "Couldn't save on this phone (storage may be turned off in private browsing).";
-      } else saved = "Not saved, because the signal wasn't clear enough.";
+      } else saved = "Not saved yet, because the signal wasn't clear. Try again, or save it anyway (it will be marked as unclear and left out of your usual range).";
     }
+    if (mode === 'openday') saved = 'Nothing has been saved. This reading disappears when you leave the page.';
+    $('saveAnywayBtn').hidden = !(mode === 'trends' && !res.reliable && isFinite(m.lnRmssd));
     $('savedNote').hidden = !saved; $('savedNote').textContent = saved;
     $('seeTrendsBtn').hidden = mode !== 'trends';
 
@@ -1237,16 +1258,16 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
   function getReadings() { var r = store.get(K.readings, []); return Array.isArray(r) ? r : []; }
   function saveReading(res) {
     var m = res.metrics, list = getReadings();
-    list.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ts: Date.now(), hr: +m.hr.toFixed(1), rmssd: +m.rmssd.toFixed(1), lnRmssd: +m.lnRmssd.toFixed(3), sqi: res.quality.score });
+    list.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ts: Date.now(), hr: +m.hr.toFixed(1), rmssd: +m.rmssd.toFixed(1), lnRmssd: +m.lnRmssd.toFixed(3), sqi: res.quality.score, reliable: !!res.reliable });
     if (list.length > 1000) list = list.slice(-1000);
     return store.set(K.readings, list);
   }
   function showTrends() {
-    var list = getReadings(), sum = DSP.trendSummary(list, Date.now());
+    var list = getReadings(), sum = DSP.trendSummary(list.filter(function (r) { return r.reliable !== false; }), Date.now());
     var box = $('trToday'), b = sum.baseline, t = sum.today;
     var words = {
       above: 'Higher than your usual range', within: 'Within your usual range', below: 'Lower than your usual range',
-      building: 'Building your usual range', none: 'No reading yet today'
+      building: 'Building your usual range', none: 'No clear reading yet today'
     };
     var detail = '';
     if (sum.status === 'building') detail = 'Take readings on at least ' + b.minDays + ' different days to see your usual range. ' + plural(b.nDays, 'day') + ' in the last week so far.';
@@ -1272,7 +1293,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
       li.innerHTML = '<div class="r-main"><div class="r-date"></div><div class="r-vals tnum"></div></div>' +
         '<button class="icon-btn" type="button"><svg width="22" height="22" aria-hidden="true"><use href="#i-trash"/></svg></button>';
       li.querySelector('.r-date').textContent = when;
-      li.querySelector('.r-vals').textContent = 'HR ' + Math.round(r.hr) + ' bpm · ln RMSSD ' + r.lnRmssd.toFixed(2) + ' · RMSSD ' + Math.round(r.rmssd) + ' ms';
+      li.querySelector('.r-vals').textContent = 'HR ' + Math.round(r.hr) + ' bpm · ln RMSSD ' + r.lnRmssd.toFixed(2) + ' · RMSSD ' + Math.round(r.rmssd) + ' ms' + (r.reliable === false ? ' · unclear signal, not in usual range' : '');
       var btn = li.querySelector('button');
       btn.setAttribute('aria-label', 'Delete reading from ' + when);
       btn.addEventListener('click', function () {
@@ -1333,7 +1354,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     denied: { t: 'Camera access is turned off', b: 'Pulse Lab only uses the camera to see the colour of your fingertip. No pictures or video are kept.', s: ['iPhone: tap "aA" in the address bar, then Website Settings, and set Camera to Allow.', 'Android: tap the icon to the left of the web address, then Permissions, and allow Camera.', 'Then tap Try again.'] },
     notfound: { t: "We couldn't find a rear camera", b: 'Pulse Lab needs a phone with a camera on the back.', s: ['Try on a different phone.', 'If you are on a laptop, open this page on your phone instead.'] },
     busy: { t: 'The camera is being used by another app', b: "Another app or browser tab is using the camera, so we can't start it.", s: ['Close other apps that use the camera, such as video calls.', 'Close other browser tabs, then tap Try again.'] },
-    poor: { t: "We couldn't get a clear reading", b: "The pulse signal wasn't strong or steady enough to measure.", s: ['Rest your fingertip lightly. Pressing hard squeezes the blood out.', 'Cover both the camera and the flash.', 'Keep your hand and phone still, resting on a table or your knee.', 'Cold hands? Rub them together to warm them up first.'] },
+    poor: { t: "We couldn't get a clear reading", b: "The pulse signal wasn't strong or steady enough to measure.", s: ['Rest your fingertip lightly. Pressing hard squeezes the blood out.', 'Cover the main rear lens completely. On phones with several lenses, try each one.', 'Keep your hand and phone still, resting on a table or your knee.', 'Cold hands? Rub them together to warm them up first.'] },
     interrupted: { t: 'Measurement stopped', b: 'The app went into the background, so the measurement was stopped.', s: ['Keep Pulse Lab on screen for the whole minute.', 'Tap Try again to start a new measurement.'] },
     generic: { t: 'Something went wrong', b: "The camera couldn't be started.", s: ['Close and reopen the browser, then try again.'] }
   };
@@ -1364,6 +1385,13 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
   $('errBack').addEventListener('click', goStart);
   $('trendsBtn').addEventListener('click', showTrends);
   $('seeTrendsBtn').addEventListener('click', showTrends);
+  $('saveAnywayBtn').addEventListener('click', function () {
+    if (!lastResult) return;
+    var ok = saveReading(lastResult);
+    $('saveAnywayBtn').hidden = true;
+    $('savedNote').textContent = ok ? 'Saved to My trends, marked as unclear.' : "Couldn't save on this phone (storage may be turned off in private browsing).";
+    announce($('savedNote').textContent);
+  });
   $('trBack').addEventListener('click', goStart);
   $('cancelBtn').addEventListener('click', function () { stopMeasurement(); M = null; announce('Measurement cancelled.'); goStart(); });
   document.addEventListener('visibilitychange', function () {
