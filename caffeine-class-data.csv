@@ -186,9 +186,9 @@ Caf-5,caffeine,baseline,1,2,handgrip,kg,TRUE,56,94,300
 Caf-5,caffeine,baseline,1,1,imtp_peak,units,TRUE,150,94,300
 Caf-5,caffeine,baseline,1,2,imtp_peak,units,TRUE,155,94,300
 Caf-5,caffeine,baseline,1,1,braking_phase,ms,FALSE,170,94,300
-Caf-5,caffeine,baseline,1,2,braking_phase,ms,FALSE,1180,94,300
+Caf-5,caffeine,baseline,1,2,braking_phase,ms,FALSE,180,94,300
 Caf-5,caffeine,baseline,1,1,propulsive_phase,ms,FALSE,240,94,300
-Caf-5,caffeine,baseline,1,2,propulsive_phase,ms,FALSE,1230,94,300
+Caf-5,caffeine,baseline,1,2,propulsive_phase,ms,FALSE,230,94,300
 Caf-5,caffeine,baseline,1,1,relative_force_at_minimum,N/kg,TRUE,21.276,94,300
 Caf-5,caffeine,baseline,1,2,relative_force_at_minimum,N/kg,TRUE,22.414,94,300
 Caf-5,caffeine,baseline,1,1,relative_braking_force,N/kg,TRUE,15.776,94,300
