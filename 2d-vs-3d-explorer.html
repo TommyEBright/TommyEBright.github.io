@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2D vs 3D Explorer</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #f7fbfd; color: #1d1d1b; line-height: 1.5; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 14px; }
+  header { background: #003d50; color: #fff; padding: 14px 18px; border-radius: 12px 12px 0 0; border-bottom: 5px solid #00857e; }
+  header h1 { margin: 0; font-size: 1.35em; }
+  header p { margin: 2px 0 0; font-size: 0.95em; opacity: 0.9; }
+  .steps { display: flex; gap: 8px; flex-wrap: wrap; background: #fff; padding: 10px; border: 1px solid #d9e2e7; border-top: 0; border-radius: 0 0 12px 12px; margin-bottom: 12px; }
+  .steps button { flex: 1 1 180px; padding: 10px; border: 0; border-radius: 10px; background: #e6f0f4; color: #003d50; font-weight: bold; font-size: 0.95em; cursor: pointer; }
+  .steps button.on { background: #0071bc; color: #fff; }
+  .views { display: flex; gap: 12px; flex-wrap: wrap; }
+  .panel { flex: 1 1 420px; min-width: 300px; background: #fff; border: 1px solid #d9e2e7; border-radius: 12px; overflow: hidden; }
+  .panel.big { flex: 1.4 1 480px; }
+  .ptitle { background: #003d50; color: #fff; padding: 7px 12px; font-weight: bold; font-size: 0.92em; }
+  .ptitle span { font-weight: normal; opacity: 0.8; margin-left: 6px; font-size: 0.9em; }
+  #v3d { width: 100%; height: 440px; display: block; background: #1e2630; }
+  #v2d { width: 100%; height: 440px; display: block; background: #262b30; }
+  .viewbtns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; padding: 8px 10px; font-size: 0.88em; }
+  .viewbtns button { padding: 5px 10px; border: 1px solid #abd6d9; background: #f2faf9; color: #003d50; border-radius: 8px; cursor: pointer; }
+  .viewbtns label { margin-left: 6px; cursor: pointer; }
+  .bottom { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+  .card { flex: 1 1 420px; background: #fff; border: 1px solid #d9e2e7; border-left: 6px solid #00857e; border-radius: 12px; padding: 12px 16px; }
+  #readout { border-left-color: #8b3556; }
+  .card h2 { margin: 0 0 6px; font-size: 1.1em; color: #003d50; }
+  .card p { margin: 0 0 8px; }
+  .note { background: #f2faf9; border-left: 4px solid #0071bc; padding: 8px 10px; border-radius: 8px; font-size: 0.92em; margin-top: 8px; }
+  .sl { margin: 8px 0; }
+  .sl label { display: flex; justify-content: space-between; font-size: 0.93em; }
+  .sl input { width: 100%; accent-color: #0071bc; }
+  .seg { display: flex; gap: 6px; margin: 6px 0 10px; flex-wrap: wrap; }
+  .seg button { flex: 1; padding: 7px 10px; border: 2px solid #0071bc; background: #fff; color: #0071bc; border-radius: 8px; font-weight: bold; cursor: pointer; }
+  .seg button.on { background: #0071bc; color: #fff; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.95em; }
+  td, th { padding: 6px 8px; border-bottom: 1px solid #e3eaee; text-align: left; }
+  th { color: #003d50; }
+  .big2d { color: #00857e; font-weight: bold; }
+  .big3d { color: #8b3556; font-weight: bold; }
+  .msg { margin-top: 8px; font-weight: bold; color: #003d50; }
+  .x { color: #d63b3b; font-weight: bold; } .y { color: #2f9e44; font-weight: bold; } .z { color: #2f6fdc; font-weight: bold; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>2D vs 3D Explorer</h1>
+    <p>What one camera can see, and what 3D motion capture adds.</p>
+  </header>
+  <nav class="steps">
+    <button data-step="0" class="on">1. Coordinates</button>
+    <button data-step="1">2. Turn the athlete</button>
+    <button data-step="2">3. Valgus and rotation</button>
+    <button data-step="3">4. How 3D works</button>
+  </nav>
+  <div class="views">
+    <div class="panel big">
+      <div class="ptitle">3D view <span>drag to spin, scroll to zoom</span></div>
+      <div id="v3d"></div>
+      <div class="viewbtns">
+        <button data-view="side">Side</button><button data-view="front">Front</button><button data-view="iso">3D</button>
+        <label><input type="checkbox" id="showAxes" checked> Segment axes</label>
+        <label><input type="checkbox" id="showMarkers" checked> Markers</label>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ptitle" id="t2d">2D camera view <span>one camera, side-on</span></div>
+      <canvas id="v2d"></canvas>
+    </div>
+  </div>
+  <div class="bottom">
+    <div class="card" id="controls"></div>
+    <div class="card" id="readout"></div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ---------- maths (lab frame: X right, Y forwards, Z up) ----------
+const D = Math.PI / 180;
+const mul = (A, B) => { const C = []; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) C[i*3+j] = A[i*3]*B[j] + A[i*3+1]*B[3+j] + A[i*3+2]*B[6+j]; return C; };
+const tr = A => [A[0],A[3],A[6],A[1],A[4],A[7],A[2],A[5],A[8]];
+const Rx = a => { const c = Math.cos(a), s = Math.sin(a); return [1,0,0, 0,c,-s, 0,s,c]; };
+const Ry = a => { const c = Math.cos(a), s = Math.sin(a); return [c,0,s, 0,1,0, -s,0,c]; };
+const Rz = a => { const c = Math.cos(a), s = Math.sin(a); return [c,-s,0, s,c,0, 0,0,1]; };
+const mv = (A, v) => [A[0]*v[0]+A[1]*v[1]+A[2]*v[2], A[3]*v[0]+A[4]*v[1]+A[5]*v[2], A[6]*v[0]+A[7]*v[1]+A[8]*v[2]];
+const add = (a, b) => [a[0]+b[0], a[1]+b[1], a[2]+b[2]];
+const sub = (a, b) => [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
+// Cardan XYZ: R = Rx(a) Ry(b) Rz(c)
+const cardan = R => [Math.atan2(-R[5], R[8]) / D, Math.asin(Math.max(-1, Math.min(1, R[2]))) / D, Math.atan2(-R[1], R[0]) / D];
+
+const B = { hip: 0.09, thigh: 0.42, shank: 0.42, ankleH: 0.08 };
+const AY = 0.6;                     // athlete stands 0.6 m in front of the lab origin
+const CAM = [3, AY, 0.75];            // 2D camera, athlete's right side, looking along -X
+const proj = P => { const s = CAM[0] / (CAM[0] - P[0]); return [(P[1] - CAM[1]) * s, (P[2] - CAM[2]) * s + CAM[2]]; }; // calibrated in the plane X = 0
+
+const S = { step: 0, mode: 'point', px: 0, py: 0.3, pz: 1.0, hf: 30, ha: 0, hr: 0, knee: 60, turn: 0, valgus: 0, rot: 0, sub3: 'cams', nCam: 1, nMk: 1 };
+
+// ---------- three.js scene ----------
+const box3 = document.getElementById('v3d');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+box3.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#1e2630');
+const cam3 = new THREE.PerspectiveCamera(40, 1, 0.05, 50);
+const controls = new OrbitControls(cam3, renderer.domElement);
+controls.enableDamping = true;
+scene.add(new THREE.HemisphereLight('#ffffff', '#445566', 1.6));
+const sun = new THREE.DirectionalLight('#ffffff', 1.8); sun.position.set(3, 5, 4); scene.add(sun);
+const grid = new THREE.GridHelper(6, 24, '#5b6b7a', '#33404c'); scene.add(grid);
+
+const lab = new THREE.Group(); lab.rotation.x = -Math.PI / 2; scene.add(lab);   // lab Z-up inside three's Y-up world
+
+function textSprite(text, color, size = 0.22) {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 96;
+  const g = c.getContext('2d'); g.font = 'bold 60px Arial'; g.fillStyle = color; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 128, 48);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
+  s.scale.set(size * 2.6, size, 1); s.renderOrder = 5; return s;
+}
+
+// global axes
+const gcs = new THREE.Group(); lab.add(gcs);
+[[1,0,0,'#e03131','X'], [0,1,0,'#2f9e44','Y'], [0,0,1,'#2f6fdc','Z']].forEach(([x,y,z,col,t]) => {
+  gcs.add(new THREE.ArrowHelper(new THREE.Vector3(x,y,z), new THREE.Vector3(0,0,0), 0.6, col, 0.1, 0.05));
+  const s = textSprite(t, col); s.position.set(x*0.72, y*0.72, z*0.72); gcs.add(s);
+});
+
+// segments (origin at proximal joint, z pointing proximally, segment runs down -z)
+function frustum(rTop, rBot, L) { const g = new THREE.CylinderGeometry(rTop, rBot, L, 14); g.translate(0, -L/2, 0); g.rotateX(Math.PI/2); return g; }
+const mats = {};
+function segMat(col) { return new THREE.MeshStandardMaterial({ color: col, roughness: 0.45, metalness: 0.1, flatShading: true, transparent: true }); }
+const markerGeo = new THREE.SphereGeometry(0.013, 12, 8);
+const markerMat = new THREE.MeshStandardMaterial({ color: '#f1f1f1', emissive: '#444444', roughness: 0.3 });
+const hotMat = new THREE.MeshStandardMaterial({ color: '#ffd24a', emissive: '#b88a00' });
+const skeleton = new THREE.Group(); lab.add(skeleton);
+const segs = {};
+function makeSeg(name, geo, col, markers) {
+  const obj = new THREE.Object3D(); obj.matrixAutoUpdate = false; skeleton.add(obj);
+  const m = segMat(col); mats[name] = m;
+  const mesh = new THREE.Mesh(geo, m); obj.add(mesh);
+  const ax = new THREE.AxesHelper(0.16); ax.material.depthTest = false; ax.renderOrder = 3; obj.add(ax);
+  const mk = markers.map(p => { const s = new THREE.Mesh(markerGeo, markerMat); s.position.set(...p); obj.add(s); return { local: p, mesh: s }; });
+  segs[name] = { obj, mesh, ax, mk };
+}
+const pelvisGeo = new THREE.CylinderGeometry(0.15, 0.1, 0.17, 14); pelvisGeo.rotateX(Math.PI/2); pelvisGeo.scale(1, 0.62, 1); pelvisGeo.translate(0, -0.01, 0.06);
+makeSeg('pelvis', pelvisGeo, '#d4a72c', [[0.12,0.07,0.1], [-0.12,0.07,0.1], [0.05,-0.1,0.11], [-0.05,-0.1,0.11]]);
+for (const side of ['R', 'L']) {
+  const g = side === 'R' ? 1 : -1;
+  makeSeg(side+'Thigh', frustum(0.068, 0.045, B.thigh), '#3d7fd9',
+    [[g*0.075,0.02,-0.17], [g*0.078,-0.03,-0.23], [g*0.07,0.03,-0.29], [g*0.05,0,-0.42], [-g*0.05,0,-0.42]]);   // cluster x3, lateral and medial knee
+  makeSeg(side+'Shank', frustum(0.05, 0.03, B.shank), '#36a86b',
+    [[g*0.055,0.02,-0.12], [g*0.057,-0.02,-0.18], [g*0.05,0.025,-0.24], [g*0.035,-0.005,-0.42], [-g*0.03,0.005,-0.41]]);   // cluster x3, malleoli
+  const fg = new THREE.CylinderGeometry(0.024, 0.04, 0.23, 14); fg.scale(1.25, 1, 0.75); fg.translate(0, 0.045, -0.045);
+  makeSeg(side+'Foot', fg, '#e0703f', [[0,-0.075,-0.04], [g*0.01,0.15,-0.06], [g*0.045,0.11,-0.065]]);   // heel, 2nd and 5th MT
+}
+const ghost = new THREE.Mesh(frustum(0.068, 0.045, B.thigh), new THREE.MeshBasicMaterial({ color: '#ffd24a', transparent: true, opacity: 0.35, depthWrite: false }));
+ghost.matrixAutoUpdate = false; lab.add(ghost);
+
+// free marker for step 1A
+const freePt = new THREE.Mesh(new THREE.SphereGeometry(0.03, 16, 12), hotMat); lab.add(freePt);
+function makeLine(col, opacity = 1, dashed = false) {
+  const g = new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute([0,0,0, 0,0,0], 3));
+  const m = dashed ? new THREE.LineDashedMaterial({ color: col, dashSize: 0.05, gapSize: 0.04, transparent: true, opacity }) : new THREE.LineBasicMaterial({ color: col, transparent: true, opacity });
+  const l = new THREE.Line(g, m); lab.add(l); return l;
+}
+function setLine(l, a, b) { const p = l.geometry.attributes.position; p.setXYZ(0, ...a); p.setXYZ(1, ...b); p.needsUpdate = true; l.geometry.computeBoundingSphere(); if (l.material.isLineDashedMaterial) l.computeLineDistances(); }
+const dropLines = [makeLine('#aab4be', 0.8, true), makeLine('#aab4be', 0.8, true), makeLine('#aab4be', 0.8, true)];
+const camRay = makeLine('#00c2b2', 0.9);
+const imgPt = new THREE.Mesh(new THREE.SphereGeometry(0.022, 14, 10), new THREE.MeshBasicMaterial({ color: '#00c2b2', wireframe: true })); lab.add(imgPt);
+
+// 2D camera and its calibrated plane of motion (X = 0)
+const cam2d = new THREE.Group(); lab.add(cam2d);
+const camBody = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.11, 0.11), new THREE.MeshStandardMaterial({ color: '#30363d' })); cam2d.add(camBody);
+const lensG = new THREE.CylinderGeometry(0.035, 0.045, 0.07, 16); lensG.rotateZ(Math.PI/2);
+const lens = new THREE.Mesh(lensG, new THREE.MeshStandardMaterial({ color: '#111' })); lens.position.x = -0.11; cam2d.add(lens);
+cam2d.position.set(...CAM);
+const camLbl = textSprite('2D camera', '#00c2b2', 0.12); camLbl.position.set(CAM[0], CAM[1], CAM[2] + 0.2); lab.add(camLbl);
+const planeG = new THREE.PlaneGeometry(1.7, 1.9); planeG.rotateY(Math.PI/2);
+const plane = new THREE.Mesh(planeG, new THREE.MeshBasicMaterial({ color: '#00c2b2', transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false }));
+plane.position.set(0, AY, 0.85); lab.add(plane);
+const planeEdge = new THREE.LineSegments(new THREE.EdgesGeometry(planeG), new THREE.LineBasicMaterial({ color: '#00c2b2', transparent: true, opacity: 0.5 }));
+planeEdge.position.copy(plane.position); lab.add(planeEdge);
+
+// 9-camera ceiling rig for step 4
+const rig = new THREE.Group(); lab.add(rig);
+const rigCams = [];
+for (let i = 0; i < 9; i++) {
+  const a = i / 9 * Math.PI * 2 + 0.3;
+  const c = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.1), new THREE.MeshStandardMaterial({ color: '#3a434d', emissive: '#000' }));
+  c.position.set(3.0 * Math.cos(a), AY + 3.0 * Math.sin(a), 2.6); rig.add(c); rigCams.push(c);
+}
+const rays = rigCams.map(() => makeLine('#ffd24a', 0.9));
+const rayExt = makeLine('#ffd24a', 0.6, true);
+const maybePts = [0.25, 0.5, 0.75, 1.0].map(() => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.02, 12, 8), new THREE.MeshBasicMaterial({ color: '#ffd24a', transparent: true, opacity: 0.45 })); lab.add(m); return m; });
+const camOrder = [0, 4, 7, 2, 5, 8, 1, 3, 6];
+
+// ---------- pose ----------
+function pose() {
+  const P = {};
+  const turn = S.step === 1 ? S.turn : 0;
+  const k = S.step === 0 ? 0 : S.step === 3 ? 20 : S.knee;
+  const v = S.step === 2 ? S.valgus : 0, r = S.step === 2 ? S.rot : 0;
+  const segMode = S.step === 0 && S.mode === 'segment';
+  const a = 0.4 * k, pt = 0.25 * k, h = k - a + pt;      // ankle dorsiflexion, pelvic tilt, hip flexion that keep the feet flat
+  const Rb = Rz(-turn * D);
+  const Rp = mul(Rb, Rx(-pt * D));
+  P.pelvis = { R: Rp, o: [0, 0, 0] };
+  for (const side of ['R', 'L']) {
+    const g = side === 'R' ? 1 : -1;
+    const hip = mv(Rp, [g * B.hip, 0, 0]);
+    const Rt = (segMode && side === 'R')
+      ? mul(Rp, mul(Rx(S.hf * D), mul(Ry(-S.ha * D), Rz(S.hr * D))))
+      : mul(Rp, mul(Rx(h * D), Ry(g * v / 2 * D)));       // hip adduction of half the valgus keeps the foot under the body
+    const knee = add(hip, mv(Rt, [0, 0, -B.thigh]));
+    const Rs = mul(Rt, mul(Rx(-k * D), mul(Ry(-g * v * D), Rz(g * r * D))));   // knee: flexion, valgus, internal rotation (XYZ)
+    const ankle = add(knee, mv(Rs, [0, 0, -B.shank]));
+    const Rf = (segMode && side === 'R') ? Rs : mul(Rb, Rz(g * r * D));
+    P[side+'Thigh'] = { R: Rt, o: hip }; P[side+'Shank'] = { R: Rs, o: knee }; P[side+'Foot'] = { R: Rf, o: ankle };
+  }
+  // put the feet on the floor, near leg in the camera's calibrated plane
+  const la = P.LFoot.o, ra = P.RFoot.o;
+  const anchor = segMode ? la : [(la[0] + ra[0]) / 2, (la[1] + ra[1]) / 2, la[2]];
+  const target = segMode ? [-2 * B.hip, AY] : add(mv(Rb, [-B.hip, 0, 0]), [0, AY, 0]);
+  const lowest = Math.min(...[[0,-0.075,-B.ankleH], [0,0.16,-B.ankleH]].map(p => mv(P.LFoot.R, p)[2] + la[2]));
+  const shift = [target[0] - anchor[0], target[1] - anchor[1], -lowest];
+  for (const n in P) P[n].o = add(P[n].o, shift);
+  return P;
+}
+const world = (P, seg, i) => add(P[seg].o, mv(P[seg].R, segs[seg].mk[i].local));
+
+// ---------- UI per step ----------
+const slider = (key, label, min, max, step, unit = '°') =>
+  `<div class="sl"><label><span>${label}</span> <b id="${key}V">${S[key]}${unit}</b></label><input type="range" data-key="${key}" data-unit="${unit}" min="${min}" max="${max}" step="${step}" value="${S[key]}"></div>`;
+const axesNote = `<div class="note"><b>Check your axes.</b> In 2D (ISB convention) <b>y</b> is vertical. In QTM and Visual3D, <span class="z">Z</span> is vertical. Always say which axis is which.</div>`;
+
+function controlsHTML() {
+  if (S.step === 0) {
+    const tabs = `<div class="seg"><button data-mode="point" class="${S.mode==='point'?'on':''}">A point</button><button data-mode="segment" class="${S.mode==='segment'?'on':''}">A segment</button></div>`;
+    if (S.mode === 'point') return `<h2>Where is a point?</h2>${tabs}
+      <p>In 3D a marker's position is three numbers measured from the lab's origin. One camera only gets two. Move the marker towards the camera (<span class="x">X</span>) and watch the 2D numbers.</p>
+      ${slider('px', '<span><span class="x">X</span> towards / away from the camera</span>', -1, 1, 0.01, ' m')}
+      ${slider('py', '<span><span class="y">Y</span> forwards / backwards</span>', -0.8, 0.8, 0.01, ' m')}
+      ${slider('pz', '<span><span class="z">Z</span> up / down</span>', 0.05, 1.6, 0.01, ' m')}${axesNote}`;
+    return `<h2>Where is a segment?</h2>${tabs}
+      <p>A segment needs its position <i>and</i> which way it faces. In 2D that's 3 numbers (x, y and one angle). In 3D it's 6 (X, Y, Z and three angles). These are its <b>degrees of freedom</b>. Try the rotation slider.</p>
+      ${slider('hf', 'Thigh flexion (about <span class="x">X</span>)', -20, 90, 1)}
+      ${slider('ha', 'Thigh abduction (about <span class="y">Y</span>)', -20, 40, 1)}
+      ${slider('hr', 'Thigh rotation (about <span class="z">Z</span>)', -40, 40, 1)}
+      <div class="note"><b>Global vs local.</b> The big arrows on the floor are the lab's axes (global). The small axes on each segment move with it (local). A 3D joint angle is one segment's axes compared with the next.</div>`;
+  }
+  if (S.step === 1) return `<h2>Turn the athlete</h2>
+    <p>2D only works if the camera is side-on to the movement. Turn the athlete towards the camera. The real knee angle stays the same, but the 2D angle drifts.</p>
+    ${slider('knee', 'Knee flexion (squat depth)', 0, 100, 1)}
+    ${slider('turn', 'Turn towards the camera', 0, 60, 1)}
+    <div class="note">The shaded panel is the plane the 2D camera was calibrated in. Once the movement leaves that plane, the 2D numbers can't be trusted.</div>`;
+  if (S.step === 2) return `<h2>Valgus and rotation</h2>
+    <p>A side-on camera can't see the knee moving inwards (valgus) or twisting (rotation). 3D measures all three, always in the same order: flexion first, then valgus, then rotation.</p>
+    ${slider('knee', 'Knee flexion', 0, 100, 1)}
+    ${slider('valgus', 'Knee valgus (knees in)', 0, 20, 1)}
+    ${slider('rot', 'Knee rotation (+ internal)', -15, 15, 1)}
+    <div class="note">Press <b>Front</b> under the 3D view to see the valgus, then <b>Side</b> to see what the 2D camera sees. In year 3 you'll meet this order as a <b>Cardan sequence</b> (XYZ).</div>`;
+  const tabs = `<div class="seg"><button data-sub="cams" class="${S.sub3==='cams'?'on':''}">A. Finding a marker</button><button data-sub="mks" class="${S.sub3==='mks'?'on':''}">B. Tracking a segment</button></div>`;
+  if (S.sub3 === 'cams') return `<h2>How 3D works</h2>${tabs}
+    <p>Each camera only knows the <i>direction</i> to a marker, not how far away it is. With two or more cameras the lines cross, and that point is the marker's 3D position.</p>
+    <div class="seg"><button data-ncam="1" class="${S.nCam===1?'on':''}">1 camera</button><button data-ncam="2" class="${S.nCam===2?'on':''}">2 cameras</button><button data-ncam="9" class="${S.nCam===9?'on':''}">All 9</button></div>
+    <div class="note">Like our lab: 9 cameras on a ceiling rig. Calibrating with the wand tells the system exactly where each camera is.</div>`;
+  return `<h2>How 3D works</h2>${tabs}
+    <p>To know where a segment is <i>and</i> which way it faces, the system needs at least three markers on it that aren't in a straight line. That's why each segment has a cluster.</p>
+    <div class="seg"><button data-nmk="1" class="${S.nMk===1?'on':''}">1 marker</button><button data-nmk="2" class="${S.nMk===2?'on':''}">2 markers</button><button data-nmk="3" class="${S.nMk===3?'on':''}">3 markers</button></div>
+    <div class="note">The gold ghost shows where the thigh <i>could</i> be with that many markers.</div>`;
+}
+const ctl = document.getElementById('controls');
+function buildControls() {
+  ctl.innerHTML = controlsHTML();
+  ctl.querySelectorAll('input[type=range]').forEach(el => el.addEventListener('input', () => {
+    S[el.dataset.key] = +el.value; document.getElementById(el.dataset.key + 'V').textContent = el.value + el.dataset.unit; update();
+  }));
+  ctl.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { S.mode = b.dataset.mode; buildControls(); update(); });
+  ctl.querySelectorAll('[data-sub]').forEach(b => b.onclick = () => { S.sub3 = b.dataset.sub; setView(S.sub3 === 'cams' ? 'far' : 'near'); buildControls(); update(); });
+  ctl.querySelectorAll('[data-ncam]').forEach(b => b.onclick = () => { S.nCam = +b.dataset.ncam; buildControls(); update(); });
+  ctl.querySelectorAll('[data-nmk]').forEach(b => b.onclick = () => { S.nMk = +b.dataset.nmk; buildControls(); update(); });
+}
+
+// ---------- angles ----------
+const ang2 = (a, b, c) => { const u = [a[0]-b[0], a[1]-b[1]], w = [c[0]-b[0], c[1]-b[1]]; return Math.acos((u[0]*w[0] + u[1]*w[1]) / Math.hypot(...u) / Math.hypot(...w)) / D; };
+function kneeAngles(P) {
+  const [a, b, c] = cardan(mul(tr(P.RThigh.R), P.RShank.R));
+  const h = proj(P.RThigh.o), k = proj(P.RShank.o), an = proj(P.RFoot.o);
+  return { flex: -a, valgus: -b, rot: c, flex2d: 180 - ang2(h, k, an) };
+}
+const f = (x, d = 1) => (Math.abs(x) < 0.05 && d === 1 ? 0 : x).toFixed(d);
+
+// ---------- update ----------
+let P;
+function update() {
+  P = pose();
+  for (const n in segs) {
+    const { R, o } = P[n];
+    segs[n].obj.matrix.set(R[0],R[1],R[2],o[0], R[3],R[4],R[5],o[1], R[6],R[7],R[8],o[2], 0,0,0,1);
+    segs[n].obj.matrixWorldNeedsUpdate = true;
+    segs[n].ax.visible = document.getElementById('showAxes').checked;
+    segs[n].mk.forEach(m => { m.mesh.visible = document.getElementById('showMarkers').checked; m.mesh.material = markerMat; });
+    mats[n].opacity = 1;
+  }
+  const pointMode = S.step === 0 && S.mode === 'point', segMode = S.step === 0 && S.mode === 'segment';
+  skeleton.visible = !pointMode;
+  [freePt, imgPt, camRay, ...dropLines].forEach(o => o.visible = pointMode);
+  [cam2d, camLbl, plane, planeEdge].forEach(o => o.visible = S.step < 3);
+  rig.visible = S.step === 3;
+  const showRays = S.step === 3 && S.sub3 === 'cams';
+  rays.forEach(r => r.visible = false); rayExt.visible = false; maybePts.forEach(m => m.visible = false);
+  ghost.visible = S.step === 3 && S.sub3 === 'mks' && S.nMk < 3;
+  rigCams.forEach(c => c.material.emissive.set('#000'));
+  if (segMode) for (const n in mats) if (n !== 'RThigh') mats[n].opacity = 0.25;
+
+  if (pointMode) {
+    const p = [S.px, S.py, S.pz];
+    freePt.position.set(...p);
+    setLine(dropLines[0], p, [p[0], p[1], 0]); setLine(dropLines[1], [p[0], p[1], 0], [p[0], 0, 0]); setLine(dropLines[2], [p[0], p[1], 0], [0, p[1], 0]);
+    const q = proj(p); imgPt.position.set(0, q[0], q[1]);
+    setLine(camRay, CAM, [0, q[0], q[1]]);
+  }
+  if (S.step === 3) {
+    if (showRays) {
+      const m = world(P, 'RThigh', 3);   // lateral knee marker
+      segs.RThigh.mk[3].mesh.material = hotMat; segs.RThigh.mk[3].mesh.visible = true;
+      camOrder.slice(0, S.nCam).forEach(i => { rays[i].visible = true; setLine(rays[i], rigCams[i].position.toArray(), m); rigCams[i].material.emissive.set('#7a5c00'); });
+      if (S.nCam === 1) {
+        const c = rigCams[camOrder[0]].position.toArray(), d = sub(m, c);
+        const end = add(m, d.map(x => x * 0.6)); setLine(rayExt, m, end); rayExt.visible = true;
+        maybePts.forEach((s, i) => { const t = [-0.35, -0.15, 0.25, 0.5][i]; s.position.set(...add(m, d.map(x => x * t))); s.visible = true; });
+      }
+    } else {
+      const ids = [[0], [0, 2], [0, 1, 2]][S.nMk - 1];
+      ids.forEach(i => { segs.RThigh.mk[i].mesh.material = hotMat; segs.RThigh.mk[i].mesh.visible = true; });
+    }
+  }
+  buildReadout();
+}
+
+// ---------- readout ----------
+const rd = document.getElementById('readout');
+function buildReadout() {
+  if (S.step === 0 && S.mode === 'point') {
+    const q = proj([S.px, S.py, S.pz]);
+    rd.innerHTML = `<h2>The numbers</h2><table>
+      <tr><th>3D (lab)</th><td class="big3d"><span class="x">X</span> ${f(S.px,2)} &nbsp; <span class="y">Y</span> ${f(S.py,2)} &nbsp; <span class="z">Z</span> ${f(S.pz,2)} m</td><td>3 numbers</td></tr>
+      <tr><th>2D (camera)</th><td class="big2d">x ${f(q[0],2)} &nbsp; y ${f(q[1],2)} m</td><td>2 numbers</td></tr></table>
+      <p class="msg">${Math.abs(S.px) < 0.02 ? 'The marker is in the calibrated plane, so the 2D numbers match the real ones.' : 'The camera can\'t see it move towards or away. It just looks bigger or smaller, so x and y come out wrong (perspective error).'}</p>`;
+    return;
+  }
+  if (S.step === 0) {
+    const [a, b, c] = cardan(P.RThigh.R), o = P.RThigh.o;
+    const h = proj(o), k = proj(P.RShank.o), th = Math.atan2(k[0] - h[0], h[1] - k[1]) / D;
+    rd.innerHTML = `<h2>The numbers (right thigh)</h2><table>
+      <tr><th>2D</th><td class="big2d">x ${f(h[0],2)}, y ${f(h[1],2)} m, angle ${f(th)}°</td><td>3 numbers</td></tr>
+      <tr><th>3D</th><td class="big3d"><span class="x">X</span> ${f(o[0],2)}, <span class="y">Y</span> ${f(o[1],2)}, <span class="z">Z</span> ${f(o[2],2)} m<br>flexion ${f(a)}°, abduction ${f(-b)}°, rotation ${f(c)}°</td><td>6 numbers</td></tr></table>
+      <p class="msg">${Math.abs(S.hr) > 2 || Math.abs(S.ha) > 2 ? 'Abduction and rotation are real movements, but the 2D camera has no number for them.' : 'Move the abduction or rotation slider and compare the two rows.'}</p>`;
+    return;
+  }
+  if (S.step < 3) {
+    const k = kneeAngles(P), err = k.flex2d - k.flex;
+    rd.innerHTML = `<h2>Right knee angle</h2><table>
+      <tr><th></th><th>2D camera</th><th>3D</th></tr>
+      <tr><td>Flexion</td><td class="big2d">${f(k.flex2d)}°</td><td class="big3d">${f(k.flex)}°</td></tr>
+      <tr><td>Valgus</td><td>can't see</td><td class="big3d">${f(k.valgus)}°</td></tr>
+      <tr><td>Rotation</td><td>can't see</td><td class="big3d">${f(k.rot)}°</td></tr></table>
+      <p class="msg">2D flexion error: ${err > 0 ? '+' : ''}${f(err)}°${Math.abs(err) >= 3 ? ', big enough to matter.' : ''}</p>`;
+    return;
+  }
+  if (S.sub3 === 'cams') {
+    const m = world(P, 'RThigh', 3);
+    rd.innerHTML = `<h2>Lateral knee marker</h2><table>
+      <tr><th>Cameras that see it</th><td>${S.nCam}</td></tr>
+      <tr><th>3D position</th><td class="big3d">${S.nCam === 1 ? 'unknown, somewhere along the line' : `<span class="x">X</span> ${f(m[0],2)}, <span class="y">Y</span> ${f(m[1],2)}, <span class="z">Z</span> ${f(m[2],2)} m`}</td></tr></table>
+      <p class="msg">${S.nCam === 1 ? 'One camera gives a direction, not a distance.' : S.nCam === 2 ? 'Two lines cross, so the position is found. Two is the minimum.' : 'More cameras means better accuracy, and backup when a marker is hidden by an arm or the other leg.'}</p>`;
+    return;
+  }
+  const known = [3, 5, 6][S.nMk - 1];
+  rd.innerHTML = `<h2>Right thigh</h2><table>
+    <tr><th>Markers</th><td>${S.nMk}</td></tr>
+    <tr><th>Degrees of freedom known</th><td class="big3d">${known} of 6</td></tr></table>
+    <p class="msg">${['Position only. The thigh could be pointing anywhere.', 'It could still spin around the line between the two markers.', 'Position and orientation locked. Now joint angles can be calculated.'][S.nMk - 1]}</p>`;
+}
+
+// ---------- 2D camera view ----------
+const cv = document.getElementById('v2d'), g2 = cv.getContext('2d');
+function draw2D() {
+  const dpr = window.devicePixelRatio || 1, W = cv.width, H = cv.height;
+  g2.fillStyle = '#262b30'; g2.fillRect(0, 0, W, H);
+  const sc = Math.min(W / 2.1, H / 1.95), ox = W / 2 - 0.4 * sc, oy = H / 2 + 0.85 * sc;
+  const px = p => [ox + p[0] * sc, oy - p[1] * sc];
+  const line = (pts, col, w = 3) => { g2.strokeStyle = col; g2.lineWidth = w * dpr; g2.beginPath(); pts.forEach((p, i) => { const q = px(p); i ? g2.lineTo(...q) : g2.moveTo(...q); }); g2.stroke(); };
+  const dot = (p, col, r = 4) => { const q = px(p); g2.fillStyle = col; g2.beginPath(); g2.arc(q[0], q[1], r * dpr, 0, 7); g2.fill(); };
+  const text = (t, x, y, col = '#fff', size = 14, al = 'left') => { g2.fillStyle = col; g2.font = `bold ${size * dpr}px Arial`; g2.textAlign = al; g2.fillText(t, x, y); };
+  line([[-1, 0], [2, 0]], '#55606b', 2);
+  // 2D axes icon (ISB: y up)
+  const ax0 = [16 * dpr, H - 16 * dpr];
+  g2.strokeStyle = '#ccd'; g2.lineWidth = 2 * dpr; g2.beginPath(); g2.moveTo(ax0[0], ax0[1] - 50 * dpr); g2.lineTo(...ax0); g2.lineTo(ax0[0] + 50 * dpr, ax0[1]); g2.stroke();
+  text('x', ax0[0] + 54 * dpr, ax0[1] + 4 * dpr, '#ccd', 13); text('y', ax0[0] - 4 * dpr, ax0[1] - 56 * dpr, '#ccd', 13);
+  text('Camera on the athlete\'s right', 12 * dpr, 22 * dpr, '#9aa5b0', 13);
+
+  if (S.step === 0 && S.mode === 'point') {
+    const q = proj([S.px, S.py, S.pz]);
+    line([[q[0], 0], q], '#6b7884', 1); line([[0, 0], [0, 1.8]], '#4a5560', 1); line([[0, q[1]], q], '#6b7884', 1);
+    dot(q, '#00c2b2', 7);
+    const c = px(q); text(`(${f(q[0],2)}, ${f(q[1],2)})`, c[0] + 12 * dpr, c[1] - 10 * dpr, '#00c2b2', 15);
+    return;
+  }
+  const near = '#4fd1c5', far = '#6f7d89';
+  for (const side of ['L', 'R']) {
+    const col = side === 'R' ? near : far, w = side === 'R' ? 4 : 3;
+    const h = proj(P[side+'Thigh'].o), k = proj(P[side+'Shank'].o), a = proj(P[side+'Foot'].o);
+    const heel = proj(world(P, side+'Foot', 0)), toe = proj(world(P, side+'Foot', 1));
+    line([h, k, a], col, w); line([a, heel, toe, a], col, w - 1);
+    [h, k, a, heel, toe].forEach(p => dot(p, '#fff', 3.5));
+  }
+  const pr = ['pelvis', 0], pp = ['pelvis', 2];
+  line([proj(world(P, ...pr)), proj(world(P, ...pp)), proj(P.RThigh.o), proj(world(P, ...pr))], '#d4a72c', 2);
+  const h = proj(P.RThigh.o), k = proj(P.RShank.o), a = proj(P.RFoot.o);
+  const arc = (c, p1, p2, label) => {
+    const cc = px(c), q1 = px(p1), q2 = px(p2);
+    let a1 = Math.atan2(q1[1] - cc[1], q1[0] - cc[0]), a2 = Math.atan2(q2[1] - cc[1], q2[0] - cc[0]);
+    let dA = a2 - a1; while (dA > Math.PI) dA -= 2 * Math.PI; while (dA < -Math.PI) dA += 2 * Math.PI;
+    g2.strokeStyle = '#ffd24a'; g2.lineWidth = 2.5 * dpr; g2.beginPath(); g2.arc(cc[0], cc[1], 26 * dpr, a1, a1 + dA, dA < 0); g2.stroke();
+    text(label, cc[0] + 34 * dpr, cc[1] + 5 * dpr, '#ffd24a', 16);
+  };
+  if (S.step === 0) {
+    const down = [h[0], h[1] - 0.3];
+    line([h, down], '#ffd24a', 1.5); arc(h, down, k, `${f(Math.atan2(k[0] - h[0], h[1] - k[1]) / D)}°`);
+  } else if (S.step < 3) {
+    const ext = [k[0] + (k[0] - h[0]), k[1] + (k[1] - h[1])];
+    g2.setLineDash([6 * dpr, 5 * dpr]); line([k, [k[0] + (k[0] - h[0]) * 0.5, k[1] + (k[1] - h[1]) * 0.5]], '#ffd24a', 1.5); g2.setLineDash([]);
+    arc(k, ext, a, `${f(kneeAngles(P).flex2d)}°`);
+  } else {
+    const m = proj(world(P, 'RThigh', S.sub3 === 'cams' ? 3 : 0));
+    dot(m, '#ffd24a', 7);
+    if (S.sub3 === 'cams') text('One camera: a direction, not a distance', W / 2, 46 * dpr, '#ffd24a', 14, 'center');
+  }
+}
+
+// ---------- views, resize, loop ----------
+const views = { side: [3.2, 0.75, -0.6], front: [0, 0.75, -3.6], iso: [2.0, 1.4, -2.6], far: [3.9, 3.0, -4.6], near: [1.5, 1.2, -1.9] };
+function setView(v) { cam3.position.set(...views[v]); controls.target.set(0, v === 'far' ? 1.0 : 0.6, -0.6); controls.update(); }
+document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => setView(b.dataset.view));
+['showAxes', 'showMarkers'].forEach(id => document.getElementById(id).onchange = update);
+document.querySelectorAll('.steps button').forEach(b => b.onclick = () => {
+  S.step = +b.dataset.step;
+  document.querySelectorAll('.steps button').forEach(x => x.classList.toggle('on', x === b));
+  document.getElementById('t2d').innerHTML = S.step === 3 ? 'What one camera sees <span>a flat picture</span>' : '2D camera view <span>one camera, side-on</span>';
+  setView(S.step === 3 ? 'far' : S.step === 2 ? 'front' : 'iso');
+  buildControls(); update();
+});
+function resize() {
+  const w = box3.clientWidth, h = box3.clientHeight;
+  renderer.setSize(w, h, false); renderer.domElement.style.width = '100%'; renderer.domElement.style.height = '100%';
+  cam3.aspect = w / h; cam3.updateProjectionMatrix();
+  const dpr = window.devicePixelRatio || 1; cv.width = cv.clientWidth * dpr; cv.height = cv.clientHeight * dpr;
+}
+window.addEventListener('resize', resize);
+
+const mRot = new THREE.Matrix4(), mT = new THREE.Matrix4(), mTi = new THREE.Matrix4(), base = new THREE.Matrix4();
+function animateGhost(t) {
+  if (!ghost.visible) return;
+  base.copy(segs.RThigh.obj.matrix);
+  let p, axis, ang;
+  if (S.nMk === 1) { p = world(P, 'RThigh', 0); axis = new THREE.Vector3(Math.sin(t * 0.7), Math.cos(t * 0.5), 0.6).normalize(); ang = 35 * D * Math.sin(t * 1.3); }
+  else { p = world(P, 'RThigh', 0); const q = world(P, 'RThigh', 2); axis = new THREE.Vector3(...sub(q, p)).normalize(); ang = 60 * D * Math.sin(t * 1.2); }
+  mT.makeTranslation(...p); mTi.makeTranslation(-p[0], -p[1], -p[2]); mRot.makeRotationAxis(axis, ang);
+  ghost.matrix.copy(mT).multiply(mRot).multiply(mTi).multiply(base); ghost.matrixWorldNeedsUpdate = true;
+}
+function loop(ms) {
+  requestAnimationFrame(loop);
+  controls.update(); animateGhost(ms / 1000);
+  renderer.render(scene, cam3); draw2D();
+}
+resize(); setView('iso'); buildControls(); update(); requestAnimationFrame(loop);
+</script>
+</body>
+</html>
