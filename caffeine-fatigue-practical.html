@@ -126,6 +126,8 @@
   <p>A guided investigation of the class caffeine practical</p>
   <div class="ctx">
     <label for="outcomeSel">Outcome <select id="outcomeSel"></select></label>
+    <label for="cmpSel" id="cmpWrap">Compare <select id="cmpSel"></select></label>
+    <label for="grpSel" id="grpWrap" style="display:none">Group <select id="grpSel"><option value="caffeine">Caffeine group</option><option value="control">Control group</option><option value="all">Both groups</option></select></label>
     <span id="dsName"></span>
   </div>
 </div></header>
@@ -183,6 +185,7 @@
 <section class="step" data-step="2" aria-labelledby="h2s" hidden>
   <p class="kicker">Step 2 of 8</p>
   <h2 id="h2s" tabindex="-1">Meet the data</h2>
+  <div class="cmpBanner"></div>
   <p>Before any analysis, look at what was collected and check it for problems. Every decision later depends on this step.</p>
   <h3>Data check</h3>
   <div id="validation"></div>
@@ -206,6 +209,7 @@
 <section class="step" data-step="3" aria-labelledby="h3s" hidden>
   <p class="kicker">Step 3 of 8</p>
   <h2 id="h3s" tabindex="-1">Group-level comparison</h2>
+  <div class="cmpBanner"></div>
   <fieldset class="predict" data-reveal="r3">
     <legend>Predict before you look</legend>
     <p>When each person's scores are joined by a line, how many lines do you expect to show an improvement with caffeine?</p>
@@ -224,6 +228,7 @@
     </div>
     <div class="chartbox"><div id="chart3"></div><p class="chartsum" id="sum3"></p></div>
     <div id="stats3"></div>
+    <div id="grp3"></div>
     <details class="tm"><summary>Tell me more about paired and independent comparisons</summary><div>
       <p>A <dfn>paired</dfn> comparison works with each person's own difference between conditions. An <dfn>independent</dfn> comparison treats the two sets of scores as if they came from different people.</p>
       <p>Because people differ a lot from each other (some jump 15 cm, others 40 cm), the independent view buries a small, consistent change under the large spread between people. The paired view removes that spread, which is why the uncertainty in the difference is usually much smaller.</p>
@@ -237,6 +242,7 @@
 <section class="step" data-step="4" aria-labelledby="h4s" hidden>
   <p class="kicker">Step 4 of 8</p>
   <h2 id="h4s" tabindex="-1">Difference scores</h2>
+  <div class="cmpBanner"></div>
   <p>A <dfn>difference score</dfn> is each person's caffeine score minus their comparison score. We correct the sign so that <strong>a positive difference always means better with caffeine</strong>, even for timed outcomes where lower is better. This convention is used on every remaining step.</p>
   <p>Not every positive difference matters. The <dfn>smallest worthwhile change (SWC)</dfn> is the smallest difference that would be meaningful. A common default is 0.2 &times; the <dfn>between-subject standard deviation</dfn> (how much people differ from each other) of the comparison scores.</p>
   <details class="tm"><summary>Tell me more about the SWC</summary><div><p>0.2 of a between-subject SD is the threshold for a "small" effect on Cohen's scale. For an individual athlete, a coach might prefer a value based on what changes competition results, for example 0.3 &times; the race-to-race variation of elite performers (Hopkins, Hawley and Burke, 1999). The SWC is a judgement, so it should be set before looking at the results.</p></div></details>
@@ -264,6 +270,7 @@
 <section class="step" data-step="5" aria-labelledby="h5s" hidden>
   <p class="kicker">Step 5 of 8</p>
   <h2 id="h5s" tabindex="-1">How confident can we be?</h2>
+  <div class="cmpBanner"></div>
   <p>Our class is a small sample, so the mean difference we observed is only an estimate of the true effect of caffeine. A <dfn>Bayesian</dfn> analysis turns the data into a <dfn>posterior distribution</dfn>: a curve showing how plausible each possible true effect is, given the data.</p>
   <details class="tm"><summary>Tell me more about the method</summary><div>
     <p>We use a <dfn>reference prior</dfn>, which lets the data speak for themselves. With this prior, the posterior for the true mean difference is a Student t distribution with n &minus; 1 degrees of freedom, centred on the observed mean difference, with a scale equal to the SD of the differences divided by &radic;n.</p>
@@ -306,6 +313,7 @@
 <section class="step" data-step="6" aria-labelledby="h6s" hidden>
   <p class="kicker">Step 6 of 8</p>
   <h2 id="h6s" tabindex="-1">Responders and non-responders?</h2>
+  <div class="cmpBanner"></div>
   <p>It is tempting to label people who improved as "responders" and the rest as "non-responders". But every test has <dfn>measurement noise</dfn>: if you tested someone twice with no caffeine at all, the scores would still differ. The <dfn>typical error (TE)</dfn> is the typical size of that random variation for one person (Hopkins, 2000).</p>
   <fieldset class="predict" data-reveal="r6">
     <legend>Predict before you look</legend>
@@ -335,6 +343,7 @@
 <section class="step" data-step="7" aria-labelledby="h7s" hidden>
   <p class="kicker">Step 7 of 8</p>
   <h2 id="h7s" tabindex="-1">Why might it have worked, or not?</h2>
+  <div class="cmpBanner"></div>
   <div class="warn"><strong>Exploratory only.</strong> With a small class, any association below is easily produced by chance or by one unusual person. Treat these panels as ideas to test in a future study, not as proof.</div>
   <div id="why"></div>
   <div class="mcq" data-mcq="m7"></div>
@@ -345,6 +354,7 @@
 <section class="step" data-step="8" aria-labelledby="h8s" hidden>
   <p class="kicker">Step 8 of 8</p>
   <h2 id="h8s" tabindex="-1">Conclusion and reflection</h2>
+  <div class="cmpBanner"></div>
   <h3>Your prediction and the data</h3>
   <div class="scroll"><table id="predTable"></table></div>
   <div id="finalVerdict"></div>
@@ -561,7 +571,8 @@ var DataKit = (function () {
     return null;
   }
   function normGuess(s) { s = String(s || '').trim().toLowerCase(); if (!s) return null; if (/^(caf|caffeine|c)/.test(s)) return 'caffeine'; if (/^(pla|placebo|p)/.test(s)) return 'placebo'; if (/^(uns|unsure|don|dk|not)/.test(s)) return 'unsure'; return 'unsure'; }
-  function prettyOutcome(k) { var s = String(k).replace(/_/g, ' '); return s.charAt(0).toUpperCase() + s.slice(1); }
+  var NICE = { jump_height: 'Jump height', handgrip: 'Handgrip', imtp_peak: 'IMTP peak', braking_phase: 'Braking phase duration', propulsive_phase: 'Propulsive phase duration', relative_force_at_minimum: 'Relative force at minimum', relative_braking_force: 'Relative braking force', relative_propulsive_force: 'Relative propulsive force' };
+  function prettyOutcome(k) { if (NICE[normHeader(k)]) return NICE[normHeader(k)]; var s = String(k).replace(/_/g, ' '); return s.charAt(0).toUpperCase() + s.slice(1); }
 
   function load(text) {
     var msgs = [], P = parseCSV(text);
@@ -641,7 +652,7 @@ var DataKit = (function () {
 })();
 /* ===================== DATA-END ===================== */
 
-var CLASS_CSV = "participant_id,group,condition,trial_order,rep,outcome,unit,higher_is_better,performance,body_mass_kg,caffeine_dose_mg\nCaf-1,caffeine,baseline,1,1,jump_height,cm,TRUE,15,80,300\nCaf-1,caffeine,baseline,1,2,jump_height,cm,TRUE,14,80,300\nCaf-1,caffeine,baseline,1,1,handgrip,kg,TRUE,25,80,300\nCaf-1,caffeine,baseline,1,2,handgrip,kg,TRUE,27,80,300\nCaf-1,caffeine,baseline,1,1,imtp_peak,units,TRUE,90,80,300\nCaf-1,caffeine,baseline,1,2,imtp_peak,units,TRUE,70,80,300\nCaf-1,caffeine,caffeine,2,1,jump_height,cm,TRUE,15,80,300\nCaf-1,caffeine,caffeine,2,2,jump_height,cm,TRUE,16,80,300\nCaf-1,caffeine,caffeine,2,1,handgrip,kg,TRUE,28,80,300\nCaf-1,caffeine,caffeine,2,2,handgrip,kg,TRUE,28,80,300\nCaf-1,caffeine,caffeine,2,1,imtp_peak,units,TRUE,70,80,300\nCaf-1,caffeine,caffeine,2,2,imtp_peak,units,TRUE,90,80,300\nCaf-1,caffeine,fatigued,3,1,jump_height,cm,TRUE,15,80,300\nCaf-1,caffeine,fatigued,3,2,jump_height,cm,TRUE,16,80,300\nCaf-1,caffeine,fatigued,3,1,handgrip,kg,TRUE,26,80,300\nCaf-1,caffeine,fatigued,3,2,handgrip,kg,TRUE,29,80,300\nCaf-1,caffeine,fatigued,3,1,imtp_peak,units,TRUE,80,80,300\nCaf-1,caffeine,fatigued,3,2,imtp_peak,units,TRUE,87,80,300\nCaf-2,caffeine,baseline,1,1,jump_height,cm,TRUE,27,52,300\nCaf-2,caffeine,baseline,1,2,jump_height,cm,TRUE,26,52,300\nCaf-2,caffeine,baseline,1,1,handgrip,kg,TRUE,35,52,300\nCaf-2,caffeine,baseline,1,2,handgrip,kg,TRUE,33,52,300\nCaf-2,caffeine,baseline,1,1,imtp_peak,units,TRUE,80,52,300\nCaf-2,caffeine,baseline,1,2,imtp_peak,units,TRUE,80,52,300\nCaf-2,caffeine,caffeine,2,1,jump_height,cm,TRUE,25,52,300\nCaf-2,caffeine,caffeine,2,2,jump_height,cm,TRUE,28,52,300\nCaf-2,caffeine,caffeine,2,1,handgrip,kg,TRUE,34,52,300\nCaf-2,caffeine,caffeine,2,2,handgrip,kg,TRUE,32,52,300\nCaf-2,caffeine,caffeine,2,1,imtp_peak,units,TRUE,85,52,300\nCaf-2,caffeine,caffeine,2,2,imtp_peak,units,TRUE,80,52,300\nCaf-2,caffeine,fatigued,3,1,jump_height,cm,TRUE,28,52,300\nCaf-2,caffeine,fatigued,3,2,jump_height,cm,TRUE,27,52,300\nCaf-2,caffeine,fatigued,3,1,handgrip,kg,TRUE,34,52,300\nCaf-2,caffeine,fatigued,3,2,handgrip,kg,TRUE,33,52,300\nCaf-2,caffeine,fatigued,3,1,imtp_peak,units,TRUE,85,52,300\nCaf-2,caffeine,fatigued,3,2,imtp_peak,units,TRUE,90,52,300\nCaf-3,caffeine,baseline,1,1,jump_height,cm,TRUE,31,85,300\nCaf-3,caffeine,baseline,1,2,jump_height,cm,TRUE,27,85,300\nCaf-3,caffeine,baseline,1,1,handgrip,kg,TRUE,44,85,300\nCaf-3,caffeine,baseline,1,2,handgrip,kg,TRUE,45,85,300\nCaf-3,caffeine,baseline,1,1,imtp_peak,units,TRUE,190,85,300\nCaf-3,caffeine,baseline,1,2,imtp_peak,units,TRUE,191,85,300\nCaf-3,caffeine,caffeine,2,1,jump_height,cm,TRUE,32,85,300\nCaf-3,caffeine,caffeine,2,2,jump_height,cm,TRUE,37,85,300\nCaf-3,caffeine,caffeine,2,1,handgrip,kg,TRUE,42,85,300\nCaf-3,caffeine,caffeine,2,2,handgrip,kg,TRUE,43,85,300\nCaf-3,caffeine,caffeine,2,1,imtp_peak,units,TRUE,180,85,300\nCaf-3,caffeine,caffeine,2,2,imtp_peak,units,TRUE,170,85,300\nCaf-3,caffeine,fatigued,3,1,handgrip,kg,TRUE,42,85,300\nCaf-3,caffeine,fatigued,3,2,handgrip,kg,TRUE,43,85,300\nCaf-3,caffeine,fatigued,3,1,imtp_peak,units,TRUE,190,85,300\nCaf-3,caffeine,fatigued,3,2,imtp_peak,units,TRUE,180,85,300\nCaf-4,caffeine,baseline,1,1,jump_height,cm,TRUE,25,85,300\nCaf-4,caffeine,baseline,1,2,jump_height,cm,TRUE,22,85,300\nCaf-4,caffeine,baseline,1,1,handgrip,kg,TRUE,45,85,300\nCaf-4,caffeine,baseline,1,2,handgrip,kg,TRUE,46,85,300\nCaf-4,caffeine,baseline,1,1,imtp_peak,units,TRUE,132,85,300\nCaf-4,caffeine,baseline,1,2,imtp_peak,units,TRUE,135,85,300\nCaf-4,caffeine,caffeine,2,1,jump_height,cm,TRUE,26,85,300\nCaf-4,caffeine,caffeine,2,2,jump_height,cm,TRUE,27,85,300\nCaf-4,caffeine,caffeine,2,1,handgrip,kg,TRUE,40,85,300\nCaf-4,caffeine,caffeine,2,2,handgrip,kg,TRUE,45,85,300\nCaf-4,caffeine,caffeine,2,1,imtp_peak,units,TRUE,140,85,300\nCaf-4,caffeine,caffeine,2,2,imtp_peak,units,TRUE,145,85,300\nCaf-4,caffeine,fatigued,3,1,jump_height,cm,TRUE,26,85,300\nCaf-4,caffeine,fatigued,3,2,jump_height,cm,TRUE,28,85,300\nCaf-4,caffeine,fatigued,3,1,handgrip,kg,TRUE,35,85,300\nCaf-4,caffeine,fatigued,3,2,handgrip,kg,TRUE,41,85,300\nCaf-4,caffeine,fatigued,3,1,imtp_peak,units,TRUE,138,85,300\nCaf-4,caffeine,fatigued,3,2,imtp_peak,units,TRUE,126,85,300\nCaf-5,caffeine,baseline,1,1,jump_height,cm,TRUE,28.9,94,300\nCaf-5,caffeine,baseline,1,2,jump_height,cm,TRUE,41,94,300\nCaf-5,caffeine,baseline,1,1,handgrip,kg,TRUE,51,94,300\nCaf-5,caffeine,baseline,1,2,handgrip,kg,TRUE,56,94,300\nCaf-5,caffeine,baseline,1,1,imtp_peak,units,TRUE,150,94,300\nCaf-5,caffeine,baseline,1,2,imtp_peak,units,TRUE,155,94,300\nCaf-5,caffeine,caffeine,2,1,jump_height,cm,TRUE,40,94,300\nCaf-5,caffeine,caffeine,2,2,jump_height,cm,TRUE,43,94,300\nCaf-5,caffeine,caffeine,2,1,handgrip,kg,TRUE,52,94,300\nCaf-5,caffeine,caffeine,2,2,handgrip,kg,TRUE,50,94,300\nCaf-5,caffeine,caffeine,2,1,imtp_peak,units,TRUE,150,94,300\nCaf-5,caffeine,caffeine,2,2,imtp_peak,units,TRUE,150,94,300\nCon-1,control,baseline,1,1,jump_height,cm,TRUE,36,90,0\nCon-1,control,baseline,1,2,jump_height,cm,TRUE,37,90,0\nCon-1,control,baseline,1,1,handgrip,kg,TRUE,50,90,0\nCon-1,control,baseline,1,2,handgrip,kg,TRUE,51,90,0\nCon-1,control,baseline,1,1,imtp_peak,units,TRUE,130,90,0\nCon-1,control,baseline,1,2,imtp_peak,units,TRUE,142,90,0\nCon-1,control,fatigued,3,1,jump_height,cm,TRUE,27,90,0\nCon-1,control,fatigued,3,2,jump_height,cm,TRUE,35,90,0\nCon-1,control,fatigued,3,1,handgrip,kg,TRUE,55,90,0\nCon-1,control,fatigued,3,2,handgrip,kg,TRUE,52,90,0\nCon-1,control,fatigued,3,1,imtp_peak,units,TRUE,145,90,0\nCon-1,control,fatigued,3,2,imtp_peak,units,TRUE,144,90,0\nCon-2,control,baseline,1,1,jump_height,cm,TRUE,30,80,0\nCon-2,control,baseline,1,2,jump_height,cm,TRUE,34,80,0\nCon-2,control,baseline,1,1,handgrip,kg,TRUE,48,80,0\nCon-2,control,baseline,1,2,handgrip,kg,TRUE,51,80,0\nCon-2,control,baseline,1,1,imtp_peak,units,TRUE,122,80,0\nCon-2,control,baseline,1,2,imtp_peak,units,TRUE,138,80,0\nCon-2,control,fatigued,3,1,jump_height,cm,TRUE,30,80,0\nCon-2,control,fatigued,3,2,jump_height,cm,TRUE,33,80,0\nCon-2,control,fatigued,3,1,handgrip,kg,TRUE,49,80,0\nCon-2,control,fatigued,3,2,handgrip,kg,TRUE,45,80,0\nCon-2,control,fatigued,3,1,imtp_peak,units,TRUE,122,80,0\nCon-2,control,fatigued,3,2,imtp_peak,units,TRUE,130,80,0";
+var CLASS_CSV = "participant_id,group,condition,trial_order,rep,outcome,unit,higher_is_better,performance,body_mass_kg,caffeine_dose_mg\nCaf-1,caffeine,baseline,1,1,jump_height,cm,TRUE,15,80,300\nCaf-1,caffeine,baseline,1,2,jump_height,cm,TRUE,14,80,300\nCaf-1,caffeine,baseline,1,1,handgrip,kg,TRUE,25,80,300\nCaf-1,caffeine,baseline,1,2,handgrip,kg,TRUE,27,80,300\nCaf-1,caffeine,baseline,1,1,imtp_peak,units,TRUE,90,80,300\nCaf-1,caffeine,baseline,1,2,imtp_peak,units,TRUE,70,80,300\nCaf-1,caffeine,baseline,1,1,braking_phase,ms,FALSE,240,80,300\nCaf-1,caffeine,baseline,1,2,braking_phase,ms,FALSE,230,80,300\nCaf-1,caffeine,baseline,1,1,propulsive_phase,ms,FALSE,350,80,300\nCaf-1,caffeine,baseline,1,2,propulsive_phase,ms,FALSE,330,80,300\nCaf-1,caffeine,baseline,1,1,relative_force_at_minimum,N/kg,TRUE,17.962,80,300\nCaf-1,caffeine,baseline,1,2,relative_force_at_minimum,N/kg,TRUE,18.3,80,300\nCaf-1,caffeine,baseline,1,1,relative_braking_force,N/kg,TRUE,14.862,80,300\nCaf-1,caffeine,baseline,1,2,relative_braking_force,N/kg,TRUE,15.3,80,300\nCaf-1,caffeine,baseline,1,1,relative_propulsive_force,N/kg,TRUE,16.899,80,300\nCaf-1,caffeine,baseline,1,2,relative_propulsive_force,N/kg,TRUE,17,80,300\nCaf-1,caffeine,caffeine,2,1,jump_height,cm,TRUE,15,80,300\nCaf-1,caffeine,caffeine,2,2,jump_height,cm,TRUE,16,80,300\nCaf-1,caffeine,caffeine,2,1,handgrip,kg,TRUE,28,80,300\nCaf-1,caffeine,caffeine,2,2,handgrip,kg,TRUE,28,80,300\nCaf-1,caffeine,caffeine,2,1,imtp_peak,units,TRUE,70,80,300\nCaf-1,caffeine,caffeine,2,2,imtp_peak,units,TRUE,90,80,300\nCaf-1,caffeine,caffeine,2,1,braking_phase,ms,FALSE,270,80,300\nCaf-1,caffeine,caffeine,2,2,braking_phase,ms,FALSE,280,80,300\nCaf-1,caffeine,caffeine,2,1,propulsive_phase,ms,FALSE,400,80,300\nCaf-1,caffeine,caffeine,2,2,propulsive_phase,ms,FALSE,370,80,300\nCaf-1,caffeine,caffeine,2,1,relative_force_at_minimum,N/kg,TRUE,17.425,80,300\nCaf-1,caffeine,caffeine,2,2,relative_force_at_minimum,N/kg,TRUE,17.05,80,300\nCaf-1,caffeine,caffeine,2,1,relative_braking_force,N/kg,TRUE,14.8,80,300\nCaf-1,caffeine,caffeine,2,2,relative_braking_force,N/kg,TRUE,14.35,80,300\nCaf-1,caffeine,caffeine,2,1,relative_propulsive_force,N/kg,TRUE,16.087,80,300\nCaf-1,caffeine,caffeine,2,2,relative_propulsive_force,N/kg,TRUE,16.5,80,300\nCaf-1,caffeine,fatigued,3,1,jump_height,cm,TRUE,15,80,300\nCaf-1,caffeine,fatigued,3,2,jump_height,cm,TRUE,16,80,300\nCaf-1,caffeine,fatigued,3,1,handgrip,kg,TRUE,26,80,300\nCaf-1,caffeine,fatigued,3,2,handgrip,kg,TRUE,29,80,300\nCaf-1,caffeine,fatigued,3,1,imtp_peak,units,TRUE,80,80,300\nCaf-1,caffeine,fatigued,3,2,imtp_peak,units,TRUE,87,80,300\nCaf-1,caffeine,fatigued,3,1,braking_phase,ms,FALSE,300,80,300\nCaf-1,caffeine,fatigued,3,2,braking_phase,ms,FALSE,280,80,300\nCaf-1,caffeine,fatigued,3,1,propulsive_phase,ms,FALSE,370,80,300\nCaf-1,caffeine,fatigued,3,2,propulsive_phase,ms,FALSE,390,80,300\nCaf-1,caffeine,fatigued,3,1,relative_force_at_minimum,N/kg,TRUE,17.25,80,300\nCaf-1,caffeine,fatigued,3,2,relative_force_at_minimum,N/kg,TRUE,17.274,80,300\nCaf-1,caffeine,fatigued,3,1,relative_braking_force,N/kg,TRUE,13.824,80,300\nCaf-1,caffeine,fatigued,3,2,relative_braking_force,N/kg,TRUE,14.962,80,300\nCaf-1,caffeine,fatigued,3,1,relative_propulsive_force,N/kg,TRUE,16.425,80,300\nCaf-1,caffeine,fatigued,3,2,relative_propulsive_force,N/kg,TRUE,16.425,80,300\nCaf-2,caffeine,baseline,1,1,jump_height,cm,TRUE,27,52,300\nCaf-2,caffeine,baseline,1,2,jump_height,cm,TRUE,26,52,300\nCaf-2,caffeine,baseline,1,1,handgrip,kg,TRUE,35,52,300\nCaf-2,caffeine,baseline,1,2,handgrip,kg,TRUE,33,52,300\nCaf-2,caffeine,baseline,1,1,imtp_peak,units,TRUE,80,52,300\nCaf-2,caffeine,baseline,1,2,imtp_peak,units,TRUE,80,52,300\nCaf-2,caffeine,baseline,1,1,braking_phase,ms,FALSE,380,52,300\nCaf-2,caffeine,baseline,1,2,braking_phase,ms,FALSE,230,52,300\nCaf-2,caffeine,baseline,1,1,propulsive_phase,ms,FALSE,370,52,300\nCaf-2,caffeine,baseline,1,2,propulsive_phase,ms,FALSE,350,52,300\nCaf-2,caffeine,baseline,1,1,relative_force_at_minimum,N/kg,TRUE,15.865,52,300\nCaf-2,caffeine,baseline,1,2,relative_force_at_minimum,N/kg,TRUE,17.923,52,300\nCaf-2,caffeine,baseline,1,1,relative_braking_force,N/kg,TRUE,12.269,52,300\nCaf-2,caffeine,baseline,1,2,relative_braking_force,N/kg,TRUE,13.961,52,300\nCaf-2,caffeine,baseline,1,1,relative_propulsive_force,N/kg,TRUE,16.653,52,300\nCaf-2,caffeine,baseline,1,2,relative_propulsive_force,N/kg,TRUE,17,52,300\nCaf-2,caffeine,caffeine,2,1,jump_height,cm,TRUE,25,52,300\nCaf-2,caffeine,caffeine,2,2,jump_height,cm,TRUE,28,52,300\nCaf-2,caffeine,caffeine,2,1,handgrip,kg,TRUE,34,52,300\nCaf-2,caffeine,caffeine,2,2,handgrip,kg,TRUE,32,52,300\nCaf-2,caffeine,caffeine,2,1,imtp_peak,units,TRUE,85,52,300\nCaf-2,caffeine,caffeine,2,2,imtp_peak,units,TRUE,80,52,300\nCaf-2,caffeine,caffeine,2,1,braking_phase,ms,FALSE,310,52,300\nCaf-2,caffeine,caffeine,2,2,braking_phase,ms,FALSE,250,52,300\nCaf-2,caffeine,caffeine,2,1,propulsive_phase,ms,FALSE,350,52,300\nCaf-2,caffeine,caffeine,2,2,propulsive_phase,ms,FALSE,320,52,300\nCaf-2,caffeine,caffeine,2,1,relative_force_at_minimum,N/kg,TRUE,16.423,52,300\nCaf-2,caffeine,caffeine,2,2,relative_force_at_minimum,N/kg,TRUE,18.846,52,300\nCaf-2,caffeine,caffeine,2,1,relative_braking_force,N/kg,TRUE,12.865,52,300\nCaf-2,caffeine,caffeine,2,2,relative_braking_force,N/kg,TRUE,12.961,52,300\nCaf-2,caffeine,caffeine,2,1,relative_propulsive_force,N/kg,TRUE,16.865,52,300\nCaf-2,caffeine,caffeine,2,2,relative_propulsive_force,N/kg,TRUE,17.461,52,300\nCaf-2,caffeine,fatigued,3,1,jump_height,cm,TRUE,28,52,300\nCaf-2,caffeine,fatigued,3,2,jump_height,cm,TRUE,27,52,300\nCaf-2,caffeine,fatigued,3,1,handgrip,kg,TRUE,34,52,300\nCaf-2,caffeine,fatigued,3,2,handgrip,kg,TRUE,33,52,300\nCaf-2,caffeine,fatigued,3,1,imtp_peak,units,TRUE,85,52,300\nCaf-2,caffeine,fatigued,3,2,imtp_peak,units,TRUE,90,52,300\nCaf-2,caffeine,fatigued,3,1,braking_phase,ms,FALSE,400,52,300\nCaf-2,caffeine,fatigued,3,2,braking_phase,ms,FALSE,320,52,300\nCaf-2,caffeine,fatigued,3,1,propulsive_phase,ms,FALSE,360,52,300\nCaf-2,caffeine,fatigued,3,2,propulsive_phase,ms,FALSE,400,52,300\nCaf-2,caffeine,fatigued,3,1,relative_force_at_minimum,N/kg,TRUE,16.634,52,300\nCaf-2,caffeine,fatigued,3,2,relative_force_at_minimum,N/kg,TRUE,15.653,52,300\nCaf-2,caffeine,fatigued,3,1,relative_braking_force,N/kg,TRUE,12.115,52,300\nCaf-2,caffeine,fatigued,3,2,relative_braking_force,N/kg,TRUE,12.903,52,300\nCaf-2,caffeine,fatigued,3,1,relative_propulsive_force,N/kg,TRUE,16.846,52,300\nCaf-2,caffeine,fatigued,3,2,relative_propulsive_force,N/kg,TRUE,16.057,52,300\nCaf-3,caffeine,baseline,1,1,jump_height,cm,TRUE,31,85,300\nCaf-3,caffeine,baseline,1,2,jump_height,cm,TRUE,27,85,300\nCaf-3,caffeine,baseline,1,1,handgrip,kg,TRUE,44,85,300\nCaf-3,caffeine,baseline,1,2,handgrip,kg,TRUE,45,85,300\nCaf-3,caffeine,baseline,1,1,imtp_peak,units,TRUE,190,85,300\nCaf-3,caffeine,baseline,1,2,imtp_peak,units,TRUE,191,85,300\nCaf-3,caffeine,baseline,1,1,braking_phase,ms,FALSE,80,85,300\nCaf-3,caffeine,baseline,1,2,braking_phase,ms,FALSE,70,85,300\nCaf-3,caffeine,baseline,1,1,propulsive_phase,ms,FALSE,200,85,300\nCaf-3,caffeine,baseline,1,2,propulsive_phase,ms,FALSE,150,85,300\nCaf-3,caffeine,baseline,1,1,relative_force_at_minimum,N/kg,TRUE,15.4,85,300\nCaf-3,caffeine,baseline,1,2,relative_force_at_minimum,N/kg,TRUE,28.388,85,300\nCaf-3,caffeine,baseline,1,1,relative_braking_force,N/kg,TRUE,12.494,85,300\nCaf-3,caffeine,baseline,1,2,relative_braking_force,N/kg,TRUE,16.929,85,300\nCaf-3,caffeine,baseline,1,1,relative_propulsive_force,N/kg,TRUE,22.623,85,300\nCaf-3,caffeine,baseline,1,2,relative_propulsive_force,N/kg,TRUE,25.482,85,300\nCaf-3,caffeine,caffeine,2,1,jump_height,cm,TRUE,32,85,300\nCaf-3,caffeine,caffeine,2,2,jump_height,cm,TRUE,37,85,300\nCaf-3,caffeine,caffeine,2,1,handgrip,kg,TRUE,42,85,300\nCaf-3,caffeine,caffeine,2,2,handgrip,kg,TRUE,43,85,300\nCaf-3,caffeine,caffeine,2,1,imtp_peak,units,TRUE,180,85,300\nCaf-3,caffeine,caffeine,2,2,imtp_peak,units,TRUE,170,85,300\nCaf-3,caffeine,caffeine,2,1,braking_phase,ms,FALSE,200,85,300\nCaf-3,caffeine,caffeine,2,2,braking_phase,ms,FALSE,150,85,300\nCaf-3,caffeine,caffeine,2,1,propulsive_phase,ms,FALSE,250,85,300\nCaf-3,caffeine,caffeine,2,2,propulsive_phase,ms,FALSE,250,85,300\nCaf-3,caffeine,caffeine,2,1,relative_force_at_minimum,N/kg,TRUE,21.835,85,300\nCaf-3,caffeine,caffeine,2,2,relative_force_at_minimum,N/kg,TRUE,22.611,85,300\nCaf-3,caffeine,caffeine,2,1,relative_braking_force,N/kg,TRUE,14.4,85,300\nCaf-3,caffeine,caffeine,2,2,relative_braking_force,N/kg,TRUE,15.635,85,300\nCaf-3,caffeine,caffeine,2,1,relative_propulsive_force,N/kg,TRUE,20.141,85,300\nCaf-3,caffeine,caffeine,2,2,relative_propulsive_force,N/kg,TRUE,20.952,85,300\nCaf-3,caffeine,fatigued,3,1,handgrip,kg,TRUE,42,85,300\nCaf-3,caffeine,fatigued,3,2,handgrip,kg,TRUE,43,85,300\nCaf-3,caffeine,fatigued,3,1,imtp_peak,units,TRUE,190,85,300\nCaf-3,caffeine,fatigued,3,2,imtp_peak,units,TRUE,180,85,300\nCaf-4,caffeine,baseline,1,1,jump_height,cm,TRUE,25,85,300\nCaf-4,caffeine,baseline,1,2,jump_height,cm,TRUE,22,85,300\nCaf-4,caffeine,baseline,1,1,handgrip,kg,TRUE,45,85,300\nCaf-4,caffeine,baseline,1,2,handgrip,kg,TRUE,46,85,300\nCaf-4,caffeine,baseline,1,1,imtp_peak,units,TRUE,132,85,300\nCaf-4,caffeine,baseline,1,2,imtp_peak,units,TRUE,135,85,300\nCaf-4,caffeine,baseline,1,1,braking_phase,ms,FALSE,220,85,300\nCaf-4,caffeine,baseline,1,2,braking_phase,ms,FALSE,210,85,300\nCaf-4,caffeine,baseline,1,1,propulsive_phase,ms,FALSE,280,85,300\nCaf-4,caffeine,baseline,1,2,propulsive_phase,ms,FALSE,310,85,300\nCaf-4,caffeine,baseline,1,1,relative_force_at_minimum,N/kg,TRUE,18.505,85,300\nCaf-4,caffeine,baseline,1,2,relative_force_at_minimum,N/kg,TRUE,18.447,85,300\nCaf-4,caffeine,baseline,1,1,relative_braking_force,N/kg,TRUE,13.811,85,300\nCaf-4,caffeine,baseline,1,2,relative_braking_force,N/kg,TRUE,14.611,85,300\nCaf-4,caffeine,baseline,1,1,relative_propulsive_force,N/kg,TRUE,18.317,85,300\nCaf-4,caffeine,baseline,1,2,relative_propulsive_force,N/kg,TRUE,17.117,85,300\nCaf-4,caffeine,caffeine,2,1,jump_height,cm,TRUE,26,85,300\nCaf-4,caffeine,caffeine,2,2,jump_height,cm,TRUE,27,85,300\nCaf-4,caffeine,caffeine,2,1,handgrip,kg,TRUE,40,85,300\nCaf-4,caffeine,caffeine,2,2,handgrip,kg,TRUE,45,85,300\nCaf-4,caffeine,caffeine,2,1,imtp_peak,units,TRUE,140,85,300\nCaf-4,caffeine,caffeine,2,2,imtp_peak,units,TRUE,145,85,300\nCaf-4,caffeine,caffeine,2,1,braking_phase,ms,FALSE,200,85,300\nCaf-4,caffeine,caffeine,2,2,braking_phase,ms,FALSE,230,85,300\nCaf-4,caffeine,caffeine,2,1,propulsive_phase,ms,FALSE,310,85,300\nCaf-4,caffeine,caffeine,2,2,propulsive_phase,ms,FALSE,310,85,300\nCaf-4,caffeine,caffeine,2,1,relative_force_at_minimum,N/kg,TRUE,18.8,85,300\nCaf-4,caffeine,caffeine,2,2,relative_force_at_minimum,N/kg,TRUE,19.494,85,300\nCaf-4,caffeine,caffeine,2,1,relative_braking_force,N/kg,TRUE,14.588,85,300\nCaf-4,caffeine,caffeine,2,2,relative_braking_force,N/kg,TRUE,14.141,85,300\nCaf-4,caffeine,caffeine,2,1,relative_propulsive_force,N/kg,TRUE,17.729,85,300\nCaf-4,caffeine,caffeine,2,2,relative_propulsive_force,N/kg,TRUE,17.87,85,300\nCaf-4,caffeine,fatigued,3,1,jump_height,cm,TRUE,26,85,300\nCaf-4,caffeine,fatigued,3,2,jump_height,cm,TRUE,28,85,300\nCaf-4,caffeine,fatigued,3,1,handgrip,kg,TRUE,35,85,300\nCaf-4,caffeine,fatigued,3,2,handgrip,kg,TRUE,41,85,300\nCaf-4,caffeine,fatigued,3,1,imtp_peak,units,TRUE,138,85,300\nCaf-4,caffeine,fatigued,3,2,imtp_peak,units,TRUE,126,85,300\nCaf-4,caffeine,fatigued,3,1,braking_phase,ms,FALSE,200,85,300\nCaf-4,caffeine,fatigued,3,2,braking_phase,ms,FALSE,210,85,300\nCaf-4,caffeine,fatigued,3,1,propulsive_phase,ms,FALSE,320,85,300\nCaf-4,caffeine,fatigued,3,2,propulsive_phase,ms,FALSE,340,85,300\nCaf-4,caffeine,fatigued,3,1,relative_force_at_minimum,N/kg,TRUE,20.929,85,300\nCaf-4,caffeine,fatigued,3,2,relative_force_at_minimum,N/kg,TRUE,20.117,85,300\nCaf-4,caffeine,fatigued,3,1,relative_braking_force,N/kg,TRUE,15.576,85,300\nCaf-4,caffeine,fatigued,3,2,relative_braking_force,N/kg,TRUE,15.294,85,300\nCaf-4,caffeine,fatigued,3,1,relative_propulsive_force,N/kg,TRUE,17.317,85,300\nCaf-4,caffeine,fatigued,3,2,relative_propulsive_force,N/kg,TRUE,17.282,85,300\nCaf-5,caffeine,baseline,1,1,jump_height,cm,TRUE,28.9,94,300\nCaf-5,caffeine,baseline,1,2,jump_height,cm,TRUE,41,94,300\nCaf-5,caffeine,baseline,1,1,handgrip,kg,TRUE,51,94,300\nCaf-5,caffeine,baseline,1,2,handgrip,kg,TRUE,56,94,300\nCaf-5,caffeine,baseline,1,1,imtp_peak,units,TRUE,150,94,300\nCaf-5,caffeine,baseline,1,2,imtp_peak,units,TRUE,155,94,300\nCaf-5,caffeine,baseline,1,1,braking_phase,ms,FALSE,170,94,300\nCaf-5,caffeine,baseline,1,2,braking_phase,ms,FALSE,1180,94,300\nCaf-5,caffeine,baseline,1,1,propulsive_phase,ms,FALSE,240,94,300\nCaf-5,caffeine,baseline,1,2,propulsive_phase,ms,FALSE,1230,94,300\nCaf-5,caffeine,baseline,1,1,relative_force_at_minimum,N/kg,TRUE,21.276,94,300\nCaf-5,caffeine,baseline,1,2,relative_force_at_minimum,N/kg,TRUE,22.414,94,300\nCaf-5,caffeine,baseline,1,1,relative_braking_force,N/kg,TRUE,15.776,94,300\nCaf-5,caffeine,baseline,1,2,relative_braking_force,N/kg,TRUE,16.085,94,300\nCaf-5,caffeine,baseline,1,1,relative_propulsive_force,N/kg,TRUE,21.265,94,300\nCaf-5,caffeine,baseline,1,2,relative_propulsive_force,N/kg,TRUE,21.808,94,300\nCaf-5,caffeine,caffeine,2,1,jump_height,cm,TRUE,40,94,300\nCaf-5,caffeine,caffeine,2,2,jump_height,cm,TRUE,43,94,300\nCaf-5,caffeine,caffeine,2,1,handgrip,kg,TRUE,52,94,300\nCaf-5,caffeine,caffeine,2,2,handgrip,kg,TRUE,50,94,300\nCaf-5,caffeine,caffeine,2,1,imtp_peak,units,TRUE,150,94,300\nCaf-5,caffeine,caffeine,2,2,imtp_peak,units,TRUE,150,94,300\nCaf-5,caffeine,caffeine,2,1,braking_phase,ms,FALSE,160,94,300\nCaf-5,caffeine,caffeine,2,2,braking_phase,ms,FALSE,160,94,300\nCaf-5,caffeine,caffeine,2,1,propulsive_phase,ms,FALSE,220,94,300\nCaf-5,caffeine,caffeine,2,2,propulsive_phase,ms,FALSE,220,94,300\nCaf-5,caffeine,caffeine,2,1,relative_force_at_minimum,N/kg,TRUE,23.765,94,300\nCaf-5,caffeine,caffeine,2,2,relative_force_at_minimum,N/kg,TRUE,23.382,94,300\nCaf-5,caffeine,caffeine,2,1,relative_braking_force,N/kg,TRUE,17.148,94,300\nCaf-5,caffeine,caffeine,2,2,relative_braking_force,N/kg,TRUE,16.712,94,300\nCaf-5,caffeine,caffeine,2,1,relative_propulsive_force,N/kg,TRUE,21.893,94,300\nCaf-5,caffeine,caffeine,2,2,relative_propulsive_force,N/kg,TRUE,22.51,94,300\nCon-1,control,baseline,1,1,jump_height,cm,TRUE,36,90,0\nCon-1,control,baseline,1,2,jump_height,cm,TRUE,37,90,0\nCon-1,control,baseline,1,1,handgrip,kg,TRUE,50,90,0\nCon-1,control,baseline,1,2,handgrip,kg,TRUE,51,90,0\nCon-1,control,baseline,1,1,imtp_peak,units,TRUE,130,90,0\nCon-1,control,baseline,1,2,imtp_peak,units,TRUE,142,90,0\nCon-1,control,baseline,1,1,braking_phase,ms,FALSE,200,90,0\nCon-1,control,baseline,1,2,braking_phase,ms,FALSE,200,90,0\nCon-1,control,baseline,1,1,propulsive_phase,ms,FALSE,280,90,0\nCon-1,control,baseline,1,2,propulsive_phase,ms,FALSE,280,90,0\nCon-1,control,baseline,1,1,relative_force_at_minimum,N/kg,TRUE,18.444,90,0\nCon-1,control,baseline,1,2,relative_force_at_minimum,N/kg,TRUE,17.844,90,0\nCon-1,control,baseline,1,1,relative_braking_force,N/kg,TRUE,14.422,90,0\nCon-1,control,baseline,1,2,relative_braking_force,N/kg,TRUE,14.344,90,0\nCon-1,control,baseline,1,1,relative_propulsive_force,N/kg,TRUE,17.6,90,0\nCon-1,control,baseline,1,2,relative_propulsive_force,N/kg,TRUE,17.611,90,0\nCon-1,control,fatigued,3,1,jump_height,cm,TRUE,27,90,0\nCon-1,control,fatigued,3,2,jump_height,cm,TRUE,35,90,0\nCon-1,control,fatigued,3,1,handgrip,kg,TRUE,55,90,0\nCon-1,control,fatigued,3,2,handgrip,kg,TRUE,52,90,0\nCon-1,control,fatigued,3,1,imtp_peak,units,TRUE,145,90,0\nCon-1,control,fatigued,3,2,imtp_peak,units,TRUE,144,90,0\nCon-1,control,fatigued,3,1,braking_phase,ms,FALSE,230,90,0\nCon-1,control,fatigued,3,2,braking_phase,ms,FALSE,220,90,0\nCon-1,control,fatigued,3,1,propulsive_phase,ms,FALSE,300,90,0\nCon-1,control,fatigued,3,2,propulsive_phase,ms,FALSE,289,90,0\nCon-1,control,fatigued,3,1,relative_force_at_minimum,N/kg,TRUE,17.444,90,0\nCon-1,control,fatigued,3,2,relative_force_at_minimum,N/kg,TRUE,18.1,90,0\nCon-1,control,fatigued,3,1,relative_braking_force,N/kg,TRUE,13.688,90,0\nCon-1,control,fatigued,3,2,relative_braking_force,N/kg,TRUE,14,90,0\nCon-1,control,fatigued,3,1,relative_propulsive_force,N/kg,TRUE,17,90,0\nCon-1,control,fatigued,3,2,relative_propulsive_force,N/kg,TRUE,17.111,90,0\nCon-2,control,baseline,1,1,jump_height,cm,TRUE,30,80,0\nCon-2,control,baseline,1,2,jump_height,cm,TRUE,34,80,0\nCon-2,control,baseline,1,1,handgrip,kg,TRUE,48,80,0\nCon-2,control,baseline,1,2,handgrip,kg,TRUE,51,80,0\nCon-2,control,baseline,1,1,imtp_peak,units,TRUE,122,80,0\nCon-2,control,baseline,1,2,imtp_peak,units,TRUE,138,80,0\nCon-2,control,baseline,1,1,braking_phase,ms,FALSE,170,80,0\nCon-2,control,baseline,1,2,braking_phase,ms,FALSE,230,80,0\nCon-2,control,baseline,1,1,propulsive_phase,ms,FALSE,280,80,0\nCon-2,control,baseline,1,2,propulsive_phase,ms,FALSE,330,80,0\nCon-2,control,baseline,1,1,relative_force_at_minimum,N/kg,TRUE,18.6,80,0\nCon-2,control,baseline,1,2,relative_force_at_minimum,N/kg,TRUE,15.862,80,0\nCon-2,control,baseline,1,1,relative_braking_force,N/kg,TRUE,14.287,80,0\nCon-2,control,baseline,1,2,relative_braking_force,N/kg,TRUE,11.712,80,0\nCon-2,control,baseline,1,1,relative_propulsive_force,N/kg,TRUE,15.487,80,0\nCon-2,control,baseline,1,2,relative_propulsive_force,N/kg,TRUE,14.837,80,0\nCon-2,control,fatigued,3,1,jump_height,cm,TRUE,30,80,0\nCon-2,control,fatigued,3,2,jump_height,cm,TRUE,33,80,0\nCon-2,control,fatigued,3,1,handgrip,kg,TRUE,49,80,0\nCon-2,control,fatigued,3,2,handgrip,kg,TRUE,45,80,0\nCon-2,control,fatigued,3,1,imtp_peak,units,TRUE,122,80,0\nCon-2,control,fatigued,3,2,imtp_peak,units,TRUE,130,80,0\nCon-2,control,fatigued,3,1,braking_phase,ms,FALSE,220,80,0\nCon-2,control,fatigued,3,2,braking_phase,ms,FALSE,250,80,0\nCon-2,control,fatigued,3,1,propulsive_phase,ms,FALSE,320,80,0\nCon-2,control,fatigued,3,2,propulsive_phase,ms,FALSE,330,80,0\nCon-2,control,fatigued,3,1,relative_force_at_minimum,N/kg,TRUE,16.487,80,0\nCon-2,control,fatigued,3,2,relative_force_at_minimum,N/kg,TRUE,16.537,80,0\nCon-2,control,fatigued,3,1,relative_braking_force,N/kg,TRUE,12.287,80,0\nCon-2,control,fatigued,3,2,relative_braking_force,N/kg,TRUE,11.812,80,0\nCon-2,control,fatigued,3,1,relative_propulsive_force,N/kg,TRUE,14.762,80,0\nCon-2,control,fatigued,3,2,relative_propulsive_force,N/kg,TRUE,14.725,80,0";
 var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_better,body_mass_kg,caffeine_dose_mg,habitual_caffeine,guessed_condition,rpe,sleep_hours,outcome,unit\nS01,placebo,1,708.4,FALSE,69,0,low,placebo,17,7.0,3 km time trial,s\nS01,caffeine,2,697.5,FALSE,69,300,low,caffeine,18,7.0,3 km time trial,s\nS02,placebo,2,672.8,FALSE,86,0,none,caffeine,18,8.5,3 km time trial,s\nS02,caffeine,1,676.1,FALSE,86,250,none,caffeine,15,7.5,3 km time trial,s\nS03,placebo,2,657.0,FALSE,77,0,low,caffeine,15,7.0,3 km time trial,s\nS03,caffeine,1,658.4,FALSE,77,225,low,caffeine,16,7.0,3 km time trial,s\nS04,placebo,1,724.7,FALSE,89,0,moderate,placebo,17,6.5,3 km time trial,s\nS04,caffeine,2,699.5,FALSE,89,400,moderate,placebo,17,6.0,3 km time trial,s\nS05,placebo,1,773.8,FALSE,70,0,high,placebo,18,7.0,3 km time trial,s\nS05,caffeine,2,766.6,FALSE,70,325,high,placebo,14,9.0,3 km time trial,s\nS06,placebo,1,712.7,FALSE,74,0,none,unsure,16,5.5,3 km time trial,s\nS06,caffeine,2,701.1,FALSE,74,225,none,caffeine,15,7.5,3 km time trial,s\nS07,placebo,2,740.0,FALSE,75,0,low,placebo,15,8.5,3 km time trial,s\nS07,caffeine,1,724.1,FALSE,75,350,low,placebo,17,9.0,3 km time trial,s\nS08,placebo,2,732.1,FALSE,81,0,high,placebo,14,6.0,3 km time trial,s\nS08,caffeine,1,734.7,FALSE,81,250,high,caffeine,18,7.5,3 km time trial,s\nS09,placebo,1,785.0,FALSE,90,0,none,placebo,17,5.5,3 km time trial,s\nS09,caffeine,2,770.8,FALSE,90,400,none,caffeine,15,7.0,3 km time trial,s\nS10,placebo,2,739.9,FALSE,62,0,none,placebo,15,7.5,3 km time trial,s\nS10,caffeine,1,734.8,FALSE,62,175,none,placebo,17,6.0,3 km time trial,s\nS11,placebo,2,693.4,FALSE,87,0,high,placebo,14,6.0,3 km time trial,s\nS11,caffeine,1,698.7,FALSE,87,400,high,placebo,18,8.5,3 km time trial,s\nS12,placebo,2,758.0,FALSE,84,0,moderate,placebo,18,6.5,3 km time trial,s\nS12,caffeine,1,767.8,FALSE,84,500,moderate,caffeine,15,8.5,3 km time trial,s";
 
 (function () {
@@ -653,13 +664,13 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
   var S = {
     step: 1, maxStep: 1, locked: false, pred: { mean: 0, prop: 50 },
     dsName: 'class', DS: null, outcome: null,
-    view: 'paired', swcFactor: 0.2, swcDefault: 0.2, swcAbs: null, teOv: null, teStudent: null,
+    cmp: 'caf', grp: 'caffeine', view: 'paired', swcFactor: 0.2, swcDefault: 0.2, swcAbs: null, teOv: null, teStudent: null,
     lblOv: '', unitOv: '', hibOv: 'auto', prior: 'none', nHyp: null, seed: 11,
     revealed: {}, answers: {}, mcq: {}, preds: {}, sort: { k: 'id', dir: 1 }
   };
 
   /* ---------- formatting ---------- */
-  function dp(A) { var r = Math.abs(A.bsd || 1); return r >= 50 ? 0 : r >= 5 ? 1 : 2; }
+  function dp(A) { var r = Math.abs(A.bsdAll || A.bsd || 1); return r >= 50 ? 0 : r >= 5 ? 1 : 2; }
   function f(x, d, sign) { if (x == null || !isFinite(x)) return '&ndash;'; var s = x.toFixed(d); if (parseFloat(s) === 0) s = (0).toFixed(d); else if (sign && x > 0) s = '+' + s; return s.replace('-', '−'); }
   function pc(p) { if (p == null) return '&ndash;'; var v = p * 100; return (v < 0.5 && v > 0 ? '<1' : v > 99.5 && v < 100 ? '>99' : v.toFixed(0)) + '%'; }
   function likely(p) { return p < 0.005 ? 'most unlikely' : p < 0.05 ? 'very unlikely' : p < 0.25 ? 'unlikely' : p < 0.75 ? 'possible' : p < 0.95 ? 'likely' : p < 0.995 ? 'very likely' : 'most likely'; }
@@ -671,30 +682,50 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
     if (d.length < 3) return null;
     return { te: M.sd(d) / Math.SQRT2, n: d.length };
   }
-  function analyse() {
+  var CMPS = { caf: { a: 'comp', b: 'caf' }, fatcaf: { a: 'caf', b: 'fat' }, fatpre: { a: 'comp', b: 'fat' } };
+  function grpOf(p) { if (p.group) return /^con/.test(p.group) ? 'control' : 'caffeine'; return p.caf.length ? 'caffeine' : 'control'; }
+  function cmpAvailable(O) { return Object.keys(CMPS).filter(function (k) { var c = CMPS[k]; return O.participants.some(function (p) { return p[c.a].length && p[c.b].length; }); }); }
+  function cmpLabel(O, k) {
+    var pre = O.comparator === 'placebo' ? 'Placebo' : 'Pre caffeine';
+    return k === 'caf' ? pre + ' vs ' + (O.comparator === 'placebo' ? 'caffeine' : 'post caffeine') : k === 'fatcaf' ? 'Post caffeine vs post fatigue' : pre + ' vs post fatigue';
+  }
+  function analyse(cmpOv) {
     if (!S.DS || !S.DS.outcomes[S.outcome]) return null;
     var O = S.DS.outcomes[S.outcome];
+    var avail = cmpAvailable(O), cmp = cmpOv || S.cmp;
+    if (avail.indexOf(cmp) < 0) cmp = avail[0] || 'caf';
+    var CM = CMPS[cmp], isCaf = cmp === 'caf';
     var hib = S.hibOv === 'auto' ? O.hib : S.hibOv === 'true';
     var sign = hib ? 1 : -1;
-    var A = { O: O, hib: hib, sign: sign, label: S.lblOv || O.label, unit: S.unitOv || O.unit || 'units', compName: O.comparator === 'placebo' ? 'Placebo' : 'Baseline (no caffeine)', compShort: O.comparator === 'placebo' ? 'placebo' : 'baseline' };
+    var preName = O.comparator === 'placebo' ? 'Placebo' : 'Pre caffeine (baseline)', preShort = O.comparator === 'placebo' ? 'placebo' : 'baseline';
+    var A = { O: O, cmp: cmp, isCaf: isCaf, cmpLabel: cmpLabel(O, cmp), hib: hib, sign: sign, label: S.lblOv || O.label, unit: S.unitOv || O.unit || 'units',
+      compName: cmp === 'fatcaf' ? 'Post caffeine' : preName, compShort: cmp === 'fatcaf' ? 'post caffeine' : preShort,
+      bName: isCaf ? (O.comparator === 'placebo' ? 'Caffeine' : 'Post caffeine') : 'Post fatigue', bShort: isCaf ? 'caffeine' : 'post fatigue',
+      better: isCaf ? 'better with caffeine' : 'better after the fatigue task', nothing: isCaf ? 'caffeine does nothing' : 'nothing truly changed' };
+    var grp = cmp === 'fatpre' ? S.grp : cmp === 'fatcaf' ? 'caffeine' : 'all';
+    if (cmp === 'fatpre' && !O.participants.some(function (p) { return grpOf(p) === 'control'; })) grp = 'all';
+    A.grp = grp;
+    A.parts = O.participants.filter(function (p) { return grp === 'all' || grpOf(p) === grp; }).map(function (p) { var q = Object.create(p); q.comp = p[CM.a]; q.caf = p[CM.b]; return q; });
     var paired = [], compMeans = [];
-    O.participants.forEach(function (p) {
+    A.parts.forEach(function (p) {
       var cm = M.mean(p.comp), cf = M.mean(p.caf);
       if (cm != null) compMeans.push(cm);
       if (cm != null && cf != null) {
-        var cafFirst = (p.ord.caffeine != null && p.ord[O.comparator] != null) ? p.ord.caffeine < p.ord[O.comparator] : null;
+        var cafFirst = (isCaf && p.ord.caffeine != null && p.ord[O.comparator] != null) ? p.ord.caffeine < p.ord[O.comparator] : null;
         paired.push({ p: p, comp: cm, caf: cf, d: sign * (cf - cm), pct: cm !== 0 ? sign * (cf - cm) / Math.abs(cm) * 100 : null, kc: p.comp.length, kf: p.caf.length, mgkg: (p.dose != null && p.mass) ? p.dose / p.mass : null, cafFirst: cafFirst });
       }
     });
     A.paired = paired; A.n = paired.length;
     A.diffs = paired.map(function (x) { return x.d; });
     A.meanD = M.mean(A.diffs); A.sdD = M.sd(A.diffs);
-    A.meanPct = M.mean(paired.map(function (x) { return x.pct; }).filter(function (v) { return v != null; }));
+    var mComp = M.mean(paired.map(function (x) { return x.comp; }));
+    A.meanPct = (mComp != null && mComp !== 0 && A.meanD != null) ? A.meanD / Math.abs(mComp) * 100 : null;
     A.bsd = M.sd(compMeans); A.nComp = compMeans.length;
+    A.bsdAll = M.sd(O.participants.map(function (p) { return M.mean(p.comp); }).filter(function (v) { return v != null; }));
     if (A.bsd == null) A.bsd = M.sd(paired.map(function (x) { return x.caf; })) || 1;
     A.swc = (S.swcAbs != null && S.swcAbs > 0) ? S.swcAbs : S.swcFactor * A.bsd;
     A.swcFixed = (S.swcAbs != null && S.swcAbs > 0);
-    var est = estimateTE(O.participants); A.teEst = est;
+    var est = estimateTE(A.parts); A.teEst = est;
     A.te = S.teStudent != null ? S.teStudent : S.teOv != null ? S.teOv : est ? est.te : null;
     A.teSource = S.teStudent != null ? 'entered on this step' : S.teOv != null ? 'set by the lecturer' : est ? 'estimated from ' + est.n + ' pairs of repeat ' + A.compShort + ' trials' : null;
     var kc = M.mean(paired.map(function (x) { return x.kc; })) || 1, kf = M.mean(paired.map(function (x) { return x.kf; })) || 1;
@@ -710,7 +741,7 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
     var span = hi - lo; if (!(span > 0)) { span = Math.abs(hi) || 1; lo -= span / 2; hi += span / 2; }
     var step = Math.pow(10, Math.floor(Math.log(span / n) / Math.LN10)), e = span / n / step;
     step *= e >= 7.5 ? 10 : e >= 3.5 ? 5 : e >= 1.5 ? 2 : 1;
-    var t = []; for (var x = Math.ceil(lo / step) * step; x <= hi + step * 1e-6; x += step) t.push(Math.round(x / step) * step);
+    var t = []; for (var x = Math.floor(lo / step + 1e-9) * step; x <= Math.ceil(hi / step - 1e-9) * step + step * 1e-6; x += step) t.push(Math.round(x / step) * step);
     return { t: t, step: step, lo: Math.min(lo, t[0]), hi: Math.max(hi, t[t.length - 1]) };
   }
   function tl(x, step) { var d = step < 1 ? Math.min(3, Math.ceil(-Math.log(step) / Math.LN10 - 1e-9)) : 0; return x.toFixed(d).replace('-', '−'); }
@@ -725,9 +756,9 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
   /* ---------- charts ---------- */
   function chartConditions(A) {
     var W = 760, H = 340, L = 70, R = 30, T = 20, B = 50;
-    var groups = [{ k: 'comp', l: A.compName, col: C.comp, mk: 'ci' }, { k: 'caf', l: 'Caffeine', col: C.caf, mk: 'sq' }];
+    var groups = [{ k: 'comp', l: A.compName, col: C.comp, mk: 'ci' }, { k: 'caf', l: A.bName, col: C.caf, mk: 'sq' }];
     var vals = [];
-    A.O.participants.forEach(function (p) { var a = M.mean(p.comp), b = M.mean(p.caf); if (a != null) vals.push(a); if (b != null) vals.push(b); });
+    A.parts.forEach(function (p) { var a = M.mean(p.comp), b = M.mean(p.caf); if (a != null) vals.push(a); if (b != null) vals.push(b); });
     if (!vals.length) return '<p>No data.</p>';
     var tk = ticks(Math.min.apply(null, vals), Math.max.apply(null, vals), 6);
     var y = function (v) { return T + (tk.hi - v) / (tk.hi - tk.lo) * (H - T - B); };
@@ -736,7 +767,7 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
     tk.t.forEach(function (t) { s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(t) + '" y2="' + y(t) + '" stroke="#e5e9ef"/><text x="' + (L - 8) + '" y="' + (y(t) + 4) + '" font-size="12" text-anchor="end" fill="#4f5b69">' + tl(t, tk.step) + '</text>'; });
     s += '<text transform="translate(16 ' + ((H - B + T) / 2) + ') rotate(-90)" font-size="12" text-anchor="middle" fill="#4f5b69">' + esc(A.label + ' (' + A.unit + ')') + '</text>';
     groups.forEach(function (g) {
-      var list = A.O.participants.map(function (p) { return { id: p.id, v: M.mean(p[g.k]), paired: !!(p.comp.length && p.caf.length) }; }).filter(function (o) { return o.v != null; });
+      var list = A.parts.map(function (p) { return { id: p.id, v: M.mean(p[g.k]), paired: !!(p.comp.length && p.caf.length) }; }).filter(function (o) { return o.v != null; });
       list.forEach(function (o, i) { var x = xc[g.k] + jitter(i, list.length) * 90; s += marker(g.mk, x, y(o.v), 6, o.paired ? g.col : '#fff', g.col) + '<title>' + esc(o.id + ': ' + o.v.toFixed(A.dp)) + '</title>'; });
       var m = M.mean(list.map(function (o) { return o.v; }));
       if (m != null) s += '<line x1="' + (xc[g.k] - 70) + '" x2="' + (xc[g.k] + 70) + '" y1="' + y(m) + '" y2="' + y(m) + '" stroke="' + C.ink + '" stroke-width="2.5"/><text x="' + (xc[g.k] + 76) + '" y="' + (y(m) + 4) + '" font-size="12" fill="' + C.ink + '">mean ' + m.toFixed(A.dp) + '</text>';
@@ -774,7 +805,7 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
         s += '<line x1="' + (g[0] - 60) + '" x2="' + (g[0] + 60) + '" y1="' + y(g[1]) + '" y2="' + y(g[1]) + '" stroke="' + C.ink + '" stroke-width="2.5"/>';
       });
     }
-    s += '<text x="' + x1 + '" y="' + (H - 18) + '" font-size="13" text-anchor="middle">' + esc(A.compName) + '</text><text x="' + x2 + '" y="' + (H - 18) + '" font-size="13" text-anchor="middle">Caffeine</text>';
+    s += '<text x="' + x1 + '" y="' + (H - 18) + '" font-size="13" text-anchor="middle">' + esc(A.compName) + '</text><text x="' + x2 + '" y="' + (H - 18) + '" font-size="13" text-anchor="middle">' + esc(A.bName) + '</text>';
     return s + '</svg>';
   }
 
@@ -812,7 +843,7 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
       s += '<text x="' + (L - 8) + '" y="' + (cy + 4) + '" font-size="11" text-anchor="end" fill="#4f5b69">No effect</text>';
       sim.forEach(function (v) { s += '<circle cx="' + x(v) + '" cy="' + cy + '" r="5" fill="#fff" stroke="' + C.grey + '" stroke-width="1.6"/>'; });
     }
-    s += '<text x="' + ((L + W - R) / 2) + '" y="' + (bottom + 36) + '" font-size="12" text-anchor="middle" fill="#4f5b69">' + esc('Difference, caffeine minus ' + A.compShort + ' (' + A.unit + '). Positive = better with caffeine') + '</text>';
+    s += '<text x="' + ((L + W - R) / 2) + '" y="' + (bottom + 36) + '" font-size="12" text-anchor="middle" fill="#4f5b69">' + esc('Difference, ' + A.bShort + ' minus ' + A.compShort + ' (' + A.unit + '). Positive = ' + A.better) + '</text>';
     return s + '</svg>';
   }
 
@@ -845,7 +876,7 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
     pts.forEach(function (a, k) { var st = styles[k] || styles[2]; var d = ''; a.forEach(function (p, i) { d += (i ? 'L' : 'M') + x(p[0]) + ' ' + y(p[1]); }); s += '<path d="' + d + '" fill="none" stroke="' + st.c + '" stroke-width="' + st.w + '"' + (st.dash ? ' stroke-dasharray="' + st.dash + '"' : '') + '/>'; });
     var ci = y(0) + 0;
     s += '<line x1="' + x(main.lo) + '" x2="' + x(main.hi) + '" y1="' + (ci - 8) + '" y2="' + (ci - 8) + '" stroke="' + C.ink + '" stroke-width="4"/>';
-    s += '<text x="' + ((L + W - R) / 2) + '" y="' + (H - 8) + '" font-size="12" text-anchor="middle" fill="#4f5b69">' + esc('True mean difference (' + A.unit + '). Positive = better with caffeine') + '</text>';
+    s += '<text x="' + ((L + W - R) / 2) + '" y="' + (H - 8) + '" font-size="12" text-anchor="middle" fill="#4f5b69">' + esc('True mean difference (' + A.unit + '). Positive = ' + A.better) + '</text>';
     return s + '</svg>';
   }
 
@@ -865,7 +896,7 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
     return s + '</svg>';
   }
 
-  function chartCategories(cats, A, title) {
+  function chartCategories(cats, A, title, yl) {
     // cats: [{label, vals:[{id,v}]}]
     var W = 680, H = 300, L = 70, R = 30, T = 16, B = 50;
     var all = [0, A.swc, -A.swc]; cats.forEach(function (c) { c.vals.forEach(function (o) { all.push(o.v); }); });
@@ -883,7 +914,7 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
       if (m != null) s += '<line x1="' + (cx - Math.min(45, bw * .35)) + '" x2="' + (cx + Math.min(45, bw * .35)) + '" y1="' + y(m) + '" y2="' + y(m) + '" stroke="' + C.ink + '" stroke-width="2.5"/>';
       s += '<text x="' + cx + '" y="' + (H - B + 18) + '" font-size="12" text-anchor="middle">' + esc(c.label) + ' (n = ' + c.vals.length + ')</text>';
     });
-    s += '<text transform="translate(16 ' + ((H - B + T) / 2) + ') rotate(-90)" font-size="12" text-anchor="middle" fill="#4f5b69">' + esc('Effect (' + A.unit + ')') + '</text>';
+    s += '<text transform="translate(16 ' + ((H - B + T) / 2) + ') rotate(-90)" font-size="12" text-anchor="middle" fill="#4f5b69">' + esc((yl || 'Effect') + ' (' + A.unit + ')') + '</text>';
     return s + '</svg>';
   }
 
@@ -955,9 +986,17 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
     window.scrollTo(0, 0);
   }
 
+  function renderBanner(k) {
+    var box = document.querySelector('section.step[data-step="' + k + '"] .cmpBanner'); if (!box) return;
+    var A = analyse(); if (!A || cmpAvailable(A.O).length < 2) { box.innerHTML = ''; return; }
+    if (k >= 7) { box.innerHTML = A.isCaf ? '' : '<div class="callout small">This step is about the caffeine effect, so it uses the <strong>' + esc(cmpLabel(A.O, 'caf').toLowerCase()) + '</strong> comparison, whatever is chosen in the Compare menu.</div>'; return; }
+    if (A.isCaf) box.innerHTML = '<p class="small muted">Comparing <strong>' + esc(A.cmpLabel.toLowerCase()) + '</strong>. Use the Compare menu at the top to look at the tests after the fatigue task.</p>';
+    else box.innerHTML = '<div class="callout small"><strong>You are comparing ' + esc(A.cmpLabel.toLowerCase()) + (A.grp === 'all' ? ' for both groups' : ' for the ' + A.grp + ' group') + '.</strong> The text on this page is written about caffeine. For this comparison, read “with caffeine” as “after the fatigue task”. A positive difference means ' + esc(A.better) + ' than at ' + esc(A.compShort) + ', “beneficial” means a worthwhile improvement and “harmful” means a worthwhile decline.</div>';
+  }
   function renderStep(k) {
-    var A = analyse();
+    var A = (k === 7 || k === 8) ? analyse('caf') : analyse();
     try {
+      renderBanner(k);
       if (!A) { return; }
       if (k === 2) step2(A); else if (k === 3) step3(A); else if (k === 4) step4(A); else if (k === 5) step5(A); else if (k === 6) step6(A); else if (k === 7) step7(A); else if (k === 8) step8(A);
     } catch (err) {
@@ -974,7 +1013,7 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
 
   function step2(A) {
     var D = S.DS, O = A.O;
-    var head = '<p>' + D.nRows + ' rows were read. For <strong>' + esc(A.label) + '</strong>, ' + O.participants.length + ' people have data and <strong>' + A.n + '</strong> have both a ' + A.compShort + ' and a caffeine score.</p>';
+    var head = '<p>' + D.nRows + ' rows were read. For <strong>' + esc(A.label) + '</strong>, ' + A.parts.length + ' people ' + (A.grp !== 'all' ? 'in the ' + A.grp + ' group ' : '') + 'have data and <strong>' + A.n + '</strong> have both a ' + A.compShort + ' and a ' + A.bShort + ' score.</p>';
     $('validation').innerHTML = head + issuesHTML(D.msgs.concat(O.msgs));
     // design note
     var orders = A.paired.map(function (x) { return x.cafFirst; });
@@ -987,18 +1026,21 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
     else if (known.length) note += ' ' + known.filter(function (o) { return o; }).length + ' people had caffeine first and ' + known.filter(function (o) { return !o; }).length + ' had it second, which helps to balance order effects.';
     else note += ' The order of testing was not recorded.';
     if (O.participants.some(function (p) { return p.group === 'control'; })) note += ' A separate control group did not take caffeine and was not tested at the caffeine time point.';
+    if (cmpAvailable(O).length > 1) note += ' Use the <strong>Compare</strong> menu at the top of the page to look at the tests after the fatigue task.';
+    if (A.cmp === 'fatcaf') note = '<div class="warn"><strong>This comparison.</strong> Each caffeine participant’s post-caffeine test is compared with their test after the fatigue task. Both tests were done after taking caffeine, so this shows how much the fatigue task changed performance while caffeine was active. The control group are not included because they were not tested at the post-caffeine time point.';
+    else if (A.cmp === 'fatpre') note = '<div class="warn"><strong>This comparison.</strong> Each person’s baseline test is compared with their test after the fatigue task. Between these two tests the caffeine group took caffeine and did an extra round of testing, but the control group did neither. Use the <strong>Group</strong> menu at the top to switch between the caffeine group, the control group and both. Step 3 shows the two groups side by side.';
     $('designNote').innerHTML = note + '</div>';
     // table
-    var rows = A.O.participants.map(function (p) {
+    var rows = A.parts.map(function (p) {
       var pr = A.paired.filter(function (x) { return x.p === p; })[0];
       return { id: p.id, comp: M.mean(p.comp), caf: M.mean(p.caf), d: pr ? pr.d : null, mgkg: (p.dose != null && p.mass) ? p.dose / p.mass : null, hab: p.habitual || '', guess: p.guess.caffeine || '' };
     });
     var k = S.sort.k, dir = S.sort.dir;
     rows.sort(function (a, b) { var x = a[k], y = b[k]; if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1; return (typeof x === 'string' ? x.localeCompare(y, undefined, { numeric: true }) : x - y) * dir; });
-    var cols = [['id', 'Participant'], ['comp', A.compName + ' (' + A.unit + ')'], ['caf', 'Caffeine (' + A.unit + ')'], ['d', 'Difference (' + A.unit + ')'], ['mgkg', 'Dose (mg/kg)']];
+    var cols = [['id', 'Participant'], ['comp', A.compName + ' (' + A.unit + ')'], ['caf', A.bName + ' (' + A.unit + ')'], ['d', 'Difference (' + A.unit + ')'], ['mgkg', 'Dose (mg/kg)']];
     if (rows.some(function (r) { return r.hab; })) cols.push(['hab', 'Habitual intake']);
     if (rows.some(function (r) { return r.guess; })) cols.push(['guess', 'Guess on caffeine day']);
-    var h = '<caption class="small muted" style="text-align:left">Difference is caffeine minus ' + A.compShort + ', sign-corrected so that positive means better with caffeine.</caption><thead><tr>';
+    var h = '<caption class="small muted" style="text-align:left">Difference is ' + A.bShort + ' minus ' + A.compShort + ', sign-corrected so that positive means ' + A.better + '.</caption><thead><tr>';
     cols.forEach(function (c) { var num = c[0] !== 'id' && c[0] !== 'hab' && c[0] !== 'guess'; h += '<th class="' + (num ? 'n' : '') + '" aria-sort="' + (k === c[0] ? (dir > 0 ? 'ascending' : 'descending') : 'none') + '"><button data-sort="' + c[0] + '">' + esc(c[1]) + (k === c[0] ? (dir > 0 ? ' ▲' : ' ▼') : '') + '</button></th>'; });
     h += '</tr></thead><tbody>';
     rows.forEach(function (r) {
@@ -1007,24 +1049,37 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
       h += '</tr>';
     });
     $('dataTable').innerHTML = h + '</tbody>';
-    $('chart2').innerHTML = '<div class="legend"><span><i style="background:' + C.comp + ';border-radius:50%"></i>' + esc(A.compName) + '</span><span><i style="background:' + C.caf + '"></i>Caffeine</span><span><i style="border:2px solid ' + C.grey + ';border-radius:50%"></i>Hollow = no paired score</span></div>' + chartConditions(A);
-    var mc = M.mean(A.O.participants.map(function (p) { return M.mean(p.comp); }).filter(function (v) { return v != null; })), mf = M.mean(A.O.participants.map(function (p) { return M.mean(p.caf); }).filter(function (v) { return v != null; }));
-    $('sum2').innerHTML = 'Chart summary. ' + esc(A.compName) + ' mean ' + f(mc, A.dp) + ' ' + esc(A.unit) + ', caffeine mean ' + f(mf, A.dp) + ' ' + esc(A.unit) + '. Scores vary a lot between people, from ' + f(Math.min.apply(null, A.O.participants.map(function (p) { return M.mean(p.comp); }).filter(function (v) { return v != null; })), A.dp) + ' to ' + f(Math.max.apply(null, A.O.participants.map(function (p) { return M.mean(p.comp); }).filter(function (v) { return v != null; })), A.dp) + ' ' + esc(A.unit) + ' at ' + A.compShort + '.';
+    $('chart2').innerHTML = '<div class="legend"><span><i style="background:' + C.comp + ';border-radius:50%"></i>' + esc(A.compName) + '</span><span><i style="background:' + C.caf + '"></i>' + esc(A.bName) + '</span><span><i style="border:2px solid ' + C.grey + ';border-radius:50%"></i>Hollow = no paired score</span></div>' + chartConditions(A);
+    var mc = M.mean(A.parts.map(function (p) { return M.mean(p.comp); }).filter(function (v) { return v != null; })), mf = M.mean(A.parts.map(function (p) { return M.mean(p.caf); }).filter(function (v) { return v != null; }));
+    $('sum2').innerHTML = 'Chart summary. ' + esc(A.compName) + ' mean ' + f(mc, A.dp) + ' ' + esc(A.unit) + ', ' + A.bShort + ' mean ' + f(mf, A.dp) + ' ' + esc(A.unit) + '. Scores vary a lot between people, from ' + f(Math.min.apply(null, A.parts.map(function (p) { return M.mean(p.comp); }).filter(function (v) { return v != null; })), A.dp) + ' to ' + f(Math.max.apply(null, A.parts.map(function (p) { return M.mean(p.comp); }).filter(function (v) { return v != null; })), A.dp) + ' ' + esc(A.unit) + ' at ' + A.compShort + '.';
   }
 
   function step3(A) {
-    if (!A.n) { $('chart3').innerHTML = '<p>No paired data.</p>'; return; }
+    if (!A.n) { $('chart3').innerHTML = '<p>No paired data.</p>'; $('grp3').innerHTML = ''; return; }
     Array.prototype.forEach.call(document.querySelectorAll('[data-view]'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-view') === S.view)); });
-    var leg = S.view === 'paired' ? '<div class="legend"><span><i style="background:' + C.comp + ';border-radius:50%"></i>' + esc(A.compName) + '</span><span><i style="background:' + C.caf + '"></i>Caffeine</span><span>Solid line = better with caffeine</span><span>Dashed line = same or worse</span></div>'
-      : '<div class="legend"><span><i style="background:' + C.comp + ';border-radius:50%"></i>' + esc(A.compName) + '</span><span><i style="background:' + C.caf + '"></i>Caffeine</span><span>Thick line = mean, vertical line = &#177;1 SD</span></div>';
+    var leg = S.view === 'paired' ? '<div class="legend"><span><i style="background:' + C.comp + ';border-radius:50%"></i>' + esc(A.compName) + '</span><span><i style="background:' + C.caf + '"></i>' + esc(A.bName) + '</span><span>Solid line = ' + A.better + '</span><span>Dashed line = same or worse</span></div>'
+      : '<div class="legend"><span><i style="background:' + C.comp + ';border-radius:50%"></i>' + esc(A.compName) + '</span><span><i style="background:' + C.caf + '"></i>' + esc(A.bName) + '</span><span>Thick line = mean, vertical line = &#177;1 SD</span></div>';
     $('chart3').innerHTML = leg + chartPaired(A);
     var better = A.paired.filter(function (x) { return x.d > 0; }).length;
     var sc = M.sd(A.paired.map(function (x) { return x.comp; })), sf = M.sd(A.paired.map(function (x) { return x.caf; }));
     var seInd = (sc != null && sf != null) ? Math.sqrt(sc * sc / A.n + sf * sf / A.n) : null, sePair = A.sdD != null ? A.sdD / Math.sqrt(A.n) : null;
-    $('sum3').innerHTML = 'Chart summary. ' + better + ' of ' + A.n + ' people performed better with caffeine. The mean difference is ' + f(A.meanD, A.dp, true) + ' ' + esc(A.unit) + ' (' + f(A.meanPct, 1, true) + '%).';
-    $('stats3').innerHTML = '<div><span class="stat"><b>' + f(A.meanD, A.dp, true) + ' ' + esc(A.unit) + '</b><span>Mean difference (positive = better)</span></span><span class="stat"><b>' + better + ' of ' + A.n + '</b><span>People who did better with caffeine</span></span>' +
+    $('sum3').innerHTML = 'Chart summary. ' + better + ' of ' + A.n + ' people performed ' + A.better + '. The mean difference is ' + f(A.meanD, A.dp, true) + ' ' + esc(A.unit) + ' (' + f(A.meanPct, 1, true) + '%).';
+    $('stats3').innerHTML = '<div><span class="stat"><b>' + f(A.meanD, A.dp, true) + ' ' + esc(A.unit) + '</b><span>Mean difference (positive = better)</span></span><span class="stat"><b>' + better + ' of ' + A.n + '</b><span>People who did ' + A.better + '</span></span>' +
       '<span class="stat"><b>&#177;' + f(seInd, A.dp) + '</b><span>Standard error if pairing is ignored</span></span><span class="stat"><b>&#177;' + f(sePair, A.dp) + '</b><span>Standard error using the pairing</span></span></div>' +
       '<p>The mean difference is the same in both views. What changes is the uncertainty: ignoring the pairing makes the <dfn>standard error</dfn> (the expected sampling error of the mean difference) ' + (seInd && sePair ? (seInd / sePair).toFixed(1) + ' times' : '') + ' larger, because the large differences between people are counted as noise.</p>';
+    var g3 = '';
+    if (A.cmp === 'fatpre') {
+      var gs = { caffeine: [], control: [] };
+      A.O.participants.forEach(function (p) { if (p.comp.length && p.fat.length) gs[grpOf(p)].push({ id: p.id, v: A.sign * (M.mean(p.fat) - M.mean(p.comp)) }); });
+      if (gs.caffeine.length && gs.control.length) {
+        var cats = [{ label: 'Caffeine group', vals: gs.caffeine }, { label: 'Control group', vals: gs.control, col: C.comp, mk: 'sq' }];
+        g3 = '<section class="card" style="margin-top:1rem"><h3>Caffeine group and control group side by side</h3><p class="small">Each point is one person’s change from baseline to after the fatigue task (positive = better after the fatigue task). The shaded band is &#177;SWC. If caffeine protected against fatigue, the caffeine group should hold up better than the control group.</p><div class="chartbox"><div class="legend"><span><i style="background:' + C.caf + ';border-radius:50%"></i>Caffeine group</span><span><i style="background:' + C.comp + '"></i>Control group</span><span>Thick line = group mean</span></div>' + chartCategories(cats, A, 'Change from baseline to after the fatigue task, by group', 'Change') +
+          '<p class="chartsum">Chart summary. ' + cats.map(function (c) { return c.label + ': mean change ' + f(M.mean(c.vals.map(function (o) { return o.v; })), A.dp, true) + ' ' + esc(A.unit) + ' (n = ' + c.vals.length + ')'; }).join('; ') + '.</p></div>' +
+          '<p class="warn small">With only ' + gs.control.length + ' control participant' + (gs.control.length > 1 ? 's' : '') + ', this comparison cannot be trusted. The caffeine group also did an extra round of testing before the fatigue task, which adds practice and warm-up, so the two groups did not have the same experience apart from caffeine.</p>' +
+          reflectBox('r3g', 'Did the caffeine group hold up better than the control group after the fatigue task? What else could explain any difference?') + '</section>';
+      }
+    }
+    $('grp3').innerHTML = g3;
   }
 
   function step4(A) {
@@ -1057,7 +1112,7 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
     $('chart5').innerHTML = '<div class="legend"><span><i style="background:rgba(213,94,0,.45)"></i>Harmful (below &#8722;SWC)</span><span><i style="background:rgba(107,114,128,.4)"></i>Trivial</span><span><i style="background:rgba(0,158,115,.5)"></i>Beneficial (above +SWC)</span><span>Thick bar = 95% credible interval</span></div>' + chartPosterior(A, [P]);
     $('sum5').innerHTML = 'Chart summary. The most plausible true mean difference is ' + f(P.mean, A.dp, true) + ' ' + esc(A.unit) + '. The 95% credible interval runs from ' + f(P.lo, A.dp, true) + ' to ' + f(P.hi, A.dp, true) + ' ' + esc(A.unit) + '. Probability harmful ' + pc(P.pHarm) + ', trivial ' + pc(P.pTriv) + ', beneficial ' + pc(P.pBen) + '.';
     $('stats5').innerHTML = '<span class="stat"><b>' + f(P.mean, A.dp, true) + ' ' + esc(A.unit) + '</b><span>Posterior mean</span></span><span class="stat"><b>' + f(P.lo, A.dp, true) + ' to ' + f(P.hi, A.dp, true) + '</b><span>95% credible interval</span></span><span class="stat"><b>' + pc(P.pHarm) + '</b><span>Harmful</span></span><span class="stat"><b>' + pc(P.pTriv) + '</b><span>Trivial</span></span><span class="stat"><b>' + pc(P.pBen) + '</b><span>Beneficial</span></span>' +
-      '<div class="callout">' + verdictText(A, P) + ' This is based on n = ' + A.n + ', so the interval is ' + ((P.hi - P.lo) > 4 * A.swc ? 'wide' : 'reasonably narrow') + ' compared with the SWC.' + (A.n < 5 ? ' <strong>With fewer than 5 people, any conclusion is very fragile.</strong>' : '') + (A.O.comparator === 'baseline' ? ' Remember that this design cannot separate caffeine from practice and expectation effects.' : '') + '</div>';
+      '<div class="callout">' + verdictText(A, P) + ' This is based on n = ' + A.n + ', so the interval is ' + ((P.hi - P.lo) > 4 * A.swc ? 'wide' : 'reasonably narrow') + ' compared with the SWC.' + (A.n < 5 ? ' <strong>With fewer than 5 people, any conclusion is very fragile.</strong>' : '') + (A.isCaf && A.O.comparator === 'baseline' ? ' Remember that this design cannot separate caffeine from practice and expectation effects.' : !A.isCaf ? (A.cmp === 'fatpre' && A.grp !== 'control' ? ' Remember that the caffeine group also took caffeine and did an extra round of testing between these two tests.' : ' Remember that practice, warm-up and motivation can also change scores between tests.') : '') + '</div>';
     // prior panel
     var nh = $('nHyp'); if (S.nHyp == null) S.nHyp = A.n; nh.value = S.nHyp; $('nHypOut').textContent = S.nHyp + (S.nHyp === A.n ? ' (actual)' : '');
     $('priorSel').value = S.prior;
@@ -1072,7 +1127,7 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
     $('sum5b').innerHTML = 'With these settings: posterior mean ' + f(G.mean, A.dp, true) + ' ' + esc(A.unit) + ', 95% credible interval ' + f(G.lo, A.dp, true) + ' to ' + f(G.hi, A.dp, true) + ', harmful ' + pc(G.pHarm) + ', trivial ' + pc(G.pTriv) + ', beneficial ' + pc(G.pBen) + '. ' + verdictText(A, G);
     // frequentist
     var t = A.meanD / (A.sdD / Math.sqrt(A.n)), p = 2 * (1 - M.tcdf(Math.abs(t), A.n - 1));
-    $('freqBox').innerHTML = '<p>A paired t-test asks a different question: if caffeine truly had zero effect, how surprising would a mean difference this large be? Here t(' + (A.n - 1) + ') = ' + f(t, 2) + ' and p = ' + (p < 0.001 ? '< 0.001' : p.toFixed(3)) + '. The 95% confidence interval is ' + f(P.lo, A.dp, true) + ' to ' + f(P.hi, A.dp, true) + ' ' + esc(A.unit) + ', numerically the same as the credible interval here.</p><p>A p-value is not the probability that caffeine works. A p-value above 0.05 does not show that there is no effect, and a p-value below 0.05 does not show that the effect is worthwhile. With small samples, the Bayesian probabilities of a harmful, trivial or beneficial effect are usually easier to interpret.</p>';
+    $('freqBox').innerHTML = '<p>A paired t-test asks a different question: if the true mean difference were zero, how surprising would a mean difference this large be? Here t(' + (A.n - 1) + ') = ' + f(t, 2) + ' and p = ' + (p < 0.001 ? '< 0.001' : p.toFixed(3)) + '. The 95% confidence interval is ' + f(P.lo, A.dp, true) + ' to ' + f(P.hi, A.dp, true) + ' ' + esc(A.unit) + ', numerically the same as the credible interval here.</p><p>A p-value is not the probability that the effect is real. A p-value above 0.05 does not show that there is no effect, and a p-value below 0.05 does not show that the effect is worthwhile. With small samples, the Bayesian probabilities of a harmful, trivial or beneficial effect are usually easier to interpret.</p>';
   }
 
   function simDraws(A) {
@@ -1086,17 +1141,17 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
     $('teNote').innerHTML = A.te != null ? 'Typical error ' + esc(A.teSource) + '. Each difference compares a mean of ' + f(A.kc, 1) + ' with a mean of ' + f(A.kf, 1) + ' trials, so the noise in one person’s difference has an SD of about <strong>' + f(A.noise, A.dp) + ' ' + esc(A.unit) + '</strong>.' : '<span class="err">There are no repeat trials to estimate the typical error. Enter a value from a reliability study of this test.</span>';
     if (A.noise == null || !A.n) { $('chart6').innerHTML = ''; $('stats6').innerHTML = ''; $('sum6').innerHTML = ''; return; }
     var sim = simDraws(A);
-    $('chart6').innerHTML = '<div class="legend"><span>Horizontal bar = 95% range of measurement noise around each person’s difference</span><span><i style="border:2px solid ' + C.grey + ';border-radius:50%"></i>Simulated class where caffeine does nothing</span></div>' + chartDiffs(A, { noise: A.noise, sim: sim });
+    $('chart6').innerHTML = '<div class="legend"><span>Horizontal bar = 95% range of measurement noise around each person’s difference</span><span><i style="border:2px solid ' + C.grey + ';border-radius:50%"></i>Simulated class where ' + A.nothing + '</span></div>' + chartDiffs(A, { noise: A.noise, sim: sim });
     var crossZero = A.paired.filter(function (x) { return Math.abs(x.d) < 1.96 * A.noise; }).length;
     var pChance = 1 - M.normcdf(A.swc / A.noise);
     var simBen = sim.filter(function (v) { return v > A.swc; }).length;
     var obsBen = A.diffs.filter(function (d) { return d > A.swc; }).length;
     var ir2 = A.sdD * A.sdD - A.noise * A.noise;
-    $('sum6').innerHTML = 'Chart summary. For ' + crossZero + ' of ' + A.n + ' people, the noise bar crosses zero, so their change could be measurement noise alone. In the simulated class where caffeine does nothing, ' + simBen + ' of ' + A.n + ' people still "improved" by more than the SWC.';
+    $('sum6').innerHTML = 'Chart summary. For ' + crossZero + ' of ' + A.n + ' people, the noise bar crosses zero, so their change could be measurement noise alone. In the simulated class where ' + A.nothing + ', ' + simBen + ' of ' + A.n + ' people still "improved" by more than the SWC.';
     $('stats6').innerHTML = '<span class="stat"><b>' + pc(pChance) + '</b><span>Chance one person beats +SWC by noise alone</span></span><span class="stat"><b>' + f(A.n * pChance, 1) + ' of ' + A.n + '</b><span>Expected to beat +SWC by chance</span></span><span class="stat"><b>' + obsBen + ' of ' + A.n + '</b><span>Observed above +SWC</span></span>' +
       '<span class="stat"><b>' + f(A.sdD, A.dp) + ' vs ' + f(A.noise, A.dp) + '</b><span>SD of differences vs noise SD</span></span>' +
       '<div class="callout">' + (ir2 > 0 ? 'The differences are more spread out than noise alone would predict. The estimated individual response SD is <strong>' + f(Math.sqrt(ir2), A.dp) + ' ' + esc(A.unit) + '</strong>, which hints at real individual differences, but with n = ' + A.n + ' this estimate is very uncertain.' : 'The differences are <strong>no more spread out than measurement noise alone</strong> would produce. These data give no evidence that some people truly responded and others did not.') +
-      (A.O.comparator === 'baseline' ? ' Without a control or placebo condition at the same time point, true individual responses cannot be separated from noise and practice effects.' : '') + '</div>';
+      (A.isCaf && A.O.comparator === 'baseline' ? ' Without a control or placebo condition at the same time point, true individual responses cannot be separated from noise and practice effects.' : '') + '</div>';
   }
 
   function reflectBox(id, q) { return '<div class="reflect"><label for="' + id + '">' + esc(q) + '</label><textarea id="' + id + '" data-ans="' + id + '">' + esc(S.answers[id] || '') + '</textarea></div>'; }
@@ -1142,7 +1197,7 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
     else h += notRecorded('The order of testing was not recorded.', 'Always record which condition each person did first, and counterbalance it.');
     h += reflectBox('r7d', 'How might a learning effect have changed the size of the caffeine effect in this study?') + '</section>';
     // blinding
-    var gb = []; A.O.participants.forEach(function (p) { Object.keys(p.guess).forEach(function (c) { if (c === 'caffeine' || c === A.O.comparator) gb.push({ actual: c === 'caffeine' ? 'caffeine' : 'placebo', guess: p.guess[c] }); }); });
+    var gb = []; A.parts.forEach(function (p) { Object.keys(p.guess).forEach(function (c) { if (c === 'caffeine' || c === A.O.comparator) gb.push({ actual: c === 'caffeine' ? 'caffeine' : 'placebo', guess: p.guess[c] }); }); });
     h += '<section class="card" style="margin-top:1rem"><h3>Blinding and expectancy</h3><p class="small">If people can tell which drink they had (for example from a bitter taste or feeling jittery), their expectations may change how hard they try. Placebo effects with caffeine can be as large as the caffeine effect itself in some people (Saunders <em>et al.</em>, 2017).</p>';
     if (gb.length >= 4) {
       var cats2 = ['caffeine', 'placebo', 'unsure'], tab = { caffeine: {}, placebo: {} };
@@ -1193,10 +1248,10 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
   /* ---------- summary export ---------- */
   function strip(html) { var d = document.createElement('div'); d.innerHTML = html; return (d.textContent || '').replace(/\s+/g, ' ').trim(); }
   function summaryText() {
-    var A = analyse(); var L = [];
+    var A = analyse('caf'), Ax = analyse(); var L = [];
     L.push('DID CAFFEINE WORK? Investigation summary');
     L.push('Date: ' + new Date().toLocaleDateString('en-GB'));
-    L.push('Outcome: ' + A.label + ' (' + A.unit + '), comparison: ' + A.compName + ', n = ' + A.n);
+    L.push('Outcome: ' + A.label + ' (' + A.unit + '), comparison: ' + A.cmpLabel + ', n = ' + A.n);
     L.push('');
     L.push('PREDICTIONS');
     L.push('Predicted average improvement: ' + S.pred.mean + '%. Observed: ' + strip(f(A.meanPct, 1, true)) + '%.');
@@ -1207,12 +1262,18 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
     L.push('SWC: ' + strip(f(A.swc, A.dp)) + ' ' + A.unit + '.');
     if (A.post) { L.push('Posterior mean ' + strip(f(A.post.mean, A.dp, true)) + ', 95% credible interval ' + strip(f(A.post.lo, A.dp, true)) + ' to ' + strip(f(A.post.hi, A.dp, true)) + ' ' + A.unit + '.'); L.push('Probability harmful ' + strip(pc(A.post.pHarm)) + ', trivial ' + strip(pc(A.post.pTriv)) + ', beneficial ' + strip(pc(A.post.pBen)) + '.'); L.push(strip(verdictText(A, A.post))); }
     if (A.noise != null) L.push('Typical error ' + strip(f(A.te, A.dp)) + ' ' + A.unit + '; noise SD of a difference ' + strip(f(A.noise, A.dp)) + '.');
+    if (Ax && Ax.cmp !== 'caf') {
+      L.push('');
+      L.push('ALSO EXPLORED: ' + Ax.cmpLabel + (Ax.grp === 'all' ? '' : ', ' + Ax.grp + ' group') + ', n = ' + Ax.n);
+      L.push('Mean difference (positive = ' + Ax.better + '): ' + strip(f(Ax.meanD, Ax.dp, true)) + ' ' + Ax.unit + ', SD of differences ' + strip(f(Ax.sdD, Ax.dp)) + '.');
+      if (Ax.post) { L.push('Posterior mean ' + strip(f(Ax.post.mean, Ax.dp, true)) + ', 95% credible interval ' + strip(f(Ax.post.lo, Ax.dp, true)) + ' to ' + strip(f(Ax.post.hi, Ax.dp, true)) + ' ' + Ax.unit + '. Probability of a worthwhile decline ' + strip(pc(Ax.post.pHarm)) + ', trivial ' + strip(pc(Ax.post.pTriv)) + ', worthwhile improvement ' + strip(pc(Ax.post.pBen)) + '.'); }
+    }
     L.push('');
     L.push('CHECK YOUR UNDERSTANDING');
     Object.keys(MCQ).forEach(function (k) { if (S.mcq[k]) L.push(MCQ[k].q + ' Answer: ' + S.mcq[k].chosen + (S.mcq[k].correct ? ' (correct)' : ' (incorrect)')); });
     L.push('');
     L.push('REFLECTIONS');
-    var Q = { r7a: 'Dose and response', r7b: 'Habitual intake', r7c: 'Sleep', r7d: 'Order effects', r7e: 'Expectancy', r7f: 'Fatigue', r7g: 'Most important explanation', q8a: 'What did the group data suggest?', q8b: 'How confident are you and why?', q8c: 'What would you change about the design?', q8d: 'Would you advise an athlete to use caffeine?' };
+    var Q = { r7a: 'Dose and response', r7b: 'Habitual intake', r7c: 'Sleep', r7d: 'Order effects', r7e: 'Expectancy', r3g: 'Caffeine and control groups after the fatigue task', r7f: 'Fatigue', r7g: 'Most important explanation', q8a: 'What did the group data suggest?', q8b: 'How confident are you and why?', q8c: 'What would you change about the design?', q8d: 'Would you advise an athlete to use caffeine?' };
     Object.keys(Q).forEach(function (k) { if (S.answers[k]) { L.push(Q[k]); L.push(S.answers[k]); L.push(''); } });
     return L.join('\n');
   }
@@ -1227,7 +1288,7 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
     var txt = summaryText();
     var h = '<h1>Did Caffeine Work? Investigation summary</h1><pre>' + esc(txt) + '</pre>';
     S.view = 'paired'; step3(A);
-    h += '<h2>Paired comparison</h2><div class="chartbox">' + $('chart3').innerHTML + '</div>';
+    h += '<h2>Paired comparison (' + esc(A.cmpLabel.toLowerCase()) + ')</h2><div class="chartbox">' + $('chart3').innerHTML + '</div>';
     h += '<h2>Difference scores</h2><div class="chartbox">' + $('chart4').innerHTML + '</div>';
     h += '<h2>Posterior distribution</h2><div class="chartbox">' + $('chart5').innerHTML + '</div>';
     $('printArea').innerHTML = h;
@@ -1243,11 +1304,21 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
     var pref = ['jump_height', 'performance'];
     S.outcome = D.keys.filter(function (k) { return pref.indexOf(k) >= 0; })[0] || D.keys[0];
     S.nHyp = null; S.teStudent = null;
+    S.grp = 'caffeine';
     var sel = $('outcomeSel'); sel.innerHTML = D.keys.map(function (k) { return '<option value="' + esc(k) + '">' + esc(D.outcomes[k].label) + '</option>'; }).join(''); sel.value = S.outcome;
+    renderCmpSel();
     $('dsName').textContent = 'Data: ' + name;
     $('loadMsg').innerHTML = '<span>Loaded ' + D.nRows + ' rows.</span>';
     renderLectReport(); renderStep(S.step);
     return true;
+  }
+  function renderCmpSel() {
+    var O = S.DS && S.DS.outcomes[S.outcome]; if (!O) return;
+    var avail = cmpAvailable(O); if (avail.indexOf(S.cmp) < 0) S.cmp = avail[0] || 'caf';
+    $('cmpSel').innerHTML = avail.map(function (k) { return '<option value="' + k + '">' + esc(cmpLabel(O, k)) + '</option>'; }).join(''); $('cmpSel').value = S.cmp;
+    $('cmpWrap').style.display = avail.length > 1 ? '' : 'none';
+    var hasCon = O.participants.some(function (p) { return grpOf(p) === 'control'; });
+    $('grpWrap').style.display = (S.cmp === 'fatpre' && hasCon) ? '' : 'none'; $('grpSel').value = S.grp;
   }
   function renderLectReport() {
     if (!S.DS) return;
@@ -1289,7 +1360,9 @@ var DEMO_CSV = "participant_id,condition,trial_order,performance,higher_is_bette
     $('simAgain').addEventListener('click', function () { S.seed += 1; renderStep(6); });
     $('priorSel').addEventListener('change', function () { S.prior = this.value; renderStep(5); });
     $('nHyp').addEventListener('input', function () { S.nHyp = +this.value; renderStep(5); });
-    $('outcomeSel').addEventListener('change', function () { S.outcome = this.value; S.nHyp = null; S.teStudent = null; renderStep(S.step); });
+    $('outcomeSel').addEventListener('change', function () { S.outcome = this.value; S.nHyp = null; S.teStudent = null; renderCmpSel(); renderStep(S.step); });
+    $('cmpSel').addEventListener('change', function () { S.cmp = this.value; S.nHyp = null; S.teStudent = null; renderCmpSel(); renderStep(S.step); });
+    $('grpSel').addEventListener('change', function () { S.grp = this.value; S.nHyp = null; S.teStudent = null; renderStep(S.step); });
     $('dlTxt').addEventListener('click', function () { download('caffeine-investigation-summary.txt', summaryText()); });
     $('printBtn').addEventListener('click', printSummary);
     $('lectToggle').addEventListener('click', function () { var L = $('lect'); L.hidden = !L.hidden; this.setAttribute('aria-expanded', String(!L.hidden)); if (!L.hidden) L.scrollIntoView(); });
