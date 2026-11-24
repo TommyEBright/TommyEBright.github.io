@@ -443,6 +443,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
       <button class="btn primary big" id="againBtn" type="button">Try again</button>
       <button class="btn secondary block" id="seeTrendsBtn" type="button" hidden>See my trends</button>
       <a class="btn ghost block" id="learnLink" href="#" target="_blank" rel="noopener">Learn more about studying Sport Science at Marjon</a>
+      <p class="small muted" id="modeHint" hidden style="text-align:center;padding:4px 8px 0">Want to save readings or see the full results? Press and hold the Pulse Lab logo at the top to switch to My Trends (saves readings and shows your history) or Lab (detailed results and data export).</p>
     </div>
   </section>
 
@@ -1120,6 +1121,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     $('resNoticeText').textContent = reasonText(res);
     $('learnLink').href = LEARN_MORE_URL;
     $('learnLink').hidden = mode === 'lab';
+    $('modeHint').hidden = mode !== 'openday';
     renderTestPanel($('testPanelA'), res.test);
 
     var saved = '';
