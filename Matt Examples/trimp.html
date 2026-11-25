@@ -1,2025 +1,1455 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Training Load Calculator — Dr. Tommy Bright</title>
+<title>Training Load Calculator | Dr. Tommy Bright</title>
+<meta name="description" content="Calculate iTRIMP, Banister, Edwards, Lucia and Stagno TRIMPs, time above 80, 85 and 90% HRmax and sRPE from a heart rate trace. Runs entirely in the browser.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --indigo:       #0a0f1e;
-    --indigo-soft:  #1a2a4a;
-    --magenta:      #2a8c4a;
-    --magenta-deep: #1a5a2d;
-    --magenta-tint: rgba(42,140,74,0.10);
-    --lime:         #6bcf8f;
-    --lime-deep:    #2a8c4a;
-    --purple:       #1a5fd4;
-    --purple-deep:  #0a3d8f;
-    --bg:           #f4f7fb;
-    --card:         #ffffff;
-    --rule:         #d0daea;
-    --rule-soft:    #e8eef6;
-    --error:        #c63838;
-    --shadow:       0 2px 0 rgba(10,15,30,0.04), 0 14px 28px -18px rgba(10,15,30,0.25);
+    --ink:        #0a0f1e;
+    --ink-soft:   #3a4a66;
+    --ink-mute:   #66738c;
+    --green:      #2a8c4a;
+    --green-deep: #1a5a2d;
+    --green-tint: rgba(42,140,74,0.09);
+    --mint:       #6bcf8f;
+    --blue:       #1a5fd4;
+    --blue-deep:  #0a3d8f;
+    --blue-tint:  rgba(26,95,212,0.08);
+    --amber:      #c27400;
+    --red:        #c63838;
+    --bg:         #f4f7fb;
+    --card:       #ffffff;
+    --rule:       #d0daea;
+    --rule-soft:  #e8eef6;
+    --shadow:     0 1px 0 rgba(10,15,30,0.04), 0 12px 24px -18px rgba(10,15,30,0.28);
+    --radius:     10px;
   }
   * { box-sizing: border-box; }
-  html, body {
-    margin: 0; padding: 0;
-    background: var(--bg);
-    color: var(--indigo);
-    font-family: 'DM Sans', 'DM Sans', system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    line-height: 1.55;
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+  body {
+    font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased; line-height: 1.55; font-size: 15px;
+    overflow-x: hidden;
   }
+  a { color: var(--blue-deep); }
 
-  .wrap { max-width: 1280px; margin: 0 auto; padding: 28px 24px 60px; }
+  /* Site chrome (hidden when embedded) */
+  .site-nav { background: var(--ink); border-bottom: 2px solid var(--blue); }
+  .site-nav .in { max-width: 1240px; margin: 0 auto; padding: 0 20px; min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .site-nav a { color: rgba(255,255,255,0.65); text-decoration: none; font-size: 13px; font-weight: 500; }
+  .site-nav a.brand { color: #fff; font-size: 15px; font-weight: 600; }
+  .site-nav a.on { color: #fff; border-bottom: 2px solid var(--blue); padding-bottom: 2px; }
+  .site-nav ul { display: flex; gap: 24px; list-style: none; margin: 0; padding: 0; flex-wrap: wrap; }
+  .hero { background: var(--ink); padding: 48px 20px 44px; }
+  .hero .in { max-width: 1240px; margin: 0 auto; }
+  .hero .eyebrow { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--mint); margin-bottom: 14px; }
+  .hero h1 { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; font-size: clamp(30px, 5vw, 50px); color: #fff; line-height: 1.08; margin: 0 0 14px; }
+  .hero h1 em { color: #6b9fe4; }
+  .hero p { color: rgba(255,255,255,0.7); max-width: 640px; margin: 0; font-size: 15px; }
+  .site-foot { background: var(--ink); color: rgba(255,255,255,0.5); padding: 28px 20px; margin-top: 40px; font-size: 13px; }
+  .site-foot .in { max-width: 1240px; margin: 0 auto; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .site-foot a { color: rgba(255,255,255,0.7); text-decoration: none; margin-right: 18px; }
+  body.embed .site-nav, body.embed .hero, body.embed .site-foot, body.embed #site-nav-block { display: none; }
+  body.embed .wrap { padding-top: 14px; }
+  .embed-head { display: none; }
+  body.embed .embed-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .embed-head h1 { font-size: 20px; margin: 0; }
+  .embed-head a { font-size: 13px; }
 
-  header.mast {
-    background: linear-gradient(135deg, rgba(10,15,30,0.95), rgba(10,15,30,0.85));
-    color: #fff;
-    border-radius: 8px;
-    border-bottom: 8px solid var(--magenta);
-    padding: 32px 28px;
-    margin-bottom: 22px;
-    text-align: center;
-  }
-  .mast .eyebrow {
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 500;
-    font-size: 12px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--lime);
-    margin-bottom: 6px;
-  }
-  .mast h1 {
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 700;
-    font-size: clamp(28px, 4.4vw, 42px);
-    line-height: 1.1;
-    letter-spacing: -0.01em;
-    margin: 0;
-    color: #fff;
-  }
-  .mast .sub {
-    margin: 10px auto 0;
-    color: var(--lime);
-    font-weight: 700;
-    max-width: 720px;
-    font-size: 16px;
-  }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 24px 16px 48px; }
 
   /* Tabs */
-  .tabs {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
   .tab {
-    background: var(--card);
-    border: 2px solid var(--indigo);
-    padding: 12px 22px;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 600;
-    font-size: 14.5px;
-    cursor: pointer;
-    color: var(--indigo);
-    border-radius: 999px;
-    transition: all 0.15s;
+    background: var(--card); border: 2px solid var(--ink); padding: 9px 16px; font: 600 14px 'DM Sans', sans-serif;
+    cursor: pointer; color: var(--ink); border-radius: 999px; transition: background .15s, color .15s;
   }
-  .tab .n {
-    display: inline-block;
-    background: var(--indigo);
-    color: var(--lime);
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 11px;
-    margin-right: 8px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-  }
-  .tab:hover { background: var(--indigo); color: var(--lime); }
-  .tab:hover .n { background: var(--magenta); color: #fff; }
-  .tab.active {
-    background: var(--magenta);
-    border-color: var(--magenta-deep);
-    color: #fff;
-  }
-  .tab.active .n { background: var(--indigo); color: #fff; }
+  .tab .n { display: inline-block; background: var(--ink); color: var(--mint); padding: 1px 7px; border-radius: 999px; font-size: 11px; margin-right: 7px; font-weight: 700; }
+  .tab:hover { background: var(--ink); color: #fff; }
+  .tab[aria-selected="true"] { background: var(--green); border-color: var(--green-deep); color: #fff; }
+  .tab[aria-selected="true"] .n { background: var(--ink); color: #fff; }
+  .tab:focus-visible, .btn:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
 
-  .panel {
-    background: var(--card);
-    border: 2px solid var(--indigo);
-    border-radius: 10px;
-    box-shadow: var(--shadow);
-    padding: 28px;
-    margin-top: 16px;
-  }
-
+  .panel { background: var(--card); border: 2px solid var(--ink); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; margin-top: 14px; }
+  @media (max-width: 600px) { .panel { padding: 16px; } }
   .tab-content { display: none; }
   .tab-content.active { display: block; }
 
-  h2.section {
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 700;
-    font-size: 22px;
-    margin: 0 0 6px;
-    color: var(--indigo);
-    border-bottom: 3px solid var(--lime);
-    padding-bottom: 8px;
-  }
-  .section-intro {
-    margin: 0 0 22px;
-    font-size: 15px;
-    color: var(--indigo-soft);
-  }
+  h2.section { font-size: 21px; margin: 0 0 6px; border-bottom: 3px solid var(--mint); padding-bottom: 8px; }
+  h3.sub { font-size: 16px; margin: 22px 0 8px; }
+  .intro { margin: 8px 0 18px; color: var(--ink-soft); max-width: 860px; }
 
-  /* Roster table */
-  .roster-actions {
-    display: flex; gap: 8px; flex-wrap: wrap;
-    margin-bottom: 18px;
-  }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 0 0 20px; }
+  .step { background: var(--bg); border: 1.5px solid var(--rule); border-radius: 8px; padding: 12px 14px; font-size: 14px; }
+  .step b { display: block; color: var(--green-deep); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 2px; }
 
   .btn {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 10px 16px;
-    border-radius: 6px;
-    border: 2px solid var(--indigo);
-    cursor: pointer;
-    background: var(--card);
-    color: var(--indigo);
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.15s;
+    font: 600 13px 'DM Sans', sans-serif; padding: 9px 14px; border-radius: 6px; border: 2px solid var(--ink); cursor: pointer;
+    background: var(--card); color: var(--ink); display: inline-flex; align-items: center; gap: 6px; text-decoration: none; transition: background .15s, color .15s;
   }
-  .btn:hover { background: var(--indigo); color: var(--lime); }
-  .btn-primary {
-    background: var(--magenta);
-    color: #fff;
-    border-color: var(--magenta-deep);
-  }
-  .btn-primary:hover { background: var(--magenta-deep); color: #fff; }
-  .btn-ghost {
-    background: transparent;
-    border-style: dashed;
-  }
-  .btn-danger {
-    background: var(--card);
-    color: var(--error);
-    border-color: var(--error);
-  }
-  .btn-danger:hover { background: var(--error); color: #fff; }
-  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn:hover { background: var(--ink); color: #fff; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-primary { background: var(--green); color: #fff; border-color: var(--green-deep); }
+  .btn-primary:hover { background: var(--green-deep); }
+  .btn-ghost { border-style: dashed; background: transparent; }
+  .btn-danger { color: var(--red); border-color: var(--red); }
+  .btn-danger:hover { background: var(--red); color: #fff; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 16px; }
+  .actions.end { justify-content: flex-end; margin: 16px 0 0; }
 
-  .empty {
-    background: var(--bg);
-    border: 2px dashed var(--rule);
-    border-radius: 10px;
-    padding: 40px 24px;
-    text-align: center;
-    color: var(--indigo-soft);
-  }
-  .empty h3 {
-    font-family: 'DM Sans', sans-serif;
-    margin: 0 0 8px;
-    color: var(--indigo);
-  }
+  .grid-2 { display: grid; grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); gap: 22px; }
+  .grid-2 > * { min-width: 0; }
+  @media (max-width: 900px) { .grid-2 { grid-template-columns: minmax(0, 1fr); } }
 
-  table.roster {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
+  fieldset { border: 2px solid var(--rule); border-radius: 8px; padding: 16px; margin: 0 0 16px; min-width: 0; }
+  fieldset legend { font-weight: 700; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; padding: 0 6px; }
+  fieldset.g { border-color: var(--green); }
+  fieldset.b { border-color: var(--blue); }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr)); gap: 12px; }
+  .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .field label { font-weight: 600; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+  .field label .opt { color: var(--green-deep); font-weight: 500; text-transform: none; letter-spacing: 0; }
+  .field input, .field select, .field textarea {
+    font: 14px 'DM Sans', sans-serif; padding: 8px 10px; border: 1.5px solid var(--rule); border-radius: 6px; background: #fff; color: var(--ink); width: 100%;
   }
-  table.roster thead {
-    background: var(--indigo);
-    color: #fff;
-  }
-  table.roster th {
-    padding: 12px 10px;
-    text-align: left;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 600;
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  table.roster th:first-child { border-top-left-radius: 6px; }
-  table.roster th:last-child  { border-top-right-radius: 6px; }
-  table.roster td {
-    padding: 10px;
-    border-bottom: 1px solid var(--rule-soft);
-    vertical-align: middle;
-  }
-  table.roster tbody tr:hover { background: rgba(42,140,74,0.04); }
-  table.roster .name {
-    font-weight: 700;
-    color: var(--indigo);
-  }
-  table.roster .row-actions {
-    display: flex; gap: 6px; flex-wrap: wrap;
-  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--green); outline: none; box-shadow: 0 0 0 3px var(--green-tint); }
+  .field .hint { font-size: 12px; color: var(--ink-mute); }
+  .field input.err { border-color: var(--red); background: #fdf0f0; }
 
-  /* Player form */
-  .form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 14px;
-  }
-  .field { display: flex; flex-direction: column; gap: 4px; }
-  .field label {
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 600;
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--indigo-soft);
-  }
-  .field label .opt {
-    color: var(--lime-deep);
-    font-weight: 500;
-    margin-left: 4px;
-  }
-  .field input, .field textarea, .field select {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    padding: 9px 11px;
-    border: 1.5px solid var(--rule);
-    border-radius: 6px;
-    background: var(--card);
-    color: var(--indigo);
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  .field input:focus, .field textarea:focus, .field select:focus {
-    border-color: var(--magenta);
-  }
-  .field .hint {
-    font-size: 12px;
-    color: var(--indigo-soft);
-    font-style: italic;
-  }
-  .field input.err { border-color: var(--error); background: #fdf0f0; }
-
-  fieldset {
-    border: 2px solid var(--rule);
-    border-radius: 8px;
-    padding: 18px;
-    margin: 0 0 18px;
-  }
-  fieldset legend {
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 700;
-    font-size: 13px;
-    color: var(--indigo);
-    padding: 0 8px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-  fieldset.accent-magenta { border-color: var(--magenta); }
-  fieldset.accent-lime    { border-color: var(--lime-deep); }
-  fieldset.accent-purple  { border-color: var(--purple); }
-
-  .form-actions {
-    display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px;
-    flex-wrap: wrap;
-  }
-
-  /* Session results */
-  .session-grid {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: 24px;
-  }
-  @media (max-width: 920px) {
-    .session-grid { grid-template-columns: 1fr; }
-  }
-
-  .upload-zone {
-    background: var(--bg);
-    border: 2px dashed var(--indigo);
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .upload-zone:hover, .upload-zone.dragover {
-    background: var(--magenta-tint);
-    border-color: var(--magenta);
-  }
-  .upload-zone p { margin: 6px 0; }
-  .upload-zone .small {
-    font-size: 12px;
-    color: var(--indigo-soft);
-  }
-  .upload-zone input[type="file"] { display: none; }
-  .upload-zone .file-name {
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 700;
-    color: var(--magenta-deep);
-    word-break: break-all;
-  }
-
-  .metric-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-  .metric {
-    background: var(--card);
-    border: 2px solid var(--indigo);
-    border-radius: 8px;
-    padding: 14px;
-    border-top: 6px solid var(--magenta);
-  }
-  .metric.lime { border-top-color: var(--lime); }
-  .metric.purple { border-top-color: var(--purple); }
-  .metric .lbl {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--indigo-soft);
-    margin-bottom: 4px;
-  }
-  .metric .val {
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 700;
-    font-size: 26px;
-    color: var(--indigo);
-    line-height: 1;
-  }
-  .metric .unit {
-    font-size: 12px;
-    color: var(--indigo-soft);
-    margin-left: 4px;
-    font-weight: 500;
-  }
-  .metric .sub {
-    margin-top: 4px;
-    font-size: 11px;
-    color: var(--indigo-soft);
-    font-family: 'DM Sans', sans-serif;
-  }
-
-  .zones-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-top: 18px;
-  }
-  @media (max-width: 720px) {
-    .zones-row { grid-template-columns: 1fr; }
-  }
-  .zones-card {
-    background: var(--card);
-    border: 2px solid var(--indigo);
-    border-radius: 8px;
-    padding: 16px;
-  }
-  .zones-card h4 {
-    font-family: 'DM Sans', sans-serif;
-    margin: 0 0 12px;
-    color: var(--indigo);
-    font-size: 15px;
-  }
-  .zone-bar {
-    margin-bottom: 8px;
-  }
-  .zone-bar .head {
-    display: flex; justify-content: space-between;
-    font-size: 12px;
-    font-family: 'DM Sans', sans-serif;
-    color: var(--indigo);
-    margin-bottom: 3px;
-  }
-  .zone-bar .bar {
-    background: var(--rule-soft);
-    height: 8px;
-    border-radius: 99px;
-    overflow: hidden;
-  }
-  .zone-bar .fill {
-    height: 100%;
-    background: var(--magenta);
-    border-radius: 99px;
-  }
-  .zone-bar.z1 .fill { background: #1a5fd4; }
-  .zone-bar.z2 .fill { background: #3a4c8a; }
-  .zone-bar.z3 .fill { background: var(--lime-deep); }
-  .zone-bar.z4 .fill { background: #e08a00; }
-  .zone-bar.z5 .fill { background: var(--magenta); }
-
-  .chart-wrap {
-    background: var(--card);
-    border: 2px solid var(--indigo);
-    border-radius: 8px;
-    padding: 12px;
-    margin-top: 16px;
-  }
-  canvas {
-    display: block;
-    width: 100%;
-    height: auto;
-    background: var(--bg);
-    border-radius: 4px;
-  }
-
-  .alert {
-    background: #fdf0f0;
-    border: 2px solid var(--error);
-    color: var(--error);
-    padding: 12px 14px;
-    border-radius: 6px;
-    margin-bottom: 14px;
-    font-size: 14px;
-  }
-  .ok {
-    background: #f0f8e8;
-    border-color: var(--lime-deep);
-    color: var(--lime-deep);
-  }
-
+  .alert { background: #fdf0f0; border: 2px solid var(--red); color: #8f1f1f; padding: 10px 12px; border-radius: 6px; margin: 10px 0; font-size: 14px; }
+  .note { background: var(--blue-tint); border-left: 4px solid var(--blue); padding: 10px 12px; border-radius: 4px; font-size: 14px; margin: 10px 0; }
+  .warn { background: #fff6e5; border-left: 4px solid var(--amber); padding: 10px 12px; border-radius: 4px; font-size: 14px; margin: 10px 0; }
+  .ok { background: var(--green-tint); border-left: 4px solid var(--green); padding: 10px 12px; border-radius: 4px; font-size: 14px; margin: 10px 0; }
   .hidden { display: none !important; }
 
-  details {
-    background: var(--bg);
-    border: 1.5px solid var(--rule);
-    border-radius: 6px;
-    padding: 10px 14px;
-    margin: 14px 0;
-  }
-  details summary {
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 600;
-    color: var(--indigo);
-    font-size: 14px;
-  }
-  details > div { margin-top: 10px; font-size: 14px; }
-  details code {
-    background: var(--card);
-    padding: 1px 5px;
-    border: 1px solid var(--rule);
-    border-radius: 3px;
-    font-size: 13px;
-  }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1.5px solid var(--rule); border-radius: 8px; }
+  table.data { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.data th { background: var(--ink); color: #fff; padding: 9px 10px; text-align: left; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+  table.data td { padding: 8px 10px; border-bottom: 1px solid var(--rule-soft); vertical-align: middle; }
+  table.data tbody tr:hover { background: var(--green-tint); }
+  table.data td.num, table.data th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.data input, table.data select { font: 13px 'DM Sans', sans-serif; padding: 4px 6px; border: 1.5px solid var(--rule); border-radius: 4px; background: #fff; }
+  table.data input[type=number] { width: 72px; }
+  .name { font-weight: 700; }
+  .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
-  footer {
-    margin-top: 40px;
-    padding: 20px;
-    background: var(--indigo);
-    color: #fff;
-    border-radius: 6px;
-    border-bottom: 8px solid var(--magenta);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-  }
-  footer .marque { font-weight: 700; color: var(--lime); }
+  .empty { background: var(--bg); border: 2px dashed var(--rule); border-radius: 10px; padding: 30px 20px; text-align: center; color: var(--ink-soft); }
+  .empty h3 { margin: 0 0 6px; color: var(--ink); }
+
+  .upload-zone { background: var(--bg); border: 2px dashed var(--ink); border-radius: 8px; padding: 18px; text-align: center; cursor: pointer; transition: background .15s, border-color .15s; }
+  .upload-zone:hover, .upload-zone.dragover { background: var(--green-tint); border-color: var(--green); }
+  .upload-zone p { margin: 4px 0; }
+  .upload-zone .small { font-size: 12px; color: var(--ink-mute); }
+  .file-name { font-weight: 700; color: var(--green-deep); word-break: break-all; font-size: 13px; }
+
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr)); gap: 10px; margin-bottom: 12px; }
+  .metric { background: #fff; border: 2px solid var(--ink); border-top: 6px solid var(--green); border-radius: 8px; padding: 12px; }
+  .metric.blue { border-top-color: var(--blue); }
+  .metric.amber { border-top-color: var(--amber); }
+  .metric.ink { border-top-color: var(--ink); }
+  .metric .lbl { font-size: 10.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); }
+  .metric .val { font-weight: 700; font-size: 26px; line-height: 1.15; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .metric .unit { font-size: 12px; color: var(--ink-mute); font-weight: 500; margin-left: 3px; }
+  .metric .sub { font-size: 12px; color: var(--ink-mute); margin-top: 2px; }
+  .metric.headline { background: linear-gradient(180deg, var(--green-tint), #fff 60%); }
+
+  .target { margin: 6px 0 2px; }
+  .target .bar { height: 8px; background: var(--rule-soft); border-radius: 99px; overflow: hidden; }
+  .target .fill { height: 100%; background: var(--green); border-radius: 99px; }
+  .target .fill.blue { background: var(--blue); }
+  .target .cap { font-size: 11.5px; color: var(--ink-mute); margin-top: 3px; }
+
+  .zones-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 12px; margin-top: 12px; }
+  .zones-card { border: 2px solid var(--ink); border-radius: 8px; padding: 14px; background: #fff; }
+  .zones-card h4 { margin: 0 0 10px; font-size: 14.5px; }
+  .zone-bar { margin-bottom: 7px; }
+  .zone-bar .head { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px; gap: 8px; }
+  .zone-bar .bar { background: var(--rule-soft); height: 8px; border-radius: 99px; overflow: hidden; }
+  .zone-bar .fill { height: 100%; border-radius: 99px; }
+  .zc1 { background: #9db7e6; } .zc2 { background: #5f86cf; } .zc3 { background: var(--green); } .zc4 { background: #e0a100; } .zc5 { background: var(--red); }
+
+  .chart-wrap { border: 2px solid var(--ink); border-radius: 8px; padding: 10px; margin-top: 12px; background: #fff; }
+  .chart-wrap canvas { display: block; width: 100%; height: 300px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--ink-soft); padding: 6px 4px 0; }
+  .legend i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+
+  details.box { background: var(--bg); border: 1.5px solid var(--rule); border-radius: 6px; padding: 10px 14px; margin: 12px 0; }
+  details.box summary { cursor: pointer; font-weight: 600; }
+  code, .mono { font-family: 'DM Mono', monospace; font-size: 12.5px; }
+  .formula { font-family: 'DM Mono', monospace; font-size: 13px; background: var(--bg); border: 1px solid var(--rule); padding: 8px 10px; border-radius: 6px; overflow-x: auto; white-space: nowrap; }
+  .refs li { margin-bottom: 6px; font-size: 13.5px; }
+  .pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--rule-soft); color: var(--ink-soft); }
+  .pill.g { background: var(--green-tint); color: var(--green-deep); }
+  .pill.a { background: #fff3d9; color: #8a5300; }
+  .pill.r { background: #fde8e8; color: #8f1f1f; }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <!-- SITE NAV -->
-  <nav style="position:sticky;top:0;z-index:200;background:#0a0f1e;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:56px;border-bottom:2px solid #1a5fd4;margin:0 -40px 0 -40px;width:calc(100% + 80px);">
-    <a href="../index.html" style="font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:#fff;text-decoration:none;">Dr. Tommy Bright</a>
-    <ul style="display:flex;gap:32px;list-style:none;">
-      <li><a href="../index.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;">Home</a></li>
-      <li><a href="../teaching.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:#fff;text-decoration:none;border-bottom:2px solid #1a5fd4;padding-bottom:2px;">Teaching &amp; Learning</a></li>
-      <li><a href="../project.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;">Projects</a></li>
-      <li><a href="../research.html" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);text-decoration:none;">Research</a></li>
+<nav class="site-nav" aria-label="Site">
+  <div class="in">
+    <a class="brand" href="../index.html">Dr. Tommy Bright</a>
+    <ul>
+      <li><a href="../index.html">Home</a></li>
+      <li><a class="on" href="../teaching.html">Teaching &amp; Learning</a></li>
+      <li><a href="../project.html">Projects</a></li>
+      <li><a href="../research.html">Research</a></li>
     </ul>
-    <div style="display:flex;gap:14px;">
-      <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:3px 9px;">LinkedIn</a>
-      <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:3px 9px;">ResearchGate</a>
-    </div>
-  </nav>
+  </div>
+</nav>
 
-  <!-- SITE HERO -->
-  <div style="background:#0a0f1e;padding:64px 40px 56px;margin:0 -40px 40px -40px;border-bottom:1px solid rgba(255,255,255,0.06);">
-    <div style="max-width:860px;margin:0 auto;">
-      <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#2a8c4a;margin-bottom:20px;">Physiology · Level 5 · 6 · 7</div>
-      <h1 style="font-family:'DM Serif Display',Georgia,serif;font-size:clamp(32px,5vw,52px);color:#fff;line-height:1.1;letter-spacing:-0.5px;margin-bottom:16px;">Training Load Calculator<br><em style="font-style:italic;color:#6b9fe4;">TRIMP &amp; beyond.</em></h1>
-      <p style="font-size:15px;color:rgba(255,255,255,0.6);max-width:560px;line-height:1.7;font-weight:300;">Player profiles · five TRIMP methods · session upload. Runs entirely in your browser.</p>
-    </div>
+<header class="hero">
+  <div class="in">
+    <div class="eyebrow">Physiology · Level 5 · 6 · 7</div>
+    <h1>Training Load Calculator<br><em>TRIMP and time in zone</em></h1>
+    <p>Fit an individual lactate profile, upload a heart rate trace and calculate five TRIMPs, time above 80, 85 and 90% HRmax and sRPE. Everything runs in your browser and no data leaves your device.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="embed-head">
+    <h1>Training Load Calculator</h1>
+    <a href="https://tommyebright.github.io/Matt%20Examples/trimp.html" target="_blank" rel="noopener">Open full screen in a new tab</a>
   </div>
 
-  <div class="tabs">
-    <button class="tab active" data-tab="roster"><span class="n">01</span>Roster</button>
-    <button class="tab" data-tab="session"><span class="n">02</span>Session</button>
-    <button class="tab" data-tab="help"><span class="n">03</span>Help</button>
-    <button class="tab" data-tab="batch"><span class="n">04</span>Batch</button>
+  <div class="tabs" role="tablist" aria-label="Calculator sections">
+    <button class="tab" role="tab" data-tab="lactate" aria-selected="true"><span class="n">01</span>Lactate profile</button>
+    <button class="tab" role="tab" data-tab="roster" aria-selected="false"><span class="n">02</span>Players</button>
+    <button class="tab" role="tab" data-tab="session" aria-selected="false"><span class="n">03</span>Session</button>
+    <button class="tab" role="tab" data-tab="batch" aria-selected="false"><span class="n">04</span>Training week</button>
+    <button class="tab" role="tab" data-tab="help" aria-selected="false"><span class="n">05</span>Guide</button>
   </div>
 
   <div class="panel">
+    <div id="storage-warning" class="warn hidden">Your browser is blocking storage for this page (common inside Canvas on Safari). The calculator still works, but players will not be remembered after you close the tab. Use <strong>Export players</strong> to keep a copy, or open the calculator in its own tab.</div>
 
-    <!-- ============ ROSTER ============ -->
-    <div class="tab-content active" id="tab-roster">
-      <h2 class="section">Player roster</h2>
-      <p class="section-intro">Each player keeps their own constants — HRrest, HRmax, the iTRIMP exponential (A and B), and Lucia HR breakpoints. Constants stay saved on this device. Update them when re-tested (typically every 6 weeks).</p>
+    <!-- ============ LACTATE PROFILE ============ -->
+    <section class="tab-content active" id="tab-lactate" role="tabpanel">
+      <h2 class="section">Step 1. Build the individual lactate profile</h2>
+      <p class="intro">iTRIMP weights every heart rate sample by the player's own blood lactate response. Enter the HR and lactate at the end of each stage of an incremental test. The calculator converts HR to a fraction of heart rate reserve (ΔHR ratio), fits the exponential curve <span class="mono">lactate = A · e<sup>B · ΔHR</sup></span> and gives you the two constants A and B.</p>
 
-      <div class="roster-actions">
-        <button class="btn btn-primary" id="btn-add-player">＋ Add player</button>
-        <button class="btn" id="btn-export">Export roster (.json)</button>
-        <button class="btn" id="btn-import">Import roster (.json)</button>
-        <input type="file" id="import-file" accept=".json" hidden>
+      <div class="grid-2">
+        <div>
+          <fieldset class="g">
+            <legend>Player and test</legend>
+            <div class="form-grid">
+              <div class="field" style="grid-column: 1 / -1;">
+                <label for="lt-name">Player name</label>
+                <input type="text" id="lt-name" autocomplete="off" placeholder="e.g. Player 01">
+              </div>
+              <div class="field">
+                <label for="lt-hrrest">HR rest (bpm)</label>
+                <input type="number" id="lt-hrrest" min="25" max="120" step="1">
+              </div>
+              <div class="field">
+                <label for="lt-hrmax">HR max (bpm)</label>
+                <input type="number" id="lt-hrmax" min="120" max="230" step="1">
+                <span class="hint">Measured, never 220 − age</span>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Paste from Excel <span style="text-transform:none;font-weight:500;letter-spacing:0;">(optional)</span></legend>
+            <div class="field">
+              <label for="lt-paste">Two columns, HR then lactate</label>
+              <textarea id="lt-paste" rows="4" placeholder="132	1.3&#10;144	1.5&#10;158	2.2"></textarea>
+              <span class="hint">Copy the HR and lactate columns from your spreadsheet and paste them here.</span>
+            </div>
+            <div class="actions end" style="margin-top:10px;">
+              <button class="btn btn-sm" id="lt-paste-btn">Use pasted data</button>
+            </div>
+          </fieldset>
+
+          <div class="actions">
+            <button class="btn btn-ghost" id="lt-sample">Load the module LT test</button>
+            <button class="btn" id="lt-add-row">+ Add stage</button>
+            <button class="btn btn-danger" id="lt-clear">Clear</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="table-wrap">
+            <table class="data" id="lt-table">
+              <thead><tr><th>Stage</th><th class="num">HR (bpm)</th><th class="num">Lactate (mmol·L⁻¹)</th><th class="num">ΔHR ratio</th><th></th></tr></thead>
+              <tbody id="lt-tbody"></tbody>
+            </table>
+          </div>
+          <div id="lt-error" class="alert hidden"></div>
+
+          <div id="lt-results" class="hidden">
+            <div class="metric-grid" style="margin-top:14px;">
+              <div class="metric headline"><div class="lbl">Constant A</div><div class="val" id="lt-a">–</div><div class="sub">y-intercept</div></div>
+              <div class="metric headline"><div class="lbl">Constant B</div><div class="val" id="lt-b">–</div><div class="sub">exponent</div></div>
+              <div class="metric blue"><div class="lbl">Fit (R²)</div><div class="val" id="lt-r2">–</div><div class="sub">log-linear fit</div></div>
+              <div class="metric blue"><div class="lbl">HR at 2 mmol</div><div class="val"><span id="lt-hr2">–</span><span class="unit">bpm</span></div><div class="sub">used as LT (Lucia)</div></div>
+              <div class="metric blue"><div class="lbl">HR at 4 mmol</div><div class="val"><span id="lt-hr4">–</span><span class="unit">bpm</span></div><div class="sub">used as OBLA (Lucia)</div></div>
+            </div>
+            <div class="chart-wrap"><canvas id="lt-chart" aria-label="Blood lactate against ΔHR ratio with fitted exponential curve" role="img"></canvas>
+              <div class="legend"><span><i style="background:var(--blue)"></i>Measured stages</span><span><i style="background:var(--green)"></i>Fitted curve A·e<sup>B·ΔHR</sup></span></div>
+            </div>
+            <p class="note" id="lt-explain"></p>
+            <div class="actions end">
+              <button class="btn btn-primary" id="lt-save">Save as player</button>
+            </div>
+            <div id="lt-saved" class="ok hidden"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PLAYERS ============ -->
+    <section class="tab-content" id="tab-roster" role="tabpanel">
+      <h2 class="section">Step 2. Players</h2>
+      <p class="intro">Each player keeps their own HR rest, HR max, iTRIMP constants (A and B) and Lucia breakpoints. Players are saved on this device only. Update them each time a player is re-tested, and raise HR max whenever a session records a higher value (Buchheit et al., 2025).</p>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="btn-add-player">+ Add player</button>
+        <button class="btn" id="btn-export">Export players (.json)</button>
+        <button class="btn" id="btn-import">Import players (.json)</button>
+        <input type="file" id="import-file" accept=".json,application/json" hidden>
         <button class="btn btn-ghost" id="btn-load-sample">Load sample player</button>
       </div>
 
       <div id="roster-table-wrap"></div>
 
-      <!-- Add/Edit player form, hidden by default -->
-      <div id="player-form" class="hidden" style="margin-top: 22px;">
-        <h2 class="section" id="player-form-title">Add player</h2>
-
-        <fieldset class="accent-magenta">
-          <legend>Identity</legend>
+      <div id="player-form" class="hidden" style="margin-top:20px;">
+        <h3 class="sub" id="player-form-title">Add player</h3>
+        <fieldset class="g">
+          <legend>Player</legend>
           <div class="form-grid">
-            <div class="field">
-              <label for="pf-name">Player name *</label>
-              <input type="text" id="pf-name" autocomplete="off">
-            </div>
-            <div class="field">
-              <label for="pf-test-date">Last test date <span class="opt">optional</span></label>
-              <input type="date" id="pf-test-date">
-              <span class="hint">Re-test recommended after 6 weeks</span>
-            </div>
-            <div class="field">
-              <label for="pf-mass">Body mass (kg) <span class="opt">optional</span></label>
-              <input type="number" id="pf-mass" step="0.1" min="0">
-            </div>
+            <div class="field"><label for="pf-name">Name *</label><input type="text" id="pf-name" autocomplete="off"></div>
+            <div class="field"><label for="pf-sex">Sex <span class="opt">for Banister</span></label>
+              <select id="pf-sex"><option value="M">Male</option><option value="F">Female</option></select></div>
+            <div class="field"><label for="pf-test-date">Test date <span class="opt">optional</span></label><input type="date" id="pf-test-date"></div>
           </div>
         </fieldset>
-
-        <fieldset class="accent-magenta">
+        <fieldset class="g">
           <legend>Heart rate range</legend>
           <div class="form-grid">
-            <div class="field">
-              <label for="pf-hrrest">HR rest (bpm) *</label>
-              <input type="number" id="pf-hrrest" step="1" min="20" max="120">
-            </div>
-            <div class="field">
-              <label for="pf-hrmax">HR max (bpm) *</label>
-              <input type="number" id="pf-hrmax" step="1" min="100" max="240">
-            </div>
+            <div class="field"><label for="pf-hrrest">HR rest (bpm) *</label><input type="number" id="pf-hrrest" step="1" min="25" max="120"></div>
+            <div class="field"><label for="pf-hrmax">HR max (bpm) *</label><input type="number" id="pf-hrmax" step="1" min="120" max="230"></div>
           </div>
         </fieldset>
-
-        <fieldset class="accent-lime">
-          <legend>iTRIMP coefficients (from HRR–blood lactate test)</legend>
+        <fieldset class="b">
+          <legend>iTRIMP constants</legend>
           <div class="form-grid">
-            <div class="field">
-              <label for="pf-a">Constant A *</label>
-              <input type="number" id="pf-a" step="0.0001">
-              <span class="hint">y-intercept of exponential fit</span>
-            </div>
-            <div class="field">
-              <label for="pf-b">Constant B *</label>
-              <input type="number" id="pf-b" step="0.0001">
-              <span class="hint">exponent coefficient</span>
-            </div>
+            <div class="field"><label for="pf-a">Constant A *</label><input type="number" id="pf-a" step="any"><span class="hint">From the Lactate profile tab</span></div>
+            <div class="field"><label for="pf-b">Constant B *</label><input type="number" id="pf-b" step="any"></div>
           </div>
-          <p style="margin: 12px 0 0; font-size: 13px; color: var(--indigo-soft);">
-            iTRIMP per sample = dt · ΔHR · A · e<sup>B · ΔHR</sup>, summed across the session.
-          </p>
         </fieldset>
-
-        <fieldset class="accent-purple">
-          <legend>luTRIMP zone breakpoints (Lucia 3-zone)</legend>
+        <fieldset class="b">
+          <legend>Lucia breakpoints</legend>
           <div class="form-grid">
-            <div class="field">
-              <label for="pf-hrlt">HR at LT (bpm) *</label>
-              <input type="number" id="pf-hrlt" step="1" min="60" max="220">
-              <span class="hint">First lactate threshold</span>
-            </div>
-            <div class="field">
-              <label for="pf-hrobla">HR at OBLA (bpm) *</label>
-              <input type="number" id="pf-hrobla" step="1" min="60" max="220">
-              <span class="hint">4 mmol·L⁻¹ point</span>
-            </div>
+            <div class="field"><label for="pf-hrlt">HR at LT (bpm) *</label><input type="number" id="pf-hrlt" step="1" min="60" max="220"><span class="hint">e.g. HR at 2 mmol·L⁻¹</span></div>
+            <div class="field"><label for="pf-hrobla">HR at OBLA (bpm) *</label><input type="number" id="pf-hrobla" step="1" min="60" max="230"><span class="hint">HR at 4 mmol·L⁻¹</span></div>
           </div>
         </fieldset>
-
         <fieldset>
           <legend>Notes</legend>
-          <div class="field">
-            <textarea id="pf-notes" rows="3" placeholder="Any test conditions, observations..."></textarea>
-          </div>
+          <div class="field"><textarea id="pf-notes" rows="2" placeholder="Test conditions, observations"></textarea></div>
         </fieldset>
-
         <div id="form-error" class="alert hidden"></div>
-
-        <div class="form-actions">
+        <div class="actions end">
           <button class="btn" id="btn-cancel-form">Cancel</button>
           <button class="btn btn-primary" id="btn-save-player">Save player</button>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- ============ SESSION ============ -->
-    <div class="tab-content" id="tab-session">
-      <h2 class="section">Session analysis</h2>
-      <p class="section-intro">Select a player from your roster, upload their HR session file, and the five TRIMP values calculate automatically.</p>
+    <section class="tab-content" id="tab-session" role="tabpanel">
+      <h2 class="section">Step 3. Analyse a session</h2>
+      <p class="intro">Choose a player, upload their heart rate file and press Calculate. CSV, TXT and Excel files work, including Polar exports and breath-by-breath CPET files. If the file has a time column, the real time between samples is used.</p>
 
       <div id="session-no-players" class="empty hidden">
-        <h3>No players in the roster yet</h3>
-        <p>Add a player on the Roster tab first — you'll need their HRrest, HRmax, A &amp; B, and Lucia HR breakpoints to compute TRIMPs.</p>
+        <h3>No players yet</h3>
+        <p>Build a lactate profile (tab 1) or add a player (tab 2) first.</p>
       </div>
 
-      <div id="session-main">
-        <div class="session-grid">
-          <div>
-            <fieldset class="accent-magenta">
-              <legend>Session setup</legend>
+      <div id="session-main" class="grid-2">
+        <div>
+          <fieldset class="g">
+            <legend>Session set-up</legend>
+            <div class="field" style="margin-bottom:12px;"><label for="sn-player">Player *</label><select id="sn-player"></select></div>
+            <div class="field" style="margin-bottom:12px;"><label for="sn-type">Session type</label>
+              <select id="sn-type"><option value="Training">Training</option><option value="Match">Match</option></select></div>
+            <div class="field" style="margin-bottom:12px;"><label for="sn-rate">Sampling rate if the file has no time column</label>
+              <select id="sn-rate"><option value="1">1 Hz (one value per second)</option><option value="5">5 Hz</option><option value="10">10 Hz (GPS units)</option><option value="custom">Custom</option></select></div>
+            <div class="field hidden" id="sn-rate-custom-wrap" style="margin-bottom:12px;"><label for="sn-rate-custom">Custom rate (Hz)</label><input type="number" id="sn-rate-custom" min="0.01" step="any" value="1"></div>
+            <div class="field" style="margin-bottom:12px;"><label for="sn-rpe">Session RPE (CR-10) <span class="opt">optional</span></label><input type="number" id="sn-rpe" min="0" max="10" step="0.5" placeholder="e.g. 7"></div>
 
-              <div class="field" style="margin-bottom: 14px;">
-                <label for="sn-player">Player *</label>
-                <select id="sn-player"></select>
-              </div>
+            <div class="upload-zone" id="upload-zone" tabindex="0" role="button" aria-label="Upload heart rate file">
+              <input type="file" id="csv-file" accept=".csv,.txt,.tsv,.xlsx,.xls" hidden>
+              <p><strong>Click or drop a heart rate file</strong></p>
+              <p class="small">.csv .txt .xlsx · HR column, with or without time</p>
+              <p id="file-display" class="file-name hidden"></p>
+            </div>
+            <div class="actions" style="margin:10px 0 0;">
+              <button class="btn btn-ghost btn-sm" id="btn-sample-session">Use a sample session</button>
+              <button class="btn btn-ghost btn-sm" id="btn-sample-download">Download the sample CSV</button>
+            </div>
+            <div id="csv-error" class="alert hidden"></div>
+            <div class="actions end"><button class="btn btn-primary" id="btn-compute">Calculate</button></div>
+          </fieldset>
+        </div>
 
-              <div class="field" style="margin-bottom: 14px;">
-                <label for="sn-rate">Sampling rate</label>
-                <select id="sn-rate">
-                  <option value="10">10 Hz (default)</option>
-                  <option value="5">5 Hz</option>
-                  <option value="1">1 Hz</option>
-                  <option value="custom">Custom…</option>
-                </select>
-              </div>
+        <div id="results-pane" class="hidden">
+          <h3 class="sub" style="margin-top:0;">Results</h3>
+          <p class="intro" id="results-meta" style="margin-top:0;">–</p>
+          <div id="results-flags"></div>
 
-              <div class="field hidden" id="sn-rate-custom-wrap" style="margin-bottom: 14px;">
-                <label for="sn-rate-custom">Custom rate (Hz)</label>
-                <input type="number" id="sn-rate-custom" min="0.1" step="0.1" value="10">
-              </div>
-
-              <div class="field" style="margin-bottom: 14px;">
-                <label for="sn-rpe">Session RPE (Borg CR-10) <span class="opt">optional, for sRPE</span></label>
-                <input type="number" id="sn-rpe" min="0" max="10" step="0.5" placeholder="e.g. 7">
-              </div>
-
-              <label style="font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--indigo-soft); display: block; margin-bottom: 5px;">HR data (CSV) *</label>
-              <div class="upload-zone" id="upload-zone">
-                <input type="file" id="csv-file" accept=".csv,.txt,.tsv">
-                <p><strong>Click or drop a CSV here</strong></p>
-                <p class="small">Single HR column, or time + HR columns. Header row OK.</p>
-                <p id="file-display" class="file-name hidden"></p>
-              </div>
-              <div id="csv-error" class="alert hidden" style="margin-top: 12px;"></div>
-
-              <div class="form-actions">
-                <button class="btn btn-primary" id="btn-compute">Compute TRIMPs</button>
-              </div>
-            </fieldset>
+          <div class="metric-grid">
+            <div class="metric headline"><div class="lbl">iTRIMP</div><div class="val"><span id="r-itrimp">–</span><span class="unit">AU</span></div>
+              <div class="target"><div class="bar"><div class="fill" id="r-itrimp-bar" style="width:0"></div></div><div class="cap" id="r-itrimp-cap"></div></div></div>
+            <div class="metric headline"><div class="lbl">Time ≥ 90% HRmax</div><div class="val"><span id="r-t90">–</span><span class="unit">min</span></div>
+              <div class="target"><div class="bar"><div class="fill blue" id="r-t90-bar" style="width:0"></div></div><div class="cap" id="r-t90-cap"></div></div></div>
+            <div class="metric ink"><div class="lbl">iTRIMP per minute</div><div class="val"><span id="r-itrimp-min">–</span><span class="unit">AU·min⁻¹</span></div><div class="sub">compare drills with match-play</div></div>
+          </div>
+          <div class="metric-grid">
+            <div class="metric blue"><div class="lbl">bTRIMP</div><div class="val"><span id="r-btrimp">–</span><span class="unit">AU</span></div><div class="sub">Banister</div></div>
+            <div class="metric blue"><div class="lbl">eTRIMP</div><div class="val"><span id="r-etrimp">–</span><span class="unit">AU</span></div><div class="sub">Edwards 5-zone</div></div>
+            <div class="metric blue"><div class="lbl">luTRIMP</div><div class="val"><span id="r-lutrimp">–</span><span class="unit">AU</span></div><div class="sub">Lucia 3-zone</div></div>
+            <div class="metric blue"><div class="lbl">Stagno TRIMP</div><div class="val"><span id="r-sttrimp">–</span><span class="unit">AU</span></div><div class="sub">team-sport weights</div></div>
+            <div class="metric amber"><div class="lbl">sRPE</div><div class="val"><span id="r-srpe">–</span><span class="unit">AU</span></div><div class="sub">RPE × minutes</div></div>
+          </div>
+          <div class="metric-grid">
+            <div class="metric ink"><div class="lbl">Duration</div><div class="val"><span id="r-dur">–</span><span class="unit">min</span></div></div>
+            <div class="metric ink"><div class="lbl">Mean HR</div><div class="val"><span id="r-meanhr">–</span><span class="unit">bpm</span></div><div class="sub" id="r-meanpct"></div></div>
+            <div class="metric ink"><div class="lbl">Peak HR</div><div class="val"><span id="r-maxhr">–</span><span class="unit">bpm</span></div><div class="sub" id="r-maxpct"></div></div>
+            <div class="metric ink"><div class="lbl">Time ≥ 80 / 85%</div><div class="val" style="font-size:20px;"><span id="r-t80">–</span> / <span id="r-t85">–</span><span class="unit">min</span></div></div>
           </div>
 
-          <div id="results-pane" class="hidden">
-            <h2 class="section" style="margin-top: 0;">Results</h2>
-            <p class="section-intro" id="results-meta">—</p>
-
-            <div class="metric-grid">
-              <div class="metric">
-                <div class="lbl">iTRIMP</div>
-                <div class="val"><span id="r-itrimp">—</span> <span class="unit">AU</span></div>
-                <div class="sub">Individualised (Manzi)</div>
-              </div>
-              <div class="metric">
-                <div class="lbl">bTRIMP</div>
-                <div class="val"><span id="r-btrimp">—</span> <span class="unit">AU</span></div>
-                <div class="sub">Banister</div>
-              </div>
-              <div class="metric lime">
-                <div class="lbl">eTRIMP</div>
-                <div class="val"><span id="r-etrimp">—</span> <span class="unit">AU</span></div>
-                <div class="sub">Edwards 5-zone</div>
-              </div>
-              <div class="metric purple">
-                <div class="lbl">luTRIMP</div>
-                <div class="val"><span id="r-lutrimp">—</span> <span class="unit">AU</span></div>
-                <div class="sub">Lucia 3-zone</div>
-              </div>
-              <div class="metric">
-                <div class="lbl">sRPE</div>
-                <div class="val"><span id="r-srpe">—</span> <span class="unit">AU</span></div>
-                <div class="sub">Foster session-RPE</div>
-              </div>
+          <div class="chart-wrap"><canvas id="hr-chart" role="img" aria-label="Heart rate trace with intensity bands and cumulative iTRIMP"></canvas>
+            <div class="legend">
+              <span><i style="background:#0a0f1e"></i>Heart rate</span>
+              <span><i style="background:rgba(198,56,56,0.22)"></i>≥ 90% HRmax</span>
+              <span><i style="background:rgba(224,161,0,0.22)"></i>80 to 90% HRmax</span>
+              <span><i style="background:#2a8c4a"></i>Cumulative iTRIMP (right axis)</span>
             </div>
+          </div>
 
-            <div class="metric-grid">
-              <div class="metric lime">
-                <div class="lbl">Duration</div>
-                <div class="val"><span id="r-dur">—</span> <span class="unit">min</span></div>
-              </div>
-              <div class="metric lime">
-                <div class="lbl">Mean HR</div>
-                <div class="val"><span id="r-meanhr">—</span> <span class="unit">bpm</span></div>
-              </div>
-              <div class="metric lime">
-                <div class="lbl">Max HR (session)</div>
-                <div class="val"><span id="r-maxhr">—</span> <span class="unit">bpm</span></div>
-              </div>
-              <div class="metric lime">
-                <div class="lbl">Samples</div>
-                <div class="val" style="font-size: 20px;"><span id="r-samples">—</span></div>
-              </div>
-            </div>
-
-            <div class="zones-row">
-              <div class="zones-card">
-                <h4>Edwards 5-zone (% HRmax)</h4>
-                <div id="edw-zones"></div>
-              </div>
-              <div class="zones-card">
-                <h4>Lucia 3-zone (LT / OBLA)</h4>
-                <div id="lu-zones"></div>
-              </div>
-            </div>
-
-            <div class="chart-wrap">
-              <canvas id="hr-chart" width="1600" height="600"></canvas>
-            </div>
-
-            <div class="form-actions">
-              <button class="btn" id="btn-download-result">Download result (.json)</button>
-            </div>
+          <div class="zones-row">
+            <div class="zones-card"><h4>Edwards zones (% HRmax)</h4><div id="edw-zones"></div></div>
+            <div class="zones-card"><h4>Lucia zones (LT and OBLA)</h4><div id="lu-zones"></div></div>
+          </div>
+          <div class="actions end">
+            <button class="btn" id="btn-add-to-week">Add to training week</button>
+            <button class="btn" id="btn-download-result">Download result (.csv)</button>
           </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- ============ BATCH ============ -->
-    <div class="tab-content" id="tab-batch">
-      <h2 class="section">Batch session processing</h2>
-      <p class="section-intro">Add many CSV files at once — from multiple folders if needed. Assign a player to each file, then compute all TRIMPs in one click.</p>
+    <!-- ============ TRAINING WEEK (BATCH) ============ -->
+    <section class="tab-content" id="tab-batch" role="tabpanel">
+      <h2 class="section">Step 4. Build a training week</h2>
+      <p class="intro">Add every session file from one week, set the player and session type for each, then calculate them all. The weekly summary compares each player with the population guidelines of about 450 to 500 AU iTRIMP and about 30 (± 20) minutes above 90% HRmax per week (Buchheit et al., 2025). Match and training minutes are shown separately because match HR can overstate the aerobic demand.</p>
 
-      <div id="batch-no-players" class="empty hidden">
-        <h3>No players in roster yet</h3>
-        <p>Add players on the Roster tab first, then come back here to run batch sessions.</p>
-      </div>
+      <div id="batch-no-players" class="empty hidden"><h3>No players yet</h3><p>Add players first, then come back to build the week.</p></div>
 
       <div id="batch-main">
-        <div class="upload-zone" id="batch-drop-zone" style="margin-bottom:10px;">
-          <input type="file" id="batch-file-input" accept=".csv,.txt,.tsv" multiple>
-          <p><strong>Click or drag CSV files here</strong></p>
-          <p class="small">Multiple files accepted. You can also drag an entire folder of CSVs onto this zone.</p>
+        <div class="upload-zone" id="batch-drop-zone" tabindex="0" role="button" aria-label="Add heart rate files">
+          <input type="file" id="batch-file-input" accept=".csv,.txt,.tsv,.xlsx,.xls" multiple hidden>
+          <p><strong>Click or drop several files here</strong></p>
+          <p class="small">You can also drop a whole folder. File or folder names that contain a player's name are matched automatically.</p>
         </div>
-        <div class="roster-actions">
-          <button class="btn" id="btn-batch-files">＋ Add files</button>
-          <button class="btn" id="btn-batch-folder">＋ Add folder</button>
+        <div class="actions" style="margin-top:10px;">
+          <button class="btn" id="btn-batch-files">+ Add files</button>
+          <button class="btn" id="btn-batch-folder">+ Add folder</button>
           <input type="file" id="batch-folder-input" webkitdirectory multiple hidden>
-          <button class="btn btn-danger" id="btn-batch-clear" style="margin-left:auto;">Clear all</button>
+          <button class="btn btn-ghost" id="btn-batch-sample">Add a sample week</button>
+          <button class="btn btn-danger" id="btn-batch-clear">Clear all</button>
         </div>
 
-        <div id="batch-defaults-bar" class="hidden" style="margin-top:14px;">
+        <div id="batch-defaults-bar" class="hidden">
           <fieldset>
             <legend>Apply to all rows</legend>
-            <div class="form-grid" style="align-items:flex-end;">
-              <div class="field">
-                <label for="batch-def-player">Player</label>
-                <select id="batch-def-player"><option value="">— pick —</option></select>
-              </div>
-              <div class="field">
-                <label for="batch-def-rate">Sampling rate</label>
-                <select id="batch-def-rate">
-                  <option value="10">10 Hz</option>
-                  <option value="5">5 Hz</option>
-                  <option value="1">1 Hz</option>
-                </select>
-              </div>
-              <div class="field" style="align-self:flex-end;">
-                <button class="btn" id="btn-batch-apply-def">Apply to all rows</button>
-              </div>
+            <div class="form-grid" style="align-items:end;">
+              <div class="field"><label for="batch-def-player">Player</label><select id="batch-def-player"><option value="">Keep as is</option></select></div>
+              <div class="field"><label for="batch-def-rate">Rate if no time column</label><select id="batch-def-rate"><option value="1">1 Hz</option><option value="5">5 Hz</option><option value="10">10 Hz</option></select></div>
+              <div class="field"><button class="btn" id="btn-batch-apply-def">Apply</button></div>
             </div>
           </fieldset>
         </div>
 
-        <div id="batch-queue-wrap" class="hidden" style="margin-top:14px; overflow-x:auto;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
-            <span id="batch-status-summary" style="font-family:'DM Sans',sans-serif; font-weight:600; font-size:14px; color:var(--indigo-soft);"></span>
-            <div style="display:flex; gap:8px;">
-              <button class="btn btn-primary" id="btn-batch-compute">▶ Compute all</button>
+        <div id="batch-queue-wrap" class="hidden">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+            <span id="batch-status-summary" style="font-weight:600;color:var(--ink-soft);"></span>
+            <div class="actions" style="margin:0;">
+              <button class="btn btn-primary" id="btn-batch-compute">Calculate all</button>
               <button class="btn" id="btn-batch-csv" disabled>Download results (.csv)</button>
             </div>
           </div>
-          <table class="roster" id="batch-table">
-            <thead>
-              <tr>
-                <th>#</th><th>File</th><th>Player</th><th>Hz</th><th>RPE</th>
-                <th>Status</th><th>iTRIMP</th><th>bTRIMP</th><th>eTRIMP</th><th>luTRIMP</th><th>sRPE</th><th>Min</th><th></th>
-              </tr>
-            </thead>
-            <tbody id="batch-tbody"></tbody>
-          </table>
+          <div class="table-wrap">
+            <table class="data" id="batch-table">
+              <thead><tr>
+                <th>#</th><th>File</th><th>Player</th><th>Type</th><th>Hz</th><th>RPE</th><th>Status</th>
+                <th class="num">Min</th><th class="num">iTRIMP</th><th class="num">≥90%</th><th class="num">bTRIMP</th><th class="num">eTRIMP</th><th class="num">luTRIMP</th><th class="num">Stagno</th><th class="num">sRPE</th><th></th>
+              </tr></thead>
+              <tbody id="batch-tbody"></tbody>
+            </table>
+          </div>
+
+          <div id="week-summary" class="hidden">
+            <h3 class="sub">Weekly summary</h3>
+            <div class="table-wrap">
+              <table class="data">
+                <thead><tr><th>Player</th><th class="num">Sessions</th><th class="num">Weekly iTRIMP</th><th>vs 450 to 500 AU</th><th class="num">≥90% training</th><th class="num">≥90% match</th><th>vs 30 min</th><th class="num">sRPE</th></tr></thead>
+                <tbody id="week-tbody"></tbody>
+              </table>
+            </div>
+            <p class="note">These guidelines describe the average response of groups of team-sport players. Individual players respond very differently to the same dose, so treat them as a starting point and adjust from each player's own fitness testing (Buchheit et al., 2025).</p>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- ============ HELP ============ -->
-    <div class="tab-content" id="tab-help">
-      <h2 class="section">How it works</h2>
+    <!-- ============ GUIDE ============ -->
+    <section class="tab-content" id="tab-help" role="tabpanel">
+      <h2 class="section">Guide and formulas</h2>
 
-      <p class="section-intro">A reference for the formulas and file formats used by this app.</p>
-
-      <fieldset class="accent-magenta">
-        <legend>Workflow</legend>
-        <ol style="margin: 0; padding-left: 22px;">
-          <li><strong>Set up each player once</strong> on the Roster tab. Enter their constants from the lab test.</li>
-          <li><strong>For every session</strong>: Session tab → pick the player → upload the HR CSV → all five TRIMPs are calculated.</li>
-          <li>Constants stay saved on this device permanently. Use Export to back up or move to another device.</li>
-        </ol>
-      </fieldset>
-
-      <fieldset class="accent-lime">
-        <legend>The five TRIMPs</legend>
-        <p style="margin: 0 0 8px;"><strong>ΔHR ratio</strong> = (HR − HRrest) / (HRmax − HRrest), computed per sample.</p>
-        <p style="margin: 0 0 8px;"><strong>iTRIMP</strong> (Manzi): sum over samples of dt · ΔHR · A · e<sup>B·ΔHR</sup>. Uses each player's individual exponential.</p>
-        <p style="margin: 0 0 8px;"><strong>bTRIMP</strong> (Banister): duration · ΔHR<sub>mean</sub> · 0.64 · e<sup>1.92·ΔHR<sub>mean</sub></sup>. Male generic coefficients.</p>
-        <p style="margin: 0 0 8px;"><strong>eTRIMP</strong> (Edwards): time-in-zone × zone weighting (1–5). Zones at 50/60/70/80/90% HRmax.</p>
-        <p style="margin: 0 0 8px;"><strong>luTRIMP</strong> (Lucia): time-in-zone × weighting (1–3). Zone 1 &lt; HR<sub>LT</sub>; Zone 2 between LT and OBLA; Zone 3 &gt; HR<sub>OBLA</sub>.</p>
-        <p style="margin: 0;"><strong>sRPE</strong> (Foster): duration (min) × RPE (0–10).</p>
-      </fieldset>
-
-      <fieldset class="accent-purple">
-        <legend>CSV format</legend>
-        <p style="margin: 0 0 8px;">The app auto-detects the layout. Accepted shapes:</p>
-        <ul style="margin: 0 0 8px; padding-left: 22px;">
-          <li><strong>Single column of HR</strong>: one bpm value per row. Sampling rate from the dropdown.</li>
-          <li><strong>Two columns</strong>: time (s) and HR. Header row optional. Time can be in seconds or h:mm:ss.</li>
-          <li>Common HR column names recognised: <code>HR</code>, <code>Heart rate</code>, <code>bpm</code>, <code>HeartRate</code>.</li>
-        </ul>
-        <p style="margin: 0;">Decimal separator must be a dot. Anything that isn't a finite number ≥ 30 and ≤ 240 is treated as missing and skipped.</p>
-      </fieldset>
-
-      <fieldset>
-        <legend>Privacy</legend>
-        <p style="margin: 0;">Everything runs in your browser. Files never leave this device — not to a server, not to me. Closing the tab doesn't lose your roster (it's saved in local storage). Clearing browser data <em>will</em> erase it, so export a backup if it matters.</p>
-      </fieldset>
-    </div>
-
-  </div>
-
-  <footer style="background:#0a0f1e;color:rgba(255,255,255,0.4);padding:40px;border-top:2px solid #1a5fd4;margin:40px -40px -40px -40px;">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:24px;margin-bottom:32px;">
-      <div style="font-size:15px;font-weight:600;color:rgba(255,255,255,0.8);font-family:'DM Sans',sans-serif;">Dr. Tommy Bright</div>
-      <ul style="display:flex;gap:24px;list-style:none;">
-        <li><a href="../index.html" style="font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;font-family:'DM Sans',sans-serif;">Home</a></li>
-        <li><a href="../teaching.html" style="font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;font-family:'DM Sans',sans-serif;">Teaching &amp; Learning</a></li>
-        <li><a href="../project.html" style="font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;font-family:'DM Sans',sans-serif;">Projects</a></li>
-        <li><a href="../research.html" style="font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;font-family:'DM Sans',sans-serif;">Research</a></li>
-      </ul>
-      <div style="display:flex;gap:12px;">
-        <a href="https://www.linkedin.com/in/thomas-bright-phd-75779b157/" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:5px 12px;">LinkedIn</a>
-        <a href="https://www.researchgate.net/profile/Thomas-Bright-4?ev=hdr_xprf" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:5px 12px;">ResearchGate</a>
+      <div class="steps">
+        <div class="step"><b>1. Lactate profile</b>Enter HR rest, HR max and the stage HR and lactate values. Save the player.</div>
+        <div class="step"><b>2. Players</b>Check the constants. Re-test every 6 to 8 weeks and raise HR max when a higher value appears.</div>
+        <div class="step"><b>3. Session</b>Upload one HR file and calculate. Check the duration matches the session.</div>
+        <div class="step"><b>4. Training week</b>Add all sessions for the week and compare with the weekly guidelines.</div>
       </div>
-    </div>
-    <div style="font-family:'DM Mono',monospace;font-size:11px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.08);">Plymouth Marjon University · Cardiff Metropolitan University · Tournament Golf College</div>
-  </footer>
 
-</div>
+      <h3 class="sub">The ΔHR ratio</h3>
+      <p>Every TRIMP based on heart rate reserve starts by expressing HR as a fraction of the range between rest and maximum.</p>
+      <div class="formula">ΔHR ratio = (HR − HR<sub>rest</sub>) ÷ (HR<sub>max</sub> − HR<sub>rest</sub>)</div>
+
+      <h3 class="sub">The TRIMP methods</h3>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Method</th><th>How it is calculated here</th><th>Individualised</th></tr></thead>
+          <tbody>
+            <tr><td class="name">iTRIMP (Manzi et al., 2009; Akubat et al., 2012)</td><td>Sum over every sample of time (min) × ΔHR × A · e<sup>B · ΔHR</sup>, where A and B come from the player's own lactate profile</td><td><span class="pill g">Yes</span></td></tr>
+            <tr><td class="name">bTRIMP (Banister, 1991)</td><td>Duration (min) × mean ΔHR × 0.64 · e<sup>1.92 · mean ΔHR</sup> for males, or 0.86 · e<sup>1.67 · mean ΔHR</sup> for females</td><td><span class="pill r">No</span></td></tr>
+            <tr><td class="name">eTRIMP (Edwards, 1993)</td><td>Minutes in 50–60, 60–70, 70–80, 80–90 and 90–100% HRmax × 1, 2, 3, 4 and 5</td><td><span class="pill r">No</span></td></tr>
+            <tr><td class="name">luTRIMP (Lucía et al., 2003)</td><td>Minutes below LT × 1, between LT and OBLA × 2, above OBLA × 3</td><td><span class="pill a">Partly</span></td></tr>
+            <tr><td class="name">Stagno TRIMP (Stagno, Thatcher and van Someren, 2007)</td><td>Minutes in 65–71, 72–78, 79–85, 86–92 and 93–100% HRmax × 1.25, 1.71, 2.54, 3.61 and 5.16</td><td><span class="pill r">No (team curve)</span></td></tr>
+            <tr><td class="name">Time in HR zone</td><td>Minutes at or above 80, 85 and 90% HRmax</td><td><span class="pill a">Depends on HRmax</span></td></tr>
+            <tr><td class="name">sRPE (Foster et al., 2001)</td><td>Session RPE (CR-10) × duration (min)</td><td><span class="pill a">Perceptual</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="sub">Why the weekly picture matters</h3>
+      <p>iTRIMP works best as a macro-level measure of cumulative cardiovascular load across a week or block, while time above 90% HRmax works as a micro-level target you can prescribe within a session. Two sessions can produce the same TRIMP from very different intensity distributions, so look at both numbers together (Buchheit et al., 2025).</p>
+
+      <h3 class="sub">File formats</h3>
+      <ul>
+        <li><strong>One column</strong> of HR values. The sampling rate you choose sets the time between samples.</li>
+        <li><strong>Time and HR columns</strong>, with or without a header. Time can be seconds, <span class="mono">mm:ss</span> or <span class="mono">h:mm:ss.ms</span>. The real gap between samples is used, so breath-by-breath CPET data and 1 Hz chest strap data are both handled correctly.</li>
+        <li><strong>Exports with information rows at the top</strong> (Polar, CPET software). The calculator searches for a header such as <span class="mono">HR</span>, <span class="mono">HR (bpm)</span> or <span class="mono">Heart rate</span> and reads the data below it.</li>
+        <li>Values below 30 or above 240 bpm are treated as dropouts and skipped. Gaps longer than five times the usual sampling interval are not counted as exercise time.</li>
+      </ul>
+
+      <details class="box">
+        <summary>How A and B are fitted</summary>
+        <p>The calculator takes the natural log of each lactate value and fits a straight line to ln(lactate) against ΔHR ratio. The slope is B and A = e<sup>intercept</sup>. This is the same method Excel uses for an exponential trendline, so your values should match a spreadsheet fit. HR at 2 and 4 mmol·L⁻¹ are found by straight-line interpolation between the two stages either side of each value.</p>
+        <p>Note that some TRIMP spreadsheets use 2.712 in place of e (2.71828). That small difference changes iTRIMP slightly, so values here can sit a little above a spreadsheet that uses 2.712.</p>
+      </details>
+
+      <details class="box">
+        <summary>Privacy</summary>
+        <p>Files are read by your browser and never uploaded anywhere. Players are stored in this browser's local storage. Clearing browser data erases them, so export a copy if you need to keep it.</p>
+      </details>
+
+      <h3 class="sub">References</h3>
+      <ul class="refs">
+        <li>Akubat, I., Patel, E., Barrett, S. and Abt, G. (2012) 'Methods of monitoring the training and match load and their relationship to changes in fitness in professional youth soccer players', <em>Journal of Sports Sciences</em>, 30(14), pp. 1473–1480.</li>
+        <li>Banister, E.W. (1991) 'Modeling elite athletic performance', in MacDougall, J.D., Wenger, H.A. and Green, H.J. (eds) <em>Physiological testing of the high-performance athlete</em>. Champaign, IL: Human Kinetics, pp. 403–424.</li>
+        <li>Buchheit, M., Akubat, I., Ellis, M., Campos, M., Rabbani, A., Castagna, C. and Malone, S. (2025) 'Revisiting dose–response relationships between heart rate zones, TRIMPs, and aerobic-related physiological and performance markers in elite team sports', <em>Sport Performance and Science Reports</em>, 269, v1.</li>
+        <li>Edwards, S. (1993) <em>The heart rate monitor book</em>. Sacramento, CA: Fleet Feet Press.</li>
+        <li>Ellis, M., Penny, R., Wright, B., Noon, M., Myers, T. and Akubat, I. (2021) 'The dose–response relationship between training-load measures and aerobic fitness in elite academy soccer players', <em>Science and Medicine in Football</em>, 5(2), pp. 128–136.</li>
+        <li>Foster, C., Florhaug, J.A., Franklin, J., Gottschall, L., Hrovatin, L.A., Parker, S., Doleshal, P. and Dodge, C. (2001) 'A new approach to monitoring exercise training', <em>Journal of Strength and Conditioning Research</em>, 15(1), pp. 109–115.</li>
+        <li>Lucía, A., Hoyos, J., Santalla, A., Earnest, C. and Chicharro, J.L. (2003) 'Tour de France versus Vuelta a España: which is harder?', <em>Medicine and Science in Sports and Exercise</em>, 35(5), pp. 872–878.</li>
+        <li>Manzi, V., Iellamo, F., Impellizzeri, F., D'Ottavio, S. and Castagna, C. (2009) 'Relation between individualized training impulses and performance in distance runners', <em>Medicine and Science in Sports and Exercise</em>, 41(11), pp. 2090–2096.</li>
+        <li>Stagno, K.M., Thatcher, R. and van Someren, K.A. (2007) 'A modified TRIMP to quantify the in-season training load of team sport players', <em>Journal of Sports Sciences</em>, 25(6), pp. 629–634.</li>
+      </ul>
+    </section>
+  </div>
+</main>
+
+<footer class="site-foot">
+  <div class="in">
+    <div><a href="../index.html">Home</a><a href="../teaching.html">Teaching &amp; Learning</a><a href="../site-map.html">Site map</a></div>
+    <div class="mono">Plymouth Marjon University · Cardiff Metropolitan University · Tournament Golf College</div>
+  </div>
+</footer>
 
 <script>
-/* ================================================================
-   STORAGE
-   ================================================================ */
-var STORAGE_KEY = 'trimp_roster_v1';
+(function () {
+'use strict';
 
+/* ---------------- Embed mode ---------------- */
+var params = new URLSearchParams(location.search);
+var inFrame = false;
+try { inFrame = window.self !== window.top; } catch (e) { inFrame = true; }
+if (params.get('embed') === '1' || (inFrame && params.get('embed') !== '0')) document.body.classList.add('embed');
+
+/* ---------------- Helpers ---------------- */
+function $(id) { return document.getElementById(id); }
+function esc(s) { return s == null ? '' : String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function fmt(v, dp) { if (v == null || !isFinite(v)) return '–'; return Number(v).toFixed(dp == null ? 1 : dp); }
+function sig(v) { if (v == null || !isFinite(v)) return '–'; var a = Math.abs(v); return a >= 100 ? v.toFixed(1) : a >= 1 ? v.toFixed(3) : v.toPrecision(4); }
+function num(v) {
+  if (typeof v === 'number') return v;
+  if (v == null) return NaN;
+  var s = String(v).trim().replace(/^"|"$/g, '');
+  if (s === '' || s === '-') return NaN;
+  if (/^-?\d+,\d+$/.test(s)) s = s.replace(',', '.');
+  return Number(s);
+}
+function median(arr) { if (!arr.length) return NaN; var a = arr.slice().sort(function (x, y) { return x - y; }); var m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; }
+function uid() { return 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6); }
+function download(name, text, type) {
+  var blob = new Blob([text], { type: type || 'text/plain' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a'); a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+}
+function toCsv(rows) {
+  return rows.map(function (r) { return r.map(function (c) { var s = c == null ? '' : String(c); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(','); }).join('\r\n');
+}
+
+/* ---------------- Storage ---------------- */
+var STORAGE_KEY = 'trimp_roster_v1';
+var storageOk = true;
 function loadRoster() {
   try {
     var raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     var parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    console.error('Roster load failed:', e);
-    return [];
-  }
+    return Array.isArray(parsed) ? parsed.map(normalisePlayer).filter(Boolean) : [];
+  } catch (e) { storageOk = false; return []; }
 }
-function saveRoster(roster) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(roster));
-    return true;
-  } catch (e) {
-    alert('Could not save roster to browser storage. ' + e.message);
-    return false;
-  }
+function saveRoster() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(roster)); }
+  catch (e) { storageOk = false; $('storage-warning').classList.remove('hidden'); }
 }
-
+function normalisePlayer(p) {
+  if (!p || typeof p !== 'object' || !p.name) return null;
+  var o = {
+    id: p.id || uid(), name: String(p.name), sex: p.sex === 'F' ? 'F' : 'M',
+    hrRest: Number(p.hrRest), hrMax: Number(p.hrMax), constA: Number(p.constA), constB: Number(p.constB),
+    hrLT: Number(p.hrLT), hrObla: Number(p.hrObla), testDate: p.testDate || null, notes: p.notes || '',
+    updatedAt: p.updatedAt || new Date().toISOString()
+  };
+  if ([o.hrRest, o.hrMax, o.constA, o.constB, o.hrLT, o.hrObla].some(function (x) { return !isFinite(x); })) return null;
+  return o;
+}
 var roster = loadRoster();
-var editingId = null; // id of player being edited, or null for new
+if (!storageOk) $('storage-warning').classList.remove('hidden');
+function findPlayer(id) { return roster.find(function (p) { return p.id === id; }); }
 
-function uid() {
-  return 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
-}
-
-/* ================================================================
-   TAB SWITCHING
-   ================================================================ */
+/* ---------------- Tabs ---------------- */
 var tabs = document.querySelectorAll('.tab');
-var contents = document.querySelectorAll('.tab-content');
-tabs.forEach(function (t) {
-  t.addEventListener('click', function () {
-    tabs.forEach(function (x) { x.classList.remove('active'); });
-    contents.forEach(function (x) { x.classList.remove('active'); });
-    t.classList.add('active');
-    document.getElementById('tab-' + t.dataset.tab).classList.add('active');
-    if (t.dataset.tab === 'session') refreshSessionTab();
-    if (t.dataset.tab === 'roster') renderRoster();
-    if (t.dataset.tab === 'batch') refreshBatchTab();
-  });
-});
+function showTab(name) {
+  tabs.forEach(function (t) { t.setAttribute('aria-selected', t.dataset.tab === name ? 'true' : 'false'); });
+  document.querySelectorAll('.tab-content').forEach(function (c) { c.classList.toggle('active', c.id === 'tab-' + name); });
+  if (name === 'roster') renderRoster();
+  if (name === 'session') refreshSessionTab();
+  if (name === 'batch') refreshBatchTab();
+  if (name === 'lactate') drawLactateChart();
+  if (name === 'session' && lastResult) drawHrChart();
+}
+tabs.forEach(function (t) { t.addEventListener('click', function () { showTab(t.dataset.tab); }); });
 
 /* ================================================================
-   ROSTER UI
+   LACTATE PROFILE
    ================================================================ */
-function renderRoster() {
-  var wrap = document.getElementById('roster-table-wrap');
-  if (roster.length === 0) {
-    wrap.innerHTML = '<div class="empty"><h3>No players yet</h3><p>Add your first player above, or click <em>Load sample player</em> to see an example.</p></div>';
-    return;
-  }
-  var html = '<table class="roster"><thead><tr>' +
-    '<th>Name</th><th>HR rest</th><th>HR max</th><th>A</th><th>B</th>' +
-    '<th>HR LT</th><th>HR OBLA</th><th>Test date</th><th></th>' +
-    '</tr></thead><tbody>';
-  roster.forEach(function (p) {
-    html += '<tr>' +
-      '<td class="name">' + escapeHtml(p.name) + '</td>' +
-      '<td>' + p.hrRest + '</td>' +
-      '<td>' + p.hrMax + '</td>' +
-      '<td>' + fmt(p.constA, 4) + '</td>' +
-      '<td>' + fmt(p.constB, 4) + '</td>' +
-      '<td>' + p.hrLT + '</td>' +
-      '<td>' + p.hrObla + '</td>' +
-      '<td>' + (p.testDate ? escapeHtml(p.testDate) : '—') + '</td>' +
-      '<td><div class="row-actions">' +
-        '<button class="btn btn-sm" data-edit="' + p.id + '">Edit</button>' +
-        '<button class="btn btn-sm btn-danger" data-delete="' + p.id + '">Delete</button>' +
-      '</div></td>' +
-    '</tr>';
-  });
-  html += '</tbody></table>';
-  wrap.innerHTML = html;
-  // attach handlers
-  wrap.querySelectorAll('[data-edit]').forEach(function (b) {
-    b.addEventListener('click', function () { openPlayerForm(b.dataset.edit); });
-  });
-  wrap.querySelectorAll('[data-delete]').forEach(function (b) {
-    b.addEventListener('click', function () { deletePlayer(b.dataset.delete); });
-  });
-}
+var ltRows = [];
+var ltFit = null;
+var LT_SAMPLE = { name: 'LT test player', hrRest: 55, hrMax: 195,
+  rows: [[132, 1.3], [144, 1.5], [158, 2.2], [170, 4.0], [180, 6.5], [183, 7.2], [186, 8.0], [188, 8.9], [190, 9.7], [192, 10.5], [194, 11.2], [195, 12.0]] };
 
-function escapeHtml(s) {
-  if (s == null) return '';
-  return String(s).replace(/[&<>"']/g, function (c) {
-    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-  });
+function renderLtTable() {
+  var tb = $('lt-tbody');
+  if (!ltRows.length) { tb.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);padding:16px;">No stages yet. Load the module LT test, paste from Excel or add stages.</td></tr>'; return; }
+  var rest = num($('lt-hrrest').value), max = num($('lt-hrmax').value);
+  tb.innerHTML = ltRows.map(function (r, i) {
+    var d = (isFinite(rest) && isFinite(max) && max > rest && isFinite(r[0])) ? (r[0] - rest) / (max - rest) : NaN;
+    return '<tr><td>' + (i + 1) + '</td>' +
+      '<td class="num"><input type="number" step="1" data-i="' + i + '" data-k="0" value="' + (isFinite(r[0]) ? r[0] : '') + '" aria-label="HR stage ' + (i + 1) + '"></td>' +
+      '<td class="num"><input type="number" step="0.1" data-i="' + i + '" data-k="1" value="' + (isFinite(r[1]) ? r[1] : '') + '" aria-label="Lactate stage ' + (i + 1) + '"></td>' +
+      '<td class="num">' + fmt(d, 3) + '</td>' +
+      '<td><button class="btn btn-sm btn-danger" data-del="' + i + '" aria-label="Remove stage ' + (i + 1) + '">✕</button></td></tr>';
+  }).join('');
 }
-function fmt(v, dp) {
-  if (v == null || isNaN(v)) return '—';
-  if (dp == null) dp = 2;
-  return Number(v).toFixed(dp);
-}
-
-function openPlayerForm(id) {
-  editingId = id || null;
-  var form = document.getElementById('player-form');
-  form.classList.remove('hidden');
-  document.getElementById('form-error').classList.add('hidden');
-  if (id) {
-    var p = roster.find(function (x) { return x.id === id; });
-    if (!p) return;
-    document.getElementById('player-form-title').textContent = 'Edit player — ' + p.name;
-    setVal('pf-name', p.name);
-    setVal('pf-test-date', p.testDate || '');
-    setVal('pf-mass', p.mass || '');
-    setVal('pf-hrrest', p.hrRest);
-    setVal('pf-hrmax', p.hrMax);
-    setVal('pf-a', p.constA);
-    setVal('pf-b', p.constB);
-    setVal('pf-hrlt', p.hrLT);
-    setVal('pf-hrobla', p.hrObla);
-    setVal('pf-notes', p.notes || '');
-  } else {
-    document.getElementById('player-form-title').textContent = 'Add player';
-    ['pf-name','pf-test-date','pf-mass','pf-hrrest','pf-hrmax','pf-a','pf-b','pf-hrlt','pf-hrobla','pf-notes'].forEach(function (id) {
-      setVal(id, '');
-    });
-  }
-  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-function closePlayerForm() {
-  document.getElementById('player-form').classList.add('hidden');
-  editingId = null;
-}
-function setVal(id, v) { document.getElementById(id).value = (v == null ? '' : v); }
-function getVal(id) { return document.getElementById(id).value.trim(); }
-function getNum(id) {
-  var v = getVal(id);
-  if (v === '') return NaN;
-  return Number(v);
-}
-
-function savePlayer() {
-  var errs = [];
-  var name = getVal('pf-name');
-  if (!name) errs.push('Name is required.');
-
-  var hrRest = getNum('pf-hrrest');
-  var hrMax  = getNum('pf-hrmax');
-  var a      = getNum('pf-a');
-  var b      = getNum('pf-b');
-  var hrLT   = getNum('pf-hrlt');
-  var hrObla = getNum('pf-hrobla');
-
-  [['pf-hrrest', hrRest, 'HR rest', 20, 120],
-   ['pf-hrmax',  hrMax,  'HR max',  100, 240],
-   ['pf-a',      a,      'Constant A'],
-   ['pf-b',      b,      'Constant B'],
-   ['pf-hrlt',   hrLT,   'HR LT', 60, 220],
-   ['pf-hrobla', hrObla, 'HR OBLA', 60, 220]
-  ].forEach(function (row) {
-    var el = document.getElementById(row[0]);
-    el.classList.remove('err');
-    if (isNaN(row[1])) {
-      errs.push(row[2] + ' is required and must be a number.');
-      el.classList.add('err');
-    } else if (row.length > 3 && (row[1] < row[3] || row[1] > row[4])) {
-      errs.push(row[2] + ' should be between ' + row[3] + ' and ' + row[4] + '.');
-      el.classList.add('err');
+$('lt-tbody').addEventListener('change', function (e) {
+  var t = e.target; if (t.dataset.i == null) return;
+  ltRows[+t.dataset.i][+t.dataset.k] = num(t.value);
+  renderLtTable(); fitLactate();
+});
+$('lt-tbody').addEventListener('click', function (e) {
+  var b = e.target.closest('[data-del]'); if (!b) return;
+  ltRows.splice(+b.dataset.del, 1); renderLtTable(); fitLactate();
+});
+['lt-hrrest', 'lt-hrmax'].forEach(function (id) { $(id).addEventListener('input', function () { renderLtTable(); fitLactate(); }); });
+$('lt-add-row').addEventListener('click', function () { ltRows.push([NaN, NaN]); renderLtTable(); });
+$('lt-clear').addEventListener('click', function () { ltRows = []; ['lt-name', 'lt-hrrest', 'lt-hrmax', 'lt-paste'].forEach(function (id) { $(id).value = ''; }); renderLtTable(); fitLactate(); });
+$('lt-sample').addEventListener('click', function () {
+  $('lt-name').value = LT_SAMPLE.name; $('lt-hrrest').value = LT_SAMPLE.hrRest; $('lt-hrmax').value = LT_SAMPLE.hrMax;
+  ltRows = LT_SAMPLE.rows.map(function (r) { return r.slice(); });
+  renderLtTable(); fitLactate();
+});
+$('lt-paste-btn').addEventListener('click', function () {
+  var rows = textToRows($('lt-paste').value);
+  var out = [];
+  rows.forEach(function (r) {
+    var vals = r.map(num).filter(function (x) { return isFinite(x); });
+    if (vals.length >= 2) {
+      // take the first value that looks like HR and the next value that looks like lactate
+      var hrI = vals.findIndex(function (x) { return x >= 60 && x <= 230; });
+      if (hrI === -1) return;
+      var la = vals.slice(hrI + 1).find(function (x) { return x > 0 && x < 30; });
+      if (la != null) out.push([vals[hrI], la]);
     }
   });
+  if (!out.length) { showLtError('No HR and lactate pairs found. Paste two columns, HR first and lactate second.'); return; }
+  ltRows = out; renderLtTable(); fitLactate();
+});
+function showLtError(msg) { var b = $('lt-error'); b.textContent = msg; b.classList.toggle('hidden', !msg); }
 
-  if (!isNaN(hrRest) && !isNaN(hrMax) && hrRest >= hrMax) {
-    errs.push('HR rest must be lower than HR max.');
+function fitLactate() {
+  showLtError('');
+  $('lt-saved').classList.add('hidden');
+  var rest = num($('lt-hrrest').value), max = num($('lt-hrmax').value);
+  var valid = ltRows.filter(function (r) { return isFinite(r[0]) && isFinite(r[1]) && r[1] > 0; });
+  ltFit = null;
+  if (!valid.length) { $('lt-results').classList.add('hidden'); return; }
+  if (!isFinite(rest) || !isFinite(max) || max <= rest) { showLtError('Enter HR rest and HR max (HR max must be above HR rest).'); $('lt-results').classList.add('hidden'); return; }
+  if (valid.length < 3) { showLtError('At least three stages are needed to fit the curve.'); $('lt-results').classList.add('hidden'); return; }
+  var xs = valid.map(function (r) { return (r[0] - rest) / (max - rest); });
+  var ys = valid.map(function (r) { return Math.log(r[1]); });
+  var n = xs.length, mx = xs.reduce(function (a, b) { return a + b; }, 0) / n, my = ys.reduce(function (a, b) { return a + b; }, 0) / n;
+  var sxx = 0, sxy = 0, syy = 0;
+  for (var i = 0; i < n; i++) { sxx += (xs[i] - mx) * (xs[i] - mx); sxy += (xs[i] - mx) * (ys[i] - my); syy += (ys[i] - my) * (ys[i] - my); }
+  if (sxx === 0) { showLtError('The HR values are all the same, so no curve can be fitted.'); return; }
+  var B = sxy / sxx, lnA = my - B * mx, A = Math.exp(lnA);
+  var r2 = syy === 0 ? 1 : (sxy * sxy) / (sxx * syy);
+  var sorted = valid.slice().sort(function (a, b) { return a[0] - b[0]; });
+  ltFit = { A: A, B: B, r2: r2, rest: rest, max: max, points: valid, hr2: interpHr(sorted, 2), hr4: interpHr(sorted, 4) };
+  if (valid.some(function (r) { return r[0] > max; })) showLtError('One or more stage HRs are above HR max. Raise HR max to the highest value recorded.');
+  $('lt-a').textContent = sig(A); $('lt-b').textContent = sig(B); $('lt-r2').textContent = r2.toFixed(3);
+  $('lt-hr2').textContent = ltFit.hr2 != null ? Math.round(ltFit.hr2) : '–';
+  $('lt-hr4').textContent = ltFit.hr4 != null ? Math.round(ltFit.hr4) : '–';
+  $('lt-explain').innerHTML = 'Weighting factor for this player = <span class="mono">' + sig(A) + ' · e<sup>' + sig(B) + ' · ΔHR</sup></span>. At 90% of HR reserve one minute is weighted ' +
+    fmt(A * Math.exp(B * 0.9), 2) + ' times, compared with ' + fmt(A * Math.exp(B * 0.5), 2) + ' at 50%. This is why time at high intensity dominates iTRIMP.' +
+    (r2 < 0.9 ? ' <strong>The fit is weaker than usual (R² below 0.90). Check the data for typing errors.</strong>' : '');
+  $('lt-results').classList.remove('hidden');
+  drawLactateChart();
+}
+function interpHr(sorted, target) {
+  for (var i = 1; i < sorted.length; i++) {
+    var a = sorted[i - 1], b = sorted[i];
+    if (a[1] <= target && b[1] >= target && b[1] !== a[1]) return a[0] + (target - a[1]) * (b[0] - a[0]) / (b[1] - a[1]);
   }
-  if (!isNaN(hrLT) && !isNaN(hrObla) && hrLT >= hrObla) {
-    errs.push('HR at LT must be lower than HR at OBLA.');
-  }
-
-  var errBox = document.getElementById('form-error');
-  if (errs.length > 0) {
-    errBox.innerHTML = '<strong>Please fix the following:</strong><ul style="margin:6px 0 0 18px;padding:0;">' +
-      errs.map(function (e) { return '<li>' + escapeHtml(e) + '</li>'; }).join('') + '</ul>';
-    errBox.classList.remove('hidden');
-    return;
-  }
-  errBox.classList.add('hidden');
-
-  var record = {
-    id: editingId || uid(),
-    name: name,
-    hrRest: hrRest,
-    hrMax: hrMax,
-    constA: a,
-    constB: b,
-    hrLT: hrLT,
-    hrObla: hrObla,
-    testDate: getVal('pf-test-date') || null,
-    mass: getVal('pf-mass') ? Number(getVal('pf-mass')) : null,
-    notes: getVal('pf-notes') || '',
+  return null;
+}
+$('lt-save').addEventListener('click', function () {
+  if (!ltFit) return;
+  var name = $('lt-name').value.trim() || 'Player ' + (roster.length + 1);
+  var existing = roster.find(function (p) { return p.name.toLowerCase() === name.toLowerCase(); });
+  var rec = {
+    id: existing ? existing.id : uid(), name: name, sex: existing ? existing.sex : 'M',
+    hrRest: ltFit.rest, hrMax: ltFit.max, constA: +ltFit.A.toPrecision(6), constB: +ltFit.B.toPrecision(6),
+    hrLT: ltFit.hr2 != null ? Math.round(ltFit.hr2) : Math.round(ltFit.rest + 0.7 * (ltFit.max - ltFit.rest)),
+    hrObla: ltFit.hr4 != null ? Math.round(ltFit.hr4) : Math.round(ltFit.rest + 0.85 * (ltFit.max - ltFit.rest)),
+    testDate: new Date().toISOString().slice(0, 10), notes: 'Fitted from ' + ltFit.points.length + ' stages, R² ' + ltFit.r2.toFixed(3),
     updatedAt: new Date().toISOString()
   };
+  if (existing) roster[roster.indexOf(existing)] = rec; else roster.push(rec);
+  saveRoster();
+  var box = $('lt-saved');
+  box.innerHTML = (existing ? 'Updated ' : 'Saved ') + '<strong>' + esc(name) + '</strong>. ' +
+    (ltFit.hr2 == null || ltFit.hr4 == null ? 'The test did not cross 2 and 4 mmol·L⁻¹, so the Lucia breakpoints were estimated. Edit them on the Players tab. ' : '') +
+    '<a href="#" id="lt-go-session">Go to Session</a>';
+  box.classList.remove('hidden');
+  $('lt-go-session').addEventListener('click', function (e) { e.preventDefault(); showTab('session'); $('sn-player').value = rec.id; });
+});
 
-  if (editingId) {
-    var i = roster.findIndex(function (x) { return x.id === editingId; });
-    if (i >= 0) roster[i] = record;
-  } else {
-    roster.push(record);
+/* ================================================================
+   PLAYERS
+   ================================================================ */
+var editingId = null;
+function renderRoster() {
+  var wrap = $('roster-table-wrap');
+  if (!roster.length) { wrap.innerHTML = '<div class="empty"><h3>No players yet</h3><p>Fit a lactate profile on tab 1, add a player, or load the sample player.</p></div>'; return; }
+  wrap.innerHTML = '<div class="table-wrap"><table class="data"><thead><tr><th>Name</th><th>Sex</th><th class="num">HR rest</th><th class="num">HR max</th><th class="num">A</th><th class="num">B</th><th class="num">HR LT</th><th class="num">HR OBLA</th><th>Test date</th><th></th></tr></thead><tbody>' +
+    roster.map(function (p) {
+      return '<tr><td class="name">' + esc(p.name) + '</td><td>' + p.sex + '</td><td class="num">' + p.hrRest + '</td><td class="num">' + p.hrMax + '</td><td class="num">' + sig(p.constA) + '</td><td class="num">' + sig(p.constB) + '</td><td class="num">' + p.hrLT + '</td><td class="num">' + p.hrObla + '</td><td>' + (p.testDate ? esc(p.testDate) : '–') + '</td>' +
+        '<td><div class="row-actions"><button class="btn btn-sm" data-edit="' + p.id + '">Edit</button><button class="btn btn-sm btn-danger" data-delete="' + p.id + '">Delete</button></div></td></tr>';
+    }).join('') + '</tbody></table></div>';
+}
+$('roster-table-wrap').addEventListener('click', function (e) {
+  var ed = e.target.closest('[data-edit]'), del = e.target.closest('[data-delete]');
+  if (ed) openPlayerForm(ed.dataset.edit);
+  if (del) {
+    var p = findPlayer(del.dataset.delete);
+    if (p && confirm('Delete player "' + p.name + '"? This cannot be undone.')) { roster = roster.filter(function (x) { return x.id !== p.id; }); saveRoster(); renderRoster(); }
   }
-  saveRoster(roster);
-  closePlayerForm();
-  renderRoster();
-}
-
-function deletePlayer(id) {
-  var p = roster.find(function (x) { return x.id === id; });
-  if (!p) return;
-  if (!confirm('Delete player "' + p.name + '"? This cannot be undone.')) return;
-  roster = roster.filter(function (x) { return x.id !== id; });
-  saveRoster(roster);
-  renderRoster();
-}
-
-document.getElementById('btn-add-player').addEventListener('click', function () { openPlayerForm(null); });
-document.getElementById('btn-cancel-form').addEventListener('click', closePlayerForm);
-document.getElementById('btn-save-player').addEventListener('click', savePlayer);
-
-/* Export / Import */
-document.getElementById('btn-export').addEventListener('click', function () {
-  var data = { app: 'TRIMP Calculator', version: 1, exportedAt: new Date().toISOString(), roster: roster };
-  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
-  a.download = 'trimp_roster_' + (new Date().toISOString().slice(0,10)) + '.json';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 });
-
-document.getElementById('btn-import').addEventListener('click', function () {
-  document.getElementById('import-file').click();
+var PF = ['pf-name', 'pf-sex', 'pf-test-date', 'pf-hrrest', 'pf-hrmax', 'pf-a', 'pf-b', 'pf-hrlt', 'pf-hrobla', 'pf-notes'];
+function openPlayerForm(id) {
+  editingId = id || null;
+  $('player-form').classList.remove('hidden');
+  $('form-error').classList.add('hidden');
+  PF.forEach(function (f) { $(f).classList.remove('err'); });
+  var p = id ? findPlayer(id) : null;
+  $('player-form-title').textContent = p ? 'Edit ' + p.name : 'Add player';
+  var vals = p ? [p.name, p.sex, p.testDate || '', p.hrRest, p.hrMax, p.constA, p.constB, p.hrLT, p.hrObla, p.notes || ''] : ['', 'M', '', '', '', '', '', '', '', ''];
+  PF.forEach(function (f, i) { $(f).value = vals[i]; });
+  $('player-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+$('btn-add-player').addEventListener('click', function () { openPlayerForm(null); });
+$('btn-cancel-form').addEventListener('click', function () { $('player-form').classList.add('hidden'); editingId = null; });
+$('btn-save-player').addEventListener('click', function () {
+  var errs = [];
+  var name = $('pf-name').value.trim(); if (!name) errs.push('Name is required.');
+  var checks = [['pf-hrrest', 'HR rest', 25, 120], ['pf-hrmax', 'HR max', 120, 230], ['pf-a', 'Constant A', 0, 1e6], ['pf-b', 'Constant B', -50, 50], ['pf-hrlt', 'HR at LT', 60, 220], ['pf-hrobla', 'HR at OBLA', 60, 230]];
+  var v = {};
+  checks.forEach(function (c) {
+    var x = num($(c[0]).value); v[c[0]] = x; $(c[0]).classList.remove('err');
+    if (!isFinite(x)) { errs.push(c[1] + ' is required.'); $(c[0]).classList.add('err'); }
+    else if (x < c[2] || x > c[3]) { errs.push(c[1] + ' should be between ' + c[2] + ' and ' + c[3] + '.'); $(c[0]).classList.add('err'); }
+  });
+  if (v['pf-hrrest'] >= v['pf-hrmax']) errs.push('HR rest must be lower than HR max.');
+  if (v['pf-hrlt'] >= v['pf-hrobla']) errs.push('HR at LT must be lower than HR at OBLA.');
+  if (v['pf-hrobla'] > v['pf-hrmax']) errs.push('HR at OBLA cannot be above HR max.');
+  if (v['pf-a'] <= 0) errs.push('Constant A must be above zero.');
+  if (errs.length) { var b = $('form-error'); b.innerHTML = '<strong>Please fix the following</strong><ul style="margin:6px 0 0 18px;padding:0;">' + errs.map(function (e) { return '<li>' + esc(e) + '</li>'; }).join('') + '</ul>'; b.classList.remove('hidden'); return; }
+  var rec = { id: editingId || uid(), name: name, sex: $('pf-sex').value, hrRest: v['pf-hrrest'], hrMax: v['pf-hrmax'], constA: v['pf-a'], constB: v['pf-b'], hrLT: v['pf-hrlt'], hrObla: v['pf-hrobla'], testDate: $('pf-test-date').value || null, notes: $('pf-notes').value.trim(), updatedAt: new Date().toISOString() };
+  var i = roster.findIndex(function (x) { return x.id === rec.id; });
+  if (i >= 0) roster[i] = rec; else roster.push(rec);
+  saveRoster(); $('player-form').classList.add('hidden'); editingId = null; renderRoster();
 });
-document.getElementById('import-file').addEventListener('change', function (e) {
-  var file = e.target.files[0];
-  if (!file) return;
+$('btn-export').addEventListener('click', function () {
+  download('trimp_players_' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify({ app: 'TRIMP Calculator', version: 2, exportedAt: new Date().toISOString(), roster: roster }, null, 2), 'application/json');
+});
+$('btn-import').addEventListener('click', function () { $('import-file').click(); });
+$('import-file').addEventListener('change', function (e) {
+  var file = e.target.files[0]; if (!file) return;
   var reader = new FileReader();
   reader.onload = function (ev) {
     try {
       var parsed = JSON.parse(ev.target.result);
-      var incoming = Array.isArray(parsed) ? parsed : parsed.roster;
-      if (!Array.isArray(incoming)) throw new Error('No roster array found in file.');
-      var validated = incoming.filter(function (p) {
-        return p && typeof p === 'object' && p.name && !isNaN(p.hrRest) && !isNaN(p.hrMax)
-          && !isNaN(p.constA) && !isNaN(p.constB) && !isNaN(p.hrLT) && !isNaN(p.hrObla);
-      }).map(function (p) {
-        return {
-          id: p.id || uid(),
-          name: String(p.name),
-          hrRest: Number(p.hrRest),
-          hrMax: Number(p.hrMax),
-          constA: Number(p.constA),
-          constB: Number(p.constB),
-          hrLT: Number(p.hrLT),
-          hrObla: Number(p.hrObla),
-          testDate: p.testDate || null,
-          mass: p.mass != null ? Number(p.mass) : null,
-          notes: p.notes || '',
-          updatedAt: p.updatedAt || new Date().toISOString()
-        };
-      });
-      if (validated.length === 0) {
-        alert('No valid player records found in that file.');
-        return;
-      }
-      var msg = 'Import ' + validated.length + ' player(s)?\n\nOK = replace current roster\nCancel = merge with current roster';
-      var replace = confirm(msg);
-      if (replace) {
-        roster = validated;
-      } else {
-        // Merge: skip duplicates by name (case-insensitive)
-        var existingNames = roster.map(function (r) { return r.name.toLowerCase(); });
-        validated.forEach(function (p) {
-          if (existingNames.indexOf(p.name.toLowerCase()) === -1) {
-            roster.push(p);
-          }
-        });
-      }
-      saveRoster(roster);
-      renderRoster();
-      alert('Imported ' + validated.length + ' player(s).');
-    } catch (err) {
-      alert('Could not read that file: ' + err.message);
-    }
-    e.target.value = ''; // reset
+      var incoming = (Array.isArray(parsed) ? parsed : parsed.roster || []).map(normalisePlayer).filter(Boolean);
+      if (!incoming.length) { alert('No valid players found in that file.'); return; }
+      if (confirm('Import ' + incoming.length + ' player(s)?\n\nOK replaces your current players.\nCancel adds them to your current players.')) roster = incoming;
+      else { var names = roster.map(function (r) { return r.name.toLowerCase(); }); incoming.forEach(function (p) { if (names.indexOf(p.name.toLowerCase()) === -1) roster.push(p); }); }
+      saveRoster(); renderRoster();
+    } catch (err) { alert('Could not read that file. ' + err.message); }
+    e.target.value = '';
   };
   reader.readAsText(file);
 });
+function samplePlayer() {
+  // Constants fitted from the module LT test (HR rest 55, HR max 195)
+  var name = 'Sample Player', n = 1;
+  while (roster.some(function (p) { return p.name === name; })) { n++; name = 'Sample Player ' + n; }
+  return { id: uid(), name: name, sex: 'M', hrRest: 55, hrMax: 195, constA: 0.05503, constB: 5.3296, hrLT: 154, hrObla: 170, testDate: new Date().toISOString().slice(0, 10), notes: 'Constants fitted from the module LT test.', updatedAt: new Date().toISOString() };
+}
+$('btn-load-sample').addEventListener('click', function () { roster.push(samplePlayer()); saveRoster(); renderRoster(); });
 
-document.getElementById('btn-load-sample').addEventListener('click', function () {
-  var sample = {
-    id: uid(),
-    name: 'Sample Player',
-    hrRest: 55,
-    hrMax: 195,
-    constA: 0.64,
-    constB: 1.92,
-    hrLT: 155,
-    hrObla: 175,
-    testDate: new Date().toISOString().slice(0, 10),
-    mass: 75,
-    notes: 'Default Banister-male coefficients shown here for demo only. Replace with individual values from each athlete\'s HRR–BLa fit.',
-    updatedAt: new Date().toISOString()
-  };
-  // ensure unique-ish
-  var n = 1;
-  var base = sample.name;
-  while (roster.some(function (p) { return p.name === sample.name; })) {
-    n++; sample.name = base + ' ' + n;
+/* ================================================================
+   FILE PARSING
+   ================================================================ */
+function splitLine(line, delim) {
+  if (line.indexOf('"') === -1) return line.split(delim);
+  var out = [], cur = '', q = false;
+  for (var i = 0; i < line.length; i++) {
+    var c = line[i];
+    if (c === '"') { if (q && line[i + 1] === '"') { cur += '"'; i++; } else q = !q; }
+    else if (c === delim && !q) { out.push(cur); cur = ''; }
+    else cur += c;
   }
-  roster.push(sample);
-  saveRoster(roster);
-  renderRoster();
-});
+  out.push(cur); return out;
+}
+function textToRows(text) {
+  text = String(text || '').replace(/^﻿/, '');
+  var lines = text.split(/\r\n|\n|\r/);
+  var sample = lines.slice(0, 200).join('\n');
+  var counts = { ',': (sample.match(/,/g) || []).length, '\t': (sample.match(/\t/g) || []).length, ';': (sample.match(/;/g) || []).length };
+  var delim = counts['\t'] > counts[','] && counts['\t'] >= counts[';'] ? '\t' : counts[';'] > counts[','] ? ';' : ',';
+  return lines.filter(function (l) { return l.trim().length; }).map(function (l) { return splitLine(l, delim); });
+}
+var HR_NAMES = ['hr', 'heart rate', 'heartrate', 'heart_rate', 'heart-rate', 'bpm', 'pulse', 'hr bpm', 'heart rate bpm', 'hr/min', 'hr_bpm'];
+var TIME_NAMES = ['t', 'time', 'elapsed', 'elapsed time', 'time elapsed', 'timestamp', 'seconds', 'secs', 'sec', 's', 'time s', 'time_s', 'duration', 'elapsed_time', 'time (s)'];
+function normHead(s) { return String(s == null ? '' : s).trim().toLowerCase().replace(/\s*[\(\[][^\)\]]*[\)\]]\s*/g, ' ').replace(/\s+/g, ' ').trim(); }
+function parseTime(v) {
+  if (typeof v === 'number') return v;
+  if (v == null) return NaN;
+  var s = String(v).trim();
+  if (s === '') return NaN;
+  if (/^-?\d+(\.\d+)?$/.test(s)) return Number(s);
+  if (/^\d+(:\d+){1,2}([.,]\d+)?$/.test(s)) {
+    var parts = s.replace(',', '.').split(':').map(Number);
+    return parts.length === 3 ? parts[0] * 3600 + parts[1] * 60 + parts[2] : parts[0] * 60 + parts[1];
+  }
+  var d = Date.parse(s);
+  return isFinite(d) ? d / 1000 : NaN;
+}
+function isHrHead(h) { return HR_NAMES.indexOf(h) !== -1 || /^heart ?rate\b/.test(h) && !/(max|rest|reserve|zone|recovery|variab)/.test(h) || /^hr\b/.test(h) && h.length <= 8 && !/(max|rest|res|zone|%|rec)/.test(h); }
+function parseHrRows(rows) {
+  if (!rows.length) throw new Error('The file is empty.');
+  // Try every row that looks like a header and keep the one that yields the most HR data
+  var best = null, lastErr = null;
+  for (var i = 0; i < Math.min(rows.length, 600); i++) {
+    var r = rows[i];
+    for (var c = 0; c < r.length; c++) {
+      if (!isHrHead(normHead(r[c]))) continue;
+      try { var p = parseFromHeader(rows, i, c); if (!best || p.hr.length > best.hr.length) best = p; } catch (e) { lastErr = e; }
+    }
+  }
+  if (best) return best;
+  return parseFromHeader(rows, -1, -1);
+}
+function parseFromHeader(rows, hdr, hrCol) {
+  var tCol = -1, note;
+  if (hdr >= 0) {
+    var hrow = rows[hdr];
+    for (var c2 = 0; c2 < hrow.length; c2++) {
+      if (c2 === hrCol) continue;
+      var h2 = normHead(hrow[c2]);
+      if (TIME_NAMES.indexOf(h2) !== -1 || /^(elapsed )?time\b/.test(h2)) { tCol = c2; break; }
+    }
+    note = 'HR column "' + String(hrow[hrCol]).trim() + '"' + (tCol >= 0 ? ', time column "' + String(hrow[tCol]).trim() + '"' : '');
+  } else {
+    // no header: find first data row and guess
+    var first = rows.find(function (r) { return r.some(function (x) { var n = num(x); return isFinite(n) && n >= 30 && n <= 240; }); });
+    if (!first) throw new Error('No values look like heart rate (30 to 240 bpm). Rename the HR column to "HR" and try again.');
+    for (var c3 = first.length - 1; c3 >= 0; c3--) { var nn = num(first[c3]); if (isFinite(nn) && nn >= 30 && nn <= 240) { hrCol = c3; break; } }
+    if (first.length > 1 && hrCol !== 0 && isFinite(parseTime(first[0]))) tCol = 0;
+    note = 'no header, HR in column ' + (hrCol + 1) + (tCol >= 0 ? ', time in column 1' : '');
+  }
+  var hr = [], t = [], dropped = 0, startRow = hdr + 1;
+  for (var k = startRow; k < rows.length; k++) {
+    var row = rows[k];
+    if (!row || hrCol >= row.length) continue;
+    var v = num(row[hrCol]);
+    var tv = tCol >= 0 ? parseTime(row[tCol]) : NaN;
+    if (!isFinite(v)) { if (hr.length) dropped++; continue; }
+    if (v < 30 || v > 240) { dropped++; continue; }
+    hr.push(v); t.push(tv);
+  }
+  if (!hr.length) throw new Error('No valid heart rate values (30 to 240 bpm) were found.');
+  var useTime = false;
+  if (tCol >= 0) {
+    var okT = t.filter(isFinite).length;
+    var inc = 0; for (var q = 1; q < t.length; q++) if (t[q] > t[q - 1]) inc++;
+    if (okT >= 0.9 * t.length && inc >= 0.9 * (t.length - 1)) {
+      useTime = true;
+      var span = t[t.length - 1] - t[0];
+      if (t.length > 60 && span > 0 && span < 1 && t[t.length - 1] <= 1.5) t = t.map(function (x) { return x * 86400; }); // Excel day fractions
+    } else note += ' (time column ignored because it was not in order)';
+  }
+  return { hr: hr, t: useTime ? t : null, note: note, dropped: dropped };
+}
+function readHrFile(file) {
+  return new Promise(function (resolve, reject) {
+    var isXl = /\.xlsx?$/i.test(file.name);
+    var reader = new FileReader();
+    reader.onerror = function () { reject(new Error('The file could not be read.')); };
+    reader.onload = function (ev) {
+      try {
+        if (!isXl) return resolve(parseHrRows(textToRows(ev.target.result)));
+        loadXlsxLib().then(function (XLSX) {
+          try {
+            var wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+            var best = null, bestErr = null;
+            wb.SheetNames.forEach(function (sn) {
+              try {
+                var rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: true, defval: '' });
+                var p = parseHrRows(rows);
+                if (!best || p.hr.length > best.hr.length) { best = p; best.note += ' (sheet "' + sn + '")'; }
+              } catch (e) { bestErr = e; }
+            });
+            if (best) resolve(best); else reject(bestErr || new Error('No heart rate data found in the workbook.'));
+          } catch (e) { reject(e); }
+        }, reject);
+      } catch (e) { reject(e); }
+    };
+    if (isXl) reader.readAsArrayBuffer(file); else reader.readAsText(file);
+  });
+}
+var xlsxPromise = null;
+function loadXlsxLib() {
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  if (!xlsxPromise) xlsxPromise = new Promise(function (res, rej) {
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = function () { res(window.XLSX); };
+    s.onerror = function () { xlsxPromise = null; rej(new Error('Excel support could not load. Save the sheet as CSV and try again.')); };
+    document.head.appendChild(s);
+  });
+  return xlsxPromise;
+}
+
+/* Per-sample time step */
+function buildDt(parsed, rate) {
+  var n = parsed.hr.length, dt = new Array(n), gaps = 0, i;
+  if (parsed.t) {
+    var diffs = [];
+    for (i = 0; i < n - 1; i++) diffs.push(parsed.t[i + 1] - parsed.t[i]);
+    var med = median(diffs.filter(function (d) { return d > 0; })) || 1;
+    var cap = Math.max(5 * med, 5);
+    for (i = 0; i < n - 1; i++) {
+      var d = diffs[i];
+      if (!(d > 0)) d = 0;
+      else if (d > cap) { d = med; gaps++; }
+      dt[i] = d;
+    }
+    dt[n - 1] = med;
+    return { dt: dt, gaps: gaps, median: med, source: 'time column' };
+  }
+  var step = 1 / rate;
+  for (i = 0; i < n; i++) dt[i] = step;
+  return { dt: dt, gaps: 0, median: step, source: rate + ' Hz' };
+}
+
+/* ================================================================
+   CALCULATIONS
+   ================================================================ */
+function computeAll(hr, dt, p, rpe) {
+  var n = hr.length, range = p.hrMax - p.hrRest;
+  var dur = 0, sumHr = 0, maxHr = 0, it = 0;
+  var e = [0, 0, 0, 0, 0], lu = [0, 0, 0], st = [0, 0, 0, 0, 0], t80 = 0, t85 = 0, t90 = 0;
+  var cum = new Array(n);
+  var eW = [1, 2, 3, 4, 5], stW = [1.25, 1.71, 2.54, 3.61, 5.16];
+  for (var i = 0; i < n; i++) {
+    var h = hr[i], s = dt[i], m = s / 60;
+    dur += s; sumHr += h * s; if (h > maxHr) maxHr = h;
+    var x = (h - p.hrRest) / range; if (x < 0) x = 0;
+    it += m * x * p.constA * Math.exp(p.constB * x);
+    cum[i] = it;
+    var f = h / p.hrMax;
+    if (f >= 0.9) e[4] += m; else if (f >= 0.8) e[3] += m; else if (f >= 0.7) e[2] += m; else if (f >= 0.6) e[1] += m; else if (f >= 0.5) e[0] += m;
+    if (h >= p.hrObla) lu[2] += m; else if (h >= p.hrLT) lu[1] += m; else lu[0] += m;
+    if (f >= 0.93) st[4] += m; else if (f >= 0.86) st[3] += m; else if (f >= 0.79) st[2] += m; else if (f >= 0.72) st[1] += m; else if (f >= 0.65) st[0] += m;
+    if (f >= 0.8) t80 += m; if (f >= 0.85) t85 += m; if (f >= 0.9) t90 += m;
+  }
+  var durMin = dur / 60, meanHr = dur > 0 ? sumHr / dur : NaN;
+  var xm = Math.max(0, (meanHr - p.hrRest) / range);
+  var bk = p.sex === 'F' ? [0.86, 1.67] : [0.64, 1.92];
+  var sum = function (arr, w) { return arr.reduce(function (a, v, k) { return a + v * w[k]; }, 0); };
+  return {
+    durationMin: durMin, samples: n, meanHr: meanHr, maxHr: maxHr,
+    iTRIMP: it, iTRIMPmin: durMin > 0 ? it / durMin : NaN,
+    bTRIMP: durMin * xm * bk[0] * Math.exp(bk[1] * xm),
+    eTRIMP: sum(e, eW), luTRIMP: sum(lu, [1, 2, 3]), stTRIMP: sum(st, stW),
+    sRPE: rpe != null && isFinite(rpe) ? durMin * rpe : null,
+    t80: t80, t85: t85, t90: t90, eZones: e, luZones: lu, cum: cum
+  };
+}
 
 /* ================================================================
    SESSION TAB
    ================================================================ */
-var sessionData = { hr: null, dt: 0.1, fileName: '' };
-
-function refreshSessionTab() {
-  var noPlayers = document.getElementById('session-no-players');
-  var main = document.getElementById('session-main');
-  if (roster.length === 0) {
-    noPlayers.classList.remove('hidden');
-    main.classList.add('hidden');
-    return;
-  }
-  noPlayers.classList.add('hidden');
-  main.classList.remove('hidden');
-  var sel = document.getElementById('sn-player');
-  var prev = sel.value;
-  sel.innerHTML = '';
-  roster.forEach(function (p) {
-    var o = document.createElement('option');
-    o.value = p.id;
-    o.textContent = p.name;
-    sel.appendChild(o);
-  });
-  if (prev) sel.value = prev;
-}
-
-document.getElementById('sn-rate').addEventListener('change', function (e) {
-  document.getElementById('sn-rate-custom-wrap').classList.toggle('hidden', e.target.value !== 'custom');
-});
-
-function getSamplingRate() {
-  var v = document.getElementById('sn-rate').value;
-  if (v === 'custom') return Number(document.getElementById('sn-rate-custom').value) || 10;
-  return Number(v);
-}
-
-/* Upload zone */
-var uploadZone = document.getElementById('upload-zone');
-var csvInput = document.getElementById('csv-file');
-uploadZone.addEventListener('click', function () { csvInput.click(); });
-uploadZone.addEventListener('dragover', function (e) {
-  e.preventDefault();
-  uploadZone.classList.add('dragover');
-});
-uploadZone.addEventListener('dragleave', function () {
-  uploadZone.classList.remove('dragover');
-});
-uploadZone.addEventListener('drop', function (e) {
-  e.preventDefault();
-  uploadZone.classList.remove('dragover');
-  var file = e.dataTransfer.files[0];
-  if (file) loadCSV(file);
-});
-csvInput.addEventListener('change', function (e) {
-  var file = e.target.files[0];
-  if (file) loadCSV(file);
-});
-
-function showCsvError(msg) {
-  var b = document.getElementById('csv-error');
-  b.textContent = msg;
-  b.classList.remove('hidden');
-}
-function clearCsvError() {
-  document.getElementById('csv-error').classList.add('hidden');
-}
-
-function loadCSV(file) {
-  clearCsvError();
-  sessionData.fileName = file.name;
-  var reader = new FileReader();
-  reader.onload = function (ev) {
-    try {
-      var parsed = parseHrCsv(ev.target.result);
-      sessionData.hr = parsed.hr;
-      document.getElementById('file-display').textContent =
-        file.name + ' — ' + parsed.hr.length + ' samples · ' +
-        (parsed.layoutNote || '');
-      document.getElementById('file-display').classList.remove('hidden');
-    } catch (err) {
-      sessionData.hr = null;
-      document.getElementById('file-display').classList.add('hidden');
-      showCsvError('Could not parse: ' + err.message);
-    }
-  };
-  reader.onerror = function () { showCsvError('File read failed.'); };
-  reader.readAsText(file);
-}
-
-/* Parse CSV: handles 1 column or 2+ columns, with or without header */
-function parseHrCsv(text) {
-  // strip BOM
-  text = text.replace(/^\uFEFF/, '');
-  // detect delimiter
-  var firstLine = text.split(/\r?\n/, 1)[0];
-  var delim = ',';
-  if (firstLine.indexOf('\t') !== -1 && firstLine.split('\t').length > firstLine.split(',').length) {
-    delim = '\t';
-  } else if (firstLine.indexOf(';') !== -1 && firstLine.split(';').length > firstLine.split(',').length) {
-    delim = ';';
-  }
-
-  var lines = text.split(/\r?\n/).filter(function (l) { return l.trim().length > 0; });
-  if (lines.length === 0) throw new Error('File is empty.');
-
-  // detect header: first row not numeric
-  var firstParts = lines[0].split(delim);
-  var headerLooksLikeText = firstParts.some(function (p) {
-    return p.trim() !== '' && isNaN(Number(p.trim()));
-  });
-
-  var hrColIdx = -1;
-  var startRow = 0;
-  var layoutNote;
-
-  if (headerLooksLikeText) {
-    startRow = 1;
-    // find HR column by name
-    var headerNames = firstParts.map(function (p) { return p.trim().toLowerCase(); });
-    var candidates = ['hr', 'heart rate', 'heartrate', 'bpm', 'heart_rate', 'pulse'];
-    for (var c = 0; c < headerNames.length; c++) {
-      if (candidates.indexOf(headerNames[c]) !== -1) { hrColIdx = c; break; }
-    }
-    if (hrColIdx === -1) {
-      // fallback: rightmost numeric column in row 2
-      if (lines.length < 2) throw new Error('Header found but no data rows.');
-      var row2 = lines[1].split(delim);
-      for (var c2 = row2.length - 1; c2 >= 0; c2--) {
-        var n = Number(row2[c2].trim());
-        if (!isNaN(n) && n > 30 && n < 240) { hrColIdx = c2; break; }
-      }
-      if (hrColIdx === -1) throw new Error('Could not find an HR column. Try renaming the column to "HR".');
-      layoutNote = 'auto-detected HR in column ' + (hrColIdx + 1);
-    } else {
-      layoutNote = 'HR column "' + firstParts[hrColIdx].trim() + '"';
-    }
-  } else {
-    // no header — first row is data
-    if (firstParts.length === 1) {
-      hrColIdx = 0;
-      layoutNote = 'single-column HR data';
-    } else {
-      // pick rightmost column whose first value looks like HR
-      for (var c3 = firstParts.length - 1; c3 >= 0; c3--) {
-        var nn = Number(firstParts[c3].trim());
-        if (!isNaN(nn) && nn > 30 && nn < 240) { hrColIdx = c3; break; }
-      }
-      if (hrColIdx === -1) throw new Error('No values look like HR (between 30 and 240 bpm).');
-      layoutNote = 'no header · HR in column ' + (hrColIdx + 1);
-    }
-  }
-
-  // extract HR
-  var hr = [];
-  for (var i = startRow; i < lines.length; i++) {
-    var parts = lines[i].split(delim);
-    if (hrColIdx >= parts.length) continue;
-    var v = Number(parts[hrColIdx].trim());
-    if (isFinite(v) && v >= 30 && v <= 240) {
-      hr.push(v);
-    }
-    // out-of-range / NaN values silently dropped
-  }
-  if (hr.length === 0) throw new Error('Found no valid HR values (30–240 bpm).');
-  return { hr: hr, layoutNote: layoutNote };
-}
-
-/* ================================================================
-   TRIMP CALCULATIONS
-   ================================================================ */
-function computeAll(hr, dt, player, rpe) {
-  // hr: array of bpm
-  // dt: seconds between samples
-  // player: roster object
-  // rpe: optional 0-10
-  var n = hr.length;
-  var durationS = n * dt;
-  var durationMin = durationS / 60;
-
-  // ΔHR per sample
-  var hrRange = player.hrMax - player.hrRest;
-  var dhr = new Array(n);
-  var sumHr = 0, maxHr = 0;
-  for (var i = 0; i < n; i++) {
-    var d = (hr[i] - player.hrRest) / hrRange;
-    if (d < 0) d = 0; // sub-rest values clipped to 0
-    if (d > 1.05) d = 1.05; // cap a touch above 100%
-    dhr[i] = d;
-    sumHr += hr[i];
-    if (hr[i] > maxHr) maxHr = hr[i];
-  }
-  var meanHr = sumHr / n;
-  var dhrMean = (meanHr - player.hrRest) / hrRange;
-  if (dhrMean < 0) dhrMean = 0;
-
-  // iTRIMP: sum of dt(min) * ΔHR * A * exp(B*ΔHR)
-  var dtMin = dt / 60;
-  var iTRIMP = 0;
-  for (var j = 0; j < n; j++) {
-    iTRIMP += dtMin * dhr[j] * player.constA * Math.exp(player.constB * dhr[j]);
-  }
-
-  // bTRIMP: duration * ΔHRmean * 0.64 * exp(1.92 * ΔHRmean) — Banister male generic
-  var bTRIMP = durationMin * dhrMean * 0.64 * Math.exp(1.92 * dhrMean);
-
-  // eTRIMP: 5 zones at 50, 60, 70, 80, 90% HRmax
-  var ezThresh = [0.5, 0.6, 0.7, 0.8, 0.9].map(function (f) { return f * player.hrMax; });
-  var eCount = [0, 0, 0, 0, 0];
-  for (var k = 0; k < n; k++) {
-    var v = hr[k];
-    if (v >= ezThresh[4]) eCount[4]++;
-    else if (v >= ezThresh[3]) eCount[3]++;
-    else if (v >= ezThresh[2]) eCount[2]++;
-    else if (v >= ezThresh[1]) eCount[1]++;
-    else if (v >= ezThresh[0]) eCount[0]++;
-    // anything below 50% HRmax: not counted in eTRIMP
-  }
-  var eZones = eCount.map(function (c, idx) {
-    var minutes = (c * dt) / 60;
-    return { zone: idx + 1, samples: c, minutes: minutes, weighted: minutes * (idx + 1) };
-  });
-  var eTRIMP = eZones.reduce(function (s, z) { return s + z.weighted; }, 0);
-
-  // luTRIMP: 3 zones at LT and OBLA
-  var luCount = [0, 0, 0];
-  for (var m = 0; m < n; m++) {
-    var hv = hr[m];
-    if (hv >= player.hrObla) luCount[2]++;
-    else if (hv >= player.hrLT) luCount[1]++;
-    else luCount[0]++;
-  }
-  var luZones = luCount.map(function (c, idx) {
-    var minutes = (c * dt) / 60;
-    return { zone: idx + 1, samples: c, minutes: minutes, weighted: minutes * (idx + 1) };
-  });
-  var luTRIMP = luZones.reduce(function (s, z) { return s + z.weighted; }, 0);
-
-  // sRPE
-  var sRPE = (rpe != null && !isNaN(rpe)) ? durationMin * rpe : null;
-
-  return {
-    durationMin: durationMin,
-    samples: n,
-    meanHr: meanHr,
-    maxHr: maxHr,
-    dhrMean: dhrMean,
-    iTRIMP: iTRIMP,
-    bTRIMP: bTRIMP,
-    eTRIMP: eTRIMP,
-    luTRIMP: luTRIMP,
-    sRPE: sRPE,
-    eZones: eZones,
-    luZones: luZones,
-    eThresholds: ezThresh
-  };
-}
-
-/* ================================================================
-   RENDER RESULTS
-   ================================================================ */
+var sessionData = null; // {parsed, fileName}
 var lastResult = null;
+function refreshSessionTab() {
+  var none = !roster.length;
+  $('session-no-players').classList.toggle('hidden', !none);
+  $('session-main').classList.toggle('hidden', none);
+  var sel = $('sn-player'), prev = sel.value;
+  sel.innerHTML = roster.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + '</option>'; }).join('');
+  if (prev && findPlayer(prev)) sel.value = prev;
+}
+$('sn-rate').addEventListener('change', function (e) { $('sn-rate-custom-wrap').classList.toggle('hidden', e.target.value !== 'custom'); });
+function getRate() { var v = $('sn-rate').value; return v === 'custom' ? num($('sn-rate-custom').value) : Number(v); }
+function showCsvError(msg) { var b = $('csv-error'); b.textContent = msg || ''; b.classList.toggle('hidden', !msg); }
 
-document.getElementById('btn-compute').addEventListener('click', function () {
-  clearCsvError();
-  if (!sessionData.hr || sessionData.hr.length === 0) {
-    showCsvError('Upload an HR CSV first.');
-    return;
-  }
-  var sel = document.getElementById('sn-player');
-  var playerId = sel.value;
-  var player = roster.find(function (p) { return p.id === playerId; });
-  if (!player) {
-    showCsvError('Select a player.');
-    return;
-  }
-  var rate = getSamplingRate();
-  if (!rate || rate <= 0) {
-    showCsvError('Invalid sampling rate.');
-    return;
-  }
-  var dt = 1 / rate;
-  var rpeRaw = document.getElementById('sn-rpe').value;
-  var rpe = rpeRaw === '' ? null : Number(rpeRaw);
-  if (rpe !== null && (isNaN(rpe) || rpe < 0 || rpe > 10)) {
-    showCsvError('RPE should be between 0 and 10, or leave blank.');
-    return;
-  }
+var uz = $('upload-zone'), csvInput = $('csv-file');
+uz.addEventListener('click', function () { csvInput.click(); });
+uz.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); csvInput.click(); } });
+uz.addEventListener('dragover', function (e) { e.preventDefault(); uz.classList.add('dragover'); });
+uz.addEventListener('dragleave', function () { uz.classList.remove('dragover'); });
+uz.addEventListener('drop', function (e) { e.preventDefault(); uz.classList.remove('dragover'); if (e.dataTransfer.files[0]) loadSessionFile(e.dataTransfer.files[0]); });
+csvInput.addEventListener('change', function (e) { if (e.target.files[0]) loadSessionFile(e.target.files[0]); e.target.value = ''; });
 
-  var result = computeAll(sessionData.hr, dt, player, rpe);
-  lastResult = { player: player, result: result, fileName: sessionData.fileName, rate: rate, rpe: rpe, computedAt: new Date().toISOString() };
-
-  document.getElementById('results-pane').classList.remove('hidden');
-  document.getElementById('results-meta').textContent =
-    player.name + ' · ' + sessionData.fileName + ' · ' + rate + ' Hz · ' +
-    result.samples + ' samples';
-
-  document.getElementById('r-itrimp').textContent = result.iTRIMP.toFixed(1);
-  document.getElementById('r-btrimp').textContent = result.bTRIMP.toFixed(1);
-  document.getElementById('r-etrimp').textContent = result.eTRIMP.toFixed(1);
-  document.getElementById('r-lutrimp').textContent = result.luTRIMP.toFixed(1);
-  document.getElementById('r-srpe').textContent = result.sRPE == null ? '—' : result.sRPE.toFixed(1);
-  document.getElementById('r-dur').textContent = result.durationMin.toFixed(2);
-  document.getElementById('r-meanhr').textContent = result.meanHr.toFixed(1);
-  document.getElementById('r-maxhr').textContent = result.maxHr;
-  document.getElementById('r-samples').textContent = result.samples;
-
-  // zone bars
-  var maxEZmin = Math.max.apply(null, result.eZones.map(function (z) { return z.minutes; })) || 1;
-  document.getElementById('edw-zones').innerHTML = result.eZones.map(function (z, i) {
-    var pct = (z.minutes / maxEZmin) * 100;
-    var label = 'Z' + z.zone + ' (' + Math.round([50,60,70,80,90][i]) + '–' +
-      (i < 4 ? Math.round([60,70,80,90,100][i]) : '100') + '% HRmax)';
-    return '<div class="zone-bar z' + z.zone + '"><div class="head"><span>' + label + '</span><span>' + z.minutes.toFixed(1) + ' min</span></div><div class="bar"><div class="fill" style="width:' + pct + '%"></div></div></div>';
-  }).join('');
-
-  var maxLuMin = Math.max.apply(null, result.luZones.map(function (z) { return z.minutes; })) || 1;
-  var luLabels = ['Z1 (below LT)', 'Z2 (LT–OBLA)', 'Z3 (above OBLA)'];
-  document.getElementById('lu-zones').innerHTML = result.luZones.map(function (z, i) {
-    var pct = (z.minutes / maxLuMin) * 100;
-    return '<div class="zone-bar z' + z.zone + '"><div class="head"><span>' + luLabels[i] + '</span><span>' + z.minutes.toFixed(1) + ' min</span></div><div class="bar"><div class="fill" style="width:' + pct + '%"></div></div></div>';
-  }).join('');
-
-  drawHrChart(sessionData.hr, dt, player, result);
-});
-
-function drawHrChart(hr, dt, player, result) {
-  var canvas = document.getElementById('hr-chart');
-  var ctx = canvas.getContext('2d');
-  var W = canvas.width, H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = '#f4f4f8';
-  ctx.fillRect(0, 0, W, H);
-
-  var m = { l: 70, r: 30, t: 30, b: 50 };
-  var plotW = W - m.l - m.r;
-  var plotH = H - m.t - m.b;
-
-  var n = hr.length;
-  var maxT = n * dt;
-  var yMin = Math.max(30, Math.min.apply(null, hr) - 10);
-  var yMax = Math.max.apply(null, hr) + 10;
-  yMax = Math.max(yMax, player.hrMax + 5);
-  yMin = Math.min(yMin, player.hrRest);
-
-  function xToPx(t) { return m.l + (t / maxT) * plotW; }
-  function yToPx(y) { return m.t + ((yMax - y) / (yMax - yMin)) * plotH; }
-
-  // Zone bands (Edwards)
-  var ezColors = ['rgba(108,45,142,0.07)', 'rgba(58,76,138,0.07)', 'rgba(147,173,44,0.10)', 'rgba(224,138,0,0.10)', 'rgba(42,140,74,0.12)'];
-  for (var i = 0; i < 5; i++) {
-    var lo = (i === 0 ? 0.5 : [0.5,0.6,0.7,0.8,0.9][i]) * player.hrMax;
-    var hi = (i === 4 ? yMax : [0.6,0.7,0.8,0.9][i] * player.hrMax);
-    if (hi <= yMin || lo >= yMax) continue;
-    var yLo = yToPx(Math.min(yMax, hi));
-    var yHi = yToPx(Math.max(yMin, lo));
-    ctx.fillStyle = ezColors[i];
-    ctx.fillRect(m.l, yLo, plotW, yHi - yLo);
-  }
-
-  // Reference lines
-  function refLine(yVal, color, label) {
-    if (yVal < yMin || yVal > yMax) return;
-    var py = yToPx(yVal);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.2;
-    ctx.setLineDash([4, 5]);
-    ctx.beginPath();
-    ctx.moveTo(m.l, py); ctx.lineTo(m.l + plotW, py);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = color;
-    ctx.font = '600 11px "DM Sans", sans-serif';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'bottom';
-    ctx.fillText(label, m.l + plotW - 4, py - 2);
-  }
-  refLine(player.hrMax, '#1a5a2d', 'HRmax (' + player.hrMax + ')');
-  refLine(player.hrObla, '#0a3d8f', 'HR OBLA (' + player.hrObla + ')');
-  refLine(player.hrLT, '#2a8c4a', 'HR LT (' + player.hrLT + ')');
-  refLine(player.hrRest, '#1a2a4a', 'HRrest (' + player.hrRest + ')');
-
-  // Axes
-  ctx.strokeStyle = '#0a0f1e';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(m.l, m.t); ctx.lineTo(m.l, m.t + plotH); ctx.lineTo(m.l + plotW, m.t + plotH);
-  ctx.stroke();
-
-  // Y ticks
-  ctx.fillStyle = '#1a2a4a';
-  ctx.font = '500 11px "DM Sans", sans-serif';
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'middle';
-  var yStep = 20;
-  for (var yt = Math.ceil(yMin / yStep) * yStep; yt <= yMax; yt += yStep) {
-    var py = yToPx(yt);
-    ctx.fillRect(m.l - 5, py - 0.5, 5, 1);
-    ctx.fillText(yt, m.l - 8, py);
-  }
-
-  // X ticks in minutes
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
-  var maxMin = maxT / 60;
-  var xStep = maxMin > 30 ? 10 : maxMin > 10 ? 5 : 1;
-  for (var xm = 0; xm <= maxMin; xm += xStep) {
-    var px = xToPx(xm * 60);
-    ctx.fillRect(px - 0.5, m.t + plotH, 1, 5);
-    ctx.fillText(xm, px, m.t + plotH + 7);
-  }
-
-  // axis titles
-  ctx.fillStyle = '#0a0f1e';
-  ctx.font = '600 12px "DM Sans", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('time  (min)', m.l + plotW / 2, m.t + plotH + 30);
-  ctx.save();
-  ctx.translate(18, m.t + plotH / 2);
-  ctx.rotate(-Math.PI / 2);
-  ctx.fillText('heart rate  (bpm)', 0, 0);
-  ctx.restore();
-
-  // HR trace — downsample if many points
-  var stride = Math.max(1, Math.floor(n / plotW));
-  ctx.strokeStyle = '#0a0f1e';
-  ctx.lineWidth = 1.4;
-  ctx.lineJoin = 'round';
-  ctx.beginPath();
-  for (var s = 0; s < n; s += stride) {
-    var t = s * dt;
-    var pxs = xToPx(t);
-    var pys = yToPx(hr[s]);
-    if (s === 0) ctx.moveTo(pxs, pys);
-    else ctx.lineTo(pxs, pys);
-  }
-  ctx.stroke();
+function setSessionData(parsed, name) {
+  sessionData = { parsed: parsed, fileName: name };
+  var d = $('file-display');
+  d.textContent = name + ' · ' + parsed.hr.length + ' samples · ' + parsed.note;
+  d.classList.remove('hidden');
+}
+function loadSessionFile(file) {
+  showCsvError('');
+  $('file-display').textContent = 'Reading ' + file.name + '…'; $('file-display').classList.remove('hidden');
+  readHrFile(file).then(function (p) { setSessionData(p, file.name); }, function (err) { sessionData = null; $('file-display').classList.add('hidden'); showCsvError('Could not read the file. ' + err.message); });
 }
 
-/* Download result */
-document.getElementById('btn-download-result').addEventListener('click', function () {
+/* Sample session: 1 Hz, about 80 minutes of team-sport training */
+function makeSampleSession(seed, hrMax, variant) {
+  var s = seed >>> 0;
+  function rnd() { s += 0x6D2B79F5; var t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }
+  var plan = [];
+  function seg(sec, a, b) { plan.push([sec, a, b]); }
+  var M = hrMax || 195;
+  seg(240, 0.50, 0.62); seg(600, 0.62, 0.78);              // arrival and warm-up
+  if (variant === 'light') { seg(900, 0.70, 0.78); seg(600, 0.60, 0.66); seg(300, 0.55, 0.52); }
+  else {
+    seg(480, 0.78, 0.82);                                  // rondos
+    for (var r = 0; r < 4; r++) { seg(240, 0.90, 0.93); seg(120, 0.70, 0.66); } // 4 x 4 min SSG
+    seg(900, 0.74, 0.80);                                  // tactical
+    if (variant !== 'medium') for (var k = 0; k < 6; k++) { seg(60, 0.88, 0.94); seg(60, 0.72, 0.70); } // run-based HIIT
+    seg(360, 0.66, 0.55);                                  // cool-down
+  }
+  var out = [['time_s', 'HR']], hr = 0.48 * M, tt = 0;
+  plan.forEach(function (p) {
+    for (var i = 0; i < p[0]; i++) {
+      var target = (p[1] + (p[2] - p[1]) * i / p[0]) * M + (rnd() - 0.5) * 6;
+      hr += (target - hr) / 14 + (rnd() - 0.5) * 1.2;
+      var v = Math.round(Math.min(M, hr));
+      if (rnd() < 0.002) v = 0; // occasional strap dropout
+      out.push([tt++, v]);
+    }
+  });
+  return toCsv(out);
+}
+function sampleSessionParsed() {
+  var p = findPlayer($('sn-player').value) || roster[0];
+  return parseHrRows(textToRows(makeSampleSession(42, p ? p.hrMax : 195)));
+}
+$('btn-sample-session').addEventListener('click', function () { showCsvError(''); setSessionData(sampleSessionParsed(), 'sample_session.csv'); });
+$('btn-sample-download').addEventListener('click', function () {
+  var p = findPlayer($('sn-player').value) || roster[0];
+  download('sample_session.csv', makeSampleSession(42, p ? p.hrMax : 195), 'text/csv');
+});
+
+$('btn-compute').addEventListener('click', function () {
+  showCsvError('');
+  if (!sessionData) { showCsvError('Upload a heart rate file or use the sample session first.'); return; }
+  var player = findPlayer($('sn-player').value);
+  if (!player) { showCsvError('Choose a player.'); return; }
+  var rate = getRate();
+  if (!sessionData.parsed.t && !(rate > 0)) { showCsvError('Enter a sampling rate above zero.'); return; }
+  var rpeRaw = $('sn-rpe').value, rpe = rpeRaw === '' ? null : num(rpeRaw);
+  if (rpe != null && !(rpe >= 0 && rpe <= 10)) { showCsvError('RPE should be between 0 and 10, or left blank.'); return; }
+  var dtInfo = buildDt(sessionData.parsed, rate);
+  var res = computeAll(sessionData.parsed.hr, dtInfo.dt, player, rpe);
+  lastResult = { player: player, result: res, fileName: sessionData.fileName, dtInfo: dtInfo, parsed: sessionData.parsed, rpe: rpe, type: $('sn-type').value };
+  renderResult();
+});
+
+function renderResult() {
+  var L = lastResult, r = L.result, p = L.player;
+  $('results-pane').classList.remove('hidden');
+  $('results-meta').textContent = p.name + ' · ' + L.fileName + ' · ' + L.type + ' · timing from ' + L.dtInfo.source + (L.parsed.t ? ' (typical interval ' + fmt(L.dtInfo.median, 2) + ' s)' : '');
+  var flags = [];
+  if (r.maxHr > p.hrMax) flags.push('<div class="warn">Peak HR in this session (' + r.maxHr + ' bpm) is above the stored HR max (' + p.hrMax + ' bpm). Update HR max on the Players tab, then recalculate. Every TRIMP and zone depends on it.</div>');
+  if (L.parsed.dropped) flags.push('<div class="note">' + L.parsed.dropped + ' sample(s) were outside 30 to 240 bpm or blank and were skipped.</div>');
+  if (L.dtInfo.gaps) flags.push('<div class="note">' + L.dtInfo.gaps + ' gap(s) in the time column were not counted as exercise time.</div>');
+  if (!L.parsed.t) flags.push('<div class="note">No time column was found, so each sample was counted as ' + fmt(L.dtInfo.median, 2) + ' s. Check that the duration below matches the real session.</div>');
+  $('results-flags').innerHTML = flags.join('');
+
+  $('r-itrimp').textContent = fmt(r.iTRIMP);
+  $('r-itrimp-min').textContent = fmt(r.iTRIMPmin, 2);
+  $('r-t90').textContent = fmt(r.t90);
+  $('r-itrimp-bar').style.width = Math.min(100, r.iTRIMP / 500 * 100) + '%';
+  $('r-itrimp-cap').textContent = fmt(r.iTRIMP / 500 * 100, 0) + '% of a 500 AU weekly guideline';
+  $('r-t90-bar').style.width = Math.min(100, r.t90 / 30 * 100) + '%';
+  $('r-t90-cap').textContent = fmt(r.t90 / 30 * 100, 0) + '% of a 30 min weekly guideline' + (L.type === 'Match' ? ' (match minutes, read with caution)' : '');
+  $('r-btrimp').textContent = fmt(r.bTRIMP);
+  $('r-etrimp').textContent = fmt(r.eTRIMP);
+  $('r-lutrimp').textContent = fmt(r.luTRIMP);
+  $('r-sttrimp').textContent = fmt(r.stTRIMP);
+  $('r-srpe').textContent = r.sRPE == null ? '–' : fmt(r.sRPE, 0);
+  $('r-dur').textContent = fmt(r.durationMin);
+  $('r-meanhr').textContent = fmt(r.meanHr, 0);
+  $('r-meanpct').textContent = fmt(r.meanHr / p.hrMax * 100, 0) + '% HRmax';
+  $('r-maxhr').textContent = Math.round(r.maxHr);
+  $('r-maxpct').textContent = fmt(r.maxHr / p.hrMax * 100, 0) + '% HRmax';
+  $('r-t80').textContent = fmt(r.t80); $('r-t85').textContent = fmt(r.t85);
+
+  var eLab = ['Z1 50–60%', 'Z2 60–70%', 'Z3 70–80%', 'Z4 80–90%', 'Z5 90–100%'];
+  $('edw-zones').innerHTML = zoneBars(r.eZones, eLab, ['zc1', 'zc2', 'zc3', 'zc4', 'zc5'], [1, 2, 3, 4, 5]);
+  $('lu-zones').innerHTML = zoneBars(r.luZones, ['Z1 below LT (' + p.hrLT + ')', 'Z2 LT to OBLA', 'Z3 above OBLA (' + p.hrObla + ')'], ['zc2', 'zc4', 'zc5'], [1, 2, 3]);
+  drawHrChart();
+  $('results-pane').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function zoneBars(mins, labels, cls, w) {
+  var mx = Math.max.apply(null, mins) || 1;
+  return mins.map(function (m, i) {
+    return '<div class="zone-bar"><div class="head"><span>' + esc(labels[i]) + ' <span style="color:var(--ink-mute)">× ' + w[i] + '</span></span><span>' + fmt(m) + ' min</span></div><div class="bar"><div class="fill ' + cls[i] + '" style="width:' + (m / mx * 100) + '%"></div></div></div>';
+  }).join('');
+}
+
+/* ---------------- Charts ---------------- */
+function setupCanvas(cv) {
+  var dpr = window.devicePixelRatio || 1, w = cv.clientWidth || 600, h = cv.clientHeight || 300;
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+  return { ctx: ctx, W: w, H: h };
+}
+function niceStep(range, target) { var raw = range / target, mag = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / mag; return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * mag; }
+
+function drawHrChart() {
   if (!lastResult) return;
-  var pkg = {
-    app: 'TRIMP Calculator',
-    computedAt: lastResult.computedAt,
-    player: { name: lastResult.player.name, id: lastResult.player.id,
-              hrRest: lastResult.player.hrRest, hrMax: lastResult.player.hrMax,
-              constA: lastResult.player.constA, constB: lastResult.player.constB,
-              hrLT: lastResult.player.hrLT, hrObla: lastResult.player.hrObla },
-    session: { fileName: lastResult.fileName, samplingRateHz: lastResult.rate,
-               rpe: lastResult.rpe, samples: lastResult.result.samples,
-               durationMin: lastResult.result.durationMin,
-               meanHr: lastResult.result.meanHr, maxHr: lastResult.result.maxHr },
-    trimps: {
-      iTRIMP: lastResult.result.iTRIMP,
-      bTRIMP: lastResult.result.bTRIMP,
-      eTRIMP: lastResult.result.eTRIMP,
-      luTRIMP: lastResult.result.luTRIMP,
-      sRPE: lastResult.result.sRPE
-    },
-    edwardsZones: lastResult.result.eZones,
-    luciaZones: lastResult.result.luZones
-  };
-  var blob = new Blob([JSON.stringify(pkg, null, 2)], { type: 'application/json' });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
-  var safeName = lastResult.player.name.replace(/[^a-z0-9]+/gi, '_');
-  a.download = 'trimp_' + safeName + '_' + new Date().toISOString().slice(0, 10) + '.json';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  var cv = $('hr-chart'); if (!cv.offsetParent) return;
+  var L = lastResult, p = L.player, hr = L.parsed.hr, dt = L.dtInfo.dt, cum = L.result.cum;
+  var c = setupCanvas(cv), ctx = c.ctx, W = c.W, H = c.H;
+  var m = { l: 46, r: 52, t: 12, b: 34 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
+  var n = hr.length, ts = new Array(n), acc = 0;
+  for (var i = 0; i < n; i++) { ts[i] = acc; acc += dt[i]; }
+  var tMax = acc / 60 || 1;
+  var yMin = Math.min(p.hrRest, Math.min.apply(null, hr)) - 5, yMax = Math.max(p.hrMax, L.result.maxHr) + 5;
+  var cMax = Math.max(1, cum[n - 1]) * 1.08;
+  var X = function (min) { return m.l + min / tMax * pw; }, Y = function (v) { return m.t + (yMax - v) / (yMax - yMin) * ph; }, Y2 = function (v) { return m.t + (1 - v / cMax) * ph; };
+  ctx.font = '11px "DM Sans", sans-serif';
+  // bands
+  ctx.fillStyle = 'rgba(224,161,0,0.14)'; ctx.fillRect(m.l, Y(0.9 * p.hrMax), pw, Y(0.8 * p.hrMax) - Y(0.9 * p.hrMax));
+  ctx.fillStyle = 'rgba(198,56,56,0.14)'; ctx.fillRect(m.l, Y(yMax), pw, Y(0.9 * p.hrMax) - Y(yMax));
+  // grid and y ticks
+  var ys = niceStep(yMax - yMin, 6);
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (var y = Math.ceil(yMin / ys) * ys; y <= yMax; y += ys) {
+    ctx.strokeStyle = '#e8eef6'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(m.l, Y(y)); ctx.lineTo(m.l + pw, Y(y)); ctx.stroke();
+    ctx.fillStyle = '#3a4a66'; ctx.fillText(y, m.l - 6, Y(y));
+  }
+  // right axis
+  var cs = niceStep(cMax, 5); ctx.textAlign = 'left';
+  for (var cv2 = 0; cv2 <= cMax; cv2 += cs) { ctx.fillStyle = '#1a5a2d'; ctx.fillText(Math.round(cv2), m.l + pw + 6, Y2(cv2)); }
+  // x ticks
+  var xs = niceStep(tMax, 8); ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillStyle = '#3a4a66';
+  for (var x = 0; x <= tMax + 1e-9; x += xs) ctx.fillText(Math.round(x * 10) / 10, X(x), m.t + ph + 6);
+  ctx.fillText('time (min)', m.l + pw / 2, m.t + ph + 20);
+  ctx.save(); ctx.translate(11, m.t + ph / 2); ctx.rotate(-Math.PI / 2); ctx.fillText('heart rate (bpm)', 0, -6); ctx.restore();
+  // reference lines
+  function ref(v, col, lab) { ctx.strokeStyle = col; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(m.l, Y(v)); ctx.lineTo(m.l + pw, Y(v)); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText(lab, m.l + 4, Y(v) - 1); }
+  ref(p.hrMax, '#8f1f1f', 'HRmax ' + p.hrMax);
+  ref(p.hrObla, '#0a3d8f', 'OBLA ' + p.hrObla);
+  ref(p.hrLT, '#1a5fd4', 'LT ' + p.hrLT);
+  // HR trace (min/max decimation per pixel)
+  ctx.strokeStyle = '#0a0f1e'; ctx.lineWidth = 1.2; ctx.beginPath();
+  var stride = Math.max(1, Math.floor(n / (pw * 2)));
+  for (var k = 0; k < n; k += stride) { var px = X(ts[k] / 60), py = Y(hr[k]); if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); }
+  ctx.stroke();
+  // cumulative iTRIMP
+  ctx.strokeStyle = '#2a8c4a'; ctx.lineWidth = 2.2; ctx.beginPath();
+  for (var j = 0; j < n; j += stride) { var qx = X(ts[j] / 60), qy = Y2(cum[j]); if (j === 0) ctx.moveTo(qx, qy); else ctx.lineTo(qx, qy); }
+  ctx.lineTo(X(tMax), Y2(cum[n - 1])); ctx.stroke();
+  // frame
+  ctx.strokeStyle = '#0a0f1e'; ctx.lineWidth = 1; ctx.strokeRect(m.l, m.t, pw, ph);
+}
+
+function drawLactateChart() {
+  if (!ltFit) return;
+  var cv = $('lt-chart'); if (!cv.offsetParent) return;
+  var c = setupCanvas(cv), ctx = c.ctx, W = c.W, H = c.H;
+  var m = { l: 44, r: 14, t: 12, b: 36 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
+  var pts = ltFit.points.map(function (r) { return [(r[0] - ltFit.rest) / (ltFit.max - ltFit.rest), r[1]]; });
+  var xMin = 0.3, xMax = 1.0;
+  pts.forEach(function (q) { if (q[0] < xMin) xMin = Math.max(0, Math.floor(q[0] * 10) / 10); if (q[0] > xMax) xMax = Math.ceil(q[0] * 20) / 20; });
+  var yMax = Math.max(4.5, Math.max.apply(null, pts.map(function (q) { return q[1]; })), ltFit.A * Math.exp(ltFit.B * xMax)) * 1.08;
+  var X = function (v) { return m.l + (v - xMin) / (xMax - xMin) * pw; }, Y = function (v) { return m.t + (1 - v / yMax) * ph; };
+  ctx.font = '11px "DM Sans", sans-serif';
+  var ys = niceStep(yMax, 6); ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (var y = 0; y <= yMax; y += ys) { ctx.strokeStyle = '#e8eef6'; ctx.beginPath(); ctx.moveTo(m.l, Y(y)); ctx.lineTo(m.l + pw, Y(y)); ctx.stroke(); ctx.fillStyle = '#3a4a66'; ctx.fillText(Math.round(y * 10) / 10, m.l - 6, Y(y)); }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (var x = Math.ceil(xMin * 10) / 10; x <= xMax + 1e-9; x += 0.1) ctx.fillText(x.toFixed(1), X(x), m.t + ph + 6);
+  ctx.fillText('ΔHR ratio (fraction of HR reserve)', m.l + pw / 2, m.t + ph + 20);
+  ctx.save(); ctx.translate(10, m.t + ph / 2); ctx.rotate(-Math.PI / 2); ctx.fillText('lactate (mmol·L⁻¹)', 0, -4); ctx.restore();
+  [2, 4].forEach(function (v) { ctx.strokeStyle = '#9aa6bd'; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(m.l, Y(v)); ctx.lineTo(m.l + pw, Y(v)); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = '#66738c'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText(v + ' mmol', m.l + 4, Y(v) - 1); });
+  ctx.strokeStyle = '#2a8c4a'; ctx.lineWidth = 2.4; ctx.beginPath();
+  for (var s = 0; s <= 100; s++) { var xv = xMin + (xMax - xMin) * s / 100, yv = ltFit.A * Math.exp(ltFit.B * xv); if (s === 0) ctx.moveTo(X(xv), Y(Math.min(yv, yMax))); else ctx.lineTo(X(xv), Y(Math.min(yv, yMax))); }
+  ctx.stroke();
+  ctx.fillStyle = '#1a5fd4';
+  pts.forEach(function (q) { ctx.beginPath(); ctx.arc(X(q[0]), Y(q[1]), 4.5, 0, Math.PI * 2); ctx.fill(); });
+  ctx.strokeStyle = '#0a0f1e'; ctx.lineWidth = 1; ctx.strokeRect(m.l, m.t, pw, ph);
+}
+var rT; window.addEventListener('resize', function () { clearTimeout(rT); rT = setTimeout(function () { drawHrChart(); drawLactateChart(); }, 150); });
+
+/* Session downloads */
+function resultRow(item) {
+  var r = item.result, p = item.player;
+  return [item.fileName, p.name, item.type, r.durationMin.toFixed(2), r.meanHr.toFixed(1), r.maxHr, r.iTRIMP.toFixed(2), r.iTRIMPmin.toFixed(3), r.t80.toFixed(2), r.t85.toFixed(2), r.t90.toFixed(2), r.bTRIMP.toFixed(2), r.eTRIMP.toFixed(2), r.luTRIMP.toFixed(2), r.stTRIMP.toFixed(2), item.rpe != null ? item.rpe : '', r.sRPE != null ? r.sRPE.toFixed(1) : ''];
+}
+var RESULT_HEAD = ['File', 'Player', 'Type', 'Duration_min', 'Mean_HR', 'Peak_HR', 'iTRIMP', 'iTRIMP_per_min', 'Min_80pc', 'Min_85pc', 'Min_90pc', 'bTRIMP', 'eTRIMP', 'luTRIMP', 'StagnoTRIMP', 'RPE', 'sRPE'];
+$('btn-download-result').addEventListener('click', function () {
+  if (!lastResult) return;
+  download('trimp_' + lastResult.player.name.replace(/[^a-z0-9]+/gi, '_') + '_' + new Date().toISOString().slice(0, 10) + '.csv', toCsv([RESULT_HEAD, resultRow(lastResult)]), 'text/csv');
+});
+$('btn-add-to-week').addEventListener('click', function () {
+  if (!lastResult) return;
+  var L = lastResult;
+  batchItems.push({ id: batchId(), file: null, fileName: L.fileName, relPath: L.fileName, parsed: L.parsed, status: 'ready', playerId: L.player.id, type: L.type, rate: getRate() || 1, rpe: L.rpe, result: null });
+  computeBatch(true);
+  showTab('batch');
 });
 
 /* ================================================================
-   BATCH TAB
+   TRAINING WEEK (BATCH)
    ================================================================ */
-var batchItems = [];
-var batchIdSeq = 0;
-function batchItemId() { return 'b_' + (++batchIdSeq); }
-
+var batchItems = [], bSeq = 0;
+function batchId() { return 'b_' + (++bSeq); }
 function refreshBatchTab() {
-  var noPlayers = document.getElementById('batch-no-players');
-  var main = document.getElementById('batch-main');
-  if (roster.length === 0) {
-    noPlayers.classList.remove('hidden');
-    main.classList.add('hidden');
-  } else {
-    noPlayers.classList.add('hidden');
-    main.classList.remove('hidden');
-  }
-  var defSel = document.getElementById('batch-def-player');
-  var prev = defSel.value;
-  defSel.innerHTML = '<option value="">— pick —</option>';
-  roster.forEach(function(p) {
-    var o = document.createElement('option');
-    o.value = p.id; o.textContent = p.name;
-    defSel.appendChild(o);
-  });
-  if (prev) defSel.value = prev;
-  renderBatchQueue();
+  var none = !roster.length;
+  $('batch-no-players').classList.toggle('hidden', !none);
+  $('batch-main').classList.toggle('hidden', none);
+  var sel = $('batch-def-player'), prev = sel.value;
+  sel.innerHTML = '<option value="">Keep as is</option>' + roster.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + '</option>'; }).join('');
+  if (prev) sel.value = prev;
+  renderBatch();
 }
-
-function autoMatchPlayer(relPath) {
-  if (roster.length === 0) return '';
-  var parts = relPath.split('/');
-  for (var s = 0; s < parts.length - 1; s++) {
-    var seg = parts[s].toLowerCase().replace(/[_\-]/g, ' ');
-    var match = roster.find(function(p) {
-      var pn = p.name.toLowerCase();
-      return pn === seg || seg.indexOf(pn) !== -1 || pn.indexOf(seg) !== -1;
-    });
-    if (match) return match.id;
-  }
-  var fname = parts[parts.length - 1].replace(/\.[^.]+$/, '').toLowerCase().replace(/[_\-]/g, ' ');
-  var best = '';
-  roster.forEach(function(p) {
-    var pn = p.name.toLowerCase();
-    if (fname.indexOf(pn) !== -1 || pn.indexOf(fname) !== -1) best = p.id;
-  });
+function autoMatch(path) {
+  var hay = path.toLowerCase().replace(/[_\-.]/g, ' ');
+  var best = '', bestLen = 0;
+  roster.forEach(function (p) { var pn = p.name.toLowerCase(); if (hay.indexOf(pn) !== -1 && pn.length > bestLen) { best = p.id; bestLen = pn.length; } });
   return best;
 }
-
-function addBatchFiles(fileItems) {
-  fileItems.forEach(function(fi) {
-    var item = {
-      id: batchItemId(),
-      file: fi.file,
-      fileName: fi.file.name,
-      relPath: fi.relPath || fi.file.name,
-      hr: null, parsedOk: false, parseError: null,
-      playerId: autoMatchPlayer(fi.relPath || fi.file.name),
-      rate: 10, rpe: null,
-      status: 'loading', result: null
-    };
+function guessType(path) { return /match|game|fixture|\bmd\b/i.test(path) ? 'Match' : 'Training'; }
+function addBatchFiles(list) {
+  list.forEach(function (fi) {
+    var item = { id: batchId(), file: fi.file, fileName: fi.file.name, relPath: fi.relPath || fi.file.name, parsed: null, status: 'loading', error: null, playerId: autoMatch(fi.relPath || fi.file.name) || (roster.length === 1 ? roster[0].id : ''), type: guessType(fi.relPath || fi.file.name), rate: 1, rpe: null, result: null };
     batchItems.push(item);
-    parseBatchFileAsync(item);
+    readHrFile(fi.file).then(function (p) { item.parsed = p; item.status = 'ready'; renderBatch(); }, function (e) { item.status = 'error'; item.error = e.message; renderBatch(); });
   });
-  renderBatchQueue();
+  renderBatch();
+}
+function renderBatch() {
+  var has = batchItems.length > 0;
+  $('batch-queue-wrap').classList.toggle('hidden', !has);
+  $('batch-defaults-bar').classList.toggle('hidden', !has);
+  if (!has) return;
+  var done = batchItems.filter(function (x) { return x.result; }).length;
+  $('batch-status-summary').textContent = batchItems.length + ' file(s) · ' + done + ' calculated';
+  $('btn-batch-csv').disabled = !done;
+  var opts = function (sel) { return '<option value="">Choose</option>' + roster.map(function (p) { return '<option value="' + p.id + '"' + (sel === p.id ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join(''); };
+  $('batch-tbody').innerHTML = batchItems.map(function (it, i) {
+    var st = it.status === 'loading' ? '<span class="pill">Reading</span>' : it.status === 'error' ? '<span class="pill r" title="' + esc(it.error) + '">Error</span>' : it.result ? '<span class="pill g">Done</span>' : '<span class="pill a">Ready</span>';
+    var r = it.result;
+    var hasT = it.parsed && it.parsed.t;
+    return '<tr><td>' + (i + 1) + '</td><td class="name" style="max-width:200px;word-break:break-all;font-size:12.5px;" title="' + esc(it.relPath) + '">' + esc(it.fileName) + (it.parsed ? '<br><span style="font-weight:400;color:var(--ink-mute);font-size:11px;">' + it.parsed.hr.length + ' samples' + (hasT ? ', timed' : '') + '</span>' : '') + (it.error ? '<br><span style="font-weight:400;color:var(--red);font-size:11px;">' + esc(it.error) + '</span>' : '') + '</td>' +
+      '<td><select data-f="playerId" data-id="' + it.id + '" aria-label="Player">' + opts(it.playerId) + '</select></td>' +
+      '<td><select data-f="type" data-id="' + it.id + '" aria-label="Session type"><option' + (it.type === 'Training' ? ' selected' : '') + '>Training</option><option' + (it.type === 'Match' ? ' selected' : '') + '>Match</option></select></td>' +
+      '<td>' + (hasT ? '<span class="pill" title="Timing taken from the file">auto</span>' : '<select data-f="rate" data-id="' + it.id + '" aria-label="Sampling rate">' + ['1', '5', '10'].map(function (v) { return '<option' + (String(it.rate) === v ? ' selected' : '') + '>' + v + '</option>'; }).join('') + '</select>') + '</td>' +
+      '<td><input type="number" min="0" max="10" step="0.5" data-f="rpe" data-id="' + it.id + '" value="' + (it.rpe != null ? it.rpe : '') + '" aria-label="RPE" style="width:58px"></td>' +
+      '<td>' + st + '</td>' +
+      '<td class="num">' + (r ? fmt(r.durationMin) : '–') + '</td><td class="num"><strong>' + (r ? fmt(r.iTRIMP) : '–') + '</strong></td><td class="num"><strong>' + (r ? fmt(r.t90) : '–') + '</strong></td>' +
+      '<td class="num">' + (r ? fmt(r.bTRIMP) : '–') + '</td><td class="num">' + (r ? fmt(r.eTRIMP) : '–') + '</td><td class="num">' + (r ? fmt(r.luTRIMP) : '–') + '</td><td class="num">' + (r ? fmt(r.stTRIMP) : '–') + '</td><td class="num">' + (r && r.sRPE != null ? fmt(r.sRPE, 0) : '–') + '</td>' +
+      '<td><button class="btn btn-sm btn-danger" data-remove="' + it.id + '" aria-label="Remove">✕</button></td></tr>';
+  }).join('');
+  renderWeek();
+}
+$('batch-tbody').addEventListener('change', function (e) {
+  var t = e.target, it = batchItems.find(function (x) { return x.id === t.dataset.id; }); if (!it) return;
+  var f = t.dataset.f;
+  it[f] = f === 'rpe' ? (t.value === '' ? null : num(t.value)) : f === 'rate' ? Number(t.value) : t.value;
+  if (it.result) computeBatch(true); else renderBatch();
+});
+$('batch-tbody').addEventListener('click', function (e) {
+  var b = e.target.closest('[data-remove]'); if (!b) return;
+  batchItems = batchItems.filter(function (x) { return x.id !== b.dataset.remove; }); renderBatch();
+});
+function computeBatch(silent) {
+  var ran = 0;
+  batchItems.forEach(function (it) {
+    it.result = null;
+    var p = findPlayer(it.playerId);
+    if (!it.parsed || !p) return;
+    it.player = p;
+    it.result = computeAll(it.parsed.hr, buildDt(it.parsed, it.rate).dt, p, it.rpe);
+    ran++;
+  });
+  renderBatch();
+  if (!ran && !silent) alert('Nothing to calculate yet. Each file needs a player and must have been read without errors.');
+}
+function renderWeek() {
+  var done = batchItems.filter(function (x) { return x.result; });
+  $('week-summary').classList.toggle('hidden', !done.length);
+  if (!done.length) return;
+  var by = {};
+  done.forEach(function (it) {
+    var k = it.playerId; if (!by[k]) by[k] = { p: it.player, n: 0, it: 0, tTr: 0, tMa: 0, srpe: 0, hasRpe: false };
+    var w = by[k]; w.n++; w.it += it.result.iTRIMP;
+    if (it.type === 'Match') w.tMa += it.result.t90; else w.tTr += it.result.t90;
+    if (it.result.sRPE != null) { w.srpe += it.result.sRPE; w.hasRpe = true; }
+  });
+  $('week-tbody').innerHTML = Object.keys(by).map(function (k) {
+    var w = by[k];
+    var itPill = w.it < 450 ? '<span class="pill a">Below</span>' : w.it <= 500 ? '<span class="pill g">Within</span>' : '<span class="pill g">Above</span>';
+    var tot = w.tTr + w.tMa;
+    var tPill = tot < 10 ? '<span class="pill r">Well below</span>' : tot < 30 ? '<span class="pill a">Below</span>' : tot <= 50 ? '<span class="pill g">Within</span>' : '<span class="pill a">High</span>';
+    return '<tr><td class="name">' + esc(w.p.name) + '</td><td class="num">' + w.n + '</td><td class="num"><strong>' + fmt(w.it, 0) + '</strong></td><td>' + itPill + '</td><td class="num">' + fmt(w.tTr) + '</td><td class="num">' + fmt(w.tMa) + '</td><td>' + tPill + '</td><td class="num">' + (w.hasRpe ? fmt(w.srpe, 0) : '–') + '</td></tr>';
+  }).join('');
 }
 
-function parseBatchFileAsync(item) {
-  var reader = new FileReader();
-  reader.onload = function(ev) {
-    try {
-      var parsed = parseHrCsv(ev.target.result);
-      item.hr = parsed.hr;
-      item.parsedOk = true;
-      item.status = 'ready';
-    } catch(e) {
-      item.parsedOk = false;
-      item.parseError = e.message;
-      item.status = 'error';
-    }
-    renderBatchQueue();
-  };
-  reader.onerror = function() {
-    item.parsedOk = false;
-    item.parseError = 'File read failed';
-    item.status = 'error';
-    renderBatchQueue();
-  };
-  reader.readAsText(item.file);
+/* Batch inputs */
+var bdz = $('batch-drop-zone'), bfi = $('batch-file-input'), bfo = $('batch-folder-input');
+function traverse(entry, out, done) {
+  if (entry.isFile) { if (/\.(csv|txt|tsv|xlsx|xls)$/i.test(entry.name)) entry.file(function (f) { out.push({ file: f, relPath: entry.fullPath.replace(/^\//, '') }); done(); }, done); else done(); return; }
+  var reader = entry.createReader(), all = [];
+  (function readMore() {
+    reader.readEntries(function (batch) {
+      if (!batch.length) { var pending = all.length; if (!pending) return done(); all.forEach(function (en) { traverse(en, out, function () { if (--pending === 0) done(); }); }); return; }
+      all = all.concat(Array.from(batch)); readMore();
+    }, done);
+  })();
 }
-
-function renderBatchQueue() {
-  var queueWrap = document.getElementById('batch-queue-wrap');
-  var defaultsBar = document.getElementById('batch-defaults-bar');
-  if (batchItems.length === 0) {
-    queueWrap.classList.add('hidden');
-    defaultsBar.classList.add('hidden');
-    return;
-  }
-  queueWrap.classList.remove('hidden');
-  defaultsBar.classList.remove('hidden');
-
-  var done = batchItems.filter(function(x) { return x.result; }).length;
-  document.getElementById('batch-status-summary').textContent =
-    batchItems.length + ' file(s) queued · ' + done + ' computed';
-  document.getElementById('btn-batch-csv').disabled = done === 0;
-
-  var tbody = document.getElementById('batch-tbody');
-  tbody.innerHTML = '';
-  batchItems.forEach(function(item, idx) {
-    var tr = document.createElement('tr');
-    var statusHtml;
-    if      (item.status === 'loading')   statusHtml = '<span style="color:var(--indigo-soft)">Parsing…</span>';
-    else if (item.status === 'ready')     statusHtml = '<span style="color:var(--lime-deep)">Ready</span>';
-    else if (item.status === 'computing') statusHtml = '<span style="color:var(--purple)">Computing…</span>';
-    else if (item.status === 'done')      statusHtml = '<span style="color:var(--lime-deep)">Done</span>';
-    else statusHtml = '<span style="color:var(--error)" title="' + escapeHtml(item.parseError || '') + '">Error</span>';
-
-    var playerOpts = '<option value="">— pick —</option>' +
-      roster.map(function(p) {
-        return '<option value="' + p.id + '"' + (item.playerId === p.id ? ' selected' : '') + '>' + escapeHtml(p.name) + '</option>';
-      }).join('');
-
-    var rateOpts = ['10','5','1'].map(function(v) {
-      return '<option value="' + v + '"' + (String(item.rate) === v ? ' selected' : '') + '>' + v + '</option>';
-    }).join('');
-
-    var r = item.result;
-    var inlineInput = 'style="font-size:12px;padding:4px 6px;border:1.5px solid var(--rule);border-radius:4px;"';
-    tr.innerHTML =
-      '<td style="color:var(--indigo-soft);font-size:12px;">' + (idx + 1) + '</td>' +
-      '<td class="name" style="max-width:180px;word-break:break-all;font-size:12px;" title="' + escapeHtml(item.relPath) + '">' +
-        escapeHtml(item.fileName) +
-        (item.hr ? '<br><span style="font-weight:400;color:var(--indigo-soft);font-size:11px;">' + item.hr.length + ' samples</span>' : '') +
-      '</td>' +
-      '<td><select class="bi-player" data-id="' + item.id + '" ' + inlineInput + ' style="font-size:12px;padding:4px 6px;border:1.5px solid var(--rule);border-radius:4px;min-width:110px;">' + playerOpts + '</select></td>' +
-      '<td><select class="bi-rate" data-id="' + item.id + '" ' + inlineInput + '>' + rateOpts + '</select></td>' +
-      '<td><input type="number" class="bi-rpe" data-id="' + item.id + '" min="0" max="10" step="0.5" placeholder="—" value="' + (item.rpe != null ? item.rpe : '') + '" style="width:52px;font-size:12px;padding:4px 6px;border:1.5px solid var(--rule);border-radius:4px;"></td>' +
-      '<td>' + statusHtml + '</td>' +
-      '<td>' + (r ? r.iTRIMP.toFixed(1)  : '—') + '</td>' +
-      '<td>' + (r ? r.bTRIMP.toFixed(1)  : '—') + '</td>' +
-      '<td>' + (r ? r.eTRIMP.toFixed(1)  : '—') + '</td>' +
-      '<td>' + (r ? r.luTRIMP.toFixed(1) : '—') + '</td>' +
-      '<td>' + (r ? (r.sRPE != null ? r.sRPE.toFixed(1) : '—') : '—') + '</td>' +
-      '<td>' + (r ? r.durationMin.toFixed(1) : '—') + '</td>' +
-      '<td><button class="btn btn-sm btn-danger bi-remove" data-id="' + item.id + '">✕</button></td>';
-    tbody.appendChild(tr);
-  });
-
-  tbody.querySelectorAll('.bi-player').forEach(function(sel) {
-    sel.addEventListener('change', function() {
-      var it = batchItems.find(function(x) { return x.id === sel.dataset.id; });
-      if (it) { it.playerId = sel.value; it.result = null; if (it.status === 'done') it.status = 'ready'; }
-      renderBatchQueue();
-    });
-  });
-  tbody.querySelectorAll('.bi-rate').forEach(function(sel) {
-    sel.addEventListener('change', function() {
-      var it = batchItems.find(function(x) { return x.id === sel.dataset.id; });
-      if (it) { it.rate = Number(sel.value); it.result = null; if (it.status === 'done') it.status = 'ready'; }
-      renderBatchQueue();
-    });
-  });
-  tbody.querySelectorAll('.bi-rpe').forEach(function(inp) {
-    inp.addEventListener('change', function() {
-      var it = batchItems.find(function(x) { return x.id === inp.dataset.id; });
-      if (it) { it.rpe = inp.value === '' ? null : Number(inp.value); it.result = null; if (it.status === 'done') it.status = 'ready'; }
-      renderBatchQueue();
-    });
-  });
-  tbody.querySelectorAll('.bi-remove').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      batchItems = batchItems.filter(function(x) { return x.id !== btn.dataset.id; });
-      renderBatchQueue();
-    });
-  });
-}
-
-/* Directory traversal for folder drag-drop */
-function traverseDir(dirEntry, fileItems, done) {
-  var reader = dirEntry.createReader();
-  var allEntries = [];
-  function readBatch() {
-    reader.readEntries(function(batch) {
-      if (batch.length === 0) { processBatch(allEntries); return; }
-      allEntries = allEntries.concat(Array.from(batch));
-      readBatch();
-    });
-  }
-  readBatch();
-  function processBatch(entries) {
-    var pending = entries.length;
-    if (pending === 0) { done(); return; }
-    entries.forEach(function(entry) {
-      if (entry.isFile && entry.name.match(/\.(csv|txt|tsv)$/i)) {
-        entry.file(function(file) {
-          fileItems.push({ file: file, relPath: entry.fullPath.replace(/^\//, '') });
-          if (--pending === 0) done();
-        }, function() { if (--pending === 0) done(); });
-      } else if (entry.isDirectory) {
-        traverseDir(entry, fileItems, function() { if (--pending === 0) done(); });
-      } else {
-        if (--pending === 0) done();
-      }
-    });
-  }
-}
-
-function collectDroppedFiles(dataTransfer, callback) {
-  var fileItems = [];
-  var items = Array.from(dataTransfer.items || []);
-  if (items.length === 0) {
-    Array.from(dataTransfer.files).forEach(function(f) { fileItems.push({ file: f, relPath: f.name }); });
-    callback(fileItems); return;
-  }
-  var pending = items.length;
-  items.forEach(function(item) {
-    if (item.kind !== 'file') { if (--pending === 0) callback(fileItems); return; }
-    var entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : null;
-    if (entry && entry.isDirectory) {
-      traverseDir(entry, fileItems, function() { if (--pending === 0) callback(fileItems); });
-    } else {
-      var file = item.getAsFile();
-      if (file && file.name.match(/\.(csv|txt|tsv)$/i)) fileItems.push({ file: file, relPath: file.name });
-      if (--pending === 0) callback(fileItems);
-    }
-  });
-}
-
-/* Batch drop zone wiring */
-var batchDropZone   = document.getElementById('batch-drop-zone');
-var batchFileInput  = document.getElementById('batch-file-input');
-var batchFolderInput = document.getElementById('batch-folder-input');
-
-batchDropZone.addEventListener('click', function() { batchFileInput.click(); });
-batchDropZone.addEventListener('dragover', function(e) { e.preventDefault(); batchDropZone.classList.add('dragover'); });
-batchDropZone.addEventListener('dragleave', function() { batchDropZone.classList.remove('dragover'); });
-batchDropZone.addEventListener('drop', function(e) {
-  e.preventDefault();
-  batchDropZone.classList.remove('dragover');
-  collectDroppedFiles(e.dataTransfer, addBatchFiles);
+bdz.addEventListener('click', function () { bfi.click(); });
+bdz.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); bfi.click(); } });
+bdz.addEventListener('dragover', function (e) { e.preventDefault(); bdz.classList.add('dragover'); });
+bdz.addEventListener('dragleave', function () { bdz.classList.remove('dragover'); });
+bdz.addEventListener('drop', function (e) {
+  e.preventDefault(); bdz.classList.remove('dragover');
+  var items = Array.from(e.dataTransfer.items || []), out = [];
+  var entries = items.map(function (i) { return i.webkitGetAsEntry ? i.webkitGetAsEntry() : null; }).filter(Boolean);
+  if (!entries.length) { addBatchFiles(Array.from(e.dataTransfer.files).map(function (f) { return { file: f, relPath: f.name }; })); return; }
+  var pending = entries.length;
+  entries.forEach(function (en) { traverse(en, out, function () { if (--pending === 0) addBatchFiles(out); }); });
 });
-batchFileInput.addEventListener('change', function(e) {
-  addBatchFiles(Array.from(e.target.files).map(function(f) { return { file: f, relPath: f.webkitRelativePath || f.name }; }));
-  e.target.value = '';
+bfi.addEventListener('change', function (e) { addBatchFiles(Array.from(e.target.files).map(function (f) { return { file: f, relPath: f.name }; })); e.target.value = ''; });
+bfo.addEventListener('change', function (e) { addBatchFiles(Array.from(e.target.files).filter(function (f) { return /\.(csv|txt|tsv|xlsx|xls)$/i.test(f.name); }).map(function (f) { return { file: f, relPath: f.webkitRelativePath || f.name }; })); e.target.value = ''; });
+$('btn-batch-files').addEventListener('click', function () { bfi.click(); });
+$('btn-batch-folder').addEventListener('click', function () { bfo.click(); });
+$('btn-batch-clear').addEventListener('click', function () { if (batchItems.length && !confirm('Remove all ' + batchItems.length + ' file(s) from the week?')) return; batchItems = []; renderBatch(); });
+$('btn-batch-apply-def').addEventListener('click', function () {
+  var pid = $('batch-def-player').value, rate = Number($('batch-def-rate').value);
+  batchItems.forEach(function (it) { if (pid) it.playerId = pid; it.rate = rate; });
+  if (batchItems.some(function (x) { return x.result; })) computeBatch(true); else renderBatch();
 });
-batchFolderInput.addEventListener('change', function(e) {
-  addBatchFiles(Array.from(e.target.files).map(function(f) { return { file: f, relPath: f.webkitRelativePath || f.name }; }));
-  e.target.value = '';
+$('btn-batch-compute').addEventListener('click', function () { computeBatch(false); });
+$('btn-batch-sample').addEventListener('click', function () {
+  if (!roster.length) return;
+  var p = findPlayer($('batch-def-player').value) || roster[0];
+  var week = [['MD+1_compensation.csv', 'Training', 'medium', 11, 5], ['MD-4_extensive.csv', 'Training', 'full', 12, 7], ['MD-3_SSG.csv', 'Training', 'full', 13, 8], ['MD-1_activation.csv', 'Training', 'light', 14, 3]];
+  week.forEach(function (w) {
+    batchItems.push({ id: batchId(), file: null, fileName: w[0], relPath: w[0], parsed: parseHrRows(textToRows(makeSampleSession(w[3], p.hrMax, w[2]))), status: 'ready', playerId: p.id, type: w[1], rate: 1, rpe: w[4], result: null });
+  });
+  computeBatch(true);
+});
+$('btn-batch-csv').addEventListener('click', function () {
+  var rows = [RESULT_HEAD];
+  batchItems.forEach(function (it) { if (it.result) rows.push(resultRow(it)); });
+  download('trimp_week_' + new Date().toISOString().slice(0, 10) + '.csv', toCsv(rows), 'text/csv');
 });
 
-document.getElementById('btn-batch-files').addEventListener('click', function() { batchFileInput.click(); });
-document.getElementById('btn-batch-folder').addEventListener('click', function() { batchFolderInput.click(); });
-document.getElementById('btn-batch-clear').addEventListener('click', function() {
-  if (batchItems.length > 0 && !confirm('Clear all ' + batchItems.length + ' file(s)?')) return;
-  batchItems = [];
-  renderBatchQueue();
-});
-document.getElementById('btn-batch-apply-def').addEventListener('click', function() {
-  var pid  = document.getElementById('batch-def-player').value;
-  var rate = Number(document.getElementById('batch-def-rate').value);
-  batchItems.forEach(function(item) {
-    if (pid) item.playerId = pid;
-    item.rate = rate;
-    item.result = null;
-    if (item.status === 'done') item.status = 'ready';
-  });
-  renderBatchQueue();
-});
-document.getElementById('btn-batch-compute').addEventListener('click', function() {
-  var anyRan = false;
-  batchItems.forEach(function(item) {
-    if (!item.parsedOk || !item.playerId) return;
-    var player = roster.find(function(p) { return p.id === item.playerId; });
-    if (!player) return;
-    item.status = 'computing';
-    try {
-      item.result = computeAll(item.hr, 1 / item.rate, player, item.rpe);
-      item.status = 'done';
-    } catch(e) {
-      item.status = 'error';
-      item.parseError = e.message;
-      item.result = null;
-    }
-    anyRan = true;
-  });
-  renderBatchQueue();
-  if (!anyRan) alert('No files are ready. Make sure each file has a player selected and parsed successfully.');
-});
-document.getElementById('btn-batch-csv').addEventListener('click', function() {
-  var rows = [['File','Folder_path','Player','HR_rest','HR_max','Sampling_Hz','RPE','Samples','Duration_min','Mean_HR','Max_HR','iTRIMP','bTRIMP','eTRIMP','luTRIMP','sRPE']];
-  batchItems.forEach(function(item) {
-    if (!item.result) return;
-    var p = roster.find(function(x) { return x.id === item.playerId; });
-    var r = item.result;
-    rows.push([
-      item.fileName, item.relPath,
-      p ? p.name : '', p ? p.hrRest : '', p ? p.hrMax : '',
-      item.rate, item.rpe != null ? item.rpe : '',
-      r.samples, r.durationMin.toFixed(2), r.meanHr.toFixed(1), r.maxHr,
-      r.iTRIMP.toFixed(2), r.bTRIMP.toFixed(2), r.eTRIMP.toFixed(2), r.luTRIMP.toFixed(2),
-      r.sRPE != null ? r.sRPE.toFixed(2) : ''
-    ]);
-  });
-  var csv = rows.map(function(row) {
-    return row.map(function(cell) {
-      var s = String(cell);
-      if (s.indexOf(',') !== -1 || s.indexOf('"') !== -1 || s.indexOf('\n') !== -1)
-        s = '"' + s.replace(/"/g, '""') + '"';
-      return s;
-    }).join(',');
-  }).join('\r\n');
-  var blob = new Blob([csv], { type: 'text/csv' });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url; a.download = 'trimp_batch_' + new Date().toISOString().slice(0, 10) + '.csv';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-});
-
-/* ================================================================
-   BOOT
-   ================================================================ */
+/* ---------------- Boot ---------------- */
+renderLtTable();
 renderRoster();
 refreshSessionTab();
 refreshBatchTab();
+
+// expose for testing
+window.__trimp = { parseHrRows: parseHrRows, textToRows: textToRows, computeAll: computeAll, buildDt: buildDt, fitLactate: fitLactate, getFit: function () { return ltFit; } };
+})();
 </script>
 
 <!-- SITE-NAV:START -->
-<nav aria-label="Site navigation" style="font:14px/1.6 system-ui,sans-serif;padding:14px 20px;margin-top:32px;border-top:1px solid #8884;text-align:center;opacity:.85"><a href="../index.html" style="color:inherit">Home</a> · <a href="../site-map.html" style="color:inherit">Site map</a> · <a href="../teaching.html#physiology" style="color:inherit">Physiology</a> · <a href="blood-lactate-analysis.html" style="color:inherit">← Exercise Thresholds Analysis</a> · <a href="ecg-learning.html" style="color:inherit">ECG &amp; Cardiac Conduction →</a></nav>
+<nav id="site-nav-block" aria-label="Site navigation" style="font:14px/1.6 system-ui,sans-serif;padding:14px 20px;border-top:1px solid #8884;text-align:center;opacity:.85"><a href="../index.html" style="color:inherit">Home</a> · <a href="../site-map.html" style="color:inherit">Site map</a> · <a href="../teaching.html#physiology" style="color:inherit">Physiology</a> · <a href="blood-lactate-analysis.html" style="color:inherit">← Exercise Thresholds Analysis</a> · <a href="ecg-learning.html" style="color:inherit">ECG &amp; Cardiac Conduction →</a></nav>
 <!-- SITE-NAV:END -->
 </body>
 </html>
