@@ -393,6 +393,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
           <li>Rest it lightly. Pressing hard squeezes the blood out.</li>
           <li>If it's dark, move closer to a bright light or a window.</li>
         </ul>
+        <p class="small muted tnum" id="camDiag"></p>
       </div>
     </div>
 
@@ -743,12 +744,14 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     var self = this;
     cvs.width = cvs.height = 24;
     this.torch = false; this.label = ''; this.deviceId = null; this.cameras = [];
+    this.lastFrameWall = 0;
 
     function grab(t) {
       var w = video.videoWidth, h = video.videoHeight;
       if (!w || !h) return;
       var c = DSP.centreCrop(w, h, 0.5);
       ctx.drawImage(video, c.sx, c.sy, c.sw, c.sh, 0, 0, 24, 24);
+      self.lastFrameWall = performance.now();
       onFrameCb(t, DSP.meanRGB(ctx.getImageData(0, 0, 24, 24).data));
     }
     function startLoop() {
@@ -799,6 +802,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
       self.deviceId = deviceId || null;
       video.srcObject = stream;
       try { await video.play(); } catch (e) { /* muted + playsinline normally autoplays */ }
+      self.lastFrameWall = performance.now(); // grace period for the first frame
       // Torch: works on most Android Chrome devices, not always on iOS.
       try {
         await track.applyConstraints({ advanced: [{ torch: true }] });
@@ -835,6 +839,8 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
       close();
       try { await open(deviceId); } catch (e) { await open(null); }
     };
+    /** Nudge a stream that has stopped delivering frames. */
+    this.kick = function () { try { var pr = video.play(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {} };
     this.stop = close;
   }
 
@@ -925,10 +931,12 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
   async function chooseCamera(o) {
     if (!M || !M.source.switchTo || (M.source.deviceId || null) === o.deviceId) return;
     var mine = M;
+    M.recovering = true; // keep the watchdog out of the way while switching
     $('camChips').querySelectorAll('button').forEach(function (b) { b.disabled = true; });
     try { await M.source.switchTo(o.deviceId); }
     catch (e) { if (M === mine) { stopMeasurement(); M = null; showCameraError(e); } return; }
     if (M !== mine) return;
+    M.recovering = false; M.kicked = false;
     store.set(K.camera, o.label || '');
     resetLive(); M.fingerOk = 0; M.lastT = null; M.lostAt = null;
     if (M.phase === 'settle') setPhase('waiting');
@@ -1148,9 +1156,46 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
       }
     }
     if (p === 'waiting' && performance.now() - M.waitingSince > 20000) $('fingerTips').hidden = false;
+    watchCamera();
+    if (!$('fingerTips').hidden) updateDiag();
     updateHint();
     drawWave();
     requestAnimationFrame(render);
+  }
+
+  /* Camera watchdog: if the stream stops sending frames (this can happen on
+     iPhone after switching lens), nudge it, then fall back to Automatic. */
+  function watchCamera() {
+    var src = M.source;
+    if (TEST || !src.kick || M.recovering) return;
+    var gap = performance.now() - src.lastFrameWall;
+    if (gap > 2000 && !M.kicked) { M.kicked = true; src.kick(); }
+    if (gap < 1000) M.kicked = false;
+    if (gap > 5000) recoverCamera();
+  }
+  async function recoverCamera() {
+    var mine = M; M.recovering = true;
+    var wasChosen = !!M.source.deviceId;
+    try { await M.source.switchTo(null); }
+    catch (e) { if (M === mine) { stopMeasurement(); M = null; showCameraError(e); } return; }
+    if (M !== mine) return;
+    M.recovering = false; M.kicked = false;
+    if (wasChosen) store.set(K.camera, '');
+    resetLive(); M.fingerOk = 0; M.lastT = null; M.lostAt = null;
+    if (M.phase === 'settle') setPhase('waiting');
+    else if (M.phase === 'resettle') setPhase('paused');
+    else if (M.phase === 'record') { closeSegment(M.recEndT || 0); setPhase('paused'); }
+    $('torchNote').hidden = !!M.source.torch;
+    renderCameraPicker();
+    announce(wasChosen ? 'That camera stopped sending pictures, so we switched back to Automatic.' : 'The camera restarted.');
+  }
+  function updateDiag() {
+    var src = M.source, rgb = M.rgb;
+    var cam = src.deviceId ? (cameraOptions().filter(function (c) { return c.deviceId === src.deviceId; })[0] || {}).name : 'Automatic';
+    var gap = performance.now() - (src.lastFrameWall || 0);
+    var t = 'Camera: ' + (cam || 'rear') + '. Flash: ' + (src.torch ? 'on' : 'off') + '. ' +
+      (gap > 2000 ? 'No picture from the camera.' : rgb ? 'Colour seen: red ' + Math.round(rgb.r) + ', green ' + Math.round(rgb.g) + ', blue ' + Math.round(rgb.b) + '.' : '');
+    if ($('camDiag').textContent !== t) $('camDiag').textContent = t;
   }
 
   /* ------------------------------------------------------------ finish + analyse */

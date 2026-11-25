@@ -29,7 +29,7 @@ The camera only works over HTTPS, and Netlify gives you that automatically.
 2. Set **Base directory** to `pulse-lab`, leave **Build command** empty and **Publish directory** as `pulse-lab` (or `.` relative to the base).
 3. Deploy. Optionally set a custom domain under **Domain management**.
 
-**After changing any file**, bump `VERSION` in `sw.js` (for example `pulse-lab-v2`) so installed copies pick up the new version. The service worker serves the cached copy first and refreshes it in the background, so phones may need the app opened twice to see a change.
+**After changing any file**, bump `VERSION` in `sw.js` (for example `pulse-lab-v2`) so installed copies pick up the new version. The service worker fetches from the network first (falling back to the cached copy when offline or after 3 s), so phones pick up changes on the next load.
 
 ## Using it
 
@@ -103,7 +103,7 @@ As noise rises, random errors in beat timing add to the successive differences, 
 All in `dsp.js`, each step a separate pure function:
 
 1. **Sampling:** each video frame's central square (half the short side) is drawn to a 24 × 24 canvas and the mean R, G and B are taken. Frame times come from `requestVideoFrameCallback` (`mediaTime`), falling back to `requestAnimationFrame` with repeated frames skipped. Samples are linearly resampled to a uniform 30 Hz.
-2. **Finger detection:** red ≥ 40 and red ≥ 1.3 × green and blue. If the finger is missing the app waits and prompts. If it's lifted for more than 0.7 s during recording, the countdown pauses. After a 3 s re-settle a new segment starts, and no interval is ever formed across the gap.
+2. **Finger detection:** red ≥ 25 and red ≥ 1.25 × green and blue. When the flash clips red at 225 or more, red only needs to be 1.12 × green and blue. A camera watchdog nudges the video if frames stop for 2 s and falls back to Automatic after 5 s (this can happen on iPhone after picking a lens). After 20 s of waiting, the tips show which camera is in use, whether the flash is on and the colour the camera sees, which helps with troubleshooting. If the finger is missing the app waits and prompts. If it's lifted for more than 0.7 s during recording, the countdown pauses. After a 3 s re-settle a new segment starts, and no interval is ever formed across the gap.
 3. **Filtering:** linear detrend, then a 2nd-order Butterworth high-pass (0.7 Hz) and low-pass (3.5 Hz) run forwards and backwards (zero phase, with odd-reflection padding). The signal is inverted because more blood means less light. The live waveform uses the same filter run causally.
 4. **Beat detection:** local maxima that are positive and at least 50% of the largest value within ±1 s. Candidates are accepted largest first, with a 330 ms refractory period. Peak times are refined by parabolic interpolation through the three samples around each maximum.
 5. **Artefact correction:** intervals outside 300 to 2000 ms, or more than 20% from the median of up to 5 in-range neighbours either side, are removed. RMSSD only uses differences between two adjacent kept intervals. More than 20% removed means the reading is unreliable.

@@ -33,6 +33,9 @@
     near(D.detectFinger({ r: 12, g: 5, b: 5 }).present ? 1 : 0, 0, 0);
     ok(D.detectFinger({ r: 12, g: 5, b: 5 }).reason === 'dark', 'dark reason');
     ok(D.detectFinger({ r: 150, g: 140, b: 130 }).reason === 'notRed', 'room scene');
+    ok(D.detectFinger({ r: 32, g: 10, b: 8 }).present, 'dim lens (telephoto, no flash)');
+    ok(D.detectFinger({ r: 255, g: 215, b: 190 }).present, 'flash clipping red');
+    ok(!D.detectFinger({ r: 255, g: 250, b: 245 }).present, 'bright white light');
   });
 
   /* resampling */

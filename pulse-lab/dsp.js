@@ -63,7 +63,7 @@
   }
 
   /* ------------------------------------------------ 2. finger detection */
-  var FINGER = { minRed: 40, dominance: 1.3 };
+  var FINGER = { minRed: 25, dominance: 1.25, satRed: 225, satDominance: 1.12 };
   /**
    * A fingertip lit from behind (or by the flash) looks strongly red.
    * present: red bright enough AND red clearly dominates green and blue.
@@ -75,6 +75,11 @@
     var dom = o.dominance != null ? o.dominance : FINGER.dominance;
     if (rgb.r < minRed) return { present: false, reason: 'dark' };
     var redDominant = rgb.r >= dom * Math.max(rgb.g, 1) && rgb.r >= dom * Math.max(rgb.b, 1);
+    // A bright flash right next to the lens can clip the red channel at 255
+    // while green and blue keep rising, so allow a smaller margin when red is saturated.
+    if (!redDominant && rgb.r >= FINGER.satRed) {
+      redDominant = rgb.r >= FINGER.satDominance * rgb.g && rgb.r >= FINGER.satDominance * rgb.b;
+    }
     if (!redDominant) return { present: false, reason: 'notRed' };
     return { present: true, reason: 'ok' };
   }
