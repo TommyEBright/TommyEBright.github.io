@@ -823,21 +823,37 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
       } catch (e) { self.cameras = []; }
     }
 
-    this.start = async function (onFrame, preferredLabel) {
+    this.start = async function (onFrame, pref) {
       if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         var err = new Error('unsupported'); err.name = 'Unsupported'; throw err;
       }
       onFrameCb = onFrame;
       ctx = cvs.getContext('2d', { willReadFrequently: true });
-      await open(null);
+      pref = pref || {};
+      // Open the saved camera straight away when we can. Opening Automatic first
+      // and then switching is unreliable on iPhone.
+      var opened = false;
+      if (pref.deviceId) {
+        try {
+          await open(pref.deviceId);
+          opened = !pref.label || !self.label || self.label === pref.label;
+          if (!opened) close();
+        } catch (e) { close(); }
+      }
+      if (!opened) await open(null);
       await listCameras(); // labels are only available once permission is granted
-      var pick = preferredLabel && self.cameras.filter(function (c) { return c.label === preferredLabel; })[0];
-      if (pick) await self.switchTo(pick.deviceId);
+      if (pref.label && self.label !== pref.label) {
+        var pick = self.cameras.filter(function (c) { return c.label === pref.label; })[0];
+        if (pick) await self.switchTo(pick.deviceId);
+      } else if (opened && pref.deviceId) {
+        var same = self.cameras.filter(function (c) { return c.label === self.label; })[0];
+        self.deviceId = same ? same.deviceId : pref.deviceId;
+      }
     };
     /** Switch to another rear camera (null = the browser's automatic choice). */
     this.switchTo = async function (deviceId) {
       close();
-      try { await open(deviceId); } catch (e) { await open(null); }
+      try { await open(deviceId); } catch (e) { close(); await open(null); }
     };
     /** Nudge a stream that has stopped delivering frames. */
     this.kick = function () { try { var pr = video.play(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {} };
@@ -890,7 +906,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     M.source = TEST ? new SyntheticSource(t.settleS + t.recordS + 15) : new CameraSource();
     var mine = M, src = M.source;
     try {
-      await src.start(onFrame, store.get(K.camera, ''));
+      await src.start(onFrame, savedCamera());
     } catch (e) {
       try { src.stop(); } catch (x) {}
       if (M !== mine) return; // cancelled while the permission prompt was open
@@ -905,6 +921,14 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     setPhase('waiting');
     requestAnimationFrame(render);
   }
+
+  /* Saved camera: { label, deviceId }. Older versions stored just the label. */
+  function savedCamera() {
+    var v = store.get(K.camera, null);
+    if (typeof v === 'string') return v ? { label: v, deviceId: null } : null;
+    return v && (v.label || v.deviceId) ? v : null;
+  }
+  function saveCamera(o) { store.set(K.camera, o && o.deviceId ? { label: o.label || '', deviceId: o.deviceId } : null); }
 
   /* Camera picker: every rear camera the phone offers, plus Automatic. */
   function cameraOptions() {
@@ -937,7 +961,8 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     catch (e) { if (M === mine) { stopMeasurement(); M = null; showCameraError(e); } return; }
     if (M !== mine) return;
     M.recovering = false; M.kicked = false;
-    store.set(K.camera, o.label || '');
+    saveCamera(o);
+    M.manualCam = true; M.scanAt = 0;
     resetLive(); M.fingerOk = 0; M.lastT = null; M.lostAt = null;
     if (M.phase === 'settle') setPhase('waiting');
     else if (M.phase === 'resettle') setPhase('paused');
@@ -1038,10 +1063,17 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
   function setPhase(p, t, resume) {
     var prev = M.phase;
     M.phase = p;
-    if (p === 'settle') M.settleEl = 0;
+    if (p === 'settle') {
+      M.settleEl = 0; M.scanAt = 0;
+      // Remember the lens the finger was found on, so next time starts there.
+      if (M.source && M.source.deviceId && !TEST) {
+        var c = (M.source.cameras || []).filter(function (x) { return x.deviceId === M.source.deviceId; })[0];
+        if (c) saveCamera(c);
+      }
+    }
     if (p === 'resettle') M.resettleEl = 0;
     if (p === 'record' && !resume) { M.recStartT = t; M.recStartWall = Date.now(); newSegment(); }
-    if (p === 'waiting') M.waitingSince = performance.now();
+    if (p === 'waiting') { M.waitingSince = performance.now(); M.scanAt = 0; }
     setPhaseUI(p);
     var msgs = {
       waiting: 'Cover a rear camera lens with your fingertip. The circle turns red when it is covered.',
@@ -1070,6 +1102,8 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     if (!M) return;
     var h = '', p = M.phase;
     if (p === 'starting') h = 'Starting the camera…';
+    else if (p === 'waiting' && M.scanning && !M.manualCam && M.source.cameras && M.source.cameras.length > 1)
+      h = 'Keep your fingertip on the lens next to the flash. Checking each camera in turn: ' + cameraLabel() + '.';
     else if (p === 'waiting') h = M.reason === 'dark' && M.rgb && M.rgb.r > 5
       ? "It's a bit dark. Cover the lens fully, or move closer to a light."
       : 'Cover a rear camera lens with your fingertip. The circle turns red when it is covered.';
@@ -1157,6 +1191,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     }
     if (p === 'waiting' && performance.now() - M.waitingSince > 20000) $('fingerTips').hidden = false;
     watchCamera();
+    scanCameras();
     if (!$('fingerTips').hidden) updateDiag();
     updateHint();
     drawWave();
@@ -1175,12 +1210,16 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
   }
   async function recoverCamera() {
     var mine = M; M.recovering = true;
-    var wasChosen = !!M.source.deviceId;
-    try { await M.source.switchTo(null); }
+    var cur = M.source.deviceId || null;
+    // First reopen the same camera; only fall back to Automatic if that fails again.
+    var target = cur && !M.retried ? cur : null;
+    M.retried = !!target;
+    var wasChosen = !!cur && !target;
+    try { await M.source.switchTo(target); }
     catch (e) { if (M === mine) { stopMeasurement(); M = null; showCameraError(e); } return; }
     if (M !== mine) return;
     M.recovering = false; M.kicked = false;
-    if (wasChosen) store.set(K.camera, '');
+    if (target) { renderCameraPicker(); return; }
     resetLive(); M.fingerOk = 0; M.lastT = null; M.lostAt = null;
     if (M.phase === 'settle') setPhase('waiting');
     else if (M.phase === 'resettle') setPhase('paused');
@@ -1189,9 +1228,41 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     renderCameraPicker();
     announce(wasChosen ? 'That camera stopped sending pictures, so we switched back to Automatic.' : 'The camera restarted.');
   }
+  /* Lens scan: phones with several rear cameras only use one at a time, and
+     iPhone's Automatic mode hops between lenses by itself. While we wait for
+     a finger, try each camera in turn and keep the one that sees it. */
+  var SCAN_FIRST_MS = 3000, SCAN_DWELL_MS = 2200;
+  function scanCameras() {
+    var cams = M.source.cameras || [];
+    if (TEST || M.manualCam || M.recovering || M.scanBusy || cams.length < 2) return;
+    if (M.phase !== 'waiting' || M.fingerOk > 0) return;
+    var now = performance.now();
+    if (!M.scanAt) M.scanAt = now + SCAN_FIRST_MS;
+    if (now < M.scanAt) return;
+    var idx = cams.map(function (c) { return c.deviceId; }).indexOf(M.source.deviceId || null);
+    var next = cams[(idx + 1) % cams.length];
+    switchForScan(next);
+  }
+  async function switchForScan(o) {
+    var mine = M; M.scanBusy = true; M.recovering = true;
+    try { await M.source.switchTo(o.deviceId); }
+    catch (e) { if (M === mine) { stopMeasurement(); M = null; showCameraError(e); } return; }
+    if (M !== mine) return;
+    M.scanBusy = false; M.recovering = false; M.kicked = false; M.retried = false;
+    M.scanning = true;
+    M.scanAt = performance.now() + SCAN_DWELL_MS;
+    resetLive(); M.fingerOk = 0; M.lastT = null; M.lostAt = null;
+    $('torchNote').hidden = !!M.source.torch;
+    renderCameraPicker();
+  }
+  function cameraLabel() {
+    var src = M.source;
+    return src.deviceId ? (cameraOptions().filter(function (c) { return c.deviceId === src.deviceId; })[0] || {}).name : 'Automatic';
+  }
+
   function updateDiag() {
     var src = M.source, rgb = M.rgb;
-    var cam = src.deviceId ? (cameraOptions().filter(function (c) { return c.deviceId === src.deviceId; })[0] || {}).name : 'Automatic';
+    var cam = cameraLabel();
     var gap = performance.now() - (src.lastFrameWall || 0);
     var t = 'Camera: ' + (cam || 'rear') + '. Flash: ' + (src.torch ? 'on' : 'off') + '. ' +
       (gap > 2000 ? 'No picture from the camera.' : rgb ? 'Colour seen: red ' + Math.round(rgb.r) + ', green ' + Math.round(rgb.g) + ', blue ' + Math.round(rgb.b) + '.' : '');
