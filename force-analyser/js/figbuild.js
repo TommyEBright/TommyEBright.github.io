@@ -2,10 +2,10 @@
 // stacked panels), or several trials overlaid between any two events, in seconds or time-normalised, with means,
 // SD bands and a second y axis. Every colour, line style, axis limit, font and size can be changed. The figure is
 // drawn through a small set of shapes with two back ends (canvas and SVG), so the preview, PNG and SVG match.
-import { A, $, esc, status, download, baseName, trialLabel, PLATE_COLS, COL } from './state.js?v=2.3.0';
-import { niceStep, numTxt } from './plot.js?v=2.3.0';
-import { analyseTrial } from './compare.js?v=2.3.0';
-import { eventChoices, eventIndex } from './analyse.js?v=2.3.0';
+import { A, $, esc, status, download, baseName, trialLabel, PLATE_COLS, COL } from './state.js?v=2.4.0';
+import { niceStep, numTxt } from './plot.js?v=2.4.0';
+import { analyseTrial } from './compare.js?v=2.4.0';
+import { eventChoices, eventIndex } from './analyse.js?v=2.4.0';
 
 const OKABE = ['#0072B2', '#D55E00', '#009E73', '#CC79A7', '#E69F00', '#56B4E9', '#000000', '#999999']; // Okabe and Ito (2008)
 const PAL = ['#1d4ed8', '#dc2626', '#059669', '#9333ea', '#d97706', '#0891b2', '#be185d', '#475569', '#65a30d', '#7c2d12'];

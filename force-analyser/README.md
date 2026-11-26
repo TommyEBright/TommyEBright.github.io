@@ -88,7 +88,7 @@ The full explanation, written for students, is in the tool under **How everythin
 
 ## Citation
 
-Bright, T. E. (2026). *Force Analysis* (Version 2.3) [Computer software]. Plymouth Marjon University. https://tommyebright.github.io/force-analyser/
+Bright, T. E. (2026). *Force Analysis* (Version 2.4) [Computer software]. Plymouth Marjon University. https://tommyebright.github.io/force-analyser/
 
 The **Cite** button in the tool copies this in APA, Harvard or BibTeX.
 
