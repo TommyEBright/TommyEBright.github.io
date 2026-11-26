@@ -1,6 +1,6 @@
 /* Pulse Lab service worker: caches the app shell so it works offline.
    Bump VERSION whenever you change any file so phones pick up the update. */
-const VERSION = 'pulse-lab-v8';
+const VERSION = 'pulse-lab-v9';
 const SHELL = ['./', './index.html', './dsp.js', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {

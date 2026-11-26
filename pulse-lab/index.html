@@ -388,7 +388,7 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
         <h3>Still looking for your fingertip</h3>
         <ul class="tips">
           <li>Turn the phone over so the cameras face up.</li>
-          <li>Phones with several lenses: only one is used. Use the Camera buttons below to choose one, then cover that lens. The circle turns red when you've got it.</li>
+          <li>Phones with several lenses: only one is used, and it may not be the one next to the flash. The app tries each camera it can use. If the circle still doesn't turn red, slide your fingertip slowly across each lens until it does. On many Android phones it is the largest lens.</li>
           <li>Lay the pad of your finger flat so it covers the whole lens. If the flash is on, let your finger reach over it too if you can. Light shining into the side of your fingertip is enough.</li>
           <li>Rest it lightly. Pressing hard squeezes the blood out.</li>
           <li>If it's dark, move closer to a bright light or a window.</li>
@@ -734,6 +734,8 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     if (/ultra ?wide/i.test(l)) return 'Ultra wide';
     if (/telephoto/i.test(l)) return 'Telephoto';
     if (/^back camera$/i.test(l)) return 'Main (wide)';
+    // Android Chrome: "camera2 0, facing back". Number them in the order the phone lists them.
+    if (/facing back|camera2|environment/i.test(l)) return n === 1 ? 'Rear 1 (main)' : 'Rear ' + n;
     return l ? l.replace(/\s*\([^)]*\)\s*$/, '') : 'Rear camera ' + n;
   }
 
@@ -803,13 +805,22 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
       video.srcObject = stream;
       try { await video.play(); } catch (e) { /* muted + playsinline normally autoplays */ }
       self.lastFrameWall = performance.now(); // grace period for the first frame
-      // Torch: works on most Android Chrome devices, not always on iOS.
-      try {
-        await track.applyConstraints({ advanced: [{ torch: true }] });
-        var st = track.getSettings ? track.getSettings() : {};
-        self.torch = st.torch === true || (track.getCapabilities && track.getCapabilities().torch === true && st.torch !== false);
-      } catch (e) { self.torch = false; }
+      self.exposureSteps = 0;
       startLoop();
+      // Torch: works on most Android Chrome devices, not always on iOS. Some
+      // Android phones only accept it once frames are flowing, so retry.
+      var my = gen, t = track;
+      self.torch = await torchOn(t);
+      [600, 1500].forEach(function (ms) {
+        setTimeout(async function () { if (my === gen && !self.torch) self.torch = await torchOn(t); }, ms);
+      });
+    }
+    async function torchOn(t) {
+      try {
+        await t.applyConstraints({ advanced: [{ torch: true }] });
+        var st = t.getSettings ? t.getSettings() : {};
+        return st.torch === true || (t.getCapabilities && t.getCapabilities().torch === true && st.torch !== false);
+      } catch (e) { return false; }
     }
     async function listCameras() {
       try {
@@ -853,7 +864,26 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     /** Switch to another rear camera (null = the browser's automatic choice). */
     this.switchTo = async function (deviceId) {
       close();
-      try { await open(deviceId); } catch (e) { close(); await open(null); }
+      try { await open(deviceId); return; } catch (e) { close(); }
+      // Android can take a moment to release the previous camera ("Could not start video source").
+      await new Promise(function (r) { setTimeout(r, 500); });
+      try { await open(deviceId); return; } catch (e) { close(); }
+      await open(null);
+    };
+    /** Darken the picture one step (Android Chrome only). Returns false if it can't. */
+    this.darker = function () {
+      try {
+        var caps = track && track.getCapabilities ? track.getCapabilities() : {}, ec = caps.exposureCompensation;
+        if (!ec || ec.min == null) return false;
+        var cur = (track.getSettings().exposureCompensation) || 0;
+        var step = Math.max(ec.step || 0.33, (ec.max - ec.min) / 12);
+        var next = Math.max(ec.min, cur - step);
+        if (next >= cur) return false;
+        var pr = track.applyConstraints({ advanced: [{ exposureCompensation: next }] });
+        if (pr && pr.catch) pr.catch(function () {});
+        self.exposureSteps++;
+        return true;
+      } catch (e) { return false; }
     };
     /** Nudge a stream that has stopped delivering frames. */
     this.kick = function () { try { var pr = video.play(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {} };
@@ -1104,6 +1134,8 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     if (p === 'starting') h = 'Starting the camera…';
     else if (p === 'waiting' && M.scanning && !M.manualCam && M.source.cameras && M.source.cameras.length > 1)
       h = 'Keep your fingertip on the lens next to the flash. Checking each camera in turn: ' + cameraLabel() + '.';
+    else if (p === 'waiting' && M.reason === 'bright')
+      h = 'Too bright: the flash is shining straight into the camera. Cover the lens fully with the pad of your finger.';
     else if (p === 'waiting') h = M.reason === 'dark' && M.rgb && M.rgb.r > 5
       ? "It's a bit dark. Cover the lens fully, or move closer to a light."
       : 'Cover a rear camera lens with your fingertip. The circle turns red when it is covered.';
@@ -1185,13 +1217,15 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
         $('lensDot').style.backgroundColor = col;
         var on = M.fingerOk > 0;
         $('lensDot').classList.toggle('ok', on);
-        var lt = on ? 'Covered. Hold still.' : M.reason === 'dark' && M.rgb.r > 5 ? 'Too dark. Move nearer a light.' : 'Lens not covered yet';
+        var lt = on ? 'Covered. Hold still.' : M.reason === 'dark' && M.rgb.r > 5 ? 'Too dark. Move nearer a light.' : M.reason === 'bright' ? 'Too bright. Cover the lens fully.' : 'Lens not covered yet';
         if ($('lensText').textContent !== lt) $('lensText').textContent = lt;
       }
     }
     if (p === 'waiting' && performance.now() - M.waitingSince > 20000) $('fingerTips').hidden = false;
     watchCamera();
     scanCameras();
+    tameBrightness();
+    var tn = !!M.source.torch; if ($('torchNote').hidden !== tn) $('torchNote').hidden = tn;
     if (!$('fingerTips').hidden) updateDiag();
     updateHint();
     drawWave();
@@ -1239,6 +1273,8 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     var now = performance.now();
     if (!M.scanAt) M.scanAt = now + SCAN_FIRST_MS;
     if (now < M.scanAt) return;
+    // Hold the scan while we are still turning down a washed-out picture.
+    if (M.reason === 'bright' && M.lastDarker && now - M.lastDarker < 1500) return;
     var idx = cams.map(function (c) { return c.deviceId; }).indexOf(M.source.deviceId || null);
     var next = cams[(idx + 1) % cams.length];
     switchForScan(next);
@@ -1254,6 +1290,17 @@ legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
     resetLive(); M.fingerOk = 0; M.lastT = null; M.lostAt = null;
     $('torchNote').hidden = !!M.source.torch;
     renderCameraPicker();
+  }
+  /* A flash right beside the lens can wash the picture out to white, which hides
+     the red of the fingertip and flattens the pulse. Where the browser allows it
+     (Android Chrome), turn the exposure down a step at a time. Never while recording. */
+  function tameBrightness() {
+    var src = M.source, rgb = M.rgb;
+    if (TEST || !src.darker || !rgb || M.phase === 'record' || M.recovering) return;
+    var now = performance.now();
+    if (M.lastDarker && now - M.lastDarker < 700) return;
+    var clipped = M.reason === 'bright' && M.fingerOk === 0 || (M.fingerOk > 0 && rgb.r >= 252);
+    if (clipped && src.exposureSteps < 12 && src.darker()) M.lastDarker = now;
   }
   function cameraLabel() {
     var src = M.source;

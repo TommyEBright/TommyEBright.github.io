@@ -67,7 +67,7 @@
   /**
    * A fingertip lit from behind (or by the flash) looks strongly red.
    * present: red bright enough AND red clearly dominates green and blue.
-   * reason: 'ok' | 'dark' (too little light) | 'notRed' (camera sees a scene, not a finger)
+   * reason: 'ok' | 'dark' (too little light) | 'bright' (washed out, e.g. flash straight into the lens) | 'notRed' (camera sees a scene, not a finger)
    */
   function detectFinger(rgb, opts) {
     var o = opts || FINGER;
@@ -80,7 +80,7 @@
     if (!redDominant && rgb.r >= FINGER.satRed) {
       redDominant = rgb.r >= FINGER.satDominance * rgb.g && rgb.r >= FINGER.satDominance * rgb.b;
     }
-    if (!redDominant) return { present: false, reason: 'notRed' };
+    if (!redDominant) return { present: false, reason: rgb.r >= 240 && rgb.g >= 200 ? 'bright' : 'notRed' };
     return { present: true, reason: 'ok' };
   }
 
