@@ -1,14 +1,14 @@
 // Shared state and small helpers.
 // A.S is the trial being worked on (its file data, plate mapping and settings). A.R is its analysis.
-import { defaultSettings } from './analyse.js?v=2.2.1';
+import { defaultSettings } from './analyse.js?v=2.3.0';
 
-export const VERSION = '2.2.1';
+export const VERSION = '2.3.0';
 export const APP = 'Force Analysis';
 export const PLATE_COLS = ['#0f766e', '#be185d', '#d97706'];
 export const COL = { total: '#1d4ed8', raw: '#94a3b8', bw: '#475569', vel: '#7c3aed', disp: '#0891b2', acc: '#dc2626', net: '#1d4ed8', power: '#ea580c', pos: 'rgba(16,185,129,.28)', neg: 'rgba(59,130,246,.26)' };
 
 // Settings that carry over from one trial to the next.
-export const SHARED = ['type', 'axes', 'jump', 'thr', 'thrMode', 'hold', 'onsetK', 'onsetBack', 'method', 'djDir', 'drop', 'bwMode', 'filt', 'roles'];
+export const SHARED = ['type', 'axes', 'jump', 'thr', 'thrMode', 'hold', 'onsetK', 'onsetBack', 'onsetMethod', 'onsetPct', 'onsetN', 'onsetSearch', 'weighLen', 'sjTolPct', 'method', 'djDir', 'drop', 'bwMode', 'filt', 'roles'];
 
 export const A = {
   session: { trials: [], cur: -1 },
@@ -39,10 +39,16 @@ export function newTrial(name, P, map) {
     name: name || 'trial',
     labels: { athlete: '', condition: '', trial: '' },
     P, map, fs: P.fs || 0,
-    set: defaultSettings(),
+    set: Object.assign(defaultSettings(), loadMethodSettings()),
     notes: ''
   };
 }
+// Analysis settings chosen in Settings (start of movement, weighing, contacts, integration): the same for every
+// trial in the session, and remembered in this browser for the next session.
+export const METHOD_KEYS = ['onsetMethod', 'onsetK', 'onsetPct', 'onsetN', 'onsetBack', 'onsetSearch', 'weighLen', 'sjTolPct', 'thrMode', 'thr', 'hold', 'method'];
+export function loadMethodSettings() { try { const o = JSON.parse(localStorage.getItem('fa-method')); if (o && typeof o === 'object') { const r = {}; METHOD_KEYS.forEach((k) => { if (o[k] !== undefined) r[k] = o[k]; }); return r; } } catch (e) { /* ignore */ } return {}; }
+export function saveMethodSettings(set) { try { const o = {}; METHOD_KEYS.forEach((k) => { o[k] = set[k]; }); localStorage.setItem('fa-method', JSON.stringify(o)); } catch (e) { /* ignore */ } }
+export function clearMethodSettings() { try { localStorage.removeItem('fa-method'); } catch (e) { /* ignore */ } }
 export function currentTrial() { return A.session.trials[A.session.cur] || null; }
 
 // ---------- saving (in this browser, with IndexedDB) ----------

@@ -1,14 +1,17 @@
 // Sessions: adding files, labelling trials, moving between them, carrying settings over.
-import { A, $, esc, persist, status, newTrial, currentTrial, SHARED, clone, forgetSession } from './state.js?v=2.2.1';
-import { parseText, buildData } from './parse.js?v=2.2.1';
-import { guessJump, JUMP_SHORT, analyse, defaultSettings } from './analyse.js?v=2.2.1';
-import { guessType, guessAxes, GAIT, TYPE_SHORT, defaultG } from './generic.js?v=2.2.1';
+import { A, $, esc, persist, status, newTrial, currentTrial, SHARED, clone, forgetSession } from './state.js?v=2.3.0';
+import { parseText, buildData } from './parse.js?v=2.3.0';
+import { guessJump, JUMP_SHORT, analyse, defaultSettings } from './analyse.js?v=2.3.0';
+import { guessType, guessAxes, GAIT, TYPE_SHORT, defaultG } from './generic.js?v=2.3.0';
 
 function readText(file) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsText(file); }); }
 
 // Guess participant / condition / trial from a file name like "Sam_CMJ_arms_3.txt".
 function labelsFrom(name) {
   const base = name.replace(/\.[^.]+$/, '');
+  // e.g. CMJ_P01_T02: condition, participant and trial
+  const c = base.match(/^(cmj|sj|sqj|dj|slj|imtp)[_\-\s]+(p\d+)[_\-\s]+t(\d+)$/i);
+  if (c) return { athlete: c[2].toUpperCase(), condition: c[1].toUpperCase().replace('SQJ', 'SJ'), trial: String(+c[3]) };
   const m = base.match(/(?:^|[_\-\s])(?:t|trial)?\s*(\d{1,2})$/i);
   return { athlete: '', condition: '', trial: m ? m[1] : '' };
 }
@@ -39,7 +42,7 @@ export function addText(txt, name, prev, opts) {
   else tr.set.roles = map.map(() => 'on');
   if (tr.fs > 0) {
     try {
-      const D = buildData(P, map), g = guessJump(D);
+      const D = buildData(P, map), g = guessJump(D, name);
       if (!prev || (opts && opts.guess) || g !== prev.set.jump) tr.set.jump = g;
       const R = analyse(D, Object.assign(defaultSettings(), { jump: g }));
       const jumpOk = R.ok && R.LD >= 0 && (R.LD - R.TO) / R.fs > 0.1 && (R.LD - R.TO) / R.fs < 1.2;

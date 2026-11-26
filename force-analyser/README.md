@@ -74,9 +74,11 @@ Files are read by the browser on the user's own device and are never uploaded. T
 
 ## Methods in brief
 
-- **Bodyweight:** the mean of the last still period before a CMJ or squat jump (up to 1 s), or the first still period after landing in a drop jump. It can also come from the body weight stored in the file, or a typed-in mass.
+- **Bodyweight:** the mean of the steadiest 1 s of still standing ending within the second before the start of movement in a CMJ or squat jump (Owen et al., 2014; Chavda et al., 2018), or the first still period after landing in a drop jump. It can also come from the body weight stored in the file, or a typed-in mass.
 - **Contact:** force above a threshold (20 N) for at least 10 ms. Take-off is the first sample below it and landing the first sample back above it. A short burst above the threshold in the air whose peak stays below 3 &times; the threshold (at least 50 N) is the plate ringing after take-off or a hard landing, not a contact, so it is ignored (v2.2.1).
-- **Start of movement:** bodyweight ± 5 SD of the weighing period, moved back 30 ms (Owen et al., 2014).
+- **Start of movement:** bodyweight ± 5 SD of the weighing period, moved back 30 ms (Owen et al., 2014), found by working back from the countermovement (CMJ) or push (squat jump) to the last sample inside the band, so sway earlier in the recording is ignored (v2.3.0). Alternatives (% of bodyweight, fixed N, first crossing) are in **Settings** with the evidence for each (Pérez-Castilla et al., 2019; Barefoot et al., 2022).
+- **Jump type:** taken from the file name when it says (CMJ, cm, SJ, SQJ, drop jump), otherwise a CMJ is a trial whose centre of mass moves down faster than 0.4 m/s before the push (v2.3.0).
+- **Squat jump countermovement check:** any dip below bodyweight bigger than the start-of-movement band in the second before the push is flagged.
 - **Integration:** a = (F − W) / m, then velocity and displacement by the trapezoid rule (or rectangles), as in Robertson et al. (2014, ch. 4). CMJ and squat jump start from rest at the start of movement. Drop jump: touchdown velocity from backward integration (from the still standing after landing, where velocity is zero) or from the box height (forward integration, v = −√(2gh)).
 - **Phases:** McMahon et al. (2018). Unweighting ends at peak downward velocity (force back to bodyweight); braking ends at zero velocity; propulsion ends at take-off.
 - **Jump height:** v² / 2g from take-off velocity, and g t² / 8 from flight time (Linthorne, 2001; Moir, 2008).
@@ -84,7 +86,16 @@ Files are read by the browser on the user's own device and are never uploaded. T
 
 The full explanation, written for students, is in the tool under **How everything is calculated**.
 
+## Citation
+
+Bright, T. E. (2026). *Force Analysis* (Version 2.3) [Computer software]. Plymouth Marjon University. https://tommyebright.github.io/force-analyser/
+
+The **Cite** button in the tool copies this in APA, Harvard or BibTeX.
+
 ## References
+
+- Barefoot, M., Lamont, H. and Smith, J.C. (2022) Comparison of the reliability of four different movement thresholds when evaluating vertical jump performance. *Sports*, 10(12), 193.
+- Chavda, S., Bromley, T., Jarvis, P., Williams, S., Bishop, C., Turner, A.N., Lake, J.P. and Mundy, P.D. (2018) Force-time characteristics of the countermovement jump: analyzing the curve in Excel. *Strength and Conditioning Journal*, 40(2), 67–77.
 
 - Ebben, W.P. and Petushek, E.J. (2010) Using the reactive strength index modified to evaluate plyometric performance. *Journal of Strength and Conditioning Research*, 24(8), 1983–1987.
 - Flanagan, E.P. and Comyns, T.M. (2008) The use of contact time and the reactive strength index to optimize fast stretch-shortening cycle training. *Strength and Conditioning Journal*, 30(5), 32–38.
@@ -92,6 +103,7 @@ The full explanation, written for students, is in the tool under **How everythin
 - McMahon, J.J., Suchomel, T.J., Lake, J.P. and Comfort, P. (2018) Understanding the key phases of the countermovement jump force-time curve. *Strength and Conditioning Journal*, 40(4), 96–106.
 - Moir, G.L. (2008) Three different methods of calculating vertical jump height from force platform data in men and women. *Measurement in Physical Education and Exercise Science*, 12(4), 207–218.
 - Owen, N.J., Watkins, J., Kilduff, L.P., Bevan, H.R. and Bennett, M.A. (2014) Development of a criterion method to determine peak mechanical power output in a countermovement jump. *Journal of Strength and Conditioning Research*, 28(6), 1552–1558.
+- Pérez-Castilla, A., Rojas, F.J. and García-Ramos, A. (2019) Reliability and magnitude of loaded countermovement jump performance variables: a technical examination of the jump threshold initiation. *Sports Biomechanics*, 21(5).
 - Robertson, D.G.E., Caldwell, G.E., Hamill, J., Kamen, G. and Whittlesey, S.N. (2014) *Research Methods in Biomechanics*, 2nd edn. Human Kinetics.
 - Street, G., McMillan, S., Board, W., Rasmussen, M. and Heneghan, J.M. (2001) Sources of error in determining countermovement jump height with the impulse method. *Journal of Applied Biomechanics*, 17(1), 43–54.
 - Winter, D.A. (2009) *Biomechanics and Motor Control of Human Movement*, 4th edn. Wiley.

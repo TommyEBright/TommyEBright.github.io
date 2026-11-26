@@ -1,6 +1,6 @@
 // Tab 1: jump type, drop jump options, bodyweight, plates and columns, thresholds.
-import { A, $, esc, persist, PLATE_COLS, savePrefs } from './state.js?v=2.2.1';
-import { TYPE_HELP, GAIT, defaultG } from './generic.js?v=2.2.1';
+import { A, $, esc, persist, PLATE_COLS, savePrefs } from './state.js?v=2.3.0';
+import { TYPE_HELP, GAIT, defaultG } from './generic.js?v=2.3.0';
 
 const JUMP_HELP = {
   cmj: 'Stand still, dip down and jump straight up. Phases: unweighting, braking, propulsion, flight and landing.',
@@ -32,8 +32,6 @@ export function syncSetup() {
   $('bwMode').value = set.bwMode; $('massWrap').classList.toggle('hide', set.bwMode !== 'mass'); $('mass').value = set.mass > 0 ? set.mass : '';
   $('fsIn').value = S.fs || '';
   $('fsInfo').innerHTML = S.P.fs ? 'From the file' + (S.P.format === 'bioware' ? ' (BioWare)' : '') : '<span class="bad">Not in the file: please enter it.</span>';
-  ['thr', 'hold', 'onsetK', 'onsetBack', 'method'].forEach((k) => { $(k).value = set[k]; });
-  $('thrMode').value = set.thrMode || 'auto';
   const R = A.R;
   let b = '';
   if (R && R.ok && !R.generic) {
@@ -105,9 +103,4 @@ export function initSetup() {
   $('bwMode').addEventListener('change', function () { A.S.set.bwMode = this.value; $('massWrap').classList.toggle('hide', this.value !== 'mass'); changed(); });
   $('mass').addEventListener('change', function () { const v = parseFloat(this.value); A.S.set.mass = v > 0 ? v : 0; changed(); });
   $('fsIn').addEventListener('change', function () { const v = parseFloat(this.value); if (v > 0) { A.S.fs = v; changed(true); } });
-  $('thrMode').addEventListener('change', function () { A.S.set.thrMode = this.value; changed(); });
-  [['thr', parseFloat], ['hold', parseFloat], ['onsetK', parseFloat], ['onsetBack', parseFloat]].forEach(([id, p]) => {
-    $(id).addEventListener('change', function () { const v = p(this.value); if (!(v >= 0)) return; A.S.set[id] = v; changed(); });
-  });
-  $('method').addEventListener('change', function () { A.S.set.method = this.value; changed(); });
 }

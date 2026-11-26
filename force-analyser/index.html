@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css?v=2.2.1">
+<link rel="stylesheet" href="css/style.css?v=2.3.0">
 </head>
 <body>
 <header class="top">
@@ -30,6 +30,8 @@
       <option value="walk">Walking (two plates)</option>
       <option value="walk4">Walking (four trials in one file)</option>
     </select>
+    <button class="btn light" id="setBtn" type="button" aria-haspopup="dialog">&#9881; Settings</button>
+    <button class="btn light" id="citeBtn" type="button" aria-haspopup="dialog">&#10077; Cite</button>
     <button class="btn accent hide" id="installBtn" type="button">Install as an app</button>
   </div>
 </header>
@@ -208,18 +210,7 @@
           </details>
         </div>
       </div>
-      <details class="more" id="advSetup">
-        <summary>More options for jumps: thresholds and integration</summary>
-        <div class="row">
-          <div><label for="thrMode">Take-off and landing</label><select id="thrMode"><option value="auto">From this trial&rsquo;s empty plate (5 SD of its noise, offset removed)</option><option value="fixed">A fixed threshold</option></select></div>
-          <div><label for="thr">Fixed contact threshold (N)</label><input type="number" id="thr" min="1" step="1"></div>
-          <div><label for="hold">Must last at least (ms)</label><input type="number" id="hold" min="0" step="1"></div>
-          <div><label for="onsetK">Start of movement: bodyweight &plusmn; (SD)</label><input type="number" id="onsetK" min="1" step="0.5"></div>
-          <div><label for="onsetBack">&hellip; then back by (ms)</label><input type="number" id="onsetBack" min="0" step="1"></div>
-          <div><label for="method">Integration</label><select id="method"><option value="trap">Trapezoid rule</option><option value="rect">Rectangles (Riemann sum)</option></select></div>
-        </div>
-        <p class="muted">Take-off and landing are where force crosses the contact threshold and stays there for the time given (so a single noisy sample is ignored). The start of movement is the first sample more than this many SDs of the weighing period away from bodyweight, moved back by the time given (5 SD and 30 ms; Owen et al., 2014). Integration: see <strong>4. Force to displacement</strong>.</p>
-      </details>
+      <p class="muted" id="advSetup">How the start of movement, bodyweight, take-off and landing are found: <button class="btn small ghost" type="button" id="setOpen2">&#9881; Settings</button></p>
     </div>
 
     <!-- EVENTS -->
@@ -387,9 +378,78 @@
       </details>
     </div>
   </section>
-  <footer>Force Analysis. Works offline once loaded. Nothing is uploaded. Built by Dr Tommy Bright.</footer>
+  <footer>Force Analysis v<span id="verFoot"></span>. Created by Dr Tommy Bright, Senior Lecturer in Sports Biomechanics, Plymouth Marjon University. Works offline once loaded; nothing is uploaded. <button class="linkbtn" type="button" onclick="document.getElementById('citeBtn').click()">How to cite</button></footer>
 </main>
+<dialog id="setDlg" class="dlg" aria-labelledby="setTitle">
+  <div class="dlg-head"><h2 id="setTitle">&#9881; Settings: how the jump is analysed</h2><button class="btn small ghost" type="button" id="setClose">Close</button></div>
+  <div class="dlg-body">
+    <p id="s_state" class="muted"></p>
+    <p class="muted">These settings apply to <strong>every trial in the session</strong> and are remembered in this browser. The recommended settings follow the published methods cited below. If you change them, change them before you analyse, keep them the same for every trial you compare, and report them.</p>
+
+    <h3>1. Bodyweight (weighing)</h3>
+    <div class="row">
+      <div><label for="s_weighLen">Still standing used for bodyweight (s)</label><input type="number" id="s_weighLen" min="0.2" max="1.5" step="0.1"></div>
+    </div>
+    <p class="muted">Bodyweight is the mean force over the steadiest window of this length that ends within the second before the start of movement (in a squat jump, while holding the squat). Recommended: <strong>1 s</strong> of quiet standing (Owen et al., 2014; Chavda et al., 2018). Bodyweight must be very accurate, because every error in it is integrated into velocity and jump height (Street et al., 2001).</p>
+
+    <h3>2. Start of movement (CMJ, squat jump, standing long jump)</h3>
+    <div class="row">
+      <div><label for="s_onsetMethod">Threshold</label><select id="s_onsetMethod">
+        <option value="sd">Bodyweight &plusmn; SD of the weighing (recommended)</option>
+        <option value="pct">Bodyweight &plusmn; % of bodyweight</option>
+        <option value="abs">Bodyweight &plusmn; a fixed force (N)</option></select></div>
+      <div id="s_kWrap"><label for="s_onsetK">Number of SDs</label><input type="number" id="s_onsetK" min="1" max="10" step="0.5"></div>
+      <div id="s_pctWrap"><label for="s_onsetPct">% of bodyweight</label><input type="number" id="s_onsetPct" min="0.5" max="20" step="0.5"></div>
+      <div id="s_nWrap"><label for="s_onsetN">Force (N)</label><input type="number" id="s_onsetN" min="1" max="200" step="1"></div>
+      <div><label for="s_onsetBack">Then move back by (ms)</label><input type="number" id="s_onsetBack" min="0" max="100" step="5"></div>
+      <div><label for="s_onsetSearch">Find it by</label><select id="s_onsetSearch">
+        <option value="back">Working back from the jump (recommended)</option>
+        <option value="first">The first crossing after the weighing</option></select></div>
+    </div>
+    <p class="muted"><strong>Recommended: bodyweight &plusmn; 5 SD of the weighing, then 30 ms earlier</strong> (Owen et al., 2014). Below bodyweight for a CMJ, above it for a squat jump. Integration assumes the participant is still at the start, so a start found too late misses part of the impulse and underestimates velocity and jump height. The 30 ms step back makes sure integration begins before the participant has started to move. Of the thresholds compared by P&eacute;rez-Castilla et al. (2019), 5 SD &minus; 30 ms, 10% of bodyweight and 50 N were the most reliable, while 10 N and 1% of bodyweight were less reliable, especially for eccentric (unweighting and braking) variables. Barefoot et al. (2022) found 10% of bodyweight the most reliable for squat jumps, but it starts later, so use it with 0 ms and expect slightly lower impulse-based jump heights.</p>
+    <p class="muted"><strong>Working back from the jump</strong> finds the same point as the first crossing when the participant stands still. If they sway or fidget earlier in the recording, it ignores that and takes the last moment they were still before the countermovement (CMJ) or push (squat jump). The <strong>first crossing</strong> is the literal Owen et al. (2014) rule, and is useful to show students what goes wrong when someone is not still.</p>
+
+    <h3>3. Squat jump: countermovement check</h3>
+    <div class="row">
+      <div><label for="s_sjTolPct">Flag a dip larger than (% of bodyweight)</label><input type="number" id="s_sjTolPct" min="0" max="20" step="0.5"></div>
+    </div>
+    <p class="muted">A squat jump should start from a still squat, so any dip below bodyweight in the second before the push is flagged. <strong>0</strong> (recommended) flags any dip bigger than the start-of-movement band (5 SD of the weighing), which is the smallest dip that can be told apart from noise. There is no agreed published cut-off, so a % allows a little more tolerance if you need it. Dips over 10% of bodyweight are reported as a countermovement.</p>
+
+    <h3>4. Take-off and landing</h3>
+    <div class="row">
+      <div><label for="s_thrMode">Contact threshold</label><select id="s_thrMode">
+        <option value="auto">From this trial&rsquo;s empty plate: 5 SD of its noise in the air, offset removed (recommended)</option>
+        <option value="fixed">A fixed threshold</option></select></div>
+      <div id="s_thrWrap"><label for="s_thr">Fixed threshold (N)</label><input type="number" id="s_thr" min="1" step="1"></div>
+      <div><label for="s_hold">Must last at least (ms)</label><input type="number" id="s_hold" min="0" step="1"></div>
+    </div>
+    <p class="muted">Take-off is the first sample below the threshold and landing the first back above it, held for the time given so one noisy sample is ignored. The automatic threshold adapts to each plate&rsquo;s noise and removes any offset left by not zeroing the plate (thresholds compared by Smith et al., 2024). A fixed 20 N is a common alternative.</p>
+
+    <h3>5. Integration</h3>
+    <div class="row">
+      <div><label for="s_method">Numerical integration</label><select id="s_method"><option value="trap">Trapezoid rule (recommended)</option><option value="rect">Rectangles (Riemann sum)</option></select></div>
+    </div>
+    <p class="muted">At 1000 Hz the trapezoid rule is recommended (Owen et al., 2014). Velocity is integrated forwards from rest at the start of movement, and displacement from velocity.</p>
+
+    <h3>Phases (not editable)</h3>
+    <p class="muted">Once the start of movement and bodyweight are set, the phases follow from the centre of mass velocity, as described by McMahon et al. (2018). <strong>CMJ:</strong> unweighting = start of movement to peak downward velocity (where force comes back up to bodyweight); braking = peak downward velocity to velocity zero (the lowest point); propulsion = velocity zero to take-off; then flight and landing. <strong>Squat jump:</strong> propulsion = start of push to take-off. These are defined by the physics, so they move automatically when you change the settings above.</p>
+
+    <div class="row tight"><button class="btn small ghost" type="button" id="setReset">Restore the recommended settings</button></div>
+    <p class="muted refs"><strong>References.</strong> Barefoot, M., Lamont, H. and Smith, J.C. (2022) Comparison of the reliability of four different movement thresholds when evaluating vertical jump performance. <em>Sports</em>, 10(12), 193. Chavda, S., Bromley, T., Jarvis, P., Williams, S., Bishop, C., Turner, A.N., Lake, J.P. and Mundy, P.D. (2018) Force-time characteristics of the countermovement jump: analyzing the curve in Excel. <em>Strength and Conditioning Journal</em>, 40(2), 67&ndash;77. McMahon, J.J., Suchomel, T.J., Lake, J.P. and Comfort, P. (2018) Understanding the key phases of the countermovement jump force-time curve. <em>Strength and Conditioning Journal</em>, 40(4), 96&ndash;106. Owen, N.J., Watkins, J., Kilduff, L.P., Bevan, H.R. and Bennett, M.A. (2014) Development of a criterion method to determine peak mechanical power output in a countermovement jump. <em>Journal of Strength and Conditioning Research</em>, 28(6), 1552&ndash;1558. P&eacute;rez-Castilla, A., Rojas, F.J. and Garc&iacute;a-Ramos, A. (2019) Reliability and magnitude of loaded countermovement jump performance variables: a technical examination of the jump threshold initiation. <em>Sports Biomechanics</em>, 21(5). Smith, J.C., Lamont, H.S. and Barefoot, M. (2024) Comparison of different take-off thresholds when assessing vertical jump performance. <em>International Journal of Exercise Science</em>, 17. https://doi.org/10.70252/QBUA4521. Street, G., McMillan, S., Board, W., Rasmussen, M. and Heneghan, J.M. (2001) Sources of error in determining countermovement jump height with the impulse method. <em>Journal of Applied Biomechanics</em>, 17(1), 43&ndash;54.</p>
+  </div>
+</dialog>
+
+<dialog id="citeDlg" class="dlg" aria-labelledby="citeTitle">
+  <div class="dlg-head"><h2 id="citeTitle">&#10077; Cite Force Analysis</h2><button class="btn small ghost" type="button" id="citeClose">Close</button></div>
+  <div class="dlg-body">
+    <p class="muted">If you use Force Analysis in a lab report, dissertation, paper or presentation, please cite it.</p>
+    <h3>APA 7th</h3><pre class="cite" id="citeApa"></pre><button class="btn small" type="button" data-copy="citeApa">Copy</button>
+    <h3>Harvard</h3><pre class="cite" id="citeHarvard"></pre><button class="btn small" type="button" data-copy="citeHarvard">Copy</button>
+    <h3>BibTeX</h3><pre class="cite" id="citeBib"></pre><button class="btn small" type="button" data-copy="citeBib">Copy</button>
+    <p class="muted" style="margin-top:.8rem">Force Analysis was created by Dr Tommy Bright, Senior Lecturer in Sports Biomechanics, Plymouth Marjon University.</p>
+  </div>
+</dialog>
 <script>window.addEventListener('error',function(e){var s=document.getElementById('status');if(s)s.innerHTML='<span class="bad"><strong>Something went wrong.</strong> Try a hard refresh (Ctrl + Shift + R, or Cmd + Shift + R on a Mac). If it keeps happening, tell your tutor: '+(e.message||'')+'</span>';});</script>
-<script type="module" src="js/app.js?v=2.2.1"></script>
+<script type="module" src="js/app.js?v=2.3.0"></script>
 </body>
 </html>

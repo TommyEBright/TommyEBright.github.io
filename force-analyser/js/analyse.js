@@ -1,6 +1,6 @@
 // The analysis of one trial: bodyweight, events, integration (force -> acceleration -> velocity ->
 // displacement), phases and power. No page code here, so it can be tested on its own.
-import { G, butter, integrateForward, integrateBackward, mean, sd, argmax, argmin, quietestWindow } from './maths.js?v=2.2.1';
+import { G, butter, integrateForward, integrateBackward, mean, sd, argmax, argmin, quietestWindow } from './maths.js?v=2.3.0';
 
 export const JUMPS = { cmj: 'Countermovement jump (CMJ)', sj: 'Squat jump (SJ)', dj: 'Drop jump (DJ)', slj: 'Standing long jump (SLJ)' };
 export const JUMP_SHORT = { cmj: 'CMJ', sj: 'SJ', dj: 'Drop jump', slj: 'SLJ' };
@@ -18,6 +18,12 @@ export function defaultSettings() {
     hold: 10,         // ms the force must stay above/below the threshold
     onsetK: 5,        // start of movement: bodyweight +/- k SD (Owen et al., 2014)
     onsetBack: 30,    // ... minus this many ms
+    onsetMethod: 'sd', // 'sd' (bodyweight +/- k SD), 'pct' (% of bodyweight) or 'abs' (fixed N)
+    onsetPct: 10,     // % of bodyweight when onsetMethod is 'pct'
+    onsetN: 50,       // N when onsetMethod is 'abs'
+    onsetSearch: 'back', // 'back': work back from the movement; 'first': first sample outside the band after weighing
+    weighLen: 1,      // s of still standing used for bodyweight (just before the movement)
+    sjTolPct: 0,      // squat jump countermovement check: dip allowed below bodyweight (% BW); 0 = same band as the start
     method: 'trap',   // trapezoid or rectangle (Riemann) integration
     djDir: 'auto',    // drop jump: 'backward' (from still standing after landing), 'forward' (from drop height) or 'auto'
     drop: 0,          // drop jump box height (m)
@@ -67,12 +73,12 @@ export function contactRuns(F, thr, holdN, minPeak = 0) {
 
 // Still standing: the longest window (1 s down to 0.2 s) whose SD is close to the quietest 0.2 s in the range.
 // prefer 'latest' (just before the jump) or 'earliest' (just after landing).
-function findQuiet(F, fs, i0, i1, prefer) {
+function findQuiet(F, fs, i0, i1, prefer, maxL = 1, minL = 0.2) {
   const base = quietestWindow(F, i0, i1, Math.max(3, Math.round(0.2 * fs)));
   if (!base) return null;
   const lvl = mean(F, base.s, base.e);
   const lim = Math.max(2 * base.sd, 0.004 * Math.abs(lvl), 1);
-  for (const L of [1.0, 0.8, 0.6, 0.5, 0.4, 0.3, 0.2]) {
+  for (const L of [1.5, 1.2, 1.0, 0.8, 0.6, 0.5, 0.4, 0.3, 0.2].filter((x) => x <= maxL + 1e-9 && x >= minL - 1e-9)) {
     const n = Math.round(L * fs); if (i1 - i0 < n) continue;
     // prefix sums
     const m = i1 - i0; const PS = new Float64Array(m + 1), PQ = new Float64Array(m + 1);
@@ -82,6 +88,18 @@ function findQuiet(F, fs, i0, i1, prefer) {
     else { for (let k = m - n; k >= 0; k--) if (sdAt(k) <= lim) return { s: i0 + k, e: i0 + k + n }; }
   }
   return { s: base.s, e: base.e };
+}
+
+// Weighing before a CMJ or SJ: the steadiest window of L s (lowest SD) that ends within the 1 s before the start
+// of movement, so bodyweight comes from still standing right before the jump. Shorter if the recording is.
+function stillBefore(F, fs, c0, end, L) {
+  let n = Math.round(L * fs);
+  if (end - c0 < n) n = end - c0;
+  if (n < Math.round(0.2 * fs)) return null;
+  const lo = Math.max(c0, end - n - Math.round(1.0 * fs)), step = Math.max(1, Math.round(0.01 * fs));
+  let best = null;
+  for (let e = end; e - n >= lo; e -= step) { const v = sd(F, e - n, e); if (!best || v < best.sd - 1e-9) best = { s: e - n, e, sd: v }; }
+  return best;
 }
 
 const first = (n, i0, i1, test) => { for (let i = Math.max(0, i0); i < Math.min(n, i1); i++) if (test(i)) return i; return -1; };
@@ -170,7 +188,7 @@ function analyseCore(D, set0, off) {
   }
   if (!w) {
     if (set.jump === 'dj') { if (LD >= 0) w = findQuiet(F, fs, Math.min(n - 1, LD + Math.round(0.3 * fs)), n, 'earliest'); }
-    else { const i0 = C.length ? C[0].s : 0; w = findQuiet(F, fs, i0, Math.max(i0 + 3, TO - Math.round(0.1 * fs)), 'latest'); }
+    else { const i0 = C.length ? C[0].s : 0; w = findQuiet(F, fs, i0, Math.max(i0 + 3, TO - Math.round(0.1 * fs)), 'latest', set.weighLen || 1); }
     if (w) w.manual = false;
   }
   let BW = NaN, wsd = NaN, src = '';
@@ -187,53 +205,91 @@ function analyseCore(D, set0, off) {
   if (mode === 'header') { BW = D.headerBW; src = 'body weight stored in the file'; }
   if (mode === 'mass') { BW = set.mass * G; src = 'body mass typed in'; }
   R.BW = BW; R.m = BW / G; R.bwSource = src; R.bwMode = mode;
-  if (w && Number.isFinite(wsd) && mode === 'auto') {
+  const weighWarn = () => { if (w && Number.isFinite(wsd) && mode === 'auto') {
     if (w.e - w.s < 0.3 * fs) R.warnings.push('Only ' + ((w.e - w.s) / fs).toFixed(2) + ' s of still standing was found' + (set.jump === 'dj' ? ' after landing' : ' before the jump') + ', so bodyweight may be less accurate. About 1 s is better.');
     if (wsd > 0.01 * BW) R.warnings.push('Force varied quite a lot while weighing (SD ' + wsd.toFixed(1) + ' N). Was the participant standing completely still?');
-  }
+  } };
+  if (set.jump === 'dj') weighWarn();
 
   // ---------- start of movement ----------
+  // The threshold band around bodyweight is (default) 5 SD of the weighing, as in Owen et al. (2014), or a % of
+  // bodyweight or a fixed force. 'back' search (default): work back from the main movement (the lowest force of
+  // the unweighting in a CMJ, the peak of the push in a SJ) to the last sample inside the band, so sway or a
+  // fidget earlier in the recording is never taken as the start. 'first' search: the first sample outside the
+  // band after the weighing. The start is then moved back by onsetBack ms (30 ms in Owen et al., 2014).
+  // With automatic weighing, the weighing period is then moved to the weighLen seconds just before the start
+  // and the start found again, so bodyweight always comes from the still standing right before the jump.
   let onset = -1;
   const k = set.onsetK || 5, back = Math.round((set.onsetBack || 0) / 1000 * fs);
-  const sdW = Number.isFinite(wsd) && wsd > 0 ? wsd : 0.005 * BW;
+  const omode = set.onsetMethod || 'sd';
+  const band = (sdv) => omode === 'pct' ? (set.onsetPct || 10) / 100 * BW : omode === 'abs' ? (set.onsetN || 50) : k * Math.max(sdv, 0.5);
   R.onsetThr = null;
   if (set.jump !== 'dj') {
-    const from = w ? w.e : 0;
-    let cross;
-    if (set.jump === 'cmj') {
-      R.onsetThr = BW - k * sdW; cross = first(n, from, TO, (i) => F[i] < BW - k * sdW);
-      const upFirst = first(n, from, TO, (i) => F[i] > BW + Math.max(k * sdW, 0.1 * BW));
-      if (upFirst >= 0 && (cross < 0 || upFirst < cross)) { R.error = slj ? 'No countermovement was found: force rose above bodyweight before it ever dropped below it. Check the still standing before the jump (Events tab).' : 'No countermovement was found: force rose above bodyweight before it ever dropped below it. This looks like a squat jump, so choose Squat jump in Setup.'; return R; }
+    const c0 = C.length ? C[0].s : 0;
+    const pk = argmax(F, c0, TO);
+    const findCross = (bnd) => {
+      const from = w && set.onsetSearch === 'first' ? w.e : c0;
+      if (set.jump === 'cmj') {
+        const lo = BW - bnd, iMin = argmin(F, c0, Math.max(c0 + 1, pk));
+        if (iMin < 0 || F[iMin] >= lo) return { cross: -1, lo };
+        if (set.onsetSearch === 'first') { const c = first(n, from, iMin + 1, (i) => F[i] < lo); return { cross: c, lo, iMin }; }
+        let j = iMin; while (j > c0 && F[j] < lo) j--;
+        return { cross: j + 1, lo, iMin };
+      }
+      const hi = BW + bnd;
+      if (pk < 0 || F[pk] <= hi) return { cross: -1, hi };
+      if (set.onsetSearch === 'first') return { cross: first(n, from, pk + 1, (i) => F[i] > hi), hi };
+      let j = pk; while (j > c0 && F[j] > hi) j--;
+      return { cross: j + 1, hi };
+    };
+    let fc = null;
+    for (let pass = 0; pass < 3; pass++) {
+      const sdW = Number.isFinite(wsd) && wsd > 0 ? wsd : 0.005 * BW;
+      const bnd = band(sdW);
+      fc = findCross(bnd);
+      R.onsetBand = bnd;
+      if (fc.cross < 0 || !(w && !w.manual && mode === 'auto')) break;
+      // move the weighing to the still standing just before the start (and before any dip in a squat jump)
+      let end = Math.max(c0, fc.cross - back);
+      if (set.jump === 'sj') {
+        const lim = Math.max(c0, end - Math.round(1.0 * fs)), iD = argmin(F, lim, Math.max(lim + 1, end));
+        if (iD >= 0 && F[iD] < BW - bnd) { let j = iD; while (j > lim && F[j] < BW - bnd) j--; end = Math.max(c0, j - back); }
+      }
+      // the steadiest weighLen s (down to 0.5 s if need be) of the still standing before the start, latest first
+      const q = stillBefore(F, fs, c0, end, set.weighLen || 1);
+      if (!q || q.e - q.s < Math.round(0.2 * fs)) break;
+      if (w.s === q.s && w.e === q.e) break;
+      w = { s: q.s, e: q.e, manual: false };
+      BW = mean(F, w.s, w.e); wsd = sd(F, w.s, w.e);
+      R.w = w; R.BW = BW; R.m = BW / G; R.wsd = wsd; R.bwWeigh = BW;
     }
-    else { R.onsetThr = BW + k * sdW; cross = first(n, from, TO, (i) => F[i] > BW + k * sdW); }
-    if (slj && cross >= 0) {
-      // balance sway (especially on one leg) can dip below the threshold long before the jump, so work back from
-      // the lowest force of the unweighting to the last sample above the threshold
-      const pk = argmax(F, from, TO), iMin = argmin(F, from, Math.max(from + 1, pk));
-      if (iMin > cross && F[iMin] < R.onsetThr) { let j = iMin; while (j > from && F[j] < R.onsetThr) j--; if (j + 1 > cross) { R.swayFrom = cross; cross = j + 1; } }
-    }
+    let cross = fc.cross;
+    R.onsetThr = set.jump === 'cmj' ? fc.lo : fc.hi;
     if (cross < 0) {
-      R.error = set.jump === 'cmj' ? 'No countermovement was found: force never dropped clearly below bodyweight before take-off. Is this a squat jump?' : 'The start of the push was not found. Is the weighing period right?';
+      R.error = set.jump === 'cmj' ? (slj ? 'No countermovement was found: force never dropped clearly below bodyweight before take-off. Check the still standing before the jump (Events tab).' : 'No countermovement was found: force never dropped clearly below bodyweight before take-off. Is this a squat jump? If so, choose Squat jump in Setup.') : 'The start of the push was not found. Is the weighing period right?';
       return R;
+    }
+    if (set.jump === 'cmj') {
+      // a rise above bodyweight just before the dip (e.g. rising onto the toes or a small arm movement) is flagged, not fatal
+      const up = argmax(F, Math.max(c0, cross - Math.round(0.5 * fs)), cross);
+      if (up >= 0 && F[up] > BW + Math.max(R.onsetBand, 0.05 * BW)) R.warnings.push('Force rose ' + (F[up] - BW).toFixed(0) + ' N above bodyweight just before the countermovement (at ' + t[up].toFixed(3) + ' s). The participant may have shifted or moved their arms before dipping. The start of movement was taken at the dip; check it in 2. Events.');
     }
     R.onsetCross = cross;
     onset = Math.max(0, cross - back);
     if (ovr('onset') >= 0) onset = ovr('onset');
     if (onset >= TO) { R.error = 'The start of movement is after take-off. Check the events.'; return R; }
     if (set.jump === 'sj') {
-      const iMin = argmin(F, from, Math.max(from + 1, cross));
-      if (iMin >= 0 && F[iMin] < BW - k * sdW) {
+      // countermovement check: any dip below bodyweight in the second before the push
+      const tol = set.sjTolPct > 0 ? set.sjTolPct / 100 * BW : R.onsetBand;
+      const lim = Math.max(c0, cross - Math.round(1.0 * fs)), iMin = argmin(F, lim, Math.max(lim + 1, cross));
+      if (iMin >= 0 && F[iMin] < BW - tol) {
         R.cmCheck = { i: iMin, drop: BW - F[iMin] };
-        R.warnings.push(BW - F[iMin] > 0.1 * BW ? 'Force dropped ' + (BW - F[iMin]).toFixed(0) + ' N (' + ((BW - F[iMin]) / BW * 100).toFixed(0) + '% of bodyweight) below bodyweight before the push. This looks like a countermovement jump: if it is, choose CMJ in Setup.' : 'Possible countermovement: force dipped ' + (BW - F[iMin]).toFixed(0) + ' N below bodyweight just before the push (at ' + t[iMin].toFixed(3) + ' s). In a squat jump the push should start from a still squat.');
+        R.warnings.push(BW - F[iMin] > 0.1 * BW ? 'Force dropped ' + (BW - F[iMin]).toFixed(0) + ' N (' + ((BW - F[iMin]) / BW * 100).toFixed(0) + '% of bodyweight) below bodyweight before the push, so this squat jump includes a countermovement. Repeat the trial, or if it was meant to be a CMJ, choose CMJ in Setup.' : 'Possible countermovement: force dipped ' + (BW - F[iMin]).toFixed(0) + ' N (' + ((BW - F[iMin]) / BW * 100).toFixed(1) + '% of bodyweight) below bodyweight just before the push (at ' + t[iMin].toFixed(3) + ' s). In a squat jump the push should start from a still squat.');
       } else R.cmCheck = { i: -1, drop: 0 };
     }
   }
   R.onset = onset;
-  // the automatic weighing period must finish before the movement starts
-  if (w && !w.manual && set.jump !== 'dj' && w.e > onset && onset - w.s >= Math.round(0.2 * fs) && mode === 'auto') {
-    w.e = onset; BW = mean(F, w.s, w.e); wsd = sd(F, w.s, w.e);
-    R.BW = BW; R.m = BW / G; R.wsd = wsd; R.bwWeigh = BW;
-  }
+  if (set.jump !== 'dj') weighWarn();
 
   // ---------- integration ----------
   const m = R.m;
@@ -416,12 +472,39 @@ export function explain(R, i) {
 }
 
 // A first guess at the jump type from the shape of the trace (the user can change it).
-export function guessJump(D) {
+// Jump type: from the file name if it says (e.g. CMJ, cm1, SJ, SQJ, drop jump), otherwise from the shape: a CMJ
+// moves the centre of mass clearly downwards before the push (peak downward velocity beyond -0.4 m/s), a squat
+// jump does not.
+// Plain-language description of how the start of movement and the weighing were found (Events tab, Word export).
+export function onsetText(set, jump) {
+  const cm = jump !== 'sj', dir = cm ? 'below' : 'above';
+  const m = set.onsetMethod || 'sd';
+  const band = m === 'pct' ? (set.onsetPct || 10) + '% of bodyweight' : m === 'abs' ? (set.onsetN || 50) + ' N' : (set.onsetK || 5) + ' SD of the weighing';
+  const how = set.onsetSearch === 'first'
+    ? 'the first sample after the weighing more than ' + band + ' ' + dir + ' bodyweight'
+    : 'more than ' + band + ' ' + dir + ' bodyweight, found by working back from the ' + (cm ? 'lowest force of the countermovement' : 'peak of the push') + ' to the last sample inside that band (so sway earlier in the recording is ignored)';
+  return how + (set.onsetBack > 0 ? ', then moved back ' + set.onsetBack + ' ms' : '') + (m === 'sd' && (set.onsetK || 5) === 5 && set.onsetBack === 30 ? ' (Owen et al., 2014)' : '');
+}
+export function weighText(set) {
+  return 'The steadiest ' + (set.weighLen || 1) + ' s (lowest SD) of still standing ending within the second before the start of movement' + (set.weighLen >= 1 ? '' : ' (at least 1 s is recommended)');
+}
+
+export function jumpFromName(name) {
+  const s = ' ' + String(name || '').replace(/\.[^.]+$/, '').toLowerCase().replace(/[_\-.]+/g, ' ') + ' ';
+  if (/[^a-z](dj|drop ?jump|depth ?jump)\d*[^a-z]/.test(s)) return 'dj';
+  if (/[^a-z](cmj|cm|counter ?movement( ?jump)?)\d*[^a-z]/.test(s)) return 'cmj';
+  if (/[^a-z](sj|sqj|squat ?jump)\d*[^a-z]/.test(s)) return 'sj';
+  return '';
+}
+export function guessJump(D, name) {
   const n = D.n, fs = D.fs, F = new Float64Array(n);
   D.plates.forEach((p) => { for (let i = 0; i < n; i++) F[i] += p.fz[i]; });
   const k = Math.max(5, Math.round(0.1 * fs));
   if (mean(F, 0, k) < 50) return 'dj';
+  const byName = jumpFromName(name);
+  if (byName) return byName;
   const R = analyseCore(D, Object.assign(defaultSettings(), { jump: 'cmj' }), 0);
-  if (!R.ok && /squat jump/.test(R.error || '')) return 'sj';
-  return 'cmj';
+  if (!R.ok) return /squat jump/i.test(R.error || '') ? 'sj' : 'cmj';
+  let vMin = 0; for (let i = R.onset; i < R.TO; i++) if (R.v[i] < vMin) vMin = R.v[i];
+  return vMin < -0.4 ? 'cmj' : 'sj';
 }

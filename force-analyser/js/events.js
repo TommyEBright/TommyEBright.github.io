@@ -1,11 +1,12 @@
 // Tab 2: the events table, with nudging one sample at a time and resetting to automatic.
-import { A, $, esc, persist } from './state.js?v=2.2.1';
-import { applyEvent } from './trace.js?v=2.2.1';
+import { A, $, esc, persist } from './state.js?v=2.3.0';
+import { onsetText, weighText } from './analyse.js?v=2.3.0';
+import { applyEvent } from './trace.js?v=2.3.0';
 
 const HOW = {
   cmj: [
-    ['Weighing', 'The last still period before the jump (up to 1 s) whose force varies about as little as the quietest part of the trial.'],
-    ['Start of movement', 'The first sample after weighing more than 5 SD below bodyweight, moved back 30 ms (Owen et al., 2014).'],
+    ['Weighing', '@weigh.'],
+    ['Start of movement', '@onset.'],
     ['Peak downward velocity', 'The most negative velocity before take-off. It is where force comes back up to bodyweight (net force = 0).'],
     ['Lowest point', 'Where velocity crosses zero after peak downward velocity: the end of braking and the start of propulsion.'],
     ['Take-off', 'The first sample below the contact threshold.'],
@@ -13,15 +14,15 @@ const HOW = {
     ['Lowest point after landing', 'Where velocity is back to zero after landing.']
   ],
   sj: [
-    ['Weighing', 'The last still period before the push (in the squat), up to 1 s.'],
-    ['Start of push', 'The first sample after weighing more than 5 SD above bodyweight, moved back 30 ms. Any dip below bodyweight before this is flagged as a possible countermovement.'],
+    ['Weighing', '@weigh (in the squat, and before any dip).'],
+    ['Start of push', '@onset. Any dip below bodyweight in the second before this is flagged as a possible countermovement.'],
     ['Take-off', 'The first sample below the contact threshold.'],
     ['Landing', 'The first sample back above the contact threshold.'],
     ['Lowest point after landing', 'Where velocity is back to zero after landing.']
   ],
   slj: [
-    ['Weighing', 'The last still period before the jump (up to 1 s).'],
-    ['Start of movement', 'Bodyweight &minus; 5 SD of the weighing, as in a CMJ, but found by working back from the lowest force of the countermovement to the last sample above that level, then moved back 30 ms. Working back means a wobble while balancing (e.g. on one leg) is not taken as the start.'],
+    ['Weighing', '@weigh.'],
+    ['Start of movement', '@onset.'],
     ['Peak downward velocity', 'The most negative vertical velocity before take-off (force back up to bodyweight).'],
     ['Lowest point', 'Where vertical velocity crosses zero: the end of braking and the start of propulsion.'],
     ['Take-off', 'The first sample below the contact threshold. The landing is off the plate, so there is no landing.'],
@@ -67,7 +68,7 @@ export function renderEvents() {
     const t = A.D.t[i]; if (t < A.view.x0 || t > A.view.x1) { const w = A.view.x1 - A.view.x0; A.fn.setView(t - w / 2, t + w / 2); }
     A.fn.cursorChanged(); document.getElementById('traceCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }));
-  $('evHow').innerHTML = HOW[R.jump].map(([a, b]) => '<li><strong>' + a + ':</strong> ' + b + '</li>').join('');
+  $('evHow').innerHTML = HOW[R.jump].map(([a, b]) => '<li><strong>' + a + ':</strong> ' + b.replace('@weigh', weighText(A.S.set)).replace('@onset', (() => { const o = onsetText(A.S.set, R.jump); return o.charAt(0).toUpperCase() + o.slice(1); })()) + '</li>').join('');
 }
 
 export function initEvents() {
