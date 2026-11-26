@@ -1,7 +1,8 @@
 // Compare trials: a table of results for every trial with group means, overlaid curves and whole-session exports.
 import { A, $, esc, download, trialLabel } from './state.js?v=2.3.0';
 import { buildData } from './parse.js?v=2.3.0';
-import { analyse, JUMP_SHORT } from './analyse.js?v=2.3.0';
+import { analyse, JUMP_SHORT, eventChoices, eventIndex } from './analyse.js?v=2.3.0';
+import { setFigure } from './figbuild.js?v=2.3.0';
 import { computeVars, display } from './vars.js?v=2.3.0';
 import { meanSD, resample } from './maths.js?v=2.3.0';
 import { Chart, frame, axes, line, range } from './plot.js?v=2.3.0';
@@ -41,8 +42,11 @@ export function renderCompare() {
   data = T.map((t) => Object.assign({ t, g: groupOf(t) }, analyseTrial(t)));
   const jumps = [cur];
   const gen = !!(data[0] && data[0].R.generic);
+  $('cmpEvWrap').classList.toggle('hide', gen); $('cmpEvWrap2').classList.toggle('hide', gen); $('cmpFig').parentNode.classList.toggle('hide', gen);
+  if (!gen) { fillEvents(cur); [...$('cmpVar').options].forEach((o) => { o.hidden = false; }); }
   [...$('cmpVar').options].forEach((o) => { o.hidden = gen && o.value !== 'F'; }); if (gen) $('cmpVar').value = 'F';
-  $('cmpAlign').options[0].textContent = gen ? 'Lined up at the start of the first window (seconds)' : 'Lined up at take-off (seconds)';
+  $('cmpAlign').options[0].textContent = gen ? 'Lined up at the start of the first window (seconds)' : 'Seconds, lined up at the second event';
+  $('cmpAlign').options[1].hidden = gen; if (gen && $('cmpAlign').value === 'from') $('cmpAlign').value = 'to';
   if (chosenFor !== cur) { chosen = null; chosenFor = cur; }
   // metric chips
   const all = [];
@@ -83,9 +87,19 @@ function curveOf(d, v) {
     return { a: w.i0, b: w.i1, align: w.i0, y: (i) => c.y[i] / k, fs: R.fs, R };
   }
   const k = v === 'F' ? (A.units === 'Nkg' ? R.m : A.units === 'BW' ? R.BW : 1) : v === 'P' ? (A.units === 'N' ? 1 : R.m) : v === 's' ? 0.01 : 1;
-  const src = { F: R.F, v: R.v, s: R.s, P: R.P }[v];
-  const a = R.jump === 'dj' ? R.TD : R.onset, b = R.TO;
-  return { a, b, y: (i) => src[i] / k, fs: R.fs, R };
+  const src = { F: R.F, a: R.a, v: R.v, s: R.s, P: R.P }[v];
+  const ev = evSel(R.jump), a = eventIndex(R, ev[0]), b = eventIndex(R, ev[1]);
+  if (a < 0 || b <= a) return null;
+  return { a, b, align: $('cmpAlign').value === 'from' ? a : b, y: (i) => src[i] / k, fs: R.fs, R };
+}
+// the two events chosen for the curves (defaults: start of movement, or touchdown, to take-off)
+function evSel(jump) {
+  const ch = eventChoices(jump).map((x) => x[0]), f = $('cmpFrom').value, t = $('cmpTo').value;
+  return [ch.includes(f) ? f : (jump === 'dj' ? 'td' : 'onset'), ch.includes(t) ? t : 'to'];
+}
+function fillEvents(jump) {
+  const ch = eventChoices(jump), keep = evSel(jump);
+  ['cmpFrom', 'cmpTo'].forEach((id, j) => { $(id).innerHTML = ch.map(([k, l]) => '<option value="' + k + '"' + (k === keep[j] ? ' selected' : '') + '>' + l + '</option>').join(''); });
 }
 function curves() {
   const v = $('cmpVar').value, mode = $('cmpAlign').value;
@@ -125,9 +139,10 @@ function drawCmp(ctx, w, h) {
   const xs = cs.flatMap((c) => [c.x[0], c.x[c.x.length - 1]]);
   const yr = range(cs.map((c) => c.y).concat(gm.map((g) => g.lo), gm.map((g) => g.hi)), 0, 1e7, [0], 0.06);
   const fr = frame(w, h, mode === 'norm' ? 0 : Math.min(...xs), mode === 'norm' ? 100 : Math.max(...xs), yr[0], yr[1]);
-  const ylab = { F: A.units === 'Nkg' ? 'Force (N/kg)' : A.units === 'BW' ? 'Force (bodyweights)' : 'Force (N)', v: 'Velocity (m/s)', s: 'Displacement (cm)', P: A.units === 'N' ? 'Power (W)' : 'Power (W/kg)' }[v];
+  const ylab = { F: A.units === 'Nkg' ? 'Force (N/kg)' : A.units === 'BW' ? 'Force (bodyweights)' : 'Force (N)', a: 'Acceleration (m/s²)', v: 'Velocity (m/s)', s: 'Displacement (cm)', P: A.units === 'N' ? 'Power (W)' : 'Power (W/kg)' }[v];
+  const evn = data[0].R.generic ? null : (() => { const ch = Object.fromEntries(eventChoices(data[0].R.jump)), e = evSel(data[0].R.jump); return e.map((k) => (ch[k] || '').replace(/ \(.*\)$/, '').toLowerCase()); })();
   const g0 = data[0].R.generic ? data[0].R.windows[0] : null;
-  axes(ctx, fr, { ylab, xlab: g0 ? (mode === 'norm' ? '% of ' + g0.name.replace(/ \d+$/, '').toLowerCase() + ' (first window of each trial)' : 'Time from the start of the first window (s)') : mode === 'norm' ? '% of ' + (data[0].R.jump === 'dj' ? 'contact (touchdown to take-off)' : 'start of movement to take-off') : 'Time from take-off (s)' });
+  axes(ctx, fr, { ylab, xlab: g0 ? (mode === 'norm' ? '% of ' + g0.name.replace(/ \d+$/, '').toLowerCase() + ' (first window of each trial)' : 'Time from the start of the first window (s)') : mode === 'norm' ? 'Time (% of ' + evn[0] + ' to ' + evn[1] + ')' : 'Time from ' + (mode === 'from' ? evn[0] : evn[1]) + ' (s)' });
   if ($('cmpTrials').checked) cs.forEach((c) => { const gi = gm.findIndex((g) => g.g === c.d.g); line(ctx, fr, c.x, c.y, { col: PAL[gi % PAL.length], width: 1.2, alpha: 0.45 }); });
   gm.forEach((g) => {
     if (g.n > 1) { ctx.save(); ctx.globalAlpha = 0.14; ctx.fillStyle = g.col; ctx.beginPath(); g.x.forEach((x, j) => (j ? ctx.lineTo(fr.X(x), fr.Y(g.hi[j])) : ctx.moveTo(fr.X(x), fr.Y(g.hi[j])))); for (let j = g.x.length - 1; j >= 0; j--) ctx.lineTo(fr.X(g.x[j]), fr.Y(g.lo[j])); ctx.closePath(); ctx.fill(); ctx.restore(); }
@@ -138,9 +153,12 @@ function drawCmp(ctx, w, h) {
 function legend(groups) {
   $('cmpLegend').innerHTML = '<div class="legend">' + groups.map((g, gi) => '<span><span class="cmpkey" style="border-color:' + PAL[gi % PAL.length] + '"></span>' + esc(g) + ' (mean' + (data.filter((d) => d.g === g).length > 1 ? ' &plusmn; SD' : '') + ')</span>').join('') + '</div>';
   if (data[0] && data[0].R.generic) { $('cmpNormInfo').textContent = 'The first window of each trial (e.g. its first contact), ' + ($('cmpAlign').value === 'norm' ? 'stretched or squashed to 0–100% (101 points) so trials of different lengths can be averaged point by point.' : 'lined up at its start. The thick line is the group mean.'); return; }
-  $('cmpNormInfo').textContent = $('cmpAlign').value === 'norm'
-    ? 'Each trial from the start of movement (or touchdown) to take-off is stretched or squashed to 0–100% (101 points), so trials of different lengths can be averaged point by point.'
-    : 'Each trial is lined up so that take-off is at 0 s. The thick line is the group mean (where every trial has data).';
+  const ch = Object.fromEntries(eventChoices(data[0].R.jump)), e = evSel(data[0].R.jump), nA = (ch[e[0]] || '').toLowerCase(), nB = (ch[e[1]] || '').toLowerCase();
+  const miss = data.filter((d) => d.R.ok && !curveOf(d, 'F')).length;
+  $('cmpNormInfo').textContent = ($('cmpAlign').value === 'norm'
+    ? 'Each trial from ' + nA + ' to ' + nB + ' is stretched or squashed to 0–100% (101 points), so trials of different lengths can be averaged point by point.'
+    : 'Each trial from ' + nA + ' to ' + nB + ' in seconds, lined up so that ' + ($('cmpAlign').value === 'from' ? nA : nB) + ' is at 0 s. The thick line is the group mean (where every trial has data).')
+    + (miss ? ' ' + miss + ' trial' + (miss > 1 ? 's do' : ' does') + ' not have both events and ' + (miss > 1 ? 'are' : 'is') + ' left out.' : '');
 }
 
 // ---------- exports ----------
@@ -164,9 +182,11 @@ function normCsv() {
     data.forEach((d) => { const c = d.R.ok && curveOf(d, 'F'); if (!c) return; const n = c.b - c.a; if (n < 2) return; for (let j = 0; j <= 100; j++) { const x = c.a + n * j / 100, i = Math.floor(x), f = x - i; rows.push([d.t.labels.athlete, d.t.labels.condition, d.t.labels.trial, d.t.name, d.R.windows[0].name, j, (c.y(i) + (c.y(Math.min(d.R.n - 1, i + 1)) - c.y(i)) * f).toFixed(3)]); } });
     return toCsv(rows);
   }
-  const rows = [['participant', 'condition', 'trial', 'file', 'percent', 'force_' + A.units, 'velocity_m_s', 'displacement_cm', 'power_' + (A.units === 'N' ? 'W' : 'W_kg')]];
+  const e0 = data[0] && data[0].R.ok ? evSel(data[0].R.jump) : ['onset', 'to'];
+  const rows = [['participant', 'condition', 'trial', 'file', 'percent_' + e0[0] + '_to_' + e0[1], 'force_' + A.units, 'velocity_m_s', 'displacement_cm', 'power_' + (A.units === 'N' ? 'W' : 'W_kg')]];
   data.forEach((d) => {
     if (!d.R.ok) return;
+    if (!curveOf(d, 'F')) return;
     const ys = ['F', 'v', 's', 'P'].map((v) => { const c = curveOf(d, v); const n = c.b - c.a, x = [], y = []; for (let i = c.a; i <= c.b; i++) { x.push((i - c.a) / n * 100); y.push(c.y(i)); } return resample(x, y, Array.from({ length: 101 }, (_, j) => j)); });
     for (let j = 0; j <= 100; j++) rows.push([d.t.labels.athlete, d.t.labels.condition, d.t.labels.trial, d.t.name, j, ys[0][j].toFixed(3), ys[1][j].toFixed(4), ys[2][j].toFixed(2), ys[3][j].toFixed(2)]);
   });
@@ -175,7 +195,14 @@ function normCsv() {
 
 export function initCompare() {
   chart = new Chart($('cCmp'), { height: 340, draw: drawCmp });
-  ['cmpGroup', 'cmpVar', 'cmpAlign', 'cmpTrials'].forEach((id) => $(id).addEventListener('change', renderCompare));
+  ['cmpGroup', 'cmpVar', 'cmpAlign', 'cmpTrials', 'cmpFrom', 'cmpTo'].forEach((id) => $(id).addEventListener('change', renderCompare));
+  $('cmpFig').addEventListener('click', () => {
+    if (!data || !data[0] || data[0].R.generic) return;
+    const e = evSel(data[0].R.jump), mode = $('cmpAlign').value, g = $('cmpGroup').value;
+    setFigure({ type: 'trials', sig: $('cmpVar').value, from: e[0], to: e[1], tmode: mode === 'norm' ? 'norm' : 'raw', anchor: mode === 'from' ? 'from' : 'to', colourBy: g === 'none' ? 'trial' : g, units: A.units, trials: {} });
+    A.fig.on.each = $('cmpTrials').checked;
+    A.fn.showTab('figure');
+  });
   $('cmpCalc').addEventListener('click', renderCompare);
   $('cmpDiscCsv').addEventListener('click', () => { if (!data) renderCompare(); download('session_results.csv', new Blob([sessionCsv()], { type: 'text/csv' })); });
   $('cmpNormCsv').addEventListener('click', () => { if (!data) renderCompare(); download('session_time_normalised.csv', new Blob([normCsv()], { type: 'text/csv' })); });

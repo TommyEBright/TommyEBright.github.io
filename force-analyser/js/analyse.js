@@ -108,22 +108,26 @@ const first = (n, i0, i1, test) => { for (let i = Math.max(0, i0); i < Math.min(
 // with nobody on the plate (the flight, or after take-off in a standing long jump, or before touchdown in a drop jump).
 // Its mean (the plate's offset: it should read 0 N) is taken off every sample, and the threshold becomes 5 SD of its
 // noise (at least 3 N, at most 50 N). Then the trial is analysed again. If anything fails, the fixed threshold is kept.
+// Lake et al. (2018a, 2018b): flight found with a 10 N threshold, the 'centre flight phase' is that flight without
+// its first and last 30 ms, and take-off and landing are where force crosses the centre-flight mean + 5 SD.
 export function analyse(D, set0) {
-  const R1 = analyseCore(D, set0, 0);
-  if (set0.thrMode === 'fixed' || !R1.ok) return R1;
-  const fs = D.fs, n = D.n, g = Math.round(0.02 * fs), segs = [];
+  if (set0.thrMode === 'fixed') return analyseCore(D, set0, 0);
+  let R1 = analyseCore(D, Object.assign({}, set0, { thr: 10 }), 0);
+  if (!R1.ok) R1 = analyseCore(D, set0, 0); // e.g. a noisy plate that never reads below 10 N in the air
+  if (!R1.ok) return R1;
+  const fs = D.fs, n = D.n, g = Math.round(0.03 * fs), segs = [];
   if (R1.LD > R1.TO) segs.push([R1.TO + g, R1.LD - g]);
   else if (R1.TO > 0) segs.push([R1.TO + Math.round(0.05 * fs), Math.min(n, R1.TO + Math.round(1.05 * fs))]);
   if (R1.TD > 0) segs.push([g, R1.TD - g]);
   const seg = segs.filter((s) => s[1] - s[0] >= Math.round(0.03 * fs)).sort((a, b) => (b[1] - b[0]) - (a[1] - a[0]))[0];
-  if (!seg) { R1.notes.push('No clean period with nobody on the plate was found, so the fixed contact threshold (' + set0.thr + ' N) was used.'); return R1; }
+  if (!seg) { R1.notes.push('No clean period with nobody on the plate was found, so a fixed contact threshold (' + R1.thrUsed + ' N) was used.'); return R1; }
   const off = mean(R1.Fraw, seg[0], seg[1]), nsd = sd(R1.Fraw, seg[0], seg[1]);
   if (!(Math.abs(off) < 100)) { R1.notes.push('The empty plate read ' + off.toFixed(0) + ' N, which is too far from 0 N to trust, so the fixed contact threshold was used.'); return R1; }
-  const thr = Math.min(50, Math.max(3, 5 * nsd));
+  const thr = Math.min(50, Math.max(2, 5 * nsd));
   const R = analyseCore(D, Object.assign({}, set0, { thr }), off);
   if (!R.ok) { R1.notes.push('The threshold from the empty plate did not work for this trial, so the fixed contact threshold (' + set0.thr + ' N) was used.'); return R1; }
   R.thrInfo = { off, sd: nsd, thr, a: seg[0], b: seg[1], fixed: set0.thr };
-  R.notes.push('Contact threshold ' + thr.toFixed(1) + ' N: 5 &times; the noise (SD ' + nsd.toFixed(2) + ' N) of the empty plate from ' + (seg[0] / fs).toFixed(3) + ' to ' + (seg[1] / fs).toFixed(3) + ' s.' + (Math.abs(off) >= 1 ? ' The empty plate read ' + off.toFixed(1) + ' N instead of 0 N, so ' + off.toFixed(1) + ' N was taken off every sample (the plate was not quite zeroed).' : ''));
+  R.notes.push('Contact threshold ' + thr.toFixed(1) + ' N: mean + 5 SD (SD ' + nsd.toFixed(2) + ' N) of the centre of the flight (or empty plate) from ' + (seg[0] / fs).toFixed(3) + ' to ' + (seg[1] / fs).toFixed(3) + ' s (Lake et al., 2018).' + (Math.abs(off) >= 1 ? ' The empty plate read ' + off.toFixed(1) + ' N instead of 0 N, so ' + off.toFixed(1) + ' N was taken off every sample (the plate was not quite zeroed).' : ''));
   return R;
 }
 
@@ -508,3 +512,30 @@ export function guessJump(D, name) {
   let vMin = 0; for (let i = R.onset; i < R.TO; i++) if (R.v[i] < vMin) vMin = R.v[i];
   return vMin < -0.4 ? 'cmj' : 'sj';
 }
+
+// ---------- events by name, for lining trials up and cutting out windows (Compare trials, Figure) ----------
+const EV_LABELS = {
+  onset: 'Start of movement', vmin: 'Peak downward velocity (start of braking)', zero: 'Lowest point (start of propulsion)',
+  minF: 'Lowest force', pkF: 'Peak force (before take-off)', td: 'Touchdown', to: 'Take-off', ld: 'Landing', le: 'Lowest point after landing'
+};
+export function eventChoices(jump) {
+  const k = jump === 'sj' ? ['onset', 'pkF', 'to', 'ld', 'le'] : jump === 'dj' ? ['td', 'zero', 'pkF', 'to', 'ld', 'le'] : ['onset', 'minF', 'vmin', 'zero', 'pkF', 'to', 'ld', 'le'];
+  return k.map((x) => [x, x === 'onset' && jump === 'sj' ? 'Start of push' : EV_LABELS[x]]);
+}
+export function eventIndex(R, key) {
+  if (!R || !R.ok || R.generic) return -1;
+  const a = R.jump === 'dj' ? R.TD : R.onset;
+  switch (key) {
+    case 'onset': return R.jump === 'dj' ? -1 : R.onset;
+    case 'td': return R.jump === 'dj' ? R.TD : -1;
+    case 'vmin': return R.vMinI >= 0 && R.jump !== 'sj' && R.jump !== 'dj' ? R.vMinI : -1;
+    case 'zero': return R.jump === 'dj' ? (R.lowI > 0 ? R.lowI : -1) : R.zeroI > 0 ? R.zeroI : -1;
+    case 'minF': return R.minFI >= 0 ? R.minFI : -1;
+    case 'pkF': return a >= 0 && R.TO > a ? argmax(R.F, a, R.TO) : -1;
+    case 'to': return R.TO;
+    case 'ld': return R.LD > 0 ? R.LD : -1;
+    case 'le': return R.landEndI > 0 ? R.landEndI : -1;
+    default: return -1;
+  }
+}
+export const EVENT_LABELS = EV_LABELS;
