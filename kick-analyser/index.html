@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="css/style.css?v=1.0.0">
+<link rel="stylesheet" href="css/style.css?v=1.1.0">
 </head>
 <body>
 <header class="top">
@@ -164,14 +164,22 @@
       <p class="lead">Foot contact and toe-off are found automatically (vertical force crossing the contact threshold). Ball contact has to be marked from video. Put the cursor on the graph at the moment of ball contact (fix it with a click, step with <kbd>&larr;</kbd> <kbd>&rarr;</kbd>) and press <strong>Set to the cursor</strong>, or type the time.</p>
       <div class="tablewrap" style="max-height:none"><table id="ptTab"></table></div>
       <div class="row tight"><button class="btn small ghost" id="ptReset" type="button">Put foot contact and toe-off back to automatic</button></div>
-      <div class="tip"><p><strong>Finding ball contact on video:</strong> count the frames from the first frame the standing foot touches the ground to the first frame the boot touches the ball, then divide by the frame rate (e.g. 24 frames at 240 fps = 100 ms). Type that number of ms into the Ball contact row.</p></div>
+      <h3>Ball contact from video</h3>
+      <p class="muted" style="margin:.2rem 0">No syncing needed: the standing foot landing is on the video <em>and</em> in the force data, so it links the two. Film side-on, in slow motion (240 fps if the phone allows, 120 fps at least), with the plate and the ball in view. Step through frame by frame and note two frame numbers (most video players and Kinematic Analysis show them).</p>
+      <div class="row">
+        <div><label for="vFps">Video frame rate (fps)</label><input type="number" id="vFps" value="240" min="1" step="1"></div>
+        <div><label for="vF1">Frame: standing foot first touches</label><input type="number" id="vF1" step="1" placeholder="e.g. 112"></div>
+        <div><label for="vF2">Frame: boot first touches the ball</label><input type="number" id="vF2" step="1" placeholder="e.g. 131"></div>
+      </div>
+      <div class="row tight"><button class="btn small accent" id="vSet" type="button">Set ball contact</button><span class="muted" id="vOut"></span></div>
+      <div class="tip"><p><strong>How accurate is it?</strong> One frame at 240 fps is about 4 ms; at 60 fps it is about 17 ms. Phone slow motion is usually played back slower, so use the <em>recorded</em> frame rate, not the playback one. If you have no slow motion, a clap or a stamp on the plate in view of the camera can also be used to line the two up.</p></div>
     </div>
 
     <!-- RESULTS -->
     <div class="pane hide" data-p="results">
       <div class="row tight" style="justify-content:space-between">
         <p class="lead" style="margin:0">Every result for this kick. Click a row to see how it was worked out, with this kick&rsquo;s own numbers.</p>
-        <button class="btn small ghost" id="resCsv" type="button">Download results (CSV)</button>
+        <div class="row tight"><button class="btn small" type="button" data-defs>&#9432; What do these mean?</button><button class="btn small ghost" id="resCsv" type="button">Download results (CSV)</button></div>
       </div>
       <div id="resTab"></div>
     </div>
@@ -181,7 +189,7 @@
 
     <!-- COMPARE -->
     <div class="pane hide" data-p="compare">
-      <p id="cmpMsg" class="muted"></p>
+      <div class="row tight" style="justify-content:space-between"><p id="cmpMsg" class="muted" style="margin:0"></p><button class="btn small" type="button" data-defs>&#9432; What do these mean?</button></div>
       <div id="cmpBody" class="hide">
         <div class="row">
           <div><label for="cmpMode">Table</label><select id="cmpMode"><option value="sum">One column per kick type (mean &plusmn; SD)</option><option value="trial">One column per kick</option></select></div>
@@ -294,6 +302,10 @@
   </div>
 </dialog>
 
+<dialog id="defDlg" class="dlg" aria-labelledby="defTitle">
+  <div class="dlg-head"><h2 id="defTitle">&#9432; What the results mean</h2><button class="btn small ghost" type="button" id="defClose">Close</button></div>
+  <div class="dlg-body" id="defBody"></div>
+</dialog>
 <dialog id="citeDlg" class="dlg" aria-labelledby="citeTitle">
   <div class="dlg-head"><h2 id="citeTitle">&#10077; Cite Kick Analysis</h2><button class="btn small ghost" type="button" id="citeClose">Close</button></div>
   <div class="dlg-body">
@@ -305,6 +317,6 @@
   </div>
 </dialog>
 <script>window.addEventListener('error',function(e){var s=document.getElementById('status');if(s)s.innerHTML='<span class="bad"><strong>Something went wrong.</strong> Try a hard refresh (Ctrl + Shift + R, or Cmd + Shift + R on a Mac). If it keeps happening, tell your tutor: '+(e.message||'')+'</span>';});</script>
-<script type="module" src="js/app.js?v=1.0.0"></script>
+<script type="module" src="js/app.js?v=1.1.0"></script>
 </body>
 </html>

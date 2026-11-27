@@ -304,3 +304,6 @@ pre.cite { white-space: pre-wrap; word-break: break-word; background: var(--soft
 #cmpTab table td.num, #cmpTab table th.num { text-align: right; }
 #figCap, #cmpCap { margin-top: .2rem; }
 @media (max-width: 700px) { .tracegrid.kick { grid-template-columns: minmax(0, 1fr) 96px; } }
+.defrow { border-bottom: 1px solid var(--line, #e5e7eb); padding: .4rem 0; }
+.defrow p { margin: .15rem 0; }
+#defDlg { max-width: 760px; }

@@ -1,5 +1,5 @@
 // Shared state and small helpers.
-export const VERSION = '1.0.0';
+export const VERSION = '1.1.0';
 export const APP = 'Kick Analysis';
 export const COL = { fz: '#1d4ed8', ap: '#dc2626', ml: '#7c3aed', cap: '#0f766e', cml: '#d97706', tz: '#475569', stance: 'rgba(29,78,216,.06)', ball: '#111827', ev: '#334155' };
 export const OKABE = ['#0072B2', '#D55E00', '#009E73', '#CC79A7', '#E69F00', '#56B4E9', '#000000', '#999999'];

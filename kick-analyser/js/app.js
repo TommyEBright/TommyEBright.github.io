@@ -1,8 +1,8 @@
 // Page shell: files, session, the main graph, Setup, Points, Results, Compare, Export, Centre of pressure, dialogs.
-import { A, $, esc, fx, status, cur, trialLabel, download, safe, kickColour, VERSION, loadSettings, saveSettings, defaultSettings } from './state.js?v=1.0.0';
-import { parseFile, guessLabels, process, results, VARS, unitOf, valOf, SIG, sigLabel, signal } from './analyse.js?v=1.0.0';
-import { canvasG, axes, range, padRange, line, band, FONTS } from './draw.js?v=1.0.0';
-import { renderFigure, openFigure } from './figure.js?v=1.0.0';
+import { A, $, esc, fx, status, cur, trialLabel, download, safe, kickColour, VERSION, loadSettings, saveSettings, defaultSettings } from './state.js?v=1.1.0';
+import { parseFile, guessLabels, process, results, VARS, unitOf, valOf, SIG, sigLabel, signal } from './analyse.js?v=1.1.0';
+import { canvasG, axes, range, padRange, line, band, FONTS } from './draw.js?v=1.1.0';
+import { renderFigure, openFigure } from './figure.js?v=1.1.0';
 
 const UI = FONTS['System UI'];
 A.set = loadSettings();
@@ -73,7 +73,11 @@ $('sesNext').addEventListener('click', () => { if (!A.trials.length) return; A.c
 $('sesNew').addEventListener('click', () => { A.trials = []; A.cur = -1; A.kickCol = {}; A.fig = null; refreshAll(); status('New session. Add files to begin.'); });
 
 // ---------- main graph ----------
-const SHOW = [['fz', 'Vertical (Fz)', 'Fz', '#1d4ed8'], ['ap', 'Front–back', 'AP', '#dc2626'], ['ml', 'Side to side', 'ML', '#7c3aed'], ['cap', 'COP front–back', 'cAP', '#0f766e'], ['cml', 'COP side to side', 'cML', '#d97706']];
+// [key, chip label, signal, colour, panel]
+const SHOW = [['fz', 'Vertical (Fz)', 'Fz', '#1d4ed8', 'F'], ['ap', 'Front–back', 'AP', '#dc2626', 'F'], ['ml', 'Side to side', 'ML', '#7c3aed', 'F'],
+  ['cap', 'COP front–back', 'cAP', '#0f766e', 'C'], ['cml', 'COP side to side', 'cML', '#d97706', 'C'], ['cr', 'COP distance from start', 'cR', '#0891b2', 'C'],
+  ['cv', 'COP speed', 'cV', '#be185d', 'V'], ['tz', 'Free moment', 'Tz', '#475569', 'T']];
+const PANELS = { F: () => (A.units === 'BW' ? 'Force (BW)' : 'Force (N)'), C: () => 'COP (cm)', V: () => 'COP speed (cm/s)', T: () => 'Free moment (N·m)' };
 function renderChips() {
   const t = cur();
   $('showChips').innerHTML = SHOW.filter(([k, , s]) => !t || t.p[s]).map(([k, l, , c]) => '<button type="button" class="chip' + (A.show[k] ? ' active' : '') + '" data-sh="' + k + '" aria-pressed="' + !!A.show[k] + '"><span class="key" style="border-color:' + c + '"></span>' + l + '</button>').join('');
@@ -88,38 +92,42 @@ function viewOf(t) {
 }
 function drawMain() {
   const t = cur(), el = $('mainChart'); if (!t) return;
-  const H = Math.max(380, Math.min(560, Math.round(el.clientWidth * 0.48)));
-  const c = canvasIn(el, H), g = canvasG(c.ctx, UI), P = t.p, v = viewOf(t), fs = t.fs;
+  const P = t.p, v = viewOf(t), fs = t.fs;
   const x = []; for (let i = v.a; i <= v.b; i++) x.push((i - P.s) / fs * 1000);
-  const L = 64, R = 14, h1 = Math.round((H - 50) * 0.55), h2 = H - 50 - h1 - 34;
-  const fset = [['fz', 'Fz'], ['ap', 'AP'], ['ml', 'ML']].filter(([k, s]) => A.show[k] && P[s]).map(([k, s]) => ({ x, y: signal(t, s, v.a, v.b), c: SHOW.find((q) => q[0] === k)[3] }));
-  const cset = [['cap', 'cAP'], ['cml', 'cML']].filter(([k]) => A.show[k]).map(([k, s]) => ({ x, y: signal(t, s, v.a, v.b), c: SHOW.find((q) => q[0] === k)[3] }));
+  const groups = []; ['F', 'C', 'V', 'T'].forEach((pid) => { const s = SHOW.filter((q) => q[4] === pid && A.show[q[0]] && P[q[2]]); if (s.length) groups.push({ pid, s }); });
+  if (!groups.length) groups.push({ pid: 'F', s: [] });
+  const each = groups.length <= 2 ? 0 : 150, base = Math.max(380, Math.min(560, Math.round(el.clientWidth * 0.48)));
+  const H = groups.length <= 2 ? base : 40 + groups.length * each + (groups.length - 1) * 30;
+  const c = canvasIn(el, H), g = canvasG(c.ctx, UI);
+  const L = 64, R = 14, gap = 30, ph = (H - 50 - gap * (groups.length - 1)) / groups.length;
   const xr = [x[0], x[x.length - 1]];
   const shade = (ax, Y, Hh) => {
     g.rect(ax.sx(0), Y, ax.sx((P.e - P.s) / fs * 1000) - ax.sx(0), Hh, { fill: 'rgba(29,78,216,.06)' });
     if (P.cs >= 0) g.rect(ax.sx((P.cs - P.s) / fs * 1000), Y + Hh - 4, ax.sx((P.ce - P.s) / fs * 1000) - ax.sx((P.cs - P.s) / fs * 1000), 4, { fill: '#0f766e', alpha: 0.5 });
     if (P.b != null) { const bx = ax.sx((P.b - P.s) / fs * 1000); g.path([bx, Y, bx, Y + Hh], { stroke: '#111827', lw: 1.5, dash: [5, 4] }); }
   };
-  const yl1 = A.units === 'BW' ? 'Force (BW)' : 'Force (N)';
-  const ax1 = axes(g, L, 10, c.w - L - R, h1, xr, padRange(fset.length ? range(fset, 'y') : [0, 1], 0.06), { fs: 12, grid: true, zero: true, ylab: yl1, xt: true });
-  g.clip(L, 10, c.w - L - R, h1); shade(ax1, 10, h1); fset.forEach((q) => line(g, q.x, q.y, ax1.sx, ax1.sy, { stroke: q.c, lw: 1.8 })); g.unclip();
-  const Y2 = 10 + h1 + 34;
-  const ax2 = axes(g, L, Y2, c.w - L - R, h2, xr, padRange(cset.length ? range(cset, 'y') : [0, 1], 0.08), { fs: 12, grid: true, zero: true, ylab: 'COP (cm)', xlab: 'Time from foot contact (ms)' });
-  g.clip(L, Y2, c.w - L - R, h2); shade(ax2, Y2, h2); cset.forEach((q) => line(g, q.x, q.y, ax2.sx, ax2.sy, { stroke: q.c, lw: 1.8 })); g.unclip();
-  if (P.b != null) g.text('Ball contact', ax1.sx((P.b - P.s) / fs * 1000) + 4, 14, { size: 11, base: 'top', fill: '#111827', bold: true });
-  frame = { c, ax1, ax2, v, L, R, Y1: 10, h1, Y2, h2 };
+  const boxes = [];
+  groups.forEach((gr, i) => {
+    const Y = 10 + i * (ph + gap), last = i === groups.length - 1;
+    const set = gr.s.map((q) => ({ x, y: signal(t, q[2], v.a, v.b), c: q[3] }));
+    const ax = axes(g, L, Y, c.w - L - R, ph, xr, padRange(set.length ? range(set, 'y') : [0, 1], 0.07), { fs: 12, grid: true, zero: true, ylab: PANELS[gr.pid](), xlab: last ? 'Time from foot contact (ms)' : '' });
+    g.clip(L, Y, c.w - L - R, ph); shade(ax, Y, ph); set.forEach((q) => line(g, q.x, q.y, ax.sx, ax.sy, { stroke: q.c, lw: 1.8 })); g.unclip();
+    boxes.push({ Y, h: ph, ax });
+  });
+  if (P.b != null) g.text('Ball contact', boxes[0].ax.sx((P.b - P.s) / fs * 1000) + 4, 14, { size: 11, base: 'top', fill: '#111827', bold: true });
+  frame = { c, ax1: boxes[0].ax, boxes, v, L, R };
   overlay();
   drawCopBox();
 }
 function overlay() {
   const t = cur(); if (!t || !frame) return;
-  const { c, ax1, ax2, Y1, h1, Y2, h2 } = frame, o = c.octx, P = t.p;
+  const { c, ax1, boxes } = frame, o = c.octx, P = t.p;
   o.clearRect(0, 0, c.w, c.h);
   const i = A.cursor;
   if (i >= frame.v.a && i <= frame.v.b) {
     const X = ax1.sx((i - P.s) / t.fs * 1000);
     o.strokeStyle = A.pinned ? '#1d4ed8' : '#64748b'; o.lineWidth = A.pinned ? 1.5 : 1; o.setLineDash(A.pinned ? [] : [3, 3]);
-    o.beginPath(); o.moveTo(X, Y1); o.lineTo(X, Y1 + h1); o.moveTo(X, Y2); o.lineTo(X, Y2 + h2); o.stroke(); o.setLineDash([]);
+    o.beginPath(); boxes.forEach((b) => { o.moveTo(X, b.Y); o.lineTo(X, b.Y + b.h); }); o.stroke(); o.setLineDash([]);
   }
   readout();
   drawCopBox();
@@ -156,7 +164,9 @@ function readout() {
   el.className = 'readout';
   el.innerHTML = '<div class="nums"><div><span>Time from contact</span><b>' + fx(ms, 0) + ' ms</b></div><div><span>Vertical (Fz)</span><b>' + fx(P.Fz[i] * k, d) + u + '</b></div>'
     + (P.AP ? '<div><span>Front–back</span><b>' + fx(P.AP[i] * k, d) + u + '</b></div>' : '') + (P.ML ? '<div><span>Side to side</span><b>' + fx(P.ML[i] * k, d) + u + '</b></div>' : '')
-    + '<div><span>COP front–back</span><b>' + (Number.isFinite(P.cAP[i]) ? fx(P.cAP[i], 1) + ' cm' : '<span class="muted">not valid</span>') + '</b></div><div><span>COP side to side</span><b>' + (Number.isFinite(P.cML[i]) ? fx(P.cML[i], 1) + ' cm' : '<span class="muted">not valid</span>') + '</b></div></div>'
+    + '<div><span>COP front–back</span><b>' + (Number.isFinite(P.cAP[i]) ? fx(P.cAP[i], 1) + ' cm' : '<span class="muted">not valid</span>') + '</b></div><div><span>COP side to side</span><b>' + (Number.isFinite(P.cML[i]) ? fx(P.cML[i], 1) + ' cm' : '<span class="muted">not valid</span>') + '</b></div>'
+    + '<div><span>COP speed</span><b>' + (Number.isFinite(P.cV[i]) ? fx(P.cV[i], 0) + ' cm/s' : '<span class="muted">not valid</span>') + '</b></div>'
+    + (P.Tz && Number.isFinite(P.Tz[i]) ? '<div><span>Free moment</span><b>' + fx(P.Tz[i], 1) + ' N\u00b7m</b></div>' : '') + '</div>'
     + '<div class="words"><span class="ph" style="background:' + col + '">' + ph + '</span>' + words + '</div>';
 }
 function drawCopBox() {
@@ -446,3 +456,32 @@ window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); defe
 $('installBtn').addEventListener('click', async () => { if (!deferred) return; deferred.prompt(); await deferred.userChoice; deferred = null; $('installBtn').classList.add('hide'); });
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 refreshAll();
+
+// ---------- what the results mean ----------
+(function () {
+  const d = $('defDlg');
+  const intro = '<p>Force and centre of pressure (COP) go together. The plate measures the force the ground puts on the foot (three directions, plus a twist) and <strong>where</strong> that force acts: the COP. Force tells you <em>how hard</em>; COP tells you <em>where under the foot</em> and how that changes. The same measures work for kicking, landing, cutting, single-leg balance or any task with one foot on the plate.</p>'
+    + '<div class="tip"><p><strong>Which ones to report?</strong> Pick the few that answer your question, and use the same window for every trial.<br>'
+    + '<strong>Balance or standing tasks:</strong> mean COP speed, path length, 95% ellipse area and the front–back and side-to-side SD (or excursion).<br>'
+    + '<strong>Landings and plants:</strong> peak vertical force, time to peak, loading rate, peak braking force and braking impulse.<br>'
+    + '<strong>Kicks, cuts and turns:</strong> front–back and side-to-side COP excursion, COP direction, COP at the moment that matters (e.g. ball contact), and peak free moment.</p></div>';
+  let lg = '', h = intro;
+  VARS.forEach((v) => {
+    if (v.g !== lg) { h += '<h3>' + esc(v.g) + '</h3>'; lg = v.g; }
+    h += '<div class="defrow"><p><strong>' + esc(v.l) + '</strong> <span class="muted">(' + esc(v.u === 'F' ? 'N or BW' : v.u === 'I' ? 'N·s or BW·s' : v.u) + ')</span><br>' + esc(v.def) + '</p>' + (v.ex ? '<p class="muted small"><em>Example:</em> ' + esc(v.ex) + '</p>' : '') + '</div>';
+  });
+  h += '<p class="muted small">Direction conventions: front–back force is negative when braking and positive when pushing forwards. Front–back COP is positive towards the toes. Side-to-side COP and force are positive laterally (towards the little toe) when the standing foot and plate direction are set in Setup, otherwise positive is the plate’s own + direction. COP values are relative to where the COP started at foot contact.</p>';
+  $('defBody').innerHTML = h;
+  document.querySelectorAll('[data-defs]').forEach((b) => b.addEventListener('click', () => d.showModal()));
+  $('defClose').addEventListener('click', () => d.close());
+  d.addEventListener('click', (e) => { if (e.target === d) d.close(); });
+})();
+
+// ---------- ball contact from video frames ----------
+function videoMs() { const f = +$('vFps').value, a = +$('vF1').value, b = +$('vF2').value; return f > 0 && $('vF1').value !== '' && $('vF2').value !== '' ? (b - a) / f * 1000 : NaN; }
+['vFps', 'vF1', 'vF2'].forEach((id) => $(id).addEventListener('input', () => { const m = videoMs(); $('vOut').textContent = Number.isFinite(m) ? (m >= 0 ? (fx(m, 0) + ' ms after foot contact (±' + fx(1000 / +$('vFps').value, 0) + ' ms)') : 'Ball contact must come after foot contact.') : ''; }));
+$('vSet').addEventListener('click', () => {
+  const t = cur(), m = videoMs(); if (!t) return;
+  if (!(m > 0)) { $('vOut').textContent = 'Type the frame rate and both frame numbers first.'; return; }
+  t.set.ball = t.raw.t[t.p.s] + m / 1000; refreshAll(); status('Ball contact set at ' + fx(m, 0) + ' ms from foot contact, from the video frames.');
+});
