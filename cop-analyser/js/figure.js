@@ -1,11 +1,11 @@
-// The figure builder (tab "4. Figure"): one kick, kicks compared (one signal or four panels), the centre of pressure
+// The figure builder (tab "4. Figure"): one trial, conditions compared (one signal or four panels), the centre of pressure
 // path under the foot, or a bar chart of any result. Every choice shows straight away; PNG, SVG or copy.
-import { A, $, esc, fx, download, trialLabel, kickColour, cur } from './state.js?v=1.1.0';
-import { VARS, results, valOf, unitOf, SIG, sigLabel, sigUnit, signal } from './analyse.js?v=1.1.0';
-import { FONTS, canvasG, svgG, axes, range, padRange, line, band, legend, legendH, textW } from './draw.js?v=1.1.0';
+import { A, $, esc, fx, download, trialLabel, kickColour, cur } from './state.js?v=1.2.0';
+import { VARS, results, valOf, unitOf, SIG, sigLabel, sigUnit, signal } from './analyse.js?v=1.2.0';
+import { FONTS, canvasG, svgG, axes, range, padRange, line, band, legend, legendH, textW } from './draw.js?v=1.2.0';
 
 const SIZES = { slide: ['Slide (16:9)', 960, 540], report: ['Report (4:3)', 800, 600], wide: ['Wide and short', 1000, 400], poster: ['Poster (3:2)', 1080, 720], tall: ['Tall', 720, 960], square: ['Square', 800, 800], journal1: ['Journal, one column', 700, 520], journal2: ['Journal, two columns', 1400, 700], custom: ['Custom size', 0, 0] };
-const TYPES = { foot: 'Coach footprint', one: 'One kick', curves: 'Kicks compared', four: 'Four panels', path: 'COP path under the foot', bar: 'Bar chart of a result' };
+const TYPES = { foot: 'Coach footprint', one: 'One trial', curves: 'Conditions compared', four: 'Four panels', path: 'COP path under the foot', bar: 'Bar chart of a result' };
 const DASHES = [null, [8, 4], [2, 3], [8, 3, 2, 3], [14, 5], [4, 4]];
 function defaults() {
   return { type: 'four', trial: '', panels: { Fz: true, AP: true, ML: false, cAP: true, cML: true }, sig: 'Fz', trials: {}, show: 'each', xm: 'ms', ball: true, stance: true,
@@ -147,7 +147,7 @@ function drawFoot(g, W, H, f, ts) {
   const key = (draw, l) => { draw(kx + R, ky); g.text(l, kx + 2 * R + 5, ky, { size: fs * 0.78, base: 'middle' }); kx += 2 * R + 14 + textW(l, fs * 0.78, g.font); };
   key((x, y) => g.circle(x, y, R, { fill: '#fff', stroke: '#111827', lw: 2 }), 'Lands');
   key((x, y) => g.path([x, y - R * 1.3, x + R * 1.3, y, x, y + R * 1.3, x - R * 1.3, y, x, y - R * 1.3], { fill: '#dc2626' }), 'Peak force');
-  if (ts.some((t) => t.p.b != null)) key((x, y) => { g.circle(x, y, R * 1.2, { fill: '#fff', stroke: '#111827', lw: 2 }); g.circle(x, y, R * 0.45, { fill: '#111827' }); }, 'Ball contact');
+  if (ts.some((t) => t.p.b != null)) key((x, y) => { g.circle(x, y, R * 1.2, { fill: '#fff', stroke: '#111827', lw: 2 }); g.circle(x, y, R * 0.45, { fill: '#111827' }); }, 'Key event');
   key((x, y) => g.rect(x - R, y - R, 2 * R, 2 * R, { fill: '#111827' }), 'Toe-off');
   g.text('Line thickness = how hard the foot is pressing. Foot outline is a guide only.', W / 2, by + fs * 1.45, { size: fs * 0.68, anchor: 'middle', base: 'top', fill: '#64748b' });
 }
@@ -156,7 +156,7 @@ export function drawFigure(g, W, H, f) {
   const fs = f.font, top0 = (f.title ? fs * 2.2 : 10);
   if (f.title) g.text(f.title, W / 2, fs * 0.4, { size: fs * 1.2, bold: true, anchor: 'middle', base: 'top' });
   const ts = chosen();
-  if (!ts.length) { g.text('Add or choose some kicks to see the figure', W / 2, H / 2, { size: fs, anchor: 'middle', fill: '#64748b' }); return; }
+  if (!ts.length) { g.text('Add or choose some trials to see the figure', W / 2, H / 2, { size: fs, anchor: 'middle', fill: '#64748b' }); return; }
   if (f.type === 'foot') { drawFoot(g, W, H, f, ts); return; }
   const L = fs * 5.2, B = fs * 3.6, R = 18;
   if (f.type === 'one') {
@@ -178,7 +178,7 @@ export function drawFigure(g, W, H, f) {
   if (f.type === 'curves' || f.type === 'four') {
     const ks4 = f.type === 'four' ? ['Fz', 'AP', 'cAP', 'cML'] : [f.sig];
     const first = curves(ks4[0], f), items = uniq(first.out.map((q) => ({ l: q.l, c: q.c, dash: q.dash })));
-    if (f.ball && first.marks.some((m) => Number.isFinite(m.x))) items.push({ l: 'Ball contact', c: '#475569', dash: [5, 4] });
+    if (f.ball && first.marks.some((m) => Number.isFinite(m.x))) items.push({ l: 'Key event', c: '#475569', dash: [5, 4] });
     const lh = f.legend && f.legendPos === 'top' ? legendH(items, W - L - R, fs, g.font) : 0;
     if (f.legend && f.legendPos === 'top') legend(g, items, L, top0, W - L - R, fs, 'top', f.lw);
     const top = top0 + lh + (f.type === 'four' && f.letters ? fs * 1.3 : 6);
@@ -206,7 +206,7 @@ export function drawFigure(g, W, H, f) {
       series.push({ x, y, c: colOf(k), dash: f.dash ? DASHES[ks.indexOf(k) % DASHES.length] : null, l: k + (n > 1 ? ' (n = ' + n + ')' : ''), bi: f.ball && P.b != null && P.b >= P.cs && P.b <= e ? P.b - P.cs : null });
     });
     const items = uniq(series.map((q) => ({ l: q.l, c: q.c, dash: q.dash })));
-    items.push({ l: 'start and end' + (series.some((q) => q.bi !== null) ? ', × ball contact' : ''), marker: true });
+    items.push({ l: 'start and end' + (series.some((q) => q.bi !== null) ? ', × key event' : ''), marker: true });
     const lh = f.legend && f.legendPos === 'top' ? legendH(items, W - L - R, fs, g.font) : 0;
     if (f.legend && f.legendPos === 'top') legend(g, items, L, top0, W - L - R, fs, 'top', f.lw);
     const top = top0 + lh + 6, pw = W - L - R, ph = H - top - B;
@@ -234,7 +234,7 @@ export function drawFigure(g, W, H, f) {
   let lo = 0, hi = 0; grp.forEach((q) => { q.vals.forEach((x) => { if (Number.isFinite(x)) { lo = Math.min(lo, x); hi = Math.max(hi, x); } }); if (q.st.n) { const e = Number.isFinite(q.st.sd) ? q.st.sd : 0; hi = Math.max(hi, q.st.m + e); lo = Math.min(lo, q.st.m - e); } });
   const top = top0 + 6, pw = W - L - R, ph = H - top - B;
   const yr = padRange([lo, hi + (hi - lo) * 0.08], 0, [num(f.lim.y0), num(f.lim.y1)]);
-  const ax = axes(g, L, top, pw, ph, [0, 1], yr, { fs, grid: f.grid, zero: true, xt: false, xlab: f.xlab || 'Kick type', ylab: f.ylab || v.l + ' (' + unitOf(v) + ')' });
+  const ax = axes(g, L, top, pw, ph, [0, 1], yr, { fs, grid: f.grid, zero: true, xt: false, xlab: f.xlab || 'Condition', ylab: f.ylab || v.l + ' (' + unitOf(v) + ')' });
   const bw = pw / ks.length;
   grp.forEach((q, i) => {
     const cx = L + bw * (i + 0.5), w = bw * 0.55, c = colOf(q.k);
@@ -251,17 +251,17 @@ export function drawFigure(g, W, H, f) {
 
 function caption(f) {
   const ts = chosen(), ks = kicksOf(ts); if (!ks.length) return '';
-  const win = A.set.win === 'ball' ? 'from foot contact to ball contact' : 'during stance';
-  const multi = ts.length > ks.length, mean = f.show === 'mean' && multi ? ' Lines are the mean for each kick type and shaded bands ± 1 SD.' : '';
-  const ball = f.ball && ts.some((t) => t.p.b != null) ? ' Dashed vertical lines mark ball contact.' : '';
+  const win = A.set.win === 'ball' ? 'from foot contact to the key event' : 'during contact';
+  const multi = ts.length > ks.length, mean = f.show === 'mean' && multi ? ' Lines are the mean for each condition and shaded bands ± 1 SD.' : '';
+  const ball = f.ball && ts.some((t) => t.p.b != null) ? ' Dashed vertical lines mark the key event.' : '';
   const xs = f.xm === 'pct' ? 'normalised to 100% of stance' : 'from foot contact';
   const P0 = ts[0].p, ml = P0.known ? 'lateral' : 'towards ' + P0.mlName;
-  if (f.type === 'foot') return 'Figure X. Centre of pressure (COP) under the support foot for the ' + AND(ks) + ' kicks, seen from above with the toes at the top. The trail runs from foot contact (open circle) to toe-off (filled square), coloured by ' + (f.footCol === 'force' ? 'vertical force' : 'time') + ' and thicker where the foot pressed harder; the red diamond marks peak vertical force. The foot outline is illustrative.';
-  if (f.type === 'one') { const tr = A.trials.find((t) => t.id === f.trial) || ts[0]; return 'Figure X. Forces and centre of pressure (COP) under the support leg for one ' + tr.labels.kick.toLowerCase() + ' kick (' + trialLabel(tr) + '), ' + xs + '. Negative front–back force is braking; COP is shown relative to its position at foot contact.' + ball; }
-  if (f.type === 'curves') return 'Figure X. ' + SIG[f.sig].l + ' under the support leg ' + win + ' for the ' + AND(ks) + ' kicks, ' + xs + '.' + mean + ball + (f.sig === 'AP' ? ' Negative values are braking and positive values propulsion.' : f.sig[0] === 'c' ? ' COP is relative to its position at foot contact.' : '');
-  if (f.type === 'four') return 'Figure X. Support leg (A) vertical force, (B) front–back force (negative = braking), (C) front–back centre of pressure (COP; positive = towards the toes) and (D) side-to-side COP (positive = ' + ml + ') for the ' + AND(ks) + ' kicks, ' + xs + '. COP is relative to its position at foot contact.' + mean + ball;
-  if (f.type === 'path') return 'Figure X. Centre of pressure path under the support foot ' + win + ' for the ' + AND(ks) + ' kicks, seen from above. Open circles mark the start (foot contact) and filled squares the end. Positive front–back is towards the toes and positive side to side is ' + ml + '.';
-  const v = VARS.find((q) => q.k === f.bar); return 'Figure X. ' + v.l + ' (' + unitOf(v) + ') of the support leg for each kick type' + (multi ? ', mean ± SD with each trial as a dot.' : '.');
+  if (f.type === 'foot') return 'Figure X. Centre of pressure (COP) under the foot for the ' + AND(ks) + ' conditions, seen from above with the toes at the top. The trail runs from foot contact (open circle) to toe-off (filled square), coloured by ' + (f.footCol === 'force' ? 'vertical force' : 'time') + ' and thicker where the foot pressed harder; the red diamond marks peak vertical force. The foot outline is illustrative.';
+  if (f.type === 'one') { const tr = A.trials.find((t) => t.id === f.trial) || ts[0]; return 'Figure X. Forces and centre of pressure (COP) under the foot for one trial (' + trialLabel(tr) + '), ' + xs + '. Negative front–back force is braking; COP is shown relative to its position at foot contact.' + ball; }
+  if (f.type === 'curves') return 'Figure X. ' + SIG[f.sig].l + ' under the foot ' + win + ' for the ' + AND(ks) + ' conditions, ' + xs + '.' + mean + ball + (f.sig === 'AP' ? ' Negative values are braking and positive values propulsion.' : f.sig[0] === 'c' ? ' COP is relative to its position at foot contact.' : '');
+  if (f.type === 'four') return 'Figure X. (A) Vertical force, (B) front–back force (negative = braking), (C) front–back centre of pressure (COP; positive = towards the toes) and (D) side-to-side COP (positive = ' + ml + ') under the foot for the ' + AND(ks) + ' conditions, ' + xs + '. COP is relative to its position at foot contact.' + mean + ball;
+  if (f.type === 'path') return 'Figure X. Centre of pressure path under the foot ' + win + ' for the ' + AND(ks) + ' conditions, seen from above. Open circles mark the start (foot contact) and filled squares the end. Positive front–back is towards the toes and positive side to side is ' + ml + '.';
+  const v = VARS.find((q) => q.k === f.bar); return 'Figure X. ' + v.l + ' (' + unitOf(v) + ') under the foot for each condition' + (multi ? ', mean ± SD with each trial as a dot.' : '.');
 }
 
 let lastSize = [960, 540];
@@ -283,34 +283,34 @@ function pngBlob(scale) {
   drawFigure(canvasG(ctx, FONTS[f.fontFam]), W, H, f);
   return new Promise((res) => c.toBlob(res, 'image/png'));
 }
-function fileName() { const f = F(); return 'kick_' + (f.type === 'bar' ? f.bar : f.type === 'curves' ? f.sig : f.type); }
+function fileName() { const f = F(); return 'cop_' + (f.type === 'bar' ? f.bar : f.type === 'curves' ? f.sig : f.type); }
 
 export function renderFigure() {
   const el = $('fbBox'); if (!el) return;
   const f = F(), all = A.trials.filter((t) => t.p);
-  if (!all.length) { el.innerHTML = '<p class="muted">Add some kicks first (Add files, or Try a demo).</p>'; return; }
+  if (!all.length) { el.innerHTML = '<p class="muted">Add some trials first (Add files, or Try a demo).</p>'; return; }
   if (!all.find((t) => t.id === f.trial)) f.trial = (cur() || all[0]).id;
   let h = '<p class="lead">Build a figure for a lab report, poster or slides. Everything you change shows straight away on the right; save it as a PNG (for Word and PowerPoint) or an editable SVG.</p><div class="figgrid"><div class="figctl">';
   h += '<p class="fl">1. What kind of figure?</p><div class="chips">' + Object.entries(TYPES).map(([k, l]) => chip('data-ft', k, l, f.type === k)).join('') + '</div>';
   if (f.type === 'one') {
-    h += '<p class="fl">2. Which kick</p><div class="row tight">' + sel('fbTrial', all.map((t) => [t.id, esc(trialLabel(t))]), f.trial) + '</div>';
+    h += '<p class="fl">2. Which trial</p><div class="row tight">' + sel('fbTrial', all.map((t) => [t.id, esc(trialLabel(t))]), f.trial) + '</div>';
     h += '<p class="fl">3. Which panels</p><div class="chips">' + Object.entries(SIG).filter(([k]) => all.some((t) => t.p[k])).map(([k, s]) => chip('data-fp', k, s.l, f.panels[k])).join('') + '</div>';
   } else {
-    h += '<p class="fl">2. Which kicks</p><div class="chips">' + all.map((t) => chip('data-ftr', t.id, '<span class="dot" style="background:' + colOf(t.labels.kick) + '"></span>' + esc(trialLabel(t)), f.trials[t.id] !== false)).join('') + '</div>';
-    if (f.type === 'foot') h += '<p class="fl">3. The footprint</p><div class="row tight"><label class="inline" style="margin:0">Colour the trail by</label>' + sel('fbFootCol', [['time', 'Time (contact to toe-off)'], ['force', 'Force (how hard the foot presses)']], f.footCol) + '</div><div class="row tight"><label class="inline" style="margin:0">Foot outline</label>' + sel('fbFootAng', [['plate', 'Straight along the plate'], ['auto', 'Turned to match the COP direction'], ['none', 'No outline']], f.footAng) + '<label class="inline" style="margin:0">Foot (boot) length <input type="number" id="fbFootLen" class="mini" style="width:4.5rem" min="15" max="35" step="0.5" placeholder="auto" value="' + esc(f.footLen) + '"> cm</label></div><div class="chks"><label class="inline"><input type="checkbox" data-fc="footStats"' + (f.footStats ? ' checked' : '') + '> Key numbers and a plain-English summary under each foot</label></div><p class="muted small">Made to show a coach or player. One footprint per kick; choose up to four or five so they stay readable. The COP path is drawn to scale from where it started under the heel; the foot outline is only a guide, because the plate does not know exactly where the foot was or which way it pointed.</p>';
+    h += '<p class="fl">2. Which trials</p><div class="chips">' + all.map((t) => chip('data-ftr', t.id, '<span class="dot" style="background:' + colOf(t.labels.kick) + '"></span>' + esc(trialLabel(t)), f.trials[t.id] !== false)).join('') + '</div>';
+    if (f.type === 'foot') h += '<p class="fl">3. The footprint</p><div class="row tight"><label class="inline" style="margin:0">Colour the trail by</label>' + sel('fbFootCol', [['time', 'Time (contact to toe-off)'], ['force', 'Force (how hard the foot presses)']], f.footCol) + '</div><div class="row tight"><label class="inline" style="margin:0">Foot outline</label>' + sel('fbFootAng', [['plate', 'Straight along the plate'], ['auto', 'Turned to match the COP direction'], ['none', 'No outline']], f.footAng) + '<label class="inline" style="margin:0">Foot (boot) length <input type="number" id="fbFootLen" class="mini" style="width:4.5rem" min="15" max="35" step="0.5" placeholder="auto" value="' + esc(f.footLen) + '"> cm</label></div><div class="chks"><label class="inline"><input type="checkbox" data-fc="footStats"' + (f.footStats ? ' checked' : '') + '> Key numbers and a plain-English summary under each foot</label></div><p class="muted small">Made to show a coach or player. One footprint per trial; choose up to four or five so they stay readable. The COP path is drawn to scale from where it started under the heel; the foot outline is only a guide, because the plate does not know exactly where the foot was or which way it pointed.</p>';
     if (f.type === 'curves') h += '<p class="fl">3. What to plot</p><div class="row tight">' + sel('fbSig', Object.entries(SIG).filter(([k]) => all.some((t) => t.p[k])).map(([k, s]) => [k, s.l]), f.sig) + '</div>';
     if (f.type === 'bar') h += '<p class="fl">3. Which result</p><div class="row tight">' + sel('fbBar', VARS.map((v) => [v.k, v.l]), f.bar) + '</div><div class="chks"><label class="inline"><input type="checkbox" data-fc="dots"' + (f.dots ? ' checked' : '') + '> Each trial as a dot</label></div>';
   }
   if (f.type === 'one' || f.type === 'curves' || f.type === 'four') {
     h += '<p class="fl">' + (f.type === 'four' ? '3' : '4') + '. Time axis</p><div class="row tight">' + sel('fbXm', [['ms', 'Milliseconds from foot contact'], ['pct', 'Percent of stance (0–100%)']], f.xm)
-      + (f.type !== 'one' ? sel('fbShow', [['each', 'Each trial'], ['mean', 'Mean ± SD per kick type']], f.show) : '') + '</div>'
-      + '<div class="chks"><label class="inline"><input type="checkbox" data-fc="ball"' + (f.ball ? ' checked' : '') + '> Ball contact line</label>' + (f.type === 'four' ? '<label class="inline"><input type="checkbox" data-fc="letters"' + (f.letters ? ' checked' : '') + '> Panel letters (A–D)</label>' : '') + '</div>';
+      + (f.type !== 'one' ? sel('fbShow', [['each', 'Each trial'], ['mean', 'Mean ± SD per condition']], f.show) : '') + '</div>'
+      + '<div class="chks"><label class="inline"><input type="checkbox" data-fc="ball"' + (f.ball ? ' checked' : '') + '> Key event line</label>' + (f.type === 'four' ? '<label class="inline"><input type="checkbox" data-fc="letters"' + (f.letters ? ' checked' : '') + '> Panel letters (A–D)</label>' : '') + '</div>';
   }
-  if (f.type === 'path') h += '<div class="chks"><label class="inline"><input type="checkbox" data-fc="ball"' + (f.ball ? ' checked' : '') + '> Mark ball contact (×)</label></div>';
+  if (f.type === 'path') h += '<div class="chks"><label class="inline"><input type="checkbox" data-fc="ball"' + (f.ball ? ' checked' : '') + '> Mark the key event (×)</label></div>';
   h += '<p class="fl">Units, size and text</p><div class="row tight">' + sel('fbUnits', [['N', 'Force in N'], ['BW', 'Force in bodyweights']], A.units)
     + sel('fbSize', Object.entries(SIZES).map(([k, v]) => [k, v[0] + (v[1] ? ' (' + v[1] + ' × ' + v[2] + ')' : '')]), f.size) + sel('fbFontFam', Object.keys(FONTS).map((k) => [k, k]), f.fontFam) + '</div>';
   if (f.size === 'custom') h += '<div class="row tight"><label class="inline" style="margin:0">Width <input type="number" id="fbW" class="mini" style="width:5.5rem" min="300" max="4000" step="10" value="' + f.W + '"></label><label class="inline" style="margin:0">Height <input type="number" id="fbH" class="mini" style="width:5.5rem" min="200" max="4000" step="10" value="' + f.H + '"> px</label></div>';
-  h += '<div class="chks">' + [['legend', 'Legend'], ['grid', 'Grid lines'], ['cb', 'Colour-blind-safe colours (Okabe &amp; Ito)'], ['dash', 'A different line style for each kick (prints in black and white)']].map(([k, l]) => '<label class="inline"><input type="checkbox" data-fc="' + k + '"' + (f[k] ? ' checked' : '') + '> ' + l + '</label>').join('') + '</div>';
+  h += '<div class="chks">' + [['legend', 'Legend'], ['grid', 'Grid lines'], ['cb', 'Colour-blind-safe colours (Okabe &amp; Ito)'], ['dash', 'A different line style for each condition (prints in black and white)']].map(([k, l]) => '<label class="inline"><input type="checkbox" data-fc="' + k + '"' + (f[k] ? ' checked' : '') + '> ' + l + '</label>').join('') + '</div>';
   h += '<div class="row tight"><label class="inline" style="margin:0">Legend</label>' + sel('fbLegPos', [['top', 'Above the graph'], ['inside', 'Inside, top right']], f.legendPos) + '<label class="inline" style="margin:0">Background</label>' + sel('fbBg', [['white', 'White'], ['none', 'Transparent (when saved)']], f.bg) + '</div>';
   h += '<div class="row"><div><label for="fbTitle">Title</label><input type="text" id="fbTitle" value="' + esc(f.title) + '" placeholder="(none)"></div>'
     + (f.type === 'four' || f.type === 'one' ? '' : '<div><label for="fbY">y axis label</label><input type="text" id="fbY" value="' + esc(f.ylab) + '" placeholder="automatic"></div>')

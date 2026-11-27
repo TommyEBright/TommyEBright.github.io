@@ -1,8 +1,8 @@
 // Page shell: files, session, the main graph, Setup, Points, Results, Compare, Export, Centre of pressure, dialogs.
-import { A, $, esc, fx, status, cur, trialLabel, download, safe, kickColour, VERSION, loadSettings, saveSettings, defaultSettings } from './state.js?v=1.1.0';
-import { parseFile, guessLabels, process, results, VARS, unitOf, valOf, SIG, sigLabel, signal } from './analyse.js?v=1.1.0';
-import { canvasG, axes, range, padRange, line, band, FONTS } from './draw.js?v=1.1.0';
-import { renderFigure, openFigure } from './figure.js?v=1.1.0';
+import { A, $, esc, fx, status, cur, trialLabel, download, safe, kickColour, VERSION, loadSettings, saveSettings, defaultSettings } from './state.js?v=1.2.0';
+import { parseFile, guessLabels, process, results, VARS, unitOf, valOf, SIG, sigLabel, signal } from './analyse.js?v=1.2.0';
+import { canvasG, axes, range, padRange, line, band, FONTS } from './draw.js?v=1.2.0';
+import { renderFigure, openFigure } from './figure.js?v=1.2.0';
 
 const UI = FONTS['System UI'];
 A.set = loadSettings();
@@ -32,7 +32,7 @@ function addText(text, name, labels) {
 async function addFiles(list) {
   let last = null;
   for (const f of list) { const t = addText(await f.text(), f.name); if (t) last = t; }
-  if (last) { A.cur = A.trials.indexOf(last); A.view = null; A.cursor = -1; A.pinned = false; refreshAll(); status('Loaded. Check the kick type in <strong>Session</strong>, then foot contact, toe-off and ball contact in <strong>2. Points</strong>.'); }
+  if (last) { A.cur = A.trials.indexOf(last); A.view = null; A.cursor = -1; A.pinned = false; refreshAll(); status('Loaded. Check the condition in <strong>Session</strong>, then foot contact, toe-off and any key event in <strong>2. Points</strong>.'); }
 }
 $('file').addEventListener('change', function () { addFiles(this.files); this.value = ''; });
 $('file2').addEventListener('change', function () { addFiles(this.files); this.value = ''; });
@@ -44,7 +44,7 @@ async function demo(k) {
     let last = null;
     for (const kk of keys) { const [file, kick] = DEMOS[kk]; const r = await fetch('demo/' + file); if (!r.ok) throw new Error(r.status); last = addText(await r.text(), file, { athlete: 'Demo', kick, trial: '1' }) || last; }
     A.cur = A.trials.indexOf(last); A.view = null; A.cursor = -1; refreshAll();
-    status('Demo loaded: one kick of each type by the same player, standing foot on one Kistler plate at 1000 Hz. Ball contact was not filmed, so the whole stance is analysed.');
+    status('Demo loaded: one kick of each type by the same player, standing (support) foot on one Kistler plate at 1000 Hz. Each kick type is a condition. Ball contact was not filmed, so the whole stance is analysed.');
   } catch (e) { status('<span class="bad">Could not load the demo (' + esc(e.message) + '). Demos need the tool to be opened from a web address, not straight from a file.</span>'); }
 }
 $('demoSel').addEventListener('change', function () { const k = this.value; this.value = ''; if (k) demo(k); });
@@ -52,16 +52,16 @@ $('demoSel').addEventListener('change', function () { const k = this.value; this
 // ---------- session ----------
 function renderSession() {
   const T = A.trials;
-  $('sesCount').textContent = T.length ? '(' + T.length + ' kick' + (T.length > 1 ? 's' : '') + ')' : '';
+  $('sesCount').textContent = T.length ? '(' + T.length + ' trial' + (T.length > 1 ? 's' : '') + ')' : '';
   $('sesNext').disabled = T.length < 2;
-  if (!T.length) { $('sesTab').innerHTML = '<tr><td class="muted">No kicks yet.</td></tr>'; return; }
-  $('sesTab').innerHTML = '<thead><tr><th>#</th><th>File</th><th>Participant</th><th>Kick type</th><th>Trial</th><th>Stance</th><th>Ball contact</th><th></th></tr></thead><tbody>' + T.map((t, i) => {
+  if (!T.length) { $('sesTab').innerHTML = '<tr><td class="muted">No trials yet.</td></tr>'; return; }
+  $('sesTab').innerHTML = '<thead><tr><th>#</th><th>File</th><th>Participant</th><th>Condition</th><th>Trial</th><th>Stance</th><th>Key event</th><th></th></tr></thead><tbody>' + T.map((t, i) => {
     const P = t.p, on = i === A.cur;
     return '<tr' + (on ? ' class="current"' : '') + '><td><span class="dot" style="background:' + kickColour(t.labels.kick) + '"></span>' + (i + 1) + '</td><td class="small">' + esc(t.name) + '</td>'
       + ['athlete', 'kick', 'trial'].map((k) => '<td><input type="text" class="mini" data-lab="' + k + '" data-i="' + i + '" value="' + esc(t.labels[k]) + '"' + (k === 'kick' ? ' list="kickList"' : '') + '></td>').join('')
       + '<td class="num">' + fx((P.e - P.s) / t.fs * 1000, 0) + ' ms</td><td class="num">' + (P.b != null ? fx((P.b - P.s) / t.fs * 1000, 0) + ' ms' : '<span class="muted">not marked</span>') + '</td>'
       + '<td class="nowrap">' + (on ? '<span class="muted">open</span>' : '<button class="btn small ghost" data-open="' + i + '" type="button">Open</button>') + ' <button class="btn small ghost" data-del="' + i + '" type="button" title="Remove" aria-label="Remove">&times;</button></td></tr>';
-  }).join('') + '</tbody><datalist id="kickList">' + ['Instep', 'Laces', 'Curler', 'Outside boot', 'Side foot', 'Chip', 'Toe poke'].map((k) => '<option value="' + k + '">').join('') + '</datalist>';
+  }).join('') + '</tbody><datalist id="kickList">' + ['Instep', 'Laces', 'Curler', 'Outside boot', 'Eyes open', 'Eyes closed', 'Single-leg landing', 'Cut', 'Pre', 'Post'].map((k) => '<option value="' + k + '">').join('') + '</datalist>';
 }
 $('sesTab').addEventListener('change', (e) => { const el = e.target; if (!el.dataset.lab) return; A.trials[+el.dataset.i].labels[el.dataset.lab] = el.value.trim(); refreshAll(); });
 $('sesTab').addEventListener('click', (e) => {
@@ -114,7 +114,7 @@ function drawMain() {
     g.clip(L, Y, c.w - L - R, ph); shade(ax, Y, ph); set.forEach((q) => line(g, q.x, q.y, ax.sx, ax.sy, { stroke: q.c, lw: 1.8 })); g.unclip();
     boxes.push({ Y, h: ph, ax });
   });
-  if (P.b != null) g.text('Ball contact', boxes[0].ax.sx((P.b - P.s) / fs * 1000) + 4, 14, { size: 11, base: 'top', fill: '#111827', bold: true });
+  if (P.b != null) g.text('Key event', boxes[0].ax.sx((P.b - P.s) / fs * 1000) + 4, 14, { size: 11, base: 'top', fill: '#111827', bold: true });
   frame = { c, ax1: boxes[0].ax, boxes, v, L, R };
   overlay();
   drawCopBox();
@@ -156,9 +156,9 @@ function readout() {
   if (i > P.e) { ph = 'After toe-off'; words = 'The standing foot has left the plate.'; }
   else if (i >= P.s) {
     let pk = P.s; for (let j = P.s; j <= P.e; j++) if (P.Fz[j] > P.Fz[pk]) pk = j;
-    if (P.b != null && i > P.b) { ph = 'Follow-through'; col = '#7c3aed'; words = 'After ball contact. The standing leg is now supporting the follow-through.'; }
+    if (P.b != null && i > P.b) { ph = 'After the key event'; col = '#7c3aed'; words = 'After the key event (e.g. ball contact). In a kick the standing leg is now supporting the follow-through.'; }
     else if (i <= pk) { ph = 'Landing'; col = '#dc2626'; words = 'The foot plants and the force rises fast as the run-up is stopped. COP starts under the heel.'; }
-    else if (P.AP && P.AP[i] < 0) { ph = 'Braking'; col = '#d97706'; words = 'The ground is pushing backwards on the foot: the standing leg is slowing the body down while the kicking leg swings.'; }
+    else if (P.AP && P.AP[i] < 0) { ph = 'Braking'; col = '#d97706'; words = 'The ground is pushing backwards on the foot: the leg is slowing the body down (e.g. a plant before a kick or a cut).'; }
     else { ph = 'Late stance'; col = '#0f766e'; words = 'Braking has finished; COP is moving towards the forefoot.'; }
   }
   el.className = 'readout';
@@ -191,7 +191,7 @@ function keyStats() {
   const r = results(t), show = ['stance', 'pkFz', 'pkBrk', 'apEx', 'mlEx', 'spd'];
   $('keyStats').innerHTML = show.map((k) => { const v = VARS.find((q) => q.k === k), val = valOf(v, r, t); return '<div class="stat' + (k === 'stance' ? ' hl' : '') + '"><span>' + v.l + '</span><strong>' + fx(val, v.u === 'F' && A.units === 'BW' ? 2 : v.u === 'ms' || v.u === 'F' ? 0 : 1) + '</strong> ' + unitOf(v) + '</div>'; }).join('');
   $('warnBox').innerHTML = t.p.notes.map((n) => '<div class="warn"><p>' + esc(n) + '</p></div>').join('');
-  $('phaseKey').innerHTML = '<span><i style="background:rgba(29,78,216,.18)"></i>Stance</span><span><i style="background:#0f766e;opacity:.6"></i>COP valid</span>' + (t.p.b != null ? '<span><i style="background:#111827;height:2px"></i>Ball contact</span>' : '');
+  $('phaseKey').innerHTML = '<span><i style="background:rgba(29,78,216,.18)"></i>Stance</span><span><i style="background:#0f766e;opacity:.6"></i>COP valid</span>' + (t.p.b != null ? '<span><i style="background:#111827;height:2px"></i>Key event</span>' : '');
 }
 
 // ---------- setup ----------
@@ -216,12 +216,12 @@ function setPoint(k) {
   if (A.cursor < 0) { status('Put the cursor on the graph first: click the moment on the graph, then step with the arrow keys.'); return; }
   const tm = t.raw.t[A.cursor];
   if (k === 'ball') t.set.ball = tm; else if (k === 'start') t.set.start = tm; else t.set.end = tm;
-  refreshAll(); status((k === 'ball' ? 'Ball contact' : k === 'start' ? 'Foot contact' : 'Toe-off') + ' set at ' + fx((A.cursor - t.p.s) / t.fs * 1000, 0) + ' ms from foot contact.');
+  refreshAll(); status((k === 'ball' ? 'Key event' : k === 'start' ? 'Foot contact' : 'Toe-off') + ' set at ' + fx((A.cursor - t.p.s) / t.fs * 1000, 0) + ' ms from foot contact.');
 }
 function renderPoints() {
   const t = cur(); if (!t) { $('ptTab').innerHTML = ''; return; }
   const P = t.p, ms = (i) => fx((i - P.s) / t.fs * 1000, 0), tt = (i) => fx(t.raw.t[i], 3);
-  const rows = [['start', 'Foot contact', P.s, t.set.start != null ? 'set by hand' : 'automatic (Fz > ' + A.set.thr + ' N)'], ['ball', 'Ball contact', P.b, t.set.ball != null ? 'from video' : ''], ['end', 'Toe-off', P.e, t.set.end != null ? 'set by hand' : 'automatic (Fz < ' + A.set.thr + ' N)']];
+  const rows = [['start', 'Foot contact', P.s, t.set.start != null ? 'set by hand' : 'automatic (Fz > ' + A.set.thr + ' N)'], ['ball', 'Key event (e.g. ball contact)', P.b, t.set.ball != null ? 'marked by hand' : ''], ['end', 'Toe-off', P.e, t.set.end != null ? 'set by hand' : 'automatic (Fz < ' + A.set.thr + ' N)']];
   $('ptTab').innerHTML = '<thead><tr><th>Point</th><th>Time in file (s)</th><th>From foot contact (ms)</th><th>How</th><th></th></tr></thead><tbody>' + rows.map(([k, l, i, how]) =>
     '<tr><td><strong>' + l + '</strong></td><td class="num">' + (i != null ? tt(i) : '–') + '</td><td>' + (k === 'ball' ? '<input type="number" class="mini" id="ballMs" step="1" style="width:7rem" value="' + (i != null ? ms(i) : '') + '" placeholder="type ms">' : '<span class="num">' + ms(i) + '</span>') + '</td><td class="muted">' + how + '</td>'
     + '<td class="nowrap"><button class="btn small" type="button" data-pt="' + k + '">Set to the cursor</button>' + (i != null ? ' <button class="btn small ghost" type="button" data-nud="' + k + '" data-d="-1" title="One sample earlier">&minus;1</button> <button class="btn small ghost" type="button" data-nud="' + k + '" data-d="1" title="One sample later">+1</button>' : '') + (k === 'ball' && i != null ? ' <button class="btn small ghost" type="button" data-clr="ball">Clear</button>' : '') + '</td></tr>').join('') + '</tbody>';
@@ -239,9 +239,9 @@ $('ptReset').addEventListener('click', () => { const t = cur(); if (t) { t.set.s
 // ---------- results ----------
 let openHow = null;
 function renderResults() {
-  const t = cur(); if (!t) { $('resTab').innerHTML = '<p class="muted">Add a kick first.</p>'; return; }
+  const t = cur(); if (!t) { $('resTab').innerHTML = '<p class="muted">Add a trial first.</p>'; return; }
   const r = results(t); let h = '<table class="restab"><thead><tr><th>Result</th><th style="text-align:right">Value</th><th>Units</th></tr></thead><tbody>', lg = '';
-  h += '<tr><td colspan="3" class="muted small">' + (r.win === 'ball' ? 'From foot contact to ball contact.' : 'Whole stance (foot contact to toe-off).' + (A.set.win === 'ball' ? ' <span class="bad">No ball contact marked for this kick, so the whole stance was used.</span>' : '')) + '</td></tr>';
+  h += '<tr><td colspan="3" class="muted small">' + (r.win === 'ball' ? 'From foot contact to the key event.' : 'Whole stance (foot contact to toe-off).' + (A.set.win === 'ball' ? ' <span class="bad">No key event marked for this trial, so the whole stance was used.</span>' : '')) + '</td></tr>';
   VARS.forEach((v) => {
     const val = valOf(v, r, t); if (!Number.isFinite(val)) return;
     if (v.g !== lg) { h += '<tr class="grp"><td colspan="3">' + esc(v.g) + '</td></tr>'; lg = v.g; }
@@ -284,12 +284,12 @@ function cmpTable(word) {
 }
 function renderCompare() {
   const n = A.trials.length;
-  $('cmpMsg').innerHTML = n ? (kicks().length < 2 ? 'Add kicks of another type (or give them different kick types in Session) to compare them.' : '') : 'Add some kicks first.';
+  $('cmpMsg').innerHTML = n ? (kicks().length < 2 ? 'Add trials of another condition (or give them different conditions in Session) to compare them.' : '') : 'Add some trials first.';
   $('cmpBody').classList.toggle('hide', !n); if (!n) return;
   $('cmpMetrics').innerHTML = VARS.map((v) => '<button type="button" class="chip' + (cmpOn[v.k] ? ' active' : '') + '" data-m="' + v.k + '" aria-pressed="' + cmpOn[v.k] + '">' + esc(v.l) + '</button>').join('');
   $('cmpTab').innerHTML = cmpTable(false);
   const ks = kicks(), multi = A.trials.length > ks.length;
-  $('cmpCap').value = 'Table X. Support leg forces and centre of pressure (COP) ' + (A.set.win === 'ball' ? 'from foot contact to ball contact' : 'during stance') + ' for each kick type' + (multi && $('cmpMode').value === 'sum' ? ' (mean ± SD)' : '') + '. Front–back COP is positive towards the toes; side-to-side COP ' + (A.trials[0].p.known ? 'is positive laterally' : 'is relative to the plate') + '. Loading rate is peak vertical force (body weights) divided by the time from foot contact to the peak.';
+  $('cmpCap').value = 'Table X. Support leg forces and centre of pressure (COP) ' + (A.set.win === 'ball' ? 'from foot contact to the key event' : 'during contact') + ' for each condition' + (multi && $('cmpMode').value === 'sum' ? ' (mean ± SD)' : '') + '. Front–back COP is positive towards the toes; side-to-side COP ' + (A.trials[0].p.known ? 'is positive laterally' : 'is relative to the plate') + '. Loading rate is peak vertical force (body weights) divided by the time from foot contact to the peak.';
   const sel = $('cmpVar'), cv = sel.value || 'Fz';
   sel.innerHTML = Object.entries(SIG).filter(([k]) => A.trials.some((t) => t.p[k])).map(([k, s]) => '<option value="' + k + '"' + (k === cv ? ' selected' : '') + '>' + s.l + '</option>').join('');
   drawCmp();
@@ -323,16 +323,16 @@ $('cmpCopy').addEventListener('click', async () => {
   try { await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([cmpTable(true)], { type: 'text/html' }), 'text/plain': new Blob([txt], { type: 'text/plain' }) })]); $('cmpCopyMsg').textContent = 'Copied. Paste it into Word.'; }
   catch (e) { try { await navigator.clipboard.writeText(txt); $('cmpCopyMsg').textContent = 'Copied as text.'; } catch (e2) { $('cmpCopyMsg').textContent = 'This browser would not copy. Use Table (CSV).'; } }
 });
-$('cmpCsv').addEventListener('click', () => { const { cols, rows } = cmpData(); download('kick_comparison.csv', [['Group', 'Result', ...cols].map(csvq).join(','), ...rows.map((r) => [r.g, r.l, ...r.c].map(csvq).join(','))].join('\n')); });
+$('cmpCsv').addEventListener('click', () => { const { cols, rows } = cmpData(); download('cop_comparison.csv', [['Group', 'Result', ...cols].map(csvq).join(','), ...rows.map((r) => [r.g, r.l, ...r.c].map(csvq).join(','))].join('\n')); });
 $('cmpLong').addEventListener('click', () => {
-  const vs = VARS; const head = ['Participant', 'Kick type', 'Trial', 'File', 'Window', ...vs.map((v) => v.l + ' (' + unitOf(v) + ')')];
-  download('kick_session_results.csv', [head.map(csvq).join(','), ...A.trials.map((t) => { const r = results(t); return [t.labels.athlete, t.labels.kick, t.labels.trial, t.name, r.win === 'ball' ? 'foot contact to ball contact' : 'stance', ...vs.map((v) => { const x = valOf(v, r, t); return Number.isFinite(x) ? x.toFixed(4) : ''; })].map(csvq).join(','); })].join('\n'));
+  const vs = VARS; const head = ['Participant', 'Condition', 'Trial', 'File', 'Window', ...vs.map((v) => v.l + ' (' + unitOf(v) + ')')];
+  download('cop_session_results.csv', [head.map(csvq).join(','), ...A.trials.map((t) => { const r = results(t); return [t.labels.athlete, t.labels.kick, t.labels.trial, t.name, r.win === 'ball' ? 'foot contact to key event' : 'stance', ...vs.map((v) => { const x = valOf(v, r, t); return Number.isFinite(x) ? x.toFixed(4) : ''; })].map(csvq).join(','); })].join('\n'));
 });
 $('cmpNorm').addEventListener('click', () => {
   const ks = ['Fz', 'AP', 'ML', 'cAP', 'cML'].filter((k) => A.trials.some((t) => t.p[k]));
-  const lines = [['Participant', 'Kick type', 'Trial', 'Signal', 'Units', ...Array.from({ length: 101 }, (_, i) => i + '%')].map(csvq).join(',')];
+  const lines = [['Participant', 'Condition', 'Trial', 'Signal', 'Units', ...Array.from({ length: 101 }, (_, i) => i + '%')].map(csvq).join(',')];
   A.trials.forEach((t) => ks.forEach((k) => { const y = signal(t, k); if (!y) return; const n = y.length; const v = []; for (let i = 0; i <= 100; i++) { const p = i / 100 * (n - 1), j = Math.min(n - 2, Math.floor(p)), f = p - j; v.push(y[j] + (y[j + 1] - y[j]) * f); } lines.push([t.labels.athlete, t.labels.kick, t.labels.trial, SIG[k].l, sigLabel(k, t).match(/\(([^,)]*)/)[1], ...v.map((x) => (Number.isFinite(x) ? x.toFixed(4) : ''))].map(csvq).join(',')); }));
-  download('kick_session_time_normalised.csv', lines.join('\n'));
+  download('cop_session_time_normalised.csv', lines.join('\n'));
 });
 $('cmpFig').addEventListener('click', () => { openFigure('curves', $('cmpVar').value); const f = A.fig; f.xm = $('cmpX').value; f.show = $('cmpShow').value; selectTab('figure'); });
 
@@ -345,16 +345,16 @@ $('xCont').addEventListener('click', () => {
   download(fname(t) + '_continuous.csv', out.join('\n'));
 });
 $('xProj').addEventListener('click', () => {
-  const o = { app: 'Kick Analysis', version: VERSION, set: A.set, units: A.units, kickCol: A.kickCol, trials: A.trials.map((t) => ({ name: t.name, labels: t.labels, set: t.set, text: t.text })) };
-  download('kick_analysis_project.json', new Blob([JSON.stringify(o)], { type: 'application/json' }));
+  const o = { app: 'COP Analysis', version: VERSION, set: A.set, units: A.units, kickCol: A.kickCol, trials: A.trials.map((t) => ({ name: t.name, labels: t.labels, set: t.set, text: t.text })) };
+  download('cop_analysis_project.json', new Blob([JSON.stringify(o)], { type: 'application/json' }));
 });
 $('projIn').addEventListener('change', async function () {
   const f = this.files[0]; this.value = ''; if (!f) return;
   try {
-    const o = JSON.parse(await f.text()); if (!o.trials) throw new Error('not a Kick Analysis project file');
+    const o = JSON.parse(await f.text()); if (!o.trials) throw new Error('not a COP Analysis project file');
     A.trials = []; A.set = Object.assign(defaultSettings(), o.set || {}); A.units = o.units || 'N'; A.kickCol = o.kickCol || {}; saveSettings();
     o.trials.forEach((q) => { const t = addText(q.text, q.name, q.labels); if (t) { t.set = q.set; process(t); } });
-    A.cur = A.trials.length ? 0 : -1; refreshAll(); status('Project opened: ' + A.trials.length + ' kicks.');
+    A.cur = A.trials.length ? 0 : -1; refreshAll(); status('Project opened: ' + A.trials.length + ' trials.');
   } catch (e) { status('<span class="bad">Could not open the project file (' + esc(e.message) + ').</span>'); }
 });
 
@@ -364,7 +364,7 @@ function renderCop() {
   const a = Math.max(0, P.s - Math.round(0.05 * fs)), b = Math.min(raw.t.length - 1, P.e + Math.round(0.05 * fs));
   const x = []; for (let i = a; i <= b; i++) x.push((i - P.s) / fs * 1000);
   $('cpThr').textContent = A.set.cthr + '% of body weight = ' + fx(P.cthr, 0) + ' N';
-  $('cpRule').innerHTML = 'COP is only used while F<sub>z</sub> &gt; ' + A.set.cthr + '% of body weight (' + fx(P.cthr, 0) + ' N), then filtered at ' + A.set.cfc + ' Hz. For this kick that leaves ' + fx((P.ce - P.cs) / fs * 1000, 0) + ' ms of ' + fx((P.e - P.s) / fs * 1000, 0) + ' ms of stance.';
+  $('cpRule').innerHTML = 'COP is only used while F<sub>z</sub> &gt; ' + A.set.cthr + '% of body weight (' + fx(P.cthr, 0) + ' N), then filtered at ' + A.set.cfc + ' Hz. For this trial that leaves ' + fx((P.ce - P.cs) / fs * 1000, 0) + ' ms of ' + fx((P.e - P.s) / fs * 1000, 0) + ' ms of stance.';
   const xr = [x[0], x[x.length - 1]], W = (el) => el.clientWidth;
   // 1. force with threshold
   let el = $('cCop1'); if (!W(el)) return;
@@ -432,12 +432,12 @@ $('setReset').addEventListener('click', () => { const d = defaultSettings(); SK.
 
 // ---------- citation ----------
 (function () {
-  const cd = $('citeDlg'), url = 'https://tommyebright.github.io/kick-analyser/', yr = '2026', v = VERSION.split('.').slice(0, 2).join('.');
+  const cd = $('citeDlg'), url = 'https://tommyebright.github.io/cop-analyser/', yr = '2026', v = VERSION.split('.').slice(0, 2).join('.');
   const today = () => new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   $('citeBtn').addEventListener('click', () => {
-    $('citeApa').textContent = 'Bright, T. E. (' + yr + '). Kick Analysis (Version ' + v + ') [Computer software]. Plymouth Marjon University. ' + url;
-    $('citeHarvard').textContent = 'Bright, T.E. (' + yr + ') Kick Analysis (Version ' + v + ') [Computer program]. Plymouth Marjon University. Available at: ' + url + ' (Accessed: ' + today() + ').';
-    $('citeBib').textContent = '@software{bright_kick_analysis_' + yr + ',\n  author = {Bright, Thomas E.},\n  title = {Kick Analysis},\n  version = {' + v + '},\n  year = {' + yr + '},\n  publisher = {Plymouth Marjon University},\n  url = {' + url + '}\n}';
+    $('citeApa').textContent = 'Bright, T. E. (' + yr + '). COP Analysis (Version ' + v + ') [Computer software]. Plymouth Marjon University. ' + url;
+    $('citeHarvard').textContent = 'Bright, T.E. (' + yr + ') COP Analysis (Version ' + v + ') [Computer program]. Plymouth Marjon University. Available at: ' + url + ' (Accessed: ' + today() + ').';
+    $('citeBib').textContent = '@software{bright_cop_analysis_' + yr + ',\n  author = {Bright, Thomas E.},\n  title = {COP Analysis},\n  version = {' + v + '},\n  year = {' + yr + '},\n  publisher = {Plymouth Marjon University},\n  url = {' + url + '}\n}';
     cd.showModal();
   });
   $('citeClose').addEventListener('click', () => cd.close());
@@ -479,9 +479,9 @@ refreshAll();
 
 // ---------- ball contact from video frames ----------
 function videoMs() { const f = +$('vFps').value, a = +$('vF1').value, b = +$('vF2').value; return f > 0 && $('vF1').value !== '' && $('vF2').value !== '' ? (b - a) / f * 1000 : NaN; }
-['vFps', 'vF1', 'vF2'].forEach((id) => $(id).addEventListener('input', () => { const m = videoMs(); $('vOut').textContent = Number.isFinite(m) ? (m >= 0 ? (fx(m, 0) + ' ms after foot contact (±' + fx(1000 / +$('vFps').value, 0) + ' ms)') : 'Ball contact must come after foot contact.') : ''; }));
+['vFps', 'vF1', 'vF2'].forEach((id) => $(id).addEventListener('input', () => { const m = videoMs(); $('vOut').textContent = Number.isFinite(m) ? (m >= 0 ? (fx(m, 0) + ' ms after foot contact (±' + fx(1000 / +$('vFps').value, 0) + ' ms)') : 'The key event must come after foot contact.') : ''; }));
 $('vSet').addEventListener('click', () => {
   const t = cur(), m = videoMs(); if (!t) return;
   if (!(m > 0)) { $('vOut').textContent = 'Type the frame rate and both frame numbers first.'; return; }
-  t.set.ball = t.raw.t[t.p.s] + m / 1000; refreshAll(); status('Ball contact set at ' + fx(m, 0) + ' ms from foot contact, from the video frames.');
+  t.set.ball = t.raw.t[t.p.s] + m / 1000; refreshAll(); status('Key event set at ' + fx(m, 0) + ' ms from foot contact, from the video frames.');
 });

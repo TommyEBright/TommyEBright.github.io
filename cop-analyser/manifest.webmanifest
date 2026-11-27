@@ -1,7 +1,7 @@
 {
-  "name": "Kick Analysis",
-  "short_name": "Kick",
-  "description": "Support leg force and centre of pressure in kicking, from your own force platform files. Runs on your device; nothing is uploaded.",
+  "name": "COP Analysis",
+  "short_name": "COP",
+  "description": "Centre of pressure and force under one foot, from your own force platform files. Runs on your device; nothing is uploaded.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

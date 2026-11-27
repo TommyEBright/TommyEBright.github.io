@@ -1,5 +1,5 @@
 // Reading BioWare files, filtering, finding stance and working out every result.
-import { A, fx } from './state.js?v=1.1.0';
+import { A, fx } from './state.js?v=1.2.0';
 
 // ---------- reading ----------
 export function parseFile(text, name) {
@@ -70,7 +70,7 @@ export function process(tr) {
   const s = tr.set.start != null ? ix(tr.set.start) : seg[0], e = tr.set.end != null ? ix(tr.set.end) : seg[1];
   const notes = [];
   const others = segs.filter((q) => q !== seg && q[1] - q[0] > 5).length;
-  if (others) notes.push(others + ' other brief contact' + (others > 1 ? 's' : '') + ' on the plate (e.g. the kicking foot or a stumble) ignored.');
+  if (others) notes.push(others + ' other brief contact' + (others > 1 ? 's' : '') + ' on the plate (e.g. the other foot or a stumble) ignored.');
   // which horizontal force is front-back
   let apKey = S.ap === 'Fx' && raw.Fx ? 'Fx' : S.ap === 'Fy' && raw.Fy ? 'Fy' : null;
   if (!apKey) {
@@ -110,7 +110,7 @@ export function process(tr) {
     }
   } else notes.push('No usable centre of pressure: force never stayed above ' + S.cthr + '% of body weight.');
   let b = null;
-  if (tr.set.ball != null) { b = ix(tr.set.ball); if (b <= s || b >= e) { notes.push('Ball contact is outside stance, so it was ignored.'); b = null; } }
+  if (tr.set.ball != null) { b = ix(tr.set.ball); if (b <= s || b >= e) { notes.push('The key event is outside stance, so it was ignored.'); b = null; } }
   if (bw && Math.abs(bw - 800) < 0.5) notes.push('Body weight is 800 N, BioWare’s default. Check it in Setup.');
   tr.p = { Fz, AP, ML, cAP, cML, cR, cV, Tz, s, e, cs, ce, b, bw, bwFrom: B.from, notes, sg, apKey, mlKey, apS, mlS, mlName, known, cthr };
   return tr.p;
@@ -122,8 +122,8 @@ export const VARS = [
   { g: 'Timing', k: 'stance', l: 'Stance time', u: 'ms', on: 1,
     def: 'How long the foot is in contact with the plate, from foot contact to toe-off.',
     ex: 'A laces kick with 347 ms of stance means the standing foot was down for about a third of a second. In a single-leg landing it is the time to stick and leave; in balance it is the trial length.' },
-  { g: 'Timing', k: 'tball', l: 'Foot contact to ball contact', u: 'ms', on: 0,
-    def: 'Time from the standing foot landing to the kicking foot striking the ball (or any other event you mark from video).',
+  { g: 'Timing', k: 'tball', l: 'Foot contact to key event', u: 'ms', on: 0,
+    def: 'Time from the foot landing to the key event you mark from video (e.g. the kicking foot striking the ball).',
     ex: '64 ms means the ball was struck very early in stance, while the standing leg was still braking hard.' },
   { g: 'Vertical force (Fz)', k: 'pkFz', l: 'Peak vertical force', u: 'F', on: 1,
     def: 'The largest vertical ground reaction force. Usually the impact as the foot lands and the body’s downward momentum is stopped.',
@@ -195,13 +195,13 @@ export const VARS = [
     def: 'Angle of the straight line from the first to the last COP point, measured from straight ahead (0° = straight heel to toe, + = towards the + side).',
     ex: '+25° with + set to lateral: the pressure rolled out towards the little toe, as on an outside-of-the-boot kick.' },
   { g: 'Centre of pressure', k: 'apEnd', l: 'COP front–back at the end', u: 'cm', on: 0,
-    def: 'Where the centre of pressure was, front–back, at the end of the analysis window (toe-off or ball contact), relative to where it started.', ex: '' },
+    def: 'Where the centre of pressure was, front–back, at the end of the analysis window (toe-off or the key event), relative to where it started.', ex: '' },
   { g: 'Centre of pressure', k: 'mlEnd', l: 'COP side-to-side at the end', u: 'cm', on: 0,
     def: 'Where the centre of pressure was, side to side, at the end of the analysis window, relative to where it started.', ex: '' },
-  { g: 'Centre of pressure', k: 'apBall', l: 'COP front–back at ball contact', u: 'cm', on: 0,
-    def: 'Front–back COP at the marked event (ball contact), relative to where it started.', ex: '9 cm: still on the heel and midfoot when the ball was struck.' },
-  { g: 'Centre of pressure', k: 'mlBall', l: 'COP side-to-side at ball contact', u: 'cm', on: 0,
-    def: 'Side-to-side COP at the marked event (ball contact), relative to where it started.', ex: '' },
+  { g: 'Centre of pressure', k: 'apBall', l: 'COP front–back at the key event', u: 'cm', on: 0,
+    def: 'Front–back COP at the key event (e.g. ball contact), relative to where it started.', ex: '9 cm: still on the heel and midfoot when the ball was struck.' },
+  { g: 'Centre of pressure', k: 'mlBall', l: 'COP side-to-side at the key event', u: 'cm', on: 0,
+    def: 'Side-to-side COP at the key event (e.g. ball contact), relative to where it started.', ex: '' },
   { g: 'Free moment (Tz)', k: 'tz', l: 'Peak free moment', u: 'N·m', on: 0,
     def: 'The largest twisting torque between the foot and the ground about a vertical axis through the centre of pressure. It is the friction that stops the foot spinning on the spot, so it shows how much the body is turning (or trying to turn) over the planted foot.',
     ex: 'The demo kicks peak at around 8 to 10 N·m as the hips and trunk turn over the standing foot. Bigger values mean more twisting between foot and ground (e.g. in cutting and pivoting), which loads the ankle and knee in rotation.' }
@@ -216,14 +216,14 @@ export function results(tr) {
   const r = { win: useBall ? 'ball' : 'stance', how: {} }, H = r.how, ms = (i) => (i - s) / fs * 1000;
   r.stance = (P.e - P.s) / fs * 1000;
   H.stance = 'Toe-off (' + tr.raw.t[P.e].toFixed(3) + ' s) − foot contact (' + tr.raw.t[P.s].toFixed(3) + ' s), where vertical force crosses ' + A.set.thr + ' N.';
-  if (P.b != null) { r.tball = ms(P.b); H.tball = 'Ball contact (marked from video) − foot contact.'; }
+  if (P.b != null) { r.tball = ms(P.b); H.tball = 'Key event (marked from video) − foot contact.'; }
   let pk = s; for (let i = s; i <= e; i++) if (P.Fz[i] > P.Fz[pk]) pk = i;
   r.pkFz = P.Fz[pk]; r.tpk = ms(pk); r.lr = r.tpk > 0 ? (P.Fz[pk] / bw) / (r.tpk / 1000) : NaN;
   H.pkFz = 'The largest vertical force in the window: ' + fx(P.Fz[pk], 0) + ' N = ' + fx(P.Fz[pk] / bw, 2) + ' × body weight (' + fx(bw, 0) + ' N).';
   H.tpk = 'Time from foot contact to peak vertical force.';
   H.lr = 'Peak force in body weights ÷ time to peak = ' + fx(P.Fz[pk] / bw, 2) + ' BW ÷ ' + fx(r.tpk / 1000, 3) + ' s. How quickly the standing leg is loaded as it plants.';
   let imp = 0; for (let i = s; i < e; i++) imp += (P.Fz[i] + P.Fz[i + 1]) / 2 * dt; r.vImp = imp;
-  H.vImp = 'Area under the vertical force (trapezoid rule) from foot contact to ' + (useBall ? 'ball contact' : 'toe-off') + '.';
+  H.vImp = 'Area under the vertical force (trapezoid rule) from foot contact to ' + (useBall ? 'the key event' : 'toe-off') + '.';
   if (P.AP) {
     let mn = 0, mx = 0, bi = 0, pi = 0;
     for (let i = s; i <= e; i++) { mn = Math.min(mn, P.AP[i]); mx = Math.max(mx, P.AP[i]); }
@@ -272,7 +272,7 @@ export function results(tr) {
     H.ang = 'atan2(side-to-side change, front–back change) from the first to the last valid point = atan2(' + fx(P.cML[z] - P.cML[a], 1) + ', ' + fx(P.cAP[z] - P.cAP[a], 1) + ').';
     H.apEnd = 'Front–back COP at ' + fx(ms(z), 0) + ' ms, the last valid point in the window.'; H.mlEnd = 'Side-to-side COP at ' + fx(ms(z), 0) + ' ms, the last valid point in the window.';
     H.tz = 'Largest twisting torque about the vertical axis under the foot (Tz), either direction, while COP is valid. Tz is calculated by BioWare about the centre of pressure.';
-    if (P.b != null && P.b >= P.cs && P.b <= P.ce) { r.apBall = P.cAP[P.b]; r.mlBall = P.cML[P.b]; H.apBall = 'COP at the ball contact sample, relative to where it started.'; H.mlBall = H.apBall; }
+    if (P.b != null && P.b >= P.cs && P.b <= P.ce) { r.apBall = P.cAP[P.b]; r.mlBall = P.cML[P.b]; H.apBall = 'COP at the key event sample, relative to where it started.'; H.mlBall = H.apBall; }
   }
   return r;
 }

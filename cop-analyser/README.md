@@ -1,10 +1,10 @@
-# Kick Analysis
+# COP Analysis
 
-Support leg forces and centre of pressure (COP) in kicking, from a force platform under the standing foot. Compare kick types with tables and report-ready figures. A free teaching and analysis tool for sport and exercise biomechanics, in the same style as Force Analysis (`../force-analyser/`), Projectile Motion and EMG Analysis.
+Centre of pressure (COP) and force under one foot on a force platform: kicks, plants, landings, cuts or single-leg balance. Compare conditions with tables, report-ready figures and coach-friendly footprints. (Formerly Kick Analysis; `../kick-analyser/` now redirects here.) A free teaching and analysis tool for sport and exercise biomechanics, in the same style as Force Analysis (`../force-analyser/`), Projectile Motion and EMG Analysis.
 
 It runs entirely in the browser. Files are opened from the user's own device and are never uploaded. It can be installed as an app and works offline once loaded.
 
-Built for the SESD52 lab report question "how does kick type influence Fz, Fy and centre of pressure?", but works for any kicking task with the standing foot on one plate.
+First built for the SESD52 lab report question "how does kick type influence Fz, Fy and centre of pressure?", and now general: any task with one foot on one plate. Trials are grouped by condition (e.g. kick type, eyes open/closed, pre/post).
 
 ## What it does
 

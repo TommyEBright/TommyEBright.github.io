@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>COP Analysis</title>
+<meta name="description" content="Centre of pressure and force under one foot, from your own force platform files: kicks, landings, cuts, balance and more. Compare conditions with tables and report-ready figures. Runs in the browser; your data never leave your device.">
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="stylesheet" href="css/style.css?v=1.2.0">
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1><img src="icons/icon-192.png" alt="">COP Analysis <span class="muted" id="ver" style="color:#94a3b8;font-weight:400"></span></h1>
+    <p>Centre of pressure and force under one foot on a force platform: kicks, plants, landings, cuts or single-leg balance. Compare conditions with tables, report-ready figures and coach-friendly footprints. Everything runs in your browser and nothing is uploaded.</p>
+  </div>
+  <div class="actions">
+    <label class="btn light filebtn">Add files<input type="file" id="file" accept=".txt,.csv,.tsv,.dat,.asc,text/plain,text/csv" multiple aria-label="Add force files"></label>
+    <select id="demoSel" class="demosel" aria-label="Try a demo">
+      <option value="">Try a demo&hellip;</option>
+      <option value="all">Kicking: four kick types (instep, laces, curler, outside of the boot)</option>
+      <option value="instep">Instep</option>
+      <option value="laces">Laces</option>
+      <option value="curler">Curler</option>
+      <option value="outside">Outside of the boot</option>
+    </select>
+    <button class="btn light" id="setBtn" type="button" aria-haspopup="dialog">&#9881; Settings</button>
+    <button class="btn light" id="citeBtn" type="button" aria-haspopup="dialog">&#10077; Cite</button>
+    <button class="btn accent hide" id="installBtn" type="button">Install as an app</button>
+  </div>
+</header>
+
+<main>
+  <details class="help">
+    <summary>Before you collect: how to get centre of pressure data you can analyse</summary>
+    <div class="hb">
+      <ul>
+        <li><strong>Zero (reset) the plate with nobody on it</strong> before every trial.</li>
+        <li><strong>The whole foot must be on the plate</strong>, and nothing else (no other foot, hand or kit). If the heel or toes are off the edge, the centre of pressure is wrong. In a kick or a landing, do not let the player aim for the plate: set up the ball or the start position so the foot lands on it naturally.</li>
+        <li><strong>Keep everything else the same</strong> between trials (e.g. the same run-up, step count and angle for a kick, or the same drop height for a landing), so differences come from the condition you are testing.</li>
+        <li><strong>Film it side-on in slow motion</strong> if there is a moment that matters that the plate cannot see (e.g. ball contact in a kick). You can then mark that key event from the video frame numbers in 2. Points. Without it, the whole contact is analysed.</li>
+        <li><strong>Several trials of each condition</strong> (three to five) give a mean and SD. With one each, you can only describe the differences.</li>
+        <li><strong>Enter the participant&rsquo;s body weight in BioWare</strong> (or type the mass in Setup), and note which foot is the standing foot and which way the plate&rsquo;s x axis points.</li>
+        <li><strong>Sample at 1000 Hz and export as text (ASCII)</strong> with Fx, Fy, Fz, Tz, Ax and Ay ticked, then open it here with <strong>Add files</strong>. Name each file after the condition and trial (e.g. <code>Laces_1.txt</code>, <code>EyesClosed_2.txt</code>) and they are filled in for you.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- SESSION -->
+  <details class="help session" open>
+    <summary>Session: your trials <span id="sesCount" class="muted"></span></summary>
+    <div class="hb">
+      <p class="muted">Add one file per trial. Give each one its condition (e.g. a kick type, a task or eyes open/closed): trials with the same condition are averaged together in <strong>Compare conditions</strong>. Settings are the same for every trial.</p>
+      <div class="tablewrap" style="max-height:300px"><table id="sesTab"></table></div>
+      <div class="row tight">
+        <label class="btn small filebtn">Add files<input type="file" id="file2" accept=".txt,.csv,.tsv,.dat,.asc,text/plain,text/csv" multiple aria-label="Add force files"></label>
+        <button class="btn small accent" id="sesNext" type="button" disabled>Next trial &rsaquo;</button>
+        <button class="btn small ghost" id="sesNew" type="button">New session</button>
+      </div>
+    </div>
+  </details>
+
+  <!-- TRACE -->
+  <section class="card" id="traceCard">
+    <div class="card-head">
+      <h2>Force and centre of pressure <span class="muted" id="trialName"></span></h2>
+      <div class="row tight toolbar">
+        <span class="lab inl">Show</span>
+        <span class="chips" id="showChips"></span>
+        <label class="inline" for="units" style="margin:0">Force in</label>
+        <select id="units" class="mini">
+          <option value="N">newtons (N)</option>
+          <option value="BW">bodyweights (&times; BW)</option>
+        </select>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="emptyBox" id="empty">
+        <p><strong>Press Add files</strong> to open a force platform file (BioWare text export with Fz, Ax and Ay).</p>
+        <p class="muted">New to this? Try the kicking demo (four kick types) first.</p>
+      </div>
+      <div id="traceWrap" class="hide">
+        <div class="tracebar">
+          <div class="row tight">
+            <button class="btn small" id="zKick" type="button">Zoom to the contact</button>
+            <button class="btn ghost small" id="zAll" type="button">Whole trial</button>
+            <span class="sep"></span>
+            <button class="btn ghost small" id="ballHere" type="button" title="Mark the key event (e.g. ball contact) at the cursor">Key event at the cursor</button>
+          </div>
+          <div class="phaseKey" id="phaseKey"></div>
+        </div>
+        <div class="tracegrid kick">
+          <div id="mainChart" class="chartbox"></div>
+          <div class="figbox">
+            <div id="copBox"></div>
+            <div class="figkey"><span>COP from above</span></div>
+          </div>
+        </div>
+        <p class="muted hint">Hover to read values. Click to fix the cursor, then <kbd>&larr;</kbd> <kbd>&rarr;</kbd> move it one sample (<kbd>Shift</kbd> for ten). To mark a key event (e.g. ball contact), put the cursor there and press <strong>Key event at the cursor</strong>, or use the video frames in 2. Points.</p>
+      </div>
+      <div class="readout" id="readout"></div>
+      <div class="stats" id="keyStats"></div>
+      <div id="warnBox"></div>
+      <p class="status" id="status" role="status">Add a file to begin.</p>
+    </div>
+  </section>
+
+  <!-- PANEL -->
+  <section class="card full" id="panel">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" type="button" data-t="setup" aria-selected="true">1. Setup</button>
+      <button class="tab" role="tab" type="button" data-t="points" aria-selected="false">2. Points</button>
+      <button class="tab" role="tab" type="button" data-t="results" aria-selected="false">3. Results</button>
+      <button class="tab" role="tab" type="button" data-t="figure" aria-selected="false">4. Figure</button>
+      <button class="tab" role="tab" type="button" data-t="compare" aria-selected="false">Compare conditions</button>
+      <button class="tab" role="tab" type="button" data-t="files" aria-selected="false">Export</button>
+      <span class="tabsep">Go deeper:</span>
+      <button class="tab deep" role="tab" type="button" data-t="cop" aria-selected="false">Centre of pressure</button>
+    </div>
+
+    <!-- SETUP -->
+    <div class="pane" data-p="setup">
+      <div class="gridc">
+        <div>
+          <h3>The participant</h3>
+          <div class="row">
+            <div><label for="foot">Foot on the plate</label><select id="foot"><option value="unk">Not recorded</option><option value="L">Left</option><option value="R">Right</option></select></div>
+            <div><label for="side">Plate side-to-side axis: + points to the participant&rsquo;s</label><select id="side"><option value="unk">Not recorded</option><option value="L">Left</option><option value="R">Right</option></select></div>
+          </div>
+          <p class="muted" id="sideInfo" style="margin:.25rem 0 0"></p>
+          <h3>Bodyweight</h3>
+          <div class="row">
+            <div><label for="bwMode">Bodyweight from</label>
+              <select id="bwMode">
+                <option value="header">The body weight stored in the file</option>
+                <option value="mass">A body mass I type in</option>
+              </select></div>
+            <div id="massWrap" class="hide"><label for="mass">Body mass (kg)</label><input type="number" id="mass" min="10" step="0.1"></div>
+          </div>
+          <p class="readout" id="bwInfo"></p>
+        </div>
+        <div>
+          <h3>Directions</h3>
+          <div class="row">
+            <div><label for="apSel">Front&ndash;back force is</label><select id="apSel"><option value="auto">Found from the data (recommended)</option><option value="Fy">Fy (with COP Ay)</option><option value="Fx">Fx (with COP Ax)</option></select></div>
+          </div>
+          <p class="muted" id="axesInfo" style="margin:.25rem 0 0"></p>
+          <h3>What to analyse</h3>
+          <div class="row">
+            <div><label for="win">Results from foot contact to</label><select id="win"><option value="stance">Toe-off (the whole stance)</option><option value="ball">The key event (e.g. ball contact, marked in 2. Points)</option></select></div>
+          </div>
+          <p class="muted" style="margin:.25rem 0 0">Use this when one moment matters most (e.g. ball contact in a kick: after it, the standing leg is only in the follow-through). Every trial needs the key event marked.</p>
+          <details class="more"><summary>Columns and sample rate <span class="muted" id="colSum"></span></summary><p class="muted" id="colInfo"></p></details>
+        </div>
+      </div>
+      <p class="muted">Filters and thresholds: <button class="btn small ghost" type="button" id="setOpen2">&#9881; Settings</button></p>
+    </div>
+
+    <!-- POINTS -->
+    <div class="pane hide" data-p="points">
+      <p class="lead">Foot contact and toe-off are found automatically (vertical force crossing the contact threshold). A key event the plate cannot see (e.g. ball contact in a kick) has to be marked from video. Put the cursor on the graph at that moment (fix it with a click, step with <kbd>&larr;</kbd> <kbd>&rarr;</kbd>) and press <strong>Set to the cursor</strong>, or type the time.</p>
+      <div class="tablewrap" style="max-height:none"><table id="ptTab"></table></div>
+      <div class="row tight"><button class="btn small ghost" id="ptReset" type="button">Put foot contact and toe-off back to automatic</button></div>
+      <h3>Key event from video</h3>
+      <p class="muted" style="margin:.2rem 0">No syncing needed: the foot landing on the plate is on the video <em>and</em> in the force data, so it links the two. Film side-on, in slow motion (240 fps if the phone allows, 120 fps at least), with the plate and the event in view. Step through frame by frame and note two frame numbers (most video players and Kinematic Analysis show them).</p>
+      <div class="row">
+        <div><label for="vFps">Video frame rate (fps)</label><input type="number" id="vFps" value="240" min="1" step="1"></div>
+        <div><label for="vF1">Frame: foot first touches the plate</label><input type="number" id="vF1" step="1" placeholder="e.g. 112"></div>
+        <div><label for="vF2">Frame: the key event (e.g. boot touches the ball)</label><input type="number" id="vF2" step="1" placeholder="e.g. 131"></div>
+      </div>
+      <div class="row tight"><button class="btn small accent" id="vSet" type="button">Set the key event</button><span class="muted" id="vOut"></span></div>
+      <div class="tip"><p><strong>How accurate is it?</strong> One frame at 240 fps is about 4 ms; at 60 fps it is about 17 ms. Phone slow motion is usually played back slower, so use the <em>recorded</em> frame rate, not the playback one. If you have no slow motion, a clap or a stamp on the plate in view of the camera can also be used to line the two up.</p></div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="pane hide" data-p="results">
+      <div class="row tight" style="justify-content:space-between">
+        <p class="lead" style="margin:0">Every result for this trial. Click a row to see how it was worked out, with this trial&rsquo;s own numbers.</p>
+        <div class="row tight"><button class="btn small" type="button" data-defs>&#9432; What do these mean?</button><button class="btn small ghost" id="resCsv" type="button">Download results (CSV)</button></div>
+      </div>
+      <div id="resTab"></div>
+    </div>
+
+    <!-- FIGURE -->
+    <div class="pane hide" data-p="figure"><div id="fbBox"></div></div>
+
+    <!-- COMPARE -->
+    <div class="pane hide" data-p="compare">
+      <div class="row tight" style="justify-content:space-between"><p id="cmpMsg" class="muted" style="margin:0"></p><button class="btn small" type="button" data-defs>&#9432; What do these mean?</button></div>
+      <div id="cmpBody" class="hide">
+        <div class="row">
+          <div><label for="cmpMode">Table</label><select id="cmpMode"><option value="sum">One column per condition (mean &plusmn; SD)</option><option value="trial">One column per trial</option></select></div>
+          <div><label for="cmpDp">Decimal places</label><select id="cmpDp"><option>0</option><option selected>1</option><option>2</option><option>3</option></select></div>
+        </div>
+        <span class="lab">Results in the table</span>
+        <div class="chips" id="cmpMetrics"></div>
+        <div class="tablewrap" style="max-height:none" id="cmpTab"></div>
+        <div class="row tight"><button class="btn small accent" id="cmpCopy" type="button">Copy table for Word</button><button class="btn small" id="cmpCsv" type="button">Table (CSV)</button><span class="muted" id="cmpCopyMsg"></span></div>
+        <label for="cmpCap">Suggested table title (check it and make it your own)</label>
+        <textarea id="cmpCap" rows="3"></textarea>
+        <h3>Curves</h3>
+        <div class="row">
+          <div><label for="cmpVar">Show</label><select id="cmpVar"></select></div>
+          <div><label for="cmpX">Time axis</label><select id="cmpX"><option value="ms">Milliseconds from foot contact</option><option value="pct">Percent of stance (0&ndash;100%)</option></select></div>
+          <div><label for="cmpShow">Lines</label><select id="cmpShow"><option value="each">Each trial</option><option value="mean">Mean &plusmn; SD per condition</option></select></div>
+        </div>
+        <div id="cCmp" class="chartbox"></div>
+        <div class="row tight"><button class="btn small accent" id="cmpFig" type="button">Make a publishable figure of these curves &rsaquo;</button><span class="muted">Opens them in <strong>4. Figure</strong>, where you can change every colour and label and save a PNG or SVG.</span></div>
+        <h3>Download the whole session</h3>
+        <div class="row tight"><button class="btn small accent" id="cmpLong" type="button">Every result, one row per trial (CSV)</button><button class="btn small" id="cmpNorm" type="button">Time-normalised curves (CSV)</button></div>
+        <p class="muted">Every file has participant, condition and trial columns, so you can filter or group them in Excel, R or SPSS.</p>
+      </div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="pane hide" data-p="files">
+      <p class="lead">Downloads for <strong>this trial</strong>. For every trial together, use <strong>Compare conditions</strong>.</p>
+      <h3>Data (CSV, opens in Excel)</h3>
+      <div class="row tight">
+        <button class="btn small accent" id="xCont" type="button">Continuous (every sample of stance)</button>
+        <button class="btn small" id="xRes" type="button">Results</button>
+      </div>
+      <p class="muted"><strong>Continuous</strong> has every sample from foot contact to toe-off: time, filtered vertical, front&ndash;back and side-to-side force, centre of pressure front&ndash;back and side to side (cm, relative to foot contact) and free moment. <strong>Results</strong> has every result in <strong>3. Results</strong> with its units.</p>
+      <h3>Project file</h3>
+      <p class="muted" style="margin:.2rem 0">Saves the whole session (files, labels, key events and settings) so you can carry on later or on another computer.</p>
+      <div class="row tight">
+        <button class="btn small" id="xProj" type="button">Save project file</button>
+        <label class="btn small ghost filebtn">Open project file<input type="file" id="projIn" accept=".json,application/json" aria-label="Open project file"></label>
+      </div>
+    </div>
+
+    <!-- CENTRE OF PRESSURE -->
+    <div class="pane hide" data-p="cop">
+      <p class="lead">The centre of pressure (COP) is the point under the foot where the whole ground reaction force acts: the centre of all the pressure the foot puts on the ground. It is not a force and it is not the centre of mass. As the standing foot lands on its heel and rolls onto the forefoot, COP moves forwards; if the foot rolls in or out, it moves to the side.</p>
+      <div class="integgrid">
+        <div class="stack">
+          <div class="pnl"><div class="pnlh"><span>1. Vertical force, with the COP threshold</span><span class="muted" id="cpThr"></span></div><div id="cCop1" class="chartbox"></div></div>
+          <div class="pnl"><div class="pnlh"><span>2. COP as exported by BioWare (Ax, Ay)</span><span class="muted">grey = not used</span></div><div id="cCop2" class="chartbox"></div></div>
+          <div class="pnl"><div class="pnlh"><span>3. COP as analysed (filtered, from where it started)</span><span class="muted">cm</span></div><div id="cCop3" class="chartbox"></div></div>
+        </div>
+        <aside class="worked">
+          <h3>How the plate finds it</h3>
+          <div class="eq"><span class="k">Front&ndash;back position</span>COP<sub>y</sub> = M<sub>x</sub> &divide; F<sub>z</sub></div>
+          <div class="eq"><span class="k">Side-to-side position</span>COP<sub>x</sub> = &minus;M<sub>y</sub> &divide; F<sub>z</sub></div>
+          <p class="small">The plate measures the moments (turning effects, M) about its centre and divides them by the vertical force. BioWare also corrects for the height of the plate&rsquo;s top surface. <strong>When F<sub>z</sub> is small, a tiny error in the moment is divided by a tiny force and the COP jumps all over the place.</strong> That is what happens as the foot lands and leaves (graph 2), so those parts must be thrown away.</p>
+          <div class="eq"><span class="k">This tool</span><span id="cpRule"></span></div>
+          <p class="small">COP excursion, path length and speed only use the part where it is valid, and are reported in cm from the first valid point (usually under the heel).</p>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="card full">
+    <div class="card-body">
+      <details class="help method">
+        <summary>How everything is calculated</summary>
+        <div class="hb">
+          <ol>
+            <li><strong>Filtering.</strong> Forces and the free moment are low-pass filtered (50 Hz unless changed in Settings), and the centre of pressure at a lower cut-off (15 Hz), because COP speed is worked out from changes in position and noise is magnified when you do that. The filter is the same as in Force Analysis: a Butterworth low-pass filter, 2nd order, run forwards and then backwards so there is no time lag (4th order overall), with the cut-off corrected for the two passes and the ends padded with a mirror image (Winter, 2009).</li>
+            <li><strong>Foot contact and toe-off.</strong> Stance is the contact on the plate (filtered vertical force above the contact threshold, 20 N) that contains the biggest force. Shorter contacts (e.g. the other foot brushing the plate) are ignored. Both can be moved by hand in 2. Points.</li>
+            <li><strong>Key event</strong> (e.g. ball contact) is marked by hand from video. When the results run to the key event, every result uses foot contact to the key event instead of the whole contact.</li>
+            <li><strong>Directions.</strong> The front&ndash;back force is the horizontal force (Fx or Fy) with the bigger force in the first 30% of stance, and is signed so that the force in the first quarter of stance (braking, as the plant leg stops the run-up) is negative and propulsion positive. Its COP partner (Ay with Fy, Ax with Fx) is signed so that the heel-to-toe roll is positive. Side to side is the other axis; + is lateral (the outside of the standing foot) when the standing foot and the plate&rsquo;s axis are given in Setup, otherwise + is the plate&rsquo;s own axis.</li>
+            <li><strong>Centre of pressure.</strong> Only used while vertical force is above a set percentage of body weight (20% unless changed), because it is unreliable at low loads (Bobbert and Schamhardt, 1990; Schmiedmayer and Kastner, 1999). The longest such stretch in stance is used and expressed relative to its first point (foot contact = 0 cm).</li>
+            <li><strong>Vertical force.</strong> Peak vertical force and its time from foot contact. Average loading rate = peak vertical force (in body weights) &divide; time to peak. Vertical impulse = area under the force (trapezoid rule).</li>
+            <li><strong>Front&ndash;back force.</strong> Peak braking and peak propulsive force are the most negative and most positive values. Braking and propulsive impulse are the areas below and above zero (trapezoid rule); net impulse is their sum.</li>
+            <li><strong>Centre of pressure results.</strong> Excursion = furthest &minus; least position, front&ndash;back and side to side. Path length = the sum of the straight-line distances between consecutive samples, <span class="formula">&Sigma;&radic;(&Delta;AP&sup2; + &Delta;ML&sup2;)</span>. Mean COP speed = path length &divide; time. Front&ndash;back and side-to-side speeds use the distance travelled in that direction only.</li>
+            <li><strong>Free moment</strong> (Tz): the twisting torque between the foot and the ground about the vertical axis through the COP. Peak = the largest value in either direction while COP is valid.</li>
+            <li><strong>Time normalisation</strong> (Compare conditions and figures): foot contact to toe-off resampled to 101 points (0&ndash;100%) by linear interpolation. Group curves are the mean &plusmn; SD point by point.</li>
+            <li><strong>Limits.</strong> The plate only measures the foot on it. It says nothing directly about the other leg, the joints or any implement (e.g. the ball). A foot partly off the plate, or anything else touching it, changes the results.</li>
+          </ol>
+          <p class="muted"><strong>References.</strong> Bobbert, M.F. and Schamhardt, H.C. (1990) Accuracy of determining the point of force application with piezoelectric force plates. <em>Journal of Biomechanics</em>, 23(7), 705&ndash;710. Schmiedmayer, H.B. and Kastner, J. (1999) Parameters influencing the accuracy of the point of force application determined with piezoelectric force plates. <em>Journal of Biomechanics</em>, 32(11), 1237&ndash;1242. Winter, D.A. (2009) <em>Biomechanics and Motor Control of Human Movement</em>, 4th edn. Wiley.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+  <footer>COP Analysis v<span id="verFoot"></span>. Created by Dr Tommy Bright, Senior Lecturer in Sports Biomechanics, Plymouth Marjon University. Works offline once loaded; nothing is uploaded. <button class="linkbtn" type="button" onclick="document.getElementById('citeBtn').click()">How to cite</button></footer>
+</main>
+
+<dialog id="setDlg" class="dlg" aria-labelledby="setTitle">
+  <div class="dlg-head"><h2 id="setTitle">&#9881; Settings: how each trial is analysed</h2><button class="btn small ghost" type="button" id="setClose">Close</button></div>
+  <div class="dlg-body">
+    <p class="muted">These settings apply to <strong>every trial in the session</strong> and are remembered in this browser. Keep them the same for every trial you compare, and report them in your method.</p>
+    <h3>1. Filters</h3>
+    <div class="row">
+      <div><label for="s_ffc">Force cut-off (Hz)</label><input type="number" id="s_ffc" min="5" max="200" step="1"></div>
+      <div><label for="s_cfc">Centre of pressure cut-off (Hz)</label><input type="number" id="s_cfc" min="2" max="100" step="1"></div>
+    </div>
+    <p class="muted">Recommended: <strong>50 Hz for force, 15 Hz for COP.</strong> 50 Hz keeps the sharp impact peak as the foot plants. COP is smoothed more because speed and path length add up every small wobble, so noise would make them too big.</p>
+    <h3>2. Contact</h3>
+    <div class="row"><div><label for="s_thr">Contact threshold (N)</label><input type="number" id="s_thr" min="5" max="200" step="1"></div></div>
+    <p class="muted">Recommended: <strong>20 N</strong>. Foot contact is the first sample above it, toe-off the last.</p>
+    <h3>3. Centre of pressure</h3>
+    <div class="row">
+      <div><label for="s_cthr">Only use COP when vertical force is above (% of body weight)</label><input type="number" id="s_cthr" min="1" max="60" step="1"></div>
+      <div><label for="s_orig">COP positions</label><select id="s_orig"><option value="plant">From where it started (foot contact = 0)</option><option value="abs">Plate coordinates</option></select></div>
+    </div>
+    <p class="muted">Recommended: <strong>20% of body weight</strong>. Below this, COP from a portable plate jumps around as the foot lands and leaves (see Go deeper: Centre of pressure). On the kicking demo, front&ndash;back excursion was 28 to 45 cm at 5% (longer than a foot), but steady at 23 to 27 cm from 20% upwards.</p>
+    <div class="row tight"><button class="btn small ghost" type="button" id="setReset">Restore the recommended settings</button></div>
+  </div>
+</dialog>
+
+<dialog id="defDlg" class="dlg" aria-labelledby="defTitle">
+  <div class="dlg-head"><h2 id="defTitle">&#9432; What the results mean</h2><button class="btn small ghost" type="button" id="defClose">Close</button></div>
+  <div class="dlg-body" id="defBody"></div>
+</dialog>
+<dialog id="citeDlg" class="dlg" aria-labelledby="citeTitle">
+  <div class="dlg-head"><h2 id="citeTitle">&#10077; Cite COP Analysis</h2><button class="btn small ghost" type="button" id="citeClose">Close</button></div>
+  <div class="dlg-body">
+    <p class="muted">If you use COP Analysis in a lab report, dissertation, paper or presentation, please cite it.</p>
+    <h3>APA 7th</h3><pre class="cite" id="citeApa"></pre><button class="btn small" type="button" data-copy="citeApa">Copy</button>
+    <h3>Harvard</h3><pre class="cite" id="citeHarvard"></pre><button class="btn small" type="button" data-copy="citeHarvard">Copy</button>
+    <h3>BibTeX</h3><pre class="cite" id="citeBib"></pre><button class="btn small" type="button" data-copy="citeBib">Copy</button>
+    <p class="muted" style="margin-top:.8rem">COP Analysis was created by Dr Tommy Bright, Senior Lecturer in Sports Biomechanics, Plymouth Marjon University.</p>
+  </div>
+</dialog>
+<script>window.addEventListener('error',function(e){var s=document.getElementById('status');if(s)s.innerHTML='<span class="bad"><strong>Something went wrong.</strong> Try a hard refresh (Ctrl + Shift + R, or Cmd + Shift + R on a Mac). If it keeps happening, tell your tutor: '+(e.message||'')+'</span>';});</script>
+<script type="module" src="js/app.js?v=1.2.0"></script>
+</body>
+</html>
