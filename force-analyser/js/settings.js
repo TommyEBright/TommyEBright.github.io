@@ -1,8 +1,8 @@
 // Settings (top bar): how the start of movement, bodyweight, take-off/landing and integration are defined.
 // The same settings apply to every trial in the session and are remembered in this browser.
 // Citation (top bar): copies a reference to the tool.
-import { A, $, persist, status, VERSION, METHOD_KEYS, saveMethodSettings, clearMethodSettings } from './state.js?v=2.5.0';
-import { defaultSettings } from './analyse.js?v=2.5.0';
+import { A, $, persist, status, VERSION, METHOD_KEYS, saveMethodSettings, clearMethodSettings } from './state.js?v=2.6.0';
+import { defaultSettings } from './analyse.js?v=2.6.0';
 
 const NUM = ['onsetK', 'onsetPct', 'onsetN', 'onsetBack', 'weighLen', 'sjTolPct', 'thr', 'hold'];
 const cur = () => (A.S ? A.S.set : Object.assign(defaultSettings(), JSON.parse(localStorage.getItem('fa-method') || '{}')));

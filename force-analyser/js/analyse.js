@@ -1,6 +1,6 @@
 // The analysis of one trial: bodyweight, events, integration (force -> acceleration -> velocity ->
 // displacement), phases and power. No page code here, so it can be tested on its own.
-import { G, butter, integrateForward, integrateBackward, mean, sd, argmax, argmin, quietestWindow } from './maths.js?v=2.5.0';
+import { G, butter, integrateForward, integrateBackward, mean, sd, argmax, argmin, quietestWindow } from './maths.js?v=2.6.0';
 
 export const JUMPS = { cmj: 'Countermovement jump (CMJ)', sj: 'Squat jump (SJ)', dj: 'Drop jump (DJ)', slj: 'Standing long jump (SLJ)' };
 export const JUMP_SHORT = { cmj: 'CMJ', sj: 'SJ', dj: 'Drop jump', slj: 'SLJ' };

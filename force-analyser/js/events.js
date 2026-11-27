@@ -1,7 +1,7 @@
 // Tab 2: the events table, with nudging one sample at a time and resetting to automatic.
-import { A, $, esc, persist } from './state.js?v=2.5.0';
-import { onsetText, weighText } from './analyse.js?v=2.5.0';
-import { applyEvent } from './trace.js?v=2.5.0';
+import { A, $, esc, persist } from './state.js?v=2.6.0';
+import { onsetText, weighText } from './analyse.js?v=2.6.0';
+import { applyEvent } from './trace.js?v=2.6.0';
 
 const HOW = {
   cmj: [
