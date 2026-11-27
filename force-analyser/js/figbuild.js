@@ -2,10 +2,11 @@
 // stacked panels), or several trials overlaid between any two events, in seconds or time-normalised, with means,
 // SD bands and a second y axis. Every colour, line style, axis limit, font and size can be changed. The figure is
 // drawn through a small set of shapes with two back ends (canvas and SVG), so the preview, PNG and SVG match.
-import { A, $, esc, status, download, baseName, trialLabel, PLATE_COLS, COL } from './state.js?v=2.4.0';
-import { niceStep, numTxt } from './plot.js?v=2.4.0';
-import { analyseTrial } from './compare.js?v=2.4.0';
-import { eventChoices, eventIndex } from './analyse.js?v=2.4.0';
+import { A, $, esc, status, download, baseName, trialLabel, PLATE_COLS, COL } from './state.js?v=2.5.0';
+import { niceStep, numTxt } from './plot.js?v=2.5.0';
+import { analyseTrial } from './compare.js?v=2.5.0';
+import { eventChoices, eventIndex } from './analyse.js?v=2.5.0';
+import { workFD } from './vars.js?v=2.5.0';
 
 const OKABE = ['#0072B2', '#D55E00', '#009E73', '#CC79A7', '#E69F00', '#56B4E9', '#000000', '#999999']; // Okabe and Ito (2008)
 const PAL = ['#1d4ed8', '#dc2626', '#059669', '#9333ea', '#d97706', '#0891b2', '#be185d', '#475569', '#65a30d', '#7c2d12'];
@@ -16,22 +17,22 @@ const PANELS = { F: 'Force', a: 'Acceleration', v: 'Velocity', s: 'Displacement'
 const DASH = { solid: null, dash: [8, 4], dot: [2, 3], dashdot: [8, 3, 2, 3], long: [14, 5] };
 const DASHN = { solid: 'Solid', dash: 'Dashed', dot: 'Dotted', dashdot: 'Dash-dot', long: 'Long dashes' };
 const isJumpR = (R) => R && R.ok && !R.generic;
-const STYLE0 = { F: COL.total, a: COL.acc, v: COL.vel, s: COL.disp, P: COL.power, bw: '#475569', thr: '#94a3b8', ev: '#334155', impP: '#10b981', impN: '#3b82f6', impA: 0.3, mean: '#111827', sd: '#9ca3af', sdA: 0.3, phA: 0.16, dash2: 'dash', bwDash: 'dash', evDash: 'dash', evLw: 1.1, axis: '#374151', gridCol: '#e5e7eb', text: '#111827' };
+const STYLE0 = { F: COL.total, a: COL.acc, v: COL.vel, s: COL.disp, P: COL.power, bw: '#475569', thr: '#94a3b8', ev: '#334155', impP: '#10b981', impN: '#3b82f6', impA: 0.3, mean: '#111827', sd: '#9ca3af', sdA: 0.3, phA: 0.16, dash2: 'dash', bwDash: 'dash', evDash: 'dash', evLw: 1.1, workA: 0.14, axis: '#374151', gridCol: '#e5e7eb', text: '#111827' };
 function defaults() {
   return { type: 'force', range: 'move', evA: 'onset', evB: 'le', pad: 0.2, units: 'N', panels: { F: true, a: true, v: true, s: true, P: false }, right: 'none',
-    trials: {}, sig: 'F', sig2: 'none', from: 'onset', to: 'to', tmode: 'norm', anchor: 'to', pre: 0.2, post: 0.1, colourBy: 'trial',
-    on: { tot: true, plates: false, hor: true, bw: true, thr: false, phases: true, events: true, names: true, impulse: false, mean: true, sd: true, each: true, evNames: true },
+    trials: {}, fdTrials: {}, sig: 'F', sig2: 'none', from: 'onset', to: 'to', tmode: 'norm', anchor: 'to', pre: 0.2, post: 0.1, colourBy: 'trial',
+    on: { tot: true, plates: false, hor: true, bw: true, thr: false, phases: true, events: true, names: true, impulse: false, mean: true, sd: true, each: true, evNames: true, start: true, work: false },
     legend: true, legendPos: 'top', grid: true, cb: false, title: '', xlab: '', ylab: '', y2lab: '', size: 'slide', W: 960, H: 540, lw: 2, font: 14, fontFam: 'Arial', bg: 'white',
     lim: { x0: '', x1: '', y0: '', y1: '', z0: '', z1: '' }, st: Object.assign({}, STYLE0), ph: {}, tcol: {} };
 }
 function F() {
   if (!A.fig) {
     A.fig = defaults();
-    try { const j = JSON.parse(localStorage.getItem('fa-fig2')); if (j) { const d = A.fig; Object.assign(d, j, { on: Object.assign(d.on, j.on || {}), panels: Object.assign(d.panels, j.panels || {}), st: Object.assign(d.st, j.st || {}), lim: Object.assign(d.lim, j.lim || {}), ph: j.ph || {}, tcol: j.tcol || {}, trials: {}, title: '', xlab: '', ylab: '', y2lab: '' }); } } catch (e) { /* ignore */ }
+    try { const j = JSON.parse(localStorage.getItem('fa-fig2')); if (j) { const d = A.fig; Object.assign(d, j, { on: Object.assign(d.on, j.on || {}), panels: Object.assign(d.panels, j.panels || {}), st: Object.assign(d.st, j.st || {}), lim: Object.assign(d.lim, j.lim || {}), ph: j.ph || {}, tcol: j.tcol || {}, trials: {}, fdTrials: {}, title: '', xlab: '', ylab: '', y2lab: '' }); } } catch (e) { /* ignore */ }
   }
   return A.fig;
 }
-function save() { try { localStorage.setItem('fa-fig2', JSON.stringify(Object.assign({}, A.fig, { trials: {} }))); } catch (e) { /* ignore */ } }
+function save() { try { localStorage.setItem('fa-fig2', JSON.stringify(Object.assign({}, A.fig, { trials: {}, fdTrials: {} }))); } catch (e) { /* ignore */ } }
 const sizeOf = (f) => (f.size === 'custom' ? [Math.max(300, Math.min(4000, +f.W || 960)), Math.max(200, Math.min(4000, +f.H || 540))] : (SIZES[f.size] || SIZES.slide).slice(1));
 const numOr = (v) => (v === '' || v === null || v === undefined || !Number.isFinite(+v) ? null : +v);
 const lim2 = (r, a, b) => { const lo = numOr(a), hi = numOr(b); const out = [lo === null ? r[0] : lo, hi === null ? r[1] : hi]; return out[1] > out[0] ? out : r; };
@@ -207,6 +208,7 @@ function title(g, f, w, top) { if (f.title) { g.text(f.title, w / 2, top, { size
 function build(g, w, h, f, R) {
   if (!R || !R.ok) return 'Open a trial that has been analysed first.';
   if (f.type === 'trials') return buildTrials(g, w, h, f, R);
+  if (f.type === 'fd') return buildFD(g, w, h, f, R);
   const on = f.on, uk = unitK(f, R), items = [], jump = isJumpR(R);
   let top = title(g, f, w, 10);
   const hasR = f.type === 'force' && jump && f.right !== 'none';
@@ -366,6 +368,55 @@ function buildTrials(g, w, h, f, R0) {
   return skipped.length ? 'note:' + skipped.length + ' trial' + (skipped.length > 1 ? 's' : '') + ' left out (missing one of the events): ' + skipped.join(', ') : '';
 }
 
+// ---------- force against displacement during propulsion: the work done in the push ----------
+// Countermovement, squat and drop jumps can share one graph, so a CMJ and an SJ from the same depth can be compared.
+const FD_JUMPS = { cmj: 'CMJ', sj: 'SJ', dj: 'DJ' };
+const fdOK = (t) => (!t.set.type || t.set.type === 'jump') && !!FD_JUMPS[t.set.jump];
+const propStart = (R) => (R.jump === 'sj' ? R.onset : R.jump === 'dj' ? R.lowI : R.zeroI);
+function buildFD(g, w, h, f, R0) {
+  if (!FD_JUMPS[R0.jump]) return 'Force against displacement works for countermovement, squat and drop jumps.';
+  const on = f.on, runs = [], skipped = [];
+  A.session.trials.filter((t) => fdOK(t) && f.fdTrials[t.id] !== false).forEach((t, j) => {
+    const { R } = analyseTrial(t);
+    if (!R || !R.ok || R.generic || !FD_JUMPS[R.jump]) { skipped.push(trialLabel(t)); return; }
+    const a = propStart(R), b = R.TO;
+    if (!(a >= 0) || !(b > a)) { skipped.push(trialLabel(t)); return; }
+    const uk = unitK(f, R), x = [], y = [];
+    for (let i = a; i <= b; i++) { x.push((R.s[i] - R.s[a]) * 100); y.push(R.F[i] / uk.k); }
+    runs.push({ t, R, x, y, uk, work: workFD(R.F, R.s, a, b), bw: R.BW / uk.k, col: f.tcol[t.id] || (f.cb ? OKABE[j % 8] : PAL[j % PAL.length]) });
+  });
+  if (!runs.length) return 'Add countermovement, squat or drop jump trials to the session (Add files), then choose them here.';
+  const wTxt = (r) => (f.units === 'N' || !(r.R.m > 0) ? Math.round(r.work) + ' J' : (r.work / r.R.m).toFixed(2) + ' J/kg');
+  let top = title(g, f, w, 10);
+  const L = 34 + Math.max(30, f.font * 2.8), Rm = 18, bot = f.font * 2 + 22, items = [];
+  if (f.legend) {
+    runs.forEach((r) => items.push({ label: trialLabel(r.t) + ' (' + FD_JUMPS[r.R.jump] + '): work ' + wTxt(r), col: r.col, lw: f.lw }));
+    if (on.work) items.push({ label: 'Work = area under the curve', col: '#9ca3af', box: true, alpha: Math.min(1, f.st.workA * 2) });
+    if (f.legendPos === 'top') top += legend(g, f, items, L, top, w - L - Rm);
+  }
+  const b = { x: L, y: top, w: w - L - Rm, h: h - top - bot };
+  if (b.h < 60) return 'Not enough room: choose a bigger size or a smaller legend.';
+  const yHi = Math.max(...runs.flatMap((r) => r.y.concat(on.bw ? [r.bw] : [])).filter(Number.isFinite));
+  const xHi = Math.max(...runs.map((r) => r.x[r.x.length - 1]));
+  const yr = lim2([0, yHi * 1.07 || 1], f.lim.y0, f.lim.y1), xr = lim2([0, xHi * 1.03 || 1], f.lim.x0, f.lim.x1);
+  if (BG) g.rect(b.x, b.y, b.w, b.h, { fill: BG });
+  const S = panel(g, f, b, xr, yr, {});
+  const pts = (r) => { const p = []; for (let j = 0; j < r.x.length; j++) if (Number.isFinite(r.y[j])) p.push(S.X(r.x[j]), S.Y(r.y[j])); return p; };
+  g.clip(b.x, b.y, b.w, b.h);
+  if (on.work) runs.forEach((r) => { const p = pts(r); p.push(S.X(r.x[r.x.length - 1]), S.Y(Math.max(0, yr[0])), S.X(r.x[0]), S.Y(Math.max(0, yr[0]))); g.path(p, { fill: r.col, alpha: f.st.workA }); });
+  if (on.bw) {
+    if (f.units !== 'N') g.path([b.x, S.Y(runs[0].bw), b.x + b.w, S.Y(runs[0].bw)], { stroke: f.st.bw, lw: 1.2, dash: DASH[f.st.bwDash] });
+    else runs.forEach((r) => g.path([b.x, S.Y(r.bw), b.x + b.w, S.Y(r.bw)], { stroke: runs.length > 1 ? r.col : f.st.bw, lw: 1.1, alpha: 0.8, dash: DASH[f.st.bwDash] }));
+  }
+  runs.forEach((r) => g.path(pts(r), { stroke: r.col, lw: f.lw }));
+  g.unclip(); frameOf(g, b);
+  if (on.start) runs.forEach((r) => { const px = S.X(r.x[0]), py = S.Y(r.y[0]); if (py >= b.y && py <= b.y + b.h) g.circle(px, py, f.lw + 3, { fill: r.col, stroke: '#ffffff', lw: 1.5 }); });
+  if (f.legend && f.legendPos === 'inside') legendInside(g, f, items, b.x + b.w, b.y);
+  g.text(f.ylab || 'Force (' + runs[0].uk.lab + ')', 14, b.y + b.h / 2, { size: f.font, bold: true, anchor: 'middle', base: 'middle', rot: -90, fill: f.st.text });
+  g.text(f.xlab || 'Rise of the centre of mass from the start of propulsion (cm)', L + b.w / 2, h - 6, { size: f.font, bold: true, anchor: 'middle', base: 'bottom', fill: f.st.text });
+  return skipped.length ? 'note:' + skipped.length + ' trial' + (skipped.length > 1 ? 's' : '') + ' left out (no start of propulsion or take-off found): ' + skipped.join(', ') : '';
+}
+
 // ---------- drawing, saving and the controls ----------
 const isErr = (m) => m && !m.startsWith('note:');
 function setLook(f, forExport) { FONT = FONTS[f.fontFam] || FONTS.Arial; BG = f.bg === 'none' && forExport ? '' : '#ffffff'; }
@@ -407,7 +458,8 @@ export function renderFigBuilder() {
   if (!jump && f.type !== 'force') f.type = 'force';
   const chip = (attr, k, lab, act, extra) => '<button type="button" class="chip' + (act ? ' active' : '') + '" ' + attr + '="' + esc(k) + '" aria-pressed="' + !!act + '"' + (extra || '') + '>' + lab + '</button>';
   const others = jump ? A.session.trials.filter((t) => sameKind(t, R)) : [];
-  const TYPES = { force: 'One trial', motion: 'One trial, stacked panels', trials: 'Several trials overlaid' };
+  const TYPES = { force: 'One trial', motion: 'One trial, stacked panels', trials: 'Several trials overlaid', fd: 'Force against displacement (work)' };
+  if (f.type === 'fd' && !FD_JUMPS[R.jump]) f.type = 'force';
   const SIGS = [['F', 'Force'], ['a', 'Acceleration'], ['v', 'Velocity'], ['s', 'Displacement'], ['P', 'Power']];
   const EVS = jump ? eventChoices(R.jump) : [];
   const hasPlates = jump ? R.plates.filter((p) => p.role !== 'off').length > 1 : R.ch.some((c) => c.kind === 'z' && c.id !== 'tot');
@@ -418,7 +470,7 @@ export function renderFigBuilder() {
   lay.push(['phases', jump ? 'Phase shading' : 'Window shading'], ['names', jump ? 'Phase names' : 'Window names'], ['events', jump ? 'Event lines' : 'Point lines'], ['evNames', 'Event names']);
   if (R.BW > 0) lay.push(['impulse', 'Net impulse shading']);
   let h = '<p class="lead">Build a figure for a report, poster, paper or slides. Everything you change shows straight away on the right; save it as a PNG (for Word and PowerPoint) or an editable SVG.</p><div class="figgrid"><div class="figctl">';
-  h += '<p class="fl">1. What kind of figure?</p><div class="chips">' + Object.entries(TYPES).filter(([k]) => jump || k === 'force').map(([k, l]) => chip('data-ft', k, l, f.type === k)).join('') + '</div>';
+  h += '<p class="fl">1. What kind of figure?</p><div class="chips">' + Object.entries(TYPES).filter(([k]) => (jump || k === 'force') && (k !== 'fd' || FD_JUMPS[R.jump])).map(([k, l]) => chip('data-ft', k, l, f.type === k)).join('') + '</div>';
   if (f.type === 'force') {
     h += '<p class="fl">2. What to show</p><div class="chips">' + lay.map(([k, l]) => chip('data-fl', k, l, f.on[k])).join('') + '</div>';
     if (jump) h += '<div class="row tight"><label class="inline" for="fbRight" style="margin:0">Right-hand axis</label>' + sel('fbRight', [['none', 'Nothing'], ['v', 'Velocity'], ['s', 'Displacement'], ['a', 'Acceleration'], ['P', 'Power']], f.right) + '</div>';
@@ -441,6 +493,13 @@ export function renderFigBuilder() {
     const keys = f.colourBy === 'trial' ? others.filter((t) => f.trials[t.id] !== false).map((t, j) => [t.id, trialLabel(t), j]) : [...new Set(others.filter((t) => f.trials[t.id] !== false).map((t) => groupKey(f, t)))].map((g, j) => ['g:' + g, g, j]);
     h += '<div class="colgrid">' + keys.map(([k, lab, j]) => '<label class="colpick"><input type="color" data-tc="' + esc(k) + '" value="' + (f.tcol[k] || (f.cb ? OKABE[j % 8] : PAL[j % PAL.length])) + '"> ' + esc(lab) + '</label>').join('') + '</div>';
   }
+  if (f.type === 'fd') {
+    const fdT = A.session.trials.filter(fdOK), on2 = fdT.filter((t) => f.fdTrials[t.id] !== false);
+    h += '<p class="fl">2. Which trials</p><p class="muted small">Countermovement, squat and drop jumps can go on the same graph, so you can put a CMJ and an SJ side by side.</p><div class="chips">' + fdT.map((t) => chip('data-ffd', t.id, esc(trialLabel(t)) + ' (' + FD_JUMPS[t.set.jump] + ')', f.fdTrials[t.id] !== false)).join('') + '</div>'
+      + '<p class="fl">3. What to show</p><div class="chips">' + [['start', 'Dot at the start of the push'], ['work', 'Shade the work (area under the curve)'], ['bw', 'Bodyweight line']].map(([k, l]) => chip('data-fl', k, l, f.on[k])).join('') + '</div>'
+      + '<p class="muted small">Each line runs from the start of propulsion (the lowest point in a CMJ or drop jump, the start of the push in a squat jump) to take-off. Force &times; displacement is work, so the area under each line is the energy the push gives the body, and that sets take-off velocity and jump height. For a fair comparison, start both jumps from the same depth (compare Push-off distance in Results). Force in &times; bodyweight puts people of different sizes on the same scale.</p>';
+    h += '<div class="colgrid">' + on2.map((t, j) => '<label class="colpick"><input type="color" data-tc="' + esc(t.id) + '" value="' + (f.tcol[t.id] || (f.cb ? OKABE[j % 8] : PAL[j % PAL.length])) + '"> ' + esc(trialLabel(t)) + '</label>').join('') + '</div>';
+  }
   // axes and labels
   const hasR = (f.type === 'force' && jump && f.right !== 'none') || (f.type === 'trials' && f.sig2 !== 'none');
   h += '<p class="fl">Units, size and text</p><div class="row tight">'
@@ -460,19 +519,21 @@ export function renderFigBuilder() {
   // style
   const st = f.st;
   let sty = '<div class="colgrid">';
-  if (f.type !== 'trials') sty += colIn('F', st.F, 'Force') + (f.type === 'motion' || hasR ? colIn('v', st.v, 'Velocity') + colIn('s', st.s, 'Displacement') + colIn('a', st.a, 'Acceleration') + colIn('P', st.P, 'Power') : '');
-  if (f.type !== 'trials' && jump && hasPlates) R.plates.forEach((p, j) => { if (p.role !== 'off') sty += colIn('pl' + j, st['pl' + j] || PLATE_COLS[j], esc(p.name)); });
-  if (f.type !== 'trials' && jump && R.Fh) sty += colIn('hor', st.hor || '#ea580c', 'Horizontal force');
+  const multi = f.type === 'trials' || f.type === 'fd';
+  if (!multi) sty += colIn('F', st.F, 'Force') + (f.type === 'motion' || hasR ? colIn('v', st.v, 'Velocity') + colIn('s', st.s, 'Displacement') + colIn('a', st.a, 'Acceleration') + colIn('P', st.P, 'Power') : '');
+  if (!multi && jump && hasPlates) R.plates.forEach((p, j) => { if (p.role !== 'off') sty += colIn('pl' + j, st['pl' + j] || PLATE_COLS[j], esc(p.name)); });
+  if (!multi && jump && R.Fh) sty += colIn('hor', st.hor || '#ea580c', 'Horizontal force');
   sty += colIn('bw', st.bw, 'Bodyweight line') + colIn('ev', st.ev, 'Event lines and names');
-  if (f.type !== 'trials') sty += colIn('impP', st.impP, 'Net impulse +') + colIn('impN', st.impN, 'Net impulse −') + colIn('thr', st.thr, 'Contact threshold');
-  else sty += colIn('mean', st.mean, 'Mean (colour by trial)') + colIn('sd', st.sd, 'SD band (colour by trial)');
+  if (!multi) sty += colIn('impP', st.impP, 'Net impulse +') + colIn('impN', st.impN, 'Net impulse −') + colIn('thr', st.thr, 'Contact threshold');
+  else if (f.type === 'trials') sty += colIn('mean', st.mean, 'Mean (colour by trial)') + colIn('sd', st.sd, 'SD band (colour by trial)');
   sty += colIn('axis', st.axis, 'Axes and numbers') + colIn('text', st.text, 'Titles and labels') + '</div>';
-  if (f.type !== 'trials') {
+  if (!multi) {
     const seen = new Set(), phs = shades(f, R).filter((s) => { if (seen.has(s.key)) return false; seen.add(s.key); return true; });
     if (phs.length) sty += '<p class="small" style="margin:.4rem 0 .1rem"><strong>' + (jump ? 'Phase' : 'Window') + ' shading</strong></p><div class="colgrid">' + phs.map((s) => '<label class="colpick"><input type="color" data-ph="' + esc(s.key) + '" value="' + s.col + '"> ' + esc(s.name) + '</label>').join('') + '</div>';
   }
-  sty += '<div class="row"><div><label>' + (f.type === 'trials' ? 'SD band opacity' : 'Shading opacity') + '</label><input type="range" data-sta="' + (f.type === 'trials' ? 'sdA' : 'phA') + '" min="0" max="0.6" step="0.02" value="' + (f.type === 'trials' ? st.sdA : st.phA) + '"></div>'
-    + (f.type !== 'trials' ? '<div><label>Impulse opacity</label><input type="range" data-sta="impA" min="0" max="0.8" step="0.02" value="' + st.impA + '"></div>' : '') + '<div><label>Event line thickness</label><input type="range" data-sta="evLw" min="0.5" max="3" step="0.25" value="' + st.evLw + '"></div></div>';
+  const opA = f.type === 'trials' ? ['SD band opacity', 'sdA'] : f.type === 'fd' ? ['Work shading opacity', 'workA'] : ['Shading opacity', 'phA'];
+  sty += '<div class="row"><div><label>' + opA[0] + '</label><input type="range" data-sta="' + opA[1] + '" min="0" max="0.6" step="0.02" value="' + st[opA[1]] + '"></div>'
+    + (!multi ? '<div><label>Impulse opacity</label><input type="range" data-sta="impA" min="0" max="0.8" step="0.02" value="' + st.impA + '"></div>' : '') + '<div><label>Event line thickness</label><input type="range" data-sta="evLw" min="0.5" max="3" step="0.25" value="' + st.evLw + '"></div></div>';
   const dsel = (k, lab) => '<label class="inline" style="margin:0">' + lab + ' <select class="mini" style="width:auto" data-std="' + k + '">' + Object.entries(DASHN).map(([v, l]) => opt(v, l, st[k])).join('') + '</select></label>';
   sty += '<div class="row tight">' + (hasR ? dsel('dash2', 'Right-axis lines') : '') + dsel('bwDash', 'Bodyweight') + dsel('evDash', 'Events') + '</div>';
   h += '<details class="more"' + (A.figStyleOpen ? ' open' : '') + ' id="fbStyle"><summary>Colours and line styles</summary>' + sty + '<button type="button" class="btn small ghost" id="fbStyleReset">Default colours</button></details>';
@@ -484,6 +545,7 @@ export function renderFigBuilder() {
   el.querySelectorAll('[data-ft]').forEach((b) => b.addEventListener('click', () => { f.type = b.getAttribute('data-ft'); re(true); }));
   el.querySelectorAll('[data-fl]').forEach((b) => b.addEventListener('click', () => { const k = b.getAttribute('data-fl'); f.on[k] = !f.on[k]; re(true); }));
   el.querySelectorAll('[data-fp]').forEach((b) => b.addEventListener('click', () => { const k = b.getAttribute('data-fp'); f.panels[k] = !f.panels[k]; re(true); }));
+  el.querySelectorAll('[data-ffd]').forEach((b) => b.addEventListener('click', () => { const k = b.getAttribute('data-ffd'); f.fdTrials[k] = f.fdTrials[k] === false; re(true); }));
   el.querySelectorAll('[data-ftr]').forEach((b) => b.addEventListener('click', () => { const k = b.getAttribute('data-ftr'); f.trials[k] = f.trials[k] === false; re(true); }));
   el.querySelectorAll('[data-fc]').forEach((c) => c.addEventListener('change', function () { f[this.getAttribute('data-fc')] = this.checked; re(true); }));
   const full = ['fbRange', 'fbTmode', 'fbColBy', 'fbSize', 'fbRight', 'fbSig2', 'fbSig', 'fbFrom', 'fbTo'];
