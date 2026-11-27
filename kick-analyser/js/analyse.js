@@ -204,7 +204,7 @@ export const VARS = [
     def: 'Side-to-side COP at the marked event (ball contact), relative to where it started.', ex: '' },
   { g: 'Free moment (Tz)', k: 'tz', l: 'Peak free moment', u: 'N·m', on: 0,
     def: 'The largest twisting torque between the foot and the ground about a vertical axis through the centre of pressure. It is the friction that stops the foot spinning on the spot, so it shows how much the body is turning (or trying to turn) over the planted foot.',
-    ex: '8 N·m on a curler: the hips and trunk rotating over the standing foot to wrap the kick. It matters in cutting and pivoting, and high values are linked with twisting load on the knee and ankle.' }
+    ex: 'The demo kicks peak at around 8 to 10 N·m as the hips and trunk turn over the standing foot. Bigger values mean more twisting between foot and ground (e.g. in cutting and pivoting), which loads the ankle and knee in rotation.' }
 ];
 export const unitOf = (v) => (F(v.u) ? (A.units === 'BW' ? 'BW' : 'N') : I(v.u) ? (A.units === 'BW' ? 'BW·s' : 'N·s') : v.u);
 export function valOf(v, r, tr) { let x = r[v.k]; if (x === null || x === undefined) return NaN; if (A.units === 'BW' && (F(v.u) || I(v.u))) x /= tr.p.bw; return x; }
