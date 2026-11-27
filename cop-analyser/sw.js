@@ -1,5 +1,5 @@
 // Service worker: keeps the app working offline. Bump VERSION when you change any file.
-const VERSION = 'cop-1.2.0';
+const VERSION = 'cop-1.2.1';
 const CORE = [
   './', 'index.html', 'css/style.css', 'manifest.webmanifest',
   'js/app.js', 'js/state.js', 'js/analyse.js', 'js/draw.js', 'js/figure.js',

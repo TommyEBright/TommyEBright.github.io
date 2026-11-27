@@ -1,8 +1,8 @@
 // Page shell: files, session, the main graph, Setup, Points, Results, Compare, Export, Centre of pressure, dialogs.
-import { A, $, esc, fx, status, cur, trialLabel, download, safe, kickColour, VERSION, loadSettings, saveSettings, defaultSettings } from './state.js?v=1.2.0';
-import { parseFile, guessLabels, process, results, VARS, unitOf, valOf, SIG, sigLabel, signal } from './analyse.js?v=1.2.0';
-import { canvasG, axes, range, padRange, line, band, FONTS } from './draw.js?v=1.2.0';
-import { renderFigure, openFigure } from './figure.js?v=1.2.0';
+import { A, $, esc, fx, status, cur, trialLabel, download, safe, kickColour, VERSION, loadSettings, saveSettings, defaultSettings } from './state.js?v=1.2.1';
+import { parseFile, guessLabels, process, results, VARS, unitOf, valOf, SIG, sigLabel, signal } from './analyse.js?v=1.2.1';
+import { canvasG, axes, range, padRange, line, band, FONTS } from './draw.js?v=1.2.1';
+import { renderFigure, openFigure } from './figure.js?v=1.2.1';
 
 const UI = FONTS['System UI'];
 A.set = loadSettings();

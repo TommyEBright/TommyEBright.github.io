@@ -1,22 +1,22 @@
 // The figure builder (tab "4. Figure"): one trial, conditions compared (one signal or four panels), the centre of pressure
 // path under the foot, or a bar chart of any result. Every choice shows straight away; PNG, SVG or copy.
-import { A, $, esc, fx, download, trialLabel, kickColour, cur } from './state.js?v=1.2.0';
-import { VARS, results, valOf, unitOf, SIG, sigLabel, sigUnit, signal } from './analyse.js?v=1.2.0';
-import { FONTS, canvasG, svgG, axes, range, padRange, line, band, legend, legendH, textW } from './draw.js?v=1.2.0';
+import { A, $, esc, fx, download, trialLabel, kickColour, cur } from './state.js?v=1.2.1';
+import { VARS, results, valOf, unitOf, SIG, sigLabel, sigUnit, signal } from './analyse.js?v=1.2.1';
+import { FONTS, canvasG, svgG, axes, range, padRange, line, band, legend, legendH, textW } from './draw.js?v=1.2.1';
 
 const SIZES = { slide: ['Slide (16:9)', 960, 540], report: ['Report (4:3)', 800, 600], wide: ['Wide and short', 1000, 400], poster: ['Poster (3:2)', 1080, 720], tall: ['Tall', 720, 960], square: ['Square', 800, 800], journal1: ['Journal, one column', 700, 520], journal2: ['Journal, two columns', 1400, 700], custom: ['Custom size', 0, 0] };
 const TYPES = { foot: 'Coach footprint', one: 'One trial', curves: 'Conditions compared', four: 'Four panels', path: 'COP path under the foot', bar: 'Bar chart of a result' };
 const DASHES = [null, [8, 4], [2, 3], [8, 3, 2, 3], [14, 5], [4, 4]];
 function defaults() {
   return { type: 'four', trial: '', panels: { Fz: true, AP: true, ML: false, cAP: true, cML: true }, sig: 'Fz', trials: {}, show: 'each', xm: 'ms', ball: true, stance: true,
-    bar: 'pkFz', dots: true, footCol: 'time', footAng: 'plate', footLen: '', footStats: true, legend: true, legendPos: 'top', grid: true, cb: false, dash: false, letters: true, title: '', xlab: '', ylab: '', size: 'slide', W: 960, H: 540, lw: 2, font: 14, fontFam: 'Arial', bg: 'white',
+    bar: 'pkFz', dots: true, footCol: 'time', footAng: 'auto', footLen: '', footStats: true, legend: true, legendPos: 'top', grid: true, cb: false, dash: false, letters: true, title: '', xlab: '', ylab: '', size: 'slide', W: 960, H: 540, lw: 2, font: 14, fontFam: 'Arial', bg: 'white',
     lim: { x0: '', x1: '', y0: '', y1: '' } };
 }
 function F() {
-  if (!A.fig) { A.fig = defaults(); try { const j = JSON.parse(localStorage.getItem('ka-fig')); if (j) Object.assign(A.fig, j, { trials: {}, trial: '', panels: Object.assign(A.fig.panels, j.panels || {}), lim: Object.assign(A.fig.lim, j.lim || {}) }); } catch (e) { /* ignore */ } }
+  if (!A.fig) { A.fig = defaults(); try { const j = JSON.parse(localStorage.getItem('cop-fig')); if (j) Object.assign(A.fig, j, { trials: {}, trial: '', panels: Object.assign(A.fig.panels, j.panels || {}), lim: Object.assign(A.fig.lim, j.lim || {}) }); } catch (e) { /* ignore */ } }
   return A.fig;
 }
-function save() { try { localStorage.setItem('ka-fig', JSON.stringify(Object.assign({}, A.fig, { trials: {}, trial: '' }))); } catch (e) { /* ignore */ } }
+function save() { try { localStorage.setItem('cop-fig', JSON.stringify(Object.assign({}, A.fig, { trials: {}, trial: '' }))); } catch (e) { /* ignore */ } }
 const sizeOf = (f) => (f.size === 'custom' ? [Math.max(300, Math.min(4000, +f.W || 960)), Math.max(200, Math.min(4000, +f.H || 540))] : SIZES[f.size].slice(1));
 const num = (v) => (v === '' || v === null || v === undefined || !Number.isFinite(+v) ? null : +v);
 const opt = (v, l, c) => '<option value="' + esc(v) + '"' + (String(v) === String(c) ? ' selected' : '') + '>' + l + '</option>';
@@ -95,7 +95,7 @@ function footLength(f, ts) {
 }
 function drawFoot(g, W, H, f, ts) {
   const fs = f.font, top0 = f.title ? fs * 2.6 : fs * 0.8, n = ts.length, FL = footLength(f, ts);
-  const statH = f.footStats ? fs * 8.4 : fs * 0.8, barH = fs * 2.8;
+  const statH = f.footStats ? fs * 9.6 : fs * 0.8, barH = fs * 2.8;
   const cw = W / n, ftop = top0 + fs * 1.8, fh = H - ftop - statH - barH;
   const startY = 0.08 * FL;
   // one scale for every foot, so they can be compared
@@ -297,7 +297,7 @@ export function renderFigure() {
     h += '<p class="fl">3. Which panels</p><div class="chips">' + Object.entries(SIG).filter(([k]) => all.some((t) => t.p[k])).map(([k, s]) => chip('data-fp', k, s.l, f.panels[k])).join('') + '</div>';
   } else {
     h += '<p class="fl">2. Which trials</p><div class="chips">' + all.map((t) => chip('data-ftr', t.id, '<span class="dot" style="background:' + colOf(t.labels.kick) + '"></span>' + esc(trialLabel(t)), f.trials[t.id] !== false)).join('') + '</div>';
-    if (f.type === 'foot') h += '<p class="fl">3. The footprint</p><div class="row tight"><label class="inline" style="margin:0">Colour the trail by</label>' + sel('fbFootCol', [['time', 'Time (contact to toe-off)'], ['force', 'Force (how hard the foot presses)']], f.footCol) + '</div><div class="row tight"><label class="inline" style="margin:0">Foot outline</label>' + sel('fbFootAng', [['plate', 'Straight along the plate'], ['auto', 'Turned to match the COP direction'], ['none', 'No outline']], f.footAng) + '<label class="inline" style="margin:0">Foot (boot) length <input type="number" id="fbFootLen" class="mini" style="width:4.5rem" min="15" max="35" step="0.5" placeholder="auto" value="' + esc(f.footLen) + '"> cm</label></div><div class="chks"><label class="inline"><input type="checkbox" data-fc="footStats"' + (f.footStats ? ' checked' : '') + '> Key numbers and a plain-English summary under each foot</label></div><p class="muted small">Made to show a coach or player. One footprint per trial; choose up to four or five so they stay readable. The COP path is drawn to scale from where it started under the heel; the foot outline is only a guide, because the plate does not know exactly where the foot was or which way it pointed.</p>';
+    if (f.type === 'foot') h += '<p class="fl">3. The footprint</p><div class="row tight"><label class="inline" style="margin:0">Colour the trail by</label>' + sel('fbFootCol', [['time', 'Time (contact to toe-off)'], ['force', 'Force (how hard the foot presses)']], f.footCol) + '</div><div class="row tight"><label class="inline" style="margin:0">Foot outline</label>' + sel('fbFootAng', [['auto', 'Turned to match the COP path (recommended)'], ['plate', 'Straight along the plate axes'], ['none', 'No outline']], f.footAng) + '<label class="inline" style="margin:0">Foot (boot) length <input type="number" id="fbFootLen" class="mini" style="width:4.5rem" min="15" max="35" step="0.5" placeholder="auto" value="' + esc(f.footLen) + '"> cm</label></div><div class="chks"><label class="inline"><input type="checkbox" data-fc="footStats"' + (f.footStats ? ' checked' : '') + '> Key numbers and a plain-English summary under each foot</label></div><p class="muted small">Made to show a coach or player. One footprint per trial; choose up to four or five so they stay readable. The COP path is drawn to scale from where it started under the heel; the foot outline is only a guide, because the plate does not know where the foot was or which way it pointed. COP cannot really leave the foot: if the path runs outside a straight outline, the foot was turned on the plate, so the outline is turned to match the heel-to-toe direction of the path.</p>';
     if (f.type === 'curves') h += '<p class="fl">3. What to plot</p><div class="row tight">' + sel('fbSig', Object.entries(SIG).filter(([k]) => all.some((t) => t.p[k])).map(([k, s]) => [k, s.l]), f.sig) + '</div>';
     if (f.type === 'bar') h += '<p class="fl">3. Which result</p><div class="row tight">' + sel('fbBar', VARS.map((v) => [v.k, v.l]), f.bar) + '</div><div class="chks"><label class="inline"><input type="checkbox" data-fc="dots"' + (f.dots ? ' checked' : '') + '> Each trial as a dot</label></div>';
   }

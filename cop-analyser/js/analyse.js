@@ -1,5 +1,5 @@
 // Reading BioWare files, filtering, finding stance and working out every result.
-import { A, fx } from './state.js?v=1.2.0';
+import { A, fx } from './state.js?v=1.2.1';
 
 // ---------- reading ----------
 export function parseFile(text, name) {
