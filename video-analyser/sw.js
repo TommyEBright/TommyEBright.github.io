@@ -1,9 +1,9 @@
 // Service worker: keeps the app working offline. Bump VERSION when you change any file.
-const VERSION = 'kva-2.4.0';
+const VERSION = 'kva-2.5.0';
 const CORE = [
   './', 'index.html', 'css/style.css', 'manifest.webmanifest',
   'js/app.js', 'js/state.js', 'js/maths.js', 'js/video.js', 'js/avi.js', 'js/overlay.js', 'js/tracking.js',
-  'js/events.js', 'js/results.js', 'js/charts.js', 'js/export.js', 'js/normalise.js', 'js/session.js', 'js/compare.js', 'js/convert.js', 'js/vars.js', 'js/builder.js', 'js/force.js', 'js/forceparse.js', 'js/blobtrack.js', 'js/settings.js', 'js/ffmpeg/index.js', 'js/ffmpeg/classes.js', 'js/ffmpeg/const.js', 'js/ffmpeg/errors.js', 'js/ffmpeg/types.js', 'js/ffmpeg/utils.js', 'js/ffmpeg/worker.js',
+  'js/events.js', 'js/results.js', 'js/charts.js', 'js/export.js', 'js/normalise.js', 'js/session.js', 'js/compare.js', 'js/convert.js', 'js/vars.js', 'js/builder.js', 'js/force.js', 'js/forceparse.js', 'js/blobtrack.js', 'js/settings.js', 'js/figbuild.js', 'js/ffmpeg/index.js', 'js/ffmpeg/classes.js', 'js/ffmpeg/const.js', 'js/ffmpeg/errors.js', 'js/ffmpeg/types.js', 'js/ffmpeg/utils.js', 'js/ffmpeg/worker.js',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'
 ];
 self.addEventListener('install', (e) => {

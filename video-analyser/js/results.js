@@ -1,11 +1,11 @@
 // Results: filtering, derivatives, angles, graphs, time normalisation, the filter check, quality checks and live data.
-import { A, $, esc, fx, status, persist, points, colourOf, angleDefs, tReal, fpsReal, PALETTE, G, fwd, hipMarker, download, baseName } from './state.js?v=2.4.0';
-import { toWorld, units, butter, residualCurve, centralDiff, secondDiff, series, angleValue, anglePoints, canWrap, unwrap, mean, sd } from './maths.js?v=2.4.0';
-import { chart, legend } from './charts.js?v=2.4.0';
-import { seek } from './video.js?v=2.4.0';
-import { eventStats, statsHTML } from './events.js?v=2.4.0';
-import { normalise, variableList, eventNames } from './normalise.js?v=2.4.0';
-import { isSynced, forceSignal, forceAtVideo } from './force.js?v=2.4.0';
+import { A, $, esc, fx, status, persist, points, colourOf, angleDefs, tReal, fpsReal, PALETTE, G, fwd, hipMarker, download, baseName } from './state.js?v=2.5.0';
+import { toWorld, units, butter, residualCurve, centralDiff, secondDiff, series, angleValue, anglePoints, canWrap, unwrap, mean, sd } from './maths.js?v=2.5.0';
+import { chart, legend } from './charts.js?v=2.5.0';
+import { seek } from './video.js?v=2.5.0';
+import { eventStats, statsHTML } from './events.js?v=2.5.0';
+import { normalise, variableList, eventNames } from './normalise.js?v=2.5.0';
+import { isSynced, forceSignal, forceAtVideo } from './force.js?v=2.5.0';
 
 const angCol = (i) => PALETTE[(i + 3) % PALETTE.length];
 
@@ -61,7 +61,7 @@ export function compute() {
   const S = A.S;
   S.cutoff = parseFloat($('cutoff').value) || 8; S.filt = $('filtOn').checked; persist();
   const R = computeData();
-  if (!R) { $('resMsg').innerHTML = points().length ? 'You need at least 3 frames with the same marker before results can be worked out.' : 'Add your markers in the <strong>Markers</strong> tab, then digitise some frames.'; $('resBody').classList.add('hide'); A.results = null; return; }
+  if (!R) { $('resMsg').innerHTML = points().length ? 'You need at least 3 frames with the same marker before results can be worked out.' : 'Add your markers in the <strong>Markers</strong> tab, then digitise some frames.'; $('resBody').classList.add('hide'); A.results = null; if (A.fn.renderFig) A.fn.renderFig(); return; }
   A.results = R;
   $('resMsg').innerHTML = R.msgs.length ? '<div class="warn">' + R.msgs.map((m) => '<p>' + esc(m) + '</p>').join('') + '</div>' : '';
   $('resBody').classList.remove('hide');
@@ -70,6 +70,7 @@ export function compute() {
   renderGraphControls(); drawResults(); renderQuality(); renderNorm(); renderFilterCheck(); dataTable();
   if (A.fn.renderPhotoOpts) A.fn.renderPhotoOpts();
   if (A.fn.renderSession) A.fn.renderSession();
+  if (A.fn.renderFig) A.fn.renderFig();
 }
 
 // ---------- graph controls ----------

@@ -1,6 +1,6 @@
 // Video loading, frame rendering (with rotate/flip), seeking and frame-rate detection.
-import { A, $, status, esc, persist, freshState, fpsReal, tReal } from './state.js?v=2.4.0';
-import { parseAvi, decodeFrame } from './avi.js?v=2.4.0';
+import { A, $, status, esc, persist, freshState, fpsReal, tReal } from './state.js?v=2.5.0';
+import { parseAvi, decodeFrame } from './avi.js?v=2.5.0';
 
 const vid = () => $('vid');
 let vctx = null, playing = false;

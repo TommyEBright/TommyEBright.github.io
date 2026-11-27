@@ -1,11 +1,11 @@
 // Export builder: the user picks the variables (markers, angles, linear and angular kinematics) and
 // whether they want them as continuous data (over time and/or time-normalised) and/or discrete values
 // (maximum, minimum, time of each, range, mean, values at events). Names follow Robertson et al. (2014).
-import { A, $, esc, fx, status, persist, tReal, download, baseName, defaultExp, APP, VERSION, withState, points, angleDefs, eventTypes } from './state.js?v=2.4.0';
-import { LIN, ANG, allVariables } from './vars.js?v=2.4.0';
-import { normalise, eventNames } from './normalise.js?v=2.4.0';
-import { eventStats, intervalRows } from './events.js?v=2.4.0';
-import { meta } from './export.js?v=2.4.0';
+import { A, $, esc, fx, status, persist, tReal, download, baseName, defaultExp, APP, VERSION, withState, points, angleDefs, eventTypes } from './state.js?v=2.5.0';
+import { LIN, ANG, allVariables } from './vars.js?v=2.5.0';
+import { normalise, eventNames } from './normalise.js?v=2.5.0';
+import { eventStats, intervalRows } from './events.js?v=2.5.0';
+import { meta } from './export.js?v=2.5.0';
 
 export const STATS = [
   { k: 'max', name: 'maximum' }, { k: 'min', name: 'minimum' },

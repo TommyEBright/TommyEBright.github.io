@@ -1,8 +1,8 @@
 // Force platform data: loading a force file, the side-by-side sync view, the sync itself and the check.
 // The sync is one number, the offset: video time = force file time + offset.
-import { A, $, esc, status, persist, tReal, fpsReal, download, baseName } from './state.js?v=2.4.0';
-import { parseText, buildData } from './forceparse.js?v=2.4.0';
-import { seek, viewCanvas } from './video.js?v=2.4.0';
+import { A, $, esc, status, persist, tReal, fpsReal, download, baseName } from './state.js?v=2.5.0';
+import { parseText, buildData } from './forceparse.js?v=2.5.0';
+import { seek, viewCanvas } from './video.js?v=2.5.0';
 
 const F = () => A.S.force;
 const V = { z: 1, cx: 0.5, cy: 0.5 }; // video view in the sync panel: zoom and centre (0-1)

@@ -187,3 +187,22 @@ dl.gloss { margin: .2rem 0 .4rem; }
 dl.gloss dt { font-weight: 600; margin-top: .55rem; }
 dl.gloss dd { margin: .1rem 0 0 0; font-size: .92rem; }
 dl.gloss .eg { display: block; color: var(--muted); font-size: .88rem; margin-top: .15rem; }
+
+/* figure builder (as in Force Analysis) */
+.figgrid { display: grid; grid-template-columns: minmax(300px, 400px) minmax(0, 1fr); gap: 1rem; align-items: start; }
+.figctl .fl { font-weight: 700; margin: .7rem 0 .2rem; }
+.figctl .fl:first-child { margin-top: 0; }
+.figctl .chks { display: flex; flex-wrap: wrap; gap: .2rem .9rem; margin: .4rem 0; }
+.figctl select.mini, .figctl input.mini { font-size: .84rem; padding: .2rem .35rem; width: auto; }
+.figctl .row { margin: .25rem 0; }
+.figprev { position: sticky; top: .5rem; }
+.figprev canvas { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: .4rem; background: #fff; box-shadow: 0 1px 3px rgba(15,23,42,.08); }
+@media (max-width: 1050px) { .figgrid { grid-template-columns: 1fr; } .figprev { position: static; order: -1; } }
+.serlist { display: flex; flex-direction: column; gap: .3rem; }
+.serrow { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem; margin: .2rem 0; }
+.serrow select.mini { max-width: 13rem; }
+.serrow input[type=color], .colpick input[type=color] { width: 2rem; height: 1.6rem; padding: 0; border: 1px solid #b6c2cf; border-radius: .3rem; background: #fff; cursor: pointer; flex: none; }
+.colgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .25rem .6rem; margin: .3rem 0; }
+.colpick { display: flex; align-items: center; gap: .4rem; font-size: .84rem; font-weight: 400; margin: 0; cursor: pointer; }
+.limgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .3rem .6rem; }
+.limgrid label { font-size: .84rem; }

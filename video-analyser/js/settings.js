@@ -1,5 +1,5 @@
 // Settings (top bar): tracking settings and what every variable means. Citation (top bar): copies a reference to the tool.
-import { A, $, persist, VERSION } from './state.js?v=2.4.0';
+import { A, $, persist, VERSION } from './state.js?v=2.5.0';
 
 function sync() {
   const S = A.S;
