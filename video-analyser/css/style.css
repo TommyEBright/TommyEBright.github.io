@@ -172,3 +172,18 @@ select.mini { font-size: .82rem; padding: .15rem .3rem; width: auto; margin-top:
 #fsCard.isfull { position: fixed; inset: 0; z-index: 1000; border-radius: 0; overflow: auto; background: var(--card); }
 #fsCard.isfull .fsbox { height: calc(100vh - 290px); }
 @media (max-width: 900px) { .fsgrid { grid-template-columns: 1fr; } .fsbox { height: 42vh; } #fsCard.isfull .fsbox { height: 38vh; } }
+
+/* settings and citation dialogs (as in Force Analysis) */
+.dlg { border: 1px solid var(--line); border-radius: var(--radius); padding: 0; width: min(860px, 94vw); max-height: 88vh; box-shadow: 0 20px 50px rgba(15,23,42,.3); color: var(--ink); }
+.dlg::backdrop { background: rgba(15,23,42,.45); }
+.dlg-head { position: sticky; top: 0; background: var(--soft); border-bottom: 1px solid var(--line); padding: .6rem .9rem; display: flex; justify-content: space-between; align-items: center; gap: .6rem; z-index: 1; }
+.dlg-head h2 { margin: 0; font-size: 1.05rem; color: var(--brand-dark); }
+.dlg-body { padding: .4rem 1rem 1rem; }
+.dlg-body h3 { font-size: .95rem; margin: 1rem 0 .3rem; color: var(--brand-dark); }
+.dlg .refs { font-size: .78rem; margin-top: .8rem; }
+pre.cite { white-space: pre-wrap; word-break: break-word; background: var(--soft); border: 1px solid var(--line); border-radius: .4rem; padding: .5rem .6rem; font-size: .84rem; margin: .2rem 0 .35rem; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.linkbtn { background: none; border: 0; padding: 0; font: inherit; color: var(--brand); text-decoration: underline; cursor: pointer; }
+dl.gloss { margin: .2rem 0 .4rem; }
+dl.gloss dt { font-weight: 600; margin-top: .55rem; }
+dl.gloss dd { margin: .1rem 0 0 0; font-size: .92rem; }
+dl.gloss .eg { display: block; color: var(--muted); font-size: .88rem; margin-top: .15rem; }

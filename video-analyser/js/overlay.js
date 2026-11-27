@@ -1,7 +1,7 @@
 // Drawing on top of the video, the magnifier, mouse/touch input, digitising and quick measurements.
-import { A, $, esc, status, persist, points, colourOf, angleDefs, tReal, isObject, clickSet } from './state.js?v=2.3.0';
-import { toWorld, toPixel, jointAngle, segFromVertical, segFromHorizontal, angleValue, anglePoints, units } from './maths.js?v=2.3.0';
-import { seek, viewCanvas } from './video.js?v=2.3.0';
+import { A, $, esc, status, persist, points, colourOf, angleDefs, tReal, isObject, clickSet } from './state.js?v=2.4.0';
+import { toWorld, toPixel, jointAngle, segFromVertical, segFromHorizontal, angleValue, anglePoints, units } from './maths.js?v=2.4.0';
+import { seek, viewCanvas } from './video.js?v=2.4.0';
 
 const ov = () => $('ov');
 let ctx = null;
@@ -221,9 +221,10 @@ export function findCentre(p, img, opts) {
   // a marker is a compact, roundish blob: not a speck, not most of the window, not an edge of clothing
   const ok = blobs.filter((b) => b.cnt >= 3 && b.cnt <= n * n * 0.35 && !b.edge && b.round);
   if (!ok.length) return null;
-  const reach = opts.reach || R;
-  let best = null, bs = -1;
-  ok.forEach((b) => { const dd = Math.hypot(b.cx - R, b.cy - R); if (dd > reach) return; const sc = b.peak / (1 + dd / hm); if (sc > bs) { bs = sc; best = b; } });
+  // the nearest clear marker to the click (not the brightest one nearby, which may be a neighbouring marker)
+  const reach = opts.reach || R, top = Math.max(...ok.map((b) => b.peak));
+  let best = null, bs = 1e9;
+  ok.forEach((b) => { const dd = Math.hypot(b.cx - R, b.cy - R); if (dd > reach || b.peak < 0.5 * top) return; if (dd < bs) { bs = dd; best = b; } });
   if (!best) return null;
   return [x0 + best.cx, y0 + best.cy];
 }

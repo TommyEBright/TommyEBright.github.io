@@ -1,7 +1,7 @@
 // Shared state and small helpers.
 // A.S is the trial being worked on. A.session holds every trial in the session.
 export const G = 9.81;
-export const VERSION = '2.3.0';
+export const VERSION = '2.4.0';
 export const APP = 'Kinematic Analysis';
 
 export const PALETTE = ['#2563eb', '#be185d', '#0f766e', '#d97706', '#7c3aed', '#0891b2', '#65a30d', '#dc2626', '#475569', '#c026d3', '#0d9488', '#ea580c'];
@@ -23,7 +23,7 @@ export const ACTIVITY_OPTS = [
 
 // Settings that carry over from one trial to the next.
 export const SHARED = ['template', 'angles', 'eventTypes', 'activity', 'dir', 'fps', 'slow', 'every', 'advance', 'snap', 'digiMode', 'manSet',
-  'cutoff', 'filt', 'graph', 'norm', 'footMarker', 'hipMarker', 'rot', 'flip', 'showCal', 'checks', 'exp'];
+  'cutoff', 'filt', 'graph', 'norm', 'footMarker', 'hipMarker', 'rot', 'flip', 'showCal', 'checks', 'exp', 'lostMode', 'pickup'];
 
 // What the export builder ticks by default.
 export function defaultExp() {
@@ -38,7 +38,7 @@ export function freshState() {
     fps: 30, slow: 1, fpsSet: false, activity: 'general', dir: 'right',
     template: { points: [], links: [], objects: [] },
     digiMode: 'auto', manSet: '', refLines: [], force: null,
-    every: 4, advance: 1, snap: true, checks: true,
+    every: 4, advance: 1, snap: true, checks: true, lostMode: 'gap', pickup: 0.3,
     calib: null, origin: null, tilt: false, grid: 0, showCal: true,
     frames: {}, conf: {}, flags: {},
     events: [], eventTypes: null, intervals: [], measures: [],

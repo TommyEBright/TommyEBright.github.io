@@ -1,6 +1,6 @@
 // Sessions: several videos (trials) worked through one after another, then compared.
-import { A, $, esc, status, persist, freshState, clone, SHARED, restoreSession, forgetSession, currentTrial } from './state.js?v=2.3.0';
-import { loadVideoFile, viewDims, hasVideo, clearVideo } from './video.js?v=2.3.0';
+import { A, $, esc, status, persist, freshState, clone, SHARED, restoreSession, forgetSession, currentTrial } from './state.js?v=2.4.0';
+import { loadVideoFile, viewDims, hasVideo, clearVideo } from './video.js?v=2.4.0';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 

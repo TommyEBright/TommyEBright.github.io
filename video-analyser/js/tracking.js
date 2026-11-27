@@ -1,7 +1,8 @@
 // Automatic digitising: marker tracking by template matching.
-import { A, $, esc, status, persist, points, fpsReal, isObject } from './state.js?v=2.3.0';
-import { seekAsync, grab, seek } from './video.js?v=2.3.0';
-import { draw, rad, markerHalf, renderChips, updateDigiCount, findCentre } from './overlay.js?v=2.3.0';
+import { A, $, esc, status, persist, points, fpsReal, isObject } from './state.js?v=2.4.0';
+import { seekAsync, grab, seek } from './video.js?v=2.4.0';
+import { draw, rad, markerHalf, renderChips, updateDigiCount, findCentre } from './overlay.js?v=2.4.0';
+import { BlobTracker } from './blobtrack.js?v=2.4.0';
 
 // ---------- flags (points the student should check) ----------
 export function clearFlag(f, m) {
@@ -150,9 +151,11 @@ async function markerHidden() {
 }
 
 // ---------- tracking ----------
-// Tracks every marker that is on the start frame. The start frame is the current frame if it has
-// markers; otherwise the nearest frame behind it with the most markers (the usual case after the
-// tool has jumped forward to the next frame to click).
+// Bright reflective markers (the usual lab markers) are tracked by BlobTracker: each frame it finds the bright
+// blobs and gives every marker the one that fits its own path, never one that belongs to another marker (the
+// other markers nearby are followed too, even if they are not in your marker set). Anything else (tape, coloured
+// or dark stickers, a ball) is tracked by template matching, as before.
+// The start frame is the current frame if it has markers; otherwise the nearest frame behind it with the most.
 export async function runTrack(dir, opts) {
   opts = opts || {};
   const S = A.S; if (A.busy || !S.vw) return;
@@ -170,57 +173,87 @@ export async function runTrack(dir, opts) {
       } else { await seekAsync(pick); }
     }
   }
-  const fr0 = S.frames[A.cur], mk = points().filter((m) => fr0 && fr0[m]);
-  const missing = points().filter((m) => !mk.includes(m));
-  $('trkNote').innerHTML = missing.length ? 'Tracking ' + esc(mk.join(', ')) + '. Not on this frame, so not tracked: ' + esc(missing.join(', ')) + '.' : '';
+  const f0 = A.cur, fr0 = S.frames[f0], mk = points().filter((m) => fr0 && fr0[m]);
+  const pause = S.lostMode === 'pause', maxHide = Math.max(3, Math.round((S.pickup || 0.3) * fpsReal()));
+  // markers not on the start frame but seen shortly before it can be picked up again when they reappear
+  const last = {};
+  points().filter((m) => !mk.includes(m) && !isObject(m)).forEach((m) => {
+    for (let k = 1; k <= maxHide; k++) { const f = f0 - dir * k, p = S.frames[f] && S.frames[f][m]; if (p) { last[m] = { f, p: p.slice() }; break; } }
+  });
+  const missing = points().filter((m) => !mk.includes(m) && !last[m]);
+  $('trkNote').innerHTML = missing.length ? 'Not on this frame, so not tracked: ' + esc(missing.join(', ')) + '. Click ' + (missing.length > 1 ? 'them' : 'it') + ' on a frame where ' + (missing.length > 1 ? 'they are' : 'it is') + ' clear and track again.' : '';
   const end = endFrame(dir);
   A.trackDir = dir; A.pauseAdvance = false;
-  A.stopReq = false; setBusy(true, 'Tracking\u2026');
+  A.stopReq = false; setBusy(true, 'Tracking…');
   const h = markerHalf(), thr = parseFloat($('trkThr').value), checks = S.checks !== false, refine = !!S.snap;
-  await seekAsync(A.cur); let img = grab(); const st = {}, bad = [];
-  mk.forEach((m) => { const p = fr0[m], t = prepT(patchAt(img, p[0], p[1], h)); if (!t) bad.push(m); st[m] = { p: p.slice(), prev: p.slice(), T0: t, Tp: t, steps: [] }; });
-  // segment lengths and marker spacing on the start frame, for spotting a marker that jumps to the wrong place
-  const links = S.template.links.filter((l) => mk.includes(l[0]) && mk.includes(l[1])).map((l) => ({ l, L0: Math.hypot(fr0[l[0]][0] - fr0[l[1]][0], fr0[l[0]][1] - fr0[l[1]][1]) }));
-  const gap0 = {}; mk.forEach((a, i) => mk.slice(i + 1).forEach((b) => { gap0[a + '\u0000' + b] = Math.hypot(fr0[a][0] - fr0[b][0], fr0[a][1] - fr0[b][1]); }));
+  const strict = thr >= 0.7 ? 0.8 : thr <= 0.5 ? 0.2 : 0.5;
+  await seekAsync(f0); let img = grab();
+  // which markers are bright reflective markers (tracked as blobs) and which need template matching
+  const start = {}, prev = {}, pf = S.frames[f0 - dir] || {};
+  mk.forEach((m) => { start[m] = fr0[m]; if (pf[m]) prev[m] = pf[m]; });
+  const bt = new BlobTracker(img, f0, start, { dir, links: S.template.links, prev, last, strict, maxHide, R0: Math.max(8, Math.round(markerHalf() * 0.9)) });
+  const blobM = bt.users();
+  const tmplM = mk.filter((m) => !blobM.includes(m));
+  const st = {}, bad = [];
+  tmplM.forEach((m) => { const p = fr0[m], t = prepT(patchAt(img, p[0], p[1], h)); if (!t) bad.push(m); st[m] = { p: p.slice(), prev: p.slice(), T0: t, Tp: t, steps: [] }; });
+  // blob markers start on the centre of their marker
+  blobM.forEach((m) => { const s = bt.M[m]; if (s.p && fr0[m]) fr0[m] = s.p.slice(); });
+  const links = S.template.links.filter((l) => tmplM.includes(l[0]) && tmplM.includes(l[1])).map((l) => ({ l, L0: Math.hypot(fr0[l[0]][0] - fr0[l[1]][0], fr0[l[0]][1] - fr0[l[1]][1]) }));
+  const gap0 = {}; tmplM.forEach((a, i) => tmplM.slice(i + 1).forEach((b) => { gap0[a + '\u0000' + b] = Math.hypot(fr0[a][0] - fr0[b][0], fr0[a][1] - fr0[b][1]); }));
   if (bad.length) { setBusy(false, ''); status(esc(bad.join(', ')) + ' is too close to the edge of the picture to track.'); return; }
-  let f = A.cur, done = 0, lost = null; const total = Math.abs(end - A.cur), t0 = performance.now();
+  let f = f0, done = 0, lost = null; const total = Math.abs(end - f0), t0 = performance.now(), hidNow = {};
   const medn = (a) => { if (!a.length) return 0; const b = a.slice().sort((x, y) => x - y); return b[b.length >> 1]; };
   while (!A.stopReq) {
     const nf = f + dir; if ((dir > 0 && nf > end) || (dir < 0 && nf < end)) break;
     await seekAsync(nf); img = grab();
     if (!S.frames[nf]) S.frames[nf] = {};
-    const lostHere = [], why = {}, found = {}, err = {};
-    mk.forEach((m) => {
+    if (!S.conf[nf]) S.conf[nf] = {};
+    const lostHere = [], why = {}, found = {}, err = {}, suspect = {};
+    // reflective markers
+    if (blobM.length) {
+      const r = bt.step(img);
+      blobM.forEach((m) => {
+        if (r.pos[m]) {
+          S.frames[nf][m] = r.pos[m].slice(); clearFlag(nf, m);
+          S.conf[nf][m] = { s: r.unsure[m] ? 0.5 : 1, src: 'track' };
+          if (r.unsure[m]) addFlag(nf, m, 'Check: ' + r.unsure[m], 'track');
+          if (hidNow[m]) { addFlag(nf, m, 'Picked up again here after being hidden: check it is the right marker', 'track'); delete hidNow[m]; }
+        } else {
+          delete S.frames[nf][m]; delete S.conf[nf][m];
+          if (!hidNow[m] && (bt.M[m].miss === 1 || nf === f0 + dir)) {
+            hidNow[m] = true;
+            if (pause) { lostHere.push(m); why[m] = r.notes[m] || 'it could not be seen'; }
+            else addFlag(nf, m, 'Hidden from here (' + (r.notes[m] || 'not visible') + ')', 'track');
+          } else if (bt.M[m].miss === maxHide + 1) addFlag(nf, m, 'Hidden too long to pick up by itself: click it where it reappears, then track again', 'track');
+        }
+      });
+    }
+    // other markers: template matching
+    tmplM.forEach((m) => {
       const s = st[m], vx = s.p[0] - s.prev[0], vy = s.p[1] - s.prev[1];
       const pred = [s.p[0] + vx, s.p[1] + vy], spd = Math.hypot(vx, vy);
       s.pred = pred; s.spd = spd;
       const R = Math.max(3 * h, Math.min(10 * h, 2.5 * h + spd));
       let r = matchSearch(img, pred, h, R, [s.T0, s.Tp]);
-      if (r.score < thr || r.edge) { // one wider look before giving up (sudden change of speed, e.g. foot contact)
-        const r2 = matchSearch(img, pred, h, Math.min(14 * h, R * 1.8), [s.T0, s.Tp]);
-        if (r2.score >= thr && !r2.edge) r = r2;
-      }
+      if (r.score < thr || r.edge) { const r2 = matchSearch(img, pred, h, Math.min(14 * h, R * 1.8), [s.T0, s.Tp]); if (r2.score >= thr && !r2.edge) r = r2; }
       if (r.score < thr || r.edge) { lostHere.push(m); why[m] = 'the picture of the marker no longer matches (blurred, hidden or changed shape)'; return; }
-      // auto-centre: pull the match onto the middle of the marker blob, if there is a clear one close by
       if (refine && !isObject(m)) { const c = findCentre(r.p, img, { reach: 0.6 * h }); if (c) r.p = c; }
       found[m] = r; err[m] = Math.hypot(r.p[0] - pred[0], r.p[1] - pred[1]);
     });
-    // Does any marker look like it has jumped to the wrong place?
-    const suspect = {};
-    if (checks) {
+    if (checks && tmplM.length) {
       const blame = (a, b) => (err[a] === undefined ? b : err[b] === undefined ? a : (err[a] - st[a].typ >= err[b] - st[b].typ ? a : b));
-      Object.keys(found).forEach((m) => { // (a) much further from where it was heading than it has been moving
+      Object.keys(found).forEach((m) => {
         const s = st[m]; s.typ = medn(s.steps);
         const lim = Math.max(2.5 * h, 1.2 * s.spd + 4 * s.typ + 1.5 * h);
         if (s.steps.length >= 2 && err[m] > lim) suspect[m] = 'it moved ' + Math.round(err[m]) + ' px away from where it was heading, much more than on the frames before';
       });
-      links.forEach(({ l, L0 }) => { // (b) a segment suddenly much longer or shorter
+      links.forEach(({ l, L0 }) => {
         const [a, b] = l; if (!found[a] || !found[b] || L0 < 3 * h) return;
         const L = Math.hypot(found[a].p[0] - found[b].p[0], found[a].p[1] - found[b].p[1]), Lp = Math.hypot(st[a].p[0] - st[b].p[0], st[a].p[1] - st[b].p[1]);
         const step = Math.abs(L - Lp), drift = Math.abs(L / L0 - 1);
-        if ((step > Math.max(2 * h, 0.2 * Lp)) || (drift > 0.35 && Math.abs(L - L0) > 2 * h)) { const m = blame(a, b); if (!suspect[m]) suspect[m] = 'the ' + a + '\u2013' + b + ' segment suddenly became ' + Math.round(Math.abs(L / (step > Math.max(2 * h, 0.2 * Lp) ? Lp : L0) - 1) * 100) + '% ' + (L > Lp ? 'longer' : 'shorter'); }
+        if ((step > Math.max(2 * h, 0.2 * Lp)) || (drift > 0.35 && Math.abs(L - L0) > 2 * h)) { const m = blame(a, b); if (!suspect[m]) suspect[m] = 'the ' + a + '–' + b + ' segment suddenly became ' + Math.round(Math.abs(L / (step > Math.max(2 * h, 0.2 * Lp) ? Lp : L0) - 1) * 100) + '% ' + (L > Lp ? 'longer' : 'shorter'); }
       });
-      const fm = Object.keys(found); // (c) two markers that were apart have landed on the same spot
+      const fm = Object.keys(found);
       fm.forEach((a, i) => fm.slice(i + 1).forEach((b) => {
         const g0 = gap0[a + '\u0000' + b] !== undefined ? gap0[a + '\u0000' + b] : gap0[b + '\u0000' + a];
         const g = Math.hypot(found[a].p[0] - found[b].p[0], found[a].p[1] - found[b].p[1]);
@@ -235,15 +268,14 @@ export async function runTrack(dir, opts) {
       const t = prepT(patchAt(img, r.p[0], r.p[1], h)); if (t) s.Tp = t;
       S.frames[nf][m] = [r.p[0], r.p[1]];
       clearFlag(nf, m);
-      if (!S.conf[nf]) S.conf[nf] = {};
       S.conf[nf][m] = { s: +r.score.toFixed(3), src: 'track' };
       if (r.score < thr + 0.1) addFlag(nf, m, 'Low match (' + r.score.toFixed(2) + ')', 'track');
     });
-    f = nf; done++; progress(done, total); draw();
+    f = nf; done++; progress(done, total); if (done % 3 === 0 || lostHere.length) draw();
     if (lostHere.length) { const sp = {}; Object.keys(suspect).forEach((m) => { sp[m] = found[m].p.slice(); }); lost = { f: nf, m: lostHere, why, suspect: Object.keys(sp).length ? sp : null }; break; }
   }
   const secs = (performance.now() - t0) / 1000;
-  qualityFlags(); persist(); setBusy(false, ''); renderFlags(); updateDigiCount();
+  qualityFlags(); persist(); setBusy(false, ''); renderFlags(); updateDigiCount(); draw();
   if (lost) {
     lost.m.forEach((m) => { delete S.frames[lost.f][m]; addFlag(lost.f, m, lost.suspect && lost.suspect[m] ? 'Paused: looked like a jump to the wrong place' : 'Tracking lost here and clicked by hand', 'track'); });
     A.trackResume = { dir, lost: lost.m, frame: lost.f, why: lost.why, suspect: lost.suspect }; A.pauseAdvance = true;
@@ -251,8 +283,10 @@ export async function runTrack(dir, opts) {
     setBusy(false); showPause();
   } else {
     renderChips();
+    const gaps = blobM.filter((m) => Object.keys(S.flags).some((k) => S.flags[k].some((x) => x.m === m && /^Hidden/.test(x.msg))));
     const hid = opts.note && opts.note.length ? ' ' + esc(opts.note.join(', ')) + (opts.note.length > 1 ? ' were' : ' was') + ' left out from the hidden frame on. Go to where ' + (opts.note.length > 1 ? 'they reappear' : 'it reappears') + ', click ' + (opts.note.length > 1 ? 'them' : 'it') + ', and track again.' : '';
-    status((A.stopReq ? 'Stopped after ' : 'Tracked ') + done + ' frames in ' + secs.toFixed(0) + ' s.' + hid + ' Check anything listed under &ldquo;Check the tracking&rdquo;, then press <strong>Update results</strong>.');
+    const gp = gaps.length ? ' Hidden for some frames (left as gaps, filled smoothly if short): ' + esc(gaps.join(', ')) + '.' : '';
+    status((A.stopReq ? 'Stopped after ' : 'Tracked ') + done + ' frames in ' + secs.toFixed(0) + ' s.' + gp + hid + ' Check anything listed under &ldquo;Check the tracking&rdquo;, then press <strong>Update results</strong>.');
   }
 }
 
