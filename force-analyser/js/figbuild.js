@@ -2,11 +2,11 @@
 // stacked panels), or several trials overlaid between any two events, in seconds or time-normalised, with means,
 // SD bands and a second y axis. Every colour, line style, axis limit, font and size can be changed. The figure is
 // drawn through a small set of shapes with two back ends (canvas and SVG), so the preview, PNG and SVG match.
-import { A, $, esc, status, download, baseName, trialLabel, PLATE_COLS, COL } from './state.js?v=2.6.0';
-import { niceStep, numTxt } from './plot.js?v=2.6.0';
-import { analyseTrial } from './compare.js?v=2.6.0';
-import { eventChoices, eventIndex } from './analyse.js?v=2.6.0';
-import { workFD } from './vars.js?v=2.6.0';
+import { A, $, esc, status, download, baseName, trialLabel, PLATE_COLS, COL } from './state.js?v=2.7.0';
+import { niceStep, numTxt } from './plot.js?v=2.7.0';
+import { analyseTrial } from './compare.js?v=2.7.0';
+import { eventChoices, eventIndex } from './analyse.js?v=2.7.0';
+import { workFD } from './vars.js?v=2.7.0';
 
 const OKABE = ['#0072B2', '#D55E00', '#009E73', '#CC79A7', '#E69F00', '#56B4E9', '#000000', '#999999']; // Okabe and Ito (2008)
 const PAL = ['#1d4ed8', '#dc2626', '#059669', '#9333ea', '#d97706', '#0891b2', '#be185d', '#475569', '#65a30d', '#7c2d12'];
@@ -20,7 +20,7 @@ const isJumpR = (R) => R && R.ok && !R.generic;
 const STYLE0 = { F: COL.total, a: COL.acc, v: COL.vel, s: COL.disp, P: COL.power, bw: '#475569', thr: '#94a3b8', ev: '#334155', impP: '#10b981', impN: '#3b82f6', impA: 0.3, mean: '#111827', sd: '#9ca3af', sdA: 0.3, phA: 0.16, dash2: 'dash', bwDash: 'dash', evDash: 'dash', evLw: 1.1, workA: 0.14, axis: '#374151', gridCol: '#e5e7eb', text: '#111827' };
 function defaults() {
   return { type: 'force', range: 'move', evA: 'onset', evB: 'le', pad: 0.2, units: 'N', panels: { F: true, a: true, v: true, s: true, P: false }, right: 'none',
-    trials: {}, fdTrials: {}, sig: 'F', sig2: 'none', from: 'onset', to: 'to', tmode: 'norm', anchor: 'to', pre: 0.2, post: 0.1, colourBy: 'trial',
+    trials: {}, fdTrials: {}, chOn: {}, gright: 'none', gsig: 'tot', gsig2: 'none', sig: 'F', sig2: 'none', from: 'onset', to: 'to', tmode: 'norm', anchor: 'to', pre: 0.2, post: 0.1, colourBy: 'trial',
     on: { tot: true, plates: false, hor: true, bw: true, thr: false, phases: true, events: true, names: true, impulse: false, mean: true, sd: true, each: true, evNames: true, start: true, work: false },
     legend: true, legendPos: 'top', grid: true, cb: false, title: '', xlab: '', ylab: '', y2lab: '', size: 'slide', W: 960, H: 540, lw: 2, font: 14, fontFam: 'Arial', bg: 'white',
     lim: { x0: '', x1: '', y0: '', y1: '', z0: '', z1: '' }, st: Object.assign({}, STYLE0), ph: {}, tcol: {} };
@@ -28,7 +28,7 @@ function defaults() {
 function F() {
   if (!A.fig) {
     A.fig = defaults();
-    try { const j = JSON.parse(localStorage.getItem('fa-fig2')); if (j) { const d = A.fig; Object.assign(d, j, { on: Object.assign(d.on, j.on || {}), panels: Object.assign(d.panels, j.panels || {}), st: Object.assign(d.st, j.st || {}), lim: Object.assign(d.lim, j.lim || {}), ph: j.ph || {}, tcol: j.tcol || {}, trials: {}, fdTrials: {}, title: '', xlab: '', ylab: '', y2lab: '' }); } } catch (e) { /* ignore */ }
+    try { const j = JSON.parse(localStorage.getItem('fa-fig2')); if (j) { const d = A.fig; Object.assign(d, j, { on: Object.assign(d.on, j.on || {}), panels: Object.assign(d.panels, j.panels || {}), st: Object.assign(d.st, j.st || {}), lim: Object.assign(d.lim, j.lim || {}), ph: j.ph || {}, tcol: j.tcol || {}, chOn: j.chOn || {}, trials: {}, fdTrials: {}, title: '', xlab: '', ylab: '', y2lab: '' }); } } catch (e) { /* ignore */ }
   }
   return A.fig;
 }
@@ -133,8 +133,36 @@ function legend(g, f, items, x, y, w) {
 // ---------- what to draw ----------
 const UN = { N: ['N', () => 1], BW: ['× bodyweight', (R) => R.BW], Nkg: ['N/kg', (R) => R.m] };
 function unitK(f, R) { const u = UN[f.units] && R.BW > 0 ? f.units : 'N'; return { u, k: UN[u][1](R), lab: UN[u][0] }; }
+// ---------- markers: jump events, or (any other data) the points and windows the user has set ----------
+function mChoices(R) {
+  if (!R.generic) return eventChoices(R.jump);
+  const out = [['rec0', 'Start of the recording']], seen = {}, cnt = {};
+  R.points.slice().sort((a, b) => a.i - b.i).forEach((p) => { cnt[p.name] = (cnt[p.name] || 0) + 1; });
+  R.points.slice().sort((a, b) => a.i - b.i).forEach((p) => { seen[p.name] = (seen[p.name] || 0) + 1; out.push(['p:' + p.name + '|' + seen[p.name], p.name + (cnt[p.name] > 1 ? ' ' + seen[p.name] : '')]); });
+  R.windows.forEach((w) => { out.push(['ws:' + w.name, 'Start of ' + w.name], ['we:' + w.name, 'End of ' + w.name]); });
+  out.push(['rec1', 'End of the recording']);
+  return out;
+}
+function mIndex(R, key) {
+  if (!R.generic) return eventIndex(R, key);
+  if (key === 'rec0') return 0;
+  if (key === 'rec1') return R.n - 1;
+  if (key.startsWith('p:')) { const [nm, k] = key.slice(2).split('|'); const ps = R.points.filter((p) => p.name === nm).sort((a, b) => a.i - b.i); const p = ps[(+k || 1) - 1]; return p ? p.i : -1; }
+  if (key.startsWith('ws:') || key.startsWith('we:')) { const w = R.windows.find((x) => x.name === key.slice(3)); return w ? (key[1] === 's' ? w.i0 : w.i1) : -1; }
+  return -1;
+}
+// sensible default window: the first window (generic) or start of movement to take-off (jumps)
+function mDefault(R, which) {
+  const ch = mChoices(R).map((x) => x[0]);
+  if (!R.generic) return which === 0 ? (ch.includes('onset') ? 'onset' : ch[0]) : 'to';
+  if (R.windows.length) return (which === 0 ? 'ws:' : 'we:') + R.windows[0].name;
+  return which === 0 ? 'rec0' : 'rec1';
+}
+const chOf = (R, id) => R.ch.find((c) => c.id === (id === 'F' ? 'tot' : id));
+
 // a quantity of a jump trial: its array, the divisor that puts it in display units, and its axis label
 function sig(f, R, key) {
+  if (R.generic) { const c = chOf(R, key); if (!c) return null; const uk = unitK(f, R); return { y: c.y, k: uk.k, lab: (c.id === 'tot' ? 'Force' : c.name) + ' (' + uk.lab + ')', name: c.name }; }
   if (key === 'F') { const uk = unitK(f, R); return { y: R.F, k: uk.k, lab: 'Force (' + uk.lab + ')', name: 'Force' }; }
   if (key === 'a') return { y: R.a, k: 1, lab: 'Acceleration (m/s²)', name: 'Acceleration' };
   if (key === 'v') return { y: R.v, k: 1, lab: 'Velocity (m/s)', name: 'Velocity', y2: R.vh };
@@ -146,8 +174,8 @@ const colOf = (f, key, j) => (f.cb ? OKABE[j % 8] : f.st[key] || STYLE0[key]);
 function xRange(f, R) {
   const end = (R.n - 1) / R.fs;
   if (f.range === 'view' && A.view) return [Math.max(0, A.view.x0), Math.min(end, A.view.x1)];
-  if (f.range === 'events' && isJumpR(R)) {
-    const a = eventIndex(R, f.evA), b = eventIndex(R, f.evB);
+  if (f.range === 'events' && R.ok) {
+    const a = mIndex(R, f.evA), b = mIndex(R, f.evB);
     if (a >= 0 && b > a) return [Math.max(0, a / R.fs - (+f.pad || 0)), Math.min(end, b / R.fs + (+f.pad || 0))];
   }
   if ((f.range === 'move' || f.range === 'events') && isJumpR(R)) {
@@ -168,7 +196,8 @@ function forceLines(f, R, uk) {
   } else {
     R.ch.forEach((c, j) => {
       const isTot = c.id === 'tot', isZ = c.kind === 'z' && !isTot, isH = c.kind !== 'z';
-      if ((isTot && on.tot) || (isZ && on.plates) || (isH && on.hor)) L.push({ y: c.y, col: f.cb ? OKABE[j % 8] : (f.st['ch_' + c.id] || c.col), lw: isTot ? f.lw : f.lw * 0.75, dash: c.dash, label: c.name, k, main: isTot, key: 'ch_' + c.id });
+      const want = f.chOn[c.id] !== undefined ? f.chOn[c.id] : (isTot && on.tot) || (isZ && on.plates) || (isH && on.hor);
+      if (want) L.push({ y: c.y, col: f.cb ? OKABE[j % 8] : (f.st['ch_' + c.id] || c.col), lw: isTot ? f.lw : f.lw * 0.75, dash: c.dash, label: c.name, k, main: isTot, key: 'ch_' + c.id });
     });
   }
   return L;
@@ -211,16 +240,16 @@ function build(g, w, h, f, R) {
   if (f.type === 'fd') return buildFD(g, w, h, f, R);
   const on = f.on, uk = unitK(f, R), items = [], jump = isJumpR(R);
   let top = title(g, f, w, 10);
-  const hasR = f.type === 'force' && jump && f.right !== 'none';
+  const rKey = jump ? f.right : f.gright, hasR = f.type === 'force' && !!rKey && rKey !== 'none' && (jump || !!chOf(R, rKey));
   const L = 34 + Math.max(30, f.font * 2.8), Rm = hasR ? 34 + Math.max(30, f.font * 2.8) : 18, bot = f.font * 2 + 22;
   const xr = lim2(xRange(f, R), f.lim.x0, f.lim.x1), i0 = Math.max(0, Math.floor(xr[0] * R.fs)), i1 = Math.min(R.n - 1, Math.ceil(xr[1] * R.fs));
   const T = R.t || Float64Array.from({ length: R.n }, (_, i) => i / R.fs);
   const sh = on.phases ? shades(f, R) : [], ev = on.events ? eventsOf(R) : [];
   const keys = f.type === 'motion' && jump ? Object.keys(PANELS).filter((k) => f.panels[k]) : ['F'];
   if (!keys.length) return 'Switch on at least one panel.';
-  const fl = forceLines(f, R, uk);
+  const fl = forceLines(f, R, uk).filter((l) => !(hasR && !jump && l.key === 'ch_' + rKey)); // a channel on the right axis is not drawn twice
   if (keys.includes('F') && !fl.length) return 'Switch on at least one force.';
-  const s2 = hasR ? sig(f, R, f.right) : null, col2 = hasR ? colOf(f, f.right, 1) : null, dash2 = DASH[f.st.dash2];
+  const s2 = hasR ? sig(f, R, rKey) : null, col2 = !hasR ? null : jump ? colOf(f, rKey, 1) : (f.cb ? OKABE[2] : f.st['ch_' + rKey] || chOf(R, rKey).col), dash2 = DASH[f.st.dash2];
   if (f.legend) {
     if (keys.includes('F')) fl.forEach((l) => items.push({ label: l.label + (hasR ? ' (left axis)' : ''), col: l.col, lw: l.lw, dash: l.dash }));
     if (hasR) items.push({ label: s2.name + ' (right axis)', col: col2, lw: f.lw, dash: dash2 });
@@ -313,25 +342,28 @@ function meanSD(cs, norm) {
   xs.forEach((x) => { const v = cs.map((c) => at(c, x)).filter(Number.isFinite); const mu = v.reduce((a, b) => a + b, 0) / v.length; m.push(mu); sd.push(v.length > 1 ? Math.sqrt(v.reduce((a, b) => a + (b - mu) ** 2, 0) / (v.length - 1)) : NaN); });
   return { x: xs, m, sd };
 }
-function buildTrials(g, w, h, f, R0) {
-  if (R0.generic) return 'Overlaying trials between events works for jumps.';
-  const T = A.session.trials.filter((t) => jumpOK(t) && trOn(f, t, R0)), on = f.on, norm = f.tmode === 'norm';
-  const kinds = [...new Set(T.map((t) => t.set.jump))], mixed = kinds.length > 1;
+function buildTrials(g, w, h, f0, R0) {
+  // any other data (gait, landings, isometrics...): channels instead of quantities, the user's points and windows instead of events
+  const gen = !!R0.generic, f = gen ? Object.assign({}, f0, { sig: f0.gsig || 'tot', sig2: f0.gsig2 || 'none', from: f0.gfrom || mDefault(R0, 0), to: f0.gto || mDefault(R0, 1), colourBy: f0.colourBy === 'jump' ? 'trial' : f0.colourBy }) : f0;
+  const evU = (ks) => (gen ? mChoices(R0) : evUnion(ks));
+  const T = A.session.trials.filter((t) => (gen ? sameKind(t, R0) : jumpOK(t)) && trOn(f, t, R0)), on = f.on, norm = f.tmode === 'norm';
+  const kinds = gen ? [] : [...new Set(T.map((t) => t.set.jump))], mixed = kinds.length > 1;
   const has2 = f.sig2 !== 'none' && f.sig2 !== f.sig;
   const runs = [], groups = [];
   const skipped = [];
   T.forEach((t, j) => {
     const { R } = analyseTrial(t); if (!R || !R.ok) { skipped.push(trialLabel(t)); return; }
-    const iA = eventIndex(R, f.from), iB = eventIndex(R, f.to);
+    const iA = mIndex(R, f.from), iB = mIndex(R, f.to);
     if (iA < 0 || iB <= iA) { skipped.push(trialLabel(t)); return; }
     const c1 = cut(f, R, f.sig, iA, iB), c2 = has2 ? cut(f, R, f.sig2, iA, iB) : null;
+    if (!c1 || (has2 && !c2)) { skipped.push(trialLabel(t)); return; }
     const gk = groupKey(f, t); let gi = -1; if (gk !== null) { gi = groups.indexOf(gk); if (gi < 0) { groups.push(gk); gi = groups.length - 1; } }
     const col = gk === null ? (f.tcol[t.id] || (f.cb ? OKABE[j % 8] : PAL[j % PAL.length])) : (f.tcol['g:' + gk] || (f.cb ? OKABE[gi % 8] : f.colourBy === 'jump' && JT_COL[gk] ? JT_COL[gk] : PAL[gi % PAL.length]));
     // where the other events fall (for the event lines)
-    const evx = {}; eventChoices(R.jump).forEach(([k]) => { const i = eventIndex(R, k); if (i >= 0) evx[k] = norm ? (i - iA) / (iB - iA) * 100 : (i - (f.anchor === 'from' ? iA : iB)) / R.fs; });
+    const evx = {}; mChoices(R).forEach(([k]) => { const i = mIndex(R, k); if (i >= 0) evx[k] = norm ? (i - iA) / (iB - iA) * 100 : (i - (f.anchor === 'from' ? iA : iB)) / R.fs; });
     runs.push({ t, R, c1, c2, col, gk, evx });
   });
-  if (!runs.length) return 'None of the chosen trials has both of these events. Choose other events, or tick other trials.';
+  if (!runs.length) return 'None of the chosen trials has both of these ' + (gen ? 'points' : 'events') + '. Choose other events, or tick other trials.';
   const noMix = mixed && !groups.length; // one mean across different jump types would mean nothing
   // means: one per colour group (or one overall when colouring by trial)
   const sets = groups.length ? groups.map((gk) => ({ gk, col: runs.find((r) => r.gk === gk).col, rs: runs.filter((r) => r.gk === gk) })) : noMix ? [] : [{ gk: null, col: f.st.mean, rs: runs }];
@@ -351,7 +383,7 @@ function buildTrials(g, w, h, f, R0) {
   const b = { x: L, y: top, w: w - L - Rm, h: h - top - bot };
   if (b.h < 60) return 'Not enough room: choose a bigger size or a smaller legend.';
   const all1 = runs.map((r) => r.c1.y).concat(sets.filter((s) => s.m1).flatMap((s) => [s.m1.m.map((m, j) => m + (s.m1.sd[j] || 0)), s.m1.m.map((m, j) => m - (s.m1.sd[j] || 0))]));
-  const yr = lim2(rangeArr(all1, [f.sig === 'F' ? 0 : NaN]), f.lim.y0, f.lim.y1);
+  const yr = lim2(rangeArr(all1, [f.sig === 'F' || (gen && f.sig !== 'none' && (chOf(R0, f.sig) || {}).kind === 'z') ? 0 : NaN]), f.lim.y0, f.lim.y1);
   const xs0 = runs.flatMap((r) => [r.c1.x[0], r.c1.x[r.c1.x.length - 1]]);
   const xr = lim2(norm ? [0, 100] : [Math.min(...xs0), Math.max(...xs0)], f.lim.x0, f.lim.x1);
   if (BG) g.rect(b.x, b.y, b.w, b.h, { fill: BG });
@@ -365,15 +397,15 @@ function buildTrials(g, w, h, f, R0) {
   if (on.events) (mixed ? kinds : [null]).forEach((kd) => {
     const rs = kd ? runs.filter((r) => r.R.jump === kd) : runs; if (!rs.length) return;
     const ec = kd && f.colourBy === 'jump' ? (sets.find((x) => x.gk === JT[kd]) || {}).col || f.st.ev : f.st.ev;
-    evUnion(kd ? [kd] : kinds).forEach(([k, lab]) => {
+    evU(kd ? [kd] : kinds).forEach(([k, lab]) => {
       if ((k === f.from || k === f.to) && norm) return; // the 0% and 100% ends
       const xs = rs.map((r) => r.evx[k]).filter(Number.isFinite); if (!xs.length) return;
       const xm = xs.reduce((a, c) => a + c, 0) / xs.length; if (xm < xr[0] || xm > xr[1]) return;
       g.path([S.X(xm), b.y, S.X(xm), b.y + b.h], { stroke: ec, lw: f.st.evLw, dash: DASH[f.st.evDash] }); evNames.push([xm, lab.replace(/ \(.*\)$/, '') + (kd ? ' (' + JT[kd] + ')' : ''), ec]);
     });
   });
-  if (f.sig !== 'F' && yr[0] < 0 && yr[1] > 0) g.path([b.x, S.Y(0), b.x + b.w, S.Y(0)], { stroke: '#94a3b8', lw: 1 });
-  if (f.sig === 'F' && on.bw && runs.every((r) => r.R.BW > 0) && f.units !== 'N') g.path([b.x, S.Y(f.units === 'BW' ? 1 : 9.81), b.x + b.w, S.Y(f.units === 'BW' ? 1 : 9.81)], { stroke: f.st.bw, lw: 1.2, dash: DASH[f.st.bwDash] });
+  if ((gen || f.sig !== 'F') && yr[0] < 0 && yr[1] > 0) g.path([b.x, S.Y(0), b.x + b.w, S.Y(0)], { stroke: '#94a3b8', lw: 1 });
+  if ((gen || f.sig === 'F') && on.bw && runs.every((r) => r.R.BW > 0) && f.units !== 'N') g.path([b.x, S.Y(f.units === 'BW' ? 1 : 9.81), b.x + b.w, S.Y(f.units === 'BW' ? 1 : 9.81)], { stroke: f.st.bw, lw: 1.2, dash: DASH[f.st.bwDash] });
   if (on.sd && many) sets.forEach((s) => { if (!s.m1 || s.rs.length < 2) return; const up = [], dn = []; s.m1.x.forEach((x, j) => { if (Number.isFinite(s.m1.sd[j]) && x >= xr[0] && x <= xr[1]) { up.push(S.X(x), S.Y(s.m1.m[j] + s.m1.sd[j])); dn.unshift(S.X(x), S.Y(s.m1.m[j] - s.m1.sd[j])); } }); const p = up.slice(); for (let j = 0; j < dn.length; j += 2) p.push(dn[j], dn[j + 1]); g.path(p, { fill: groups.length ? s.col : f.st.sd, alpha: f.st.sdA }); });
   const faded = on.mean && many;
   if (on.each) runs.forEach((r) => { g.path(pts(r.c1.x, r.c1.y, S.Y), { stroke: r.col, lw: f.lw * 0.8, alpha: faded ? 0.55 : 1 }); if (Y2) g.path(pts(r.c2.x, r.c2.y, Y2), { stroke: r.col, lw: f.lw * 0.8, alpha: faded ? 0.55 : 1, dash: DASH[f.st.dash2] }); });
@@ -383,7 +415,7 @@ function buildTrials(g, w, h, f, R0) {
   if (f.legend && f.legendPos === 'inside') legendInside(g, f, items, b.x + b.w, b.y);
   g.text(f.ylab || s1.lab, 14, b.y + b.h / 2, { size: f.font, bold: true, anchor: 'middle', base: 'middle', rot: -90, fill: f.st.text });
   if (has2) g.text(f.y2lab || s2.lab, w - 14, b.y + b.h / 2, { size: f.font, bold: true, anchor: 'middle', base: 'middle', rot: 90, fill: f.st.text });
-  const ch = Object.fromEntries(evUnion(kinds)), nmA = shortEv(ch[f.from]), nmB = shortEv(ch[f.to]);
+  const ch = Object.fromEntries(evU(kinds)), nmA = shortEv(ch[f.from]), nmB = shortEv(ch[f.to]);
   g.text(f.xlab || (norm ? 'Time (% of ' + nmA + ' to ' + nmB + ')' : 'Time relative to ' + (f.anchor === 'from' ? nmA : nmB) + ' (s)'), L + b.w / 2, h - 6, { size: f.font, bold: true, anchor: 'middle', base: 'bottom', fill: f.st.text });
   const notes = [];
   if (noMix && on.mean) notes.push('These trials are different jump types, so no single mean is drawn: choose Colour by: Jump type for a mean ± SD of each.');
@@ -478,7 +510,7 @@ export function renderFigBuilder() {
   const el = $('fbBox'); if (!el) return;
   const R = A.R; if (!R || !R.ok) { el.innerHTML = '<p class="muted">Open a trial that has been analysed first.</p>'; return; }
   const f = F(), jump = isJumpR(R);
-  if (!jump && f.type !== 'force') f.type = 'force';
+  if (!jump && f.type !== 'force' && f.type !== 'trials') f.type = 'force';
   const chip = (attr, k, lab, act, extra) => '<button type="button" class="chip' + (act ? ' active' : '') + '" ' + attr + '="' + esc(k) + '" aria-pressed="' + !!act + '"' + (extra || '') + '>' + lab + '</button>';
   const TYPES = { force: 'One trial', motion: 'One trial, stacked panels', trials: 'Several trials (overlay or mean ± SD)', fd: 'Force against displacement (work)' };
   if (f.type === 'fd' && !FD_JUMPS[R.jump]) f.type = 'force';
@@ -486,37 +518,46 @@ export function renderFigBuilder() {
   const EVS = jump ? eventChoices(R.jump) : [];
   const hasPlates = jump ? R.plates.filter((p) => p.role !== 'off').length > 1 : R.ch.some((c) => c.kind === 'z' && c.id !== 'tot');
   const hasHor = jump ? !!R.Fh : R.ch.some((c) => c.kind !== 'z');
-  const lay = [['tot', jump ? 'Vertical force' : 'Total force']];
-  if (hasPlates) lay.push(['plates', 'Each plate']); if (hasHor) lay.push(['hor', jump ? 'Horizontal force' : 'Horizontal forces']);
+  // jumps: vertical / each plate / horizontal; any other data: every channel on its own (total, each plate, each horizontal force)
+  const chDef = (c) => (c.id === 'tot' ? f.on.tot : c.kind === 'z' ? f.on.plates : f.on.hor);
+  const lay = jump ? [['tot', 'Vertical force']] : [];
+  if (jump && hasPlates) lay.push(['plates', 'Each plate']); if (jump && hasHor) lay.push(['hor', 'Horizontal force']);
   if (R.BW > 0) lay.push(['bw', 'Bodyweight line']); if (jump) lay.push(['thr', 'Contact threshold']);
   lay.push(['phases', jump ? 'Phase shading' : 'Window shading'], ['names', jump ? 'Phase names' : 'Window names'], ['events', jump ? 'Event lines' : 'Point lines'], ['evNames', 'Event names']);
   if (R.BW > 0) lay.push(['impulse', 'Net impulse shading']);
   let h = '<p class="lead">Build a figure for a report, poster, paper or slides. Everything you change shows straight away on the right; save it as a PNG (for Word and PowerPoint) or an editable SVG.</p><div class="figgrid"><div class="figctl">';
-  h += '<p class="fl">1. What kind of figure?</p><div class="chips">' + Object.entries(TYPES).filter(([k]) => (jump || k === 'force') && (k !== 'fd' || FD_JUMPS[R.jump])).map(([k, l]) => chip('data-ft', k, l, f.type === k)).join('') + '</div>';
+  h += '<p class="fl">1. What kind of figure?</p><div class="chips">' + Object.entries(TYPES).filter(([k]) => (jump || k === 'force' || k === 'trials') && (k !== 'fd' || FD_JUMPS[R.jump])).map(([k, l]) => chip('data-ft', k, l, f.type === k)).join('') + '</div>';
   if (f.type === 'force') {
-    h += '<p class="fl">2. What to show</p><div class="chips">' + lay.map(([k, l]) => chip('data-fl', k, l, f.on[k])).join('') + '</div>';
-    if (jump) h += '<div class="row tight"><label class="inline" for="fbRight" style="margin:0">Right-hand axis</label>' + sel('fbRight', [['none', 'Nothing'], ['v', 'Velocity'], ['s', 'Displacement'], ['a', 'Acceleration'], ['P', 'Power']], f.right) + '</div>';
+    h += '<p class="fl">2. What to show</p>' + (jump ? '' : '<p class="muted small" style="margin:.1rem 0 .3rem">Forces (left axis):</p><div class="chips">' + R.ch.map((c) => chip('data-fch', c.id, esc(c.name), f.chOn[c.id] !== undefined ? f.chOn[c.id] : chDef(c))).join('') + '</div><p class="muted small" style="margin:.3rem 0">Lines and shading:</p>') + '<div class="chips">' + lay.map(([k, l]) => chip('data-fl', k, l, f.on[k])).join('') + '</div>';
+    h += '<div class="row tight"><label class="inline" for="fbRight" style="margin:0">Right-hand axis</label>' + (jump ? sel('fbRight', [['none', 'Nothing'], ['v', 'Velocity'], ['s', 'Displacement'], ['a', 'Acceleration'], ['P', 'Power']], f.right) : sel('fbRight', [['none', 'Nothing']].concat(R.ch.map((c) => [c.id, esc(c.name)])), f.gright)) + '</div>';
   }
   if (f.type === 'motion') h += '<p class="fl">2. Which panels</p><div class="chips">' + Object.entries(PANELS).map(([k, l]) => chip('data-fp', k, l, f.panels[k])).join('') + '</div><p class="fl">What to show</p><div class="chips">' + lay.filter(([k]) => ['tot', 'plates', 'hor', 'bw', 'phases', 'names', 'events', 'impulse'].includes(k)).map(([k, l]) => chip('data-fl', k, l, f.on[k])).join('') + '</div>';
   if (f.type === 'force' || f.type === 'motion') {
-    h += '<p class="fl">3. Which part of the trial</p><div class="row tight">' + sel('fbRange', [['move', jump ? 'The jump' : 'The windows'], ['events', 'Between two events'], ['view', 'The part the graph above shows'], ['all', 'The whole trial']], f.range) + '</div>';
-    if (f.range === 'events' && jump) h += '<div class="row tight">' + sel('fbEvA', EVS, f.evA) + '<span class="muted">to</span>' + sel('fbEvB', EVS, f.evB) + '<label class="inline" style="margin:0">± <input type="number" id="fbPad" class="mini" style="width:4.5rem" min="0" max="2" step="0.05" value="' + f.pad + '"> s</label></div>';
+    const MK = mChoices(R).map((x) => x[0]);
+    if (!MK.includes(f.evA)) f.evA = mDefault(R, 0);
+    if (!MK.includes(f.evB)) f.evB = jump ? (MK.includes('le') ? 'le' : 'to') : mDefault(R, 1);
+    h += '<p class="fl">3. Which part of the trial</p><div class="row tight">' + sel('fbRange', [['move', jump ? 'The jump' : 'The windows'], ['events', jump ? 'Between two events' : 'Between two points or window ends'], ['view', 'The part the graph above shows'], ['all', 'The whole trial']], f.range) + '</div>';
+    if (f.range === 'events') h += (!jump && !R.points.length && !R.windows.length ? '<p class="muted small">Add points or windows in <strong>2. Points</strong> to choose where the figure starts and ends.</p>' : '') + '<div class="row tight">' + sel('fbEvA', mChoices(R), f.evA) + '<span class="muted">to</span>' + sel('fbEvB', mChoices(R), f.evB) + '<label class="inline" style="margin:0">± <input type="number" id="fbPad" class="mini" style="width:4.5rem" min="0" max="2" step="0.05" value="' + f.pad + '"> s</label></div>';
   }
   if (f.type === 'trials') {
-    const allJ = A.session.trials.filter(jumpOK), kindsAll = [...new Set(allJ.map((t) => t.set.jump))], tick = allJ.filter((t) => trOn(f, t, R));
-    const kindsOn = [...new Set(tick.map((t) => t.set.jump))], evs = evUnion(kindsOn.length ? kindsOn : [R.jump]).map((x) => x[0]);
-    if (!evs.includes(f.from)) f.from = evs.includes('onset') ? 'onset' : evs[0] || f.from;
-    if (!evs.includes(f.to)) f.to = evs.includes('to') ? 'to' : evs[evs.length - 1] || f.to;
+    const allJ = A.session.trials.filter((t) => (jump ? jumpOK(t) : sameKind(t, R))), kindsAll = jump ? [...new Set(allJ.map((t) => t.set.jump))] : [], tick = allJ.filter((t) => trOn(f, t, R));
+    const kindsOn = jump ? [...new Set(tick.map((t) => t.set.jump))] : [], EVL = jump ? evUnion(kindsOn.length ? kindsOn : [R.jump]) : mChoices(R), evs = EVL.map((x) => x[0]);
+    const FK = jump ? 'from' : 'gfrom', TK = jump ? 'to' : 'gto', SK = jump ? 'sig' : 'gsig', S2K = jump ? 'sig2' : 'gsig2';
+    const SG = jump ? SIGS : R.ch.map((c) => [c.id, esc(c.name)]);
+    if (!evs.includes(f[FK])) f[FK] = jump ? (evs.includes('onset') ? 'onset' : evs[0]) : mDefault(R, 0);
+    if (!evs.includes(f[TK])) f[TK] = jump ? (evs.includes('to') ? 'to' : evs[evs.length - 1]) : mDefault(R, 1);
+    if (!jump && !SG.some((x) => x[0] === f.gsig)) f.gsig = 'tot';
     h += '<p class="fl">2. Which trials</p>'
       + (kindsAll.length > 1 ? '<div class="row tight"><span class="muted">Tick all:</span>' + kindsAll.map((k) => '<button type="button" class="btn small ghost" data-fall="' + k + '">' + JT[k] + '</button>').join('') + '<button type="button" class="btn small ghost" data-fall="*">Every jump</button><button type="button" class="btn small ghost" data-fall="-">None</button></div>' : '')
       + '<div class="chips">' + allJ.map((t) => chip('data-ftr', t.id, esc(trialLabel(t)) + (kindsAll.length > 1 ? ' (' + JT[t.set.jump] + ')' : ''), trOn(f, t, R))).join('') + '</div>'
       + (kindsOn.length > 1 ? '<p class="muted small">Different jump types are ticked: colour by <strong>Jump type</strong> to show each type in its own colour with its own mean ± SD.</p>' : '')
-      + '<p class="fl">3. What to plot</p><div class="row tight"><label class="inline" style="margin:0">Left axis</label>' + sel('fbSig', SIGS, f.sig) + '<label class="inline" style="margin:0">Right axis</label>' + sel('fbSig2', [['none', 'Nothing']].concat(SIGS), f.sig2) + '</div>'
-      + '<p class="fl">4. From which event to which</p><div class="row tight">' + sel('fbFrom', evUnion(kindsOn.length ? kindsOn : [R.jump]), f.from) + '<span class="muted">to</span>' + sel('fbTo', evUnion(kindsOn.length ? kindsOn : [R.jump]), f.to) + '</div>'
+      + '<p class="fl">3. What to plot</p><div class="row tight"><label class="inline" style="margin:0">Left axis</label>' + sel('fbSig', SG, f[SK]) + '<label class="inline" style="margin:0">Right axis</label>' + sel('fbSig2', [['none', 'Nothing']].concat(SG), f[S2K]) + '</div>'
+      + '<p class="fl">4. From ' + (jump ? 'which event to which' : 'where to where (your points and windows)') + '</p><div class="row tight">' + sel('fbFrom', EVL, f[FK]) + '<span class="muted">to</span>' + sel('fbTo', EVL, f[TK]) + '</div>'
+      + (!jump ? '<p class="muted small">Points are matched across trials by name and order (e.g. the 2nd &lsquo;Foot contact&rsquo;), windows by name. Trials without them are left out.</p>' : '')
       + '<div class="row tight">' + sel('fbTmode', [['norm', 'Time-normalised (0–100%, 101 points)'], ['raw', 'Real time (s)']], f.tmode) + '</div>';
     if (f.tmode === 'raw') h += '<div class="row tight"><label class="inline" style="margin:0">Line up at</label>' + sel('fbAnchor', [['from', 'the first event (0 s)'], ['to', 'the second event (0 s)']], f.anchor) + '<label class="inline" style="margin:0">extra before <input type="number" id="fbPre" class="mini" style="width:4.5rem" min="0" max="2" step="0.05" value="' + f.pre + '"> s</label><label class="inline" style="margin:0">after <input type="number" id="fbPost" class="mini" style="width:4.5rem" min="0" max="2" step="0.05" value="' + f.post + '"> s</label></div>';
     h += '<p class="muted small">' + (f.tmode === 'norm' ? 'Each trial between the two events is stretched or squashed to 0–100% so trials of different lengths can be averaged point by point. The event lines show where the other events fall on average.' : 'Each trial is shown in seconds, lined up at the chosen event. Means and SDs are drawn only where every trial has data.') + '</p>'
-      + '<p class="fl">5. Colours, means and spread</p><div class="row tight"><label class="inline" style="margin:0">Colour by</label>' + sel('fbColBy', [['trial', 'Trial'], ['jump', 'Jump type (mean ± SD per type)'], ['athlete', 'Participant (mean ± SD per participant)'], ['condition', 'Condition (mean ± SD per condition)'], ['both', 'Participant and condition']], f.colourBy) + '</div>'
+      + '<p class="fl">5. Colours, means and spread</p><div class="row tight"><label class="inline" style="margin:0">Colour by</label>' + sel('fbColBy', [['trial', 'Trial']].concat(jump ? [['jump', 'Jump type (mean ± SD per type)']] : []).concat([ ['athlete', 'Participant (mean ± SD per participant)'], ['condition', 'Condition (mean ± SD per condition)'], ['both', 'Participant and condition']]), f.colourBy) + '</div>'
       + '<div class="row tight"><label class="inline" style="margin:0">Show</label>' + sel('fbShow', [['each', 'Every trial'], ['mean', 'Mean ± SD only'], ['both', 'Every trial with the mean ± SD']], f.on.each && !f.on.mean ? 'each' : !f.on.each ? 'mean' : 'both') + '</div>'
       + '<div class="chips" style="margin-top:.3rem">' + [['each', 'Each trial'], ['mean', 'Mean'], ['sd', '± SD band'], ['events', 'Event lines'], ['evNames', 'Event names'], ['bw', 'Bodyweight line']].map(([k, l]) => chip('data-fl', k, l, f.on[k])).join('') + '</div>';
     // colour per trial or per group
@@ -550,7 +591,8 @@ export function renderFigBuilder() {
   const st = f.st;
   let sty = '<div class="colgrid">';
   const multi = f.type === 'trials' || f.type === 'fd';
-  if (!multi) sty += colIn('F', st.F, 'Force') + (f.type === 'motion' || hasR ? colIn('v', st.v, 'Velocity') + colIn('s', st.s, 'Displacement') + colIn('a', st.a, 'Acceleration') + colIn('P', st.P, 'Power') : '');
+  if (!multi && !jump) R.ch.forEach((c) => { sty += colIn('ch_' + c.id, st['ch_' + c.id] || c.col, esc(c.name)); });
+  if (!multi && jump) sty += colIn('F', st.F, 'Force') + (f.type === 'motion' || hasR ? colIn('v', st.v, 'Velocity') + colIn('s', st.s, 'Displacement') + colIn('a', st.a, 'Acceleration') + colIn('P', st.P, 'Power') : '');
   if (!multi && jump && hasPlates) R.plates.forEach((p, j) => { if (p.role !== 'off') sty += colIn('pl' + j, st['pl' + j] || PLATE_COLS[j], esc(p.name)); });
   if (!multi && jump && R.Fh) sty += colIn('hor', st.hor || '#ea580c', 'Horizontal force');
   sty += colIn('bw', st.bw, 'Bodyweight line') + colIn('ev', st.ev, 'Event lines and names');
@@ -574,6 +616,7 @@ export function renderFigBuilder() {
   const re = (full) => { save(); if (full) renderFigBuilder(); else draw(); };
   el.querySelectorAll('[data-ft]').forEach((b) => b.addEventListener('click', () => { f.type = b.getAttribute('data-ft'); re(true); }));
   el.querySelectorAll('[data-fl]').forEach((b) => b.addEventListener('click', () => { const k = b.getAttribute('data-fl'); f.on[k] = !f.on[k]; re(true); }));
+  el.querySelectorAll('[data-fch]').forEach((b) => b.addEventListener('click', () => { const k = b.getAttribute('data-fch'), c = R.ch.find((x) => x.id === k); f.chOn[k] = !(f.chOn[k] !== undefined ? f.chOn[k] : chDef(c)); re(true); }));
   el.querySelectorAll('[data-fp]').forEach((b) => b.addEventListener('click', () => { const k = b.getAttribute('data-fp'); f.panels[k] = !f.panels[k]; re(true); }));
   el.querySelectorAll('[data-ffd]').forEach((b) => b.addEventListener('click', () => { const k = b.getAttribute('data-ffd'); f.fdTrials[k] = f.fdTrials[k] === false; re(true); }));
   el.querySelectorAll('[data-ftr]').forEach((b) => b.addEventListener('click', () => { const k = b.getAttribute('data-ftr'), t = A.session.trials.find((x) => x.id === k); f.trials[k] = !trOn(f, t, R); re(true); }));
@@ -581,7 +624,7 @@ export function renderFigBuilder() {
   if ($('fbShow')) $('fbShow').addEventListener('change', function () { const v = this.value; f.on.each = v !== 'mean'; f.on.mean = v !== 'each'; f.on.sd = v !== 'each'; re(true); });
   el.querySelectorAll('[data-fc]').forEach((c) => c.addEventListener('change', function () { f[this.getAttribute('data-fc')] = this.checked; re(true); }));
   const full = ['fbRange', 'fbTmode', 'fbColBy', 'fbSize', 'fbRight', 'fbSig2', 'fbSig', 'fbFrom', 'fbTo'];
-  [['fbRange', 'range'], ['fbEvA', 'evA'], ['fbEvB', 'evB'], ['fbUnits', 'units'], ['fbSize', 'size'], ['fbFontFam', 'fontFam'], ['fbRight', 'right'], ['fbSig', 'sig'], ['fbSig2', 'sig2'], ['fbFrom', 'from'], ['fbTo', 'to'], ['fbTmode', 'tmode'], ['fbAnchor', 'anchor'], ['fbColBy', 'colourBy'], ['fbLegPos', 'legendPos'], ['fbBg', 'bg']]
+  [['fbRange', 'range'], ['fbEvA', 'evA'], ['fbEvB', 'evB'], ['fbUnits', 'units'], ['fbSize', 'size'], ['fbFontFam', 'fontFam'], ['fbRight', jump ? 'right' : 'gright'], ['fbSig', jump ? 'sig' : 'gsig'], ['fbSig2', jump ? 'sig2' : 'gsig2'], ['fbFrom', jump ? 'from' : 'gfrom'], ['fbTo', jump ? 'to' : 'gto'], ['fbTmode', 'tmode'], ['fbAnchor', 'anchor'], ['fbColBy', 'colourBy'], ['fbLegPos', 'legendPos'], ['fbBg', 'bg']]
     .forEach(([id, k]) => { if ($(id)) $(id).addEventListener('change', function () { f[k] = this.value; re(full.includes(id)); }); });
   [['fbPad', 'pad'], ['fbPre', 'pre'], ['fbPost', 'post'], ['fbW', 'W'], ['fbH', 'H']].forEach(([id, k]) => { if ($(id)) $(id).addEventListener('change', function () { const v = parseFloat(this.value); if (v >= 0) { f[k] = v; re(); } }); });
   [['fbTitle', 'title'], ['fbY', 'ylab'], ['fbY2', 'y2lab'], ['fbX', 'xlab']].forEach(([id, k]) => { if ($(id)) $(id).addEventListener('input', function () { f[k] = this.value; re(); }); });
