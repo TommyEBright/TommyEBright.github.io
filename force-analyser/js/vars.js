@@ -1,6 +1,6 @@
 // Every variable the tool reports: name, phase, level, units, how it is worked out (with the trial's own numbers).
 // Levels: 1 Foundation (Level 4), 2 Intermediate (Level 5), 3 Advanced (Level 6 and MSc).
-import { G, area, mean, argmax, argmin } from './maths.js?v=2.4.0';
+import { G, area, mean, argmax, argmin } from './maths.js?v=2.5.0';
 
 const f = (x, d) => (x === null || x === undefined || !Number.isFinite(x) ? '&ndash;' : x.toFixed(d));
 const fs3 = (x) => f(x, 3);
@@ -10,6 +10,7 @@ export const UNITS = {
   force: { N: ['N', 1, 0], Nkg: ['N/kg', 'm', 2], BW: ['&times; BW', 'BW', 2] },
   imp: { N: ['N&middot;s', 1, 1], Nkg: ['N&middot;s/kg', 'm', 3], BW: ['N&middot;s/kg', 'm', 3] },
   power: { N: ['W', 1, 0], Nkg: ['W/kg', 'm', 2], BW: ['W/kg', 'm', 2] },
+  work: { N: ['J', 1, 0], Nkg: ['J/kg', 'm', 2], BW: ['J/kg', 'm', 2] },
   rfd: { N: ['N/s', 1, 0], Nkg: ['N/s/kg', 'm', 1], BW: ['BW/s', 'BW', 2] },
   time: { all: ['s', 1, 3] },
   vel: { all: ['m/s', 1, 2] },
@@ -38,6 +39,8 @@ const GROUPS = {
 export function groupsFor(jump) { return GROUPS[jump]; }
 
 // Asymmetry between two plates marked left and right: (L - R) / bigger x 100.
+// Work done by the ground reaction force between samples a and b: the area under force against displacement (trapezoids).
+export function workFD(F, s, a, b) { let w = 0; for (let i = a; i < b; i++) w += (F[i] + F[i + 1]) / 2 * (s[i + 1] - s[i]); return w; }
 function asym(L, Rv) { const b = Math.max(Math.abs(L), Math.abs(Rv)); return b ? (L - Rv) / b * 100 : NaN; }
 
 export function computeVars(R, set) {
@@ -149,6 +152,11 @@ export function computeVars(R, set) {
         how: 'The fastest upward centre of mass velocity: ' + N2(v[vMax]) + ' m/s at ' + fs3(T(vMax)) + ' s. It comes just before take-off, where force drops back below bodyweight.' });
       add({ key: 'push', name: 'Push-off distance', group: 'Propulsion', level: 3, type: 'disp', value: s[TO] - s[zero],
         how: 'How far the centre of mass rose while still on the ground: ' + fs3(s[TO]) + ' &minus; (' + fs3(s[zero]) + ') = ' + fs3(s[TO] - s[zero]) + ' m.' });
+      if (!slj) {
+        const wk = workFD(F, s, zero, TO), ke = 0.5 * m * v[TO] * v[TO], pe = m * G * (s[TO] - s[zero]);
+        add({ key: 'prop_work', name: 'Work done during propulsion', short: 'Propulsive work', group: 'Propulsion', level: 2, type: 'work', value: wk,
+          how: 'Area under the force against displacement curve from the lowest point to take-off = ' + N0(wk) + ' J. It is the energy the push gives the body: kinetic energy at take-off (&frac12; &times; ' + N2(m) + ' &times; ' + N2(v[TO]) + '&sup2; = ' + N0(ke) + ' J) plus the rise of the centre of mass (' + N2(m) + ' &times; 9.81 &times; ' + fs3(s[TO] - s[zero]) + ' = ' + N0(pe) + ' J), ' + N0(ke + pe) + ' J in total. Draw it with Figure &rarr; Force against displacement.' });
+      }
     }
   }
 
@@ -156,6 +164,8 @@ export function computeVars(R, set) {
     const pt = (TO - onset) / fs;
     const pI = argmax(F, onset, TO);
     const mpf = mean(F, onset, TO);
+    add({ key: 'f_start', name: 'Force at the start of the push', short: 'Start-of-push force', group: 'Propulsion', level: 2, type: 'force', value: F[onset],
+      how: 'Force when the push starts (the start of movement): ' + N0(F[onset]) + ' N at ' + fs3(T(onset)) + ' s, ' + N2(F[onset] / BW) + ' &times; bodyweight. From a still squat this is close to bodyweight. Compare it with Force at zero velocity in a countermovement jump, which is where that jump&rsquo;s push starts.' });
     add({ key: 'prop_mf', name: 'Mean propulsive force', group: 'Propulsion', level: 2, type: 'force', value: mpf,
       how: 'The average of every force sample from the start of the push to take-off = ' + N0(mpf) + ' N.' });
     const pImp = area(F, dt, onset, TO, meth, BW);
@@ -166,6 +176,9 @@ export function computeVars(R, set) {
     const vMax = argmax(v, onset, TO + 1);
     add({ key: 'vpk', name: 'Peak velocity', group: 'Propulsion', level: 3, type: 'vel', value: v[vMax], how: 'The fastest upward centre of mass velocity: ' + N2(v[vMax]) + ' m/s at ' + fs3(T(vMax)) + ' s.' });
     add({ key: 'push', name: 'Push-off distance', group: 'Propulsion', level: 3, type: 'disp', value: s[TO] - s[onset], how: 'How far the centre of mass rose from the squat to take-off = ' + fs3(s[TO]) + ' m.' });
+    const wk = workFD(F, s, onset, TO), ke = 0.5 * m * v[TO] * v[TO], pe = m * G * (s[TO] - s[onset]);
+    add({ key: 'prop_work', name: 'Work done during propulsion', short: 'Propulsive work', group: 'Propulsion', level: 2, type: 'work', value: wk,
+      how: 'Area under the force against displacement curve from the start of the push to take-off = ' + N0(wk) + ' J. It is the energy the push gives the body: kinetic energy at take-off (&frac12; &times; ' + N2(m) + ' &times; ' + N2(v[TO]) + '&sup2; = ' + N0(ke) + ' J) plus the rise of the centre of mass (' + N2(m) + ' &times; 9.81 &times; ' + fs3(s[TO] - s[onset]) + ' = ' + N0(pe) + ' J), ' + N0(ke + pe) + ' J in total. Draw it with Figure &rarr; Force against displacement.' });
     add({ key: 'tpf', name: 'Time to peak force', group: 'Propulsion', level: 2, type: 'time', value: (pI - onset) / fs, how: fs3(T(pI)) + ' &minus; ' + fs3(T(onset)) + ' = ' + fs3((pI - onset) / fs) + ' s from the start of the push.' });
     [50, 100, 200].forEach((ms) => {
       const j = onset + Math.round(ms / 1000 * fs);

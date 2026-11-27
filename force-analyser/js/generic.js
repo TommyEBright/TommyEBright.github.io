@@ -2,7 +2,7 @@
 // The user finds the points by hand; the tool works out the results between them.
 // The results come out in the same form as the jump results (see vars.js), so the same tables, exports and
 // comparisons work for both.
-import { G, area, mean, sd, argmax, argmin, butter, quietestWindow } from './maths.js?v=2.4.0';
+import { G, area, mean, sd, argmax, argmin, butter, quietestWindow } from './maths.js?v=2.5.0';
 
 export const TYPES = {
   any: 'Any force–time data',
